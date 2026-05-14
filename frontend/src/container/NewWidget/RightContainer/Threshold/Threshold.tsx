@@ -1,12 +1,16 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
-import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
+import { Button, Input, InputNumber, Select, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from '@signozhq/icons';
 
 import {
 	operatorOptions,
@@ -52,9 +56,8 @@ function Threshold({
 	const [value, setValue] = useState<number>(thresholdValue);
 	const [unit, setUnit] = useState<string>(thresholdUnit);
 	const [color, setColor] = useState<string>(thresholdColor);
-	const [format, setFormat] = useState<ThresholdProps['thresholdFormat']>(
-		thresholdFormat,
-	);
+	const [format, setFormat] =
+		useState<ThresholdProps['thresholdFormat']>(thresholdFormat);
 	const [label, setLabel] = useState<string>(thresholdLabel);
 	const [tableSelectedOption, setTableSelectedOption] = useState<string>(
 		thresholdTableOptions,
@@ -136,7 +139,6 @@ function Threshold({
 	const [{ handlerId }, drop] = useDrop<
 		ThresholdProps,
 		void,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{ handlerId: any }
 	>({
 		accept: 'Threshold',
@@ -173,7 +175,6 @@ function Threshold({
 			}
 
 			moveThreshold(dragIndex, hoverIndex);
-			// eslint-disable-next-line no-param-reassign
 			item.keyIndex = hoverIndex;
 		},
 	});
@@ -203,6 +204,18 @@ function Threshold({
 				: yAxisUnit;
 		return unit !== 'none' && convertUnit(value, unit, toUnitId) === null;
 	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits, unit, value]);
+
+	const unitSelectCategories = useMemo(() => {
+		return unitOptions(
+			selectedGraph === PANEL_TYPES.TABLE
+				? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
+				: yAxisUnit || '',
+		);
+	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits]);
+
+	const unitLabel = useMemo(() => {
+		return Y_AXIS_UNIT_NAMES[unit as keyof typeof Y_AXIS_UNIT_NAMES];
+	}, [unit]);
 
 	return (
 		<div
@@ -236,6 +249,7 @@ function Threshold({
 								<Input
 									defaultValue={label}
 									onChange={handleLabelChange}
+									data-testid="threshold-label-input"
 									bordered={!isDarkMode}
 									className="label-input"
 								/>
@@ -262,6 +276,7 @@ function Threshold({
 												onChange={handleTableOptionsChange}
 												rootClassName="operator-input-root"
 												className="operator-input"
+												data-testid="table-operator-input-selector"
 											/>
 											<Typography.Text className="typography">is</Typography.Text>
 										</Space>
@@ -274,6 +289,7 @@ function Threshold({
 										style={{ marginLeft: '10px' }}
 										rootClassName="operator-input-root"
 										className="operator-input"
+										data-testid="operator-input-selector"
 									/>
 								</div>
 							) : (
@@ -308,24 +324,24 @@ function Threshold({
 							defaultValue={value}
 							onChange={handleValueChange}
 							className="unit-input"
+							data-testid="threshold-value-input"
 						/>
 					) : (
 						<ShowCaseValue value={value} className="unit-input" />
 					)}
 					{isEditMode ? (
-						<Select
-							defaultValue={unit}
-							options={unitOptions(
-								selectedGraph === PANEL_TYPES.TABLE
-									? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
-									: yAxisUnit || '',
-							)}
+						<YAxisUnitSelector
+							value={unit}
 							onChange={handleUnitChange}
-							showSearch
-							className="unit-selection"
+							placeholder="Select unit"
+							source={YAxisSource.DASHBOARDS}
+							initialValue={unit}
+							data-testid="threshold-unit-input"
+							categoriesOverride={unitSelectCategories}
+							containerClassName="unit-selection"
 						/>
 					) : (
-						<ShowCaseValue value={unit} className="unit-selection-prev" />
+						<ShowCaseValue value={unitLabel} className="unit-selection-prev" />
 					)}
 				</div>
 				<div className="thresholds-color-selector">
@@ -338,6 +354,7 @@ function Threshold({
 								defaultValue={format}
 								options={showAsOptions}
 								onChange={handlerFormatChange}
+								data-testid="threshold-color-selector"
 								rootClassName="color-format"
 							/>
 						</>
@@ -356,7 +373,10 @@ function Threshold({
 					)}
 				</div>
 				{isInvalidUnitComparison && (
-					<Typography.Text className="invalid-unit">
+					<Typography.Text
+						className="invalid-unit"
+						data-testid="invalid-unit-comparison"
+					>
 						Threshold unit ({unit}) is not valid in comparison with the{' '}
 						{selectedGraph === PANEL_TYPES.TABLE ? 'column' : 'y-axis'} unit (
 						{selectedGraph === PANEL_TYPES.TABLE

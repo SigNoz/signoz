@@ -56,8 +56,8 @@ export interface AlertRuleStats {
 	totalPastTriggers: number;
 	currentTriggersSeries: CurrentTriggersSeries;
 	pastTriggersSeries: CurrentTriggersSeries | null;
-	currentAvgResolutionTime: number;
-	pastAvgResolutionTime: number;
+	currentAvgResolutionTime: string;
+	pastAvgResolutionTime: string;
 	currentAvgResolutionTimeSeries: CurrentTriggersSeries;
 	pastAvgResolutionTimeSeries: any | null;
 }
@@ -109,7 +109,8 @@ export type AlertRuleTimelineTableResponsePayload = {
 		labels: AlertLabelsProps['labels'];
 	};
 };
-type AlertState = 'firing' | 'normal' | 'no-data' | 'muted';
+
+type AlertState = 'firing' | 'normal' | 'nodata' | 'muted';
 
 export interface AlertRuleTimelineGraphResponse {
 	start: number;

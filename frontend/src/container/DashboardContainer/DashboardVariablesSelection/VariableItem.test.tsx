@@ -40,21 +40,13 @@ describe('VariableItem', () => {
 		useEffectSpy.mockRestore();
 	});
 
-	test('renders component with default props', () => {
+	it('renders component with default props', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -62,21 +54,13 @@ describe('VariableItem', () => {
 		expect(screen.getByText('$testVariable')).toBeInTheDocument();
 	});
 
-	test('renders Input when the variable type is TEXTBOX', () => {
+	it('renders Input when the variable type is TEXTBOX', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -85,21 +69,13 @@ describe('VariableItem', () => {
 		).toBeInTheDocument();
 	});
 
-	test('calls onValueUpdate when Input value changes and blurs', async () => {
+	it('calls onValueUpdate when Input value changes and blurs', async () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -126,21 +102,13 @@ describe('VariableItem', () => {
 		});
 	});
 
-	test('renders a Select element when variable type is CUSTOM', () => {
+	it('renders a Select element when variable type is CUSTOM', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -149,7 +117,7 @@ describe('VariableItem', () => {
 		expect(screen.getByTestId('variable-select')).toBeInTheDocument();
 	});
 
-	test('renders a Select element with all selected', async () => {
+	it('renders a Select element with all selected', async () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
@@ -163,14 +131,6 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -178,21 +138,13 @@ describe('VariableItem', () => {
 		expect(screen.getByText('ALL')).toBeInTheDocument();
 	});
 
-	test('calls useEffect when the component mounts', () => {
+	it('calls useEffect when the component mounts', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					variablesToGetUpdated={[]}
-					setVariablesToGetUpdated={(): void => {}}
-					dependencyData={{
-						order: [],
-						graph: {},
-						parentDependencyGraph: {},
-						hasCycle: false,
-					}}
 				/>
 			</MockQueryClientProvider>,
 		);

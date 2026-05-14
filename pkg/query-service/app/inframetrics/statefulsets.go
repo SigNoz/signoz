@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -230,6 +232,10 @@ func (d *StatefulSetsRepo) getTopStatefulSetGroups(ctx context.Context, orgID va
 		topStatefulSetGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopStatefulSetGroups",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topStatefulSetGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -355,6 +361,10 @@ func (d *StatefulSetsRepo) GetStatefulSetList(ctx context.Context, orgID valuer.
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetStatefulSetList",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

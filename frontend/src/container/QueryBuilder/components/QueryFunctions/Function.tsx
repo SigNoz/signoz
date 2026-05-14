@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import { useMemo, useState } from 'react';
 import { Button, Flex, Select } from 'antd';
 import cx from 'classnames';
@@ -11,7 +9,7 @@ import {
 } from 'constants/queryFunctionOptions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
-import { X } from 'lucide-react';
+import { X } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
@@ -37,16 +35,14 @@ export default function Function({
 	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
-	const { showInput, disabled } = queryFunctionsTypesConfig[
-		normalizedFunctionName
-	];
+	const { showInput, disabled } =
+		queryFunctionsTypesConfig[normalizedFunctionName];
 
 	let functionValue;
 
 	const hasValue = !isNil(funcData.args?.[0]?.value);
 
 	if (hasValue) {
-		// eslint-disable-next-line prefer-destructuring
 		functionValue = funcData.args?.[0]?.value;
 	}
 
@@ -69,7 +65,6 @@ export default function Function({
 		normalizedFunctionName === QueryFunctionsTypes.ANOMALY;
 
 	if (normalizedFunctionName === QueryFunctionsTypes.ANOMALY) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 

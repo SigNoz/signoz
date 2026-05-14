@@ -1,14 +1,13 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Select } from 'antd';
 import {
 	initialQueriesMap,
 	initialQueryMeterWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { AggregatorFilter } from 'container/QueryBuilder/filters';
+import { MetricNameSelector } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -44,26 +43,14 @@ export const MetricsSelect = memo(function MetricsSelect({
 	signalSourceChangeEnabled: boolean;
 	savePreviousQuery: boolean;
 }): JSX.Element {
-	const [attributeKeys, setAttributeKeys] = useState<BaseAutocompleteData[]>([]);
-
 	const { handleChangeAggregatorAttribute } = useQueryOperations({
 		index,
 		query,
 		entityVersion: version,
 	});
 
-	const handleAggregatorAttributeChange = useCallback(
-		(value: BaseAutocompleteData, isEditMode?: boolean) => {
-			handleChangeAggregatorAttribute(value, isEditMode, attributeKeys || []);
-		},
-		[handleChangeAggregatorAttribute, attributeKeys],
-	);
-
-	const {
-		updateAllQueriesOperators,
-		handleSetQueryData,
-		panelType,
-	} = useQueryBuilder();
+	const { updateAllQueriesOperators, handleSetQueryData, panelType } =
+		useQueryBuilder();
 
 	const source = useMemo(
 		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
@@ -133,9 +120,8 @@ export const MetricsSelect = memo(function MetricsSelect({
 				signalSource: newSignalSource,
 				panelType: panelType || '',
 			});
-			const savedQuery: IBuilderQuery | null = getPreviousQueryFromKey(
-				newQueryKey,
-			);
+			const savedQuery: IBuilderQuery | null =
+				getPreviousQueryFromKey(newQueryKey);
 
 			// remove the new query key from session storage
 			removeKeyFromPreviousQuery(newQueryKey);
@@ -160,16 +146,16 @@ export const MetricsSelect = memo(function MetricsSelect({
 					options={SOURCE_OPTIONS}
 					value={source}
 					defaultValue="metrics"
+					data-testid={`metrics-source-selector-${index}`}
 					onChange={handleSignalSourceChange}
 				/>
 			)}
 
-			<AggregatorFilter
-				onChange={handleAggregatorAttributeChange}
+			<MetricNameSelector
+				onChange={handleChangeAggregatorAttribute}
 				query={query}
-				index={index}
+				data-testid={`metric-name-selector-${index}`}
 				signalSource={signalSource || ''}
-				setAttributeKeys={setAttributeKeys}
 			/>
 		</div>
 	);

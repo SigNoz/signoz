@@ -28,6 +28,7 @@ import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { openInNewTab } from 'utils/navigation';
 
 import './TracesTableComponent.styles.scss';
 
@@ -35,6 +36,7 @@ function TracesTableComponent({
 	widget,
 	queryResponse,
 	setRequestData,
+	onColumnWidthsChange,
 }: TracesTableComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
@@ -70,12 +72,13 @@ function TracesTableComponent({
 
 	const queryTableDataResult =
 		queryResponse.data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const transformedQueryTableData = useMemo(
-		() => ((transformDataWithDate(queryTableData) || []) as unknown) as RowData[],
+		() => (transformDataWithDate(queryTableData) || []) as unknown as RowData[],
 		[queryTableData],
 	);
 
@@ -85,7 +88,7 @@ function TracesTableComponent({
 				event.preventDefault();
 				event.stopPropagation();
 				if (event.metaKey || event.ctrlKey) {
-					window.open(getTraceLink(record), '_blank');
+					openInNewTab(getTraceLink(record));
 				} else {
 					history.push(getTraceLink(record));
 				}
@@ -131,8 +134,8 @@ function TracesTableComponent({
 						columns={columns}
 						onRow={handleRow}
 						sticky
-						widgetId={widget.id}
-						shouldPersistColumnWidths
+						columnWidths={widget.columnWidths}
+						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</OverlayScrollbar>
 			</div>
@@ -175,6 +178,7 @@ export type TracesTableComponentProps = {
 	>;
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export default TracesTableComponent;

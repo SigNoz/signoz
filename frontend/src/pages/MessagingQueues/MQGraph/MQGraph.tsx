@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';

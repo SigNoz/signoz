@@ -1,32 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/require-default-props */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable prefer-destructuring */
 
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Table, Tooltip, Typography } from 'antd';
-import { Progress } from 'antd/lib';
-import { ColumnsType } from 'antd/lib/table';
+import { Table, Tooltip } from 'antd';
+import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	getInvalidValueTooltipText,
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	K8sCategory,
-} from './constants';
+import styles from './commonUtils.module.scss';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
  */
 export function formatBytes(bytes: number, decimals = 2): string {
+	if (Number.isNaN(bytes) || !Number.isFinite(bytes)) {
+		return '-';
+	}
+
 	if (bytes === 0) {
 		return '0 Bytes';
 	}
@@ -36,36 +28,6 @@ export function formatBytes(bytes: number, decimals = 2): string {
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
 	return `${parseFloat((bytes / k ** i).toFixed(decimals))} ${sizes[i]}`;
-}
-
-/**
- * Wrapper component that renders its children for valid values or renders '-' for invalid values (-1)
- */
-export function ValidateColumnValueWrapper({
-	children,
-	value,
-	entity,
-	attribute,
-}: {
-	children: React.ReactNode;
-	value: number;
-	entity?: K8sCategory;
-	attribute?: string;
-}): JSX.Element {
-	if (value === -1) {
-		let element = <div>-</div>;
-		if (entity && attribute) {
-			element = (
-				<Tooltip title={getInvalidValueTooltipText(entity, attribute)}>
-					{element}
-				</Tooltip>
-			);
-		}
-
-		return element;
-	}
-
-	return <div>{children}</div>;
 }
 
 /**
@@ -110,38 +72,6 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 	return Color.BG_SAKURA_500;
 }
 
-export const getProgressBarText = (percent: number): React.ReactNode =>
-	`${percent}%`;
-
-export function EntityProgressBar({
-	value,
-	type,
-}: {
-	value: number;
-	type: 'request' | 'limit';
-}): JSX.Element {
-	const percentage = Number((value * 100).toFixed(1));
-
-	return (
-		<div className="entity-progress-bar">
-			<Progress
-				percent={percentage}
-				strokeLinecap="butt"
-				size="small"
-				status="normal"
-				strokeColor={
-					type === 'limit'
-						? getStrokeColorForLimitUtilization(value)
-						: getStrokeColorForRequestUtilization(value)
-				}
-				className="progress-bar"
-				showInfo={false}
-			/>
-			<Typography.Text style={{ fontSize: '10px' }}>{percentage}%</Typography.Text>
-		</div>
-	);
-}
-
 export function EventContents({
 	data,
 }: {
@@ -182,7 +112,7 @@ export function EventContents({
 			dataSource={tableData}
 			pagination={false}
 			showHeader={false}
-			className="event-content-container"
+			className={styles.eventContentContainer}
 		/>
 	);
 }
@@ -249,7 +179,6 @@ export const filterDuplicateFilters = (
 	const uniqueFilters = [];
 	const seenIds = new Set();
 
-	// eslint-disable-next-line no-restricted-syntax
 	for (const filter of filters) {
 		if (!seenIds.has(filter.id)) {
 			seenIds.add(filter.id);
@@ -258,42 +187,4 @@ export const filterDuplicateFilters = (
 	}
 
 	return uniqueFilters;
-};
-
-export const getOrderByFromParams = (
-	searchParams: URLSearchParams,
-	returnNullAsDefault = false,
-): {
-	columnName: string;
-	order: 'asc' | 'desc';
-} | null => {
-	const orderByFromParams = searchParams.get(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
-	);
-	if (orderByFromParams) {
-		const decoded = decodeURIComponent(orderByFromParams);
-		const parsed = JSON.parse(decoded);
-		return parsed as { columnName: string; order: 'asc' | 'desc' };
-	}
-	if (returnNullAsDefault) {
-		return null;
-	}
-	return { columnName: 'cpu', order: 'desc' };
-};
-
-export const getFiltersFromParams = (
-	searchParams: URLSearchParams,
-	queryKey: string,
-): IBuilderQuery['filters'] | null => {
-	const filtersFromParams = searchParams.get(queryKey);
-	if (filtersFromParams) {
-		try {
-			const decoded = decodeURIComponent(filtersFromParams);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['filters'];
-		} catch (error) {
-			return null;
-		}
-	}
-	return null;
 };

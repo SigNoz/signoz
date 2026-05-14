@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Switch, Typography } from 'antd';
+import { Button, Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
-import { Check, Info, Link2 } from 'lucide-react';
+import { Check, Info, Link2 } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 const routesToBeSharedWithTime = [
 	ROUTES.LOGS_EXPLORER,
@@ -79,17 +82,13 @@ function ShareURLModal(): JSX.Element {
 
 				urlQuery.delete(QueryParams.relativeTime);
 
-				currentUrl = `${window.location.origin}${
-					location.pathname
-				}?${urlQuery.toString()}`;
+				currentUrl = getAbsoluteUrl(`${location.pathname}?${urlQuery.toString()}`);
 			} else {
 				urlQuery.delete(QueryParams.startTime);
 				urlQuery.delete(QueryParams.endTime);
 
 				urlQuery.set(QueryParams.relativeTime, selectedTime);
-				currentUrl = `${window.location.origin}${
-					location.pathname
-				}?${urlQuery.toString()}`;
+				currentUrl = getAbsoluteUrl(`${location.pathname}?${urlQuery.toString()}`);
 			}
 		}
 

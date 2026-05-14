@@ -6,6 +6,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Space } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -32,10 +33,11 @@ function TableView({
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const queryKey = useMemo(
 		() => [
@@ -49,7 +51,6 @@ function TableView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 

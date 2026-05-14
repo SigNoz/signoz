@@ -8,8 +8,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
@@ -32,7 +34,7 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -60,10 +62,8 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
-	const {
-		stagedQuery,
-		panelType: panelTypeFromQueryBuilder,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
+		useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
@@ -125,7 +125,6 @@ function ListView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 
@@ -176,9 +175,10 @@ function ListView({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -237,6 +237,11 @@ function ListView({
 						dataSource={DataSource.TRACES}
 					/>
 				</div>
+
+				<DownloadOptionsMenu
+					dataSource={DataSource.TRACES}
+					selectedColumns={options?.selectColumns}
+				/>
 
 				<TraceExplorerControls
 					isLoading={isFetching}

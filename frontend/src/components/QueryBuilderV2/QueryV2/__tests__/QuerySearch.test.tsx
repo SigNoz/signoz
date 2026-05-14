@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable import/named */
 import { EditorView } from '@uiw/react-codemirror';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -38,14 +36,14 @@ beforeAll(() => {
 		const mockRange = {
 			// CodeMirror uses these for text measurement
 			getClientRects: (): DOMRectList =>
-				(({
+				({
 					length: 1,
 					item: (index: number): DOMRect | null => (index === 0 ? mockRect : null),
 					0: mockRect,
 					*[Symbol.iterator](): Generator<DOMRect> {
 						yield mockRect;
 					},
-				} as unknown) as DOMRectList),
+				}) as unknown as DOMRectList,
 			getBoundingClientRect: (): DOMRect => mockRect,
 			// CodeMirror calls these to set up text ranges
 			setStart: (node: Node, offset: number): void => {
@@ -74,7 +72,7 @@ beforeAll(() => {
 			},
 			commonAncestorContainer: document.body,
 		};
-		return (mockRange as unknown) as Range;
+		return mockRange as unknown as Range;
 	};
 
 	// Mock document.createRange to return a new Range instance each time
@@ -88,9 +86,9 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): { selectedDashboard: undefined } => ({
-		selectedDashboard: undefined,
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): { dashboardData: undefined } => ({
+		dashboardData: undefined,
 	}),
 }));
 
@@ -366,5 +364,37 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		});
 
 		dispatchSpy.mockRestore();
+	});
+
+	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
+		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
+			typeof getKeySuggestions
+		>;
+		mockedGetKeys.mockClear();
+
+		const queryData = {
+			...initialQueriesMap.metrics.builder.queryData[0],
+			aggregateAttribute: {
+				key: '',
+				dataType: DataTypes.String,
+				type: 'string',
+			},
+		};
+
+		render(
+			<QuerySearch
+				onChange={jest.fn()}
+				queryData={queryData}
+				dataSource={DataSource.METRICS}
+				showFilterSuggestionsWithoutMetric
+			/>,
+		);
+
+		await waitFor(
+			() => {
+				expect(mockedGetKeys).toHaveBeenCalled();
+			},
+			{ timeout: 2000 },
+		);
 	});
 });

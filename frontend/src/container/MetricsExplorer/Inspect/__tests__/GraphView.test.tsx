@@ -1,14 +1,13 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable react/jsx-props-no-spreading */
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
 import { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
+import { InspectMetricsSeries } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -33,7 +32,6 @@ describe('GraphView', () => {
 				{ timestamp: 1234567891000, value: '20' },
 			],
 			labels: { label1: 'value1' },
-			labelsArray: [{ label: 'label1', value: 'value1' }],
 		},
 	];
 
@@ -45,7 +43,7 @@ describe('GraphView', () => {
 		] as AlignedData,
 		metricUnit: '',
 		metricName: 'test_metric',
-		metricType: MetricType.GAUGE,
+		metricType: MetrictypesTypeDTO.gauge,
 		spaceAggregationSeriesMap: new Map(),
 		inspectionStep: InspectionStep.COMPLETED,
 		setPopoverOptions: jest.fn(),
@@ -54,15 +52,12 @@ describe('GraphView', () => {
 		setExpandedViewOptions: jest.fn(),
 		resetInspection: jest.fn(),
 		showExpandedView: false,
-		metricInspectionOptions: {
+		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 			spaceAggregationLabels: ['host_name'],
 			timeAggregationOption: TimeAggregationOptions.MAX,
-			filters: {
-				items: [],
-				op: 'AND',
-			},
+			filterExpression: '',
 		},
 		isInspectMetricsRefetching: false,
 	};

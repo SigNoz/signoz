@@ -2,9 +2,11 @@ import {
 	buildDependencies,
 	buildDependencyGraph,
 } from 'container/DashboardContainer/DashboardVariablesSelection/util';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import {
+	IDashboardVariable,
+	TVariableQueryType,
+} from 'types/api/dashboard/getAll';
 
-import { initializeVariableFetchStore } from '../variableFetchStore';
 import {
 	IDashboardVariables,
 	IDashboardVariablesStoreState,
@@ -44,6 +46,7 @@ export function buildDependencyData(
 		order,
 		graph,
 		parentDependencyGraph,
+		transitiveDescendants,
 		hasCycle,
 		cycleNodes,
 	} = buildDependencyGraph(dependencies);
@@ -58,49 +61,62 @@ export function buildDependencyData(
 		order: queryVariableOrder,
 		graph,
 		parentDependencyGraph,
+		transitiveDescendants,
 		hasCycle,
 		cycleNodes,
 	};
 }
 
 /**
- * Initialize the variable fetch store with the computed dependency data
+ * Build a variable name → type mapping from sorted variables array
  */
-function initializeFetchStore(
+export function buildVariableTypesMap(
 	sortedVariablesArray: IDashboardVariable[],
-	dependencyData: IDependencyData | null,
-): void {
-	if (dependencyData) {
-		const allVariableNames = sortedVariablesArray
-			.map((v) => v.name)
-			.filter((name): name is string => !!name);
+): Record<string, TVariableQueryType> {
+	const types: Record<string, TVariableQueryType> = {};
+	sortedVariablesArray.forEach((v) => {
+		if (v.name) {
+			types[v.name] = v.type;
+		}
+	});
+	return types;
+}
 
-		initializeVariableFetchStore(
-			allVariableNames,
-			dependencyData.graph,
-			dependencyData.parentDependencyGraph,
-		);
-	}
+/**
+ * Build display-ordered list of dynamic variable names
+ */
+export function buildDynamicVariableOrder(
+	sortedVariablesArray: IDashboardVariable[],
+): string[] {
+	return sortedVariablesArray
+		.filter((v) => v.type === 'DYNAMIC' && v.name)
+		.map((v) => v.name as string);
 }
 
 /**
  * Compute derived values from variables
  * This is a composition of buildSortedVariablesArray and buildDependencyData
- * Also initializes the variable fetch store with the new dependency data
  */
 export function computeDerivedValues(
 	variables: IDashboardVariablesStoreState['variables'],
 ): Pick<
 	IDashboardVariablesStoreState,
-	'sortedVariablesArray' | 'dependencyData'
+	| 'sortedVariablesArray'
+	| 'dependencyData'
+	| 'variableTypes'
+	| 'dynamicVariableOrder'
 > {
 	const sortedVariablesArray = buildSortedVariablesArray(variables);
 	const dependencyData = buildDependencyData(sortedVariablesArray);
+	const variableTypes = buildVariableTypesMap(sortedVariablesArray);
+	const dynamicVariableOrder = buildDynamicVariableOrder(sortedVariablesArray);
 
-	// Initialize the variable fetch store when dependency data is computed
-	initializeFetchStore(sortedVariablesArray, dependencyData);
-
-	return { sortedVariablesArray, dependencyData };
+	return {
+		sortedVariablesArray,
+		dependencyData,
+		variableTypes,
+		dynamicVariableOrder,
+	};
 }
 
 /**
@@ -112,7 +128,8 @@ export function updateDerivedValues(
 ): void {
 	draft.sortedVariablesArray = buildSortedVariablesArray(draft.variables);
 	draft.dependencyData = buildDependencyData(draft.sortedVariablesArray);
-
-	// Initialize the variable fetch store when dependency data is updated
-	initializeFetchStore(draft.sortedVariablesArray, draft.dependencyData);
+	draft.variableTypes = buildVariableTypesMap(draft.sortedVariablesArray);
+	draft.dynamicVariableOrder = buildDynamicVariableOrder(
+		draft.sortedVariablesArray,
+	);
 }

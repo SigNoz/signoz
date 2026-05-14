@@ -11,12 +11,12 @@ import (
 )
 
 // UnmarshalJSONWithSuggestions unmarshals JSON data into the target struct
-// and provides field name suggestions for unknown fields
+// and provides field name suggestions for unknown fields.
 func UnmarshalJSONWithSuggestions(data []byte, target any) error {
 	return UnmarshalJSONWithContext(data, target, "")
 }
 
-// UnmarshalJSONWithContext unmarshals JSON with context information for better error messages
+// UnmarshalJSONWithContext unmarshals JSON with context information for better error messages.
 func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 	// First, try to unmarshal with DisallowUnknownFields to catch unknown fields
 	dec := json.NewDecoder(bytes.NewReader(data))
@@ -68,7 +68,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 	return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid JSON: %v", err)
 }
 
-// extractUnknownField extracts the field name from an unknown field error message
+// extractUnknownField extracts the field name from an unknown field error message.
 func extractUnknownField(errMsg string) string {
 	// The error message format is: json: unknown field "fieldname"
 	parts := strings.Split(errMsg, `"`)
@@ -78,7 +78,7 @@ func extractUnknownField(errMsg string) string {
 	return ""
 }
 
-// getJSONFieldNames extracts all JSON field names from a struct
+// getJSONFieldNames extracts all JSON field names from a struct.
 func getJSONFieldNames(v any) []string {
 	var fields []string
 
@@ -110,7 +110,7 @@ func getJSONFieldNames(v any) []string {
 }
 
 // wrapUnmarshalError wraps UnmarshalJSONWithContext errors with appropriate context
-// It preserves errors that already have additional context or unknown field errors
+// It preserves errors that already have additional context or unknown field errors.
 func wrapUnmarshalError(err error, errorFormat string, args ...interface{}) error {
 	if err == nil {
 		return nil
@@ -137,7 +137,7 @@ func wrapUnmarshalError(err error, errorFormat string, args ...interface{}) erro
 
 // wrapValidationError rewraps validation errors with context while preserving additional hints
 // It extracts the inner message from the error and creates a new error with the provided format
-// The innerMsg is automatically appended to the args for formatting
+// The innerMsg is automatically appended to the args for formatting.
 func wrapValidationError(err error, contextIdentifier string, errorFormat string) error {
 	if err == nil {
 		return nil

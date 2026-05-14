@@ -38,7 +38,7 @@ import {
 	isUndefined,
 	unset,
 } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -100,6 +100,17 @@ interface QueryBuilderSearchV2Props {
 	// Determines whether to call onChange when a tag is closed
 	triggerOnChangeOnClose?: boolean;
 	skipQueryBuilderRedirect?: boolean;
+	/** Additional props passed through to the underlying Ant Design Select (e.g. listHeight, listItemHeight) */
+	selectProps?: Partial<
+		Pick<
+			React.ComponentProps<typeof Select>,
+			| 'listHeight'
+			| 'listItemHeight'
+			| 'popupClassName'
+			| 'dropdownMatchSelectWidth'
+			| 'popupMatchSelectWidth'
+		>
+	>;
 }
 
 export interface Option {
@@ -142,6 +153,7 @@ function QueryBuilderSearchV2(
 		hideSpanScopeSelector,
 		triggerOnChangeOnClose,
 		skipQueryBuilderRedirect,
+		selectProps,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -169,9 +181,10 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
-	const isLogsDataSource = useMemo(() => query.dataSource === DataSource.LOGS, [
-		query.dataSource,
-	]);
+	const isLogsDataSource = useMemo(
+		() => query.dataSource === DataSource.LOGS,
+		[query.dataSource],
+	);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -266,43 +279,39 @@ function QueryBuilderSearchV2(
 		},
 	);
 
-	const {
-		data: suggestionsData,
-		isFetching: isFetchingSuggestions,
-	} = useGetAttributeSuggestions(
-		{
-			searchText: searchValue?.split(' ')[0],
-			dataSource: query.dataSource,
-			filters: query.filters || { items: [], op: 'AND' },
-		},
-		{
-			queryKey: [suggestionsParams],
-			enabled: isQueryEnabled && isLogsDataSource,
-		},
-	);
+	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
+		useGetAttributeSuggestions(
+			{
+				searchText: searchValue?.split(' ')[0],
+				dataSource: query.dataSource,
+				filters: query.filters || { items: [], op: 'AND' },
+			},
+			{
+				queryKey: [suggestionsParams],
+				enabled: isQueryEnabled && isLogsDataSource,
+			},
+		);
 
-	const {
-		data: attributeValues,
-		isFetching: isFetchingAttributeValues,
-	} = useGetAggregateValues(
-		{
-			aggregateOperator: query.aggregateOperator || '',
-			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			attributeKey: currentFilterItem?.key?.key || '',
-			filterAttributeKeyDataType:
-				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
-			tagType: currentFilterItem?.key?.type ?? '',
-			searchText: isArray(currentFilterItem?.value)
-				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
-				  ''
-				: currentFilterItem?.value?.toString() || '',
-		},
-		{
-			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
-			queryKey: [valueParams],
-		},
-	);
+	const { data: attributeValues, isFetching: isFetchingAttributeValues } =
+		useGetAggregateValues(
+			{
+				aggregateOperator: query.aggregateOperator || '',
+				dataSource: query.dataSource,
+				aggregateAttribute: query.aggregateAttribute?.key || '',
+				attributeKey: currentFilterItem?.key?.key || '',
+				filterAttributeKeyDataType:
+					currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
+				tagType: currentFilterItem?.key?.type ?? '',
+				searchText: isArray(currentFilterItem?.value)
+					? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+						''
+					: currentFilterItem?.value?.toString() || '',
+			},
+			{
+				enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
+				queryKey: [valueParams],
+			},
+		);
 
 	const handleDropdownSelect = useCallback(
 		(value: string) => {
@@ -328,7 +337,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -553,9 +561,10 @@ function QueryBuilderSearchV2(
 		// Case 1 -> when typing an attribute key (not selecting from dropdown)
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
-			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
-				(value) => value.key === tagKey.split(' ')[0],
-			);
+			const isSuggestedKeyInAutocomplete =
+				suggestionsData?.payload?.attributes?.some(
+					(value) => value.key === tagKey.split(' ')[0],
+				);
 
 			if (isSuggestedKeyInAutocomplete) {
 				const allAttributesMatchingTheKey =
@@ -694,7 +703,7 @@ function QueryBuilderSearchV2(
 										type: '',
 									},
 								},
-						  ]
+							]
 						: []),
 					...(suggestionsData?.payload?.attributes?.map((key) => ({
 						label: key.key,
@@ -727,7 +736,7 @@ function QueryBuilderSearchV2(
 										type: '',
 									},
 								},
-						  ]
+							]
 						: []),
 					// Map existing attribute keys from payload
 					...(data?.payload?.attributeKeys?.map((key) => ({
@@ -846,7 +855,7 @@ function QueryBuilderSearchV2(
 				Array.isArray(tag.value) &&
 				tag.value[tag.value.length - 1] === ''
 					? tag.value?.slice(0, -1)
-					: tag.value ?? '';
+					: (tag.value ?? '');
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
@@ -952,9 +961,7 @@ function QueryBuilderSearchV2(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
 								if (!isDisabled) {
@@ -973,10 +980,10 @@ function QueryBuilderSearchV2(
 	return (
 		<div className="query-builder-search-v2">
 			<Select
+				{...selectProps}
+				data-testid={'qb-search-select'}
 				ref={selectRef}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
@@ -988,7 +995,6 @@ function QueryBuilderSearchV2(
 				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
 					!isUndefined(suffixIcon) ? (
 						suffixIcon
 					) : isOpen ? (
@@ -1018,7 +1024,6 @@ function QueryBuilderSearchV2(
 				notFoundContent={loading ? <Spin size="small" /> : null}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				dropdownRender={(menu): ReactElement => (
 					<QueryBuilderSearchDropdown
 						menu={menu}
@@ -1081,6 +1086,7 @@ QueryBuilderSearchV2.defaultProps = {
 	hideSpanScopeSelector: true,
 	triggerOnChangeOnClose: false,
 	skipQueryBuilderRedirect: false,
+	selectProps: undefined,
 };
 
 export default QueryBuilderSearchV2;

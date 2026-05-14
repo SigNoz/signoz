@@ -6,11 +6,15 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
@@ -87,11 +91,46 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 	return remote.FromQueryResult(sortSeries, res), nil
 }
 
+func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sortSeries bool) (storage.SeriesSet, error) {
+	if len(queries) == 0 {
+		return storage.EmptySeriesSet(), nil
+	}
+	if len(queries) == 1 {
+		return c.Read(ctx, queries[0], sortSeries)
+	}
+
+	type result struct {
+		ss  storage.SeriesSet
+		err error
+	}
+
+	results := make([]result, len(queries))
+	var wg sync.WaitGroup
+	wg.Add(len(queries))
+	for i, q := range queries {
+		go func(i int, q *prompb.Query) {
+			defer wg.Done()
+			ss, err := c.Read(ctx, q, sortSeries)
+			results[i] = result{ss, err}
+		}(i, q)
+	}
+	wg.Wait()
+
+	sets := make([]storage.SeriesSet, 0, len(queries))
+	for _, r := range results {
+		if r.err != nil {
+			return nil, r.err
+		}
+		sets = append(sets, r.ss)
+	}
+	return storage.NewMergeSeriesSet(sets, 0, storage.ChainedSeriesMerge), nil
+}
+
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
-	var argCount int = 0
-	var selectString string = "fingerprint, any(labels)"
+	var argCount = 0
+	var selectString = "fingerprint, any(labels)"
 	if subQuery {
 		argCount = 1
 		selectString = "fingerprint"
@@ -104,10 +143,7 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := !constants.IsDotMetricsEnabled
 
 	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 
@@ -137,6 +173,7 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 }
 
 func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
+	ctx = client.withClickhousePrometheusContext(ctx, "getFingerprintsFromClickhouseQuery")
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -168,6 +205,7 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 }
 
 func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+	ctx = client.withClickhousePrometheusContext(ctx, "querySamples")
 	argCount := len(args)
 
 	query := fmt.Sprintf(`
@@ -244,6 +282,8 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 }
 
 func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*prompb.QueryResult, error) {
+	ctx = client.withClickhousePrometheusContext(ctx, "queryRaw")
+
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -290,4 +330,13 @@ func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*pr
 	}
 
 	return &res, nil
+}
+
+func (client *client) withClickhousePrometheusContext(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-prometheus",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

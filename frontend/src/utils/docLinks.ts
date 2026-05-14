@@ -6,6 +6,15 @@ const DOCLINKS = {
 		'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=traces-explorer-trace-tab#traces-view',
 	METRICS_EXPLORER_EMPTY_STATE:
 		'https://signoz.io/docs/userguide/send-metrics-cloud/',
+	EXTERNAL_API_MONITORING:
+		'https://signoz.io/docs/external-api-monitoring/overview/',
+	QUERY_CLICKHOUSE_TRACES:
+		'https://signoz.io/docs/userguide/writing-clickhouse-traces-query/#timestamp-bucketing-for-distributed_signoz_index_v3',
+	QUERY_CLICKHOUSE_LOGS:
+		'https://signoz.io/docs/userguide/logs_clickhouse_queries/',
+	QUERY_CLICKHOUSE_METRICS:
+		'https://signoz.io/docs/userguide/write-a-metrics-clickhouse-query/',
+	AGENT_SKILL_INSTALL: 'https://signoz.io/docs/ai/agent-skills/#installation',
 };
 
 export default DOCLINKS;

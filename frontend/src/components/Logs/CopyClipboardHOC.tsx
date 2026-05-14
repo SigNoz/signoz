@@ -32,6 +32,7 @@ function CopyClipboardHOC({
 		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
+				overlayClassName="drawer-popover"
 				content={<span style={{ fontSize: '0.9rem' }}>{tooltipText}</span>}
 			>
 				{children}

@@ -1,0 +1,54 @@
+---
+description: TypeScript type safety requirements for Jest tests
+globs: **/*.test.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript Type Safety in Tests
+
+All Jest tests must be fully type-safe. Never use `any`.
+
+## Mock Function Typing
+
+```ts
+// Use jest.mocked for module mocks
+import useFoo from 'hooks/useFoo';
+jest.mock('hooks/useFoo');
+const mockUseFoo = jest.mocked(useFoo);
+
+// Use jest.MockedFunction for standalone mocks
+const mockFetch = jest.fn() as jest.MockedFunction<(id: number) => Promise<User>>;
+```
+
+## Mock Data
+
+Define interfaces for all mock data:
+
+```ts
+const mockUser: User = { id: 1, name: 'John', email: 'john@example.com' };
+
+const mockProps: ComponentProps = {
+  title: 'Test',
+  data: [mockUser],
+  onSelect: jest.fn() as jest.MockedFunction<(user: User) => void>,
+};
+```
+
+## Hook Mocking Pattern
+
+```ts
+import useFoo from 'hooks/useFoo';
+jest.mock('hooks/useFoo');
+const mockUseFoo = jest.mocked(useFoo);
+mockUseFoo.mockReturnValue(/* minimal shape */);
+```
+
+Prefer helpers (`rqSuccess`, `rqLoading`, `rqError`) for React Query results.
+
+## Checklist
+
+- All mock functions use `jest.MockedFunction<T>` or `jest.mocked()`
+- All mock data has proper interfaces
+- No `any` types in test files
+- Component props are typed
+- API response types are defined

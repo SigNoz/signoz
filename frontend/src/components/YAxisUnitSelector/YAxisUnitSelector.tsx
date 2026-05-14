@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { WarningFilled } from '@ant-design/icons';
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { Select, Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import classNames from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';
@@ -22,6 +22,8 @@ function YAxisUnitSelector({
 	'data-testid': dataTestId,
 	source,
 	initialValue,
+	categoriesOverride,
+	containerClassName,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
@@ -32,9 +34,8 @@ function YAxisUnitSelector({
 		const initialUniversalUnit = mapMetricUnitToUniversalUnit(initialValue);
 		const currentUniversalUnit = mapMetricUnitToUniversalUnit(value);
 		if (initialUniversalUnit !== currentUniversalUnit) {
-			const initialUniversalUnitName = getUniversalNameFromMetricUnit(
-				initialValue,
-			);
+			const initialUniversalUnitName =
+				getUniversalNameFromMetricUnit(initialValue);
 			const currentUniversalUnitName = getUniversalNameFromMetricUnit(value);
 			return `Unit mismatch. The metric was sent with unit ${initialUniversalUnitName}, but ${currentUniversalUnitName} is selected.`;
 		}
@@ -66,10 +67,14 @@ function YAxisUnitSelector({
 		return aliases.some((alias) => alias.toLowerCase().includes(search));
 	};
 
-	const categories = getYAxisCategories(source);
+	const categoriesToRender = useMemo(() => {
+		return categoriesOverride || getYAxisCategories(source);
+	}, [categoriesOverride, source]);
 
 	return (
-		<div className="y-axis-unit-selector-component">
+		<div
+			className={classNames('y-axis-unit-selector-component', containerClassName)}
+		>
 			<Select
 				showSearch
 				value={universalUnit}
@@ -80,7 +85,7 @@ function YAxisUnitSelector({
 				suffixIcon={
 					incompatibleUnitMessage ? (
 						<Tooltip title={incompatibleUnitMessage}>
-							<WarningFilled />
+							<SolidAlertTriangle role="img" aria-label="warning" size="md" />
 						</Tooltip>
 					) : undefined
 				}
@@ -90,7 +95,7 @@ function YAxisUnitSelector({
 				data-testid={dataTestId}
 				allowClear
 			>
-				{categories.map((category) => (
+				{categoriesToRender.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
 						{category.units.map((unit) => (
 							<Select.Option key={unit.id} value={unit.id}>

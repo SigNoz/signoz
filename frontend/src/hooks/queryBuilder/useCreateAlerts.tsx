@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
@@ -13,13 +14,14 @@ import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useNotifications } from 'hooks/useNotifications';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { withBasePath } from 'utils/basePath';
 import { getGraphType } from 'utils/getGraphType';
 
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
@@ -32,7 +34,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -48,8 +50,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -57,8 +59,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Dashboard Detail: Panel action', {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -75,6 +77,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
+				if (widget.query.queryType) {
+					updatedQuery.queryType = widget.query.queryType;
+				}
 				// If widget has a y-axis unit, set it to the updated query if it is not already set
 				if (widget.yAxisUnit && !isEmpty(widget.yAxisUnit)) {
 					updatedQuery.unit = widget.yAxisUnit;
@@ -91,7 +96,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 				const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
 
-				window.open(url, '_blank', 'noreferrer');
+				window.open(withBasePath(url), '_blank', 'noreferrer');
 			},
 			onError: () => {
 				notifications.error({
@@ -106,7 +111,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation,
 		dashboardVariables,
 		dashboardDynamicVariables,
-		selectedDashboard?.data.version,
 		widget,
 	]);
 };

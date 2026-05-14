@@ -1,39 +1,39 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`utils/spanToTree should return a single tree on valid trace data 1`] = `
-Object {
-  "missingSpanTree": Array [],
-  "spanTree": Array [
-    Object {
-      "childReferences": Array [
-        Object {
+{
+  "missingSpanTree": [],
+  "spanTree": [
+    {
+      "childReferences": [
+        {
           "RefType": "CHILD_OF",
           "SpanId": "",
           "TraceId": "0000000000000000span_1",
         },
       ],
-      "children": Array [
-        Object {
-          "childReferences": Array [
-            Object {
+      "children": [
+        {
+          "childReferences": [
+            {
               "RefType": "CHILD_OF",
               "SpanId": "span_1",
               "TraceId": "0000000000000000span_1",
             },
           ],
-          "children": Array [
-            Object {
-              "childReferences": Array [
-                Object {
+          "children": [
+            {
+              "childReferences": [
+                {
                   "RefType": "CHILD_OF",
                   "SpanId": "span_2",
                   "TraceId": "0000000000000000span_1",
                 },
               ],
-              "children": Array [],
-              "event": Array [
-                Object {
-                  "attributeMap": Object {
+              "children": [],
+              "event": [
+                {
+                  "attributeMap": {
                     "event": "HTTP request received S3",
                     "level": "info",
                     "method": "GET",
@@ -46,15 +46,15 @@ Object {
               "id": "span_3",
               "isProcessed": true,
               "name": "HTTP GET SPAN 3",
-              "nonChildReferences": Array [],
+              "nonChildReferences": [],
               "serviceColour": "",
               "serviceName": "frontend",
               "spanKind": "Lorem Ipsum2",
               "startTime": 1657275433246,
               "statusCodeString": "Unset2",
               "statusMessage": "Server2",
-              "tags": Array [
-                Object {
+              "tags": [
+                {
                   "key": "host.name.span3",
                   "value": "span_3",
                 },
@@ -63,9 +63,9 @@ Object {
               "value": 683273000,
             },
           ],
-          "event": Array [
-            Object {
-              "attributeMap": Object {
+          "event": [
+            {
+              "attributeMap": {
                 "event": "HTTP request received S2",
                 "level": "info",
                 "method": "GET",
@@ -78,15 +78,15 @@ Object {
           "id": "span_2",
           "isProcessed": true,
           "name": "HTTP GET SPAN 2",
-          "nonChildReferences": Array [],
+          "nonChildReferences": [],
           "serviceColour": "",
           "serviceName": "frontend",
           "spanKind": "Lorem Ipsum1",
           "startTime": 1657275433246,
           "statusCodeString": "Unset1",
           "statusMessage": "Server1",
-          "tags": Array [
-            Object {
+          "tags": [
+            {
               "key": "host.name.span2",
               "value": "span_2",
             },
@@ -95,9 +95,9 @@ Object {
           "value": 683273000,
         },
       ],
-      "event": Array [
-        Object {
-          "attributeMap": Object {
+      "event": [
+        {
+          "attributeMap": {
             "event": "HTTP request received S1",
             "level": "info",
             "method": "GET",
@@ -109,15 +109,15 @@ Object {
       "hasError": false,
       "id": "span_1",
       "name": "HTTP GET SPAN 1",
-      "nonChildReferences": Array [],
+      "nonChildReferences": [],
       "serviceColour": "",
       "serviceName": "frontend",
       "spanKind": "Lorem Ipsum",
       "startTime": 1657275433246,
       "statusCodeString": "Unset",
       "statusMessage": "Server",
-      "tags": Array [
-        Object {
+      "tags": [
+        {
           "key": "host.name.span1",
           "value": "span_1",
         },
@@ -130,22 +130,22 @@ Object {
 `;
 
 exports[`utils/spanToTree should return a single tree on valid trace data 2`] = `
-Object {
-  "missingSpanTree": Array [
-    Object {
-      "children": Array [
-        Object {
-          "childReferences": Array [
-            Object {
+{
+  "missingSpanTree": [
+    {
+      "children": [
+        {
+          "childReferences": [
+            {
               "RefType": "CHILD_OF",
               "SpanId": "span_2",
               "TraceId": "0000000000000000span_1",
             },
           ],
-          "children": Array [],
-          "event": Array [
-            Object {
-              "attributeMap": Object {
+          "children": [],
+          "event": [
+            {
+              "attributeMap": {
                 "event": "HTTP request received S3",
                 "level": "info",
                 "method": "GET",
@@ -158,15 +158,15 @@ Object {
           "id": "span_3",
           "isProcessed": true,
           "name": "HTTP GET SPAN 3",
-          "nonChildReferences": Array [],
+          "nonChildReferences": [],
           "serviceColour": "",
           "serviceName": "frontend",
           "spanKind": "Lorem Ipsum2",
           "startTime": 1657275433246,
           "statusCodeString": "Unset2",
           "statusMessage": "Server2",
-          "tags": Array [
-            Object {
+          "tags": [
+            {
               "key": "host.name.span3",
               "value": "span_3",
             },
@@ -184,24 +184,24 @@ Object {
       "startTime": null,
       "statusCodeString": "",
       "statusMessage": "",
-      "tags": Array [],
+      "tags": [],
       "time": null,
       "value": null,
     },
   ],
-  "spanTree": Array [
-    Object {
-      "childReferences": Array [
-        Object {
+  "spanTree": [
+    {
+      "childReferences": [
+        {
           "RefType": "CHILD_OF",
           "SpanId": "",
           "TraceId": "0000000000000000span_1",
         },
       ],
-      "children": Array [],
-      "event": Array [
-        Object {
-          "attributeMap": Object {
+      "children": [],
+      "event": [
+        {
+          "attributeMap": {
             "event": "HTTP request received S1",
             "level": "info",
             "method": "GET",
@@ -213,15 +213,15 @@ Object {
       "hasError": false,
       "id": "span_1",
       "name": "HTTP GET SPAN 1",
-      "nonChildReferences": Array [],
+      "nonChildReferences": [],
       "serviceColour": "",
       "serviceName": "frontend",
       "spanKind": "Lorem Ipsum",
       "startTime": 1657275433246,
       "statusCodeString": "Unset",
       "statusMessage": "Server",
-      "tags": Array [
-        Object {
+      "tags": [
+        {
           "key": "host.name.span1",
           "value": "span_1",
         },

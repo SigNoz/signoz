@@ -7,7 +7,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('MetricOverTime - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const mockEndpointName = '/api/users';
 	const emptyFilters: IBuilderQuery['filters'] = {
 		items: [],
@@ -33,7 +32,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (net.peer.name OR server.address)', () => {
+		it('uses new domain filter format: (http_host)', () => {
 			const widget = getRateOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
@@ -44,7 +43,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify EXACT new filter format with OR operator
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Endpoint name is used in legend, not filter
@@ -57,13 +56,11 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 					{
 						id: 'test-1',
 						key: {
-							// eslint-disable-next-line sonarjs/no-duplicate-string
 							key: 'service.name',
 							dataType: DataTypes.String,
 							type: 'resource',
 						},
 						op: '=',
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						value: 'user-service',
 					},
 					{
@@ -90,7 +87,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Verify custom filters are merged into the expression
@@ -120,7 +117,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			expect(queryData).not.toHaveProperty('filters.items');
 		});
 
-		it('uses new domain filter format: (net.peer.name OR server.address)', () => {
+		it('uses new domain filter format: (http_host)', () => {
 			const widget = getLatencyOverTimeWidgetData(
 				mockDomainName,
 				mockEndpointName,
@@ -132,7 +129,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 			// Verify EXACT new filter format with OR operator
 			expect(queryData.filter).toBeDefined();
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}')`,
+				`http_host = '${mockDomainName}'`,
 			);
 
 			// Endpoint name is used in legend, not filter
@@ -166,7 +163,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`(net.peer.name = '${mockDomainName}' OR server.address = '${mockDomainName}') service.name = 'user-service'`,
+				`http_host = '${mockDomainName}' service.name = 'user-service'`,
 			);
 		});
 	});

@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type QBEvent struct {
@@ -42,6 +43,17 @@ type QueryData struct {
 	Results []any `json:"results"`
 }
 
+var _ jsonschema.OneOfExposer = QueryData{}
+
+// JSONSchemaOneOf documents the polymorphic result types in QueryData.Results.
+func (QueryData) JSONSchemaOneOf() []any {
+	return []any{
+		TimeSeriesData{},
+		ScalarData{},
+		RawData{},
+	}
+}
+
 type QueryRangeResponse struct {
 	Type RequestType `json:"type"`
 	Data QueryData   `json:"data"`
@@ -50,6 +62,14 @@ type QueryRangeResponse struct {
 	Warning *QueryWarnData `json:"warning,omitempty"`
 
 	QBEvent *QBEvent `json:"-"`
+}
+
+var _ jsonschema.Preparer = &QueryRangeResponse{}
+
+// PrepareJSONSchema adds description to the QueryRangeResponse schema.
+func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.")
+	return nil
 }
 
 type TimeSeriesData struct {
@@ -74,6 +94,21 @@ type AggregationBucket struct {
 type TimeSeries struct {
 	Labels []*Label           `json:"labels,omitempty"`
 	Values []*TimeSeriesValue `json:"values"`
+}
+
+// EvaluableValues returns only the values where Partial is false and value is not NaN or +/- Inf.
+// TODO(srikanthccv): should we skip them in the consume.go?
+func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
+	if ts == nil {
+		return nil
+	}
+	result := make([]*TimeSeriesValue, 0, len(ts.Values))
+	for _, v := range ts.Values {
+		if !v.Partial && !math.IsNaN(v.Value) && !math.IsInf(v.Value, 0) {
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 type Label struct {
@@ -153,11 +188,19 @@ type ColumnType struct {
 }
 
 var (
-	// for the group by part of the query
+	// for the group by part of the query.
 	ColumnTypeGroup = ColumnType{valuer.NewString("group")}
-	// for the aggregation part of the query
+	// for the aggregation part of the query.
 	ColumnTypeAggregation = ColumnType{valuer.NewString("aggregation")}
 )
+
+// Enum returns the acceptable values for ColumnType.
+func (ColumnType) Enum() []any {
+	return []any{
+		ColumnTypeGroup,
+		ColumnTypeAggregation,
+	}
+}
 
 type ColumnDescriptor struct {
 	telemetrytypes.TelemetryFieldKey

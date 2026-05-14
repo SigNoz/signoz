@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import { cloneDeep } from 'lodash-es';
 import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
 

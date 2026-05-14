@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
@@ -64,9 +65,10 @@ function TimeSeriesView({
 	const location = useLocation();
 	const { currentQuery } = useQueryBuilder();
 
-	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
-		data?.payload,
-	]);
+	const chartData = useMemo(
+		() => getUPlotChartData(data?.payload),
+		[data?.payload],
+	);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -90,10 +92,11 @@ function TimeSeriesView({
 		scrollLeft: 0,
 	});
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange();
@@ -105,12 +108,11 @@ function TimeSeriesView({
 	// Initialize graph visibility from localStorage
 	useEffect(() => {
 		if (data?.payload?.data?.result) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: data.payload.data.result,
-				name: 'time-series-explorer',
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: data.payload.data.result,
+					name: 'time-series-explorer',
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 	}, [data?.payload?.data?.result]);
@@ -256,7 +258,9 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+					dataSource === DataSource.METRICS && (
+						<EmptyMetricsSearch hasQueryResult={data !== undefined} />
+					)}
 
 				{!isLoading &&
 					!isError &&

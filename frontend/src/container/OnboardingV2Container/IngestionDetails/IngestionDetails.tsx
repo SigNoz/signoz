@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { AxiosError } from 'axios';
+import { useGetIngestionKeys } from 'api/generated/services/gateway';
+import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { DOCS_BASE_URL } from 'constants/app';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
-import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
-import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from '@signozhq/icons';
+import { withBasePath } from 'utils/basePath';
 
 import './IngestionDetails.styles.scss';
 
@@ -39,17 +41,15 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [firstIngestionKey, setFirstIngestionKey] = useState<IngestionKeyProps>(
-		{} as IngestionKeyProps,
-	);
+	const [firstIngestionKey, setFirstIngestionKey] =
+		useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
 
 	const {
 		data: ingestionKeys,
 		isLoading: isIngestionKeysLoading,
 		error,
 		isError,
-	} = useGetAllIngestionsKeys({
-		search: '',
+	} = useGetIngestionKeys({
 		page: 1,
 		per_page: 10,
 	});
@@ -61,6 +61,8 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		error: globalConfigError,
 	} = useGetGlobalConfig();
 
+	const globalConfigApiError = convertToApiError(globalConfigError);
+
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
 		notifications.success({
@@ -69,18 +71,21 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (ingestionKeys?.data.data && ingestionKeys?.data.data.length > 0) {
-			setFirstIngestionKey(ingestionKeys?.data.data[0]);
+		if (!ingestionKeys || isIngestionKeysLoading) {
+			return;
 		}
-	}, [ingestionKeys]);
+
+		if (ingestionKeys.data.keys && ingestionKeys.data.keys.length > 0) {
+			setFirstIngestionKey(ingestionKeys.data.keys[0]);
+		}
+	}, [isIngestionKeysLoading, ingestionKeys]);
 
 	return (
 		<div className="configure-product-ingestion-section-content">
 			{isError && (
 				<div className="ingestion-endpoint-section-error-container">
 					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} />{' '}
-						{(error as AxiosError)?.message || 'Something went wrong'}
+						<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
 					</Typography.Text>
 
 					<div className="ingestion-setup-details-links">
@@ -154,11 +159,11 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 													title={
 														<div className="ingestion-url-error-content">
 															<Typography.Text className="ingestion-url-error-code">
-																{globalConfigError?.getErrorCode()}
+																{globalConfigApiError?.getErrorCode()}
 															</Typography.Text>
 
 															<Typography.Text className="ingestion-url-error-message">
-																{globalConfigError?.getErrorMessage()}
+																{globalConfigApiError?.getErrorMessage()}
 															</Typography.Text>
 														</div>
 													}
@@ -176,7 +181,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 										</Typography.Text>
 
 										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.value)}
+											{maskKey(firstIngestionKey?.value || '')}
 
 											<Copy
 												size={14}
@@ -186,7 +191,9 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
 														{},
 													);
-													handleCopyKey(firstIngestionKey?.value);
+													if (firstIngestionKey?.value) {
+														handleCopyKey(firstIngestionKey.value);
+													}
 												}}
 											/>
 										</Typography.Text>
@@ -211,7 +218,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 							</a>
 							. To create a new one,{' '}
 							<a
-								href="/settings/ingestion-settings"
+								href={withBasePath('/settings/ingestion-settings')}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"

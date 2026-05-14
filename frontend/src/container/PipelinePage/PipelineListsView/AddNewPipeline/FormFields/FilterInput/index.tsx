@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ProcessorFormField } from '../../../AddNewProcessor/config';
 import { formValidationRules } from '../../../config';
 import LogsFilterPreview from '../../../Preview/LogsFilterPreview';
-import { FormLabelStyle } from '../../styles';
 
 import './styles.scss';
 
@@ -30,7 +29,7 @@ function TagFilterInput({
 	};
 
 	return (
-		<QueryBuilderSearch
+		<QueryBuilderSearchV2
 			query={query}
 			onChange={onQueryChange}
 			placeholder={placeholder}
@@ -68,13 +67,13 @@ function FilterInput({ fieldData }: FilterInputProps): JSX.Element {
 	return (
 		<Form.Item
 			required={false}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 			rules={formValidationRules}
 			name={fieldData.name}
 		>
 			{/* Antd form will supply value and onChange here.
-      // @ts-ignore */}
+      // @ts-expect-error */}
 			<TagFilterInputWithLogsResultPreview
 				placeholder={t(fieldData.placeholder)}
 			/>

@@ -1,6 +1,7 @@
 .trace-explorer-controls {
 	display: flex;
 	justify-content: flex-end;
+	align-items: center;
 	gap: 8px;
 
 	.order-by-container {
@@ -9,7 +10,7 @@
 		gap: 8px;
 
 		.order-by-label {
-			color: var(--text-vanilla-400);
+			color: var(--muted-foreground);
 			font-size: 12px;
 			font-style: normal;
 			font-weight: 400;

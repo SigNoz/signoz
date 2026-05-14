@@ -1,23 +1,18 @@
-import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { matchPath, useLocation } from 'react-router-dom';
+import { ReactChild, useCallback, useMemo } from 'react';
+import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getAll from 'api/v1/user/get';
+import { useListUsers } from 'api/generated/services/users';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
-import { Organization } from 'types/api/user/getOrganization';
-import { UserResponse } from 'types/api/user/getUser';
 import { USER_ROLES } from 'types/roles';
 import { routePermission } from 'utils/permission';
 
@@ -29,6 +24,7 @@ import routes, {
 	SUPPORT_ROUTE,
 } from './routes';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const location = useLocation();
 	const { pathname } = location;
@@ -45,6 +41,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -61,20 +59,17 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const currentRoute = mapRoutes.get('current');
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
+	const orgData = useMemo(() => {
+		if (org && org.length > 0 && org[0].id !== undefined) {
+			return org[0];
+		}
+		return undefined;
+	}, [org]);
 
-	const { data: usersData, isFetching: isFetchingUsers } = useQuery<
-		SuccessResponseV2<UserResponse[]> | undefined,
-		APIError
-	>({
-		queryFn: () => {
-			if (orgData && orgData.id !== undefined) {
-				return getAll();
-			}
-			return undefined;
+	const { data: usersData, isFetching: isFetchingUsers } = useListUsers({
+		query: {
+			enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 		},
-		queryKey: ['getOrgUser'],
-		enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 	});
 
 	const checkFirstTimeUser = useCallback((): boolean => {
@@ -87,217 +82,161 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return remainingUsers.length === 1;
 	}, [usersData?.data]);
 
-	useEffect(() => {
-		if (
-			isCloudUserVal &&
-			!isFetchingOrgPreferences &&
-			orgPreferences &&
-			!isFetchingUsers &&
-			usersData &&
-			usersData.data
-		) {
-			const isOnboardingComplete = orgPreferences?.find(
-				(preference: OrgPreference) =>
-					preference.name === ORG_PREFERENCES.ORG_ONBOARDING,
-			)?.value;
+	// Handle old routes - redirect to new routes
+	if (isOldRoute) {
+		const redirectUrl = oldNewRoutesMapping[pathname];
+		return (
+			<Redirect
+				to={{
+					pathname: redirectUrl,
+					search: location.search,
+					hash: location.hash,
+				}}
+			/>
+		);
+	}
 
+	// Public dashboard - no redirect needed
+	const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
+	if (isPublicDashboard) {
+		return <>{children}</>;
+	}
+
+	if (pathname.startsWith('/ai-assistant/') && !isAIAssistantEnabled) {
+		return <Redirect to={ROUTES.HOME} />;
+	}
+
+	// Check for workspace access restriction (cloud only)
+	const isCloudPlatform = activeLicense?.platform === LicensePlatform.CLOUD;
+
+	if (!isFetchingActiveLicense && activeLicense && isCloudPlatform) {
+		const isTerminated = activeLicense.state === LicenseState.TERMINATED;
+		const isExpired = activeLicense.state === LicenseState.EXPIRED;
+		const isCancelled = activeLicense.state === LicenseState.CANCELLED;
+		const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
+
+		if (
+			isWorkspaceAccessRestricted &&
+			pathname !== ROUTES.WORKSPACE_ACCESS_RESTRICTED
+		) {
+			return <Redirect to={ROUTES.WORKSPACE_ACCESS_RESTRICTED} />;
+		}
+
+		// Check for workspace suspended (DEFAULTED)
+		const shouldSuspendWorkspace = activeLicense.state === LicenseState.DEFAULTED;
+		if (shouldSuspendWorkspace && pathname !== ROUTES.WORKSPACE_SUSPENDED) {
+			return <Redirect to={ROUTES.WORKSPACE_SUSPENDED} />;
+		}
+	}
+
+	// Check for workspace blocked (trial expired)
+	if (!isFetchingActiveLicense && isCloudPlatform && trialInfo?.workSpaceBlock) {
+		const isRouteEnabledForWorkspaceBlockedState =
+			isAdmin &&
+			(pathname === ROUTES.SETTINGS ||
+				pathname === ROUTES.ORG_SETTINGS ||
+				pathname === ROUTES.MEMBERS_SETTINGS ||
+				pathname === ROUTES.BILLING ||
+				pathname === ROUTES.MY_SETTINGS);
+
+		if (
+			pathname !== ROUTES.WORKSPACE_LOCKED &&
+			!isRouteEnabledForWorkspaceBlockedState
+		) {
+			return <Redirect to={ROUTES.WORKSPACE_LOCKED} />;
+		}
+	}
+
+	// Check for onboarding redirect (cloud users, first user, onboarding not complete)
+	if (
+		isCloudUserVal &&
+		!isFetchingOrgPreferences &&
+		orgPreferences &&
+		!isFetchingUsers &&
+		usersData &&
+		usersData.data
+	) {
+		const isOnboardingComplete = orgPreferences?.find(
+			(preference: OrgPreference) =>
+				preference.name === ORG_PREFERENCES.ORG_ONBOARDING,
+		)?.value;
+
+		// Don't redirect to onboarding if workspace has issues
+		const isWorkspaceBlocked = trialInfo?.workSpaceBlock;
+		const isWorkspaceSuspended = activeLicense?.state === LicenseState.DEFAULTED;
+		const isWorkspaceAccessRestricted =
+			activeLicense?.state === LicenseState.TERMINATED ||
+			activeLicense?.state === LicenseState.EXPIRED ||
+			activeLicense?.state === LicenseState.CANCELLED;
+
+		const hasWorkspaceIssue =
+			isWorkspaceBlocked || isWorkspaceSuspended || isWorkspaceAccessRestricted;
+
+		if (!hasWorkspaceIssue) {
 			const isFirstUser = checkFirstTimeUser();
 			if (
 				isFirstUser &&
 				!isOnboardingComplete &&
-				// if the current route is allowed to be overriden by org onboarding then only do the same
-				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname)
+				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname) &&
+				pathname !== ROUTES.ONBOARDING
 			) {
-				history.push(ROUTES.ONBOARDING);
+				return <Redirect to={ROUTES.ONBOARDING} />;
 			}
 		}
-	}, [
-		checkFirstTimeUser,
-		isCloudUserVal,
-		isFetchingOrgPreferences,
-		isFetchingUsers,
-		orgPreferences,
-		usersData,
-		pathname,
-	]);
+	}
 
-	const navigateToWorkSpaceBlocked = (route: any): void => {
-		const { path } = route;
+	// Check for GET_STARTED → GET_STARTED_WITH_CLOUD redirect (feature flag)
+	if (
+		currentRoute?.path === ROUTES.GET_STARTED &&
+		featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
+	) {
+		return <Redirect to={ROUTES.GET_STARTED_WITH_CLOUD} />;
+	}
 
-		const isRouteEnabledForWorkspaceBlockedState =
-			isAdmin &&
-			(path === ROUTES.SETTINGS ||
-				path === ROUTES.ORG_SETTINGS ||
-				path === ROUTES.BILLING ||
-				path === ROUTES.MY_SETTINGS);
-
-		if (
-			path &&
-			path !== ROUTES.WORKSPACE_LOCKED &&
-			!isRouteEnabledForWorkspaceBlockedState
-		) {
-			history.push(ROUTES.WORKSPACE_LOCKED);
-		}
-	};
-
-	const navigateToWorkSpaceAccessRestricted = (route: any): void => {
-		const { path } = route;
-
-		if (path && path !== ROUTES.WORKSPACE_ACCESS_RESTRICTED) {
-			history.push(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
-		}
-	};
-
-	useEffect(() => {
-		if (!isFetchingActiveLicense && activeLicense) {
-			const currentRoute = mapRoutes.get('current');
-
-			const isTerminated = activeLicense.state === LicenseState.TERMINATED;
-			const isExpired = activeLicense.state === LicenseState.EXPIRED;
-			const isCancelled = activeLicense.state === LicenseState.CANCELLED;
-
-			const isWorkspaceAccessRestricted = isTerminated || isExpired || isCancelled;
-
-			const { platform } = activeLicense;
-
-			if (
-				isWorkspaceAccessRestricted &&
-				platform === LicensePlatform.CLOUD &&
-				currentRoute
-			) {
-				navigateToWorkSpaceAccessRestricted(currentRoute);
-			}
-		}
-	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
-
-	useEffect(() => {
-		if (!isFetchingActiveLicense) {
-			const currentRoute = mapRoutes.get('current');
-			const shouldBlockWorkspace = trialInfo?.workSpaceBlock;
-
-			if (
-				shouldBlockWorkspace &&
-				currentRoute &&
-				activeLicense?.platform === LicensePlatform.CLOUD
-			) {
-				navigateToWorkSpaceBlocked(currentRoute);
-			}
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		isFetchingActiveLicense,
-		trialInfo?.workSpaceBlock,
-		activeLicense?.platform,
-		mapRoutes,
-		pathname,
-	]);
-
-	const navigateToWorkSpaceSuspended = (route: any): void => {
-		const { path } = route;
-
-		if (path && path !== ROUTES.WORKSPACE_SUSPENDED) {
-			history.push(ROUTES.WORKSPACE_SUSPENDED);
-		}
-	};
-
-	useEffect(() => {
-		if (!isFetchingActiveLicense && activeLicense) {
-			const currentRoute = mapRoutes.get('current');
-			const shouldSuspendWorkspace =
-				activeLicense.state === LicenseState.DEFAULTED;
-
-			if (
-				shouldSuspendWorkspace &&
-				currentRoute &&
-				activeLicense.platform === LicensePlatform.CLOUD
-			) {
-				navigateToWorkSpaceSuspended(currentRoute);
-			}
-		}
-	}, [isFetchingActiveLicense, activeLicense, mapRoutes, pathname]);
-
-	useEffect(() => {
-		if (org && org.length > 0 && org[0].id !== undefined) {
-			setOrgData(org[0]);
-		}
-	}, [org]);
-
-	// if the feature flag is enabled and the current route is /get-started then redirect to /get-started-with-signoz-cloud
-	useEffect(() => {
-		if (
-			currentRoute?.path === ROUTES.GET_STARTED &&
-			featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
-		) {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-		}
-	}, [currentRoute, featureFlags]);
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	useEffect(() => {
-		// if it is an old route navigate to the new route
-		if (isOldRoute) {
-			const redirectUrl = oldNewRoutesMapping[pathname];
-
-			const newLocation = {
-				...location,
-				pathname: redirectUrl,
-			};
-			history.replace(newLocation);
-			return;
-		}
-
-		// if the current route is public dashboard then don't redirect to login
-		const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
-
-		if (isPublicDashboard) {
-			return;
-		}
-
-		// if the current route
-		if (currentRoute) {
-			const { isPrivate, key } = currentRoute;
-			if (isPrivate) {
-				if (isLoggedInState) {
-					const route = routePermission[key];
-					if (route && route.find((e) => e === user.role) === undefined) {
-						history.push(ROUTES.UN_AUTHORIZED);
-					}
-				} else {
-					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-					history.push(ROUTES.LOGIN);
-				}
-			} else if (isLoggedInState) {
-				const fromPathname = getLocalStorageApi(
-					LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
-				);
-				if (fromPathname) {
-					history.push(fromPathname);
-					setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-				} else if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-					history.push(ROUTES.HOME);
+	// Main routing logic
+	if (currentRoute) {
+		const { isPrivate, key } = currentRoute;
+		if (isPrivate) {
+			if (isLoggedInState) {
+				const route = routePermission[key];
+				if (route && route.find((e) => e === user.role) === undefined) {
+					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {
-				// do nothing as the unauthenticated routes are LOGIN and SIGNUP and the LOGIN container takes care of routing to signup if
-				// setup is not completed
+				// Save current path and redirect to login
+				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
+				return <Redirect to={ROUTES.LOGIN} />;
 			}
 		} else if (isLoggedInState) {
+			// Non-private route, but user is logged in
 			const fromPathname = getLocalStorageApi(
 				LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
 			);
 			if (fromPathname) {
-				history.push(fromPathname);
 				setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
-			} else {
-				history.push(ROUTES.HOME);
+				return <Redirect to={fromPathname} />;
 			}
-		} else {
-			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
-			history.push(ROUTES.LOGIN);
+			if (pathname !== ROUTES.SOMETHING_WENT_WRONG) {
+				return <Redirect to={ROUTES.HOME} />;
+			}
 		}
-	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
+		// Non-private route, user not logged in - let login/signup pages handle it
+	} else if (isLoggedInState) {
+		// Unknown route, logged in
+		const fromPathname = getLocalStorageApi(
+			LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT,
+		);
+		if (fromPathname) {
+			setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, '');
+			return <Redirect to={fromPathname} />;
+		}
+		return <Redirect to={ROUTES.HOME} />;
+	} else {
+		// Unknown route, not logged in
+		setLocalStorageApi(LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT, pathname);
+		return <Redirect to={ROUTES.LOGIN} />;
+	}
 
-	// NOTE: disabling this rule as there is no need to have div
-	// eslint-disable-next-line react/jsx-no-useless-fragment
 	return <>{children}</>;
 }
 

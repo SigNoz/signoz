@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Col, Row } from 'antd';
@@ -126,22 +127,17 @@ function CeleryTaskLatencyGraph({
 	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
 
 	const onGraphClick = useCallback(
-		(type: string): OnClickPluginOpts['onClick'] => (
-			xValue,
-			yValue,
-			mouseX,
-			mouseY,
-			data,
-		): Promise<void> => {
-			const [firstDataPoint] = Object.entries(data || {});
-			const [entity, value] = firstDataPoint;
-			setEntityData({
-				entity,
-				value,
-			});
+		(type: string): OnClickPluginOpts['onClick'] =>
+			(xValue, yValue, mouseX, mouseY, data): Promise<void> => {
+				const [firstDataPoint] = Object.entries(data || {});
+				const [entity, value] = firstDataPoint;
+				setEntityData({
+					entity,
+					value,
+				});
 
-			return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
-		},
+				return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
+			},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);

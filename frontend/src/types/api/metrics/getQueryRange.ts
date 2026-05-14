@@ -1,13 +1,14 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
-import { Warning } from '..';
+import { SuccessResponse, Warning } from '..';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
 } from '../queryBuilder/queryBuilderData';
+import { ExecStats } from '../v5/queryRange';
 import { QueryData, QueryDataV3 } from '../widgets/getQuery';
 
 export type QueryRangePayload = {
@@ -35,7 +36,14 @@ export interface MetricRangePayloadProps {
 		newResult: MetricRangePayloadV3;
 		warnings?: string[];
 	};
+	meta?: ExecStats;
 }
+
+/** Query range success response including optional warning and meta */
+export type MetricQueryRangeSuccessResponse = SuccessResponse<
+	MetricRangePayloadProps,
+	unknown
+> & { warning?: Warning; meta?: ExecStats };
 
 export interface MetricRangePayloadV3 {
 	data: {
@@ -44,4 +52,5 @@ export interface MetricRangePayloadV3 {
 		warnings?: string[];
 	};
 	warning?: Warning;
+	meta?: ExecStats;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useEffect, useState } from 'react';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { QueryParams } from 'constants/query';
@@ -87,9 +86,9 @@ export default function MarkdownStep(): JSX.Element {
 		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
 			docFilePaths = AzureMonitoringDocFilePaths;
 		}
-		// @ts-ignore
+		// @ts-expect-error
 		if (docFilePaths && docFilePaths[path]) {
-			// @ts-ignore
+			// @ts-expect-error
 			setMarkdownContent(docFilePaths[path]);
 		}
 

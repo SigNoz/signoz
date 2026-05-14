@@ -1,17 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import {
-	Alert,
-	Button,
-	Col,
-	Flex,
-	Modal,
-	Row,
-	Skeleton,
-	Space,
-	Typography,
-} from 'antd';
+import { Alert, Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import manageCreditCardApi from 'api/v1/portal/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
@@ -21,7 +12,10 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
+
+import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
 import './WorkspaceSuspended.styles.scss';
 
@@ -55,7 +49,7 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [manageCreditCard]);
 
@@ -113,7 +107,7 @@ function WorkspaceSuspended(): JSX.Element {
 										<Typography.Title level={2}>
 											<div className="workspace-suspended__title">{t('actionHeader')}</div>
 										</Typography.Title>
-										<Typography.Paragraph className="workspace-suspended__details">
+										<Typography.Text className="workspace-suspended__details">
 											{t('actionDescription')}
 											<br />
 											{t('yourDataIsSafe')}{' '}
@@ -124,7 +118,7 @@ function WorkspaceSuspended(): JSX.Element {
 												)}
 											</span>{' '}
 											{t('actNow')}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>
@@ -165,10 +159,7 @@ function WorkspaceSuspended(): JSX.Element {
 								</Row>
 							)}
 							<div className="workspace-suspended__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>
 						</>
 					)}

@@ -1,8 +1,10 @@
 .column-unit-selector {
-	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 
 	.heading {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Space Mono';
 		font-size: 13px;
 		font-style: normal;
@@ -30,12 +32,9 @@
 			width: 100%;
 		}
 	}
-}
-
-.lightMode {
-	.column-unit-selector {
-		.heading {
-			color: var(--bg-ink-400);
-		}
+	&-content {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 }

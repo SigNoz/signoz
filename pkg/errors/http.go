@@ -6,8 +6,8 @@ import (
 )
 
 type JSON struct {
-	Code    string                    `json:"code"`
-	Message string                    `json:"message"`
+	Code    string                    `json:"code" required:"true"`
+	Message string                    `json:"message" required:"true"`
 	Url     string                    `json:"url,omitempty"`
 	Errors  []responseerroradditional `json:"errors,omitempty"`
 }

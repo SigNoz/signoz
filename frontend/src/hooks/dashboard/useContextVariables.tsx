@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { AppState } from 'store/reducers';
@@ -152,9 +153,9 @@ function useContextVariables({
 
 	// Helper function to get variable by name
 	const getVariableByName = useMemo(
-		(): ((name: string) => ContextVariable | undefined) => (
-			name: string,
-		): ContextVariable | undefined => allVariables.find((v) => v.name === name),
+		(): ((name: string) => ContextVariable | undefined) =>
+			(name: string): ContextVariable | undefined =>
+				allVariables.find((v) => v.name === name),
 		[allVariables],
 	);
 

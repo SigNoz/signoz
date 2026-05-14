@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
+import { Spin, Switch, Table, Tooltip } from 'antd';
+import { Info, Loader } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
 import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -17,12 +18,13 @@ import {
 	getTopErrorsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { Info } from 'lucide-react';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import EndPointsDropDown from './components/EndPointsDropDown';
 import ErrorState from './components/ErrorState';
@@ -43,9 +45,8 @@ function TopErrors({
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const [endPointName, setSelectedEndPointName] = useState<string>('');
-	const [showStatusCodeErrors, setShowStatusCodeErrors] = useState<boolean>(
-		true,
-	);
+	const [showStatusCodeErrors, setShowStatusCodeErrors] =
+		useState<boolean>(true);
 
 	const queryPayload = useMemo(
 		() =>
@@ -56,21 +57,21 @@ function TopErrors({
 				{
 					items: endPointName
 						? [
-								// Remove any existing http.url filters from initialFilters to avoid duplicates
+								// Remove any existing http_url filters from initialFilters to avoid duplicates
 								...(initialFilters?.items?.filter(
-									(item) => item.key?.key !== SPAN_ATTRIBUTES.URL_PATH,
+									(item) => item.key?.key !== SPAN_ATTRIBUTES.HTTP_URL,
 								) || []),
 								{
 									id: '92b8a1c1',
 									key: {
 										dataType: DataTypes.String,
-										key: SPAN_ATTRIBUTES.URL_PATH,
+										key: SPAN_ATTRIBUTES.HTTP_URL,
 										type: 'tag',
 									},
 									op: '=',
 									value: endPointName,
 								},
-						  ]
+							]
 						: [...(initialFilters?.items || [])],
 					op: 'AND',
 				},
@@ -200,7 +201,9 @@ function TopErrors({
 					columns={topErrorsColumnsConfig}
 					loading={{
 						spinning: isLoading || isRefetching,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						indicator: (
+							<Spin indicator={<Loader size={14} className="animate-spin" />} />
+						),
 					}}
 					dataSource={isLoading || isRefetching ? [] : formattedTopErrorsData}
 					locale={{
@@ -209,7 +212,7 @@ function TopErrors({
 								<div className="no-filtered-endpoints-message-container">
 									<div className="no-filtered-endpoints-message-content">
 										<img
-											src="/Icons/emptyState.svg"
+											src={emptyStateUrl}
 											alt="thinking-emoji"
 											className="empty-state-svg"
 										/>

@@ -1,8 +1,9 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import ROUTES from 'constants/routes';
 import Filters from 'container/Trace/Filters';
 import TraceGraph from 'container/Trace/Graph';
@@ -13,6 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';

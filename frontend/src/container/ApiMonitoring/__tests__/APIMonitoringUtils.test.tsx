@@ -1,4 +1,3 @@
-/* eslint-disable import/no-import-module-exports */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -49,7 +48,6 @@ describe('API Monitoring Utils', () => {
 			const columns = APIMonitoringColumnsMock;
 			const data = [
 				[
-					// eslint-disable-next-line sonarjs/no-duplicate-string
 					'test-domain', // domainName
 					'10', // endpoints
 					'25', // rps
@@ -107,7 +105,6 @@ describe('API Monitoring Utils', () => {
 			const groupBy = [
 				{
 					id: 'group-by-1',
-					// eslint-disable-next-line sonarjs/no-duplicate-string
 					key: 'http.method',
 					dataType: DataTypes.String,
 					type: '',
@@ -280,7 +277,7 @@ describe('API Monitoring Utils', () => {
 			const endpointFilter = result?.items?.find(
 				(item) =>
 					item.key &&
-					item.key.key === SPAN_ATTRIBUTES.URL_PATH &&
+					item.key.key === SPAN_ATTRIBUTES.HTTP_URL &&
 					item.value === endPointName,
 			);
 			expect(endpointFilter).toBeDefined();
@@ -306,7 +303,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(url);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '8080',
 				endpoint: '/api/endpoint?param=value',
 			});
@@ -320,7 +317,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(url);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '-',
 				endpoint: '/api/endpoint',
 			});
@@ -334,7 +331,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(nonUrl);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '-',
 				endpoint: nonUrl,
 			});
@@ -344,21 +341,17 @@ describe('API Monitoring Utils', () => {
 	describe('getFormattedEndPointDropDownData', () => {
 		it('should format endpoint dropdown data correctly', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			const mockData = [
 				{
 					data: {
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/users',
-						'url.full': 'http://example.com/api/users',
 						A: 150, // count or other metric
 					},
 				},
 				{
 					data: {
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/orders',
-						'url.full': 'http://example.com/api/orders',
 						A: 75,
 					},
 				},
@@ -381,16 +374,14 @@ describe('API Monitoring Utils', () => {
 			expect(result[1]).toHaveProperty('value', '/api/orders');
 		});
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle empty input array', () => {
 			// Act
 			const result = getFormattedEndPointDropDownData([]);
 
 			// Assert
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle undefined input', () => {
 			// Arrange
 			const undefinedInput = undefined as any;
@@ -401,12 +392,12 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			// If the implementation doesn't handle undefined, just check that it returns something predictable
 			// Based on the error, it seems the function returns undefined for undefined input
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle items without URL path', () => {
 			// Arrange
-			const URL_PATH_KEY = SPAN_ATTRIBUTES.URL_PATH;
+			const URL_PATH_KEY = SPAN_ATTRIBUTES.HTTP_URL;
 			type MockDataType = {
 				data: {
 					[key: string]: string | number;
@@ -469,7 +460,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Check first item
 			expect(result[0].statusCode).toBe('200');
@@ -502,7 +493,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(1);
+			expect(result).toHaveLength(1);
 			expect(result[0].statusCode).toBe('-');
 			expect(result[0].count).toBe('-');
 			expect(result[0].p99Latency).toBe('-');
@@ -515,7 +506,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle undefined input', () => {
@@ -527,7 +518,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle mixed status code formats and preserve order', () => {
@@ -564,7 +555,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(3);
+			expect(result).toHaveLength(3);
 
 			// Check order preservation - should maintain the same order as input
 			expect(result[0].statusCode).toBe('404');
@@ -684,7 +675,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.data.result).toEqual([]);
+			expect(result.data.result).toStrictEqual([]);
 		});
 
 		it('should handle empty result array', () => {
@@ -704,7 +695,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.data.result).toEqual([]);
+			expect(result.data.result).toStrictEqual([]);
 		});
 	});
 
@@ -712,13 +703,11 @@ describe('API Monitoring Utils', () => {
 		it('should generate widget configuration for status code bar chart', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const filters = { items: [], op: 'AND' };
 
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 
@@ -741,21 +730,11 @@ describe('API Monitoring Utils', () => {
 			if (domainFilter) {
 				expect(domainFilter.value).toBe(domainName);
 			}
-
-			// Should have endpoint filter if provided
-			const endpointFilter = queryData.filters?.items?.find(
-				(item) => item.key && item.key.key === SPAN_ATTRIBUTES.URL_PATH,
-			);
-			expect(endpointFilter).toBeDefined();
-			if (endpointFilter) {
-				expect(endpointFilter.value).toBe(endPointName);
-			}
 		});
 
 		it('should include custom filters in the widget configuration', () => {
 			// Arrange
 			const domainName = 'test-domain';
-			const endPointName = '/api/test';
 			const customFilter = {
 				id: 'custom-filter',
 				key: {
@@ -771,7 +750,6 @@ describe('API Monitoring Utils', () => {
 			// Act
 			const result = getStatusCodeBarChartWidgetData(
 				domainName,
-				endPointName,
 				filters as IBuilderQuery['filters'],
 			);
 
@@ -801,7 +779,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Should have two filters, one for >= start code and one for <= end code
 			const startRangeFilter = result.find((item) => item.op === '>=');
@@ -833,7 +811,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			const startRangeFilter = result.find((item) => item.op === '>=');
 			const endRangeFilter = result.find((item) => item.op === '<=');
@@ -854,7 +832,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle empty metric object', () => {
@@ -863,7 +841,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle metric without response_status_code', () => {
@@ -877,7 +855,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle unsupported status code range', () => {
@@ -891,7 +869,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Should still have two filters
 			const startRangeFilter = result.find((item) => item.op === '>=');

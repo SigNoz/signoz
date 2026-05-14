@@ -1,5 +1,5 @@
 .text {
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-family: Inter;
 	font-size: 14px;
 	font-style: normal;
@@ -14,7 +14,7 @@
 	height: 5px;
 	width: 5px;
 	border-radius: 50%;
-	background-color: var(--bg-slate-300);
+	background-color: var(--l3-background);
 	flex-shrink: 0;
 }
 
@@ -51,7 +51,7 @@
 				align-items: center;
 				gap: 4px;
 				border-radius: 20px;
-				background: rgba(255, 255, 255, 0.08);
+				background: color-mix(in srgb, var(--l1-foreground) 8%, transparent);
 				white-space: nowrap;
 			}
 
@@ -68,7 +68,11 @@
 
 				&.tag {
 					border-radius: 50px;
-					background: rgba(189, 153, 121, 0.1) !important;
+					background: color-mix(
+						in srgb,
+						var(--bg-sienna-400) 10%,
+						transparent
+					) !important;
 					color: var(--bg-sienna-400) !important;
 
 					.dot {
@@ -106,7 +110,11 @@
 
 				&.scope {
 					border-radius: 50px;
-					background: rgba(113, 144, 249, 0.1) !important;
+					background: color-mix(
+						in srgb,
+						var(--bg-robin-400) 10%,
+						transparent
+					) !important;
 					color: var(--bg-robin-400) !important;
 
 					.dot {
@@ -142,7 +150,7 @@
 			gap: 8px;
 
 			.OPERATOR {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 14px;
 				font-style: normal;
@@ -154,7 +162,7 @@
 			}
 
 			.VALUE {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 14px;
 				font-style: normal;
@@ -178,7 +186,7 @@
 				align-items: center;
 				gap: 4px;
 				border-radius: 20px;
-				background: rgba(255, 255, 255, 0.08);
+				background: var(--l3-background);
 			}
 		}
 	}
@@ -187,73 +195,13 @@
 	.container {
 		.left-section {
 			.value {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 	}
 	.container-without-tag {
 		.value {
-			color: var(--bg-vanilla-100);
-		}
-	}
-}
-
-.lightMode {
-	.text {
-		color: var(--bg-ink-400);
-	}
-
-	.option {
-		.container {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-
-			.right-section {
-				.data-type {
-					background: var(--bg-vanilla-300);
-				}
-			}
-			.option-meta-data-container {
-				display: flex;
-				gap: 8px;
-			}
-		}
-
-		.container-without-tag {
-			.left {
-				.OPERATOR {
-					color: var(--bg-ink-400);
-				}
-
-				.VALUE {
-					color: var(--bg-ink-400);
-				}
-			}
-
-			.right {
-				.data-type {
-					background: var(--bg-vanilla-300);
-				}
-			}
-
-			.value {
-				color: var(--bg-ink-100);
-			}
-		}
-	}
-	.option:hover {
-		.container {
-			.left-section {
-				.value {
-					color: var(--bg-ink-100);
-				}
-			}
-		}
-		.container-without-tag {
-			.value {
-				color: var(--bg-ink-100);
-			}
+			color: var(--l1-foreground);
 		}
 	}
 }

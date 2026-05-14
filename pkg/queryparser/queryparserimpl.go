@@ -2,6 +2,7 @@ package queryparser
 
 import (
 	"context"
+	"fmt"
 
 	"strings"
 
@@ -23,7 +24,15 @@ func New(settings factory.ProviderSettings) QueryParser {
 	}
 }
 
-func (p *queryParserImpl) AnalyzeQueryFilter(ctx context.Context, queryType qbtypes.QueryType, query string) (*queryfilterextractor.FilterResult, error) {
+func (p *queryParserImpl) AnalyzeQueryFilter(ctx context.Context, queryType qbtypes.QueryType, query string) (result *queryfilterextractor.FilterResult, err error) {
+	// the third-party clickhouse sql parser can panic on certain inputs, recover gracefully
+	defer func() {
+		if r := recover(); r != nil {
+			result = nil
+			err = errors.NewInternalf(errors.CodeInternal, "failed to analyze query filter: %s", fmt.Sprint(r))
+		}
+	}()
+
 	var extractorType queryfilterextractor.ExtractorType
 	switch queryType {
 	case qbtypes.QueryTypePromQL:

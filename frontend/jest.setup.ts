@@ -6,10 +6,12 @@
  * Adds custom matchers from the react testing library to all tests
  */
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import 'jest-styled-components';
-import './src/styles.scss';
 
 import { server } from './src/mocks-server/server';
+
+import './src/styles.scss';
 // Establish API mocking before all tests.
 
 // Mock window.matchMedia
@@ -22,6 +24,46 @@ window.matchMedia =
 			removeListener: function () {},
 		};
 	};
+
+if (!HTMLElement.prototype.scrollIntoView) {
+	HTMLElement.prototype.scrollIntoView = function (): void {};
+}
+
+if (typeof window.IntersectionObserver === 'undefined') {
+	class IntersectionObserverMock {
+		observe(): void {}
+		unobserve(): void {}
+		disconnect(): void {}
+		takeRecords(): IntersectionObserverEntry[] {
+			return [];
+		}
+	}
+	(window as any).IntersectionObserver = IntersectionObserverMock;
+}
+
+// Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
+// These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
+// jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),
+// causing SyntaxErrors during getComputedStyle / getByRole calls.
+const _origGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = function (
+	elt: Element,
+	pseudoElt?: string | null,
+): CSSStyleDeclaration {
+	try {
+		return _origGetComputedStyle.call(window, elt, pseudoElt);
+	} catch {
+		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
+		// see the element as visible and without animations.
+		return {
+			display: '',
+			visibility: '',
+			opacity: '1',
+			animationName: 'none',
+			getPropertyValue: () => '',
+		} as unknown as CSSStyleDeclaration;
+	}
+};
 
 beforeAll(() => server.listen());
 

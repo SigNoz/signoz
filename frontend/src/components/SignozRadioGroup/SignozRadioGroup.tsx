@@ -1,5 +1,4 @@
-import { Radio } from 'antd';
-import { RadioChangeEvent } from 'antd/es/radio';
+import { Radio, RadioChangeEvent } from 'antd';
 
 import './SignozRadioGroup.styles.scss';
 

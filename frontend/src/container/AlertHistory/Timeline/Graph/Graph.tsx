@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
@@ -118,7 +119,7 @@ function HorizontalTimelineGraph({
 								count: transformedData.length - 1,
 								...TIMELINE_OPTIONS,
 							}),
-					  ]
+						]
 					: [],
 
 			tzDate: (timestamp: number): Date =>

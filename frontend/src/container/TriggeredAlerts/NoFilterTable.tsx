@@ -1,6 +1,5 @@
-/* eslint-disable react/display-name */
-import { Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { TableColumnsType as ColumnsType } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

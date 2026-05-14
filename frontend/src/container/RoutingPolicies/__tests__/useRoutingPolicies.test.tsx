@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { Router } from 'react-router-dom';
 import {
@@ -22,7 +21,6 @@ import {
 } from './testUtils';
 
 const mockHistoryReplace = jest.fn();
-// eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useHistory: (): any => ({
@@ -59,7 +57,7 @@ jest.mock('hooks/routingPolicies/useGetRoutingPolicies', () => ({
 			isFetching: false,
 			isLoading: false,
 			isError: false,
-		} as any),
+		}) as any,
 }));
 jest.mock('hooks/routingPolicies/useCreateRoutingPolicy', () => ({
 	useCreateRoutingPolicy: (): any => ({
@@ -127,7 +125,7 @@ describe('useRoutingPolicies', () => {
 
 		expect(result.current.searchTerm).toBe('');
 		expect(result.current.routingPoliciesData).toHaveLength(2);
-		expect(result.current.routingPoliciesData).toEqual(
+		expect(result.current.routingPoliciesData).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ name: MOCK_ROUTING_POLICY_1.name }),
 				expect.objectContaining({ name: MOCK_ROUTING_POLICY_2.name }),

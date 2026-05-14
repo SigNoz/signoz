@@ -1,7 +1,7 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
+import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -31,7 +31,7 @@ export const AllTraceFilterKeyValue: Record<string, string> = {
 	httpRoute: 'HTTP Route',
 	'http.route': 'HTTP Route',
 	httpUrl: 'HTTP URL',
-	'http.url': 'HTTP URL',
+	[SPAN_ATTRIBUTES.HTTP_URL]: 'HTTP URL',
 	traceID: 'Trace ID',
 	trace_id: 'Trace ID',
 } as const;
@@ -39,7 +39,8 @@ export const AllTraceFilterKeyValue: Record<string, string> = {
 export type AllTraceFilterKeys = keyof typeof AllTraceFilterKeyValue;
 
 // Type for the values of AllTraceFilterKeyValue
-export type AllTraceFilterValues = typeof AllTraceFilterKeyValue[AllTraceFilterKeys];
+export type AllTraceFilterValues =
+	(typeof AllTraceFilterKeyValue)[AllTraceFilterKeys];
 
 export const AllTraceFilterOptions = Object.keys(
 	AllTraceFilterKeyValue,
@@ -90,9 +91,9 @@ export const addFilter = (
 
 		// If previous filters are undefined, initialize them
 		if (!prevFilters) {
-			return ({
+			return {
 				[filterType]: { values: isDuration ? value : valueArray, keys },
-			} as unknown) as FilterType;
+			} as unknown as FilterType;
 		}
 
 		// If the filter type doesn't exist, initialize it
@@ -181,101 +182,99 @@ export const removeAllFilters = (
 			? (remainingFilters as Record<
 					AllTraceFilterKeys,
 					{ values: string[]; keys: BaseAutocompleteData }
-			  >)
+				>)
 			: undefined;
 	});
 };
 
-export const traceFilterKeys: Record<
-	AllTraceFilterKeys,
-	BaseAutocompleteData
-> = {
-	durationNano: {
-		key: 'durationNano',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		id: 'durationNano--float64--tag--true',
-	},
-	hasError: {
-		key: 'hasError',
-		dataType: DataTypes.bool,
-		type: 'tag',
-		id: 'hasError--bool--tag--true',
-	},
-	serviceName: {
-		key: 'serviceName',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'serviceName--string--tag--true',
-	},
+export const traceFilterKeys: Record<AllTraceFilterKeys, BaseAutocompleteData> =
+	{
+		durationNano: {
+			key: 'durationNano',
+			dataType: DataTypes.Float64,
+			type: 'tag',
+			id: 'durationNano--float64--tag--true',
+		},
+		hasError: {
+			key: 'hasError',
+			dataType: DataTypes.bool,
+			type: 'tag',
+			id: 'hasError--bool--tag--true',
+		},
+		serviceName: {
+			key: 'serviceName',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'serviceName--string--tag--true',
+		},
 
-	'deployment.environment': {
-		key: 'deployment.environment',
-		dataType: DataTypes.String,
-		type: 'resource',
-		id: 'deployment.environment--string--resource--false',
-	},
-	name: {
-		key: 'name',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'name--string--tag--true',
-	},
-	rpcMethod: {
-		key: 'rpcMethod',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'rpcMethod--string--tag--true',
-	},
-	responseStatusCode: {
-		key: 'responseStatusCode',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'responseStatusCode--string--tag--true',
-	},
-	httpHost: {
-		key: 'httpHost',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'httpHost--string--tag--true',
-	},
-	httpMethod: {
-		key: 'httpMethod',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'httpMethod--string--tag--true',
-	},
-	httpRoute: {
-		key: 'httpRoute',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'httpRoute--string--tag--true',
-	},
-	httpUrl: {
-		key: 'httpUrl',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'httpUrl--string--tag--true',
-	},
-	traceID: {
-		key: 'traceID',
-		dataType: DataTypes.String,
-		type: 'tag',
-		id: 'traceID--string--tag--true',
-	},
-	durationNanoMin: {
-		key: 'durationNanoMin',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		id: 'durationNanoMin--float64--tag--true',
-	},
-	durationNanoMax: {
-		key: 'durationNanoMax',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		id: 'durationNanoMax--float64--tag--true',
-	},
-} as const;
+		'deployment.environment': {
+			key: 'deployment.environment',
+			dataType: DataTypes.String,
+			type: 'resource',
+			id: 'deployment.environment--string--resource--false',
+		},
+		name: {
+			key: 'name',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'name--string--tag--true',
+		},
+		rpcMethod: {
+			key: 'rpcMethod',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'rpcMethod--string--tag--true',
+		},
+		responseStatusCode: {
+			key: 'responseStatusCode',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'responseStatusCode--string--tag--true',
+		},
+		httpHost: {
+			key: 'httpHost',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'httpHost--string--tag--true',
+		},
+		httpMethod: {
+			key: 'httpMethod',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'httpMethod--string--tag--true',
+		},
+		httpRoute: {
+			key: 'httpRoute',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'httpRoute--string--tag--true',
+		},
+		httpUrl: {
+			key: 'httpUrl',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'httpUrl--string--tag--true',
+		},
+		traceID: {
+			key: 'traceID',
+			dataType: DataTypes.String,
+			type: 'tag',
+			id: 'traceID--string--tag--true',
+		},
+		durationNanoMin: {
+			key: 'durationNanoMin',
+			dataType: DataTypes.Float64,
+			type: 'tag',
+			id: 'durationNanoMin--float64--tag--true',
+		},
+		durationNanoMax: {
+			key: 'durationNanoMax',
+			dataType: DataTypes.Float64,
+			type: 'tag',
+			id: 'durationNanoMax--float64--tag--true',
+		},
+	} as const;
 
 interface AggregateValuesProps {
 	value: AllTraceFilterKeys;

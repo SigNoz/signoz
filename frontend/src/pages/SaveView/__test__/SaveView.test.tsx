@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
@@ -29,7 +28,7 @@ jest.mock('react-router-dom', () => {
 describe('SaveView', () => {
 	it('should render the SaveView component', async () => {
 		render(<SaveView />);
-		expect(await screen.findByText('Table View')).toBeInTheDocument();
+		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
 		const savedViews = screen.getAllByRole('row');
 		expect(savedViews).toHaveLength(2);
@@ -54,7 +53,7 @@ describe('SaveView', () => {
 			</MemoryRouter>,
 		);
 
-		expect(await screen.findByText('Table View')).toBeInTheDocument();
+		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
 		const explorerIcon = await screen.findAllByTestId('go-to-explorer');
 		expect(explorerIcon[0]).toBeInTheDocument();
@@ -74,7 +73,7 @@ describe('SaveView', () => {
 	it('should render the SaveView component with a search input', async () => {
 		render(<SaveView />);
 		const searchInput = screen.getByPlaceholderText('Search for views...');
-		expect(await screen.findByText('Table View')).toBeInTheDocument();
+		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
 		expect(searchInput).toBeInTheDocument();
 
@@ -89,7 +88,7 @@ describe('SaveView', () => {
 		expect(searchInput).toHaveValue('R-test panel');
 		searchInput.blur();
 
-		expect(await screen.findByText('R-test panel')).toBeInTheDocument();
+		await expect(screen.findByText('R-test panel')).resolves.toBeInTheDocument();
 
 		// Table View should not be present now
 		const savedViews = screen.getAllByRole('row');
@@ -100,7 +99,6 @@ describe('SaveView', () => {
 		server.use(
 			rest.put(
 				'http://localhost/api/v1/explorer/views/test-uuid-1',
-				// eslint-disable-next-line no-return-assign
 				(_req, res, ctx) =>
 					res(
 						ctx.status(200),
@@ -148,7 +146,9 @@ describe('SaveView', () => {
 		const deleteButton = await screen.findAllByTestId('delete-view');
 		fireEvent.click(deleteButton[0]);
 
-		expect(await screen.findByText('delete_confirm_message')).toBeInTheDocument();
+		await expect(
+			screen.findByText('delete_confirm_message'),
+		).resolves.toBeInTheDocument();
 
 		const confirmButton = await screen.findByTestId('confirm-delete');
 		fireEvent.click(confirmButton);

@@ -1,12 +1,11 @@
 import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
-import MessagingQueues from 'pages/MessagingQueues';
-import MeterExplorer from 'pages/MeterExplorer';
 
 import {
+	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
+	AlertTypeSelectionPage,
 	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
@@ -17,9 +16,11 @@ import {
 	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
+	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
-	InstalledIntegrations,
+	Integrations,
+	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -28,6 +29,8 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MessagingQueuesMainPage,
+	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
 	Onboarding,
@@ -46,6 +49,7 @@ import {
 	StatusPage,
 	SupportPage,
 	TraceDetail,
+	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -136,12 +140,22 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
+	// V3 trace details is gated until release: /trace serves V2 (public),
+	// /trace-old serves V3 (URL-only access). Flip the two `component`
+	// values back to release V3.
 	{
 		path: ROUTES.TRACE_DETAIL,
 		exact: true,
 		component: TraceDetail,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
+	},
+	{
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+		component: TraceDetailV3,
+		isPrivate: true,
+		key: 'TRACE_DETAIL_OLD',
 	},
 	{
 		path: ROUTES.SETTINGS,
@@ -340,6 +354,13 @@ const routes: AppRoutes[] = [
 		key: 'LOGIN',
 	},
 	{
+		path: ROUTES.FORGOT_PASSWORD,
+		exact: true,
+		component: ForgotPassword,
+		isPrivate: false,
+		key: 'FORGOT_PASSWORD',
+	},
+	{
 		path: ROUTES.UN_AUTHORIZED,
 		exact: true,
 		component: UnAuthorized,
@@ -382,37 +403,44 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
+		path: ROUTES.INTEGRATIONS_DETAIL,
+		exact: true,
+		component: IntegrationsDetailsPage,
+		isPrivate: true,
+		key: 'INTEGRATIONS_DETAIL',
+	},
+	{
 		path: ROUTES.INTEGRATIONS,
 		exact: true,
-		component: InstalledIntegrations,
+		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_CELERY_TASK',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_OVERVIEW',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
@@ -455,21 +483,21 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.METER,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER_VIEWS,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
@@ -478,6 +506,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.AI_ASSISTANT,
+		exact: true,
+		component: AIAssistantPage,
+		key: 'AI_ASSISTANT',
 		isPrivate: true,
 	},
 ];
@@ -505,6 +540,7 @@ export const oldRoutes = [
 	'/logs-save-views',
 	'/traces-save-views',
 	'/settings/access-tokens',
+	'/settings/api-keys',
 	'/messaging-queues',
 	'/alerts/edit',
 ];
@@ -515,7 +551,8 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/access-tokens': '/settings/api-keys',
+	'/settings/access-tokens': '/settings/service-accounts',
+	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 };

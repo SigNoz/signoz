@@ -43,6 +43,7 @@ jest.mock(
 );
 jest.mock('container/QueryBuilder/filters', () => ({
 	AggregatorFilter: (): JSX.Element => <div />,
+	MetricNameSelector: (): JSX.Element => <div />,
 }));
 // Mock hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder');
@@ -56,7 +57,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 
 	beforeEach(() => {
 		clearPreviousQuery();
-		handleSetQueryDataMock = (jest.fn() as unknown) as jest.MockedFunction<
+		handleSetQueryDataMock = jest.fn() as unknown as jest.MockedFunction<
 			(index: number, q: IBuilderQuery) => void
 		>;
 
@@ -221,7 +222,7 @@ describe('DataSource change - Logs to Traces', () => {
 
 	beforeEach(() => {
 		clearPreviousQuery();
-		handleSetQueryDataMock = (jest.fn() as unknown) as jest.MockedFunction<
+		handleSetQueryDataMock = jest.fn() as unknown as jest.MockedFunction<
 			(i: number, q: IBuilderQuery) => void
 		>;
 

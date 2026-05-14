@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
 	memo,
@@ -10,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
@@ -39,6 +39,7 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { UpdateTimeInterval } from 'store/actions';
@@ -59,6 +60,7 @@ import LogsActionsContainer from './LogsActionsContainer';
 
 import './LogsExplorerViews.styles.scss';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
 	listQueryKeyRef,
@@ -68,9 +70,7 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView,
 }: {
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	listQueryKeyRef: MutableRefObject<any>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	showLiveLogs: boolean;
@@ -111,11 +111,12 @@ function LogsExplorerViewsContainer({
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
-		stagedQuery,
-	]);
+	const listQuery = useMemo(
+		() => getListQuery(stagedQuery) || null,
+		[stagedQuery],
+	);
 
 	const isLimit: boolean = useMemo(() => {
 		if (!listQuery) {
@@ -159,37 +160,33 @@ function LogsExplorerViewsContainer({
 		'custom',
 	);
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isError,
-		isSuccess,
-		error,
-	} = useGetExplorerQueryRange(
-		requestData,
-		selectedPanelType,
-		ENTITY_VERSION_V5,
-		{
-			keepPreviousData: true,
-			enabled: !isLimit && !!requestData,
-		},
-		{
-			...(activeLogId &&
-				!logs.length && {
-					start: minTime,
-					end: maxTime,
-				}),
-		},
-		undefined,
-		listQueryKeyRef,
-		{
-			...(!isEmpty(queryId) &&
-				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
-		},
-		// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
-		'custom',
-	);
+	const { data, isLoading, isFetching, isError, isSuccess, error } =
+		useGetExplorerQueryRange(
+			requestData,
+			selectedPanelType,
+			ENTITY_VERSION_V5,
+			{
+				keepPreviousData: true,
+				enabled: !isLimit && !!requestData,
+			},
+			{
+				...(activeLogId &&
+					!logs.length && {
+						start: minTime,
+						end: maxTime,
+					}),
+			},
+			undefined,
+			listQueryKeyRef,
+			{
+				...(!isEmpty(queryId) &&
+					selectedPanelType !== PANEL_TYPES.LIST && {
+						'X-SIGNOZ-QUERY-ID': queryId,
+					}),
+			},
+			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
+			'custom',
+		);
 
 	const getRequestData = useCallback(
 		(
@@ -369,10 +366,6 @@ function LogsExplorerViewsContainer({
 		orderBy,
 	]);
 
-	const onUnitChangeHandler = useCallback((value: string): void => {
-		setYAxisUnit(value);
-	}, []);
-
 	const chartData = useMemo(() => {
 		if (!stagedQuery) {
 			return [];
@@ -448,8 +441,6 @@ function LogsExplorerViewsContainer({
 						isLoading={isLoading}
 						isError={isError}
 						isSuccess={isSuccess}
-						minTime={minTime}
-						maxTime={maxTime}
 					/>
 				)}
 
@@ -466,7 +457,10 @@ function LogsExplorerViewsContainer({
 						</div>
 					)}
 
-				<div className="logs-explorer-views-type-content">
+				<div
+					className="logs-explorer-views-type-content"
+					data-log-detail-ignore="true"
+				>
 					{showLiveLogs && (
 						<LiveLogs handleChangeSelectedView={handleChangeSelectedView} />
 					)}
@@ -487,10 +481,7 @@ function LogsExplorerViewsContainer({
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
 							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter
-									onChange={onUnitChangeHandler}
-									yAxisUnit={yAxisUnit}
-								/>
+								<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 							</div>
 							<TimeSeriesView
 								isLoading={isLoading || isFetching}
@@ -505,16 +496,18 @@ function LogsExplorerViewsContainer({
 						</div>
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
-						<LogsExplorerTable
-							data={
-								(data?.payload?.data?.newResult?.data?.result ||
-									data?.payload?.data?.result ||
-									[]) as QueryDataV3[]
-							}
-							isLoading={isLoading || isFetching}
-							isError={isError}
-							error={error as APIError}
-						/>
+						<div className="table-view-container">
+							<LogsExplorerTable
+								data={
+									(data?.payload?.data?.newResult?.data?.result ||
+										data?.payload?.data?.result ||
+										[]) as QueryDataV3[]
+								}
+								isLoading={isLoading || isFetching}
+								isError={isError}
+								error={error as APIError}
+							/>
+						</div>
 					)}
 				</div>
 			</div>

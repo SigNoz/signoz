@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { queryByAttribute, waitFor } from '@testing-library/react';
 import { fireEvent, render, screen, within } from 'tests/test-utils';
 
@@ -82,9 +81,8 @@ describe('Onboarding invite team member flow', () => {
 		const inviteModal = await screen.findByTestId('invite-team-members-modal');
 		expect(inviteModal).toBeInTheDocument();
 
-		const inviteModalTitle = await within(inviteModal).findAllByText(
-			/invite_team_members/i,
-		);
+		const inviteModalTitle =
+			await within(inviteModal).findAllByText(/invite_team_members/i);
 		expect(inviteModalTitle[0]).toBeInTheDocument();
 
 		// Verify that the invite modal contains an input field for entering the email address

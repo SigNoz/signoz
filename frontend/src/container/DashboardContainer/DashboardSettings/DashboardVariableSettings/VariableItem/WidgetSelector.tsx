@@ -2,7 +2,7 @@ import React from 'react';
 import { CustomMultiSelect } from 'components/NewSelect';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { WidgetRow, Widgets } from 'types/api/dashboard/getAll';
 
 export function WidgetSelector({
@@ -12,17 +12,17 @@ export function WidgetSelector({
 	selectedWidgets: string[];
 	setSelectedWidgets: (widgets: string[]) => void;
 }): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
 
 	// Get layout IDs for cross-referencing
 	const layoutIds = new Set(
-		(selectedDashboard?.data?.layout || []).map((item) => item.i),
+		(dashboardData?.data?.layout || []).map((item) => item.i),
 	);
 
 	// Filter and deduplicate widgets by ID, keeping only those with layout entries
 	// and excluding row widgets since they are not panels that can have variables
 	const widgets = Object.values(
-		(selectedDashboard?.data?.widgets || []).reduce(
+		(dashboardData?.data?.widgets || []).reduce(
 			(acc: Record<string, WidgetRow | Widgets>, widget: WidgetRow | Widgets) => {
 				if (
 					widget.id &&

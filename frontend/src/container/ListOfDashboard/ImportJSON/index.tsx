@@ -4,18 +4,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { red } from '@ant-design/colors';
-import { ExclamationCircleTwoTone } from '@ant-design/icons';
+import {
+	CircleAlert,
+	ExternalLink,
+	Github,
+	MonitorDot,
+	MoveRight,
+} from '@signozhq/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Flex,
-	Modal,
-	Space,
-	Typography,
-	Upload,
-	UploadProps,
-} from 'antd';
+import { Button, Flex, Modal, Space, Upload, UploadProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import ROUTES from 'constants/routes';
@@ -23,7 +22,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
-import { ExternalLink, Github, MonitorDot, MoveRight } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
@@ -39,9 +37,8 @@ function ImportJSON({
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
-	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
-		false,
-	);
+	const [isCreateDashboardError, setIsCreateDashboardError] =
+		useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -119,8 +116,10 @@ function ImportJSON({
 
 	const getErrorNode = (error: string): JSX.Element => (
 		<Space>
-			<ExclamationCircleTwoTone twoToneColor={[red[7], '#1f1f1f']} />
-			<Typography style={{ color: '#D89614' }}>{error}</Typography>
+			<CircleAlert size="md" color={red[7]} />
+			<Typography style={{ color: 'var(--warning-background)' }}>
+				{error}
+			</Typography>
 		</Space>
 	);
 
@@ -249,7 +248,6 @@ function ImportJSON({
 							monaco.editor.remeasureFonts();
 						});
 					}}
-					// eslint-disable-next-line react/jsx-no-bind
 					beforeMount={setEditorTheme}
 				/>
 			</div>

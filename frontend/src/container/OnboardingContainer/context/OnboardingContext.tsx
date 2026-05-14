@@ -1,4 +1,11 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	ReactNode,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useState,
+} from 'react';
 
 import { ModuleProps, useCases } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
@@ -59,10 +66,8 @@ function OnboardingContextProvider({
 		OnboardingMethods.QUICK_START,
 	);
 
-	const [
-		selectedDataSource,
-		setSelectedDataSource,
-	] = useState<DataSourceType | null>(defaultApplicationDataSource);
+	const [selectedDataSource, setSelectedDataSource] =
+		useState<DataSourceType | null>(defaultApplicationDataSource);
 
 	const updateServiceName = (newValue: string): void => {
 		setServiceName(newValue);
@@ -110,7 +115,6 @@ function OnboardingContextProvider({
 		updateActiveStep(null);
 	};
 
-	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue: OnboardingContextData = {
 		activeStep,
 		serviceName,

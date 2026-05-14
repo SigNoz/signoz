@@ -1,12 +1,11 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 import FeedbackModal from '../FeedbackModal';
 
@@ -20,7 +19,8 @@ jest.mock('react-router-dom', () => ({
 	useLocation: jest.fn(),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -31,7 +31,7 @@ jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(),
 }));
 
-jest.mock('pages/Integrations/utils', () => ({
+jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 

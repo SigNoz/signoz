@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
-import { Button, Table, TableProps, Typography } from 'antd';
-import { RotateCw } from 'lucide-react';
+import { Button, Table, TableProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { RotateCw } from '@signozhq/icons';
+
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import RoutingPolicyListItem from './RoutingPolicyListItem';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';
@@ -32,15 +36,14 @@ function RoutingPolicyList({
 	const showLoading = isRoutingPoliciesLoading || isRoutingPoliciesFetching;
 	const showError = !showLoading && isRoutingPoliciesError;
 
-	/* eslint-disable no-nested-ternary */
 	const localeEmptyState = useMemo(
 		() => (
 			<div className="no-routing-policies-message-container">
 				{showError ? (
-					<img src="/Icons/awwSnap.svg" alt="aww-snap" className="error-state-svg" />
+					<img src={awwSnapUrl} alt="aww-snap" className="error-state-svg" />
 				) : (
 					<img
-						src="/Icons/emptyState.svg"
+						src={emptyStateUrl}
 						alt="thinking-emoji"
 						className="empty-state-svg"
 					/>

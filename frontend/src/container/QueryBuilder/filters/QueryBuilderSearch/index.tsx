@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -10,12 +9,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Button, Select, Spin, Tag, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
@@ -34,7 +34,7 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -81,9 +81,10 @@ function QueryBuilderSearch({
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
@@ -187,9 +188,7 @@ function QueryBuilderSearch({
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={chipValue}>
 					<TypographyText
-						ellipsis
 						$isInNin={isInNin}
-						disabled={isDisabled}
 						$isEnabled={!!searchValue}
 						onClick={(): void => {
 							if (!isDisabled) {
@@ -293,7 +292,7 @@ function QueryBuilderSearch({
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
 					? tagValue?.slice(0, -1)
-					: tagValue ?? '';
+					: (tagValue ?? '');
 
 			return {
 				id: uuid().slice(0, 8),
@@ -405,7 +404,6 @@ function QueryBuilderSearch({
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
 				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
 					!isUndefined(suffixIcon) ? (
 						suffixIcon
 					) : isOpen ? (
@@ -504,7 +502,7 @@ function QueryBuilderSearch({
 								/>
 								{option.selected && <StyledCheckOutlined />}
 							</Select.Option>
-					  ))}
+						))}
 			</Select>
 		</div>
 	);
@@ -519,7 +517,8 @@ interface QueryBuilderSearchProps {
 	suffixIcon?: React.ReactNode;
 	isInfraMonitoring?: boolean;
 	disableNavigationShortcuts?: boolean;
-	entity?: K8sCategory | null;
+	// TODO: Remove the dependency of InfraMonitoring from this code
+	entity?: InfraMonitoringEntity | null;
 	isMetricsExplorer?: boolean;
 }
 

@@ -1,14 +1,8 @@
 import { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
-import { SuccessResponseV2 } from 'types/api';
-import {
-	MetricMetadata,
-	MetricMetadataResponse,
-} from 'types/api/metricsExplorer/v2/getMetricMetadata';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
@@ -22,6 +16,7 @@ import {
 	splitQueryIntoOneChartPerQuery,
 	useGetMetrics,
 } from '../utils';
+import { MOCK_METRIC_METADATA } from './testUtils';
 
 const MOCK_QUERY_DATA_1: IBuilderQuery = {
 	...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
@@ -66,24 +61,24 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 		expect(result).toHaveLength(4);
 		// Verify query 1 has the correct data
 		expect(result[0].builder.queryData).toHaveLength(1);
-		expect(result[0].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_1);
+		expect(result[0].builder.queryData[0]).toStrictEqual(MOCK_QUERY_DATA_1);
 		expect(result[0].builder.queryFormulas).toHaveLength(0);
 		expect(result[0].unit).toBeUndefined();
 		// Verify query 2 has the correct data
 		expect(result[1].builder.queryData).toHaveLength(1);
-		expect(result[1].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_2);
+		expect(result[1].builder.queryData[0]).toStrictEqual(MOCK_QUERY_DATA_2);
 		expect(result[1].builder.queryFormulas).toHaveLength(0);
 		expect(result[1].unit).toBe('unit2');
 		// Verify query 3 has the correct data
 		expect(result[2].builder.queryFormulas).toHaveLength(1);
-		expect(result[2].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);
+		expect(result[2].builder.queryFormulas[0]).toStrictEqual(MOCK_FORMULA_DATA);
 		expect(result[2].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[2].builder.queryData[0].disabled).toBe(true);
 		expect(result[2].builder.queryData[1].disabled).toBe(true);
 		expect(result[2].unit).toBe('');
 		// Verify query 4 has the correct data
 		expect(result[3].builder.queryFormulas).toHaveLength(1);
-		expect(result[3].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);
+		expect(result[3].builder.queryFormulas[0]).toStrictEqual(MOCK_FORMULA_DATA);
 		expect(result[3].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[3].builder.queryData[0].disabled).toBe(true);
 		expect(result[3].builder.queryData[1].disabled).toBe(true);
@@ -91,32 +86,19 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 	});
 });
 
-const MOCK_METRIC_METADATA: MetricMetadata = {
-	description: 'Metric 1 description',
-	unit: 'unit1',
-	type: MetricType.GAUGE,
-	temporality: Temporality.DELTA,
-	isMonotonic: true,
-};
-
 describe('useGetMetrics', () => {
 	beforeEach(() => {
 		jest
 			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
 			.mockReturnValue([
-				({
+				{
 					isLoading: false,
 					isError: false,
 					data: {
-						httpStatusCode: 200,
-						data: {
-							status: 'success',
-							data: MOCK_METRIC_METADATA,
-						},
+						data: MOCK_METRIC_METADATA,
+						status: 'success',
 					},
-				} as Partial<
-					UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>
-				>) as UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>,
+				} as UseQueryResult<GetMetricMetadata200, Error>,
 			]);
 	});
 
@@ -124,7 +106,7 @@ describe('useGetMetrics', () => {
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
 		expect(result.current.metrics[0]).toBeDefined();
-		expect(result.current.metrics[0]).toEqual(MOCK_METRIC_METADATA);
+		expect(result.current.metrics[0]).toStrictEqual(MOCK_METRIC_METADATA);
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.isError).toBe(false);
 	});
@@ -133,12 +115,11 @@ describe('useGetMetrics', () => {
 		jest
 			.spyOn(useGetMultipleMetricsHook, 'useGetMultipleMetrics')
 			.mockReturnValue([
-				({
+				{
 					isLoading: true,
 					isError: false,
-				} as Partial<
-					UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>
-				>) as UseQueryResult<SuccessResponseV2<MetricMetadataResponse>, Error>,
+					data: undefined,
+				} as UseQueryResult<GetMetricMetadata200, Error>,
 			]);
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
@@ -150,12 +131,22 @@ describe('getMetricUnits', () => {
 	it('should return the same unit for units that are not known to the universal unit mapper', () => {
 		const result = getMetricUnits([MOCK_METRIC_METADATA]);
 		expect(result).toHaveLength(1);
-		expect(result[0]).toEqual(MOCK_METRIC_METADATA.unit);
+		expect(result[0]).toStrictEqual(MOCK_METRIC_METADATA.unit);
 	});
 
 	it('should return universal unit for units that are known to the universal unit mapper', () => {
 		const result = getMetricUnits([{ ...MOCK_METRIC_METADATA, unit: 'seconds' }]);
 		expect(result).toHaveLength(1);
 		expect(result[0]).toBe('s');
+	});
+
+	it('should return undefined for metrics with no unit', () => {
+		const result = getMetricUnits([
+			{ ...MOCK_METRIC_METADATA, unit: '' },
+			{ ...MOCK_METRIC_METADATA, unit: '' },
+		]);
+		expect(result).toHaveLength(2);
+		expect(result[0]).toBeUndefined();
+		expect(result[1]).toBeUndefined();
 	});
 });

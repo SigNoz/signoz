@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import axios from 'api';
 
 import { getFieldValues } from '../getFieldValues';
@@ -200,7 +199,7 @@ describe('getFieldValues API', () => {
 		const result = await getFieldValues('traces', 'service.name');
 
 		// Verify the returned structure matches SuccessResponseV2 format
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			httpStatusCode: 200,
 			data: expect.objectContaining({
 				values: expect.any(Object),

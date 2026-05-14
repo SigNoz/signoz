@@ -1,0 +1,13 @@
+.fill-mode-selector {
+	.fill-mode-icon {
+		width: 24px;
+		height: 24px;
+	}
+
+	.fill-mode-label {
+		text-transform: uppercase;
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--l2-foreground);
+	}
+}

@@ -1,4 +1,7 @@
+import { isNil } from 'lodash-es';
+
 import createStore from '../store';
+import { VariableFetchContext } from '../variableFetchStore';
 import { IDashboardVariablesStoreState } from './dashboardVariablesStoreTypes';
 import {
 	computeDerivedValues,
@@ -10,11 +13,12 @@ const initialState: IDashboardVariablesStoreState = {
 	variables: {},
 	sortedVariablesArray: [],
 	dependencyData: null,
+	variableTypes: {},
+	dynamicVariableOrder: [],
 };
 
-export const dashboardVariablesStore = createStore<IDashboardVariablesStoreState>(
-	initialState,
-);
+export const dashboardVariablesStore =
+	createStore<IDashboardVariablesStoreState>(initialState);
 
 /**
  * Set dashboard variables (replaces all variables)
@@ -54,4 +58,39 @@ export function updateDashboardVariablesStore({
 
 		updateDerivedValues(draft);
 	});
+}
+
+/**
+ * Read current store snapshot as VariableFetchContext.
+ * Used by components to pass context to variableFetchStore actions
+ * without creating a circular import.
+ */
+export function getVariableDependencyContext(): VariableFetchContext {
+	const state = dashboardVariablesStore.getSnapshot();
+	// Dynamic variables should only wait on query variables having values,
+	// not on CUSTOM, TEXTBOX, or other types.
+	const doAllQueryVariablesHaveValuesSelected = Object.values(
+		state.variables,
+	).every((variable) => {
+		if (variable.type !== 'QUERY') {
+			return true;
+		}
+
+		if (isNil(variable.selectedValue)) {
+			return false;
+		}
+
+		if (Array.isArray(variable.selectedValue)) {
+			return variable.selectedValue.length > 0;
+		}
+
+		return true;
+	});
+
+	return {
+		doAllQueryVariablesHaveValuesSelected,
+		variableTypes: state.variableTypes,
+		dynamicVariableOrder: state.dynamicVariableOrder,
+		dependencyData: state.dependencyData,
+	};
 }

@@ -1,7 +1,6 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { ArrowRight } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
+import { openInNewTab } from 'utils/navigation';
 
 interface AlertInfoCardProps {
 	header: string;
@@ -21,7 +20,7 @@ function AlertInfoCard({
 			className="alert-info-card"
 			onClick={(): void => {
 				onClick();
-				window.open(link, '_blank');
+				openInNewTab(link);
 			}}
 		>
 			<div className="alert-card-text">
@@ -32,7 +31,7 @@ function AlertInfoCard({
 					{subheader}
 				</Typography.Text>
 			</div>
-			<ArrowRightOutlined />
+			<ArrowRight size="md" />
 		</div>
 	);
 }

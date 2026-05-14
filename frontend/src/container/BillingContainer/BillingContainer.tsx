@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-loop-func */
+import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { CircleCheck, CloudDownload } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -13,10 +13,9 @@ import {
 	Row,
 	Skeleton,
 	Table,
+	TableColumnsType as ColumnsType,
 	Tag,
-	Typography,
 } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -32,12 +31,15 @@ import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
+import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
 import './BillingContainer.styles.scss';
+import { LicenseState } from 'types/api/licensesV3/getActive';
 
 interface DataType {
 	key: string;
@@ -307,34 +309,32 @@ export default function BillingContainer(): JSX.Element {
 		},
 	);
 
-	const {
-		mutate: manageCreditCard,
-		isLoading: isLoadingManageBilling,
-	} = useMutation(manageCreditCardApi, {
-		onSuccess: (data) => {
-			handleBillingOnSuccess(data);
-		},
-		onError: handleBillingOnError,
-	});
+	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
+		useMutation(manageCreditCardApi, {
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		});
 
 	const handleBilling = useCallback(async () => {
 		if (!trialInfo?.trialConvertedToSubscription) {
-			logEvent('Billing : Upgrade Plan', {
+			void logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			updateCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		} else {
-			logEvent('Billing : Manage Billing', {
+			void logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			manageCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -362,15 +362,17 @@ export default function BillingContainer(): JSX.Element {
 		[apiResponse, billAmount, isLoading, isFetchingBillingData],
 	);
 
-	const { Text } = Typography;
 	const subscriptionPastDueMessage = (): JSX.Element => (
 		<Typography>
 			{`We were not able to process payments for your account. Please update your card details `}
-			<Text type="danger" onClick={handleBilling} style={{ cursor: 'pointer' }}>
+			<Typography.Link
+				onClick={handleBilling}
+				style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
+			>
 				{t('here')}
-			</Text>
+			</Typography.Link>
 			{` if your payment information has changed. Email us at `}
-			<Text type="secondary">cloud-support@signoz.io</Text>
+			<Typography.Text color="muted">cloud-support@signoz.io</Typography.Text>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);
@@ -418,7 +420,7 @@ export default function BillingContainer(): JSX.Element {
 				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
 					{t('billing')}
 				</Typography.Text>
-				<Typography.Text color={Color.BG_VANILLA_400}>
+				<Typography.Text color="muted">
 					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
@@ -448,10 +450,12 @@ export default function BillingContainer(): JSX.Element {
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
-							icon={<CloudDownloadOutlined />}
 							className="periscope-btn"
 						>
-							Download CSV
+							<Flex align="center" justify="center" gap={4}>
+								<CloudDownload size="md" />
+								Download CSV
+							</Flex>
 						</Button>
 						<Button
 							data-testid="header-billing-button"
@@ -472,8 +476,8 @@ export default function BillingContainer(): JSX.Element {
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
 					<Typography.Text
-						ellipsis
-						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
+						truncate={1}
+						style={{ fontWeight: '300', color: 'var(--bg-forest-500)', fontSize: 12 }}
 					>
 						{t('card_details_recieved_and_billing_info')}
 					</Typography.Text>
@@ -487,7 +491,7 @@ export default function BillingContainer(): JSX.Element {
 								showIcon
 								style={{ marginTop: 12 }}
 							/>
-					  )
+						)
 					: null}
 
 				{isLoading || isFetchingBillingData ? (
@@ -537,6 +541,10 @@ export default function BillingContainer(): JSX.Element {
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
+			{isCloudUserVal && activeLicense?.state === LicenseState.ACTIVATED && (
+				<CancelSubscriptionBanner />
+			)}
+
 			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">
 					<Row
@@ -549,21 +557,21 @@ export default function BillingContainer(): JSX.Element {
 					>
 						<Col span={20} className="plan-benefits">
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;
 									<a
 										href="https://signoz.io/pricing/"
 										style={{
-											color: '#f99781',
+											color: 'var(--bg-cherry-300)',
 										}}
 										target="_blank"
 										rel="noreferrer"

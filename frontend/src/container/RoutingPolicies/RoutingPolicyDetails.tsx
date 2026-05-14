@@ -1,20 +1,12 @@
 import { useMemo } from 'react';
-import {
-	Button,
-	Divider,
-	Flex,
-	Form,
-	Input,
-	Modal,
-	Select,
-	Typography,
-} from 'antd';
-import { useForm } from 'antd/lib/form/Form';
+import { Button, Divider, Flex, Form, Input, Modal, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
-import { Check, Loader, X } from 'lucide-react';
+import { Check, Loader, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
@@ -33,7 +25,7 @@ function RoutingPolicyDetails({
 	isPolicyDetailsModalActionLoading,
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
-	const [form] = useForm();
+	const [form] = Form.useForm();
 	const { user } = useAppContext();
 
 	const initialFormState = useMemo(() => {
@@ -77,7 +69,7 @@ function RoutingPolicyDetails({
 							style={{ padding: '0 4px' }}
 							type="link"
 							onClick={(): void => {
-								window.open(ROUTES.CHANNELS_NEW, '_blank');
+								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
 						>
 							here.

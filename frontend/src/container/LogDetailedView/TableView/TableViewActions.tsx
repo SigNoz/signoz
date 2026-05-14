@@ -1,8 +1,8 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
+import type { DataNode } from 'antd/es/tree';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
@@ -16,7 +16,12 @@ import { MetricsType } from 'container/MetricsApplication/constant';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
-import { ArrowDownToDot, ArrowUpFromDot, Ellipsis } from 'lucide-react';
+import {
+	ArrowDownToDot,
+	ArrowUpFromDot,
+	Ellipsis,
+	RefreshCw,
+} from '@signozhq/icons';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -53,7 +58,7 @@ interface ITableViewActionsProps {
 }
 
 // Memoized Tree Component
-const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
+const MemoizedTree = React.memo<{ treeData: DataNode[] }>(({ treeData }) => (
 	<Tree
 		defaultExpandAll
 		showLine
@@ -70,50 +75,54 @@ const BodyContent: React.FC<{
 	record: DataType;
 	bodyHtml: { __html: string };
 	textToCopy: string;
-}> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
-	const { isLoading, treeData, error } = useAsyncJSONProcessing(
-		fieldData.value,
-		record.field === 'body',
-	);
-
-	// Show JSON tree if available, otherwise show HTML content
-	if (record.field === 'body' && treeData) {
-		return <MemoizedTree treeData={treeData} />;
-	}
-
-	if (record.field === 'body' && isLoading) {
-		return (
-			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-				<Spin size="small" />
-				<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
-			</div>
+	handleChangeSelectedView?: ChangeViewFunctionType;
+}> = React.memo(
+	({ fieldData, record, bodyHtml, textToCopy, handleChangeSelectedView }) => {
+		const { isLoading, treeData, error } = useAsyncJSONProcessing(
+			fieldData.value,
+			record.field === 'body',
+			handleChangeSelectedView,
 		);
-	}
 
-	if (record.field === 'body' && error) {
-		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				Error parsing Body JSON
-			</span>
-		);
-	}
+		// Show JSON tree if available, otherwise show HTML content
+		if (record.field === 'body' && treeData) {
+			return <MemoizedTree treeData={treeData} />;
+		}
 
-	if (record.field === 'body') {
-		return (
-			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+		if (record.field === 'body' && isLoading) {
+			return (
+				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<Spin size="small" />
+					<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
+				</div>
+			);
+		}
+
+		if (record.field === 'body' && error) {
+			return (
 				<span
 					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
 				>
-					<span dangerouslySetInnerHTML={bodyHtml} />
+					Error parsing Body JSON
 				</span>
-			</CopyClipboardHOC>
-		);
-	}
+			);
+		}
 
-	return null;
-});
+		if (record.field === 'body') {
+			return (
+				<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+					<span
+						style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+					>
+						<span dangerouslySetInnerHTML={bodyHtml} />
+					</span>
+				</CopyClipboardHOC>
+			);
+		}
+
+		return null;
+	},
+);
 
 BodyContent.displayName = 'BodyContent';
 
@@ -205,6 +214,70 @@ export default function TableViewActions(
 		viewName,
 	]);
 
+	const handleReplaceFilter = useCallback((): void => {
+		if (!stagedQuery) {
+			return;
+		}
+		const normalizedDataType: DataTypes | undefined =
+			dataType && Object.values(DataTypes).includes(dataType as DataTypes)
+				? (dataType as DataTypes)
+				: undefined;
+
+		const updatedQuery = updateQueriesData(
+			stagedQuery,
+			'queryData',
+			(item, index) => {
+				// Only replace filters for index 0
+				if (index === 0) {
+					const newFilterItem: BaseAutocompleteData = {
+						key: fieldFilterKey,
+						type: fieldType || '',
+						dataType: normalizedDataType,
+					};
+
+					// Create new filter items array with single IN filter
+					const newFilters = {
+						items: [
+							{
+								id: '',
+								key: newFilterItem,
+								op: OPERATORS.IN,
+								value: [parseFieldValue(fieldData.value)],
+							},
+						],
+						op: 'AND',
+					};
+
+					// Clear the expression and update filters
+					return {
+						...item,
+						filters: newFilters,
+						filter: { expression: '' },
+					};
+				}
+
+				return item;
+			},
+		);
+
+		const queryData: ICurrentQueryData = {
+			name: viewName,
+			id: updatedQuery.id,
+			query: updatedQuery,
+		};
+
+		handleChangeSelectedView?.(ExplorerViews.LIST, queryData);
+	}, [
+		stagedQuery,
+		updateQueriesData,
+		fieldFilterKey,
+		fieldType,
+		dataType,
+		fieldData,
+		handleChangeSelectedView,
+		viewName,
+	]);
+
 	// Memoize textToCopy computation
 	const textToCopy = useMemo(() => {
 		let text = fieldData.value;
@@ -215,6 +288,15 @@ export default function TableViewActions(
 				'Failed to remove starting and ending quotes from the value',
 				error,
 			);
+		}
+		// If the value is valid JSON (object or array), pretty-print it for copying
+		try {
+			const parsed = JSON.parse(text);
+			if (typeof parsed === 'object' && parsed !== null) {
+				return JSON.stringify(parsed, null, 2);
+			}
+		} catch {
+			// not JSON, return as-is
 		}
 		return text;
 	}, [fieldData.value]);
@@ -242,6 +324,7 @@ export default function TableViewActions(
 						record={record}
 						bodyHtml={bodyHtml}
 						textToCopy={textToCopy}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 
@@ -265,6 +348,7 @@ export default function TableViewActions(
 		fieldData,
 		bodyHtml,
 		textToCopy,
+		handleChangeSelectedView,
 		formatTimezoneAdjustedTimestamp,
 		cleanTimestamp,
 	]);
@@ -278,8 +362,97 @@ export default function TableViewActions(
 					record={record}
 					bodyHtml={bodyHtml}
 					textToCopy={textToCopy}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
-				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
+				{!isListViewPanel &&
+					!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
+						<span className="action-btn">
+							<Tooltip title="Filter for value" mouseLeaveDelay={0}>
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterInLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(
+										OPERATORS['='],
+										fieldFilterKey,
+										parseFieldValue(fieldData.value),
+										dataType,
+										fieldType,
+									)}
+								/>
+							</Tooltip>
+							<Tooltip title="Filter out value" mouseLeaveDelay={0}>
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterOutLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(
+										OPERATORS['!='],
+										fieldFilterKey,
+										parseFieldValue(fieldData.value),
+										dataType,
+										fieldType,
+									)}
+								/>
+							</Tooltip>
+							{!isOldLogsExplorerOrLiveLogsPage && (
+								<Popover
+									open={isOpen}
+									onOpenChange={setIsOpen}
+									arrow={false}
+									content={
+										<div data-log-detail-ignore="true">
+											<Button
+												className="more-filter-actions"
+												type="text"
+												icon={<GroupByIcon />}
+												onClick={handleGroupByAttribute}
+											>
+												Group By Attribute
+											</Button>
+											<Button
+												className="more-filter-actions"
+												type="text"
+												icon={<RefreshCw size={14} />}
+												onClick={handleReplaceFilter}
+											>
+												Replace filters with this value
+											</Button>
+										</div>
+									}
+									rootClassName="table-view-actions-content"
+									trigger="hover"
+									placement="bottomLeft"
+								>
+									<Button
+										icon={<Ellipsis size={14} />}
+										className="filter-btn periscope-btn"
+									/>
+								</Popover>
+							)}
+						</span>
+					)}
+			</div>
+		);
+	}
+
+	return (
+		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
+			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
+				{renderFieldContent()}
+			</CopyClipboardHOC>
+			{!isListViewPanel &&
+				!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
 						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
@@ -325,14 +498,22 @@ export default function TableViewActions(
 								onOpenChange={setIsOpen}
 								arrow={false}
 								content={
-									<div>
+									<div data-log-detail-ignore="true">
 										<Button
-											className="group-by-clause"
+											className="more-filter-actions"
 											type="text"
 											icon={<GroupByIcon />}
 											onClick={handleGroupByAttribute}
 										>
 											Group By Attribute
+										</Button>
+										<Button
+											className="more-filter-actions"
+											type="text"
+											icon={<RefreshCw size={14} />}
+											onClick={handleReplaceFilter}
+										>
+											Replace filters with this value
 										</Button>
 									</div>
 								}
@@ -348,84 +529,6 @@ export default function TableViewActions(
 						)}
 					</span>
 				)}
-			</div>
-		);
-	}
-
-	return (
-		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-				{renderFieldContent()}
-			</CopyClipboardHOC>
-			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
-				<span className="action-btn">
-					<Tooltip title="Filter for value" mouseLeaveDelay={0}>
-						<Button
-							className="filter-btn periscope-btn"
-							icon={
-								isfilterInLoading ? (
-									<Spin size="small" />
-								) : (
-									<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-								)
-							}
-							onClick={onClickHandler(
-								OPERATORS['='],
-								fieldFilterKey,
-								parseFieldValue(fieldData.value),
-								dataType,
-								fieldType,
-							)}
-						/>
-					</Tooltip>
-					<Tooltip title="Filter out value" mouseLeaveDelay={0}>
-						<Button
-							className="filter-btn periscope-btn"
-							icon={
-								isfilterOutLoading ? (
-									<Spin size="small" />
-								) : (
-									<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-								)
-							}
-							onClick={onClickHandler(
-								OPERATORS['!='],
-								fieldFilterKey,
-								parseFieldValue(fieldData.value),
-								dataType,
-								fieldType,
-							)}
-						/>
-					</Tooltip>
-					{!isOldLogsExplorerOrLiveLogsPage && (
-						<Popover
-							open={isOpen}
-							onOpenChange={setIsOpen}
-							arrow={false}
-							content={
-								<div>
-									<Button
-										className="group-by-clause"
-										type="text"
-										icon={<GroupByIcon />}
-										onClick={handleGroupByAttribute}
-									>
-										Group By Attribute
-									</Button>
-								</div>
-							}
-							rootClassName="table-view-actions-content"
-							trigger="hover"
-							placement="bottomLeft"
-						>
-							<Button
-								icon={<Ellipsis size={14} />}
-								className="filter-btn periscope-btn"
-							/>
-						</Popover>
-					)}
-				</span>
-			)}
 		</div>
 	);
 }

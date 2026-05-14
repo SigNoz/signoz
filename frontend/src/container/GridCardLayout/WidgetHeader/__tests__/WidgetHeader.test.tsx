@@ -1,5 +1,6 @@
 import React, { MutableRefObject } from 'react';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
@@ -88,7 +89,6 @@ jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 }));
 
 jest.mock('hooks/dashboard/useGetResolvedText', () => {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
 	return {
 		__esModule: true,
@@ -99,14 +99,18 @@ jest.mock('hooks/dashboard/useGetResolvedText', () => {
 	};
 });
 
-jest.mock('lucide-react', () => ({
-	CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
-	TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
-	X: (): JSX.Element => <svg data-testid="lucide-x" />,
-	SquareArrowOutUpRight: (): JSX.Element => (
-		<svg data-testid="lucide-square-arrow-out-up-right" />
-	),
-}));
+jest.mock('@signozhq/icons', () => {
+	const { createIconsMock } = jest.requireActual<
+		typeof import('test-mocks/createIconsMock')
+	>('test-mocks/createIconsMock');
+	return createIconsMock({
+		CircleX: (): JSX.Element => <svg data-testid="lucide-circle-x" />,
+		TriangleAlert: (): JSX.Element => <svg data-testid="lucide-triangle-alert" />,
+		SquareArrowOutUpRight: (): JSX.Element => (
+			<svg data-testid="lucide-square-arrow-out-up-right" />
+		),
+	});
+});
 jest.mock('antd', () => ({
 	...jest.requireActual('antd'),
 	Spin: (): JSX.Element => <div data-testid="antd-spin" />,
@@ -139,7 +143,7 @@ const mockWidget: Widgets = {
 	selectedTracesFields: [],
 };
 
-const mockQueryResponse = ({
+const mockQueryResponse = {
 	data: {
 		payload: {
 			data: {
@@ -155,7 +159,7 @@ const mockQueryResponse = ({
 	isError: false,
 	error: null,
 	isFetching: false,
-} as unknown) as UseQueryResult<
+} as unknown as UseQueryResult<
 	SuccessResponse<MetricRangePayloadProps, unknown> & {
 		warning?: Warning;
 	},
@@ -322,7 +326,7 @@ describe('WidgetHeader', () => {
 						url: 'https://example.com',
 						warnings: [{ message: 'Test warning' }],
 					} as Warning,
-			  }
+				}
 			: undefined;
 
 		const warningResponse = {

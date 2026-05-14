@@ -1,22 +1,29 @@
 package telemetrytypes
 
 import (
+	"fmt"
 	"testing"
 
+	otelconstants "github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	bodyV2Column       = otelconstants.BodyV2Column
+	bodyPromotedColumn = otelconstants.BodyPromotedColumn
 )
 
 // ============================================================================
 // Helper Functions for Test Data Creation
 // ============================================================================
 
-// makeKey creates a TelemetryFieldKey for testing
-func makeKey(name string, dataType JSONDataType, materialized bool) *TelemetryFieldKey {
+// makeKey creates a TelemetryFieldKey for testing.
+func makeKey(name string, dataType FieldDataType, materialized bool) *TelemetryFieldKey {
 	return &TelemetryFieldKey{
-		Name:         name,
-		JSONDataType: &dataType,
-		Materialized: materialized,
+		Name:          name,
+		FieldDataType: dataType,
+		Materialized:  materialized,
 	}
 }
 
@@ -34,7 +41,6 @@ type jsonAccessTestNode struct {
 	MaxDynamicTypes int                            `yaml:"maxDynamicTypes,omitempty"`
 	MaxDynamicPaths int                            `yaml:"maxDynamicPaths,omitempty"`
 	ElemType        string                         `yaml:"elemType,omitempty"`
-	AvailableTypes  []string                       `yaml:"availableTypes,omitempty"`
 	Branches        map[string]*jsonAccessTestNode `yaml:"branches,omitempty"`
 }
 
@@ -56,14 +62,6 @@ func toTestNode(n *JSONAccessNode) *jsonAccessTestNode {
 	// whose parent is nil.
 	if n.Parent != nil && n.Parent.Parent == nil {
 		out.Column = n.Parent.Name
-	}
-
-	// AvailableTypes as strings (using StringValue for stable representation)
-	if len(n.AvailableTypes) > 0 {
-		out.AvailableTypes = make([]string, 0, len(n.AvailableTypes))
-		for _, t := range n.AvailableTypes {
-			out.AvailableTypes = append(out.AvailableTypes, t.StringValue())
-		}
 	}
 
 	// Terminal config
@@ -109,8 +107,8 @@ func TestNode_Alias(t *testing.T) {
 	}{
 		{
 			name:     "Root node returns name as-is",
-			node:     NewRootJSONAccessNode("body_json", 32, 0),
-			expected: "body_json",
+			node:     NewRootJSONAccessNode(bodyV2Column, 32, 0),
+			expected: bodyV2Column,
 		},
 		{
 			name: "Node without parent returns backticked name",
@@ -124,9 +122,9 @@ func TestNode_Alias(t *testing.T) {
 			name: "Node with root parent uses dot separator",
 			node: &JSONAccessNode{
 				Name:   "age",
-				Parent: NewRootJSONAccessNode("body_json", 32, 0),
+				Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 			},
-			expected: "`" + "body_json" + ".age`",
+			expected: "`" + bodyV2Column + ".age`",
 		},
 		{
 			name: "Node with non-root parent uses array separator",
@@ -134,10 +132,10 @@ func TestNode_Alias(t *testing.T) {
 				Name: "name",
 				Parent: &JSONAccessNode{
 					Name:   "education",
-					Parent: NewRootJSONAccessNode("body_json", 32, 0),
+					Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 				},
 			},
-			expected: "`" + "body_json" + ".education[].name`",
+			expected: "`" + bodyV2Column + ".education[].name`",
 		},
 		{
 			name: "Nested array path with multiple levels",
@@ -147,11 +145,11 @@ func TestNode_Alias(t *testing.T) {
 					Name: "awards",
 					Parent: &JSONAccessNode{
 						Name:   "education",
-						Parent: NewRootJSONAccessNode("body_json", 32, 0),
+						Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 					},
 				},
 			},
-			expected: "`" + "body_json" + ".education[].awards[].type`",
+			expected: "`" + bodyV2Column + ".education[].awards[].type`",
 		},
 	}
 
@@ -173,18 +171,18 @@ func TestNode_FieldPath(t *testing.T) {
 			name: "Simple field path from root",
 			node: &JSONAccessNode{
 				Name:   "user",
-				Parent: NewRootJSONAccessNode("body_json", 32, 0),
+				Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "body_json" + ".`user`",
+			expected: bodyV2Column + ".`user`",
 		},
 		{
 			name: "Field path with backtick-required key",
 			node: &JSONAccessNode{
 				Name:   "user-name", // requires backtick
-				Parent: NewRootJSONAccessNode("body_json", 32, 0),
+				Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 			},
-			expected: "body_json" + ".`user-name`",
+			expected: bodyV2Column + ".`user-name`",
 		},
 		{
 			name: "Nested field path",
@@ -192,11 +190,11 @@ func TestNode_FieldPath(t *testing.T) {
 				Name: "age",
 				Parent: &JSONAccessNode{
 					Name:   "user",
-					Parent: NewRootJSONAccessNode("body_json", 32, 0),
+					Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + "body_json" + ".user`.`age`",
+			expected: "`" + bodyV2Column + ".user`.`age`",
 		},
 		{
 			name: "Array element field path",
@@ -204,11 +202,11 @@ func TestNode_FieldPath(t *testing.T) {
 				Name: "name",
 				Parent: &JSONAccessNode{
 					Name:   "education",
-					Parent: NewRootJSONAccessNode("body_json", 32, 0),
+					Parent: NewRootJSONAccessNode(bodyV2Column, 32, 0),
 				},
 			},
 			// FieldPath() always wraps the field name in backticks
-			expected: "`" + "body_json" + ".education`.`name`",
+			expected: "`" + bodyV2Column + ".education`.`name`",
 		},
 	}
 
@@ -235,41 +233,35 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 	}{
 		{
 			name: "Simple path not promoted",
-			key:  makeKey("user.name", String, false),
-			expectedYAML: `
+			key:  makeKey("user.name", FieldDataTypeString, false),
+			expectedYAML: fmt.Sprintf(`
 - name: user.name
-  column: body_json
-  availableTypes:
-    - String
+  column: %s
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
 			name: "Simple path promoted",
-			key:  makeKey("user.name", String, true),
-			expectedYAML: `
+			key:  makeKey("user.name", FieldDataTypeString, true),
+			expectedYAML: fmt.Sprintf(`
 - name: user.name
-  column: body_json
-  availableTypes:
-    - String
+  column: %s
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
 - name: user.name
-  column: body_json_promoted
-  availableTypes:
-    - String
+  column: %s
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   isTerminal: true
   elemType: String
-`,
+`, bodyV2Column, bodyPromotedColumn),
 		},
 		{
 			name:         "Empty path returns error",
-			key:          makeKey("", String, false),
+			key:          makeKey("", FieldDataTypeString, false),
 			expectErr:    true,
 			expectedYAML: "",
 		},
@@ -278,8 +270,8 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.key.SetJSONAccessPlan(JSONColumnMetadata{
-				BaseColumn:     "body_json",
-				PromotedColumn: "body_json_promoted",
+				BaseColumn:     bodyV2Column,
+				PromotedColumn: bodyPromotedColumn,
 			}, types)
 			if tt.expectErr {
 				require.Error(t, err)
@@ -304,130 +296,99 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 		{
 			name: "Single array level - JSON branch only",
 			path: "education[].name",
-			expectedYAML: `
+			expectedYAML: fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: name
-      availableTypes:
-        - String
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
 			name: "Single array level - both JSON and Dynamic branches",
 			path: "education[].awards[].type",
-			expectedYAML: `
+			expectedYAML: fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
 			name: "Deeply nested array path",
 			path: "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
-			expectedYAML: `
+			expectedYAML: fmt.Sprintf(`
 - name: interests
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
-      availableTypes:
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
-          availableTypes:
-            - Array(JSON)
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
-                  availableTypes:
-                    - Array(JSON)
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
-                      availableTypes:
-                        - Array(JSON)
                       branches:
                         json:
                           name: name
-                          availableTypes:
-                            - String
                           isTerminal: true
                           elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
 			name: "ArrayAnyIndex replacement [*] to []",
 			path: "education[*].name",
-			expectedYAML: `
+			expectedYAML: fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: name
-      availableTypes:
-        - String
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-`,
+`, bodyV2Column),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key := makeKey(tt.path, String, false)
+			key := makeKey(tt.path, FieldDataTypeString, false)
 			err := key.SetJSONAccessPlan(JSONColumnMetadata{
-				BaseColumn:     "body_json",
-				PromotedColumn: "body_json_promoted",
+				BaseColumn:     bodyV2Column,
+				PromotedColumn: bodyPromotedColumn,
 			}, types)
 			require.NoError(t, err)
 			require.NotNil(t, key.JSONPlan)
@@ -443,118 +404,91 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 	path := "education[].awards[].type"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
-		key := makeKey(path, String, false)
+		key := makeKey(path, FieldDataTypeString, false)
 		err := key.SetJSONAccessPlan(JSONColumnMetadata{
-			BaseColumn:     "body_json",
-			PromotedColumn: "body_json_promoted",
+			BaseColumn:     bodyV2Column,
+			PromotedColumn: bodyPromotedColumn,
 		}, types)
 		require.NoError(t, err)
 		require.Len(t, key.JSONPlan, 1)
 
-		expectedYAML := `
+		expectedYAML := fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-`
+`, bodyV2Column)
 		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
 	})
 
 	t.Run("Promoted plan", func(t *testing.T) {
-		key := makeKey(path, String, true)
+		key := makeKey(path, FieldDataTypeString, true)
 		err := key.SetJSONAccessPlan(JSONColumnMetadata{
-			BaseColumn:     "body_json",
-			PromotedColumn: "body_json_promoted",
+			BaseColumn:     bodyV2Column,
+			PromotedColumn: bodyPromotedColumn,
 		}, types)
 		require.NoError(t, err)
 		require.Len(t, key.JSONPlan, 2)
 
-		expectedYAML := `
+		expectedYAML := fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
 - name: education
-  column: body_json_promoted
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   branches:
     json:
       name: awards
-      availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
       maxDynamicTypes: 8
       maxDynamicPaths: 64
       branches:
         json:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 4
           maxDynamicPaths: 16
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - String
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
-`
+`, bodyV2Column, bodyPromotedColumn)
 		got := plansToYAML(t, key.JSONPlan)
 		require.YAMLEq(t, expectedYAML, got)
 	})
@@ -571,105 +505,84 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 	}{
 		{
 			name:      "Path with no available types",
-			path:      "unknown.path",
+			path:      "unknown[].path",
 			expectErr: true,
 		},
 		{
-			name:  "Very deep nesting - validates progression doesn't go negative",
-			path:  "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
-			expectedYAML: `
+			name: "Very deep nesting - validates progression doesn't go negative",
+			path: "interests[].entities[].reviews[].entries[].metadata[].positions[].name",
+			expectedYAML: fmt.Sprintf(`
 - name: interests
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
-      availableTypes:
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
-          availableTypes:
-            - Array(JSON)
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
-                  availableTypes:
-                    - Array(JSON)
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
-                      availableTypes:
-                        - Array(JSON)
                       branches:
                         json:
                           name: name
-                          availableTypes:
-                            - String
                           isTerminal: true
                           elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
-			name:  "Path with mixed scalar and array types",
-			path:  "education[].type",
-			expectedYAML: `
+			name: "Path with mixed scalar and array types",
+			path: "education[].type",
+			expectedYAML: fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: type
-      availableTypes:
-        - String
-        - Int64
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
-`,
+`, bodyV2Column),
 		},
 		{
-			name:  "Exists with only array types available",
-			path:  "education",
-			expectedYAML: `
+			name: "Exists with only array types available",
+			path: "education",
+			expectedYAML: fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   isTerminal: true
   elemType: Array(JSON)
-`,
+`, bodyV2Column),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Choose key type based on path; operator does not affect the tree shape asserted here.
-			keyType := String
+			keyType := FieldDataTypeString
 			switch tt.path {
 			case "education":
-				keyType = ArrayJSON
+				keyType = FieldDataTypeArrayJSON
 			case "education[].type":
-				keyType = String
+				keyType = FieldDataTypeString
 			}
 			key := makeKey(tt.path, keyType, false)
 			err := key.SetJSONAccessPlan(JSONColumnMetadata{
-				BaseColumn:     "body_json",
-				PromotedColumn: "body_json_promoted",
+				BaseColumn:     bodyV2Column,
+				PromotedColumn: bodyPromotedColumn,
 			}, types)
 			if tt.expectErr {
 				require.Error(t, err)
@@ -685,102 +598,75 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 func TestPlanJSON_TreeStructure(t *testing.T) {
 	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
-	key := makeKey(path, String, false)
+	key := makeKey(path, FieldDataTypeString, false)
 	err := key.SetJSONAccessPlan(JSONColumnMetadata{
-		BaseColumn:     "body_json",
-		PromotedColumn: "body_json_promoted",
+		BaseColumn:     bodyV2Column,
+		PromotedColumn: bodyPromotedColumn,
 	}, types)
 	require.NoError(t, err)
 	require.Len(t, key.JSONPlan, 1)
 
-	expectedYAML := `
+	expectedYAML := fmt.Sprintf(`
 - name: education
-  column: body_json
-  availableTypes:
-    - Array(JSON)
+  column: %s
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
       maxDynamicTypes: 8
       branches:
         json:
           name: participated
-          availableTypes:
-            - Array(Dynamic)
-            - Array(JSON)
           maxDynamicTypes: 4
           branches:
             json:
               name: team
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 2
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - String
                   maxDynamicTypes: 1
                   isTerminal: true
                   elemType: String
             dynamic:
               name: team
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - String
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true
                   elemType: String
         dynamic:
           name: participated
-          availableTypes:
-            - Array(Dynamic)
-            - Array(JSON)
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           branches:
             json:
               name: team
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 8
               maxDynamicPaths: 64
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - String
                   maxDynamicTypes: 4
                   maxDynamicPaths: 16
                   isTerminal: true
                   elemType: String
             dynamic:
               name: team
-              availableTypes:
-                - Array(JSON)
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - String
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true
                   elemType: String
-`
+`, bodyV2Column)
 
 	got := plansToYAML(t, key.JSONPlan)
 	require.YAMLEq(t, expectedYAML, got)

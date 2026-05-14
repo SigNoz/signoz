@@ -1,5 +1,5 @@
 .log-context-container {
-	border: 1px solid var(--bg-slate-400);
+	border: 1px solid var(--l1-border);
 	flex: 1;
 	position: relative;
 	overflow: scroll;
@@ -14,10 +14,10 @@
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--bg-slate-300);
+		background: var(--l3-background);
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--bg-slate-200);
+		background: var(--l3-background);
 	}
 }

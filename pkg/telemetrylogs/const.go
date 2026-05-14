@@ -1,6 +1,8 @@
 package telemetrylogs
 
 import (
+	"fmt"
+
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -8,16 +10,16 @@ import (
 
 const (
 
-	// Internal Columns
+	// Internal Columns.
 	LogsV2IDColumn                   = "id"
 	LogsV2TimestampBucketStartColumn = "ts_bucket_start"
 	LogsV2ResourceFingerPrintColumn  = "resource_fingerprint"
 
-	// Intrinsic Columns
+	// Intrinsic Columns.
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyJSONColumn          = constants.BodyJSONColumn
+	LogsV2BodyV2Column            = constants.BodyV2Column
 	LogsV2BodyPromotedColumn      = constants.BodyPromotedColumn
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
@@ -27,15 +29,21 @@ const (
 	LogsV2ScopeNameColumn         = "scope_name"
 	LogsV2ScopeVersionColumn      = "scope_version"
 
-	// Contextual Columns
+	// Contextual Columns.
 	LogsV2AttributesStringColumn = "attributes_string"
 	LogsV2AttributesNumberColumn = "attributes_number"
 	LogsV2AttributesBoolColumn   = "attributes_bool"
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
 
-	BodyJSONColumnPrefix     = constants.BodyJSONColumnPrefix
+	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+
+	// messageSubColumn is the ClickHouse sub-column that body searches map to
+	// when use_json_body feature flag is true.
+	messageSubField          = "message"
+	messageSubColumn         = "body_v2.message"
+	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
@@ -118,3 +126,11 @@ var (
 		},
 	}
 )
+
+func bodyAliasExpression(bodyJSONEnabled bool) string {
+	if !bodyJSONEnabled {
+		return LogsV2BodyColumn
+	}
+
+	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
+}

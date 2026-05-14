@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { toast } from '@signozhq/ui/sonner';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
-import updateProfileAPI from 'api/onboarding/updateProfile';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { usePutProfile } from 'api/generated/services/zeus';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
 import { AxiosError } from 'axios';
@@ -10,7 +12,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
+import { InviteTeamMembersProps } from 'container/OrganizationSettings/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
@@ -23,7 +25,7 @@ import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
 import OptimiseSignozNeeds, {
 	OptimiseSignozDetails,
 } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
-import OrgQuestions, { OrgData, OrgDetails } from './OrgQuestions/OrgQuestions';
+import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
 
 import './OnboardingQuestionaire.styles.scss';
 
@@ -37,11 +39,11 @@ export const showErrorNotification = (
 };
 
 const INITIAL_ORG_DETAILS: OrgDetails = {
-	organisationName: '',
 	usesObservability: true,
 	observabilityTool: '',
 	otherTool: '',
 	usesOtel: null,
+	migrationTimeline: null,
 };
 
 const INITIAL_SIGNOZ_DETAILS: SignozDetails = {
@@ -71,32 +73,14 @@ function OnboardingQuestionaire(): JSX.Element {
 		INITIAL_SIGNOZ_DETAILS,
 	);
 
-	const [
-		optimiseSignozDetails,
-		setOptimiseSignozDetails,
-	] = useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
+	const [optimiseSignozDetails, setOptimiseSignozDetails] =
+		useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
 	const [teamMembers, setTeamMembers] = useState<
 		InviteTeamMembersProps[] | null
 	>(null);
 
-	const [currentOrgData, setCurrentOrgData] = useState<OrgData | null>(null);
-
-	const [
-		updatingOrgOnboardingStatus,
-		setUpdatingOrgOnboardingStatus,
-	] = useState<boolean>(false);
-
-	useEffect(() => {
-		if (org) {
-			setCurrentOrgData(org[0]);
-
-			setOrgDetails({
-				...orgDetails,
-				organisationName: org[0].displayName,
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [org]);
+	const [updatingOrgOnboardingStatus, setUpdatingOrgOnboardingStatus] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		logEvent('Org Onboarding: Started', {
@@ -135,20 +119,8 @@ function OnboardingQuestionaire(): JSX.Element {
 		optimiseSignozDetails.hostsPerDay === 0 &&
 		optimiseSignozDetails.services === 0;
 
-	const { mutate: updateProfile, isLoading: isUpdatingProfile } = useMutation(
-		updateProfileAPI,
-		{
-			onSuccess: () => {
-				setCurrentStep(4);
-			},
-			onError: (error) => {
-				showErrorNotification(notifications, error as AxiosError);
-
-				// Allow user to proceed even if API fails
-				setCurrentStep(4);
-			},
-		},
-	);
+	const { mutate: updateProfile, isLoading: isUpdatingProfile } =
+		usePutProfile<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: updateOrgPreference } = useMutation(updateOrgPreferenceAPI, {
 		onSuccess: () => {
@@ -167,28 +139,44 @@ function OnboardingQuestionaire(): JSX.Element {
 			nextPageID: 4,
 		});
 
-		updateProfile({
-			uses_otel: orgDetails?.usesOtel as boolean,
-			has_existing_observability_tool: orgDetails?.usesObservability as boolean,
-			existing_observability_tool:
-				orgDetails?.observabilityTool === 'Others'
-					? (orgDetails?.otherTool as string)
-					: (orgDetails?.observabilityTool as string),
-			where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
-			reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
-				'Others',
-			)
-				? ([
-						...(signozDetails?.interestInSignoz?.filter(
-							(item) => item !== 'Others',
-						) || []),
-						signozDetails?.otherInterestInSignoz,
-				  ] as string[])
-				: (signozDetails?.interestInSignoz as string[]),
-			logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
-			number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
-			number_of_services: optimiseSignozDetails?.services as number,
-		});
+		updateProfile(
+			{
+				data: {
+					uses_otel: orgDetails?.usesOtel as boolean,
+					has_existing_observability_tool: orgDetails?.usesObservability as boolean,
+					existing_observability_tool:
+						orgDetails?.observabilityTool === 'Others'
+							? (orgDetails?.otherTool as string)
+							: (orgDetails?.observabilityTool as string),
+					where_did_you_discover_signoz: signozDetails?.discoverSignoz as string,
+					timeline_for_migrating_to_signoz: orgDetails?.migrationTimeline as string,
+					reasons_for_interest_in_signoz: signozDetails?.interestInSignoz?.includes(
+						'Others',
+					)
+						? ([
+								...(signozDetails?.interestInSignoz?.filter(
+									(item) => item !== 'Others',
+								) || []),
+								signozDetails?.otherInterestInSignoz,
+							] as string[])
+						: (signozDetails?.interestInSignoz as string[]),
+					logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
+					number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,
+					number_of_services: optimiseSignozDetails?.services as number,
+				},
+			},
+			{
+				onSuccess: () => {
+					setCurrentStep(4);
+				},
+				onError: (error: any) => {
+					toast.error(error?.message || SOMETHING_WENT_WRONG);
+
+					// Allow user to proceed even if API fails
+					setCurrentStep(4);
+				},
+			},
+		);
 	};
 
 	const handleOnboardingComplete = (): void => {
@@ -208,7 +196,6 @@ function OnboardingQuestionaire(): JSX.Element {
 			<div className="onboarding-questionaire-content">
 				{currentStep === 1 && (
 					<OrgQuestions
-						currentOrgData={currentOrgData}
 						orgDetails={{
 							...orgDetails,
 							usesOtel: orgDetails.usesOtel ?? null,

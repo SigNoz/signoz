@@ -13,7 +13,7 @@
 
 	.ant-input-group-addon {
 		border: none;
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 	}
 	.search-header-icons {
 		cursor: pointer;
@@ -53,14 +53,6 @@
 
 .widget-api-actions {
 	padding-right: 0.25rem;
-}
-
-.lightMode {
-	.widget-header-container {
-		.ant-input-group-addon {
-			background-color: inherit;
-		}
-	}
 }
 
 .long-tooltip {

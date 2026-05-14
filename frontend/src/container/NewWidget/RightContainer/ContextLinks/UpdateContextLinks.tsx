@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-	Button,
-	Col,
-	Form,
-	Input as AntInput,
-	Input,
-	Row,
-	Typography,
-} from 'antd';
+import { Button, Col, Form, Input as AntInput, Input, Row } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {
 	getInitialValues,
@@ -16,8 +9,9 @@ import {
 	updateUrlWithParams,
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from '@signozhq/icons';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
+import { getBaseUrl } from 'utils/basePath';
 
 import VariablesDropdown from './VariablesDropdown';
 
@@ -84,7 +78,7 @@ function UpdateContextLinks({
 	);
 
 	// Function to get current domain
-	const getCurrentDomain = (): string => window.location.origin;
+	const getCurrentDomain = (): string => getBaseUrl();
 
 	// Function to handle variable selection from dropdown
 	const handleVariableSelect = (
@@ -98,8 +92,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update form value
@@ -131,8 +125,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update the parameter value
@@ -140,7 +134,7 @@ function UpdateContextLinks({
 	};
 
 	useEffect(() => {
-		((window as unknown) as Record<string, unknown>).form = form;
+		(window as unknown as Record<string, unknown>).form = form;
 	}, [form]);
 
 	// Parse URL and update params when URL changes
@@ -243,11 +237,9 @@ function UpdateContextLinks({
 											form.setFieldValue(CONTEXT_LINK_FIELDS.URL, e.target.value);
 										}}
 										onFocus={(): void => setIsOpen(true)}
-										// eslint-disable-next-line sonarjs/no-identical-functions
 										onClick={(e): void =>
 											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
 										}
-										// eslint-disable-next-line sonarjs/no-identical-functions
 										onKeyUp={(e): void =>
 											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
 										}
@@ -306,7 +298,6 @@ function UpdateContextLinks({
 														handleParamChange(index, 'value', event.target.value);
 													}}
 													onFocus={(): void => setIsOpen(true)}
-													// eslint-disable-next-line sonarjs/no-identical-functions
 													onClick={(e): void =>
 														setCursorPosition(
 															(e.target as HTMLTextAreaElement).selectionStart || 0,

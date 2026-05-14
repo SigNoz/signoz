@@ -1,7 +1,4 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/function-component-definition */
 import React, {
 	useCallback,
 	useEffect,
@@ -10,11 +7,14 @@ import React, {
 	useState,
 } from 'react';
 import {
-	CloseOutlined,
-	DownOutlined,
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+	ArrowDown,
+	ArrowUp,
+	ChevronDown,
+	Info,
+	Loader,
+	RefreshCw,
+	X,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';
@@ -22,7 +22,6 @@ import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -63,6 +62,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	showIncompleteDataMessage = false,
 	showRetryButton = true,
 	isDynamicVariable = false,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -114,23 +114,28 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	/**
 	 * Separates section and non-section options
 	 */
-	const splitOptions = useCallback((options: OptionData[]): {
-		sectionOptions: OptionData[];
-		nonSectionOptions: OptionData[];
-	} => {
-		const sectionOptions: OptionData[] = [];
-		const nonSectionOptions: OptionData[] = [];
+	const splitOptions = useCallback(
+		(
+			options: OptionData[],
+		): {
+			sectionOptions: OptionData[];
+			nonSectionOptions: OptionData[];
+		} => {
+			const sectionOptions: OptionData[] = [];
+			const nonSectionOptions: OptionData[] = [];
 
-		options.forEach((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				sectionOptions.push(option);
-			} else {
-				nonSectionOptions.push(option);
-			}
-		});
+			options.forEach((option) => {
+				if ('options' in option && Array.isArray(option.options)) {
+					sectionOptions.push(option);
+				} else {
+					nonSectionOptions.push(option);
+				}
+			});
 
-		return { sectionOptions, nonSectionOptions };
-	}, []);
+			return { sectionOptions, nonSectionOptions };
+		},
+		[],
+	);
 
 	/**
 	 * Apply search filtering to options
@@ -256,7 +261,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const clearIcon = useCallback(
 		() => (
-			<CloseOutlined
+			<X
+				size="md"
 				onClick={(e): void => {
 					e.stopPropagation();
 					if (onChange) {
@@ -324,9 +330,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						processedOptions = filterOptionsBySearch(processedOptions, searchText);
 					}
 
-					const { sectionOptions, nonSectionOptions } = splitOptions(
-						processedOptions,
-					);
+					const { sectionOptions, nonSectionOptions } =
+						splitOptions(processedOptions);
 
 					// Add custom option if needed
 					if (
@@ -568,6 +573,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -578,9 +584,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader size="md" className="animate-spin" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
+						</div>
+					)}
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<Loader size="md" className="animate-spin" />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
 						</div>
 					)}
 					{errorMessage && !loading && (
@@ -590,8 +606,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							</div>
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
-									<ReloadOutlined
-										twoToneColor={Color.BG_CHERRY_400}
+									<RefreshCw
+										data-testid="retry-button"
+										size="md"
+										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
 											onRetry();
@@ -605,6 +623,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -641,6 +660,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		showRetryButton,
 		isDarkMode,
 		isDynamicVariable,
+		waitingMessage,
 	]);
 
 	// Handle dropdown visibility changes
@@ -715,7 +735,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			popupMatchSelectWidth={popupMatchSelectWidth}
 			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+			suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-select-dropdown-container', popupClassName)}

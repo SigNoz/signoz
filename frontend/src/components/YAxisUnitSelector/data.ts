@@ -1,10 +1,11 @@
 import { Y_AXIS_UNIT_NAMES } from './constants';
+import { YAxisCategoryNames } from './constants';
 import { UniversalYAxisUnit, YAxisCategory } from './types';
 
 // Base categories for the universal y-axis units
 export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 	{
-		name: 'Time',
+		name: YAxisCategoryNames.Time,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.SECONDS],
@@ -37,7 +38,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Data',
+		name: YAxisCategoryNames.Data,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BYTES],
@@ -154,7 +155,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Data Rate',
+		name: YAxisCategoryNames.DataRate,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.BYTES_SECOND],
@@ -295,7 +296,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Count',
+		name: YAxisCategoryNames.Count,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.COUNT],
@@ -312,7 +313,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Operations',
+		name: YAxisCategoryNames.Operations,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.OPS_SECOND],
@@ -353,7 +354,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Percentage',
+		name: YAxisCategoryNames.Percentage,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT],
@@ -366,7 +367,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Boolean',
+		name: YAxisCategoryNames.Boolean,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TRUE_FALSE],
@@ -382,7 +383,7 @@ export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 
 export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 	{
-		name: 'Time',
+		name: YAxisCategoryNames.Time,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.DURATION_MS],
@@ -419,7 +420,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Data Rate',
+		name: YAxisCategoryNames.DataRate,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.DATA_RATE_PACKETS_PER_SECOND],
@@ -428,7 +429,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Boolean',
+		name: YAxisCategoryNames.Boolean,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ON_OFF],
@@ -437,7 +438,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'None',
+		name: YAxisCategoryNames.None,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NONE],
@@ -446,7 +447,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Hash Rate',
+		name: YAxisCategoryNames.HashRate,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.HASH_RATE_HASHES_PER_SECOND],
@@ -479,7 +480,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Miscellaneous',
+		name: YAxisCategoryNames.Miscellaneous,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MISC_STRING],
@@ -520,7 +521,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Acceleration',
+		name: YAxisCategoryNames.Acceleration,
 		units: [
 			{
 				name:
@@ -541,7 +542,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Angular',
+		name: YAxisCategoryNames.Angular,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.ANGULAR_DEGREE],
@@ -566,7 +567,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Area',
+		name: YAxisCategoryNames.Area,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.AREA_SQUARE_METERS],
@@ -583,7 +584,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'FLOPs',
+		name: YAxisCategoryNames.Flops,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.FLOPS_FLOPS],
@@ -620,7 +621,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Concentration',
+		name: YAxisCategoryNames.Concentration,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.CONCENTRATION_PPM],
@@ -677,7 +678,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Currency',
+		name: YAxisCategoryNames.Currency,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.CURRENCY_USD],
@@ -774,7 +775,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Datetime',
+		name: YAxisCategoryNames.Datetime,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.DATETIME_ISO],
@@ -811,7 +812,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Power/Electrical',
+		name: YAxisCategoryNames.PowerElectrical,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.POWER_WATT],
@@ -968,7 +969,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Flow',
+		name: YAxisCategoryNames.Flow,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.FLOW_GALLONS_PER_MINUTE],
@@ -1005,7 +1006,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Force',
+		name: YAxisCategoryNames.Force,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.FORCE_NEWTON_METERS],
@@ -1026,7 +1027,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Mass',
+		name: YAxisCategoryNames.Mass,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MASS_MILLIGRAM],
@@ -1051,7 +1052,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Length',
+		name: YAxisCategoryNames.Length,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.LENGTH_MILLIMETER],
@@ -1080,7 +1081,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Pressure',
+		name: YAxisCategoryNames.Pressure,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PRESSURE_MILLIBAR],
@@ -1117,7 +1118,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Radiation',
+		name: YAxisCategoryNames.Radiation,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.RADIATION_BECQUEREL],
@@ -1174,7 +1175,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Rotation Speed',
+		name: YAxisCategoryNames.RotationSpeed,
 		units: [
 			{
 				name:
@@ -1200,7 +1201,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Temperature',
+		name: YAxisCategoryNames.Temperature,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.TEMPERATURE_CELSIUS],
@@ -1217,7 +1218,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Velocity',
+		name: YAxisCategoryNames.Velocity,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.VELOCITY_METERS_PER_SECOND],
@@ -1238,7 +1239,7 @@ export const ADDITIONAL_Y_AXIS_CATEGORIES: YAxisCategory[] = [
 		],
 	},
 	{
-		name: 'Volume',
+		name: YAxisCategoryNames.Volume,
 		units: [
 			{
 				name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.VOLUME_MILLILITER],

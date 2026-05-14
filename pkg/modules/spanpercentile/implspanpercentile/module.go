@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -26,7 +28,11 @@ func NewModule(
 	}
 }
 
-func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
+func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "spanpercentile",
+		instrumentationtypes.CodeFunctionName: "GetSpanPercentile",
+	})
 	queryRangeRequest, err := buildSpanPercentileQuery(ctx, req)
 	if err != nil {
 		return nil, err
@@ -46,7 +52,7 @@ func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userI
 
 func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	if len(queryResult.Data.Results) == 0 {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no data returned from query")
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
 	scalarData, ok := queryResult.Data.Results[0].(*qbtypes.ScalarData)
@@ -55,7 +61,7 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 	}
 
 	if len(scalarData.Data) == 0 {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no rows returned from query")
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
 	row := scalarData.Data[0]

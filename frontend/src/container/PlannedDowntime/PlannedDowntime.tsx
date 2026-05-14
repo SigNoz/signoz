@@ -1,21 +1,21 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useHistory } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
-import getAll from 'api/alerts/getAll';
-import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
+import { Button, Flex, Form, Input, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
-	DowntimeSchedules,
-	useGetAllDowntimeSchedules,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
+	useDeleteDowntimeScheduleByID,
+	useListDowntimeSchedules,
+} from 'api/generated/services/downtimeschedules';
+import { useListRules } from 'api/generated/services/rules';
+import type { RuletypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { USER_ROLES } from 'types/roles';
 
 import 'dayjs/locale/en';
@@ -33,28 +33,33 @@ import './PlannedDowntime.styles.scss';
 dayjs.locale('en');
 
 export function PlannedDowntime(): JSX.Element {
-	const { data, isError, isLoading } = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
+	const {
+		data: alertsData,
+		isError,
+		isLoading,
+	} = useListRules({
+		query: { cacheTime: 0 },
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
+	const { showErrorModal } = useErrorModal();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
-	const [initialValues, setInitialValues] = useState<
-		Partial<DowntimeSchedules & { editMode: boolean }>
-	>(defautlInitialValues);
+	const [initialValues, setInitialValues] =
+		useState<Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>>(
+			defautlInitialValues,
+		);
 
-	const downtimeSchedules = useGetAllDowntimeSchedules();
+	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
-			data?.payload?.map((i) => ({
+			alertsData?.data?.map((i) => ({
 				label: i.alert,
 				value: i.id,
 			})),
-		[data],
+		[alertsData],
 	);
 
 	useEffect(() => {
@@ -66,7 +71,7 @@ export function PlannedDowntime(): JSX.Element {
 	const [searchValue, setSearchValue] = React.useState<string | number>(
 		urlQuery.get('search') || '',
 	);
-	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
+	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
@@ -105,12 +110,13 @@ export function PlannedDowntime(): JSX.Element {
 	const {
 		mutateAsync: deleteDowntimeScheduleAsync,
 		isLoading: isDeleteLoading,
-	} = useDeleteDowntimeSchedule({ id: deleteData?.id });
+	} = useDeleteDowntimeScheduleByID();
 
 	const onDeleteHandler = (): void => {
 		deleteDowntimeHandler({
 			deleteDowntimeScheduleAsync,
 			notifications,
+			showErrorModal,
 			refetchAllSchedules,
 			deleteId: deleteData?.id,
 			hideDeleteDowntimeScheduleModal,
@@ -140,7 +146,6 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => {
 								setInitialValues({ ...defautlInitialValues, editMode: false });
@@ -150,7 +155,10 @@ export function PlannedDowntime(): JSX.Element {
 							}}
 							disabled={user?.role === USER_ROLES.VIEWER}
 						>
-							New downtime
+							<Flex align="center" gap={4}>
+								<Plus size={16} />
+								New downtime
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

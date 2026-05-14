@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-use';
-import { Col, Input, Row, Tooltip, Typography } from 'antd';
+import { Col, Input, Row, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -24,6 +25,7 @@ import {
 	AggregatorFilter,
 	GroupByFilter,
 	HavingFilter,
+	MetricNameSelector,
 	OperatorsSelect,
 	OrderByFilter,
 	ReduceToFilter,
@@ -45,7 +47,6 @@ import { QueryProps } from './Query.interfaces';
 
 import './Query.styles.scss';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({
 	index,
 	queryVariant,
@@ -404,7 +405,7 @@ export const Query = memo(function Query({
 										)}
 
 										<Col flex="auto">
-											<AggregatorFilter
+											<MetricNameSelector
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>

@@ -6,9 +6,15 @@
 ##################### Global #####################
 global:
   # the url under which the signoz apiserver is externally reachable.
+  # the path component (e.g. /signoz in https://example.com/signoz) is used
+  # as the base path for all HTTP routes (both API and web frontend).
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
+  # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
+  # mcp_url: <unset>
+  # the url of the SigNoz AI Assistant server. when unset, the AI Assistant is hidden in the frontend.
+  # ai_assistant_url: <unset>
 
 ##################### Version #####################
 version:
@@ -39,12 +45,19 @@ instrumentation:
             host: "0.0.0.0"
             port: 9090
 
+##################### PProf #####################
+pprof:
+  # Whether to enable the pprof server.
+  enabled: true
+  # The address on which the pprof server listens.
+  address: 0.0.0.0:6060
+
 ##################### Web #####################
 web:
   # Whether to enable the web frontend
   enabled: true
-  # The prefix to serve web on
-  prefix: /
+  # The index file to use as the SPA entrypoint.
+  index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
 
@@ -75,13 +88,18 @@ sqlstore:
   provider: sqlite
   # The maximum number of open connections to the database.
   max_open_conns: 100
+  # The maximum amount of time a connection may be reused.
+  # If max_conn_lifetime == 0, connections are not closed due to a connection's age.
+  max_conn_lifetime: 0
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
-    # Mode is the mode to use for the sqlite database.
-    mode: delete
-    # BusyTimeout is the timeout for the sqlite database to wait for a lock.
+    # The journal mode for the sqlite database. Supported values: delete, wal.
+    mode: wal
+    # The timeout for the sqlite database to wait for a lock.
     busy_timeout: 10s
+    # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
+    transaction_mode: deferred
 
 ##################### APIServer #####################
 apiserver:
@@ -137,6 +155,8 @@ telemetrystore:
 
 ##################### Prometheus #####################
 prometheus:
+  # The maximum time a PromQL query is allowed to run before being aborted.
+  timeout: 2m
   active_query_tracker:
     # Whether to enable the active query tracker.
     enabled: true
@@ -193,6 +213,15 @@ emailing:
   templates:
     # The directory containing the email templates. This directory should contain a list of files defined at pkg/types/emailtypes/template.go.
     directory: /opt/signoz/conf/templates/email
+    format:
+      header:
+        enabled: false
+        logo_url: ""
+      help:
+        enabled: false
+        email: ""
+      footer:
+        enabled: false
   smtp:
     # The SMTP server address.
     address: localhost:25
@@ -285,7 +314,6 @@ flagger:
   config:
     boolean:
       use_span_metrics: true
-      interpolation_enabled: false
       kafka_span_eval: false
     string:
     float:
@@ -300,3 +328,111 @@ user:
       allow_self: true
       # The duration within which a user can reset their password.
       max_token_lifetime: 6h
+    invite:
+      # The duration within which a user can accept their invite.
+      max_token_lifetime: 48h
+  root:
+    # Whether to enable the root user. When enabled, a root user is provisioned
+    # on startup using the email and password below. The root user cannot be
+    # deleted, updated, or have their password changed through the UI.
+    enabled: false
+    # The email address of the root user.
+    email: ""
+    # The password of the root user. Must meet password requirements.
+    password: ""
+    # The name of the organization to create or look up for the root user.
+    org:
+      name: default
+      id: 00000000-0000-0000-0000-000000000000
+
+##################### IdentN #####################
+identn:
+  tokenizer:
+    # toggle tokenizer identN
+    enabled: true
+    # headers to use for tokenizer identN resolver
+    headers:
+      - Authorization
+      - Sec-WebSocket-Protocol
+  apikey:
+    # toggle apikey identN
+    enabled: true
+    # headers to use for apikey identN resolver
+    headers:
+      - SIGNOZ-API-KEY
+  impersonation:
+    # toggle impersonation identN, when enabled, all requests will impersonate the root user
+    enabled: false
+
+##################### Service Account #####################
+serviceaccount:
+  email:
+    # email domain for the service account principal
+    domain: signozserviceaccount.com
+
+  analytics:
+    # toggle service account analytics
+    enabled: true
+
+##################### Auditor #####################
+auditor:
+  # Specifies the auditor provider to use.
+  # noop: discards all audit events (community default).
+  # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  provider: noop
+  # The async channel capacity for audit events. Events are dropped when full (fail-open).
+  buffer_size: 1000
+  # The maximum number of events per export batch.
+  batch_size: 100
+  # The maximum time between export flushes.
+  flush_interval: 1s
+  otlphttp:
+    # The target scheme://host:port/path of the OTLP HTTP endpoint.
+    endpoint: http://localhost:4318/v1/logs
+    # Whether to use HTTP instead of HTTPS.
+    insecure: false
+    # The maximum duration for an export attempt.
+    timeout: 10s
+    # Additional HTTP headers sent with every export request.
+    headers: {}
+    retry:
+      # Whether to retry on transient failures.
+      enabled: true
+      # The initial wait time before the first retry.
+      initial_interval: 5s
+      # The upper bound on backoff interval.
+      max_interval: 30s
+      # The total maximum time spent retrying.
+      max_elapsed_time: 60s
+
+##################### Cloud Integration #####################
+cloudintegration:
+  # cloud integration agent configuration
+  agent:
+    # The version of the cloud integration agent.
+    version: v0.0.8
+
+##################### Trace Detail #####################
+tracedetail:
+  waterfall:
+    # Number of spans returned per request when the trace is too large to show all at once.
+    span_page_size: 500
+    # Maximum depth of descendents to auto-expand for the selected span.
+    max_depth_to_auto_expand: 5
+    # Threshold below which all spans are returned without windowing.
+    max_limit_to_select_all_spans: 10000
+
+##################### Authz #################################
+authz:
+  # Specifies the authz provider to use.
+  provider: openfga
+  openfga:
+    # maximum tuples allowed per openfga write operation.
+    max_tuples_per_write: 300
+
+##################### Meter Reporter #####################
+meterreporter:
+  # The interval between collection ticks. Minimum 5m.
+  interval: 6h
+  # Whether to backfill sealed days from the license creation day.
+  backfill: true

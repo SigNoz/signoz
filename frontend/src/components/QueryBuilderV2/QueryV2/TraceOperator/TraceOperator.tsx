@@ -1,12 +1,10 @@
-/* eslint-disable react/require-default-props */
-/* eslint-disable sonarjs/no-duplicate-string */
-
 import { useCallback } from 'react';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from '@signozhq/icons';
 import {
 	IBuilderQuery,
 	IBuilderTraceOperator,

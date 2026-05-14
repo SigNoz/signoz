@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -16,12 +18,12 @@ var (
 	movingAvgWindowSize = 7
 )
 
-// BaseProvider is an interface that includes common methods for all provider types
+// BaseProvider is an interface that includes common methods for all provider types.
 type BaseProvider interface {
 	GetBaseSeasonalProvider() *BaseSeasonalProvider
 }
 
-// GenericProviderOption is a generic type for provider options
+// GenericProviderOption is a generic type for provider options.
 type GenericProviderOption[T BaseProvider] func(T)
 
 func WithQuerier[T BaseProvider](querier querier.Querier) GenericProviderOption[T] {
@@ -67,38 +69,42 @@ func (p *BaseSeasonalProvider) toTSResults(ctx context.Context, resp *qbtypes.Qu
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID, params *anomalyQueryParams) (*anomalyQueryResults, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "anomaly",
+		instrumentationtypes.CodeFunctionName: "getResults",
+	})
 	// TODO(srikanthccv): parallelize this?
-	p.logger.InfoContext(ctx, "fetching results for current period", "anomaly_current_period_query", params.CurrentPeriodQuery)
+	p.logger.InfoContext(ctx, "fetching results for current period", slog.Any("anomaly_current_period_query", params.CurrentPeriodQuery))
 	currentPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	p.logger.InfoContext(ctx, "fetching results for past period", "anomaly_past_period_query", params.PastPeriodQuery)
+	p.logger.InfoContext(ctx, "fetching results for past period", slog.Any("anomaly_past_period_query", params.PastPeriodQuery))
 	pastPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	p.logger.InfoContext(ctx, "fetching results for current season", "anomaly_current_season_query", params.CurrentSeasonQuery)
+	p.logger.InfoContext(ctx, "fetching results for current season", slog.Any("anomaly_current_season_query", params.CurrentSeasonQuery))
 	currentSeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	p.logger.InfoContext(ctx, "fetching results for past season", "anomaly_past_season_query", params.PastSeasonQuery)
+	p.logger.InfoContext(ctx, "fetching results for past season", slog.Any("anomaly_past_season_query", params.PastSeasonQuery))
 	pastSeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	p.logger.InfoContext(ctx, "fetching results for past 2 season", "anomaly_past_2season_query", params.Past2SeasonQuery)
+	p.logger.InfoContext(ctx, "fetching results for past 2 season", slog.Any("anomaly_past_2season_query", params.Past2SeasonQuery))
 	past2SeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.Past2SeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	p.logger.InfoContext(ctx, "fetching results for past 3 season", "anomaly_past_3season_query", params.Past3SeasonQuery)
+	p.logger.InfoContext(ctx, "fetching results for past 3 season", slog.Any("anomaly_past_3season_query", params.Past3SeasonQuery))
 	past3SeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.Past3SeasonQuery)
 	if err != nil {
 		return nil, err
@@ -115,7 +121,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 }
 
 // getMatchingSeries gets the matching series from the query result
-// for the given series
+// for the given series.
 func (p *BaseSeasonalProvider) getMatchingSeries(_ context.Context, queryResult *qbtypes.TimeSeriesData, series *qbtypes.TimeSeries) *qbtypes.TimeSeries {
 	if queryResult == nil || len(queryResult.Aggregations) == 0 || len(queryResult.Aggregations[0].Series) == 0 {
 		return nil
@@ -149,13 +155,14 @@ func (p *BaseSeasonalProvider) getStdDev(series *qbtypes.TimeSeries) float64 {
 	avg := p.getAvg(series)
 	var sum float64
 	for _, smpl := range series.Values {
-		sum += math.Pow(smpl.Value-avg, 2)
+		d := smpl.Value - avg
+		sum += d * d
 	}
 	return math.Sqrt(sum / float64(len(series.Values)))
 }
 
 // getMovingAvg gets the moving average for the given series
-// for the given window size and start index
+// for the given window size and start index.
 func (p *BaseSeasonalProvider) getMovingAvg(series *qbtypes.TimeSeries, movingAvgWindowSize, startIdx int) float64 {
 	if series == nil || len(series.Values) == 0 {
 		return 0
@@ -206,17 +213,17 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 		if predictedValue < 0 {
 			// this should not happen (except when the data has extreme outliers)
 			// we will use the moving avg of the previous period series in this case
-			p.logger.WarnContext(ctx, "predicted value is less than 0 for series", "anomaly_predicted_value", predictedValue, "anomaly_labels", series.Labels)
+			p.logger.WarnContext(ctx, "predicted value is less than 0 for series", slog.Float64("anomaly_predicted_value", predictedValue), slog.Any("anomaly_labels", series.Labels))
 			predictedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 		}
 
 		p.logger.DebugContext(ctx, "predicted value for series",
-			"anomaly_moving_avg", movingAvg,
-			"anomaly_avg", avg,
-			"anomaly_mean", mean,
-			"anomaly_labels", series.Labels,
-			"anomaly_predicted_value", predictedValue,
-			"anomaly_curr", curr.Value,
+			slog.Float64("anomaly_moving_avg", movingAvg),
+			slog.Float64("anomaly_avg", avg),
+			slog.Float64("anomaly_mean", mean),
+			slog.Any("anomaly_labels", series.Labels),
+			slog.Float64("anomaly_predicted_value", predictedValue),
+			slog.Float64("anomaly_curr", curr.Value),
 		)
 		predictedSeries.Values = append(predictedSeries.Values, &qbtypes.TimeSeriesValue{
 			Timestamp: curr.Timestamp,
@@ -230,7 +237,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 // getBounds gets the upper and lower bounds for the given series
 // for the given z score threshold
 // moving avg of the previous period series + z score threshold * std dev of the series
-// moving avg of the previous period series - z score threshold * std dev of the series
+// moving avg of the previous period series - z score threshold * std dev of the series.
 func (p *BaseSeasonalProvider) getBounds(
 	series, predictedSeries, weekSeries *qbtypes.TimeSeries,
 	zScoreThreshold float64,
@@ -263,7 +270,7 @@ func (p *BaseSeasonalProvider) getBounds(
 
 // getExpectedValue gets the expected value for the given series
 // for the given index
-// prevSeriesAvg + currentSeasonSeriesAvg - mean of past season series, past2 season series and past3 season series
+// prevSeriesAvg + currentSeasonSeriesAvg - mean of past season series, past2 season series and past3 season series.
 func (p *BaseSeasonalProvider) getExpectedValue(
 	_, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries, idx int,
 ) float64 {
@@ -277,7 +284,7 @@ func (p *BaseSeasonalProvider) getExpectedValue(
 
 // getScore gets the anomaly score for the given series
 // for the given index
-// (value - expectedValue) / std dev of the series
+// (value - expectedValue) / std dev of the series.
 func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries, value float64, idx int,
 ) float64 {
@@ -290,7 +297,7 @@ func (p *BaseSeasonalProvider) getScore(
 
 // getAnomalyScores gets the anomaly scores for the given series
 // for the given index
-// (value - expectedValue) / std dev of the series
+// (value - expectedValue) / std dev of the series.
 func (p *BaseSeasonalProvider) getAnomalyScores(
 	series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries,
 ) *qbtypes.TimeSeries {
@@ -406,7 +413,7 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			past3SeasonSeries := p.getMatchingSeries(ctx, past3SeasonResult, series)
 
 			stdDev := p.getStdDev(currentSeasonSeries)
-			p.logger.InfoContext(ctx, "calculated standard deviation for series", "anomaly_std_dev", stdDev, "anomaly_labels", series.Labels)
+			p.logger.InfoContext(ctx, "calculated standard deviation for series", slog.Float64("anomaly_std_dev", stdDev), slog.Any("anomaly_labels", series.Labels))
 
 			prevSeriesAvg := p.getAvg(pastPeriodSeries)
 			currentSeasonSeriesAvg := p.getAvg(currentSeasonSeries)
@@ -414,12 +421,12 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			past2SeasonSeriesAvg := p.getAvg(past2SeasonSeries)
 			past3SeasonSeriesAvg := p.getAvg(past3SeasonSeries)
 			p.logger.InfoContext(ctx, "calculated mean for series",
-				"anomaly_prev_series_avg", prevSeriesAvg,
-				"anomaly_current_season_series_avg", currentSeasonSeriesAvg,
-				"anomaly_past_season_series_avg", pastSeasonSeriesAvg,
-				"anomaly_past_2season_series_avg", past2SeasonSeriesAvg,
-				"anomaly_past_3season_series_avg", past3SeasonSeriesAvg,
-				"anomaly_labels", series.Labels,
+				slog.Float64("anomaly_prev_series_avg", prevSeriesAvg),
+				slog.Float64("anomaly_current_season_series_avg", currentSeasonSeriesAvg),
+				slog.Float64("anomaly_past_season_series_avg", pastSeasonSeriesAvg),
+				slog.Float64("anomaly_past_2season_series_avg", past2SeasonSeriesAvg),
+				slog.Float64("anomaly_past_3season_series_avg", past3SeasonSeriesAvg),
+				slog.Any("anomaly_labels", series.Labels),
 			)
 
 			predictedSeries := p.getPredictedSeries(

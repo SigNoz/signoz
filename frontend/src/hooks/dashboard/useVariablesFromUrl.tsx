@@ -11,7 +11,7 @@ export interface LocalStoreDashboardVariables {
 		| IDashboardVariable['selectedValue'];
 }
 
-interface UseVariablesFromUrlReturn {
+export interface UseVariablesFromUrlReturn {
 	getUrlVariables: () => LocalStoreDashboardVariables;
 	setUrlVariables: (variables: LocalStoreDashboardVariables) => void;
 	updateUrlVariable: (
@@ -32,7 +32,14 @@ const useVariablesFromUrl = (): UseVariablesFromUrlReturn => {
 		}
 
 		try {
-			return JSON.parse(decodeURIComponent(variablesParam));
+			const decoded = ((): string => {
+				try {
+					return decodeURIComponent(variablesParam);
+				} catch {
+					return variablesParam;
+				}
+			})();
+			return JSON.parse(decoded);
 		} catch (error) {
 			Sentry.captureEvent({
 				message: `Failed to parse dashboard variables from URL: ${error}`,

@@ -1,4 +1,7 @@
-import { ColumnGroupType, ColumnType } from 'antd/lib/table/interface';
+import {
+	TableColumnGroupType as ColumnGroupType,
+	TableColumnType as ColumnType,
+} from 'antd/';
 import {
 	HistoryData,
 	PipelineData,
@@ -127,6 +130,6 @@ export const formValidationRules = [
 	},
 ];
 
-export const iconStyle = { fontSize: '1.5rem' };
-export const smallIconStyle = { fontSize: '1rem' };
+export const iconStyle = { fontSize: '1rem' };
+export const smallIconStyle = { fontSize: '0.75rem' };
 export const holdIconStyle = { ...iconStyle, cursor: 'move' };

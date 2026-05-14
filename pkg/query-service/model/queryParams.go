@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type InstantQueryMetricsParams struct {
@@ -333,10 +335,15 @@ type GetWaterfallSpansForTraceWithMetadataParams struct {
 	SelectedSpanID              string   `json:"selectedSpanId"`
 	IsSelectedSpanIDUnCollapsed bool     `json:"isSelectedSpanIDUnCollapsed"`
 	UncollapsedSpans            []string `json:"uncollapsedSpans"`
+	Limit                       uint     `json:"limit"`
 }
 
 type GetFlamegraphSpansForTraceParams struct {
-	SelectedSpanID string `json:"selectedSpanId"`
+	SelectedSpanID  string                             `json:"selectedSpanId"`
+	Limit           uint                               `json:"limit"`
+	BoundaryStartTS uint64                             `json:"boundaryStartTsMilli"`
+	BoundaryEndTS   uint64                             `json:"boundarEndTsMilli"`
+	SelectFields    []telemetrytypes.TelemetryFieldKey `json:"selectFields"`
 }
 
 type SpanFilterParams struct {
@@ -395,56 +402,6 @@ const (
 type TagKey struct {
 	Key  string      `json:"key"`
 	Type TagDataType `json:"type"`
-}
-
-type TTLParams struct {
-	Type                  string // It can be one of {traces, metrics}.
-	ColdStorageVolume     string // Name of the cold storage volume.
-	ToColdStorageDuration int64  // Seconds after which data will be moved to cold storage.
-	DelDuration           int64  // Seconds after which data will be deleted.
-}
-
-type CustomRetentionTTLParams struct {
-	Type                      string                `json:"type"`
-	DefaultTTLDays            int                   `json:"defaultTTLDays"`
-	TTLConditions             []CustomRetentionRule `json:"ttlConditions"`
-	ColdStorageVolume         string                `json:"coldStorageVolume,omitempty"`
-	ToColdStorageDurationDays int64                 `json:"coldStorageDurationDays,omitempty"`
-}
-
-type CustomRetentionRule struct {
-	Filters []FilterCondition `json:"conditions"`
-	TTLDays int               `json:"ttlDays"`
-}
-
-type FilterCondition struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
-}
-
-type GetCustomRetentionTTLResponse struct {
-	Version string `json:"version"`
-	Status  string `json:"status"`
-
-	// V1 fields
-	// LogsTime             int `json:"logs_ttl_duration_hrs,omitempty"`
-	// LogsMoveTime         int `json:"logs_move_ttl_duration_hrs,omitempty"`
-	ExpectedLogsTime     int `json:"expected_logs_ttl_duration_hrs,omitempty"`
-	ExpectedLogsMoveTime int `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
-
-	// V2 fields
-	DefaultTTLDays     int                   `json:"default_ttl_days,omitempty"`
-	TTLConditions      []CustomRetentionRule `json:"ttl_conditions,omitempty"`
-	ColdStorageVolume  string                `json:"cold_storage_volume,omitempty"`
-	ColdStorageTTLDays int                   `json:"cold_storage_ttl_days,omitempty"`
-}
-
-type CustomRetentionTTLResponse struct {
-	Message string `json:"message"`
-}
-
-type GetTTLParams struct {
-	Type string
 }
 
 type ListErrorsParams struct {

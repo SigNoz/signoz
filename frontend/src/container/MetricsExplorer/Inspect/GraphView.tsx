@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Skeleton, Switch, Typography } from 'antd';
+import { Button, Skeleton, Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -13,9 +15,10 @@ import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
+import HoverPopover from './HoverPopover';
 import TableView from './TableView';
 import { GraphPopoverOptions, GraphViewProps } from './types';
-import { HoverPopover, onGraphClick, onGraphHover } from './utils';
+import { onGraphClick, onGraphHover } from './utils';
 
 function GraphView({
 	inspectMetricsTimeSeries,
@@ -29,7 +32,7 @@ function GraphView({
 	popoverOptions,
 	setShowExpandedView,
 	setExpandedViewOptions,
-	metricInspectionOptions,
+	metricInspectionAppliedOptions,
 	isInspectMetricsRefetching,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -38,16 +41,15 @@ function GraphView({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const start = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
+	const start = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
 	const [showHoverPopover, setShowHoverPopover] = useState(false);
-	const [
-		hoverPopoverOptions,
-		setHoverPopoverOptions,
-	] = useState<GraphPopoverOptions | null>(null);
+	const [hoverPopoverOptions, setHoverPopoverOptions] =
+		useState<GraphPopoverOptions | null>(null);
 	const [viewType, setViewType] = useState<'graph' | 'table'>('graph');
 
 	const popoverRef = useRef<HTMLDivElement>(null);
@@ -233,7 +235,7 @@ function GraphView({
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						setShowExpandedView={setShowExpandedView}
 						setExpandedViewOptions={setExpandedViewOptions}
-						metricInspectionOptions={metricInspectionOptions}
+						metricInspectionAppliedOptions={metricInspectionAppliedOptions}
 						isInspectMetricsRefetching={isInspectMetricsRefetching}
 					/>
 				)}
@@ -255,7 +257,7 @@ function GraphView({
 				<HoverPopover
 					options={hoverPopoverOptions}
 					step={inspectionStep}
-					metricInspectionOptions={metricInspectionOptions}
+					metricInspectionAppliedOptions={metricInspectionAppliedOptions}
 				/>
 			)}
 		</div>

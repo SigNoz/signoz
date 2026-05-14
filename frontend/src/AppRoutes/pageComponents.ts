@@ -65,6 +65,13 @@ export const TraceDetail = Loadable(
 		),
 );
 
+export const TraceDetailV3 = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+		),
+);
+
 export const UsageExplorerPage = Loadable(
 	() => import(/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage'),
 );
@@ -157,17 +164,8 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
-export const APIKeys = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
-);
-
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
-);
-
-export const CustomDomainSettings = Loadable(
-	() =>
-		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
 );
 
 export const Logs = Loadable(
@@ -192,6 +190,10 @@ export const PipelinePage = Loadable(
 
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
+);
+
+export const ForgotPassword = Loadable(
+	() => import(/* webpackChunkName: "ForgotPassword" */ 'pages/ForgotPassword'),
 );
 
 export const UnAuthorized = Loadable(
@@ -249,10 +251,16 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
-export const InstalledIntegrations = Loadable(
+export const Integrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
 		),
 );
 
@@ -302,5 +310,24 @@ export const PublicDashboardPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
+		),
+);
+
+export const AlertTypeSelectionPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Alert Type Selection Page" */ 'pages/AlertTypeSelection'
+		),
+);
+
+export const MeterExplorerPage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
+);
+
+export const AIAssistantPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
 		),
 );

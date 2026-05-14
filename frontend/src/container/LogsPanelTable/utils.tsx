@@ -1,8 +1,7 @@
 import { ReactNode } from 'react';
-import { ColumnsType } from 'antd/es/table';
-import { Typography } from 'antd/lib';
+import { TableColumnsType as ColumnsType } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-// import Typography from 'antd/es/typography/Typography';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
@@ -36,9 +35,9 @@ export const getLogPanelColumnsList = (
 
 					if (name === 'body') {
 						return (
-							<Typography.Paragraph ellipsis={{ rows: 1 }} data-testid={name}>
+							<Typography.Text truncate={1} data-testid={name}>
 								{value}
-							</Typography.Paragraph>
+							</Typography.Text>
 						);
 					}
 

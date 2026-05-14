@@ -31,6 +31,13 @@ var (
 	TreemapModeSamples = TreemapMode{valuer.NewString("samples")}
 )
 
+func (TreemapMode) Enum() []any {
+	return []any{
+		TreemapModeTimeSeries,
+		TreemapModeSamples,
+	}
+}
+
 // StatsRequest represents the payload accepted by the metrics stats endpoint.
 type StatsRequest struct {
 	Filter  *qbtypes.Filter  `json:"filter,omitempty"`
@@ -98,7 +105,7 @@ func (req *StatsRequest) UnmarshalJSON(data []byte) error {
 type Stat struct {
 	MetricName  string           `json:"metricName" required:"true"`
 	Description string           `json:"description" required:"true"`
-	MetricType  metrictypes.Type `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	MetricType  metrictypes.Type `json:"type" required:"true"`
 	MetricUnit  string           `json:"unit" required:"true"`
 	TimeSeries  uint64           `json:"timeseries" required:"true"`
 	Samples     uint64           `json:"samples" required:"true"`
@@ -112,18 +119,18 @@ type StatsResponse struct {
 
 type MetricMetadata struct {
 	Description string                  `json:"description" required:"true"`
-	MetricType  metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	MetricType  metrictypes.Type        `json:"type" required:"true"`
 	MetricUnit  string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
-// MarshalBinary implements cachetypes.Cacheable interface
+// MarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// UnmarshalBinary implements cachetypes.Cacheable interface
+// UnmarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, m)
 }
@@ -131,10 +138,10 @@ func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 // UpdateMetricMetadataRequest represents the payload for updating metric metadata.
 type UpdateMetricMetadataRequest struct {
 	MetricName  string                  `json:"metricName" required:"true"`
-	Type        metrictypes.Type        `json:"type" required:"true" enum:"gauge,sum,histogram,summary,exponentialhistogram"`
+	Type        metrictypes.Type        `json:"type" required:"true"`
 	Description string                  `json:"description" required:"true"`
 	Unit        string                  `json:"unit" required:"true"`
-	Temporality metrictypes.Temporality `json:"temporality" required:"true" enum:"delta,cumulative,unspecified"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
@@ -144,7 +151,7 @@ type TreemapRequest struct {
 	Start  int64           `json:"start" required:"true"`
 	End    int64           `json:"end" required:"true"`
 	Limit  int             `json:"limit" required:"true"`
-	Mode   TreemapMode     `json:"mode" required:"true" enum:"timeseries,samples"`
+	Mode   TreemapMode     `json:"mode" required:"true"`
 }
 
 // Validate enforces basic constraints on TreemapRequest.
@@ -253,21 +260,17 @@ type MetricHighlightsResponse struct {
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
-// MetricAttributesRequest represents the payload for the metric attributes endpoint.
+// MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"metricName" required:"true"`
-	Start      *int64 `json:"start,omitempty"`
-	End        *int64 `json:"end,omitempty"`
+	MetricName string `json:"-"`
+	Start      *int64 `query:"start"`
+	End        *int64 `query:"end"`
 }
 
 // Validate ensures MetricAttributesRequest contains acceptable values.
 func (req *MetricAttributesRequest) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.MetricName == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
 	}
 
 	if req.Start != nil && req.End != nil {
@@ -277,17 +280,6 @@ func (req *MetricAttributesRequest) Validate() error {
 	}
 
 	return nil
-}
-
-// UnmarshalJSON validates input immediately after decoding.
-func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
-	type raw MetricAttributesRequest
-	var decoded raw
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		return err
-	}
-	*req = MetricAttributesRequest(decoded)
-	return req.Validate()
 }
 
 // MetricAttribute represents a single attribute with its values and count.
@@ -303,6 +295,85 @@ type MetricAttributesResponse struct {
 	TotalKeys  int64             `json:"totalKeys" required:"true"`
 }
 
-type MetricNameParams struct {
-	MetricName string `query:"metricName" required:"true"`
+// ListMetricsParams represents the query parameters for the list metrics endpoint.
+type ListMetricsParams struct {
+	Start  *int64 `query:"start"`
+	End    *int64 `query:"end"`
+	Limit  int    `query:"limit"`
+	Search string `query:"searchText"`
+	Source string `query:"source"`
+}
+
+// Validate ensures ListMetricsParams contains acceptable values.
+func (p *ListMetricsParams) Validate() error {
+	if p.Start != nil && *p.Start <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be greater than 0")
+	}
+	if p.End != nil && *p.End <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end must be greater than 0")
+	}
+	if p.Start != nil && p.End != nil && *p.Start >= *p.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *p.Start, *p.End)
+	}
+	if p.Limit < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be negative")
+	}
+	if p.Limit == 0 {
+		p.Limit = 100
+	}
+	if p.Limit > 5000 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must not exceed 5000")
+	}
+	return nil
+}
+
+// ListMetric represents a single metric with its metadata in the list metrics response.
+type ListMetric struct {
+	MetricName  string                  `json:"metricName" required:"true"`
+	Description string                  `json:"description" required:"true"`
+	MetricType  metrictypes.Type        `json:"type" required:"true"`
+	MetricUnit  string                  `json:"unit" required:"true"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
+	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
+}
+
+// ListMetricsResponse represents the response for the list metrics endpoint.
+type ListMetricsResponse struct {
+	Metrics []ListMetric `json:"metrics" required:"true" nullable:"true"`
+}
+
+// MetricsOnboardingResponse is the response for the lightweight metrics onboarding check.
+type MetricsOnboardingResponse struct {
+	HasMetrics bool `json:"hasMetrics" required:"true"`
+}
+
+// InspectMetricsRequest is the request for inspecting raw metric data points.
+type InspectMetricsRequest struct {
+	MetricName string          `json:"metricName" required:"true"`
+	Start      int64           `json:"start" required:"true"`
+	End        int64           `json:"end" required:"true"`
+	Filter     *qbtypes.Filter `json:"filter,omitempty"`
+}
+
+// Validate ensures the request is valid.
+func (r *InspectMetricsRequest) Validate() error {
+	if r.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	if r.Start <= 0 || r.End <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end must be positive")
+	}
+	if r.Start >= r.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be less than end")
+	}
+	maxRange := int64(30 * 60 * 1000) // 30 minutes in milliseconds
+	if r.End-r.Start > maxRange {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "time range must not exceed 30 minutes")
+	}
+	return nil
+}
+
+// InspectMetricsResponse is the response for the inspect metrics endpoint.
+type InspectMetricsResponse struct {
+	Series []*qbtypes.TimeSeries `json:"series" required:"true" nullable:"true"`
 }

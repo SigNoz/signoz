@@ -10,6 +10,7 @@ import (
 
 // Handler exposes HTTP handlers for the metrics module.
 type Handler interface {
+	ListMetrics(http.ResponseWriter, *http.Request)
 	GetStats(http.ResponseWriter, *http.Request)
 	GetTreemap(http.ResponseWriter, *http.Request)
 	GetMetricMetadata(http.ResponseWriter, *http.Request)
@@ -18,10 +19,14 @@ type Handler interface {
 	GetMetricAlerts(http.ResponseWriter, *http.Request)
 	GetMetricDashboards(http.ResponseWriter, *http.Request)
 	GetMetricHighlights(http.ResponseWriter, *http.Request)
+	GetOnboardingStatus(http.ResponseWriter, *http.Request)
+	InspectMetrics(http.ResponseWriter, *http.Request)
 }
 
 // Module represents the metrics module interface.
 type Module interface {
+	CheckMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) (bool, error)
+	ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error)
 	GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error)
 	GetTreemap(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.TreemapRequest) (*metricsexplorertypes.TreemapResponse, error)
 	GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error)
@@ -30,4 +35,6 @@ type Module interface {
 	GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error)
 	GetMetricHighlights(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricHighlightsResponse, error)
 	GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error)
+	HasNonSigNozMetrics(ctx context.Context) (bool, error)
+	InspectMetrics(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.InspectMetricsRequest) (*metricsexplorertypes.InspectMetricsResponse, error)
 }

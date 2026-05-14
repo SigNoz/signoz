@@ -1,8 +1,8 @@
 .funnel-metrics {
-	background: var(--bg-ink-500);
+	background: var(--l1-background);
 	border-radius: 6px;
 	box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 	&--loading-state,
 	&--empty-state {
 		padding: 16px;
@@ -13,11 +13,11 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 14px 16px;
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	&__title {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 22px;
@@ -31,7 +31,7 @@
 		gap: 8px;
 
 		&-label {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			line-height: 22px; /* 157.143% */
@@ -39,7 +39,7 @@
 		}
 
 		&-value {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-family: 'Geist Mono';
 			font-size: 14px;
 			font-style: normal;
@@ -60,10 +60,10 @@
 		gap: 26px;
 		padding: 14px 16px;
 		&:not(:last-child) {
-			border-right: 1px solid var(--bg-slate-500);
+			border-right: 1px solid var(--l1-border);
 		}
 		&-title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 14px;
 			line-height: 22px; /* 157.143% */
 			letter-spacing: -0.07px;
@@ -71,52 +71,11 @@
 
 		&-value,
 		&-unit {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: 'Geist Mono';
 			font-size: 14px;
 			line-height: 22px; /* 157.143% */
 			letter-spacing: -0.07px;
-		}
-	}
-}
-
-.lightMode {
-	.funnel-metrics {
-		background: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-vanilla-300);
-		box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.05);
-
-		&__header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-		}
-
-		&__title {
-			color: var(--text-ink-300);
-		}
-
-		&__subtitle {
-			&-label {
-				color: var(--text-ink-300);
-			}
-
-			&-value {
-				color: var(--text-ink-500);
-			}
-		}
-
-		&__item {
-			&:not(:last-child) {
-				border-right: 1px solid var(--bg-vanilla-300);
-			}
-
-			&-title {
-				color: var(--text-ink-500);
-			}
-
-			&-value,
-			&-unit {
-				color: var(--text-ink-300);
-			}
 		}
 	}
 }

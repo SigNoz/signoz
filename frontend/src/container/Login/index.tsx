@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { Button } from '@signozhq/button';
-import { Form, Input, Select, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Form, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
@@ -10,10 +11,12 @@ import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
+
+import tvUrl from '@/assets/svgs/tv.svg';
 
 import { FormContainer, Label, ParentContainer } from './styles';
 
@@ -58,10 +61,8 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
-	const [
-		sessionsContextLoading,
-		setIsLoadingSessionsContext,
-	] = useState<boolean>(false);
+	const [sessionsContextLoading, setIsLoadingSessionsContext] =
+		useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 
@@ -211,6 +212,7 @@ function Login(): JSX.Element {
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
 
+				// oxlint-disable-next-line signoz/no-raw-absolute-path
 				window.location.href = url;
 			}
 		} catch (error) {
@@ -219,6 +221,20 @@ function Login(): JSX.Element {
 			setIsSubmitting(false);
 		}
 	};
+
+	const handleForgotPasswordClick = useCallback((): void => {
+		const email = form.getFieldValue('email');
+
+		if (!email || !sessionsContext || !sessionsContext?.orgs?.length) {
+			return;
+		}
+
+		history.push(ROUTES.FORGOT_PASSWORD, {
+			email,
+			orgId: sessionsOrgId,
+			orgs: sessionsContext.orgs,
+		});
+	}, [form, sessionsContext, sessionsOrgId]);
 
 	useEffect(() => {
 		if (callbackAuthError) {
@@ -291,15 +307,15 @@ function Login(): JSX.Element {
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
 					<div className="login-form-emoji">
-						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
 					<Typography.Title level={4} className="login-form-title">
 						Sign in to your workspace
 					</Typography.Title>
-					<Typography.Paragraph className="login-form-description">
+					<Typography.Text className="login-form-description">
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
-					</Typography.Paragraph>
+					</Typography.Text>
 				</div>
 
 				<div className="login-form-card">
@@ -312,7 +328,6 @@ function Login(): JSX.Element {
 								data-testid="email"
 								required
 								placeholder="e.g. john@signoz.io"
-								autoFocus
 								disabled={versionLoading}
 								className="login-form-input"
 								onPressEnter={onNextHandler}
@@ -345,11 +360,15 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
-								<Tooltip title="Ask your admin to reset your password and send you a new invite link">
-									<Typography.Link className="forgot-password-link">
-										Forgot password?
-									</Typography.Link>
-								</Tooltip>
+								<Typography.Link
+									className="forgot-password-link"
+									onClick={(event): void => {
+										event.preventDefault();
+										handleForgotPasswordClick();
+									}}
+								>
+									Forgot password?
+								</Typography.Link>
 							</div>
 							<FormContainer.Item name="password">
 								<Input.Password
@@ -373,9 +392,9 @@ function Login(): JSX.Element {
 							disabled={!isNextButtonEnabled}
 							variant="solid"
 							onClick={onNextHandler}
-							data-testid="initiate_login"
+							testId="initiate_login"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Next
 						</Button>
@@ -387,10 +406,10 @@ function Login(): JSX.Element {
 							variant="solid"
 							type="submit"
 							color="primary"
-							data-testid="callback_authn_submit"
+							testId="callback_authn_submit"
 							data-attr="signup"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Sign in with SSO
 						</Button>
@@ -401,11 +420,11 @@ function Login(): JSX.Element {
 							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							color="primary"
-							data-testid="password_authn_submit"
+							testId="password_authn_submit"
 							type="submit"
 							data-attr="signup"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Sign in with Password
 						</Button>

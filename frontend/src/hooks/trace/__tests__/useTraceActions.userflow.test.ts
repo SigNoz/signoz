@@ -53,7 +53,6 @@ const mockAggregateKeysResponse = {
 	payload: {
 		attributeKeys: [
 			{
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				key: 'http.method',
 				dataType: 'string',
 				type: 'tag',

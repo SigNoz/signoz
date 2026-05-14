@@ -122,7 +122,7 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusOK, response)
+	render.Success(rw, http.StatusCreated, response)
 }
 
 func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Request) {

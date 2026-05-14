@@ -3,10 +3,9 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 
 function useFetch<PayloadProps, FunctionParams>(
 	functions: {
-		(props: FunctionParams): Promise<
-			SuccessResponse<PayloadProps> | ErrorResponse
-		>;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(
+			props: FunctionParams,
+		): Promise<SuccessResponse<PayloadProps> | ErrorResponse>;
 		(arg0: any): Promise<SuccessResponse<PayloadProps> | ErrorResponse>;
 	},
 	param?: FunctionParams,

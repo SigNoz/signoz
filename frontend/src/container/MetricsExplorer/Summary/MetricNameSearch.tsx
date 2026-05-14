@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import {
 	Button,
 	Empty,
@@ -10,22 +9,25 @@ import {
 	Popover,
 	Spin,
 } from 'antd';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
+import {
+	getListMetricsQueryKey,
+	useListMetrics,
+} from 'api/generated/services/metrics';
+import { Filter } from 'api/v5/v5';
+import {
+	convertExpressionToFilters,
+	convertFiltersToExpression,
+} from 'components/QueryBuilderV2/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Search } from 'lucide-react';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-
-import { SUMMARY_FILTERS_KEY } from './constants';
+import { Search } from '@signozhq/icons';
 
 function MetricNameSearch({
-	queryFilters,
+	queryFilterExpression,
+	onFilterChange,
 }: {
-	queryFilters: TagFilter;
+	queryFilterExpression: Filter;
+	onFilterChange: (value: string) => void;
 }): JSX.Element {
-	const [searchParams, setSearchParams] = useSearchParams();
-
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 	const [searchString, setSearchString] = useState<string>('');
 	const [debouncedSearchString, setDebouncedSearchString] = useState<string>('');
@@ -43,33 +45,38 @@ function MetricNameSearch({
 	}, [isPopoverOpen]);
 
 	const {
-		data: metricNameFilterValuesData,
+		data: metricNameListData,
 		isLoading: isLoadingMetricNameFilterValues,
 		isError: isErrorMetricNameFilterValues,
-	} = useGetMetricsListFilterValues(
+	} = useListMetrics(
 		{
 			searchText: debouncedSearchString,
-			filterKey: 'metric_name',
-			filterAttributeKeyDataType: DataTypes.String,
 			limit: 10,
 		},
 		{
-			enabled: isPopoverOpen,
-			refetchOnWindowFocus: false,
-			queryKey: [
-				REACT_QUERY_KEY.GET_METRICS_LIST_FILTER_VALUES,
-				'metric_name',
-				debouncedSearchString,
-				isPopoverOpen,
-			],
+			query: {
+				enabled: isPopoverOpen,
+				refetchOnWindowFocus: false,
+				queryKey: [
+					...getListMetricsQueryKey({
+						searchText: debouncedSearchString,
+						limit: 10,
+					}),
+					'search',
+					isPopoverOpen,
+				],
+			},
 		},
 	);
 
 	const handleSelect = useCallback(
 		(selectedMetricName: string): void => {
+			const queryFilters = convertExpressionToFilters(
+				queryFilterExpression.expression,
+			);
 			const newFilters = {
 				items: [
-					...queryFilters.items,
+					...queryFilters,
 					{
 						id: 'metric_name',
 						op: 'CONTAINS',
@@ -83,18 +90,16 @@ function MetricNameSearch({
 				],
 				op: 'and',
 			};
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[SUMMARY_FILTERS_KEY]: JSON.stringify(newFilters),
-			});
+			const newFilterExpression = convertFiltersToExpression(newFilters);
+			onFilterChange(newFilterExpression.expression);
 			setIsPopoverOpen(false);
 		},
-		[queryFilters.items, setSearchParams, searchParams],
+		[queryFilterExpression, onFilterChange],
 	);
 
 	const metricNameFilterValues = useMemo(
-		() => metricNameFilterValuesData?.payload?.data?.filterValues || [],
-		[metricNameFilterValuesData],
+		() => metricNameListData?.data?.metrics?.map((m) => m.metricName) || [],
+		[metricNameListData],
 	);
 
 	const handleKeyDown = useCallback(

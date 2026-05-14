@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { compose, Store } from 'redux';
 
 declare global {

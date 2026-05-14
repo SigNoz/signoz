@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { CloseCircleFilled } from '@ant-design/icons';
+import { SolidXCircle } from '@signozhq/icons';
 import { Button, Select, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
@@ -95,7 +95,6 @@ function ResourceAttributesFilter({
 					data-testid="resource-environment-filter"
 					style={{ minWidth: 200, height: 34 }}
 					onChange={handleEnvironmentChange}
-					onBlur={handleBlur}
 				>
 					{environments.map((opt) => (
 						<Select.Option key={opt.value} value={opt.value}>
@@ -150,7 +149,7 @@ function ResourceAttributesFilter({
 					{queries.length || staging.length || selectedQuery.length ? (
 						<Button
 							onClick={handleClearAll}
-							icon={<CloseCircleFilled />}
+							icon={<SolidXCircle size="lg" />}
 							type="text"
 						/>
 					) : null}

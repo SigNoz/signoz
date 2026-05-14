@@ -10,17 +10,24 @@ import {
 
 const WINDOW_OFFSET = 16;
 
+/** Get the plot instance from the controller; returns null if never set or cleared. */
+export function getPlot(controller: TooltipControllerState): uPlot | null {
+	return controller.plot ?? null;
+}
+
 export function createInitialControllerState(): TooltipControllerState {
 	return {
 		plot: null,
 		hoverActive: false,
 		isAnySeriesActive: false,
 		pinned: false,
+		clickData: null,
 		style: { transform: '', pointerEvents: 'none' },
 		horizontalOffset: 0,
 		verticalOffset: 0,
 		seriesIndexes: [],
 		focusedSeriesIndex: null,
+		syncedSeriesIndexes: null,
 		cursorDrivenBySync: false,
 		plotWithinViewport: false,
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
@@ -46,12 +53,13 @@ export function updateWindowSize(controller: TooltipControllerState): void {
  * This is used to decide if a synced tooltip should be shown at all.
  */
 export function updatePlotVisibility(controller: TooltipControllerState): void {
-	if (!controller.plot) {
+	const plot = getPlot(controller);
+	if (!plot) {
 		controller.plotWithinViewport = false;
 		return;
 	}
 	controller.plotWithinViewport = isPlotInViewport(
-		controller.plot.rect,
+		plot.rect,
 		controller.windowWidth,
 		controller.windowHeight,
 	);
@@ -66,10 +74,11 @@ export function isScrollEventInPlot(
 	event: Event,
 	controller: TooltipControllerState,
 ): boolean {
+	const plot = getPlot(controller);
 	return (
 		event.target instanceof Node &&
-		controller.plot !== null &&
-		event.target.contains(controller.plot.root)
+		plot !== null &&
+		event.target.contains(plot.root)
 	);
 }
 
@@ -87,13 +96,19 @@ export function shouldShowTooltipForSync(
 export function shouldShowTooltipForInteraction(
 	controller: TooltipControllerState,
 ): boolean {
-	return controller.focusedSeriesIndex != null || controller.isAnySeriesActive;
+	return controller.focusedSeriesIndex != null;
 }
 
 export function updateHoverState(
 	controller: TooltipControllerState,
 	syncTooltipWithDashboard: boolean,
 ): void {
+	// When pinned, keep hoverActive stable so the tooltip stays visible
+	// until explicitly dismissed — the cursor lock fires asynchronously
+	// and setSeries/setLegend can otherwise race and clear hoverActive.
+	if (controller.pinned) {
+		return;
+	}
 	// When the cursor is driven by dashboard‑level sync, we only show
 	// the tooltip if the plot is in viewport and at least one series
 	// is active. Otherwise we fall back to local interaction logic.
@@ -165,11 +180,12 @@ export function createSetLegendHandler(
 ): (u: uPlot) => void {
 	return (u: uPlot): void => {
 		const { controller } = ctx;
-		if (!controller.plot?.cursor?.idxs) {
+		const plot = getPlot(controller);
+		if (!plot?.cursor?.idxs) {
 			return;
 		}
 
-		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
+		const newSeriesIndexes = [...plot.cursor.idxs];
 		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
 		const previousCursorDrivenBySync = controller.cursorDrivenBySync;

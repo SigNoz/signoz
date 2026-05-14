@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import '@testing-library/jest-dom';
@@ -86,7 +85,7 @@ describe('previousQuery.utils', () => {
 		saveAsPreviousQuery(key, sampleQuery);
 
 		const fromStore = getPreviousQueryFromKey(key);
-		expect(fromStore).toEqual(sampleQuery);
+		expect(fromStore).toStrictEqual(sampleQuery);
 	});
 
 	it('saveAsPreviousQuery merges multiple entries and removeKeyFromPreviousQuery deletes one', () => {

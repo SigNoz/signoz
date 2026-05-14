@@ -1,17 +1,6 @@
-/* eslint-disable radix */
-/* eslint-disable guard-for-in */
-/* eslint-disable no-restricted-syntax */
 /* eslint-disable no-var */
-/* eslint-disable vars-on-top */
-/* eslint-disable func-style */
-/* eslint-disable no-void */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable func-names */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-sequences */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 
 // https://tobyzerner.github.io/placement.js/dist/index.js
@@ -221,12 +210,12 @@ export const placement = (function () {
 							element[mainAxis.offsetSize] -
 							mainMarginTotal,
 					)
-			  }px`),
-			  (element.style[mainAxis.after] = 'auto'))
+				}px`),
+				(element.style[mainAxis.after] = 'auto'))
 			: ((element.style[mainAxis.before] = `${
 					mainScrollOffset + clampMainPosition(anchorRect[mainAxis.after])
-			  }px`),
-			  (element.style[mainAxis.after] = 'auto'));
+				}px`),
+				(element.style[mainAxis.after] = 'auto'));
 
 		// Position on cross axis based on alignment
 		const crossScrollOffset = window[crossAxis.scrollOffset];
@@ -242,14 +231,14 @@ export const placement = (function () {
 
 		switch (align) {
 			case 'start':
-				(element.style[crossAxis.before] = `${
+				((element.style[crossAxis.before] = `${
 					crossScrollOffset +
 					clampCrossPosition(anchorRect[crossAxis.before] - crossMarginBefore)
 				}px`),
-					(element.style[crossAxis.after] = 'auto');
+					(element.style[crossAxis.after] = 'auto'));
 				break;
 			case 'end':
-				(element.style[crossAxis.before] = 'auto'),
+				((element.style[crossAxis.before] = 'auto'),
 					(element.style[crossAxis.after] = `${
 						crossScrollOffset +
 						clampCrossPosition(
@@ -257,12 +246,12 @@ export const placement = (function () {
 								anchorRect[crossAxis.after] -
 								crossMarginAfter,
 						)
-					}px`);
+					}px`));
 				break;
 			default:
 				// 'center'
 				var crossSize = anchorRect[crossAxis.after] - anchorRect[crossAxis.before];
-				(element.style[crossAxis.before] = `${
+				((element.style[crossAxis.before] = `${
 					crossScrollOffset +
 					clampCrossPosition(
 						anchorRect[crossAxis.before] +
@@ -271,10 +260,10 @@ export const placement = (function () {
 							crossMarginBefore,
 					)
 				}px`),
-					(element.style[crossAxis.after] = 'auto');
+					(element.style[crossAxis.after] = 'auto'));
 		}
 
 		// Store final placement as data attributes
-		(element.dataset.side = side), (element.dataset.align = align);
+		((element.dataset.side = side), (element.dataset.align = align));
 	};
 })();

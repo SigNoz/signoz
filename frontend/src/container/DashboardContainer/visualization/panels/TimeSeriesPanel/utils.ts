@@ -1,3 +1,5 @@
+import { ExecStats } from 'api/v5/v5';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fillMissingXAxisTimestamps,
@@ -5,23 +7,23 @@ import {
 } from 'container/DashboardContainer/visualization/panels/utils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import onClickPlugin, {
-	OnClickPluginOpts,
-} from 'lib/uPlotLib/plugins/onClickPlugin';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
-	DistributionType,
 	DrawStyle,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
-	SelectionPreferencesSource,
-	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
+import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
+import get from 'lodash-es/get';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import { PanelMode } from '../types';
+import { buildBaseConfig } from '../utils/baseConfigBuilder';
 
 export const prepareChartData = (
 	apiResponse: MetricRangePayloadProps,
@@ -33,116 +35,79 @@ export const prepareChartData = (
 	return [timestampArr, ...yAxisValuesArr];
 };
 
-export const prepareUPlotConfig = ({
-	widgetId,
-	apiResponse,
-	tzDate,
-	minTimeScale,
-	maxTimeScale,
-	isLogScale,
-	thresholds,
-	softMin,
-	softMax,
-	spanGaps,
-	colorMapping,
-	lineInterpolation,
-	isDarkMode,
-	currentQuery,
-	onDragSelect,
-	onClick,
-	yAxisUnit,
-	panelMode,
-}: {
-	widgetId: string;
-	apiResponse: MetricRangePayloadProps;
-	tzDate: uPlot.LocalDateFromUnix;
-	minTimeScale: number | undefined;
-	maxTimeScale: number | undefined;
-	isLogScale: boolean;
-	softMin: number | null;
-	softMax: number | null;
-	spanGaps: boolean;
-	colorMapping: Record<string, string>;
-	lineInterpolation: LineInterpolation;
-	isDarkMode: boolean;
-	thresholds: ThresholdsDrawHookOptions;
-	currentQuery: Query;
-	yAxisUnit: string;
-	onDragSelect: (startTime: number, endTime: number) => void;
-	onClick?: OnClickPluginOpts['onClick'];
-	panelMode: PanelMode;
-}): UPlotConfigBuilder => {
-	const builder = new UPlotConfigBuilder({
-		onDragSelect,
-		widgetId,
-		tzDate,
-		shouldSaveSelectionPreference: panelMode === PanelMode.DASHBOARD_VIEW,
-		selectionPreferencesSource: [
-			PanelMode.DASHBOARD_VIEW,
-			PanelMode.STANDALONE_VIEW,
-		].includes(panelMode)
-			? SelectionPreferencesSource.LOCAL_STORAGE
-			: SelectionPreferencesSource.IN_MEMORY,
-	});
+function hasSingleVisiblePointForSeries(series: QueryData): boolean {
+	const rawValues = series.values ?? [];
+	let validPointCount = 0;
 
-	// X scale – time axis
-	builder.addScale({
-		scaleKey: 'x',
-		time: true,
-		min: minTimeScale,
-		max: maxTimeScale,
-		logBase: isLogScale ? 10 : undefined,
-		distribution: isLogScale
-			? DistributionType.Logarithmic
-			: DistributionType.Linear,
-	});
-
-	// Y scale – value axis, driven primarily by softMin/softMax and data
-	builder.addScale({
-		scaleKey: 'y',
-		time: false,
-		min: undefined,
-		max: undefined,
-		softMin: softMin ?? undefined,
-		softMax: softMax ?? undefined,
-		thresholds,
-		logBase: isLogScale ? 10 : undefined,
-		distribution: isLogScale
-			? DistributionType.Logarithmic
-			: DistributionType.Linear,
-	});
-
-	builder.addThresholds(thresholds);
-
-	if (typeof onClick === 'function') {
-		builder.addPlugin(
-			onClickPlugin({
-				onClick,
-				apiResponse,
-			}),
-		);
+	for (const [, rawValue] of rawValues) {
+		if (!isInvalidPlotValue(rawValue)) {
+			validPointCount += 1;
+			if (validPointCount > 1) {
+				return false;
+			}
+		}
 	}
 
-	builder.addAxis({
-		scaleKey: 'x',
-		show: true,
-		side: 2,
+	return true;
+}
+
+export const prepareUPlotConfig = ({
+	widget,
+	isDarkMode,
+	currentQuery,
+	onClick,
+	onDragSelect,
+	apiResponse,
+	timezone,
+	panelMode,
+	minTimeScale,
+	maxTimeScale,
+}: {
+	widget: Widgets;
+	isDarkMode: boolean;
+	currentQuery: Query;
+	onClick?: OnClickPluginOpts['onClick'];
+	onDragSelect: (startTime: number, endTime: number) => void;
+	apiResponse?: MetricRangePayloadProps;
+	timezone: Timezone;
+	panelMode: PanelMode;
+	minTimeScale?: number;
+	maxTimeScale?: number;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+}): UPlotConfigBuilder => {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const minStepInterval = Math.min(...Object.values(stepIntervals));
+
+	const builder = buildBaseConfig({
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
-		isLogScale: false,
+		onClick,
+		onDragSelect,
+		apiResponse,
+		timezone,
+		panelMode,
 		panelType: PANEL_TYPES.TIME_SERIES,
+		minTimeScale,
+		maxTimeScale,
+		stepInterval: minStepInterval,
 	});
 
-	builder.addAxis({
-		scaleKey: 'y',
-		show: true,
-		side: 3,
-		isDarkMode,
-		isLogScale: false,
-		yAxisUnit,
-		panelType: PANEL_TYPES.TIME_SERIES,
-	});
+	if (!(apiResponse && apiResponse.data.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
 
-	apiResponse.data?.result?.forEach((series) => {
+	apiResponse.data.result.forEach((series) => {
+		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
@@ -155,16 +120,20 @@ export const prepareUPlotConfig = ({
 
 		builder.addSeries({
 			scaleKey: 'y',
-			drawStyle: DrawStyle.Line,
+			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
-			colorMapping,
-			spanGaps,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation,
-			showPoints: VisibilityMode.Never,
+			colorMapping: widget.customLegendColors ?? {},
+			spanGaps: widget.spanGaps ?? true,
+			lineStyle: widget.lineStyle || LineStyle.Solid,
+			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
+			showPoints:
+				widget.showPoints || hasSingleValidPoint ? true : !!widget.showPoints,
 			pointSize: 5,
+			fillMode: widget.fillMode || FillMode.None,
 			isDarkMode,
+			metric: series.metric,
 		});
 	});
+
 	return builder;
 };

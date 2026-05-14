@@ -4,17 +4,20 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
 	alertChannels,
-	apiKeys,
 	billingSettings,
 	createAlertChannels,
-	customDomainSettings,
 	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	mcpServerSettings,
+	membersSettings,
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleDetails,
+	rolesSettings,
+	serviceAccountsSettings,
 } from './config';
 
 export const getRoutes = (
@@ -34,6 +37,7 @@ export const getRoutes = (
 	if (isWorkspaceBlocked && isAdmin) {
 		settings.push(
 			...organizationSettings(t),
+			...membersSettings(t),
 			...mySettings(t),
 			...billingSettings(t),
 			...keyboardShortcuts(t),
@@ -59,11 +63,16 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...apiKeys(t));
+		settings.push(
+			...membersSettings(t),
+			...serviceAccountsSettings(t),
+			...rolesSettings(t),
+			...roleDetails(t),
+		);
 	}
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...customDomainSettings(t), ...billingSettings(t));
+		settings.push(...billingSettings(t));
 	}
 
 	settings.push(
@@ -71,6 +80,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...mcpServerSettings(t),
 	);
 
 	return settings;

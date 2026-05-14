@@ -1,16 +1,26 @@
-import {
-	AlertFilled,
-	AlignLeftOutlined,
-	ApiFilled,
-	BarChartOutlined,
-	DashboardFilled,
-	SoundFilled,
-} from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import Slack from 'container/SideNav/Slack';
 import store from 'store';
 
+import elixirPngUrl from '@/assets/Logos/elixir.png';
+import goPngUrl from '@/assets/Logos/go.png';
+import javaPngUrl from '@/assets/Logos/java.png';
+import javascriptPngUrl from '@/assets/Logos/javascript.png';
+import msNetFrameworkPngUrl from '@/assets/Logos/ms-net-framework.png';
+import phpPngUrl from '@/assets/Logos/php.png';
+import pythonPngUrl from '@/assets/Logos/python.png';
+import railsPngUrl from '@/assets/Logos/rails.png';
+import rustPngUrl from '@/assets/Logos/rust.png';
+
 import { TGetStartedContentSection } from './types';
+import {
+	AlignLeft,
+	BellRing,
+	ChartBar,
+	LayoutDashboard,
+	Volume2,
+	Unplug,
+} from '@signozhq/icons';
 
 export const GetStartedContent = (): TGetStartedContentSection[] => {
 	const {
@@ -23,14 +33,14 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Instrument your Java Application',
 					icon: (
-						<img src={`/Logos/java.png?currentVersion=${currentVersion}`} alt="" />
+						<img src={`${javaPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
 					url: 'https://signoz.io/docs/instrumentation/java/',
 				},
 				{
 					title: 'Instrument your Python Application',
 					icon: (
-						<img src={`/Logos/python.png?currentVersion=${currentVersion}`} alt="" />
+						<img src={`${pythonPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
 					url: 'https://signoz.io/docs/instrumentation/python/',
 				},
@@ -38,7 +48,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 					title: 'Instrument your JS Application',
 					icon: (
 						<img
-							src={`/Logos/javascript.png?currentVersion=${currentVersion}`}
+							src={`${javascriptPngUrl}?currentVersion=${currentVersion}`}
 							alt=""
 						/>
 					),
@@ -46,16 +56,14 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				},
 				{
 					title: 'Instrument your Go Application',
-					icon: (
-						<img src={`/Logos/go.png?currentVersion=${currentVersion}`} alt="" />
-					),
+					icon: <img src={`${goPngUrl}?currentVersion=${currentVersion}`} alt="" />,
 					url: 'https://signoz.io/docs/instrumentation/golang/',
 				},
 				{
 					title: 'Instrument your .NET Application',
 					icon: (
 						<img
-							src={`/Logos/ms-net-framework.png?currentVersion=${currentVersion}`}
+							src={`${msNetFrameworkPngUrl}?currentVersion=${currentVersion}`}
 							alt=""
 						/>
 					),
@@ -63,29 +71,27 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				},
 				{
 					title: 'Instrument your PHP Application',
-					icon: (
-						<img src={`/Logos/php.png?currentVersion=${currentVersion}`} alt="" />
-					),
+					icon: <img src={`${phpPngUrl}?currentVersion=${currentVersion}`} alt="" />,
 					url: 'https://signoz.io/docs/instrumentation/php/',
 				},
 				{
 					title: 'Instrument your Rails Application',
 					icon: (
-						<img src={`/Logos/rails.png?currentVersion=${currentVersion}`} alt="" />
+						<img src={`${railsPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
 					url: 'https://signoz.io/docs/instrumentation/ruby-on-rails/',
 				},
 				{
 					title: 'Instrument your Rust Application',
 					icon: (
-						<img src={`/Logos/rust.png?currentVersion=${currentVersion}`} alt="" />
+						<img src={`${rustPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
 					url: 'https://signoz.io/docs/instrumentation/rust/',
 				},
 				{
 					title: 'Instrument your Elixir Application',
 					icon: (
-						<img src={`/Logos/elixir.png?currentVersion=${currentVersion}`} alt="" />
+						<img src={`${elixirPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
 					url: 'https://signoz.io/docs/instrumentation/elixir/',
 				},
@@ -96,12 +102,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send metrics to SigNoz',
-					icon: <BarChartOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <ChartBar size="lg" />,
 					url: 'https://signoz.io/docs/userguide/send-metrics/',
 				},
 				{
 					title: 'Create and Manage Dashboards',
-					icon: <DashboardFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <LayoutDashboard size="lg" />,
 					url: 'https://signoz.io/docs/userguide/manage-dashboards-and-panels/',
 				},
 			],
@@ -111,12 +117,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send your logs to SigNoz',
-					icon: <AlignLeftOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <AlignLeft size="lg" />,
 					url: 'https://signoz.io/docs/userguide/logs/',
 				},
 				{
 					title: 'Existing log collectors to SigNoz',
-					icon: <ApiFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <Unplug size="lg" />,
 					url: 'https://signoz.io/docs/userguide/fluentbit_to_signoz/',
 				},
 			],
@@ -126,14 +132,13 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Create alert rules on metrics',
-					icon: <AlertFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <BellRing size="lg" />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/',
 				},
 				{
 					title: 'Configure alert notification channels',
-					icon: <SoundFilled style={{ fontSize: '3.5rem' }} />,
-					url:
-						'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
+					icon: <Volume2 size="lg" />,
+					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
 				},
 			],
 		},

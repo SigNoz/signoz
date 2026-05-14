@@ -3,7 +3,7 @@ import { Button, Divider, Tooltip } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
-import { PencilLine } from 'lucide-react';
+import { PencilLine } from '@signozhq/icons';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
@@ -36,19 +36,14 @@ function FunnelConfiguration({
 }: FunnelConfigurationProps): JSX.Element {
 	const { hasEditPermission } = useAppContext();
 	const { triggerSave } = useFunnelContext();
-	const {
-		isPopoverOpen,
-		setIsPopoverOpen,
-		steps,
-		isSaving,
-	} = useFunnelConfiguration({
-		funnel,
-		triggerAutoSave: triggerAutoSave || triggerSave,
-		showNotifications: showNotifications || triggerSave,
-	});
-	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
-		false,
-	);
+	const { isPopoverOpen, setIsPopoverOpen, steps, isSaving } =
+		useFunnelConfiguration({
+			funnel,
+			triggerAutoSave: triggerAutoSave || triggerSave,
+			showNotifications: showNotifications || triggerSave,
+		});
+	const [isDescriptionModalOpen, setIsDescriptionModalOpen] =
+		useState<boolean>(false);
 
 	const handleDescriptionModalClose = (): void => {
 		setIsDescriptionModalOpen(false);
@@ -64,12 +59,11 @@ function FunnelConfiguration({
 					<div className="funnel-configuration__header-right">
 						<Tooltip
 							title={
-								// eslint-disable-next-line no-nested-ternary
 								!hasEditPermission
 									? 'You need editor or admin access to edit funnel description'
 									: funnel?.description
-									? 'Edit funnel description'
-									: 'Add funnel description'
+										? 'Edit funnel description'
+										: 'Add funnel description'
 							}
 						>
 							<Button
@@ -108,6 +102,7 @@ function FunnelConfiguration({
 						)}
 						<div className="funnel-configuration__steps">
 							{!isTraceDetailsPage && <StepsHeader />}
+
 							<StepsContent isTraceDetailsPage={isTraceDetailsPage} span={span} />
 						</div>
 					</>

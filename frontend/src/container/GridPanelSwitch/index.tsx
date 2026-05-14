@@ -60,15 +60,14 @@ const GridPanelSwitch = forwardRef<
 		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]
 		>;
-		const componentProps = useMemo(() => currentProps[panelType], [
-			panelType,
-			currentProps,
-		]);
+		const componentProps = useMemo(
+			() => currentProps[panelType],
+			[panelType, currentProps],
+		);
 
 		if (!Component || !componentProps) {
 			return null;
 		}
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <Component {...componentProps} />;
 	},
 );

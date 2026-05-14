@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import {
 	CSSProperties,
 	Dispatch,
@@ -10,7 +9,15 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import {
+	Check,
+	ConciergeBell,
+	Disc3,
+	PanelBottomClose,
+	Plus,
+	X,
+	Info,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -21,8 +28,10 @@ import {
 	RefSelectProps,
 	Select,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import axios from 'axios';
@@ -55,14 +64,6 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
-import {
-	Check,
-	ConciergeBell,
-	Disc3,
-	PanelBottomClose,
-	Plus,
-	X,
-} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -172,23 +173,51 @@ function ExplorerOptions({
 	const { user } = useAppContext();
 
 	const handleConditionalQueryModification = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(defaultQuery: Query | null): string => {
 			const queryToUse = defaultQuery || query;
+			if (!queryToUse) {
+				throw new Error('No query provided');
+			}
 			if (
 				queryToUse?.builder?.queryData?.[0]?.aggregateOperator !==
-				StringOperators.NOOP
+					StringOperators.NOOP &&
+				sourcepage !== DataSource.LOGS
 			) {
 				return JSON.stringify(queryToUse);
 			}
 
-			// Modify aggregateOperator to count, as noop is not supported in alerts
+			// Convert NOOP to COUNT for alerts and strip orderBy for logs
 			const modifiedQuery = cloneDeep(queryToUse);
+			if (modifiedQuery && modifiedQuery.builder?.queryData) {
+				modifiedQuery.builder.queryData = modifiedQuery.builder.queryData.map(
+					(item) => {
+						const updatedItem = { ...item };
 
-			modifiedQuery.builder.queryData[0].aggregateOperator = StringOperators.COUNT;
+						if (updatedItem.aggregateOperator === StringOperators.NOOP) {
+							updatedItem.aggregateOperator = StringOperators.COUNT;
+						}
 
-			return JSON.stringify(modifiedQuery);
+						// Alerts do not support order by on logs explorer queries
+						if (sourcepage === DataSource.LOGS && panelType === PANEL_TYPES.LIST) {
+							updatedItem.orderBy = [];
+						}
+
+						return updatedItem;
+					},
+				);
+			}
+
+			try {
+				return JSON.stringify(modifiedQuery);
+			} catch (err) {
+				throw new Error(
+					'Failed to stringify modified query: ' +
+						(err instanceof Error ? err.message : String(err)),
+				);
+			}
 		},
-		[query],
+		[panelType, query, sourcepage],
 	);
 
 	const onCreateAlertsHandler = useCallback(
@@ -261,8 +290,9 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
-		?.extraData;
+	const extraData = viewsData?.data?.data?.find(
+		(view) => view.id === viewKey,
+	)?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
 	const rgbaColor = generateRGBAFromHex(
@@ -316,20 +346,18 @@ function ExplorerOptions({
 					format: options?.format,
 					maxLines: options?.maxLines,
 					fontSize: options?.fontSize,
-			  }
+				}
 			: undefined,
 	);
 
-	const {
-		mutateAsync: updateViewAsync,
-		isLoading: isViewUpdating,
-	} = useUpdateView({
-		compositeQuery,
-		viewKey,
-		extraData: updatedExtraData,
-		sourcePage: isMeterExplorer ? 'meter' : sourcepage,
-		viewName,
-	});
+	const { mutateAsync: updateViewAsync, isLoading: isViewUpdating } =
+		useUpdateView({
+			compositeQuery,
+			viewKey,
+			extraData: updatedExtraData,
+			sourcePage: isMeterExplorer ? 'meter' : sourcepage,
+			viewName,
+		});
 
 	const showErrorNotification = (err: Error): void => {
 		notifications.error({
@@ -445,7 +473,7 @@ function ExplorerOptions({
 		value: string;
 	}): void => {
 		// Retrieve stored views from local storage
-		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const storedViews = getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
 
 		// Initialize or parse the stored views
 		const updatedViews: PreservedViewsInLocalStorage = storedViews
@@ -459,7 +487,7 @@ function ExplorerOptions({
 		};
 
 		// Save the updated views back to local storage
-		localStorage.setItem(
+		setLocalStorageKey(
 			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 			JSON.stringify(updatedViews),
 		);
@@ -510,7 +538,7 @@ function ExplorerOptions({
 
 	const removeCurrentViewFromLocalStorage = (): void => {
 		// Retrieve stored views from local storage
-		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const storedViews = getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
 
 		if (storedViews) {
 			// Parse the stored views
@@ -520,7 +548,7 @@ function ExplorerOptions({
 			delete parsedViews[PRESERVED_VIEW_TYPE];
 
 			// Update local storage with the modified views
-			localStorage.setItem(
+			setLocalStorageKey(
 				PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 				JSON.stringify(parsedViews),
 			);
@@ -556,18 +584,16 @@ function ExplorerOptions({
 		options,
 	);
 
-	const {
-		isLoading: isSaveViewLoading,
-		mutateAsync: saveViewAsync,
-	} = useSaveView({
-		viewName: newViewName || '',
-		compositeQuery,
-		sourcePage: sourcepage,
-		extraData: JSON.stringify({
-			color,
-			selectColumns: options.selectColumns,
-		}),
-	});
+	const { isLoading: isSaveViewLoading, mutateAsync: saveViewAsync } =
+		useSaveView({
+			viewName: newViewName || '',
+			compositeQuery,
+			sourcePage: sourcepage,
+			extraData: JSON.stringify({
+				color,
+				selectColumns: options.selectColumns,
+			}),
+		});
 
 	const onSaveHandler = (): void => {
 		saveNewViewHandler({
@@ -583,7 +609,7 @@ function ExplorerOptions({
 							format: options?.format,
 							maxLines: options?.maxLines,
 							fontSize: options?.fontSize,
-					  }
+						}
 					: {}),
 			}),
 			notifications,
@@ -621,7 +647,7 @@ function ExplorerOptions({
 				? `1px solid ${Color.BG_SLATE_400}`
 				: `1px solid ${Color.BG_VANILLA_300}`,
 			background: isDarkMode
-				? 'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)'
+				? 'var(--bg-gradient-dark-shadow)'
 				: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
 			boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
 			backdropFilter: 'blur(20px)',
@@ -633,10 +659,8 @@ function ExplorerOptions({
 
 	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
-	const [
-		isRecentlyUsedSavedViewSelected,
-		setIsRecentlyUsedSavedViewSelected,
-	] = useState(false);
+	const [isRecentlyUsedSavedViewSelected, setIsRecentlyUsedSavedViewSelected] =
+		useState(false);
 
 	useEffect(() => {
 		// If the query is not the default query, don't set the recently used saved view
@@ -645,7 +669,7 @@ function ExplorerOptions({
 		}
 
 		const parsedPreservedView = JSON.parse(
-			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
+			getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
 
 		const preservedView = parsedPreservedView[PRESERVED_VIEW_TYPE] || {};
@@ -665,7 +689,6 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		// eslint-disable-next-line consistent-return
 		return (): void => {
 			clearTimeout(timeoutId);
 		};
@@ -730,7 +753,7 @@ function ExplorerOptions({
 					suffixIcon={null}
 					onSelect={(e): void => {
 						const selectedQuery = splitedQueries.find(
-							(query) => query.id === ((e as unknown) as string),
+							(query) => query.id === (e as unknown as string),
 						);
 						if (selectedQuery) {
 							onCreateAlertsHandler(selectedQuery);
@@ -757,9 +780,9 @@ function ExplorerOptions({
 		);
 	}, [
 		disabled,
+		query,
 		isOneChartPerQuery,
 		onCreateAlertsHandler,
-		query,
 		splitedQueries,
 	]);
 
@@ -785,7 +808,7 @@ function ExplorerOptions({
 					suffixIcon={null}
 					onSelect={(e): void => {
 						const selectedQuery = splitedQueries.find(
-							(query) => query.id === ((e as unknown) as string),
+							(query) => query.id === (e as unknown as string),
 						);
 						if (selectedQuery) {
 							setQueryToExport(() => {
@@ -947,9 +970,10 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<InfoCircleOutlined className="info-icon" />
+								<Info size="md" className="info-icon" />
 							</Tooltip>
 						)}
+
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -986,6 +1010,7 @@ function ExplorerOptions({
 						onClick={onSaveHandler}
 						disabled={isSaveViewLoading}
 						data-testid="save-view-btn"
+						className="save-button"
 					>
 						Save this view
 					</Button>,

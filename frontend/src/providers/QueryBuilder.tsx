@@ -1,4 +1,5 @@
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
 	useCallback,
@@ -109,10 +110,8 @@ export function QueryBuilderProvider({
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
 	// This is used to determine if the query was called from the handleRunQuery function - which means manual trigger from Stage and Run button
-	const [
-		calledFromHandleRunQuery,
-		setCalledFromHandleRunQuery,
-	] = useState<boolean>(false);
+	const [calledFromHandleRunQuery, setCalledFromHandleRunQuery] =
+		useState<boolean>(false);
 
 	const compositeQueryParam = useGetCompositeQueryParam();
 	const { queryType: queryTypeParam, ...queryState } =
@@ -243,9 +242,8 @@ export function QueryBuilderProvider({
 
 	const initQueryBuilderData = useCallback(
 		(query: Query): void => {
-			const { queryType: newQueryType, ...queryState } = prepareQueryBuilderData(
-				query,
-			);
+			const { queryType: newQueryType, ...queryState } =
+				prepareQueryBuilderData(query);
 
 			const type = newQueryType || EQueryType.QUERY_BUILDER;
 
@@ -689,7 +687,7 @@ export function QueryBuilderProvider({
 						...initialQueryBuilderFormTraceOperatorValues,
 						queryName: TRACE_OPERATOR_QUERY_NAME,
 						expression: trimmed,
-				  };
+					};
 
 			return {
 				...prevState,
@@ -709,7 +707,7 @@ export function QueryBuilderProvider({
 						...initialQueryBuilderFormTraceOperatorValues,
 						queryName: TRACE_OPERATOR_QUERY_NAME,
 						expression: trimmed,
-				  };
+					};
 
 			return {
 				...prevState,
@@ -827,7 +825,6 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
 					prevState.builder.queryData,
@@ -945,8 +942,9 @@ export function QueryBuilderProvider({
 		(
 			query: Partial<Query>,
 			searchParams?: Record<string, unknown>,
-			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
+			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
+			newTab?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1013,7 +1011,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl);
+			safeNavigate(generatedUrl, { newTab });
 		},
 		[location.pathname, safeNavigate, urlQuery],
 	);
@@ -1044,7 +1042,7 @@ export function QueryBuilderProvider({
 						expression:
 							item.filter?.expression.trim() === ''
 								? ''
-								: item.filter?.expression ?? '',
+								: (item.filter?.expression ?? ''),
 					},
 					filters: {
 						items: [],
@@ -1151,10 +1149,10 @@ export function QueryBuilderProvider({
 		[supersetQuery, queryType],
 	);
 
-	const isEnabledQuery = useMemo(() => !!stagedQuery && !!panelType, [
-		stagedQuery,
-		panelType,
-	]);
+	const isEnabledQuery = useMemo(
+		() => !!stagedQuery && !!panelType,
+		[stagedQuery, panelType],
+	);
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({

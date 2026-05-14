@@ -78,14 +78,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 		[handleChangeQueryData],
 	);
 
-	const showAggregationInterval = useMemo(() => {
-		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-		if (panelType === PANEL_TYPES.VALUE) {
-			return false;
-		}
-
-		return true;
-	}, [panelType]);
+	const showAggregationInterval = useMemo(
+		() => panelType !== PANEL_TYPES.VALUE,
+		[panelType],
+	);
 
 	const disableOperatorSelector =
 		!queryAggregation.metricName || queryAggregation.metricName === '';

@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-continue */
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { IQueryPair } from 'types/antlrQueryTypes';

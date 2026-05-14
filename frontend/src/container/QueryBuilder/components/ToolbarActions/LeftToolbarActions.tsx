@@ -1,8 +1,13 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import { FilterOutlined } from '@ant-design/icons';
+import {
+	ArrowUpToLine,
+	Atom,
+	Filter,
+	SquareMousePointer,
+	Terminal,
+	Binoculars,
+} from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
-import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import './ToolbarActions.styles.scss';
@@ -31,7 +36,8 @@ export default function LeftToolbarActions({
 			{!showFilter && (
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<FilterOutlined />
+						<Filter size={12} />
+						<ArrowUpToLine size={12} style={{ transform: 'rotate(90deg)' }} />
 					</Button>
 				</Tooltip>
 			)}

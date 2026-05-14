@@ -1,10 +1,8 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
 import {
-	QueryTypes,
 	ConditionalOperators,
+	QueryTypes,
 	ValidTypeSequence,
 	ValidTypeValue,
 } from 'lib/logql/tokens';
@@ -18,14 +16,22 @@ export function fieldsQueryIsvalid(queryFields: QueryFields[]): boolean {
 	let lastOp: string;
 	let result = true;
 	queryFields.forEach((q, idx) => {
-		if (!q.value || q.value === null || q.value === '') result = false;
+		if (!q.value || q.value === null || q.value === '') {
+			result = false;
+		}
 
-		if (Array.isArray(q.value) && q.value.length === 0) result = false;
+		if (Array.isArray(q.value) && q.value.length === 0) {
+			result = false;
+		}
 
 		const nextOp = idx < queryFields.length ? queryFields[idx + 1] : undefined;
-		if (!ValidTypeSequence(lastOp?.type, q?.type, nextOp?.type)) result = false;
+		if (!ValidTypeSequence(lastOp?.type, q?.type, nextOp?.type)) {
+			result = false;
+		}
 
-		if (!ValidTypeValue(lastOp?.value, q.value)) result = false;
+		if (!ValidTypeValue(lastOp?.value, q.value)) {
+			result = false;
+		}
 		lastOp = q;
 	});
 	return result;
@@ -47,9 +53,9 @@ export const queryKOVPair = (): QueryFields[] => [
 ];
 
 export const initQueryKOVPair = (
-	name?: string = null,
-	op?: string = null,
-	value?: string | string[] = null,
+	name: string = null,
+	op: string = null,
+	value: string | string[] = null,
 ): QueryFields[] => [
 	{
 		type: QueryTypes.QUERY_KEY,
@@ -66,7 +72,7 @@ export const initQueryKOVPair = (
 ];
 
 export const prepareConditionOperator = (
-	op?: string = ConditionalOperators.AND,
+	op: string = ConditionalOperators.AND,
 ): QueryFields => {
 	return {
 		type: QueryTypes.CONDITIONAL_OPERATOR,
@@ -74,8 +80,10 @@ export const prepareConditionOperator = (
 	};
 };
 
-export const createParsedQueryStructure = (parsedQuery = []) => {
-	if (!parsedQuery.length) {
+export const createParsedQueryStructure = (
+	parsedQuery = [],
+): QueryFields[][] => {
+	if (parsedQuery.length === 0) {
 		return parsedQuery;
 	}
 
@@ -83,14 +91,14 @@ export const createParsedQueryStructure = (parsedQuery = []) => {
 
 	let cond;
 	let qCtr = -1;
-	parsedQuery.forEach((query, idx) => {
+	parsedQuery.forEach((query) => {
 		if (cond) {
 			structuredArray.push(cond);
 			structuredArray.push(queryKOVPair());
 			cond = null;
 			qCtr = -1;
 		}
-		const stagingArr = structuredArray[structuredArray.length - 1];
+		const stagingArr = structuredArray.at(-1);
 		const prevQuery =
 			Array.isArray(stagingArr) && qCtr >= 0 ? stagingArr[qCtr] : null;
 
@@ -121,10 +129,8 @@ export const hashCode = (s: string): string => {
 		return '0';
 	}
 	return `${Math.abs(
-		s.split('').reduce((a, b) => {
-			// eslint-disable-next-line no-bitwise, no-param-reassign
-			a = (a << 5) - a + b.charCodeAt(0);
-			// eslint-disable-next-line no-bitwise
+		[...s].reduce((a, b) => {
+			a = (a << 5) - a + b.codePointAt(0);
 			return a & a;
 		}, 0),
 	)}`;

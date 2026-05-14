@@ -6,19 +6,24 @@ import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import ROUTES from 'constants/routes';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import {
-	ArrowRight,
-	ArrowUpRight,
-	BarChart,
-	CompassIcon,
-	DraftingCompass,
-} from 'lucide-react';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
+
+import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
+
+import { getItemIcon } from '../constants';
+import {
+	ArrowRight,
+	ArrowUpRight,
+	BarChart,
+	Compass,
+	DraftingCompass,
+	ScrollText,
+} from '@signozhq/icons';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -49,17 +54,20 @@ export default function SavedViews({
 		isError: metricsViewsError,
 	} = useGetAllViews(DataSource.METRICS);
 
-	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
-		logsViewsData,
-	]);
+	const logsViews = useMemo(
+		() => [...(logsViewsData?.data.data || [])],
+		[logsViewsData],
+	);
 
-	const tracesViews = useMemo(() => [...(tracesViewsData?.data.data || [])], [
-		tracesViewsData,
-	]);
+	const tracesViews = useMemo(
+		() => [...(tracesViewsData?.data.data || [])],
+		[tracesViewsData],
+	);
 
-	const metricsViews = useMemo(() => [...(metricsViewsData?.data.data || [])], [
-		metricsViewsData,
-	]);
+	const metricsViews = useMemo(
+		() => [...(metricsViewsData?.data.data || [])],
+		[metricsViewsData],
+	);
 
 	useEffect(() => {
 		if (selectedEntity === 'logs') {
@@ -151,7 +159,7 @@ export default function SavedViews({
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
 					<img
-						src="/Icons/floppy-disc.svg"
+						src={floppyDiscUrl}
 						alt="empty-alert-icon"
 						className="empty-state-icon"
 					/>
@@ -224,9 +232,7 @@ export default function SavedViews({
 					>
 						<div className="saved-view-item-name-container home-data-item-name-container">
 							<img
-								src={
-									view.id % 2 === 0 ? '/Icons/eight-ball.svg' : '/Icons/circus-tent.svg'
-								}
+								src={getItemIcon(String(view.id))}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>
@@ -256,7 +262,7 @@ export default function SavedViews({
 							className="periscope-btn link"
 							onClick={(): void => handleRedirectQuery(view)}
 						>
-							<CompassIcon size={16} />
+							<Compass size={16} />
 						</Button>
 					</div>
 				))}
@@ -342,31 +348,22 @@ export default function SavedViews({
 							<Button.Group className="views-tabs">
 								<Button
 									value="logs"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'logs' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'logs' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('logs')}
 								>
-									<img src="/Icons/logs.svg" alt="logs-icon" className="logs-icon" />
+									<ScrollText size={14} />
 									Logs
 								</Button>
 								<Button
 									value="traces"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'traces' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'traces' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('traces')}
 								>
 									<DraftingCompass size={14} /> Traces
 								</Button>
 								<Button
 									value="metrics"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'metrics' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'metrics' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('metrics')}
 								>
 									<BarChart size={14} /> Metrics

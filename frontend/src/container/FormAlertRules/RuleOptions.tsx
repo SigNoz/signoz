@@ -8,9 +8,9 @@ import {
 	Select,
 	SelectProps,
 	Space,
-	Typography,
 } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import { Typography } from '@signozhq/ui/typography';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,

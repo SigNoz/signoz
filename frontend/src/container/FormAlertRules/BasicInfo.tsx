@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Select, Switch, Tooltip } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button, Flex, Form, Select, Switch, Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -15,6 +15,7 @@ import { AlertDef, Labels } from 'types/api/alerts/def';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
+import { openInNewTab } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ChannelSelect from './ChannelSelect';
@@ -58,10 +59,8 @@ function BasicInfo({
 		user.role,
 	);
 
-	const [
-		shouldBroadCastToAllChannels,
-		setShouldBroadCastToAllChannels,
-	] = useState(false);
+	const [shouldBroadCastToAllChannels, setShouldBroadCastToAllChannels] =
+		useState(false);
 
 	useEffect(() => {
 		const hasPreferredChannels =
@@ -87,7 +86,7 @@ function BasicInfo({
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 			ruleId: isNewRule ? 0 : alertDef?.id,
 		});
-		window.open(ROUTES.CHANNELS_NEW, '_blank');
+		openInNewTab(ROUTES.CHANNELS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 	const hasLoggedEvent = useRef(false);
@@ -255,11 +254,13 @@ function BasicInfo({
 					>
 						<Button
 							onClick={handleCreateNewChannels}
-							icon={<PlusOutlined />}
 							className="create-notification-btn"
 							disabled={!addNewChannelPermission}
 						>
-							Create a notification channel
+							<Flex align="center" justify="center">
+								<Plus size="md" />
+								Create a notification channel
+							</Flex>
 						</Button>
 					</Tooltip>
 				)}

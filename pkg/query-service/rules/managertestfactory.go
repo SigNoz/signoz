@@ -16,13 +16,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type queryMatcherAny struct {
@@ -89,7 +87,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	}
 
 	// Create reader with mocked telemetry store
-	readerCache, err := cachetest.New(cache.Config{
+	cache, err := cachetest.New(cache.Config{
 		Provider: "memory",
 		Memory: cache.Memory{
 			NumCounters: 10 * 1000,
@@ -98,39 +96,26 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	})
 	require.NoError(t, err)
 
-	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{}, telemetryStore)
-	reader := clickhouseReader.NewReader(
-		nil,
-		telemetryStore,
-		prometheus,
-		"",
-		time.Duration(time.Second),
-		nil,
-		readerCache,
-		options,
-	)
+	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	if err != nil {
 		t.Fatalf("failed to create flagger: %v", err)
 	}
 
-	// Create mock querierV5 with test values
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, readerCache, flagger)
+	// Create querier with test values
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 
 	mgrOpts := &ManagerOptions{
-		Logger:         zap.NewNop(),
-		SLogger:        instrumentationtest.New().Logger(),
+		Logger:         instrumentationtest.New().Logger(),
 		Cache:          cacheObj,
 		Alertmanager:   fAlert,
 		Querier:        mockQuerier,
 		TelemetryStore: telemetryStore,
-		Reader:         reader,
-		SqlStore:       sqlStore, // SQLStore needed for SendAlerts to query organizations
+		SQLStore:       sqlStore, // SQLStore needed for SendAlerts to query organizations
 	}
 
 	// Call the ManagerOptions hook if provided to allow customization

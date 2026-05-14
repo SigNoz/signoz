@@ -1,6 +1,6 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import history from 'lib/history';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import './FullScreenHeader.styles.scss';
 
@@ -15,7 +15,7 @@ export default function FullScreenHeader({
 	return (
 		<div className="full-screen-header-container">
 			<div className="brand-logo" onClick={handleLogoClick}>
-				<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+				<img src={signozBrandLogoUrl} alt="SigNoz" />
 
 				<div className="brand-logo-name">SigNoz</div>
 			</div>

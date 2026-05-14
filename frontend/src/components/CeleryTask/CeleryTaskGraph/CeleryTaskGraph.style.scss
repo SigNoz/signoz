@@ -40,13 +40,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border: 1px solid var(--bg-slate-500);
-		background: linear-gradient(
-				0deg,
-				rgba(171, 189, 255, 0) 0%,
-				rgba(171, 189, 255, 0) 100%
-			),
-			#0b0c0e;
+		border: 1px solid var(--l1-border);
 
 		.ant-card-body {
 			height: 100%;
@@ -147,13 +141,13 @@
 		gap: 16px;
 		align-items: center;
 
-		border: 1px dashed var(--bg-slate-50);
+		border: 1px dashed var(--l1-border);
 		border-radius: 4px;
 		padding: 6px 24px 6px 12px;
 		width: max-content;
 
 		.configure-option-Info-text {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 12px;
 			font-weight: 400;
 		}
@@ -161,7 +155,7 @@
 
 	.row-panel {
 		border-radius: 4px;
-		background: rgba(18, 19, 23, 0.4);
+		background: color-mix(in srgb, var(--card) 40%, transparent);
 		padding: 8px;
 		display: flex;
 		gap: 6px;
@@ -180,12 +174,12 @@
 			align-items: center;
 
 			.row-icon {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				cursor: pointer;
 			}
 
 			.section-title {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -198,7 +192,7 @@
 }
 
 .celery-task-states {
-	border-bottom: 1px solid var(--bg-ink-200);
+	border-bottom: 1px solid var(--l1-border);
 
 	&__tab {
 		min-width: 140px;
@@ -207,11 +201,11 @@
 		position: relative;
 
 		&:not([data-last-tab='true']) {
-			border-right: 1px solid var(--bg-ink-200);
+			border-right: 1px solid var(--l1-border);
 		}
 
 		&--selected {
-			background-color: rgba(38, 38, 38, 0.5);
+			background-color: var(--l3-background);
 		}
 	}
 
@@ -225,7 +219,7 @@
 	&__label {
 		font-family: 'Inter';
 		font-size: 14px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		line-height: 20px;
 		font-weight: 500;
 	}
@@ -233,7 +227,7 @@
 	&__value {
 		font-family: 'Geist Mono';
 		font-size: 24px;
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		line-height: 32px;
 	}
 
@@ -243,49 +237,7 @@
 		height: 2px;
 		bottom: 0;
 		left: 0;
-		background-color: var(--bg-vanilla-100);
-	}
-}
-
-.lightMode {
-	.celery-task-graph-grid-container {
-		.celery-task-graph-worker-count {
-			border: 1px solid var(--bg-vanilla-300);
-			background: unset;
-		}
-
-		.row-panel .row-panel-section .section-title {
-			color: var(--bg-ink-400);
-		}
-	}
-
-	.celery-task-states {
-		border-bottom: 1px solid var(--bg-vanilla-300);
-
-		&__tab {
-			&:not([data-last-tab='true']) {
-				border-right: 1px solid var(--bg-vanilla-300);
-			}
-
-			&--selected {
-				background-color: var(--bg-vanilla-200);
-			}
-		}
-
-		&__label {
-			color: var(--bg-ink-500);
-		}
-
-		&__value {
-			color: var(--bg-slate-100);
-		}
-
-		&__indicator {
-			background-color: var(--bg-ink-400);
-		}
-	}
-
-	.configure-option-Info {
-		border: 1px dashed var(--bg-robin-400);
+		background-color: var(--l1-background);
+		color: var(--l1-foreground);
 	}
 }

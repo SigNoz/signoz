@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
@@ -17,17 +20,19 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
 	source?: YAxisSource;
+	isCancelled?: boolean;
+	onFetchingStateChange?: (isFetching: boolean) => void;
 }
 
-function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
+function ChartPreview({
+	alertDef,
+	source,
+	isCancelled = false,
+	onFetchingStateChange,
+}: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const {
-		alertType,
-		thresholdState,
-		alertState,
-		setAlertState,
-		isEditMode,
-	} = useCreateAlertState();
+	const { alertType, thresholdState, alertState, setAlertState, isEditMode } =
+		useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -36,19 +41,26 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	// Only update automatically when creating a new metrics-based alert rule
+	const location = useLocation();
+	const yAxisUnitFromURL = new URLSearchParams(location.search).get(
+		QueryParams.yAxisUnit,
+	);
+
+	// Only update automatically when creating a new metrics-based alert rule.
+	// Skip when yAxisUnit was explicitly provided via URL (e.g. from ingestion settings).
 	const shouldUpdateYAxisUnit = useMemo(() => {
-		// Do not update if we are coming to the page from dashboards (we still show warning)
 		if (source === YAxisSource.DASHBOARDS) {
 			return false;
 		}
+		if (yAxisUnitFromURL) {
+			return false;
+		}
 		return !isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
-	}, [isEditMode, alertType, source]);
+	}, [isEditMode, alertType, source, yAxisUnitFromURL]);
 
 	const selectedQueryName = thresholdState.selectedQuery;
-	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
-		selectedQueryName,
-	);
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
 
 	// Every time a new metric is selected, set the y-axis unit to its unit value if present
 	// Only for metrics-based alerts in create mode
@@ -87,6 +99,8 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 
@@ -101,6 +115,8 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 

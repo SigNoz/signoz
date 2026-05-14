@@ -1,5 +1,6 @@
-import { Empty, Table, Tooltip } from 'antd';
-import { ColumnProps } from 'antd/es/table';
+import { Empty, Table, TableColumnProps as ColumnProps, Tooltip } from 'antd';
+
+import solidInfoCircleUrl from '@/assets/Icons/solid-info-circle.svg';
 
 import './FunnelTable.styles.scss';
 
@@ -24,7 +25,7 @@ function FunnelTable({
 				<div className="funnel-table__title">{title}</div>
 				<div className="funnel-table__actions">
 					<Tooltip title={tooltip ?? null}>
-						<img src="/Icons/solid-info-circle.svg" alt="info" />
+						<img src={solidInfoCircleUrl} alt="info" />
 					</Tooltip>
 				</div>
 			</div>

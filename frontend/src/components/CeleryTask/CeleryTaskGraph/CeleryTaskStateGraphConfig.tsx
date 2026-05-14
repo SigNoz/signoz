@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -93,10 +92,10 @@ function CeleryTaskStateGraphConfig({
 							{isLoading
 								? '-'
 								: isError
-								? '-'
-								: Number.isNaN(values[index])
-								? '-'
-								: Math.round(Number(values[index]))}
+									? '-'
+									: Number.isNaN(values[index])
+										? '-'
+										: Math.round(Number(values[index]))}
 						</div>
 					</div>
 					{tab.key === barState && <div className="celery-task-states__indicator" />}

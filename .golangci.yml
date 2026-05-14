@@ -6,12 +6,14 @@ linters:
     - depguard
     - errcheck
     - forbidigo
+    - godot
     - govet
     - iface
     - ineffassign
     - misspell
     - nilnil
     - sloglint
+    - staticcheck
     - wastedassign
     - unparam
     - unused
@@ -35,7 +37,7 @@ linters:
         - identical
     sloglint:
       no-mixed-args: true
-      kv-only: true
+      attr-only: true
       no-global: all
       context: all
       static-msg: true

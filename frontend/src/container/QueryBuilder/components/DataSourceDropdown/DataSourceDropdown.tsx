@@ -21,17 +21,18 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 		? exploreDataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,
-		  }))
+			}))
 		: dataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,
-		  }));
+			}));
 
 	return (
 		<Select
 			defaultValue={dataSourceOptions[0].value}
 			options={dataSourceOptions}
 			onChange={onChange}
+			data-testid={props['data-testid']}
 			value={value}
 			style={style}
 		/>

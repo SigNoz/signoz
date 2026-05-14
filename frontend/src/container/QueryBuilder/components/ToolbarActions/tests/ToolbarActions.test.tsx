@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -52,10 +51,10 @@ describe('ToolbarActions', () => {
 		expect(queryByTestId('clickhouse-view')).not.toBeInTheDocument();
 
 		await userEvent.click(screen.getByTestId('search-view'));
-		expect(handleChangeSelectedView).toBeCalled();
+		expect(handleChangeSelectedView).toHaveBeenCalled();
 
 		await userEvent.click(screen.getByTestId('query-builder-view'));
-		expect(handleChangeSelectedView).toBeCalled();
+		expect(handleChangeSelectedView).toHaveBeenCalled();
 	});
 
 	it('renders - clickhouse view and test view switching', async () => {
@@ -79,27 +78,32 @@ describe('ToolbarActions', () => {
 		expect(clickHouseView).toBeInTheDocument();
 
 		await userEvent.click(clickHouseView as HTMLElement);
-		expect(handleChangeSelectedView).toBeCalled();
+		expect(handleChangeSelectedView).toHaveBeenCalled();
 
 		// Test that timeseries view is also present and clickable
 		const timeseriesView = queryByTestId('query-builder-view');
 		expect(timeseriesView).toBeInTheDocument();
 
 		await userEvent.click(timeseriesView as HTMLElement);
-		expect(handleChangeSelectedView).toBeCalled();
+		expect(handleChangeSelectedView).toHaveBeenCalled();
 	});
 
 	it('RightToolbarActions - render correctly with props', async () => {
 		const onStageRunQuery = jest.fn();
 		const { queryByText } = render(
 			<MockQueryClientProvider>
-				<RightToolbarActions onStageRunQuery={onStageRunQuery} />,
+				<RightToolbarActions
+					onStageRunQuery={onStageRunQuery}
+					isLoadingQueries={false}
+					handleCancelQuery={jest.fn()}
+				/>
+				,
 			</MockQueryClientProvider>,
 		);
 
 		const runQueryBtn = queryByText('Run Query');
 		expect(runQueryBtn).toBeInTheDocument();
 		await userEvent.click(runQueryBtn as HTMLElement);
-		expect(onStageRunQuery).toBeCalled();
+		expect(onStageRunQuery).toHaveBeenCalled();
 	});
 });

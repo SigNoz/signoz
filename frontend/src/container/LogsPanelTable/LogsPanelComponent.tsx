@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -16,7 +15,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import { useLogsData } from 'hooks/useLogsData';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -34,6 +33,7 @@ function LogsPanelComponent({
 	widget,
 	setRequestData,
 	queryResponse,
+	onColumnWidthsChange,
 }: LogsPanelComponentProps): JSX.Element {
 	const [pageSize, setPageSize] = useState<number>(10);
 	const [offset, setOffset] = useState<number>(0);
@@ -42,8 +42,15 @@ function LogsPanelComponent({
 		setPageSize(value);
 		setOffset(0);
 		setRequestData((prev) => {
-			const newQueryData = { ...prev.query };
-			newQueryData.builder.queryData[0].pageSize = value;
+			const newQueryData = {
+				...prev.query,
+				builder: {
+					...prev.query.builder,
+					queryData: prev.query.builder.queryData.map((qd, i) =>
+						i === 0 ? { ...qd, pageSize: value } : qd,
+					),
+				},
+			};
 			return {
 				...prev,
 				query: newQueryData,
@@ -83,24 +90,24 @@ function LogsPanelComponent({
 		() => logs.map((log) => FlatLogData(log) as RowData),
 		[logs],
 	);
-
 	const {
 		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
 		onAddToQuery,
-	} = useActiveLog();
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
 			onClick: (): void => {
 				const log = logs.find((item) => item.id === record.id);
 				if (log) {
-					onSetActiveLog(log);
+					handleSetActiveLog(log);
 				}
 			},
 		}),
-		[logs, onSetActiveLog],
+		[handleSetActiveLog, logs],
 	);
 
 	const handleRequestData = (newOffset: number): void => {
@@ -132,7 +139,7 @@ function LogsPanelComponent({
 
 	return (
 		<>
-			<div className="logs-table">
+			<div className="logs-table" data-log-detail-ignore="true">
 				<div className="resize-table">
 					<OverlayScrollbar>
 						<ResizeTable
@@ -146,8 +153,8 @@ function LogsPanelComponent({
 							columns={columns}
 							onRow={handleRow}
 							rowKey={(record): string => record.id}
-							widgetId={widget.id}
-							shouldPersistColumnWidths
+							columnWidths={widget.columnWidths}
+							onColumnWidthsChange={onColumnWidthsChange}
 						/>
 					</OverlayScrollbar>
 				</div>
@@ -166,15 +173,19 @@ function LogsPanelComponent({
 					</div>
 				)}
 			</div>
-			<LogDetail
-				selectedTab={VIEW_TYPES.OVERVIEW}
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-				isListViewPanel
-				listViewPanelSelectedFields={widget?.selectedLogFields}
-			/>
+			{selectedTab && activeLog && (
+				<LogDetail
+					selectedTab={selectedTab}
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+					isListViewPanel
+					listViewPanelSelectedFields={widget?.selectedLogFields}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+				/>
+			)}
 		</>
 	);
 }
@@ -186,6 +197,7 @@ export type LogsPanelComponentProps = {
 		Error
 	>;
 	widget: Widgets;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export default LogsPanelComponent;

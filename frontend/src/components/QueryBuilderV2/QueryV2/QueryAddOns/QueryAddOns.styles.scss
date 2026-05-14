@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-add-ons {
 	width: 100%;
 }
@@ -20,34 +22,34 @@
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
 
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 		}
 
 		.tab {
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			border-left: none;
 			min-width: 120px;
 			height: 36px;
 			line-height: 36px;
 
 			&:first-child {
-				border-left: 1px solid var(--bg-slate-400);
+				border-left: 1px solid var(--l1-border);
 			}
 		}
 
 		.tab::before {
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 		}
 
 		.selected-view {
 			color: var(--text-robin-500);
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 
 			display: none;
 		}
 
 		.selected-view::before {
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 		}
 	}
 
@@ -56,8 +58,8 @@
 		height: 30px;
 
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
 }
@@ -89,7 +91,7 @@
 				position: relative !important;
 
 				&:focus-within {
-					border-color: var(--bg-robin-500);
+					border-color: var(--primary-background);
 				}
 
 				&.cm-focused {
@@ -98,20 +100,20 @@
 
 				.cm-content {
 					border-radius: 2px;
-					border: 1px solid var(--Slate-400, #1d212d);
+					border: 1px solid var(--l1-border);
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 					padding: 0px !important;
-					background-color: #121317 !important;
+					background-color: var(--l2-background) !important;
 
 					&:focus-within {
-						border-color: var(--bg-ink-200);
+						border-color: var(--l1-border);
 					}
 				}
 
 				.cm-tooltip-autocomplete {
-					background: var(--bg-ink-300) !important;
-					color: var(--bg-ink-500) !important;
+					background: var(--l3-background) !important;
+					color: var(--l1-background) !important;
 					border-radius: 2px !important;
 					font-size: 12px !important;
 					font-weight: 500 !important;
@@ -121,17 +123,17 @@
 					right: 0px !important;
 
 					border-radius: 4px;
-					border: 1px solid var(--bg-slate-200, #1d212d);
+					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
-						rgba(18, 19, 23, 0.8) 0%,
-						rgba(18, 19, 23, 0.9) 98.68%
+						color-mix(in srgb, var(--card) 80%, transparent) 0%,
+						color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 					) !important;
 					backdrop-filter: blur(20px);
 					box-sizing: border-box;
 					box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
 					font-family: 'Space Mono', monospace !important;
-					color: var(--bg-vanilla-100) !important;
+					color: var(--l1-foreground) !important;
 
 					ul {
 						width: 100% !important;
@@ -174,7 +176,11 @@
 
 							&[aria-selected='true'] {
 								// background-color: rgba(78, 116, 248, 0.7) !important;
-								background: rgba(171, 189, 255, 0.04) !important;
+								background: color-mix(
+									in srgb,
+									var(--bg-robin-200) 4%,
+									transparent
+								) !important;
 							}
 						}
 					}
@@ -207,25 +213,25 @@
 				.cm-line {
 					line-height: 36px !important;
 					font-family: 'Space Mono', monospace !important;
-					background-color: #121317 !important;
+					background-color: var(--l2-background) !important;
 
 					::-moz-selection {
-						background: var(--bg-ink-100) !important;
+						background: var(--l3-background) !important;
 						opacity: 0.5 !important;
 					}
 
 					::selection {
-						background: var(--bg-ink-100) !important;
+						background: var(--l3-background) !important;
 						opacity: 0.5 !important;
 					}
 
 					.cm-function {
-						color: var(--bg-robin-500) !important;
+						color: var(--primary-background) !important;
 					}
 
 					.chip-decorator {
-						background: rgba(36, 40, 52, 1) !important;
-						color: var(--bg-vanilla-100) !important;
+						background: var(--l3-background) !important;
+						color: var(--l1-foreground) !important;
 						border-radius: 4px;
 						padding: 2px 4px;
 						margin-right: 4px;
@@ -233,7 +239,7 @@
 				}
 
 				.cm-selectionBackground {
-					background: var(--bg-ink-100) !important;
+					background: var(--l3-background) !important;
 					opacity: 0.5 !important;
 				}
 
@@ -245,8 +251,8 @@
 
 		.close-btn {
 			border-radius: 0px 2px 2px 0px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
 			height: 38px;
 			width: 38px;
 
@@ -277,111 +283,6 @@
 		position: relative;
 		.cm-placeholder {
 			font-size: 12px !important;
-		}
-	}
-}
-
-.lightMode {
-	.add-ons-list {
-		.add-ons-tabs {
-			.add-on-tab-title {
-				color: var(--bg-ink-500) !important;
-			}
-
-			.tab {
-				border: 1px solid var(--bg-vanilla-300) !important;
-				background: var(--bg-vanilla-100) !important;
-
-				&:first-child {
-					border-left: 1px solid var(--bg-vanilla-300) !important;
-				}
-			}
-
-			.tab::before {
-				background: var(--bg-vanilla-300) !important;
-			}
-
-			.selected-view {
-				color: var(--bg-robin-500) !important;
-				border: 1px solid var(--bg-vanilla-300) !important;
-			}
-
-			.selected-view::before {
-				background: var(--bg-vanilla-300) !important;
-			}
-		}
-
-		.compass-button {
-			border: 1px solid var(--bg-vanilla-300) !important;
-			background: var(--bg-vanilla-100) !important;
-		}
-	}
-
-	.having-filter-container {
-		.having-filter-select-container {
-			.having-filter-select-editor {
-				.cm-editor {
-					&:focus-within {
-						border-color: var(--bg-vanilla-300) !important;
-					}
-
-					.cm-content {
-						border: 1px solid var(--bg-vanilla-300) !important;
-						background: var(--bg-vanilla-100) !important;
-
-						&:focus-within {
-							border-color: var(--bg-vanilla-300) !important;
-						}
-					}
-
-					.cm-tooltip-autocomplete {
-						background: var(--bg-vanilla-100) !important;
-						border: 1px solid var(--bg-vanilla-300) !important;
-						color: var(--bg-ink-500) !important;
-						box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-
-						ul {
-							li {
-								color: var(--bg-ink-300) !important;
-								&:hover {
-									background: var(--bg-vanilla-300) !important;
-								}
-
-								&[aria-selected='true'] {
-									background: var(--bg-vanilla-300) !important;
-									font-weight: 600 !important;
-								}
-							}
-						}
-					}
-
-					.cm-line {
-						background-color: var(--bg-vanilla-100) !important;
-
-						::-moz-selection {
-							background: var(--bg-vanilla-100) !important;
-						}
-
-						::selection {
-							background: var(--bg-ink-100) !important;
-						}
-
-						.chip-decorator {
-							background: var(--bg-vanilla-300) !important;
-							color: var(--bg-ink-400) !important;
-						}
-					}
-
-					.cm-selectionBackground {
-						background: var(--bg-vanilla-100) !important;
-					}
-				}
-			}
-
-			.close-btn {
-				border: 1px solid var(--bg-vanilla-300) !important;
-				background: var(--bg-vanilla-100) !important;
-			}
 		}
 	}
 }

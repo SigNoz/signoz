@@ -3,24 +3,28 @@ package querier
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// queryInfo holds common query properties
+// queryInfo holds common query properties.
 type queryInfo struct {
 	Name     string
 	Disabled bool
 	Step     qbtypes.Step
 }
 
-// getqueryInfo extracts common info from any query type
+// getqueryInfo extracts common info from any query type.
 func getqueryInfo(spec any) queryInfo {
 	switch s := spec.(type) {
 	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
@@ -41,7 +45,7 @@ func getqueryInfo(spec any) queryInfo {
 	return queryInfo{}
 }
 
-// getQueryName is a convenience function when only name is needed
+// getQueryName is a convenience function when only name is needed.
 func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
@@ -121,8 +125,12 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 				continue
 			}
 
+			stepInterval, err := req.StepIntervalForQuery(name)
+			if err != nil {
+				return nil, err
+			}
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
-			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, stepInterval)
 			// empty time series if it doesn't exist
 			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
 			if !ok {
@@ -158,7 +166,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 	return finalResults, nil
 }
 
-// postProcessBuilderQuery applies postprocessing to a single builder query result
+// postProcessBuilderQuery applies postprocessing to a single builder query result.
 func postProcessBuilderQuery[T any](
 	q *querier,
 	result *qbtypes.Result,
@@ -170,7 +178,7 @@ func postProcessBuilderQuery[T any](
 
 	// Apply functions
 	if len(query.Functions) > 0 {
-		step := query.StepInterval.Duration.Milliseconds()
+		step := query.StepInterval.Milliseconds()
 		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
 		result = q.applyFunctions(result, functions)
 	}
@@ -178,7 +186,7 @@ func postProcessBuilderQuery[T any](
 	return result
 }
 
-// postProcessMetricQuery applies postprocessing to a metric query result
+// postProcessMetricQuery applies postprocessing to a metric query result.
 func postProcessMetricQuery(
 	q *querier,
 	result *qbtypes.Result,
@@ -202,7 +210,7 @@ func postProcessMetricQuery(
 	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	if len(query.Functions) > 0 {
-		step := query.StepInterval.Duration.Milliseconds()
+		step := query.StepInterval.Milliseconds()
 		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
 		result = q.applyFunctions(result, functions)
 	}
@@ -217,7 +225,7 @@ func postProcessMetricQuery(
 	return result
 }
 
-// postProcessTraceOperator applies postprocessing to a trace operator query result
+// postProcessTraceOperator applies postprocessing to a trace operator query result.
 func postProcessTraceOperator(
 	q *querier,
 	result *qbtypes.Result,
@@ -229,7 +237,7 @@ func postProcessTraceOperator(
 
 	// Apply functions if any
 	if len(query.Functions) > 0 {
-		step := query.StepInterval.Duration.Milliseconds()
+		step := query.StepInterval.Milliseconds()
 		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)
 		result = q.applyFunctions(result, functions)
 	}
@@ -237,7 +245,7 @@ func postProcessTraceOperator(
 	return result
 }
 
-// applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field
+// applyMetricReduceTo applies reduce to operation using the metric's ReduceTo field.
 func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.ReduceTo) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
@@ -260,7 +268,7 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 	return result
 }
 
-// applySeriesLimit limits the number of series in the result
+// applySeriesLimit limits the number of series in the result.
 func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
@@ -277,7 +285,7 @@ func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []
 	return result
 }
 
-// applyFunctions applies functions to time series data
+// applyFunctions applies functions to time series data.
 func (q *querier) applyFunctions(result *qbtypes.Result, functions []qbtypes.Function) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
@@ -295,7 +303,7 @@ func (q *querier) applyFunctions(result *qbtypes.Result, functions []qbtypes.Fun
 	return result
 }
 
-// applyFormulas processes formula queries in the composite query
+// applyFormulas processes formula queries in the composite query.
 func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]*qbtypes.Result {
 	// Collect formula queries
 	formulaQueries := make(map[string]qbtypes.QueryBuilderFormula)
@@ -337,7 +345,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 	return results
 }
 
-// processTimeSeriesFormula handles formula evaluation for time series data
+// processTimeSeriesFormula handles formula evaluation for time series data.
 func (q *querier) processTimeSeriesFormula(
 	ctx context.Context,
 	results map[string]*qbtypes.Result,
@@ -358,14 +366,14 @@ func (q *querier) processTimeSeriesFormula(
 	// Create formula evaluator
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
 	// Evaluate the formula
 	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
@@ -508,13 +516,13 @@ func (q *querier) processScalarFormula(
 	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
 	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
@@ -565,7 +573,7 @@ func (q *querier) processScalarFormula(
 	}
 }
 
-// filterDisabledQueries removes results for disabled queries
+// filterDisabledQueries removes results for disabled queries.
 func (q *querier) filterDisabledQueries(results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]*qbtypes.Result {
 	filtered := make(map[string]*qbtypes.Result)
 
@@ -581,7 +589,7 @@ func (q *querier) filterDisabledQueries(results map[string]*qbtypes.Result, req 
 	return filtered
 }
 
-// formatScalarResultsAsTable formats scalar results as a unified table for UI display
+// formatScalarResultsAsTable formats scalar results as a unified table for UI display.
 func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]any {
 	if len(results) == 0 {
 		return map[string]any{"table": &qbtypes.ScalarData{}}
@@ -614,23 +622,33 @@ func (q *querier) formatScalarResultsAsTable(results map[string]*qbtypes.Result,
 	return map[string]any{"table": merged}
 }
 
-// convertTimeSeriesDataToScalar converts time series to scalar format
+// convertTimeSeriesDataToScalar converts time series to scalar format.
 func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName string) *qbtypes.ScalarData {
 	if tsData == nil || len(tsData.Aggregations) == 0 {
 		return &qbtypes.ScalarData{QueryName: queryName}
 	}
 
-	columns := []*qbtypes.ColumnDescriptor{}
-
-	// Add group columns from first series
-	if len(tsData.Aggregations[0].Series) > 0 {
-		for _, label := range tsData.Aggregations[0].Series[0].Labels {
-			columns = append(columns, &qbtypes.ColumnDescriptor{
-				TelemetryFieldKey: label.Key,
-				QueryName:         queryName,
-				Type:              qbtypes.ColumnTypeGroup,
-			})
+	// Series can have ragged label sets; build the column schema from the
+	// union of all label keys (first-seen order) and fill rows by key lookup.
+	keyOrder := []telemetrytypes.TelemetryFieldKey{}
+	keyIndex := map[string]int{}
+	for _, series := range tsData.Aggregations[0].Series {
+		for _, label := range series.Labels {
+			if _, ok := keyIndex[label.Key.Name]; ok {
+				continue
+			}
+			keyIndex[label.Key.Name] = len(keyOrder)
+			keyOrder = append(keyOrder, label.Key)
 		}
+	}
+
+	columns := make([]*qbtypes.ColumnDescriptor, 0, len(keyOrder)+len(tsData.Aggregations))
+	for _, key := range keyOrder {
+		columns = append(columns, &qbtypes.ColumnDescriptor{
+			TelemetryFieldKey: key,
+			QueryName:         queryName,
+			Type:              qbtypes.ColumnTypeGroup,
+		})
 	}
 
 	// Add aggregation columns
@@ -648,18 +666,18 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		})
 	}
 
-	// Build rows
+	// Build rows.
+	groupColCount := len(keyOrder)
 	data := [][]any{}
 	for seriesIdx, series := range tsData.Aggregations[0].Series {
 		row := make([]any, len(columns))
 
-		// Add group values
-		for i, label := range series.Labels {
-			row[i] = label.Value
+		// Place each label under its key's column (by lookup, not index).
+		for _, label := range series.Labels {
+			row[keyIndex[label.Key.Name]] = label.Value
 		}
 
 		// Add aggregation values (last value)
-		groupColCount := len(series.Labels)
 		for aggIdx, agg := range tsData.Aggregations {
 			if seriesIdx < len(agg.Series) && len(agg.Series[seriesIdx].Values) > 0 {
 				lastValue := agg.Series[seriesIdx].Values[len(agg.Series[seriesIdx].Values)-1].Value
@@ -679,7 +697,7 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 	}
 }
 
-// hasMultipleQueries checks if ScalarData contains columns from multiple queries
+// hasMultipleQueries checks if ScalarData contains columns from multiple queries.
 func hasMultipleQueries(sd *qbtypes.ScalarData) bool {
 	queries := make(map[string]bool)
 	for _, col := range sd.Columns {
@@ -690,7 +708,7 @@ func hasMultipleQueries(sd *qbtypes.ScalarData) bool {
 	return len(queries) > 1
 }
 
-// deduplicateRows removes duplicate rows based on group columns
+// deduplicateRows removes duplicate rows based on group columns.
 func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Find group column indices
 	groupIndices := []int{}
@@ -737,7 +755,7 @@ func deduplicateRows(sd *qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.Sca
 	}
 }
 
-// mergeScalarData merges multiple scalar data results
+// mergeScalarData merges multiple scalar data results.
 func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bool) *qbtypes.ScalarData {
 	// Collect unique group columns
 	groupCols := []string{}
@@ -853,7 +871,7 @@ func mergeScalarData(results map[string]*qbtypes.ScalarData, applyDefaultSort bo
 	}
 }
 
-// buildRowKey builds a unique key from row values at specified indices
+// buildRowKey builds a unique key from row values at specified indices.
 func buildRowKey(row []any, indices []int) string {
 	parts := make([]string, len(indices))
 	for i, idx := range indices {
@@ -866,7 +884,7 @@ func buildRowKey(row []any, indices []int) string {
 	return fmt.Sprintf("%v", parts)
 }
 
-// buildKeyFromGroupCols builds a key from group column values
+// buildKeyFromGroupCols builds a key from group column values.
 func buildKeyFromGroupCols(row []any, groupMap map[string]int, groupCols []string) string {
 	parts := make([]string, len(groupCols))
 	for i, colName := range groupCols {
@@ -879,7 +897,7 @@ func buildKeyFromGroupCols(row []any, groupMap map[string]int, groupCols []strin
 	return fmt.Sprintf("%v", parts)
 }
 
-// sortByFirstAggregation sorts data by the first aggregation column (descending)
+// sortByFirstAggregation sorts data by the first aggregation column (descending).
 func sortByFirstAggregation(data [][]any, columns []*qbtypes.ColumnDescriptor) {
 	// Find first aggregation column
 	aggIdx := -1
@@ -899,7 +917,7 @@ func sortByFirstAggregation(data [][]any, columns []*qbtypes.ColumnDescriptor) {
 	})
 }
 
-// compareValues compares two values for sorting (handles n/a and numeric types)
+// compareValues compares two values for sorting (handles n/a and numeric types).
 func compareValues(a, b any) int {
 	// n/a values gets pushed to the end
 	if a == "n/a" && b == "n/a" {
@@ -929,7 +947,7 @@ func compareValues(a, b any) int {
 	return 0
 }
 
-// toFloat64 attempts to convert a value to float64
+// toFloat64 attempts to convert a value to float64.
 func toFloat64(v any) (float64, bool) {
 	val := numericAsFloat(getPointerValue(v))
 	if math.IsNaN(val) {
@@ -945,7 +963,7 @@ func gcd(a, b int64) int64 {
 	return gcd(b, a%b)
 }
 
-// prepareFillZeroArgsWithStep prepares fillZero function arguments with a specific step
+// prepareFillZeroArgsWithStep prepares fillZero function arguments with a specific step.
 func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req *qbtypes.QueryRangeRequest, step int64) []qbtypes.Function {
 	needsCopy := false
 	for _, fn := range functions {
@@ -962,11 +980,19 @@ func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req 
 	updatedFunctions := make([]qbtypes.Function, len(functions))
 	copy(updatedFunctions, functions)
 
+	// funcFillZero expects start/end in milliseconds. req.Start/req.End may
+	// arrive in s/ms/μs/ns depending on the caller; normalize via ToNanoSecs
+	// (same pattern used elsewhere in the codebase, e.g. RecommendedStepInterval)
+	// then convert to ms. Without this, an ns payload makes (end-start)/step
+	// 10^6× too large and OOMs the process.
+	startMs := querybuilder.ToNanoSecs(req.Start) / 1_000_000
+	endMs := querybuilder.ToNanoSecs(req.End) / 1_000_000
+
 	for i, fn := range updatedFunctions {
 		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
 			fn.Args = []qbtypes.FunctionArg{
-				{Value: float64(req.Start)},
-				{Value: float64(req.End)},
+				{Value: float64(startMs)},
+				{Value: float64(endMs)},
 				{Value: float64(step)},
 			}
 			updatedFunctions[i] = fn
@@ -976,7 +1002,7 @@ func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req 
 	return updatedFunctions
 }
 
-// calculateFormulaStep calculates the GCD of steps from queries referenced in the formula
+// calculateFormulaStep calculates the GCD of steps from queries referenced in the formula.
 func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRangeRequest) int64 {
 	parsedExpr, err := govaluate.NewEvaluableExpression(expression)
 	if err != nil {
@@ -1000,7 +1026,7 @@ func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRang
 	for _, query := range req.CompositeQuery.Queries {
 		info := getqueryInfo(query.Spec)
 		if queryNames[info.Name] && info.Step.Duration > 0 {
-			stepMs := info.Step.Duration.Milliseconds()
+			stepMs := info.Step.Milliseconds()
 			if stepMs > 0 {
 				steps = append(steps, stepMs)
 			}

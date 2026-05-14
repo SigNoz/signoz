@@ -1,9 +1,16 @@
 import { useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
-import { InputRef, Switch, Tooltip, Typography } from 'antd';
-import { ColumnsType, ColumnType } from 'antd/lib/table';
+import { Search } from '@signozhq/icons';
+import {
+	InputRef,
+	Switch,
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+	Tooltip,
+} from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -97,7 +104,7 @@ function TopOperationsTable({
 
 	const getSearchOption = (): ColumnType<TopOperationList> => ({
 		filterDropdown,
-		filterIcon: <SearchOutlined />,
+		filterIcon: <Search size="md" />,
 		onFilter: (value, record): boolean =>
 			record.name
 				.toString()
@@ -190,8 +197,7 @@ function TopOperationsTable({
 
 	const entryPointSpanInfo = {
 		text: 'Shows the spans where requests enter new services for the first time',
-		url:
-			'https://signoz.io/docs/traces-management/guides/entry-point-spans-service-overview/',
+		url: 'https://signoz.io/docs/traces-management/guides/entry-point-spans-service-overview/',
 		urlText: 'Learn more about Entrypoint Spans.',
 	};
 

@@ -4,33 +4,35 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func TestRollingWindow_EvaluationTime(t *testing.T) {
 	tests := []struct {
 		name       string
-		evalWindow Duration
+		evalWindow valuer.TextDuration
 		current    time.Time
 		wantStart  time.Time
 		wantEnd    time.Time
 	}{
 		{
 			name:       "5 minute rolling window",
-			evalWindow: Duration(5 * time.Minute),
+			evalWindow: valuer.MustParseTextDuration("5m"),
 			current:    time.Date(2023, 12, 1, 12, 30, 0, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 12, 25, 0, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 12, 30, 0, 0, time.UTC),
 		},
 		{
 			name:       "1 hour rolling window",
-			evalWindow: Duration(1 * time.Hour),
+			evalWindow: valuer.MustParseTextDuration("1h"),
 			current:    time.Date(2023, 12, 1, 15, 45, 30, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 14, 45, 30, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 15, 45, 30, 0, time.UTC),
 		},
 		{
 			name:       "30 second rolling window",
-			evalWindow: Duration(30 * time.Second),
+			evalWindow: valuer.MustParseTextDuration("30s"),
 			current:    time.Date(2023, 12, 1, 12, 30, 15, 0, time.UTC),
 			wantStart:  time.Date(2023, 12, 1, 12, 29, 45, 0, time.UTC),
 			wantEnd:    time.Date(2023, 12, 1, 12, 30, 15, 0, time.UTC),
@@ -41,7 +43,7 @@ func TestRollingWindow_EvaluationTime(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rw := &RollingWindow{
 				EvalWindow: tt.evalWindow,
-				Frequency:  Duration(1 * time.Minute),
+				Frequency:  valuer.MustParseTextDuration("1m"),
 			}
 
 			gotStart, gotEnd := rw.NextWindowFor(tt.current)
@@ -69,7 +71,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(15),
 				},
-				Frequency: Duration(5 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("5m"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -83,7 +85,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(9),
 					Minute: intPtr(30),
 				},
-				Frequency: Duration(1 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("1h"),
 				Timezone:  "Asia/Kolkata",
 			},
 			current: time.Date(2025, 3, 15, 15, 30, 0, 0, time.UTC),
@@ -98,7 +100,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:    intPtr(14),
 					Minute:  intPtr(0),
 				},
-				Frequency: Duration(24 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("24h"),
 				Timezone:  "America/New_York",
 			},
 			current: time.Date(2025, 3, 18, 19, 0, 0, 0, time.UTC), // Tuesday
@@ -113,7 +115,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 					Hour:   intPtr(0),
 					Minute: intPtr(0),
 				},
-				Frequency: Duration(24 * time.Hour),
+				Frequency: valuer.MustParseTextDuration("24h"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 12, 0, 0, 0, time.UTC),
@@ -125,7 +127,7 @@ func TestCumulativeWindow_NewScheduleSystem(t *testing.T) {
 				Schedule: CumulativeSchedule{
 					Type: ScheduleTypeHourly,
 				},
-				Frequency: Duration(5 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("5m"),
 				Timezone:  "UTC",
 			},
 			current: time.Date(2025, 3, 15, 14, 30, 0, 0, time.UTC),
@@ -755,8 +757,8 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 			jsonInput: `{"kind":"rolling","spec":{"evalWindow":"5m","frequency":"1m"}}`,
 			wantKind:  RollingEvaluation,
 			wantSpec: RollingWindow{
-				EvalWindow: Duration(5 * time.Minute),
-				Frequency:  Duration(1 * time.Minute),
+				EvalWindow: valuer.MustParseTextDuration("5m"),
+				Frequency:  valuer.MustParseTextDuration("1m"),
 			},
 		},
 		{
@@ -768,7 +770,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					Type:   ScheduleTypeHourly,
 					Minute: intPtr(30),
 				},
-				Frequency: Duration(2 * time.Minute),
+				Frequency: valuer.MustParseTextDuration("2m"),
 				Timezone:  "UTC",
 			},
 		},
@@ -847,10 +849,10 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					t.Fatalf("Expected RollingWindow spec, got %T", envelope.Spec)
 				}
 				wantSpec := tt.wantSpec.(RollingWindow)
-				if gotSpec.EvalWindow != wantSpec.EvalWindow {
+				if !gotSpec.EvalWindow.Equal(wantSpec.EvalWindow) {
 					t.Errorf("RollingWindow.EvalWindow = %v, want %v", gotSpec.EvalWindow, wantSpec.EvalWindow)
 				}
-				if gotSpec.Frequency != wantSpec.Frequency {
+				if !gotSpec.Frequency.Equal(wantSpec.Frequency) {
 					t.Errorf("RollingWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 			case CumulativeEvaluation:
@@ -866,7 +868,7 @@ func TestEvaluationEnvelope_UnmarshalJSON(t *testing.T) {
 					(gotSpec.Schedule.Minute != nil && wantSpec.Schedule.Minute != nil && *gotSpec.Schedule.Minute != *wantSpec.Schedule.Minute) {
 					t.Errorf("CumulativeWindow.Schedule.Minute = %v, want %v", gotSpec.Schedule.Minute, wantSpec.Schedule.Minute)
 				}
-				if gotSpec.Frequency != wantSpec.Frequency {
+				if !gotSpec.Frequency.Equal(wantSpec.Frequency) {
 					t.Errorf("CumulativeWindow.Frequency = %v, want %v", gotSpec.Frequency, wantSpec.Frequency)
 				}
 				if gotSpec.Timezone != wantSpec.Timezone {

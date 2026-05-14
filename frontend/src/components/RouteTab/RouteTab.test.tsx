@@ -28,7 +28,7 @@ const testRoutes: RouteTabProps['routes'] = [
 ];
 
 describe('RouteTab component', () => {
-	test('renders correctly', () => {
+	it('renders correctly', () => {
 		const history = createMemoryHistory();
 		render(
 			<Router history={history}>
@@ -39,7 +39,7 @@ describe('RouteTab component', () => {
 		expect(screen.getByRole('tab', { name: 'Tab2' })).toBeInTheDocument();
 	});
 
-	test('renders correct number of tabs', () => {
+	it('renders correct number of tabs', () => {
 		const history = createMemoryHistory();
 		render(
 			<Router history={history}>
@@ -47,10 +47,10 @@ describe('RouteTab component', () => {
 			</Router>,
 		);
 		const tabs = screen.getAllByRole('tab');
-		expect(tabs.length).toBe(testRoutes.length);
+		expect(tabs).toHaveLength(testRoutes.length);
 	});
 
-	test('sets provided activeKey as active tab', () => {
+	it('sets provided activeKey as active tab', () => {
 		const history = createMemoryHistory();
 		render(
 			<Router history={history}>
@@ -62,7 +62,7 @@ describe('RouteTab component', () => {
 		).toBeInTheDocument();
 	});
 
-	test('navigates to correct route on tab click', () => {
+	it('navigates to correct route on tab click', () => {
 		const history = createMemoryHistory();
 		render(
 			<Router history={history}>
@@ -74,7 +74,7 @@ describe('RouteTab component', () => {
 		expect(history.location.pathname).toBe('/tab2');
 	});
 
-	test('calls onChangeHandler on tab change', () => {
+	it('calls onChangeHandler on tab change', () => {
 		const onChangeHandler = jest.fn();
 		const history = createMemoryHistory();
 		render(

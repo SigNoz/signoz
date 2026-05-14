@@ -1,51 +1,60 @@
-import { RocketOutlined } from '@ant-design/icons';
-import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
-	BarChart2,
+	BarChart,
 	BellDot,
-	Binoculars,
 	Book,
+	Bot,
 	Boxes,
-	BugIcon,
+	Bug,
+	Building2,
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
 	Github,
-	Globe,
 	HardDrive,
 	Home,
-	Key,
 	Keyboard,
 	Layers2,
 	LayoutGrid,
 	ListMinus,
+	LogOut,
 	MessageSquareText,
 	Plus,
 	Receipt,
+	Rocket,
 	Route,
 	ScrollText,
-	Search,
 	Settings,
+	Shield,
 	Slack,
+	Sparkles,
 	Unplug,
 	User,
 	UserPlus,
-} from 'lucide-react';
+	Users,
+	Binoculars,
+} from '@signozhq/icons';
+import { Style } from '@signozhq/design-tokens';
+import { MenuProps } from 'antd';
+import ROUTES from 'constants/routes';
 
-import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
+import {
+	SecondaryMenuItemKey,
+	SettingsNavSection,
+	SidebarItem,
+} from './sideNav.types';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const homeMenuItem = {
@@ -72,9 +81,24 @@ export const helpSupportMenuItem = {
 	icon: <MessageSquareText size={16} />,
 };
 
+// The AI Assistant route is parameterized as `/ai-assistant/:conversationId`.
+// Sending the user to `/ai-assistant/new` triggers the page's fallback that
+// spawns a fresh conversation and replaces the URL with the real id, so
+// every sidenav click starts a new chat (the in-page history sidebar lets
+// the user resume earlier ones). Using a stable concrete path also lets
+// the active-highlight map below resolve `/ai-assistant/<any id>` back to
+// this menu key.
+const AI_ASSISTANT_NAV_KEY = '/ai-assistant/new';
+
+export const aiAssistantMenuItem = {
+	key: AI_ASSISTANT_NAV_KEY,
+	label: 'AI Assistant',
+	icon: <Sparkles size={16} className="ai-assistant-icon" />,
+	itemKey: 'ai-assistant',
+};
+
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };
@@ -114,7 +138,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		itemKey: 'metrics',
 	},
@@ -158,7 +182,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		itemKey: 'exceptions',
 	},
 	{
@@ -188,12 +212,6 @@ export const primaryMenuItems: SidebarItem[] = [
 		label: 'Home',
 		icon: <Home size={16} />,
 		itemKey: 'home',
-	},
-	{
-		key: 'quick-search',
-		label: 'Search',
-		icon: <Search size={16} />,
-		itemKey: 'quick-search',
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
@@ -237,7 +255,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		isEnabled: true,
 		itemKey: 'metrics',
@@ -260,7 +278,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		isEnabled: true,
 		itemKey: 'exceptions',
 	},
@@ -297,76 +315,114 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	},
 ];
 
-export const settingsMenuItems: SidebarItem[] = [
+export const settingsNavSections: SettingsNavSection[] = [
 	{
-		key: ROUTES.SETTINGS,
-		label: 'General',
-		icon: <Settings size={16} />,
-		isEnabled: true,
-		itemKey: 'general',
+		key: 'general',
+		items: [
+			{
+				key: ROUTES.SETTINGS,
+				label: 'Workspace',
+				icon: <Settings size={16} />,
+				isEnabled: true,
+				itemKey: 'workspace',
+			},
+			{
+				key: ROUTES.MY_SETTINGS,
+				label: 'Account',
+				icon: <User size={16} />,
+				isEnabled: true,
+				itemKey: 'account',
+			},
+			{
+				key: ROUTES.ALL_CHANNELS,
+				label: 'Notification Channels',
+				icon: <FileKey2 size={16} />,
+				isEnabled: true,
+				itemKey: 'notification-channels',
+			},
+			{
+				key: ROUTES.BILLING,
+				label: 'Billing',
+				icon: <Receipt size={16} />,
+				isEnabled: false,
+				itemKey: 'billing',
+			},
+			{
+				key: ROUTES.INTEGRATIONS,
+				label: 'Integrations',
+				icon: <Unplug size={16} />,
+				isEnabled: false,
+				itemKey: 'integrations',
+			},
+			{
+				key: ROUTES.MCP_SERVER,
+				label: 'MCP Server',
+				icon: <Sparkles size={16} />,
+				isEnabled: false,
+				itemKey: 'mcp-server',
+			},
+		],
+	},
+
+	{
+		key: 'identity-access',
+		title: 'Identity & Access',
+		items: [
+			{
+				key: ROUTES.ROLES_SETTINGS,
+				label: 'Roles',
+				icon: <Shield size={16} />,
+				isEnabled: false,
+				itemKey: 'roles',
+			},
+			{
+				key: ROUTES.MEMBERS_SETTINGS,
+				label: 'Members',
+				icon: <Users size={16} />,
+				isEnabled: false,
+				itemKey: 'members',
+			},
+			{
+				key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+				label: 'Service Accounts',
+				icon: <Bot size={16} />,
+				isEnabled: false,
+				itemKey: 'service-accounts',
+			},
+			{
+				key: ROUTES.INGESTION_SETTINGS,
+				label: 'Ingestion',
+				icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
+				isEnabled: false,
+				itemKey: 'ingestion',
+			},
+		],
 	},
 	{
-		key: ROUTES.BILLING,
-		label: 'Billing',
-		icon: <Receipt size={16} />,
-		isEnabled: false,
-		itemKey: 'billing',
+		key: 'authentication',
+		title: 'Authentication',
+		items: [
+			{
+				key: ROUTES.ORG_SETTINGS,
+				label: 'Single Sign-on',
+				icon: <User size={16} />,
+				isEnabled: false,
+				itemKey: 'sso',
+			},
+		],
 	},
 	{
-		key: ROUTES.ORG_SETTINGS,
-		label: 'Members & SSO',
-		icon: <User size={16} />,
-		isEnabled: false,
-		itemKey: 'members-sso',
-	},
-	{
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		label: 'Custom Domain',
-		icon: <Globe size={16} />,
-		isEnabled: false,
-		itemKey: 'custom-domain',
-	},
-	{
-		key: ROUTES.INTEGRATIONS,
-		label: 'Integrations',
-		icon: <Unplug size={16} />,
-		isEnabled: false,
-		itemKey: 'integrations',
-	},
-	{
-		key: ROUTES.ALL_CHANNELS,
-		label: 'Notification Channels',
-		icon: <FileKey2 size={16} />,
-		isEnabled: true,
-		itemKey: 'notification-channels',
-	},
-	{
-		key: ROUTES.API_KEYS,
-		label: 'API Keys',
-		icon: <Key size={16} />,
-		isEnabled: false,
-		itemKey: 'api-keys',
-	},
-	{
-		key: ROUTES.INGESTION_SETTINGS,
-		label: 'Ingestion',
-		icon: <RocketOutlined rotate={45} />,
-		isEnabled: false,
-		itemKey: 'ingestion',
-	},
-	{
-		key: ROUTES.MY_SETTINGS,
-		label: 'Account Settings',
-		icon: <User size={16} />,
-		isEnabled: true,
-		itemKey: 'account-settings',
-	},
-	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Layers2 size={16} />,
-		isEnabled: true,
-		itemKey: 'keyboard-shortcuts',
+		key: 'shortcuts',
+		hasDivider: true,
+		items: [
+			{
+				key: ROUTES.SHORTCUTS,
+				label: 'Keyboard Shortcuts',
+				icon: <Keyboard size={16} />,
+				isEnabled: true,
+				itemKey: 'keyboard-shortcuts',
+			},
+		],
 	},
 ];
 
@@ -418,18 +474,84 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		itemKey: 'chat-support',
 	},
 	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Keyboard size={14} />,
-		itemKey: 'keyboard-shortcuts',
-	},
-	{
 		key: 'invite-collaborators',
 		label: 'Invite a Team Member',
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
 ];
+
+export interface UserSettingsMenuItemsParams {
+	userEmail: string;
+	isWorkspaceBlocked: boolean;
+	isEnterpriseSelfHostedUser: boolean;
+	isCommunityEnterpriseUser: boolean;
+}
+
+export const getUserSettingsDropdownMenuItems = ({
+	userEmail,
+	isWorkspaceBlocked,
+	isEnterpriseSelfHostedUser,
+	isCommunityEnterpriseUser,
+}: UserSettingsMenuItemsParams): MenuProps['items'] =>
+	[
+		{
+			key: 'label',
+			label: (
+				<div className="user-settings-dropdown-logged-in-section">
+					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
+					<span className="user-settings-dropdown-label-email">{userEmail}</span>
+				</div>
+			),
+			disabled: true,
+			dataTestId: 'logged-in-as-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'workspace',
+			label: 'Workspace Settings',
+			icon: <Building2 size={14} color={Style.L1_FOREGROUND} />,
+			disabled: isWorkspaceBlocked,
+			dataTestId: 'workspace-settings-nav-item',
+		},
+		{
+			key: 'account',
+			label: 'Account Settings',
+			icon: <User size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'account-settings-nav-item',
+		},
+		...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
+			? [
+					{
+						key: 'license',
+						label: 'Manage License',
+						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
+						dataTestId: 'manage-license-nav-item',
+					},
+				]
+			: []),
+		{
+			key: 'keyboard-shortcuts',
+			label: 'Keyboard Shortcuts',
+			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'keyboard-shortcuts-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'logout',
+			label: (
+				<span className="user-settings-dropdown-logout-section">Sign out</span>
+			),
+			icon: (
+				<LogOut
+					size={14}
+					className="user-settings-dropdown-logout-section"
+					color={Style.DANGER_BACKGROUND}
+				/>
+			),
+			dataTestId: 'logout-nav-item',
+		},
+	].filter(Boolean);
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
@@ -441,6 +563,10 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 		ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
 	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
+	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
+	// to the AI Assistant menu item's concrete key.
+	'/ai-assistant': AI_ASSISTANT_NAV_KEY,
 };
 
 export default menuItems;

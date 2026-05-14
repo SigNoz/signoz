@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Row, Skeleton, Space, Typography } from 'antd';
+import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+
+import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
 import './WorkspaceAccessRestricted.styles.scss';
 
@@ -113,10 +116,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 								</Col>
 							</Row>
 							<div className="workspace-access-restricted__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>
 						</>
 					)}

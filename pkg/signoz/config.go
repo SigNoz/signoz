@@ -3,7 +3,6 @@ package signoz
 import (
 	"context"
 	"log/slog"
-	"net/url"
 	"os"
 	"path"
 	"reflect"
@@ -12,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -20,9 +21,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -37,7 +45,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
-	"github.com/spf13/cobra"
 )
 
 // Config defines the entire input configuration of signoz.
@@ -50,6 +57,9 @@ type Config struct {
 
 	// Instrumentation config
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
+
+	// PProf config
+	PProf pprof.Config `mapstructure:"pprof"`
 
 	// Analytics config
 	Analytics analytics.Config `mapstructure:"analytics"`
@@ -108,54 +118,43 @@ type Config struct {
 	// MetricsExplorer config
 	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
 
+	// InfraMonitoring config
+	InfraMonitoring inframonitoring.Config `mapstructure:"inframonitoring"`
+
 	// Flagger config
 	Flagger flagger.Config `mapstructure:"flagger"`
 
 	// User config
 	User user.Config `mapstructure:"user"`
+
+	// IdentN config
+	IdentN identn.Config `mapstructure:"identn"`
+
+	// ServiceAccount config
+	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
+
+	// Auditor config
+	Auditor auditor.Config `mapstructure:"auditor"`
+
+	// MeterReporter config
+	MeterReporter meterreporter.Config `mapstructure:"meterreporter"`
+
+	// CloudIntegration config
+	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
+
+	// TraceDetail config
+	TraceDetail tracedetail.Config `mapstructure:"tracedetail"`
+
+	// Authz config
+	Authz authz.Config `mapstructure:"authz"`
 }
 
-// DeprecatedFlags are the flags that are deprecated and scheduled for removal.
-// These flags are used to ensure backward compatibility with the old flags.
-type DeprecatedFlags struct {
-	MaxIdleConns               int
-	MaxOpenConns               int
-	DialTimeout                time.Duration
-	Config                     string
-	FluxInterval               string
-	FluxIntervalForTraceDetail string
-	PreferSpanMetrics          bool
-	Cluster                    string
-	GatewayUrl                 string
-}
-
-func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
-	cmd.Flags().IntVar(&df.MaxIdleConns, "max-idle-conns", 50, "max idle connections to the database")
-	cmd.Flags().IntVar(&df.MaxOpenConns, "max-open-conns", 100, "max open connections to the database")
-	cmd.Flags().DurationVar(&df.DialTimeout, "dial-timeout", 5*time.Second, "dial timeout for the database")
-	cmd.Flags().StringVar(&df.Config, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
-	cmd.Flags().StringVar(&df.FluxInterval, "flux-interval", "5m", "flux interval")
-	cmd.Flags().StringVar(&df.FluxIntervalForTraceDetail, "flux-interval-for-trace-detail", "2m", "flux interval for trace detail")
-	cmd.Flags().BoolVar(&df.PreferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
-	cmd.Flags().StringVar(&df.Cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
-	cmd.Flags().StringVar(&df.GatewayUrl, "gateway-url", "", "(url to the gateway)")
-
-	_ = cmd.Flags().MarkDeprecated("max-idle-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead")
-	_ = cmd.Flags().MarkDeprecated("max-open-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead")
-	_ = cmd.Flags().MarkDeprecated("dial-timeout", "use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead")
-	_ = cmd.Flags().MarkDeprecated("config", "use SIGNOZ_PROMETHEUS_CONFIG instead")
-	_ = cmd.Flags().MarkDeprecated("flux-interval", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
-	_ = cmd.Flags().MarkDeprecated("flux-interval-for-trace-detail", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
-	_ = cmd.Flags().MarkDeprecated("cluster", "use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead")
-	_ = cmd.Flags().MarkDeprecated("prefer-span-metrics", "use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS instead")
-	_ = cmd.Flags().MarkDeprecated("gateway-url", "use SIGNOZ_GATEWAY_URL instead")
-}
-
-func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig, deprecatedFlags DeprecatedFlags) (Config, error) {
+func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
 	configFactories := []factory.ConfigFactory{
 		global.NewConfigFactory(),
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
+		pprof.NewConfigFactory(),
 		analytics.NewConfigFactory(),
 		web.NewConfigFactory(),
 		cache.NewConfigFactory(),
@@ -174,8 +173,16 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
+		inframonitoring.NewConfigFactory(),
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
+		identn.NewConfigFactory(),
+		serviceaccount.NewConfigFactory(),
+		auditor.NewConfigFactory(),
+		meterreporter.NewConfigFactory(),
+		cloudintegration.NewConfigFactory(),
+		tracedetail.NewConfigFactory(),
+		authz.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -188,7 +195,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		return Config{}, err
 	}
 
-	mergeAndEnsureBackwardCompatibility(ctx, logger, &config, deprecatedFlags)
+	mergeAndEnsureBackwardCompatibility(ctx, logger, &config)
 
 	if err := validateConfig(config); err != nil {
 		return Config{}, err
@@ -213,7 +220,7 @@ func validateConfig(config Config) error {
 	return nil
 }
 
-func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logger, config *Config, deprecatedFlags DeprecatedFlags) {
+func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logger, config *Config) {
 	if os.Getenv("SIGNOZ_LOCAL_DB_PATH") != "" {
 		logger.WarnContext(ctx, "[Deprecated] env SIGNOZ_LOCAL_DB_PATH is deprecated and scheduled for removal. Please use SIGNOZ_SQLSTORE_SQLITE_PATH instead.")
 		config.SQLStore.Sqlite.Path = os.Getenv("SIGNOZ_LOCAL_DB_PATH")
@@ -248,25 +255,6 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 	if os.Getenv("ClickHouseUrl") != "" {
 		logger.WarnContext(ctx, "[Deprecated] env ClickHouseUrl is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN instead.")
 		config.TelemetryStore.Clickhouse.DSN = os.Getenv("ClickHouseUrl")
-	}
-
-	if deprecatedFlags.MaxIdleConns != 50 {
-		logger.WarnContext(ctx, "[Deprecated] flag --max-idle-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead.")
-		config.TelemetryStore.Connection.MaxIdleConns = deprecatedFlags.MaxIdleConns
-	}
-
-	if deprecatedFlags.MaxOpenConns != 100 {
-		logger.WarnContext(ctx, "[Deprecated] flag --max-open-conns is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead.")
-		config.TelemetryStore.Connection.MaxOpenConns = deprecatedFlags.MaxOpenConns
-	}
-
-	if deprecatedFlags.DialTimeout != 5*time.Second {
-		logger.WarnContext(ctx, "[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
-		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
-	}
-
-	if deprecatedFlags.Config != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}
 
 	if os.Getenv("INVITE_EMAIL_TEMPLATE") != "" {
@@ -317,49 +305,12 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		config.Analytics.Enabled = os.Getenv("TELEMETRY_ENABLED") == "true"
 	}
 
-	if deprecatedFlags.FluxInterval != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --flux-interval is deprecated and scheduled for removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
-		fluxInterval, err := time.ParseDuration(deprecatedFlags.FluxInterval)
-		if err != nil {
-			logger.WarnContext(ctx, "Error parsing --flux-interval, using default value.")
-		} else {
-			config.Querier.FluxInterval = fluxInterval
-		}
-	}
-
-	if deprecatedFlags.FluxIntervalForTraceDetail != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --flux-interval-for-trace-detail is deprecated and scheduled for complete removal. Please use SIGNOZ_QUERIER_FLUX__INTERVAL instead.")
-	}
-
-	if deprecatedFlags.Cluster != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --cluster is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead.")
-		config.TelemetryStore.Clickhouse.Cluster = deprecatedFlags.Cluster
-	}
-
-	if deprecatedFlags.PreferSpanMetrics {
-		logger.WarnContext(ctx, "[Deprecated] flag --prefer-span-metrics is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS instead.")
-		if config.Flagger.Config.Boolean == nil {
-			config.Flagger.Config.Boolean = make(map[string]bool)
-		}
-		config.Flagger.Config.Boolean[flagger.FeatureUseSpanMetrics.String()] = deprecatedFlags.PreferSpanMetrics
-	}
-
 	if os.Getenv("USE_SPAN_METRICS") != "" {
 		logger.WarnContext(ctx, "[Deprecated] env USE_SPAN_METRICS is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__SPAN__METRICS instead.")
 		if config.Flagger.Config.Boolean == nil {
 			config.Flagger.Config.Boolean = make(map[string]bool)
 		}
 		config.Flagger.Config.Boolean[flagger.FeatureUseSpanMetrics.String()] = os.Getenv("USE_SPAN_METRICS") == "true"
-	}
-
-	if deprecatedFlags.GatewayUrl != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --gateway-url is deprecated and scheduled for removal. Please use SIGNOZ_GATEWAY_URL instead.")
-		u, err := url.Parse(deprecatedFlags.GatewayUrl)
-		if err != nil {
-			logger.WarnContext(ctx, "Error parsing --gateway-url, using default value.")
-		} else {
-			config.Gateway.URL = u
-		}
 	}
 
 	if os.Getenv("SIGNOZ_JWT_SECRET") != "" {
@@ -375,12 +326,13 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		config.Flagger.Config.Boolean[flagger.FeatureKafkaSpanEval.String()] = os.Getenv("KAFKA_SPAN_EVAL") == "true"
 	}
 
-	if os.Getenv("INTERPOLATION_ENABLED") != "" {
-		logger.WarnContext(ctx, "[Deprecated] env INTERPOLATION_ENABLED is deprecated and scheduled for removal. Please use SIGNOZ_FLAGGER_CONFIG_BOOLEAN_INTERPOLATION__ENABLED instead.")
-		if config.Flagger.Config.Boolean == nil {
-			config.Flagger.Config.Boolean = make(map[string]bool)
+	if os.Getenv("RULES_EVAL_DELAY") != "" {
+		logger.WarnContext(ctx, "[Deprecated] env RULES_EVAL_DELAY is deprecated and scheduled for removal. Please use SIGNOZ_RULER_EVAL__DELAY instead.")
+		if d, err := time.ParseDuration(os.Getenv("RULES_EVAL_DELAY")); err == nil {
+			config.Ruler.EvalDelay = d
+		} else {
+			logger.WarnContext(ctx, "Error parsing RULES_EVAL_DELAY, using default value of 2m")
 		}
-		config.Flagger.Config.Boolean[flagger.FeatureInterpolationEnabled.String()] = os.Getenv("INTERPOLATION_ENABLED") == "true"
 	}
 }
 

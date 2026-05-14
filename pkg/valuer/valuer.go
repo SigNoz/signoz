@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	ginbinding "github.com/gin-gonic/gin/binding"
 )
 
 var (
@@ -42,4 +43,7 @@ type Valuer interface {
 
 	// Implement encoding.TextUnmarshaler to allow the value to be marshalled unto a string
 	encoding.TextMarshaler
+
+	// Implement Gin's BindUnmarshaler interface
+	ginbinding.BindUnmarshaler
 }

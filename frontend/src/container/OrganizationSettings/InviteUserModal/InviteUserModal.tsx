@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, Modal } from 'antd';
-import { FormInstance } from 'antd/lib';
+import { Button, Form, FormInstance, Modal } from 'antd';
 import sendInvite from 'api/v1/invite/create';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 
 import InviteTeamMembers from '../InviteTeamMembers';
-import { InviteMemberFormValues } from '../PendingInvitesContainer';
+import { InviteMemberFormValues } from '../utils';
 
 export interface InviteUserModalProps {
 	isInviteTeamMemberModalOpen: boolean;
@@ -34,27 +34,25 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		async (values: InviteMemberFormValues): Promise<void> => {
 			try {
 				setIsInvitingMembers?.(true);
-				values?.members?.forEach(
-					async (member): Promise<void> => {
-						try {
-							await sendInvite({
-								email: member.email,
-								name: member?.name,
-								role: member.role,
-								frontendBaseUrl: window.location.origin,
-							});
+				values?.members?.forEach(async (member): Promise<void> => {
+					try {
+						await sendInvite({
+							email: member.email,
+							name: member?.name,
+							role: member.role,
+							frontendBaseUrl: getBaseUrl(),
+						});
 
-							notifications.success({
-								message: 'Invite sent successfully',
-							});
-						} catch (error) {
-							notifications.error({
-								message: (error as APIError).getErrorCode(),
-								description: (error as APIError).getErrorMessage(),
-							});
-						}
-					},
-				);
+						notifications.success({
+							message: 'Invite sent successfully',
+						});
+					} catch (error) {
+						notifications.error({
+							message: (error as APIError).getErrorCode(),
+							description: (error as APIError).getErrorMessage(),
+						});
+					}
+				});
 
 				setTimeout(async () => {
 					onClose();

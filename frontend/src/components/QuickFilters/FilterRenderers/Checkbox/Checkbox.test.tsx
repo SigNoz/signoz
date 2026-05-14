@@ -53,7 +53,6 @@ const MOCK_SERVICE_NAMES = [MQ_KAFKA, OTEL_DEMO, OTLP_PYTHON, SAMPLE_FLASK];
 const createMockFilter = (
 	overrides: Partial<MockFilterConfig> = {},
 ): MockFilterConfig => ({
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	title: 'Service Name',
 	attributeKey: {
 		key: SERVICE_NAME_KEY,
@@ -84,7 +83,7 @@ const createMockQueryBuilderData = (hasActiveFilters = false): any => ({
 										op: 'in',
 										value: [OTEL_DEMO, SAMPLE_FLASK],
 									},
-							  ]
+								]
 							: [],
 					},
 				},
@@ -100,7 +99,7 @@ describe('CheckboxFilter - User Flows', () => {
 		jest.clearAllMocks();
 
 		// Default mock implementations for useGetAggregateValues
-		mockUseGetAggregateValues.mockReturnValue(({
+		mockUseGetAggregateValues.mockReturnValue({
 			data: {
 				payload: {
 					stringAttributeValues: MOCK_SERVICE_NAMES,
@@ -108,7 +107,7 @@ describe('CheckboxFilter - User Flows', () => {
 			},
 			isLoading: false,
 			refetch: jest.fn(),
-		} as unknown) as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
+		} as unknown as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
 		// Default mock implementations for useGetQueryKeyValueSuggestions
 		// Returns data in the format expected by the hook
@@ -151,7 +150,6 @@ describe('CheckboxFilter - User Flows', () => {
 		// User should see the filter is automatically opened (not collapsed)
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 
@@ -363,6 +361,58 @@ describe('CheckboxFilter - User Flows', () => {
 		expect(filtersForServiceName).toHaveLength(0);
 	});
 
+	it('should match filter when query uses resource. prefix (resource.service.name matches service.name)', async () => {
+		// Filter config uses unprefixed key (service.name)
+		// Query has filter with resource. prefix (resource.service.name)
+		// Checkbox should recognize the match and show checked state
+		mockUseQueryBuilder.mockReturnValue({
+			lastUsedQuery: 0,
+			currentQuery: {
+				builder: {
+					queryData: [
+						{
+							filters: {
+								items: [
+									{
+										key: {
+											key: 'resource.service.name',
+											dataType: DataTypes.String,
+											type: 'resource',
+										},
+										op: 'in',
+										value: [OTEL_DEMO],
+									},
+								],
+								op: 'AND',
+							},
+						},
+					],
+				},
+			},
+			redirectWithQueryBuilderData: jest.fn(),
+		} as any);
+
+		const mockFilter = createMockFilter({ defaultOpen: false });
+
+		render(
+			<CheckboxFilter
+				filter={mockFilter}
+				source={QuickFiltersSource.LOGS_EXPLORER}
+			/>,
+		);
+
+		// Filter should auto-open because it has active filters (key match via prefix stripping)
+		await waitFor(() => {
+			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+		});
+
+		// otel-demo should be checked (filter uses resource.service.name IN [otel-demo])
+		// Checked items are sorted to the top, so otel-demo is first
+		const checkboxes = screen.getAllByRole('checkbox');
+		expect(checkboxes[0]).toBeChecked();
+		expect(screen.getByText(OTEL_DEMO)).toBeInTheDocument();
+	});
+
 	it('should extend an existing IN filter when checking an additional value', async () => {
 		const redirectWithQueryBuilderData = jest.fn();
 
@@ -421,6 +471,6 @@ describe('CheckboxFilter - User Flows', () => {
 
 		expect(filterForServiceName.key.key).toBe(SERVICE_NAME_KEY);
 		expect(filterForServiceName.op).toBe('in');
-		expect(filterForServiceName.value).toEqual(['mq-kafka', 'otel-demo']);
+		expect(filterForServiceName.value).toStrictEqual(['mq-kafka', 'otel-demo']);
 	});
 });

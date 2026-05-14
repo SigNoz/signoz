@@ -1,22 +1,21 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Card, Tooltip, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Card, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
+import { CircleArrowDown, CircleArrowRight, Focus } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
+import { InspectMetricsSeries } from './types';
 import {
 	ExpandedViewProps,
 	InspectionStep,
@@ -33,28 +32,27 @@ function ExpandedView({
 	options,
 	spaceAggregationSeriesMap,
 	step,
-	metricInspectionOptions,
+	metricInspectionAppliedOptions,
 	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
-	const [
-		selectedTimeSeries,
-		setSelectedTimeSeries,
-	] = useState<InspectMetricsSeries | null>(null);
+	const [selectedTimeSeries, setSelectedTimeSeries] =
+		useState<InspectMetricsSeries | null>(null);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
 			[MetricsExplorerEventKeys.Modal]: 'inspect',
-			[MetricsExplorerEventKeys.Filters]: metricInspectionOptions.filters,
+			[MetricsExplorerEventKeys.Filters]:
+				metricInspectionAppliedOptions.filterExpression,
 			[MetricsExplorerEventKeys.TimeAggregationInterval]:
-				metricInspectionOptions.timeAggregationInterval,
+				metricInspectionAppliedOptions.timeAggregationInterval,
 			[MetricsExplorerEventKeys.TimeAggregationOption]:
-				metricInspectionOptions.timeAggregationOption,
+				metricInspectionAppliedOptions.timeAggregationOption,
 			[MetricsExplorerEventKeys.SpaceAggregationOption]:
-				metricInspectionOptions.spaceAggregationOption,
+				metricInspectionAppliedOptions.spaceAggregationOption,
 			[MetricsExplorerEventKeys.SpaceAggregationLabels]:
-				metricInspectionOptions.spaceAggregationLabels,
+				metricInspectionAppliedOptions.spaceAggregationLabels,
 		});
-	}, [metricInspectionOptions]);
+	}, [metricInspectionAppliedOptions]);
 
 	useEffect(() => {
 		if (step !== InspectionStep.COMPLETED) {
@@ -167,7 +165,7 @@ function ExpandedView({
 							<Typography.Text strong>
 								{`${absoluteValue} is the ${
 									SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
-										metricInspectionOptions.spaceAggregationOption ??
+										metricInspectionAppliedOptions.spaceAggregationOption ??
 											SpaceAggregationOptions.SUM_BY
 									]
 								} of`}
@@ -208,9 +206,9 @@ function ExpandedView({
 											>
 												{title}
 												{selectedTimeSeries?.title === title ? (
-													<ArrowDownCircle color={Color.BG_FOREST_300} size={12} />
+													<CircleArrowDown color={Color.BG_FOREST_300} size={12} />
 												) : (
-													<ArrowRightCircle size={12} />
+													<CircleArrowRight size={12} />
 												)}
 											</div>
 										</Tooltip>
@@ -238,15 +236,15 @@ function ExpandedView({
 											selectedTimeSeries?.values.find(
 												(value) => value?.timestamp >= (options?.timestamp || 0),
 											)?.value ?? options?.value
-									  } is the ${
+										} is the ${
 											TIME_AGGREGATION_OPTIONS[
-												metricInspectionOptions.timeAggregationOption ??
+												metricInspectionAppliedOptions.timeAggregationOption ??
 													TimeAggregationOptions.SUM
 											]
-									  } of`
-									: selectedTimeSeries?.values.find(
+										} of`
+									: (selectedTimeSeries?.values.find(
 											(value) => value?.timestamp >= (options?.timestamp || 0),
-									  )?.value ?? options?.value}
+										)?.value ?? options?.value)}
 							</Typography.Text>
 						</div>
 
@@ -299,7 +297,7 @@ function ExpandedView({
 							<Typography.Text strong>
 								{`${absoluteValue} is the ${
 									TIME_AGGREGATION_OPTIONS[
-										metricInspectionOptions.timeAggregationOption ??
+										metricInspectionAppliedOptions.timeAggregationOption ??
 											TimeAggregationOptions.SUM
 									]
 								} of`}

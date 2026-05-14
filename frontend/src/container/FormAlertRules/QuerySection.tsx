@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Tabs, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -13,7 +14,7 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from 'lucide-react';
+import { Atom, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
@@ -24,15 +25,24 @@ import { FormContainer, StepHeading } from './styles';
 
 import './QuerySection.styles.scss';
 
+const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
+	'https://github.com/SigNoz/signoz/issues/11034';
+
+const ANOMALY_QUERY_SUPPORT_PROMQL_ISSUE =
+	'https://github.com/SigNoz/signoz/issues/11036';
+
 function QuerySection({
 	queryCategory,
 	setQueryCategory,
 	alertType,
 	runQuery,
+	isLoadingQueries,
+	handleCancelQuery,
 	alertDef,
 	panelType,
 	ruleId,
 	hideTitle,
+	isAnomalyDetection,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -46,7 +56,9 @@ function QuerySection({
 
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
 
-	const renderChQueryUI = (): JSX.Element => <ChQuerySection />;
+	const renderChQueryUI = (): JSX.Element => (
+		<ChQuerySection alertType={alertType} />
+	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -74,6 +86,21 @@ function QuerySection({
 		/>
 	);
 
+	const anomalyDisabledTooltip = (url: string): JSX.Element => (
+		<span>
+			Coming soon for anomaly detection.{' '}
+			<Typography.Link
+				href={url}
+				target="_blank"
+				rel="noopener noreferrer"
+				style={{ color: 'inherit', textDecoration: 'underline' }}
+			>
+				Leave a thumbs-up
+			</Typography.Link>{' '}
+			to help us prioritize!
+		</span>
+	);
+
 	const tabs = [
 		{
 			label: (
@@ -88,16 +115,30 @@ function QuerySection({
 		},
 		{
 			label: (
-				<Tooltip title="ClickHouse">
-					<Button className="nav-btns">
+				<Tooltip
+					title={
+						isAnomalyDetection
+							? anomalyDisabledTooltip(ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE)
+							: 'ClickHouse'
+					}
+				>
+					<Button className="nav-btns" disabled={isAnomalyDetection}>
 						<Terminal size={14} />
 						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
 				</Tooltip>
 			),
 			key: EQueryType.CLICKHOUSE,
+			disabled: isAnomalyDetection,
 		},
 	];
+
+	useEffect(() => {
+		if (isAnomalyDetection && queryCategory !== EQueryType.QUERY_BUILDER) {
+			setQueryCategory(EQueryType.QUERY_BUILDER);
+			setCurrentTab(EQueryType.QUERY_BUILDER);
+		}
+	}, [isAnomalyDetection, queryCategory, setQueryCategory]);
 
 	const items = useMemo(
 		() => [
@@ -114,19 +155,32 @@ function QuerySection({
 			},
 			{
 				label: (
-					<Tooltip title="ClickHouse">
-						<Button className="nav-btns">
+					<Tooltip
+						title={
+							isAnomalyDetection
+								? anomalyDisabledTooltip(ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE)
+								: 'ClickHouse'
+						}
+					>
+						<Button className="nav-btns" disabled={isAnomalyDetection}>
 							<Terminal size={14} />
 							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
 					</Tooltip>
 				),
 				key: EQueryType.CLICKHOUSE,
+				disabled: isAnomalyDetection,
 			},
 			{
 				label: (
-					<Tooltip title="PromQL">
-						<Button className="nav-btns">
+					<Tooltip
+						title={
+							isAnomalyDetection
+								? anomalyDisabledTooltip(ANOMALY_QUERY_SUPPORT_PROMQL_ISSUE)
+								: 'PromQL'
+						}
+					>
+						<Button className="nav-btns" disabled={isAnomalyDetection}>
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
@@ -135,9 +189,10 @@ function QuerySection({
 					</Tooltip>
 				),
 				key: EQueryType.PROM,
+				disabled: isAnomalyDetection,
 			},
 		],
-		[isDarkMode],
+		[isDarkMode, isAnomalyDetection, anomalyDisabledTooltip],
 	);
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -176,6 +231,8 @@ function QuerySection({
 												queryType: queryCategory,
 											});
 										}}
+										handleCancelQuery={handleCancelQuery}
+										isLoadingQueries={isLoadingQueries}
 									/>
 								</span>
 							}
@@ -195,7 +252,11 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<RunQueryBtn onStageRunQuery={runQuery} />
+									<RunQueryBtn
+										onStageRunQuery={runQuery}
+										handleCancelQuery={handleCancelQuery}
+										isLoadingQueries={isLoadingQueries}
+									/>
 								</span>
 							}
 							items={items}
@@ -205,16 +266,16 @@ function QuerySection({
 		}
 	};
 	const renderQuerySection = (c: EQueryType): JSX.Element | null => {
-		switch (c) {
-			case EQueryType.PROM:
-				return renderPromqlUI();
-			case EQueryType.CLICKHOUSE:
-				return renderChQueryUI();
-			case EQueryType.QUERY_BUILDER:
-				return renderMetricUI();
-			default:
-				return null;
+		if (c === EQueryType.PROM && !isAnomalyDetection) {
+			return renderPromqlUI();
 		}
+		if (c === EQueryType.CLICKHOUSE && !isAnomalyDetection) {
+			return renderChQueryUI();
+		}
+		if (c === EQueryType.QUERY_BUILDER) {
+			return renderMetricUI();
+		}
+		return null;
 	};
 
 	const step2Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '2' : '1';
@@ -237,14 +298,18 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
 	hideTitle?: boolean;
+	isAnomalyDetection?: boolean;
 }
 
 QuerySection.defaultProps = {
 	hideTitle: false,
+	isAnomalyDetection: false,
 };
 
 export default QuerySection;

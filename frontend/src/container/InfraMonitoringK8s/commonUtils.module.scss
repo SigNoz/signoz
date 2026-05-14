@@ -1,0 +1,79 @@
+.eventContentContainer {
+	:global(.ant-table) {
+		background: var(--l1-background);
+
+		:global(.ant-table-row:hover) {
+			:global(.ant-table-cell .value-field .action-btn) {
+				display: flex;
+				position: absolute;
+				top: 50%;
+				right: 16px;
+				transform: translateY(-50%);
+				gap: 4px;
+			}
+		}
+
+		:global(.ant-table-cell) {
+			border: 1px solid var(--l2-border);
+		}
+
+		:global(.attribute-name .ant-btn:hover) {
+			background-color: transparent !important;
+		}
+
+		:global(.attribute-pin) {
+			cursor: pointer;
+			padding: 0;
+			vertical-align: middle;
+			text-align: center;
+		}
+
+		:global(.attribute-pin .log-attribute-pin) {
+			padding: 8px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		:global(.attribute-pin .pin-attribute-icon) {
+			border: none;
+		}
+
+		:global(.attribute-pin .pin-attribute-icon.pinned svg) {
+			fill: var(--bg-robin-500);
+		}
+
+		:global(.value-field-container) {
+			background: var(--l3-background);
+		}
+
+		:global(.attribute-pin.value-field-container) {
+			background: var(--l1-background);
+		}
+
+		:global(.value-field-container .value-field) {
+			font-family: 'Geist Mono';
+			position: relative;
+		}
+
+		:global(.value-field-container .action-btn) {
+			display: none;
+			width: max-content;
+			position: absolute;
+			right: 0;
+		}
+
+		:global(.value-field-container .action-btn .filter-btn) {
+			display: flex;
+			align-items: center;
+			border: none;
+			box-shadow: none;
+			border-radius: 2px;
+			background: var(--l3-background);
+			padding: 2px 3px;
+			gap: 3px;
+			height: 18px;
+			width: 20px;
+		}
+	}
+}

@@ -5,10 +5,10 @@
 	gap: 12px;
 	align-items: flex-start;
 	border-radius: 4px;
-	background: var(--bg-cherry-500);
+	background: var(--danger-background);
 
 	.text {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -19,7 +19,7 @@
 	}
 
 	.value {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;

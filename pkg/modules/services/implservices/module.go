@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -32,8 +34,10 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 	}
 }
 
-// FetchTopLevelOperations returns top-level operations per service using db query
+// FetchTopLevelOperations returns top-level operations per service using db query.
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+	ctx = m.withServicesContext(ctx, "FetchTopLevelOperations")
+
 	db := m.TelemetryStore.ClickhouseDB()
 	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", telemetrytraces.DBName, telemetrytraces.TopLevelOperationsTableName)
 	args := []any{clickhouse.Named("start", start)}
@@ -70,6 +74,7 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
+	ctx = m.withServicesContext(ctx, "Get")
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -102,8 +107,9 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	return items, nil
 }
 
-// GetTopOperations implements services.Module for QBV5 based top ops
+// GetTopOperations implements services.Module for QBV5 based top ops.
 func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+	ctx = m.withServicesContext(ctx, "GetTopOperations")
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -122,8 +128,9 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 	return items, nil
 }
 
-// GetEntryPointOperations implements services.Module for QBV5 based entry point ops
+// GetEntryPointOperations implements services.Module for QBV5 based entry point ops.
 func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+	ctx = m.withServicesContext(ctx, "GetEntryPointOperations")
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -233,7 +240,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "service.name" {
+			if c.Name == "service.name" {
 				serviceNameRespIndex = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -381,7 +388,7 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "name" {
+			if c.Name == "name" {
 				nameIdx = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -495,7 +502,7 @@ func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "name" {
+			if c.Name == "name" {
 				nameIdx = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -516,4 +523,13 @@ func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse
 		out = append(out, item)
 	}
 	return out
+}
+
+func (m *module) withServicesContext(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "services",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

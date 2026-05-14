@@ -1,36 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-export const checkAPIInvocationMock = {
-	variablesToGetUpdated: [],
-	variableData: {
-		name: 'k8s_node_name',
-		key: '4d71d385-beaf-4434-8dbf-c62be68049fc',
-		allSelected: false,
-		customValue: '',
-		description: '',
-		id: '4d71d385-beaf-4434-8dbf-c62be68049fc',
-		modificationUUID: '77233d3c-96d7-4ccb-aa9d-11b04d563068',
-		multiSelect: false,
-		order: 6,
-		queryValue:
-			"SELECT JSONExtractString(labels, 'k8s_node_name') AS k8s_node_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'k8s_node_cpu_time' AND JSONExtractString(labels, 'k8s_cluster_name') = {{.k8s_cluster_name}}\nGROUP BY k8s_node_name",
-		selectedValue: 'gke-signoz-saas-si-consumer-bsc-e2sd4-a6d430fa-gvm2',
-		showALLOption: false,
-		sort: 'DISABLED',
-		textboxValue: '',
-		type: 'QUERY',
-	},
-	parentDependencyGraph: {
-		deployment_environment: [],
-		service_name: ['deployment_environment'],
-		endpoint: ['deployment_environment', 'service_name'],
-		http_status_code: ['endpoint'],
-		k8s_cluster_name: [],
-		environment: [],
-		k8s_node_name: ['k8s_cluster_name'],
-		k8s_namespace_name: ['k8s_cluster_name', 'k8s_node_name'],
-	},
-} as any;
-
 export const onUpdateVariableNodeMock = {
 	nodeToUpdate: 'deployment_environment',
 	graph: {

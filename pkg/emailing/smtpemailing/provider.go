@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/smtp/client"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
@@ -15,6 +16,7 @@ type provider struct {
 	settings factory.ScopedProviderSettings
 	store    emailtypes.TemplateStore
 	client   *client.Client
+	config   emailing.Config
 }
 
 func NewFactory() factory.ProviderFactory[emailing.Emailing, emailing.Config] {
@@ -27,7 +29,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// Try to create a template store. If it fails, use an empty store.
 	store, err := filetemplatestore.NewStore(ctx, config.Templates.Directory, emailtypes.Templates, settings.Logger())
 	if err != nil {
-		settings.Logger().ErrorContext(ctx, "failed to create template store, using empty store", "error", err)
+		settings.Logger().ErrorContext(ctx, "failed to create template store, using empty store", errors.Attr(err))
 		store = filetemplatestore.NewEmptyStore()
 	}
 
@@ -55,7 +57,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{settings: settings, store: store, client: client}, nil
+	return &provider{
+		settings: settings,
+		store:    store,
+		client:   client,
+		config:   config,
+	}, nil
 }
 
 func (provider *provider) SendHTML(ctx context.Context, to string, subject string, templateName emailtypes.TemplateName, data map[string]any) error {
@@ -69,8 +76,19 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 		return err
 	}
 
+	// if no data is provided, create an empty map to prevent a panic when we add the format, to, and subject data
+	if data == nil {
+		data = make(map[string]any)
+	}
+
+	// the following are overridden if provided in the data map
+	data["format"] = provider.config.Templates.Format
+	data["to"] = to
+	data["subject"] = subject
+
 	content, err := emailtypes.NewContent(template, data)
 	if err != nil {
+		provider.settings.Logger().ErrorContext(ctx, "failed to create email content", errors.Attr(err))
 		return err
 	}
 

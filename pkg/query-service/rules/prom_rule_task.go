@@ -2,17 +2,20 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
 
+	"log/slog"
+
+	opentracing "github.com/opentracing/opentracing-go"
+	plabels "github.com/prometheus/prometheus/model/labels"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	opentracing "github.com/opentracing/opentracing-go"
-	plabels "github.com/prometheus/prometheus/model/labels"
-	"go.uber.org/zap"
 )
 
 // PromRuleTask is a promql rule executor
@@ -34,19 +37,19 @@ type PromRuleTask struct {
 	terminated chan struct{}
 
 	pause  bool
-	logger *zap.Logger
+	logger *slog.Logger
 	notify NotifyFunc
 
 	maintenanceStore ruletypes.MaintenanceStore
 	orgID            valuer.UUID
 }
 
-// newPromRuleTask holds rules that have promql condition
-// and evalutes the rule at a given frequency
+// NewPromRuleTask holds rules that have promql condition
+// and evaluates the rule at a given frequency
 func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *PromRuleTask {
-	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
+	opts.Logger.Info("initiating a new rule group", "name", name, "frequency", frequency)
 
-	if time.Now() == time.Now().Add(frequency) {
+	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
 
@@ -183,7 +186,7 @@ func (g *PromRuleTask) PromRules() []*PromRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -264,7 +267,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*PromRuleTask)
 	if !ok {
-		return fmt.Errorf("you can only copy rule groups with same type")
+		return errors.NewInternalf(errors.CodeInternal, "you can only copy rule groups with same type")
 	}
 
 	g.evaluationTime = from.evaluationTime
@@ -322,14 +325,14 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("panic during promql rule evaluation", zap.Any("panic", r))
+			g.logger.ErrorContext(ctx, "panic during promql rule evaluation", "panic", r)
 		}
 	}()
 
-	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
+	g.logger.InfoContext(ctx, "promql rule task", "name", g.name, "eval_started_at", ts)
+	maintenance, err := g.maintenanceStore.ListPlannedMaintenance(ctx, g.orgID.StringValue())
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
+		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
 	}
 
 	for i, rule := range g.rules {
@@ -339,7 +342,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -347,7 +350,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 
@@ -371,7 +374,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			comment := ctxtypes.CommentFromContext(ctx)
 			comment.Set("rule_id", rule.ID())
-			comment.Set("auth_type", "internal")
+			comment.Set("identn_provider", authtypes.IdentNProviderInternal.StringValue())
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
@@ -379,7 +382,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

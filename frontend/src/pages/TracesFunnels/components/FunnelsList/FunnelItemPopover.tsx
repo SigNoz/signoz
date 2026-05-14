@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
-import { Ellipsis, PencilLine, Trash2 } from 'lucide-react';
+import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { FunnelData } from 'types/api/traceFunnels';
 
@@ -87,7 +87,6 @@ function FunnelItemPopover({
 	}
 
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
 		<div
 			onClick={preventDefault}
 			role="button"

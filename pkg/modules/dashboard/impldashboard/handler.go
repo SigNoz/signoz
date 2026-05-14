@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -15,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -23,11 +24,12 @@ import (
 
 type handler struct {
 	module           dashboard.Module
+	authz            authz.AuthZ
 	providerSettings factory.ProviderSettings
 }
 
-func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings) dashboard.Handler {
-	return &handler{module: module, providerSettings: providerSettings}
+func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettings, authz authz.AuthZ) dashboard.Handler {
+	return &handler{module: module, providerSettings: providerSettings, authz: authz}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -58,7 +60,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		dashboardMigrator.Migrate(ctx, req)
 	}
 
-	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.UserID), req)
+	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -109,7 +111,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 
 	diff := 0
 	// Allow multiple deletions for API key requests; enforce for others
-	if authType, ok := ctxtypes.AuthTypeFromContext(ctx); ok && authType == ctxtypes.AuthTypeTokenizer {
+	if claims.IdentNProvider == authtypes.IdentNProviderTokenizer {
 		diff = 1
 	}
 
@@ -156,7 +158,24 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, claims.Role, *req.Locked)
+	isAdmin := false
+	selectors := []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
+	}
+	err = handler.authz.CheckWithTupleCreation(
+		ctx,
+		claims,
+		valuer.MustNewUUID(claims.OrgID),
+		authtypes.Relation{Verb: coretypes.VerbAssignee},
+		coretypes.NewResourceRole(),
+		selectors,
+		selectors,
+	)
+	if err == nil {
+		isAdmin = true
+	}
+
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, isAdmin, *req.Locked)
 	if err != nil {
 		render.Error(rw, err)
 		return

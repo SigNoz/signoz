@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import getSeries from '../getSeriesData';
 import {
@@ -9,24 +8,24 @@ import {
 jest.mock('../getRenderer', () => jest.fn().mockImplementation(() => () => {}));
 
 describe('Get Series Data', () => {
-	test('Should return series data for uplot chart', () => {
+	it('Should return series data for uplot chart', () => {
 		const seriesData = getSeries(seriesBarChartData);
-		expect(seriesData.length).toBe(5);
+		expect(seriesData).toHaveLength(5);
 		expect(seriesData[1].label).toBe('firstLegend');
 		expect(seriesData[1].show).toBe(true);
-		expect(seriesData[1].fill).toBe('#C71585');
+		expect(seriesData[1].fill).toBe('#FF6F91');
 		expect(seriesData[1].width).toBe(2);
 	});
 
-	test('Should return series drawline bar chart for panel type barchart', () => {
+	it('Should return series drawline bar chart for panel type barchart', () => {
 		const seriesData = getSeries(seriesBarChartData);
-		// @ts-ignore
+		// @ts-expect-error
 		expect(seriesData[1].drawStyle).toBe('bars');
 	});
 
-	test('Should return seris drawline line chart for panel type time series', () => {
+	it('Should return seris drawline line chart for panel type time series', () => {
 		const seriesData = getSeries(seriesLineChartData);
-		// @ts-ignore
+		// @ts-expect-error
 
 		expect(seriesData[1].drawStyle).toBe('line');
 	});

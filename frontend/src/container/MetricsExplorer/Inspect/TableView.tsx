@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { Card, Flex, Table, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Card, Flex, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
+import { InspectMetricsSeries } from './types';
 import { TableViewProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
@@ -11,13 +12,13 @@ function TableView({
 	setShowExpandedView,
 	setExpandedViewOptions,
 	isInspectMetricsRefetching,
-	metricInspectionOptions,
+	metricInspectionAppliedOptions,
 }: TableViewProps): JSX.Element {
 	const isSpaceAggregatedWithoutLabel = useMemo(
 		() =>
-			!!metricInspectionOptions.spaceAggregationOption &&
-			metricInspectionOptions.spaceAggregationLabels.length === 0,
-		[metricInspectionOptions],
+			!!metricInspectionAppliedOptions.spaceAggregationOption &&
+			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0,
+		[metricInspectionAppliedOptions],
 	);
 	const labelKeys = useMemo(() => {
 		if (isSpaceAggregatedWithoutLabel) {
@@ -78,14 +79,17 @@ function TableView({
 	const dataSource = useMemo(
 		() =>
 			inspectMetricsTimeSeries.map((series, index) => {
-				const labelData = labelKeys.reduce((acc, label) => {
-					acc[label] = (
-						<div style={getDynamicColumnStyle(series.strokeColor)}>
-							{series.labels[label]}
-						</div>
-					);
-					return acc;
-				}, {} as Record<string, JSX.Element>);
+				const labelData = labelKeys.reduce(
+					(acc, label) => {
+						acc[label] = (
+							<div style={getDynamicColumnStyle(series.strokeColor)}>
+								{series.labels[label]}
+							</div>
+						);
+						return acc;
+					},
+					{} as Record<string, JSX.Element>,
+				);
 
 				return {
 					key: index,

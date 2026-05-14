@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Checkbox, Input, Typography } from 'antd';
+import { Checkbox, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useResizeObserver } from 'hooks/useDimensions';
 import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getYAxisScaleForAnomalyDetection } from 'lib/uPlotLib/utils/getYAxisScale';
-import { LineChart } from 'lucide-react';
+import { ChartLine } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 
@@ -30,22 +31,18 @@ function UplotChart({
 
 	useEffect(() => {
 		if (plotInstance.current) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			plotInstance.current.destroy();
 		}
 
 		if (data && data.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			// eslint-disable-next-line new-cap
+			// @ts-expect-error
 			plotInstance.current = new uPlot(options, data, chartRef.current);
 		}
 
 		return (): void => {
 			if (plotInstance.current) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				plotInstance.current.destroy();
 			}
 		};
@@ -62,7 +59,6 @@ function AnomalyAlertEvaluationView({
 	yAxisUnit: string;
 }): JSX.Element {
 	const { spline } = uPlot.paths;
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	const _spline = spline ? spline() : undefined;
 	const chartRef = useRef<HTMLDivElement>(null);
 	const isDarkMode = useIsDarkMode();
@@ -149,7 +145,7 @@ function AnomalyAlertEvaluationView({
 		? [
 				seriesData[allSeries[0]].data[0], // Shared X-axis
 				...allSeries.map((key) => seriesData[key].data[1]), // Map through Y-axis data for all series
-		  ]
+			]
 		: [];
 
 	const { timezone } = useTimezone();
@@ -234,7 +230,7 @@ function AnomalyAlertEvaluationView({
 								size: 1,
 							},
 						},
-				  ]
+					]
 				: allSeries.map((seriesKey) => ({
 						label: seriesKey,
 						stroke: seriesData[seriesKey].color,
@@ -242,7 +238,7 @@ function AnomalyAlertEvaluationView({
 						show: true,
 						paths: _spline,
 						spanGaps: true,
-				  }))),
+					}))),
 		],
 		scales: {
 			x: {
@@ -280,8 +276,7 @@ function AnomalyAlertEvaluationView({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		handleSearch(value);
@@ -303,7 +298,7 @@ function AnomalyAlertEvaluationView({
 					/>
 				) : (
 					<div className="anomaly-alert-evaluation-view-no-data-container">
-						<LineChart size={48} strokeWidth={0.5} />
+						<ChartLine size={48} strokeWidth={0.5} />
 
 						<Typography>No Data</Typography>
 					</div>

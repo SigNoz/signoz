@@ -1,9 +1,4 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/function-component-definition */
 import React, {
 	useCallback,
 	useEffect,
@@ -13,18 +8,23 @@ import React, {
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import {
-	DownOutlined,
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+	ArrowDown,
+	ArrowLeft,
+	ArrowRight,
+	ArrowUp,
+	ChevronDown,
+	Info,
+	Loader,
+	RefreshCw,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select, Typography } from 'antd';
+import { Button, Checkbox, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -73,6 +73,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	enableRegexOption = false,
 	isDynamicVariable = false,
 	showRetryButton = true,
+	waitingMessage,
 	...rest
 }) => {
 	// ===== State & Refs =====
@@ -140,10 +141,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	}, [selectedValues, allAvailableValues, enableAllSelection]);
 
 	// Define allOptionShown earlier in the code
-	const allOptionShown = useMemo(
-		() => value === ALL_SELECTED_VALUE || value === 'ALL',
-		[value],
-	);
+	const allOptionShown = value === ALL_SELECTED_VALUE;
 
 	// Value passed to the underlying Ant Select component
 	const displayValue = useMemo(
@@ -267,23 +265,28 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	/**
 	 * Separates section and non-section options
 	 */
-	const splitOptions = useCallback((options: OptionData[]): {
-		sectionOptions: OptionData[];
-		nonSectionOptions: OptionData[];
-	} => {
-		const sectionOptions: OptionData[] = [];
-		const nonSectionOptions: OptionData[] = [];
+	const splitOptions = useCallback(
+		(
+			options: OptionData[],
+		): {
+			sectionOptions: OptionData[];
+			nonSectionOptions: OptionData[];
+		} => {
+			const sectionOptions: OptionData[] = [];
+			const nonSectionOptions: OptionData[] = [];
 
-		options.forEach((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				sectionOptions.push(option);
-			} else {
-				nonSectionOptions.push(option);
-			}
-		});
+			options.forEach((option) => {
+				if ('options' in option && Array.isArray(option.options)) {
+					sectionOptions.push(option);
+				} else {
+					nonSectionOptions.push(option);
+				}
+			});
 
-		return { sectionOptions, nonSectionOptions };
-	}, []);
+			return { sectionOptions, nonSectionOptions };
+		},
+		[],
+	);
 
 	/**
 	 * Apply search filtering to options
@@ -408,6 +411,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		const textToCopy = selectedTexts.join(', ');
 
+		// oxlint-disable-next-line signoz/no-navigator-clipboard
 		navigator.clipboard.writeText(textToCopy).catch(console.error);
 	}, [selectedChips, selectedValues]);
 
@@ -756,15 +760,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						}}
 					>
 						<div className="option-content">
-							<Typography.Text
-								ellipsis={{
-									tooltip: {
-										placement: 'right',
-										autoAdjustOverflow: true,
-									},
-								}}
-								className="option-label-text"
-							>
+							<Typography.Text truncate={1} className="option-label-text">
 								{highlightMatchedText(String(option.label || ''), searchText)}
 							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (
@@ -1451,11 +1447,22 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// Custom dropdown render with sections support
 	const customDropdownRender = useCallback((): React.ReactElement => {
-		// Process options based on current search
-		const processedOptions =
-			selectedValues.length > 0 && isEmpty(searchText)
-				? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
-				: filteredOptions;
+		// When ALL is selected and the options contain sections (groups),
+		// skip prioritization so section headers (e.g. "Related values" /
+		// "All values") remain visible instead of being collapsed away by
+		// every option getting hoisted to the top. For flat option lists we
+		// still prioritize so selected/synthesized values stay rendered.
+		const hasSections = filteredOptions.some(
+			(opt) => 'options' in opt && Array.isArray(opt.options),
+		);
+		const shouldPrioritize =
+			selectedValues.length > 0 &&
+			isEmpty(searchText) &&
+			!(hasSections && (allOptionShown || isAllSelected));
+
+		const processedOptions = shouldPrioritize
+			? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
+			: filteredOptions;
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 
@@ -1624,7 +1631,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 							data={enhancedNonSectionOptions}
 							itemContent={(index, item): React.ReactNode =>
-								(mapOptions([item]) as unknown) as React.ReactElement
+								mapOptions([item]) as unknown as React.ReactElement
 							}
 							totalCount={enhancedNonSectionOptions.length}
 							itemSize={(): number => 40}
@@ -1666,7 +1673,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 										}}
 										data={section.options || []}
 										itemContent={(index, item): React.ReactNode =>
-											(mapOptions([item]) as unknown) as React.ReactElement
+											mapOptions([item]) as unknown as React.ReactElement
 										}
 										totalCount={section.options?.length || 0}
 										itemSize={(): number => 40}
@@ -1684,6 +1691,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
+						!waitingMessage &&
 						!(showIncompleteDataMessage && isScrolledToBottom) && (
 							<section className="navigate">
 								<ArrowDown size={8} className="icons" />
@@ -1696,20 +1704,31 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader size="md" className="animate-spin" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
 					)}
-					{errorMessage && !loading && (
+					{!loading && waitingMessage && (
+						<div className="navigation-loading">
+							<div className="navigation-icons">
+								<Loader size="md" className="animate-spin" />
+							</div>
+							<div className="navigation-text" title={waitingMessage}>
+								{waitingMessage}
+							</div>
+						</div>
+					)}
+					{errorMessage && !loading && !waitingMessage && (
 						<div className="navigation-error">
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
-									<ReloadOutlined
-										twoToneColor={Color.BG_CHERRY_400}
+									<RefreshCw
+										data-testid="retry-button"
+										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
 											onRetry();
@@ -1723,6 +1742,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{showIncompleteDataMessage &&
 						isScrolledToBottom &&
 						!loading &&
+						!waitingMessage &&
 						!errorMessage && (
 							<div className="navigation-text-incomplete">
 								Don&apos;t see the value? Use search
@@ -1741,6 +1761,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	}, [
 		selectedValues,
 		searchText,
+		allOptionShown,
+		isAllSelected,
 		filteredOptions,
 		splitOptions,
 		isLabelPresent,
@@ -1765,6 +1787,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 		isDarkMode,
 		isDynamicVariable,
 		showRetryButton,
+		waitingMessage,
 	]);
 
 	// Custom handler for dropdown visibility changes
@@ -1916,7 +1939,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								? {
 										borderColor: Color.BG_ROBIN_500,
 										backgroundColor: Color.BG_SLATE_400,
-								  }
+									}
 								: undefined
 						}
 					>
@@ -1990,7 +2013,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				popupMatchSelectWidth={dropdownMatchSelectWidth}
 				allowClear={allowClear}
 				getPopupContainer={getPopupContainer ?? popupContainer}
-				suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+				suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
 				dropdownRender={customDropdownRender}
 				menuItemSelectedIcon={null}
 				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}

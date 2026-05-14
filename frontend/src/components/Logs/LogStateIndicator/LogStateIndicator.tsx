@@ -78,7 +78,6 @@ const SEVERITY_VARIANT_CLASSES: Record<string, string> = {
 	Wrn: 'severity-warn-4',
 
 	// Error variants - cherry-600 to cherry-200
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	ERROR: 'severity-error-0',
 	Error: 'severity-error-1',
 	error: 'severity-error-2',
@@ -90,11 +89,9 @@ const SEVERITY_VARIANT_CLASSES: Record<string, string> = {
 	FAIL: 'severity-error-0',
 
 	// Fatal variants - sakura-600 to sakura-200
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	FATAL: 'severity-fatal-0',
 	Fatal: 'severity-fatal-1',
 	fatal: 'severity-fatal-2',
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	critical: 'severity-fatal-3',
 	Critical: 'severity-fatal-4',
 	CRITICAL: 'severity-fatal-0',

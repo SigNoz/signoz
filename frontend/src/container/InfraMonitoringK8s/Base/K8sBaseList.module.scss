@@ -1,0 +1,40 @@
+.emptyStateContainer {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	min-height: 400px;
+}
+
+.k8SListTable {
+	padding-left: var(--spacing-2);
+	--tanstack-table-header-cell-bg: var(--l2-background);
+	--tanstack-table-header-cell-color: var(--l2-foreground);
+	--tanstack-table-cell-bg: var(--l2-background);
+	--tanstack-table-cell-color: var(--l2-foreground);
+	--tanstack-table-row-hover-bg: var(--l2-background-hover);
+	--tanstack-table-row-active-bg: var(--l2-background-active);
+	--tanstack-table-resize-handle-bg: var(--l2-background);
+	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
+	--tanstack-table-row-height: 42px;
+
+	--tanstack-cell-padding-top-override: 5px;
+	--tanstack-cell-padding-bottom-override: 5px;
+	--tanstack-cell-padding-left-override: 5px;
+	--tanstack-cell-padding-right-override: 5px;
+
+	--tanstack-expansion-first-col-padding-left: 30px;
+
+	&[data-has-group-by='false'] {
+		--tanstack-cell-padding-left-first-column: 28px;
+	}
+}
+
+.paginationContainer {
+	padding-bottom: var(--spacing-8);
+	padding-right: var(--spacing-8);
+
+	ul {
+		margin: 0;
+	}
+}

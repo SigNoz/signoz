@@ -1,5 +1,36 @@
 import { UnitFamilyConfig, UniversalYAxisUnit, YAxisUnit } from './types';
 
+export enum YAxisCategoryNames {
+	Time = 'Time',
+	Data = 'Data',
+	DataRate = 'Data Rate',
+	Count = 'Count',
+	Operations = 'Operations',
+	Percentage = 'Percentage',
+	Boolean = 'Boolean',
+	None = 'None',
+	HashRate = 'Hash Rate',
+	Miscellaneous = 'Miscellaneous',
+	Acceleration = 'Acceleration',
+	Angular = 'Angular',
+	Area = 'Area',
+	Flops = 'FLOPs',
+	Concentration = 'Concentration',
+	Currency = 'Currency',
+	Datetime = 'Datetime',
+	PowerElectrical = 'Power/Electrical',
+	Flow = 'Flow',
+	Force = 'Force',
+	Mass = 'Mass',
+	Length = 'Length',
+	Pressure = 'Pressure',
+	Radiation = 'Radiation',
+	RotationSpeed = 'Rotation Speed',
+	Temperature = 'Temperature',
+	Velocity = 'Velocity',
+	Volume = 'Volume',
+}
+
 // Mapping of universal y-axis units to their AWS, UCUM, and OpenMetrics equivalents (if available)
 export const UniversalYAxisUnitMappings: Partial<
 	Record<UniversalYAxisUnit, Set<YAxisUnit> | null>

@@ -69,9 +69,6 @@ jest.mock('antd', () => {
 					))}
 				</div>
 			)),
-		Skeleton: jest
-			.fn()
-			.mockImplementation(() => <div data-testid="skeleton-mock" />),
 		Typography: {
 			Text: jest
 				.fn()
@@ -88,7 +85,6 @@ describe('DependentServices', () => {
 		{
 			key: 'service1',
 			serviceData: {
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				serviceName: 'auth-service',
 				count: 500,
 				percentage: 62.5,

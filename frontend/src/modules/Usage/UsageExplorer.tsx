@@ -1,11 +1,12 @@
-/* eslint-disable */
 //@ts-nocheck
 
-import { Select, Space, Typography } from 'antd';
-import Graph from 'components/Graph';
 import { useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { withRouter } from 'react-router-dom';
+import { Select, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import Graph from 'components/Graph';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalTime } from 'types/actions/globalTime';
@@ -69,13 +70,8 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const {
-		getServicesList,
-		getUsageData,
-		globalTime,
-		totalCount,
-		usageData,
-	} = props;
+	const { getServicesList, getUsageData, globalTime, totalCount, usageData } =
+		props;
 	const { services } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
@@ -115,6 +111,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					<Select
 						onSelect={(value): void => {
 							setSelectedTime(
+								// eslint-disable-next-line eqeqeq
 								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
 							);
 						}}

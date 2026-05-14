@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable react/display-name */
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -28,14 +27,14 @@ import { QueryBuilderV2 } from '../../QueryBuilderV2';
 jest.mock(
 	'../QueryAggregation/QueryAggregation',
 	() =>
-		function () {
+		function QueryAggregation() {
 			return <div>QueryAggregation</div>;
 		},
 );
 jest.mock(
 	'../MerticsAggregateSection/MetricsAggregateSection',
 	() =>
-		function () {
+		function MetricsAggregateSection() {
 			return <div>MetricsAggregateSection</div>;
 		},
 );
@@ -95,13 +94,12 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			},
 		};
 
-		const updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'] = (
-			q,
-		) => q;
+		const updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'] =
+			(q) => q;
 		const updateQueriesData: QueryBuilderContextType['updateQueriesData'] = (q) =>
 			q;
 
-		const baseContext = ({
+		const baseContext = {
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
@@ -134,7 +132,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			initQueryBuilderData: jest.fn(),
 			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
-		} as unknown) as QueryBuilderContextType;
+		} as unknown as QueryBuilderContextType;
 
 		baseQBContext = baseContext;
 		mockedUseQueryBuilder.mockReturnValue(baseQBContext);
@@ -150,7 +148,8 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			handleChangeAggregatorAttribute: jest.fn(),
 			handleChangeDataSource: jest.fn(),
 			handleDeleteQuery: jest.fn(),
-			handleChangeQueryData: (jest.fn() as unknown) as ReturnType<UseQueryOperations>['handleChangeQueryData'],
+			handleChangeQueryData:
+				jest.fn() as unknown as ReturnType<UseQueryOperations>['handleChangeQueryData'],
 			handleChangeFormulaData: jest.fn(),
 			handleQueryFunctionsUpdates: handleQueryFunctionsUpdatesMock,
 			listOfAdditionalFormulaFilters: [],

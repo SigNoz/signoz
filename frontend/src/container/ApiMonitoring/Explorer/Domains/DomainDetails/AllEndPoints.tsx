@@ -44,16 +44,14 @@ function AllEndPoints({
 		[key: string]: any;
 	}>({});
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys({
-		dataSource: DataSource.TRACES,
-		aggregateAttribute: '',
-		aggregateOperator: 'noop',
-		searchText: groupBySearchValue,
-		tagType: '',
-	});
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys({
+			dataSource: DataSource.TRACES,
+			aggregateAttribute: '',
+			aggregateOperator: 'noop',
+			searchText: groupBySearchValue,
+			tagType: '',
+		});
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -121,7 +119,7 @@ function AllEndPoints({
 			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				// Check if the key exists in our cached options first
 				if (allAvailableGroupByOptions[element]) {
@@ -202,7 +200,7 @@ function AllEndPoints({
 
 	const onRowClick = useCallback(
 		(props: any): void => {
-			setSelectedEndPointName(props[SPAN_ATTRIBUTES.URL_PATH] as string);
+			setSelectedEndPointName(props[SPAN_ATTRIBUTES.HTTP_URL] as string);
 			setSelectedView(VIEWS.ENDPOINT_STATS);
 			const initialItems = [
 				...(filters?.items || []),
@@ -213,7 +211,7 @@ function AllEndPoints({
 				op: 'AND',
 			});
 			setParams({
-				selectedEndPointName: props[SPAN_ATTRIBUTES.URL_PATH] as string,
+				selectedEndPointName: props[SPAN_ATTRIBUTES.HTTP_URL] as string,
 				selectedView: VIEWS.ENDPOINT_STATS,
 				endPointDetailsLocalFilters: {
 					items: initialItems,

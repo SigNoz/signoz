@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -242,7 +239,7 @@ export const getUPlotChartOptions = ({
 					query || currentQuery,
 					getLabelName(item.metric || {}, item.queryName || '', item.legend || ''),
 				),
-		  )
+			)
 		: [];
 
 	const legendConfig = enhancedLegend
@@ -251,14 +248,14 @@ export const getUPlotChartOptions = ({
 				seriesCount,
 				seriesLabels,
 				legendPosition,
-		  )
+			)
 		: {
 				calculatedHeight: 30,
 				minHeight: 30,
 				maxHeight: 30,
 				itemsPerRow: 3,
 				showScrollbar: false,
-		  };
+			};
 
 	// Calculate chart dimensions based on legend position
 	const chartWidth =
@@ -305,7 +302,7 @@ export const getUPlotChartOptions = ({
 						focus: {
 							prox: 30,
 						},
-				  }
+					}
 				: {}),
 		},
 		...(enableZoom
@@ -313,7 +310,7 @@ export const getUPlotChartOptions = ({
 					select: {
 						show: true,
 					},
-			  }
+				}
 			: {}),
 		tzDate,
 		padding: [16, 16, 8, 8],
@@ -702,9 +699,8 @@ export const getUPlotChartOptions = ({
 											setGraphsVisibilityStates?.((prev) => {
 												const newGraphVisibilityStates = [...prev];
 												// Toggle the specific series visibility (checkbox behavior)
-												newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
-													index + 1
-												];
+												newGraphVisibilityStates[index + 1] =
+													!newGraphVisibilityStates[index + 1];
 
 												saveLegendEntriesToLocalStorage?.({
 													options: self,
@@ -814,7 +810,7 @@ export const getUPlotChartOptions = ({
 					hiddenGraph,
 					isDarkMode,
 					colorMapping,
-			  }),
+				}),
 		axes: getAxes({ isDarkMode, yAxisUnit, panelType, isLogScale }),
 	};
 };

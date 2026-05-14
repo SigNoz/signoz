@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip, Typography } from 'antd';
+import { CircleAlert, Trash2 } from '@signozhq/icons';
+import { Flex, Modal, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
@@ -48,11 +49,19 @@ export function DeleteButton({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
-					<span style={{ color: '#e42b35', fontWeight: 500 }}> {name} </span>
+					<span style={{ color: 'var(--danger-background)', fontWeight: 500 }}>
+						{' '}
+						{name}{' '}
+					</span>
 					dashboard?
 				</Typography.Title>
 			),
-			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
+			icon: (
+				<CircleAlert
+					style={{ color: 'var(--danger-background)', marginInlineEnd: '12px' }}
+					size="3xl"
+				/>
+			),
 			okText: 'Delete',
 			okButtonProps: {
 				danger: true,
@@ -104,7 +113,6 @@ export function DeleteButton({
 		<>
 			<Tooltip placement="left" title={getDeleteTooltipContent()}>
 				<TableLinkText
-					type="danger"
 					onClick={(e): void => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -115,7 +123,9 @@ export function DeleteButton({
 					className="delete-btn"
 					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<DeleteOutlined /> Delete dashboard
+					<Flex align="center" justify="center" gap={4}>
+						<Trash2 size={14} /> Delete dashboard
+					</Flex>
 				</TableLinkText>
 			</Tooltip>
 

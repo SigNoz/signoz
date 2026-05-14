@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable react/jsx-props-no-spreading */
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
@@ -58,9 +56,9 @@ const mockDashboard = {
 	},
 };
 // Mock dependencies
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
-		selectedDashboard: mockDashboard,
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
+		dashboardData: mockDashboard,
 	}),
 }));
 
@@ -154,9 +152,9 @@ describe('Panel Management Tests', () => {
 			};
 
 			// Temporarily mock the dashboard
-			jest.doMock('providers/Dashboard/Dashboard', () => ({
-				useDashboard: (): any => ({
-					selectedDashboard: modifiedDashboard,
+			jest.doMock('providers/Dashboard/store/useDashboardStore', () => ({
+				useDashboardStore: (): any => ({
+					dashboardData: modifiedDashboard,
 				}),
 			}));
 
@@ -426,7 +424,7 @@ describe('Panel Management Tests', () => {
 			);
 
 			// Should return dashboard unchanged
-			expect(updatedDashboard).toEqual(dashboard);
+			expect(updatedDashboard).toStrictEqual(dashboard);
 		});
 
 		it('should handle undefined dashboard gracefully', () => {

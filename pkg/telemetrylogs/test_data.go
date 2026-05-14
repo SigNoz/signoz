@@ -2,11 +2,12 @@ package telemetrylogs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// Helper function to limit string length for display
+// Helper function to limit string length for display.
 func limitString(s string, maxLen int) string {
 	s = strings.ReplaceAll(s, "\n", " ")
 	s = strings.ReplaceAll(s, "\t", " ")
@@ -17,20 +18,13 @@ func limitString(s string, maxLen int) string {
 	return s[:maxLen-3] + "..."
 }
 
-// Function to build a complete field key map for testing all scenarios
-func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
+// Function to build a complete field key map for testing all scenarios.
+func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytypes.TelemetryFieldKey {
 	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {
 			{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-		},
-		"body": {
-			{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextLog,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
@@ -938,13 +932,24 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				Materialized:  true,
 			},
 		},
+		"body": {
+			{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 
 	for _, keys := range keysMap {
 		for _, key := range keys {
 			key.Signal = telemetrytypes.SignalLogs
+			if key.FieldContext == telemetrytypes.FieldContextResource {
+				key.Evolutions = mockEvolutionData(releaseTime)
+			}
 		}
 	}
+
 	return keysMap
 }
 
@@ -1006,4 +1011,25 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
 }

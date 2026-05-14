@@ -1,8 +1,11 @@
 
 node_modules
 
+# editor
 .vscode
 !.vscode/settings.json
+.zed
+.idea
 
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
@@ -31,8 +34,6 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
 
-.idea
-
 **/build
 **/storage
 **/locust-scripts/__pycache__/
@@ -50,6 +51,8 @@ ee/query-service/tests/test-deploy/data/
 # local data
 *.backup
 *.db
+*.db-shm
+*.db-wal
 **/db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
@@ -229,5 +232,3 @@ cython_debug/
 pyrightconfig.json
 
 
-# cursor files
-frontend/.cursor/

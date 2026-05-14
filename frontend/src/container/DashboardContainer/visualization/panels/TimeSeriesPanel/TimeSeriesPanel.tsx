@@ -1,22 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
+import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { LineInterpolation } from 'lib/uPlotV2/config/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { useTimezone } from 'providers/Timezone';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
 import '../Panel.styles.scss';
+import TooltipFooter from '../components/TooltipFooter';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -26,8 +30,8 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		onDragSelect,
 		isFullViewMode,
 		onToggleModelHandler,
+		groupByPerQuery,
 	} = props;
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -36,16 +40,9 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
+	const dashboardId = useDashboardStore((s) => s.dashboardData?.id);
+	const [syncMode] = useDashboardCursorSyncMode(dashboardId, panelMode);
+	const [syncFilterMode] = useSyncTooltipFilterMode(dashboardId);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -73,55 +70,33 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	}, [queryResponse?.data?.payload]);
 
 	const config = useMemo(() => {
-		const tzDate = (timestamp: number): Date =>
-			uPlot.tzDate(new Date(timestamp * 1e3), timezone.value);
-
 		return prepareUPlotConfig({
-			widgetId: widget.id || '',
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
-			tzDate,
-			minTimeScale: minTimeScale,
-			maxTimeScale: maxTimeScale,
-			isLogScale: widget?.isLogScale ?? false,
-			thresholds: {
-				scaleKey: 'y',
-				thresholds: (widget.thresholds || []).map((threshold) => ({
-					thresholdValue: threshold.thresholdValue ?? 0,
-					thresholdColor: threshold.thresholdColor,
-					thresholdUnit: threshold.thresholdUnit,
-					thresholdLabel: threshold.thresholdLabel,
-				})),
-				yAxisUnit: widget.yAxisUnit,
-			},
-			yAxisUnit: widget.yAxisUnit || '',
-			softMin: widget.softMin === undefined ? null : widget.softMin,
-			softMax: widget.softMax === undefined ? null : widget.softMax,
-			spanGaps: false,
-			colorMapping: widget.customLegendColors ?? {},
-			lineInterpolation: LineInterpolation.Spline,
+			widget,
 			isDarkMode,
+			currentQuery: widget.query,
 			onClick: clickHandlerWithContextMenu,
 			onDragSelect,
-			currentQuery: widget.query,
+			apiResponse: queryResponse?.data?.payload,
+			timezone,
 			panelMode,
+			minTimeScale: minTimeScale,
+			maxTimeScale: maxTimeScale,
 		});
 	}, [
-		widget.id,
-		maxTimeScale,
-		minTimeScale,
-		timezone.value,
-		widget.customLegendColors,
-		widget.isLogScale,
-		widget.softMax,
-		widget.softMin,
+		widget,
 		isDarkMode,
-		queryResponse?.data?.payload,
-		widget.query,
-		widget.thresholds,
-		widget.yAxisUnit,
-		panelMode,
 		clickHandlerWithContextMenu,
 		onDragSelect,
+		queryResponse?.data?.payload,
+		panelMode,
+		minTimeScale,
+		maxTimeScale,
+		timezone,
+		// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
+		// Rebuild it on syncMode changes so the new chart instance starts from a
+		// clean config — otherwise switching to "No Sync" would inherit stale sync
+		// settings from the previous mode.
+		syncMode,
 	]);
 
 	const layoutChildren = useMemo(() => {
@@ -133,6 +108,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 				config={config}
 				alignedData={chartData}
 				yAxisUnit={widget.yAxisUnit}
+				decimalPrecision={widget.decimalPrecision}
 				onCancel={onToggleModelHandler}
 			/>
 		);
@@ -142,23 +118,39 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		chartData,
 		widget.yAxisUnit,
 		onToggleModelHandler,
+		widget.decimalPrecision,
 	]);
+
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => {
+			return (
+				<TooltipFooter id={widget.id} isPinned={isPinned} dismiss={dismiss} />
+			);
+		},
+		[],
+	);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<TimeSeries
+					key={`${syncMode}-${syncFilterMode}`}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
+					timezone={timezone}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
-					timezone={timezone.value}
 					data={chartData as uPlot.AlignedData}
+					groupByPerQuery={groupByPerQuery}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
+					syncMode={syncMode}
+					syncFilterMode={syncFilterMode}
 					layoutChildren={layoutChildren}
+					renderTooltipFooter={renderTooltipFooter}
 				>
 					<ContextMenu
 						coordinates={coordinates}

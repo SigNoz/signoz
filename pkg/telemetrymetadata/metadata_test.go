@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
@@ -16,10 +17,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
-func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+func newTestTelemetryMetaStoreTestHelper(t *testing.T, store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+	t.Helper()
 	return NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
 		store,
@@ -36,8 +39,15 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
+		flaggertest.New(t),
 	)
 }
 
@@ -59,7 +69,7 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},
@@ -169,14 +179,15 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 			mock := mockTelemetryStore.Mock()
 
-			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+			metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 			hasTraces := false
 			hasLogs := false
 			for _, key := range tt.inputKeys {
-				if key.Signal == telemetrytypes.SignalTraces {
+				switch key.Signal {
+				case telemetrytypes.SignalTraces:
 					hasTraces = true
-				} else if key.Signal == telemetrytypes.SignalLogs {
+				case telemetrytypes.SignalLogs:
 					hasLogs = true
 				}
 			}
@@ -312,13 +323,27 @@ func TestEnrichWithIntrinsicMetricKeys(t *testing.T) {
 		},
 	)
 	assert.NotContains(t, result, "metric_name")
+
+	result = enrichWithIntrinsicMetricKeys(
+		map[string][]*telemetrytypes.TelemetryFieldKey{},
+		[]*telemetrytypes.FieldKeySelector{
+			{
+				Signal: telemetrytypes.SignalMetrics,
+				MetricContext: &telemetrytypes.MetricContext{
+					MetricNamespace: "system.cpu",
+				},
+				SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			},
+		},
+	)
+	assert.NotContains(t, result, "metric_name")
 }
 
 func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -357,7 +382,7 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	metadataRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_string_value", Type: "String"},
@@ -382,5 +407,176 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	assert.True(t, complete)
 	assert.Empty(t, values.StringValues)
 	assert.Empty(t, values.BoolValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMetricFieldValuesAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
+
+	valueRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_string_value", Type: "String"},
+	}, [][]any{{"value.a"}})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT attr_string_value FROM signoz_metrics.distributed_metadata WHERE attr_name = ? AND metric_name LIKE ? LIMIT ?")).
+		WithArgs("custom_key", "system.cpu%", 11).
+		WillReturnRows(valueRows)
+
+	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "custom_key",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+		Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.ElementsMatch(t, []string{"value.a"}, values.StringValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMetricFieldValuesIntrinsicMetricNameAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
+
+	valueRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "metric_name", Type: "String"},
+	}, [][]any{{"system.cpu.utilization"}})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT metric_name FROM signoz_metrics.distributed_time_series_v4_1week WHERE metric_name LIKE ? GROUP BY metric_name LIMIT ?")).
+		WithArgs("system.cpu%", 51).
+		WillReturnRows(valueRows)
+
+	metadataRows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_string_value", Type: "String"},
+	}, [][]any{})
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT DISTINCT attr_string_value FROM signoz_metrics.distributed_metadata WHERE attr_name = ? AND metric_name LIKE ? LIMIT ?")).
+		WithArgs("metric_name", "system.cpu%", 50).
+		WillReturnRows(metadataRows)
+
+	values, complete, err := metadata.(*telemetryMetaStore).getMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "metric_name",
+			Limit:             50,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+		Limit: 50,
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.ElementsMatch(t, []string{"system.cpu.utilization"}, values.StringValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMeterSourceMetricFieldValuesAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
+
+	rows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr", Type: "Array(String)"},
+	}, [][]any{{[]string{"service.name", "frontend"}}})
+
+	mock.ExpectQuery(`SELECT .*distributed_samples_agg_1d.*metric_name LIKE .*`).
+		WithArgs("service.name", "\\_\\_%", "system.cpu%", "", 11).
+		WillReturnRows(rows)
+
+	values, complete, err := metadata.(*telemetryMetaStore).getMeterSourceMetricFieldValues(context.Background(), &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal: telemetrytypes.SignalMetrics,
+			Source: telemetrytypes.SourceMeter,
+			Name:   "service.name",
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+		Limit: 10,
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.ElementsMatch(t, []string{"frontend"}, values.StringValues)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMetricsKeysAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
+
+	rows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "name", Type: "String"},
+		{Name: "field_context", Type: "String"},
+		{Name: "field_data_type", Type: "String"},
+		{Name: "priority", Type: "UInt8"},
+	}, [][]any{{"service.name", "resource", "String", 1}})
+
+	mock.ExpectQuery(`(?s)SELECT.*distributed_metadata.*metric_name LIKE.*`).
+		WithArgs("%service%", "\\_\\_%", "system.cpu%", 11).
+		WillReturnRows(rows)
+
+	keys, complete, err := metadata.(*telemetryMetaStore).getMetricsKeys(context.Background(), []*telemetrytypes.FieldKeySelector{
+		{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "service",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Len(t, keys, 1)
+	assert.Equal(t, "service.name", keys[0].Name)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMeterSourceMetricKeysAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
+
+	rows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_name", Type: "String"},
+	}, [][]any{{"service.name"}})
+
+	mock.ExpectQuery(`SELECT.*distributed_samples_agg_1d.*metric_name LIKE.*`).
+		WithArgs("%service%", "\\_\\_%", "system.cpu%", 10).
+		WillReturnRows(rows)
+
+	keys, complete, err := metadata.(*telemetryMetaStore).getMeterSourceMetricKeys(context.Background(), []*telemetrytypes.FieldKeySelector{
+		{
+			Signal:            telemetrytypes.SignalMetrics,
+			Source:            telemetrytypes.SourceMeter,
+			Name:              "service",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Len(t, keys, 1)
+	assert.Equal(t, "service.name", keys[0].Name)
 	require.NoError(t, mock.ExpectationsWereMet())
 }

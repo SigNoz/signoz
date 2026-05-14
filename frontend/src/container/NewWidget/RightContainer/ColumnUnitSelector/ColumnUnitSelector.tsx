@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { isEmpty } from 'lodash-es';
@@ -13,6 +13,7 @@ interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	isNewDashboard: boolean;
+	'data-testid'?: string;
 }
 
 export function ColumnUnitSelector(
@@ -61,10 +62,13 @@ export function ColumnUnitSelector(
 	};
 
 	useEffect(() => {
-		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
-			acc[query.value] = getValues(query.value);
-			return acc;
-		}, {} as Record<string, string>);
+		const newColumnUnits = aggregationQueries.reduce(
+			(acc, query) => {
+				acc[query.value] = getValues(query.value);
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 		setColumnUnits(newColumnUnits);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [aggregationQueries]);
@@ -72,22 +76,25 @@ export function ColumnUnitSelector(
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map(({ value, label }) => {
-				const baseQueryName = value.split('.')[0];
-				return (
-					<YAxisUnitSelectorV2
-						value={columnUnits[value] || ''}
-						onSelect={(unitValue: string): void =>
-							handleColumnUnitSelect(value, unitValue)
-						}
-						fieldLabel={label}
-						key={value}
-						selectedQueryName={baseQueryName}
-						// Update the column unit value automatically only in create mode
-						shouldUpdateYAxisUnit={isNewDashboard}
-					/>
-				);
-			})}
+			<div className="column-unit-selector-content">
+				{aggregationQueries.map(({ value, label }) => {
+					const baseQueryName = value.split('.')[0];
+					return (
+						<YAxisUnitSelectorV2
+							value={columnUnits[value] || ''}
+							onSelect={(unitValue: string): void =>
+								handleColumnUnitSelect(value, unitValue)
+							}
+							fieldLabel={label}
+							key={value}
+							data-testid={props['data-testid']}
+							selectedQueryName={baseQueryName}
+							// Update the column unit value automatically only in create mode
+							shouldUpdateYAxisUnit={isNewDashboard}
+						/>
+					);
+				})}
+			</div>
 		</section>
 	);
 }

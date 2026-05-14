@@ -2,8 +2,9 @@ package alertmanagertypes
 
 import (
 	"context"
-	"github.com/expr-lang/expr"
 	"time"
+
+	"github.com/expr-lang/expr"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -12,12 +13,12 @@ import (
 )
 
 type PostableRoutePolicy struct {
-	Expression     string         `json:"expression"`
+	Expression     string         `json:"expression" required:"true"`
 	ExpressionKind ExpressionKind `json:"kind"`
-	Channels       []string       `json:"channels"`
-	Name           string         `json:"name"`
+	Channels       []string       `json:"channels" required:"true"`
+	Name           string         `json:"name" required:"true"`
 	Description    string         `json:"description"`
-	Tags           []string       `json:"tags,omitempty"`
+	Tags           []string       `json:"tags,omitempty" nullable:"true"`
 }
 
 func (p *PostableRoutePolicy) Validate() error {
@@ -53,15 +54,13 @@ func (p *PostableRoutePolicy) Validate() error {
 }
 
 type GettableRoutePolicy struct {
-	PostableRoutePolicy // Embedded
+	PostableRoutePolicy
 
-	ID string `json:"id"`
-
-	// Audit fields
-	CreatedAt *time.Time `json:"createdAt"`
-	UpdatedAt *time.Time `json:"updatedAt"`
-	CreatedBy *string    `json:"createdBy"`
-	UpdatedBy *string    `json:"updatedBy"`
+	ID        string    `json:"id" required:"true"`
+	CreatedAt time.Time `json:"createdAt" required:"true"`
+	UpdatedAt time.Time `json:"updatedAt" required:"true"`
+	CreatedBy *string   `json:"createdBy" nullable:"true"`
+	UpdatedBy *string   `json:"updatedBy" nullable:"true"`
 }
 
 type ExpressionKind struct {
@@ -73,7 +72,14 @@ var (
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
 
-// RoutePolicy represents the database model for expression routes
+func (ExpressionKind) Enum() []any {
+	return []any{
+		RuleBasedExpression,
+		PolicyBasedExpression,
+	}
+}
+
+// RoutePolicy represents the database model for expression routes.
 type RoutePolicy struct {
 	bun.BaseModel `bun:"table:route_policy"`
 	types.Identifiable
@@ -136,4 +142,5 @@ type RouteStore interface {
 	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*RoutePolicy, error)
 	GetAllByName(ctx context.Context, orgID string, name string) ([]*RoutePolicy, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
+	GetAll(ctx context.Context, orgID string) ([]*RoutePolicy, error)
 }

@@ -1,6 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	MouseEvent,
 	useCallback,
@@ -10,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -36,9 +34,11 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
@@ -53,27 +53,33 @@ import {
 	GitCommitVertical,
 	GripVertical,
 	LampDesk,
-	Logs,
+	List,
 	MousePointerClick,
 	PackagePlus,
 	ScrollText,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
+import { isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
+import { openInNewTab } from 'utils/navigation';
+
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
+	getUserSettingsDropdownMenuItems,
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
+	aiAssistantMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -86,13 +92,8 @@ import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import './SideNav.styles.scss';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: item.key });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: item.key });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -150,12 +151,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		},
 	);
 
-	const [
-		helpSupportDropdownMenuItems,
-		setHelpSupportDropdownMenuItems,
-	] = useState<(SidebarItem | DropdownSeparator)[]>(
-		DefaultHelpSupportDropdownMenuItems,
-	);
+	const [helpSupportDropdownMenuItems, setHelpSupportDropdownMenuItems] =
+		useState<(SidebarItem | DropdownSeparator)[]>(
+			DefaultHelpSupportDropdownMenuItems,
+		);
 
 	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
 		[],
@@ -225,13 +224,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [licenseTag, setLicenseTag] = useState('');
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const aiAssistantActiveConversationId = useAIAssistantStore(
+		(s) => s.activeConversationId,
+	);
 
 	// Compute initial pinned items and secondary menu items synchronously to avoid flash
 	const computedPinnedMenuItems = useMemo(() => {
 		const navShortcutsPreference = userPreferences?.find(
 			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
 		);
-		const navShortcuts = (navShortcutsPreference?.value as unknown) as
+		const navShortcuts = navShortcutsPreference?.value as unknown as
 			| string[]
 			| undefined;
 
@@ -306,14 +309,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
-
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	const [
-		showVersionUpdateNotification,
-		setShowVersionUpdateNotification,
-	] = useState(false);
+	const [showVersionUpdateNotification, setShowVersionUpdateNotification] =
+		useState(false);
 
 	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
 
@@ -436,10 +435,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
-	};
-
 	const onClickGetStarted = (event: MouseEvent): void => {
 		logEvent('Sidebar: Menu clicked', {
 			menuRoute: '/get-started',
@@ -450,7 +445,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
-		if (isCtrlMetaKey(event)) {
+		if (isModifierKeyPressed(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
 			history.push(onboaringRoute);
@@ -465,7 +460,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
+				if (event && isModifierKeyPressed(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
@@ -477,58 +472,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[pathname, search],
 	);
 
-	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
-		pathname,
-	]);
+	const activeMenuKey = useMemo(
+		() => getActiveMenuKeyFromPath(pathname),
+		[pathname],
+	);
 
-	const isSettingsPage = useMemo(() => pathname.startsWith(ROUTES.SETTINGS), [
-		pathname,
-	]);
+	const isSettingsPage = useMemo(
+		() => pathname.startsWith(ROUTES.SETTINGS),
+		[pathname],
+	);
 
 	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
 		() =>
-			[
-				{
-					key: 'label',
-					label: (
-						<div className="user-settings-dropdown-logged-in-section">
-							<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
-							<span className="user-settings-dropdown-label-email">{user.email}</span>
-						</div>
-					),
-					disabled: true,
-					dataTestId: 'logged-in-as-nav-item',
-				},
-				{ type: 'divider' as const },
-				{
-					key: 'account',
-					label: 'Account Settings',
-					dataTestId: 'account-settings-nav-item',
-				},
-				{
-					key: 'workspace',
-					label: 'Workspace Settings',
-					disabled: isWorkspaceBlocked,
-					dataTestId: 'workspace-settings-nav-item',
-				},
-				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
-					? [
-							{
-								key: 'license',
-								label: 'Manage License',
-								dataTestId: 'manage-license-nav-item',
-							},
-					  ]
-					: []),
-				{ type: 'divider' as const },
-				{
-					key: 'logout',
-					label: (
-						<span className="user-settings-dropdown-logout-section">Sign out</span>
-					),
-					dataTestId: 'logout-nav-item',
-				},
-			].filter(Boolean),
+			getUserSettingsDropdownMenuItems({
+				userEmail: user.email,
+				isWorkspaceBlocked,
+				isEnterpriseSelfHostedUser,
+				isCommunityEnterpriseUser,
+			}),
 		[
 			isEnterpriseSelfHostedUser,
 			isCommunityEnterpriseUser,
@@ -664,13 +625,29 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
-			if (isCtrlMetaKey(event)) {
+			if (isModifierKeyPressed(event)) {
 				openInNewTab(settingsRoute);
 			} else {
 				history.push(settingsRoute);
 			}
 		} else if (item.key === 'quick-search') {
 			openCmdK();
+		} else if (item.key === aiAssistantMenuItem.key) {
+			// Resume the active conversation when one exists — without this
+			// every sidenav click hits `/ai-assistant/new` which the page
+			// resolves by spawning a fresh thread. Only fall back to /new
+			// when there's no active conversation to resume.
+			const aiPath = aiAssistantActiveConversationId
+				? ROUTES.AI_ASSISTANT.replace(
+						':conversationId',
+						aiAssistantActiveConversationId,
+					)
+				: aiAssistantMenuItem.key;
+			if (isModifierKeyPressed(event)) {
+				openInNewTab(aiPath);
+			} else {
+				history.push(aiPath);
+			}
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}
@@ -733,11 +710,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
 			onClickHandler(ROUTES.BILLING, null),
 		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys, () =>
-			onClickHandler(ROUTES.API_KEYS, null),
-		);
 		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
 			onClickHandler(ROUTES.ALL_CHANNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
+			onClickHandler(ROUTES.SERVICE_ACCOUNTS_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsRoles, () =>
+			onClickHandler(ROUTES.ROLES_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsMembers, () =>
+			onClickHandler(ROUTES.MEMBERS_SETTINGS, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
 			onClickHandler(ROUTES.LOGS_PIPELINES, null),
@@ -761,8 +744,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
 			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
@@ -770,8 +755,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 
 	const isPinnedItem = useMemo(
-		() => (item: SidebarItem): boolean =>
-			secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
+		() =>
+			(item: SidebarItem): boolean =>
+				secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
 		[secondaryMenuItems],
 	);
 
@@ -816,7 +802,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										},
 									);
 									onTogglePin(item);
-							  }
+								}
 							: undefined
 					}
 					onClick={(event): void => {
@@ -842,14 +828,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
 		const item = helpSupportDropdownMenuItems.find(
 			(item) => !('type' in item) && item.key === info.key,
 		);
 
 		if (item && !('type' in item) && item.isExternal && item.url) {
-			window.open(item.url, '_blank');
+			openInNewTab(item.url);
 		}
+
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
 
 		if (item && !('type' in item)) {
 			logEvent('Help Popover: Item clicked', {
@@ -859,15 +848,21 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 			switch (item.key) {
 				case ROUTES.SHORTCUTS:
-					history.push(ROUTES.SHORTCUTS);
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(ROUTES.SHORTCUTS);
+					} else {
+						history.push(ROUTES.SHORTCUTS);
+					}
 					break;
 				case 'invite-collaborators':
-					history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					} else {
+						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					}
 					break;
 				case 'chat-support':
 					if (window.pylon) {
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						window.Pylon('show');
 					}
 					break;
@@ -881,8 +876,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-		const item = userSettingsDropdownMenuItems.find(
+		const item = (userSettingsDropdownMenuItems ?? []).find(
 			(item) => item?.key === info.key,
 		);
 		let menuLabel = '';
@@ -898,15 +894,37 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			menuRoute: item?.key,
 			menuLabel,
 		});
+
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
+
 		switch (info.key) {
 			case 'account':
-				history.push(ROUTES.MY_SETTINGS);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.MY_SETTINGS);
+				} else {
+					history.push(ROUTES.MY_SETTINGS);
+				}
 				break;
 			case 'workspace':
-				history.push(ROUTES.SETTINGS);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SETTINGS);
+				} else {
+					history.push(ROUTES.SETTINGS);
+				}
 				break;
 			case 'license':
-				history.push(ROUTES.LIST_LICENSES);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.LIST_LICENSES);
+				} else {
+					history.push(ROUTES.LIST_LICENSES);
+				}
+				break;
+			case 'keyboard-shortcuts':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SHORTCUTS);
+				} else {
+					history.push(ROUTES.SHORTCUTS);
+				}
 				break;
 			case 'logout':
 				Logout();
@@ -954,13 +972,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="brand-company-meta">
 							<div
 								className="brand-logo"
-								// eslint-disable-next-line react/no-unknown-property
 								onClick={(event: MouseEvent): void => {
 									// Current home page
 									onClickHandler(ROUTES.HOME, event);
 								}}
 							>
-								<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+								<img src={signozBrandLogoUrl} alt="SigNoz" />
 							</div>
 
 							{licenseTag && (
@@ -1068,7 +1085,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 															setIsReorderShortcutNavItemsModalOpen(true);
 														}}
 													>
-														<Logs size={16} />
+														<List size={16} />
 													</div>
 												</Tooltip>
 											)}
@@ -1140,11 +1157,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										? renderNavItems(
 												activeMoreMenuItems.filter((item) => item.isEnabled),
 												true,
-										  )
+											)
 										: renderNavItems(
 												moreMenuItems.filter((item) => item.isEnabled),
 												true,
-										  )}
+											)}
 								</div>
 							</div>
 						)}
@@ -1162,6 +1179,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
+							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
+
 							<div className="nav-dropdown-item">
 								<Dropdown
 									menu={{

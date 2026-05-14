@@ -1,35 +1,67 @@
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
+import { generateGradientFill } from '../utils/generateGradientFill';
+import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
+	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
+	ExtendedSeries,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
 	SeriesProps,
-	VisibilityMode,
 } from './types';
 
 /**
  * Builder for uPlot series configuration
  * Handles creation of series settings
  */
-export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
+
+/**
+ * Path builders are static and shared across all instances of UPlotSeriesBuilder
+ */
+let builders: PathBuilders | null = null;
+
+const DEFAULT_LINE_WIDTH = 2;
+export const POINT_SIZE_FACTOR = 2.5;
+export class UPlotSeriesBuilder extends ConfigBuilder<
+	SeriesProps,
+	ExtendedSeries
+> {
+	constructor(props: SeriesProps) {
+		super(props);
+		const pathBuilders = uPlot.paths;
+
+		if (!builders) {
+			const linearBuilder = pathBuilders.linear;
+			const splineBuilder = pathBuilders.spline;
+			const steppedBuilder = pathBuilders.stepped;
+
+			if (!linearBuilder || !splineBuilder || !steppedBuilder) {
+				throw new Error('Required uPlot path builders are not available');
+			}
+			builders = {
+				linear: linearBuilder(),
+				spline: splineBuilder(),
+				stepBefore: steppedBuilder({ align: -1 }),
+				stepAfter: steppedBuilder({ align: 1 }),
+			};
+		}
+	}
+
 	private buildLineConfig({
-		lineColor,
-		lineWidth,
-		lineStyle,
-		lineCap,
+		resolvedLineColor,
 	}: {
-		lineColor: string;
-		lineWidth?: number;
-		lineStyle?: LineStyle;
-		lineCap?: Series.Cap;
+		resolvedLineColor: string;
 	}): Partial<Series> {
+		const { lineWidth, lineStyle, lineCap, fillColor, fillMode } = this.props;
 		const lineConfig: Partial<Series> = {
-			stroke: lineColor,
-			width: lineWidth ?? 2,
+			stroke: resolvedLineColor,
+			width: lineWidth ?? DEFAULT_LINE_WIDTH,
 		};
 
 		if (lineStyle === LineStyle.Dashed) {
@@ -39,21 +71,45 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		if (lineCap) {
 			lineConfig.cap = lineCap;
 		}
+
+		/**
+		 * Configure area fill based on draw style and fill mode:
+		 * - bar charts always use a solid fill with the series color
+		 * - histogram uses the same color with a fixed alpha suffix for translucency
+		 * - for other series, an explicit fillMode controls whether we use a solid fill
+		 *   or a vertical gradient from the series color to transparent
+		 */
+		const finalFillColor = fillColor ?? resolvedLineColor;
+
+		if (this.props.drawStyle === DrawStyle.Bar) {
+			lineConfig.fill = finalFillColor;
+		} else if (this.props.drawStyle === DrawStyle.Histogram) {
+			lineConfig.fill = `${finalFillColor}40`;
+		} else if (fillMode && fillMode !== FillMode.None) {
+			if (fillMode === FillMode.Solid) {
+				lineConfig.fill = finalFillColor;
+			} else if (fillMode === FillMode.Gradient) {
+				lineConfig.fill = (self: uPlot): CanvasGradient =>
+					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
+			}
+		}
+
 		return lineConfig;
 	}
 
 	/**
 	 * Build path configuration
 	 */
-	private buildPathConfig({
-		pathBuilder,
-		drawStyle,
-		lineInterpolation,
-	}: {
-		pathBuilder?: Series.PathBuilder | null;
-		drawStyle: DrawStyle;
-		lineInterpolation?: LineInterpolation;
-	}): Partial<Series> {
+	private buildPathConfig(): Partial<Series> {
+		const {
+			pathBuilder,
+			drawStyle,
+			lineInterpolation,
+			barAlignment,
+			barMaxWidth,
+			barWidthFactor,
+			stepInterval,
+		} = this.props;
 		if (pathBuilder) {
 			return { paths: pathBuilder };
 		}
@@ -70,7 +126,14 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 					idx0: number,
 					idx1: number,
 				): Series.Paths | null => {
-					const pathsBuilder = getPathBuilder(drawStyle, lineInterpolation);
+					const pathsBuilder = getPathBuilder({
+						drawStyle,
+						lineInterpolation,
+						barAlignment,
+						barMaxWidth,
+						barWidthFactor,
+						stepInterval,
+					});
 
 					return pathsBuilder(self, seriesIdx, idx0, idx1);
 				},
@@ -84,40 +147,51 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	 * Build points configuration
 	 */
 	private buildPointsConfig({
-		lineColor,
-		lineWidth,
-		pointSize,
-		pointsBuilder,
-		pointsFilter,
-		drawStyle,
-		showPoints,
+		resolvedLineColor,
 	}: {
-		lineColor: string;
-		lineWidth?: number;
-		pointSize?: number;
-		pointsBuilder: Series.Points.Show | null;
-		pointsFilter: Series.Points.Filter | null;
-		drawStyle: DrawStyle;
-		showPoints?: VisibilityMode;
+		resolvedLineColor: string;
 	}): Partial<Series.Points> {
+		const { lineWidth, pointSize, pointsFilter } = this.props;
+
+		const resolvedPointSize =
+			pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * POINT_SIZE_FACTOR;
+
 		const pointsConfig: Partial<Series.Points> = {
-			stroke: lineColor,
-			fill: lineColor,
-			size: !pointSize || pointSize < (lineWidth ?? 2) ? undefined : pointSize,
+			stroke: resolvedLineColor,
+			fill: resolvedLineColor,
+			size: resolvedPointSize,
 			filter: pointsFilter || undefined,
+			show: this.resolvePointsShow(),
 		};
 
-		if (pointsBuilder) {
-			pointsConfig.show = pointsBuilder;
-		} else if (drawStyle === DrawStyle.Points) {
-			pointsConfig.show = true;
-		} else if (showPoints === VisibilityMode.Never) {
-			pointsConfig.show = false;
-		} else if (showPoints === VisibilityMode.Always) {
-			pointsConfig.show = true;
+		// When spanGaps is in threshold (numeric) mode, points hidden by default
+		// become invisible when isolated by injected gap-nulls (no line connects
+		// to them). Use a gap-based filter to show only those isolated points as
+		// dots. Do NOT set show=true here — the filter is called with show=false
+		// and returns specific indices to render; setting show=true would cause
+		// uPlot to call filter with show=true which short-circuits the logic and
+		// renders all points.
+		if (this.shouldApplyIsolatedPointFilter(pointsConfig.show)) {
+			pointsConfig.filter = isolatedPointFilter;
 		}
 
 		return pointsConfig;
+	}
+
+	private resolvePointsShow(): Series.Points['show'] {
+		const { pointsBuilder, drawStyle, showPoints } = this.props;
+		if (pointsBuilder) {
+			return pointsBuilder;
+		}
+		if (drawStyle === DrawStyle.Points) {
+			return true;
+		}
+		return !!showPoints;
+	}
+
+	private shouldApplyIsolatedPointFilter(show: Series.Points['show']): boolean {
+		const { drawStyle, pointsFilter } = this.props;
+		return drawStyle === DrawStyle.Line && !pointsFilter && !show;
 	}
 
 	private getLineColor(): string {
@@ -135,57 +209,35 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		);
 	}
 
-	getConfig(): Series {
-		const {
-			drawStyle,
-			pathBuilder,
-			pointsBuilder,
-			pointsFilter,
-			lineInterpolation,
-			lineWidth,
-			lineStyle,
-			lineCap,
-			showPoints,
-			pointSize,
-			scaleKey,
-			label,
-			spanGaps,
-			show = true,
-		} = this.props;
+	getConfig(): ExtendedSeries {
+		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
 
-		const lineColor = this.getLineColor();
+		const resolvedLineColor = this.getLineColor();
 
 		const lineConfig = this.buildLineConfig({
-			lineColor,
-			lineWidth,
-			lineStyle,
-			lineCap,
+			resolvedLineColor,
 		});
-		const pathConfig = this.buildPathConfig({
-			pathBuilder,
-			drawStyle,
-			lineInterpolation,
-		});
+		const pathConfig = this.buildPathConfig();
 		const pointsConfig = this.buildPointsConfig({
-			lineColor,
-			lineWidth,
-			pointSize,
-			pointsBuilder: pointsBuilder ?? null,
-			pointsFilter: pointsFilter ?? null,
-			drawStyle,
-			showPoints,
+			resolvedLineColor,
 		});
 
 		return {
 			scale: scaleKey,
 			label,
-			spanGaps: typeof spanGaps === 'boolean' ? spanGaps : false,
+			// When spanGaps is numeric, we always disable uPlot's internal
+			// spanGaps behavior and rely on data-prep to implement the
+			// threshold-based null handling. When spanGaps is boolean we
+			// map it directly. When spanGaps is undefined we fall back to
+			// the default of true.
+			spanGaps: typeof spanGaps === 'number' ? false : (spanGaps ?? true),
 			value: (): string => '',
 			pxAlign: true,
 			show,
 			...lineConfig,
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
+			metric,
 		};
 	}
 }
@@ -198,35 +250,40 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
-let builders: PathBuilders | null = null;
-
 /**
  * Get path builder based on draw style and interpolation
  */
-function getPathBuilder(
-	style: DrawStyle,
-	lineInterpolation?: LineInterpolation,
-): Series.PathBuilder {
-	const pathBuilders = uPlot.paths;
-
+function getPathBuilder({
+	drawStyle,
+	lineInterpolation,
+	barAlignment = BarAlignment.Center,
+	barWidthFactor = 0.6,
+	barMaxWidth = 200,
+	stepInterval,
+}: {
+	drawStyle: DrawStyle;
+	lineInterpolation?: LineInterpolation;
+	barAlignment?: BarAlignment;
+	barMaxWidth?: number;
+	barWidthFactor?: number;
+	stepInterval?: number;
+}): Series.PathBuilder {
 	if (!builders) {
-		const linearBuilder = pathBuilders.linear;
-		const splineBuilder = pathBuilders.spline;
-		const steppedBuilder = pathBuilders.stepped;
-
-		if (!linearBuilder || !splineBuilder || !steppedBuilder) {
-			throw new Error('Required uPlot path builders are not available');
-		}
-
-		builders = {
-			linear: linearBuilder(),
-			spline: splineBuilder(),
-			stepBefore: steppedBuilder({ align: -1 }),
-			stepAfter: steppedBuilder({ align: 1 }),
-		};
+		throw new Error('Required uPlot path builders are not available');
 	}
 
-	if (style === DrawStyle.Line) {
+	if (drawStyle === DrawStyle.Bar || drawStyle === DrawStyle.Histogram) {
+		const pathBuilders = uPlot.paths;
+		return getBarPathBuilder({
+			pathBuilders,
+			barAlignment,
+			barWidthFactor,
+			barMaxWidth,
+			stepInterval,
+		});
+	}
+
+	if (drawStyle === DrawStyle.Line) {
 		if (lineInterpolation === LineInterpolation.StepBefore) {
 			return builders.stepBefore;
 		}
@@ -239,6 +296,78 @@ function getPathBuilder(
 	}
 
 	return builders.spline;
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function getBarPathBuilder({
+	pathBuilders,
+	barAlignment,
+	barWidthFactor,
+	barMaxWidth,
+	stepInterval,
+}: {
+	pathBuilders: typeof uPlot.paths;
+	barAlignment: BarAlignment;
+	barWidthFactor: number;
+	barMaxWidth: number;
+	stepInterval?: number;
+}): Series.PathBuilder {
+	if (!builders) {
+		throw new Error('Required uPlot path builders are not available');
+	}
+
+	const barsPathBuilderFactory = pathBuilders.bars;
+
+	// When a stepInterval is provided (in seconds), cap the maximum bar width
+	// so that a single bar never visually spans more than stepInterval worth
+	// of time on the x-scale.
+	if (
+		typeof stepInterval === 'number' &&
+		stepInterval > 0 &&
+		barsPathBuilderFactory
+	) {
+		return (
+			self: uPlot,
+			seriesIdx: number,
+			idx0: number,
+			idx1: number,
+		): Series.Paths | null => {
+			let effectiveBarMaxWidth = barMaxWidth;
+			const widthBasedOnStepInterval = calculateWidthBasedOnStepInterval({
+				uPlotInstance: self,
+				stepInterval,
+			});
+
+			if (widthBasedOnStepInterval > 0) {
+				effectiveBarMaxWidth = Math.min(
+					effectiveBarMaxWidth,
+					widthBasedOnStepInterval,
+				);
+			}
+
+			const barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${effectiveBarMaxWidth}`;
+			if (builders && !builders[barsCfgKey]) {
+				builders[barsCfgKey] = barsPathBuilderFactory({
+					size: [barWidthFactor, effectiveBarMaxWidth],
+					align: barAlignment,
+				});
+			}
+
+			return builders && builders[barsCfgKey]
+				? builders[barsCfgKey](self, seriesIdx, idx0, idx1)
+				: null;
+		};
+	}
+
+	const barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
+	if (!builders[barsCfgKey] && barsPathBuilderFactory) {
+		builders[barsCfgKey] = barsPathBuilderFactory({
+			size: [barWidthFactor, barMaxWidth],
+			align: barAlignment,
+		});
+	}
+
+	return builders[barsCfgKey];
 }
 
 export type { SeriesProps };

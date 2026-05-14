@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -31,10 +32,11 @@ function TopOperationMetrics(): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { queries } = useResourceAttribute();
 

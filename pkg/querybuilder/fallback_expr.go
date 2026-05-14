@@ -19,12 +19,15 @@ import (
 
 func CollisionHandledFinalExpr(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	fm qbtypes.FieldMapper,
 	cb qbtypes.ConditionBuilder,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	bodyJSONEnabled bool,
 ) (string, []any, error) {
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
@@ -44,7 +47,7 @@ func CollisionHandledFinalExpr(
 
 	addCondition := func(key *telemetrytypes.TelemetryFieldKey) error {
 		sb := sqlbuilder.NewSelectBuilder()
-		condition, err := cb.ConditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb, 0, 0)
+		condition, err := cb.ConditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return err
 		}
@@ -57,7 +60,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	colName, fieldForErr := fm.FieldFor(ctx, field)
+	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -92,9 +95,9 @@ func CollisionHandledFinalExpr(
 				if err != nil {
 					return "", nil, err
 				}
-				colName, _ = fm.FieldFor(ctx, key)
-				colName, _ = DataTypeCollisionHandledFieldName(key, dummyValue, colName, qbtypes.FilterOperatorUnknown)
-				stmts = append(stmts, colName)
+				fieldExpression, _ = fm.FieldFor(ctx, startNs, endNs, key)
+				fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+				stmts = append(stmts, fieldExpression)
 			}
 		}
 	} else {
@@ -104,15 +107,15 @@ func CollisionHandledFinalExpr(
 		}
 
 		// first if condition covers the older tests and second if condition covers the array conditions
-		if !BodyJSONQueryEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
+		if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)
 		} else {
-			colName, _ = DataTypeCollisionHandledFieldName(field, dummyValue, colName, qbtypes.FilterOperatorUnknown)
+			fieldExpression, _ = DataTypeCollisionHandledFieldName(field, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 		}
 
-		stmts = append(stmts, colName)
+		stmts = append(stmts, fieldExpression)
 	}
 
 	for idx := range stmts {
@@ -209,17 +212,21 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		case float64:
 			// try to convert the string value to to number
 			tblFieldName = castFloat(tblFieldName)
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			tblFieldName = castFloat(tblFieldName)
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloat(tblFieldName)
-			} else if hasString(v) {
+			} else {
+				// Any mix that is not all-floats (e.g. [bool, float64], [bool], all-strings)
+				// must be stringified: passing a Go bool as UInt8 against a String column
+				// causes ClickHouse error 386 "no supertype for String and UInt8".
 				_, value = castString(tblFieldName), toStrings(v)
 			}
 		case bool:
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
-
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,
@@ -273,6 +280,18 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
 		}
+	case telemetrytypes.FieldDataTypeArrayDynamic:
+		switch v := value.(type) {
+		case string:
+			tblFieldName = castString(tblFieldName)
+		case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			tblFieldName = accurateCastFloat(tblFieldName)
+		case bool:
+			tblFieldName = castBool(tblFieldName)
+		case []any:
+			// dynamic array elements will be default casted to string
+			tblFieldName, value = castString(tblFieldName), toStrings(v)
+		}
 	}
 	return tblFieldName, value
 }
@@ -280,6 +299,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
 func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
 func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
+func castBool(col string) string      { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
+func accurateCastFloat(col string) string {
+	return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", col)
+}
 
 func allFloats(in []any) bool {
 	for _, x := range in {

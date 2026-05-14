@@ -42,11 +42,19 @@ function Panel({
 			};
 		}
 
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
+		const updatedQueryForList = {
+			...updatedQuery,
+			builder: {
+				...updatedQuery.builder,
+				queryData: updatedQuery.builder.queryData.map((qd, i) =>
+					i === 0 ? { ...qd, pageSize: 10 } : qd,
+				),
+			},
+		};
 
 		return {
-			query: updatedQuery,
+			query: updatedQueryForList,
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			tableParams: {
@@ -111,11 +119,9 @@ function Panel({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const onDragSelect = useCallback((_start: number, _end: number): void => {
 		// Handle drag select if needed - no-op for public dashboards
 	}, []);

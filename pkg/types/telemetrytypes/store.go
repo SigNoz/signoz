@@ -3,7 +3,6 @@ package telemetrytypes
 import (
 	"context"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
@@ -27,22 +26,26 @@ type MetadataStore interface {
 	GetAllValues(ctx context.Context, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
 	// FetchTemporality fetches the temporality for metric
-	FetchTemporality(ctx context.Context, metricName string) (metrictypes.Temporality, error)
+	FetchTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error)
 
 	// FetchTemporalityMulti fetches the temporality for multiple metrics
-	FetchTemporalityMulti(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error)
+	FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error)
+
+	FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error)
 
 	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-	ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error)
+	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
 	// ListPromotedPaths lists the promoted paths.
-	ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error)
+	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
 
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+
+	FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error)
 }
 
 type MetricMetadataLookupKey struct {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -11,9 +11,10 @@ import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { openInNewTab } from 'utils/navigation';
 
 import { ContextMenuItem } from './contextConfig';
 import { getDataLinks } from './dataLinksUtils';
@@ -62,11 +63,9 @@ const useBaseAggregateOptions = ({
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
-	const {
-		getUpdatedQuery,
-		isLoading: isResolveQueryLoading,
-	} = useUpdatedQuery();
-	const { selectedDashboard } = useDashboard();
+	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
+		useUpdatedQuery();
+	const { dashboardData } = useDashboardStore();
 
 	useEffect(() => {
 		if (!aggregateData) {
@@ -79,7 +78,7 @@ const useBaseAggregateOptions = ({
 					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
 					timePreferance: 'GLOBAL_TIME',
 				},
-				selectedDashboard,
+				dashboardData,
 			});
 			setResolvedQuery(updatedQuery);
 		};
@@ -113,9 +112,9 @@ const useBaseAggregateOptions = ({
 			return allLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
 					key={id}
-					icon={<LinkOutlined />}
+					icon={<Link size="md" />}
 					onClick={(): void => {
-						window.open(url, '_blank');
+						openInNewTab(url);
 						onClose?.();
 					}}
 				>
@@ -229,7 +228,13 @@ const useBaseAggregateOptions = ({
 									return (
 										<ContextMenu.Item
 											key={key}
-											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											icon={
+												isLoading ? (
+													<Loader className="animate-spin" size="md" />
+												) : (
+													<span style={{ color: aggregateData?.seriesColor }}>{icon}</span>
+												)
+											}
 											onClick={(): void => onClick()}
 											disabled={isLoading}
 										>

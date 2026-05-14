@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -24,9 +25,7 @@ function ExportPanelContainer({
 }: ExportPanelProps): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 
-	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(
-		null,
-	);
+	const [dashboardId, setDashboardId] = useState<string | null>(null);
 
 	const {
 		data,
@@ -36,36 +35,34 @@ function ExportPanelContainer({
 
 	const { showErrorModal } = useErrorModal();
 
-	const {
-		mutate: createNewDashboard,
-		isLoading: createDashboardLoading,
-	} = useMutation(createDashboard, {
-		onSuccess: (data) => {
-			if (data.data) {
-				onExport(data?.data, true);
-			}
-			refetch();
-		},
-		onError: (error) => {
-			showErrorModal(error as APIError);
-		},
-	});
+	const { mutate: createNewDashboard, isLoading: createDashboardLoading } =
+		useMutation(createDashboard, {
+			onSuccess: (data) => {
+				if (data.data) {
+					onExport(data?.data, true);
+				}
+				refetch();
+			},
+			onError: (error) => {
+				showErrorModal(error as APIError);
+			},
+		});
 
 	const options = useMemo(() => getSelectOptions(data?.data || []), [data]);
 
 	const handleExportClick = useCallback((): void => {
 		const currentSelectedDashboard = data?.data?.find(
-			({ id }) => id === selectedDashboardId,
+			({ id }) => id === dashboardId,
 		);
 
 		onExport(currentSelectedDashboard || null, false);
-	}, [data, selectedDashboardId, onExport]);
+	}, [data, dashboardId, onExport]);
 
 	const handleSelect = useCallback(
-		(selectedDashboardValue: string): void => {
-			setSelectedDashboardId(selectedDashboardValue);
+		(selectedDashboardId: string): void => {
+			setDashboardId(selectedDashboardId);
 		},
-		[setSelectedDashboardId],
+		[setDashboardId],
 	);
 
 	const handleNewDashboard = useCallback(async () => {
@@ -85,10 +82,7 @@ function ExportPanelContainer({
 	const isDashboardLoading = isAllDashboardsLoading || createDashboardLoading;
 
 	const isDisabled =
-		isAllDashboardsLoading ||
-		!options?.length ||
-		!selectedDashboardId ||
-		isLoading;
+		isAllDashboardsLoading || !options?.length || !dashboardId || isLoading;
 
 	return (
 		<Wrapper direction="vertical">
@@ -101,7 +95,7 @@ function ExportPanelContainer({
 					showSearch
 					loading={isDashboardLoading}
 					disabled={isDashboardLoading}
-					value={selectedDashboardId}
+					value={dashboardId}
 					onSelect={handleSelect}
 					filterOption={filterOptions}
 				/>

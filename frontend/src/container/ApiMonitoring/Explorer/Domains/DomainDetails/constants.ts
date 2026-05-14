@@ -12,8 +12,8 @@ export const VIEW_TYPES = {
 
 // Span attribute keys - these are the source of truth for all attribute keys
 export const SPAN_ATTRIBUTES = {
-	URL_PATH: 'http.url',
+	HTTP_URL: 'http_url',
 	RESPONSE_STATUS_CODE: 'response_status_code',
-	SERVER_NAME: 'net.peer.name',
+	SERVER_NAME: 'http_host',
 	SERVER_PORT: 'net.peer.port',
 } as const;

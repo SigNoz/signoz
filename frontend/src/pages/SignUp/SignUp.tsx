@@ -1,23 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
-import { Input } from '@signozhq/input';
-import { Form, Input as AntdInput, Typography } from 'antd';
+import { useMemo, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Input } from '@signozhq/ui/input';
+import { Form, Input as AntdInput } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import accept from 'api/v1/invite/id/accept';
-import getInviteDetails from 'api/v1/invite/id/get';
 import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight, CircleAlert } from 'lucide-react';
-import { SuccessResponseV2 } from 'types/api';
+import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
-import { InviteDetails } from 'types/api/user/getInviteDetails';
+
+import tvUrl from '@/assets/svgs/tv.svg';
 
 import { FormContainer, Label } from './styles';
 
@@ -34,27 +31,9 @@ type FormValues = {
 
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
+	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
 	const [formError, setFormError] = useState<APIError | null>();
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-	const token = params.get('token');
-	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
-
-	const getInviteDetailsResponse = useQuery<
-		SuccessResponseV2<InviteDetails>,
-		APIError
-	>({
-		queryFn: () =>
-			getInviteDetails({
-				inviteId: token || '',
-			}),
-		queryKey: ['getInviteDetails', token],
-		enabled: token !== null,
-	});
 
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
@@ -64,50 +43,6 @@ function SignUp(): JSX.Element {
 	const password = Form.useWatch('password', form);
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
-	useEffect(() => {
-		if (
-			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data.data
-		) {
-			const responseDetails = getInviteDetailsResponse.data.data;
-			form.setFieldValue('email', responseDetails.email);
-			form.setFieldValue('organizationName', responseDetails.organization);
-			setIsDetailsDisable(true);
-
-			logEvent('Account Creation Page Visited', {
-				email: responseDetails.email,
-				name: responseDetails.name,
-				company_name: responseDetails.organization,
-				source: 'SigNoz Cloud',
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		getInviteDetailsResponse.data?.data,
-		form,
-		getInviteDetailsResponse.status,
-	]);
-
-	useEffect(() => {
-		if (
-			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse?.error
-		) {
-			const { error } = getInviteDetailsResponse;
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
-		}
-	}, [
-		getInviteDetailsResponse,
-		getInviteDetailsResponse.data,
-		getInviteDetailsResponse.status,
-		notifications,
-	]);
-
-	const isSignUp = token === null;
-
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, email } = values;
@@ -115,7 +50,6 @@ function SignUp(): JSX.Element {
 				email,
 				orgDisplayName: organizationName,
 				password,
-				token: params.get('token') || undefined,
 			});
 
 			const token = await passwordAuthNContext({
@@ -130,26 +64,6 @@ function SignUp(): JSX.Element {
 		}
 	};
 
-	const acceptInvite = async (values: FormValues): Promise<void> => {
-		try {
-			const { password, email } = values;
-			const user = await accept({
-				password,
-				token: params.get('token') || '',
-			});
-			const token = await passwordAuthNContext({
-				email,
-				password,
-				orgId: user.data.orgId,
-			});
-
-			await afterLogin(token.data.accessToken, token.data.refreshToken);
-		} catch (error) {
-			setFormError(error as APIError);
-		}
-	};
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
@@ -157,14 +71,10 @@ function SignUp(): JSX.Element {
 				setLoading(true);
 				setFormError(null);
 
-				if (isSignUp) {
-					await signUp(values);
-					logEvent('Account Created Successfully', {
-						email: values.email,
-					});
-				} else {
-					await acceptInvite(values);
-				}
+				await signUp(values);
+				logEvent('Account Created Successfully', {
+					email: values.email,
+				});
 
 				setLoading(false);
 			} catch (error) {
@@ -176,35 +86,10 @@ function SignUp(): JSX.Element {
 		})();
 	};
 
-	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
-		changedValues,
-	) => {
-		// Clear error if passwords match while typing (but don't set error until blur)
-		if ('password' in changedValues || 'confirmPassword' in changedValues) {
-			const { password, confirmPassword } = form.getFieldsValue();
+	const isPasswordMismatch =
+		Boolean(confirmPassword) && password !== confirmPassword;
 
-			if (password && confirmPassword && password === confirmPassword) {
-				setConfirmPasswordError(false);
-			}
-		}
-	};
-
-	const handlePasswordBlur = (): void => {
-		const { password, confirmPassword } = form.getFieldsValue();
-		// Only validate if confirm password has a value
-		if (confirmPassword) {
-			const isSamePassword = password === confirmPassword;
-			setConfirmPasswordError(!isSamePassword);
-		}
-	};
-
-	const handleConfirmPasswordBlur = (): void => {
-		const { password, confirmPassword } = form.getFieldsValue();
-		if (password && confirmPassword) {
-			const isSamePassword = password === confirmPassword;
-			setConfirmPasswordError(!isSamePassword);
-		}
-	};
+	const showPasswordMismatchError = confirmPasswordTouched && isPasswordMismatch;
 
 	const isValidForm = useMemo(
 		(): boolean =>
@@ -212,8 +97,8 @@ function SignUp(): JSX.Element {
 			Boolean(email?.trim()) &&
 			Boolean(password?.trim()) &&
 			Boolean(confirmPassword?.trim()) &&
-			!confirmPasswordError,
-		[loading, email, password, confirmPassword, confirmPasswordError],
+			password === confirmPassword,
+		[loading, email, password, confirmPassword],
 	);
 
 	return (
@@ -221,23 +106,18 @@ function SignUp(): JSX.Element {
 			<div className="signup-card">
 				<div className="signup-form-header">
 					<div className="signup-header-icon">
-						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
 					<Typography.Title level={4} className="signup-header-title">
 						Create your account
 					</Typography.Title>
-					<Typography.Paragraph className="signup-header-subtitle">
+					<Typography.Text className="signup-header-subtitle">
 						You&apos;re almost in. Create a password to start monitoring your
 						applications with SigNoz.
-					</Typography.Paragraph>
+					</Typography.Text>
 				</div>
 
-				<FormContainer
-					onFinish={handleSubmit}
-					onValuesChange={handleValuesChange}
-					form={form}
-					className="signup-form"
-				>
+				<FormContainer onFinish={handleSubmit} form={form} className="signup-form">
 					<div className="signup-form-container">
 						<div className="signup-form-fields">
 							<div className="signup-field-container">
@@ -249,7 +129,6 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
-										disabled={isDetailsDisable}
 										className="signup-form-input"
 									/>
 								</FormContainer.Item>
@@ -268,7 +147,6 @@ function SignUp(): JSX.Element {
 										placeholder="Enter new password"
 										disabled={loading}
 										className="signup-antd-input"
-										onBlur={handlePasswordBlur}
 									/>
 								</FormContainer.Item>
 							</div>
@@ -278,6 +156,12 @@ function SignUp(): JSX.Element {
 								<FormContainer.Item
 									name="confirmPassword"
 									validateTrigger="onBlur"
+									validateStatus={showPasswordMismatchError ? 'error' : undefined}
+									help={
+										showPasswordMismatchError
+											? "Passwords don't match. Please try again."
+											: undefined
+									}
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
 									<AntdInput.Password
@@ -286,35 +170,19 @@ function SignUp(): JSX.Element {
 										placeholder="Confirm your new password"
 										disabled={loading}
 										className="signup-antd-input"
-										onBlur={handleConfirmPasswordBlur}
+										onBlur={() => setConfirmPasswordTouched(true)}
 									/>
 								</FormContainer.Item>
 							</div>
 						</div>
 					</div>
 
-					{isSignUp && (
-						<Callout
-							type="info"
-							size="small"
-							showIcon
-							className="signup-info-callout"
-							description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
-						/>
-					)}
+					<Callout type="info" size="small" showIcon className="signup-info-callout">
+						This will create an admin account. If you are not an admin, please ask
+						your admin for an invite link
+					</Callout>
 
-					{confirmPasswordError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							icon={<CircleAlert size={12} />}
-							className="signup-error-callout"
-							description="Passwords don't match. Please try again."
-						/>
-					)}
-
-					{formError && !confirmPasswordError && <AuthError error={formError} />}
+					{formError && <AuthError error={formError} />}
 
 					<div className="signup-form-actions">
 						<Button
@@ -324,7 +192,7 @@ function SignUp(): JSX.Element {
 							data-attr="signup"
 							disabled={!isValidForm}
 							className="signup-submit-button"
-							suffixIcon={<ArrowRight size={16} />}
+							suffix={<ArrowRight size={16} />}
 						>
 							Access My Workspace
 						</Button>

@@ -276,8 +276,9 @@ export type QueryBuilderContextType = {
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
-		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		shallStringify?: boolean,
+		newTab?: boolean,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;

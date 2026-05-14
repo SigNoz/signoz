@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useGetFieldKeys } from 'hooks/dynamicVariables/useGetFieldKeys';
 
@@ -374,7 +373,7 @@ describe('DynamicVariable Component', () => {
 		fireEvent.mouseDown(attributeSelectElement);
 
 		// Find and click reload icon (retry button)
-		const reloadIcon = screen.getByLabelText('reload');
+		const reloadIcon = screen.getByTestId('retry-button');
 		fireEvent.click(reloadIcon);
 
 		// Should trigger refetch

@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Not Found page test should render Not Found page without errors 1`] = `
 <DocumentFragment>
@@ -101,7 +101,7 @@ exports[`Not Found page test should render Not Found page without errors 1`] = `
   >
     <img
       alt="not-found"
-      src="/Images/notFound404.png"
+      src="test-file-stub"
       style="max-height: 480px; max-width: 480px;"
     />
     <div

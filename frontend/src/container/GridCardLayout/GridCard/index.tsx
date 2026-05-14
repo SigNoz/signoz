@@ -1,19 +1,23 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
+import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
+import { getVariableReferencesInQuery } from 'lib/dashboardVariables/variableReference';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import APIError from 'types/api/error';
@@ -22,6 +26,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../../constants/queryCacheTime';
+import { REACT_QUERY_KEY } from '../../../constants/reactQueryKeys';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
@@ -53,23 +62,31 @@ function GridCardGraph({
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
-	widgetsByDynamicVariableId,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
-		false,
-	);
+	const [isInternalServerError, setIsInternalServerError] =
+		useState<boolean>(false);
+	const queryRangeCalledRef = useRef(false);
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			if (!queryRangeCalledRef.current) {
+				Sentry.captureEvent({
+					message: `Dashboard query range not called within expected timeframe for widget ${widget?.id}`,
+					level: 'warning',
+				});
+			}
+		}, 120000);
+		return (): void => clearTimeout(timeoutId);
+	}, [widget?.id]);
+
 	const {
-		toScrollWidgetId,
-		setToScrollWidgetId,
-		setDashboardQueryRangeCalled,
-		variablesToGetUpdated,
-	} = useDashboard();
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+		isAutoRefreshDisabled,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -100,27 +117,33 @@ function GridCardGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const graphRef = useRef<HTMLDivElement>(null);
+	const widgetContainerRef = useRef<HTMLDivElement>(null);
 
-	const isVisible = useIntersectionObserver(graphRef, undefined, true);
+	const isVisible = useIntersectionObserver(widgetContainerRef, undefined, true);
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
+	useScrollWidgetIntoView(widget?.id || '', widgetContainerRef);
 
 	const updatedQuery = widget?.query;
+
+	const referencedVariableNames = useMemo(() => {
+		if (!variables || !updatedQuery) {
+			return [];
+		}
+		const allNames = Object.values(variables)
+			.map((v) => v.name)
+			.filter((name): name is string => !!name);
+		return getVariableReferencesInQuery(updatedQuery, allNames);
+	}, [updatedQuery, variables]);
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
+	const isPanelWaitingOnAnyVariable = useIsPanelWaitingOnVariable(
+		referencedVariableNames,
+	);
+
+	const queryEnabledCondition =
+		isVisible && !isEmptyWidget && isQueryEnabled && !isPanelWaitingOnAnyVariable;
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -177,27 +200,6 @@ function GridCardGraph({
 		[requestData.query],
 	);
 
-	// Bring back dependency on variable chaining for panels to refetch,
-	// but only for non-dynamic variables. We derive a stable token from
-	// the head of the variablesToGetUpdated queue when it's non-dynamic.
-	const nonDynamicVariableChainToken = useMemo(() => {
-		if (!variablesToGetUpdated || variablesToGetUpdated.length === 0) {
-			return undefined;
-		}
-		if (!variables) {
-			return undefined;
-		}
-		const headName = variablesToGetUpdated[0];
-		const variableObj = Object.values(variables).find(
-			(variable) => variable?.name === headName,
-		);
-		if (variableObj && variableObj.type !== 'DYNAMIC') {
-			return headName;
-		}
-		return undefined;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [variablesToGetUpdated, variables]);
-
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
@@ -214,8 +216,10 @@ function GridCardGraph({
 		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
+				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 				maxTime,
 				minTime,
+				isAutoRefreshDisabled,
 				globalSelectedInterval,
 				widget?.query,
 				widget?.panelTypes,
@@ -224,22 +228,15 @@ function GridCardGraph({
 				requestData,
 				variables
 					? Object.entries(variables).reduce((acc, [id, variable]) => {
-							if (
-								variable.type !== 'DYNAMIC' ||
-								(widgetsByDynamicVariableId?.[variable.id] &&
-									widgetsByDynamicVariableId?.[variable.id].includes(widget.id))
-							) {
+							if (variable.name && referencedVariableNames.includes(variable.name)) {
 								return { ...acc, [id]: variable.selectedValue };
 							}
 							return acc;
-					  }, {})
+						}, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
-				// Include non-dynamic variable chaining token to drive refetches
-				// only when a non-dynamic variable is at the head of the queue
-				...(nonDynamicVariableChainToken ? [nonDynamicVariableChainToken] : []),
 			],
 			retry(failureCount, error): boolean {
 				if (
@@ -252,7 +249,10 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
-			enabled: queryEnabledCondition && !nonDynamicVariableChainToken,
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				const errorMessage =
@@ -271,14 +271,14 @@ function GridCardGraph({
 						});
 					}
 				}
-				setDashboardQueryRangeCalled(true);
+				queryRangeCalledRef.current = true;
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
 				getGraphData?.(data?.payload?.data);
-				setDashboardQueryRangeCalled(true);
+				queryRangeCalledRef.current = true;
 			},
 		},
 	);
@@ -294,7 +294,6 @@ function GridCardGraph({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
@@ -306,7 +305,7 @@ function GridCardGraph({
 			: headerMenuList;
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div style={{ height: '100%', width: '100%' }} ref={widgetContainerRef}>
 			{isEmptyLayout ? (
 				<EmptyWidget />
 			) : (
@@ -319,7 +318,7 @@ function GridCardGraph({
 					threshold={threshold}
 					headerMenuList={menuList}
 					isFetchingResponse={
-						queryResponse.isFetching || variablesToGetUpdated.length > 0
+						queryResponse.isFetching || isPanelWaitingOnAnyVariable
 					}
 					setRequestData={setRequestData}
 					onClickHandler={onClickHandler}

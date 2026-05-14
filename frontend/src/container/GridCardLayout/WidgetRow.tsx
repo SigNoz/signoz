@@ -2,9 +2,14 @@ import { useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Button, Popover } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
+import { Ellipsis, PenLine, Plus, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -33,18 +38,18 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 	} = props;
 	const [isRowSettingsOpen, setIsRowSettingsOpen] = useState<boolean>(false);
 
-	const {
-		handleToggleDashboardSlider,
-		selectedDashboard,
-		isDashboardLocked,
-		setSelectedRowWidgetId,
-	} = useDashboard();
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
+
+	const { dashboardData } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
@@ -81,8 +86,13 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
 							icon={<Plus size={14} />}
 							onClick={(): void => {
-								setSelectedRowWidgetId(id);
-								handleToggleDashboardSlider(true);
+								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
+								if (!dashboardData?.id) {
+									return;
+								}
+
+								setSelectedRowWidgetId(dashboardData.id, id);
+								setIsPanelTypeSelectionModalOpen(true);
 							}}
 						>
 							New Panel
@@ -108,7 +118,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 				</div>
 			}
 		>
-			<EllipsisIcon
+			<Ellipsis
 				size={14}
 				className="settings-icon"
 				onClick={(): void => setIsRowSettingsOpen(!isRowSettingsOpen)}

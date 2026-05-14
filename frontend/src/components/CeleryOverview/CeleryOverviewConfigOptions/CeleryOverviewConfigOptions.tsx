@@ -31,9 +31,8 @@ export function FilterSelect({
 	onChange,
 	isMultiple,
 }: SelectOptionConfig): JSX.Element {
-	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
-		filterType,
-	);
+	const { handleSearch, isFetching, options } =
+		useCeleryFilterOptions(filterType);
 
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
@@ -96,7 +95,6 @@ export function FilterSelect({
 			key={filterType.toString()}
 			placeholder={placeholder}
 			showSearch
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...(isMultiple ? { mode: 'multiple' } : {})}
 			options={mergedOptions}
 			loading={isFetching}

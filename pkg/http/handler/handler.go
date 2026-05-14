@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/swaggest/openapi-go"
+	"github.com/swaggest/openapi-go/openapi3"
 )
 
 type ServeOpenAPIFunc func(openapi.OperationContext)
@@ -14,14 +15,16 @@ type ServeOpenAPIFunc func(openapi.OperationContext)
 type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
+	AuditDef() *AuditDef
 }
 
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
+	auditDef    *AuditDef
 }
 
-func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
+func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
 	// Remove duplicate error status codes
 	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
 		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
@@ -35,10 +38,16 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
 		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
 	}
 
-	return &handler{
+	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
 	}
+
+	for _, opt := range opts {
+		opt(handler)
+	}
+
+	return handler
 }
 
 func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -59,7 +68,39 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	}
 
 	// Add request structure
-	opCtx.AddReqStructure(handler.openAPIDef.Request, openapi.WithContentType(handler.openAPIDef.RequestContentType))
+	reqOpts := []openapi.ContentOption{openapi.WithContentType(handler.openAPIDef.RequestContentType)}
+	if len(handler.openAPIDef.RequestExamples) > 0 {
+		reqOpts = append(reqOpts, openapi.WithCustomize(func(cor openapi.ContentOrReference) {
+			rbOrRef, ok := cor.(*openapi3.RequestBodyOrRef)
+			if !ok || rbOrRef.RequestBody == nil {
+				return
+			}
+			ct := handler.openAPIDef.RequestContentType
+			if ct == "" {
+				ct = "application/json"
+			}
+			mt, exists := rbOrRef.RequestBody.Content[ct]
+			if !exists {
+				return
+			}
+			if mt.Examples == nil {
+				mt.Examples = make(map[string]openapi3.ExampleOrRef)
+			}
+			for _, ex := range handler.openAPIDef.RequestExamples {
+				val := ex.Value
+				oaExample := openapi3.Example{Value: &val}
+				if ex.Summary != "" {
+					oaExample.WithSummary(ex.Summary)
+				}
+				if ex.Description != "" {
+					oaExample.WithDescription(ex.Description)
+				}
+				mt.Examples[ex.Name] = openapi3.ExampleOrRef{Example: &oaExample}
+			}
+			rbOrRef.RequestBody.Content[ct] = mt
+		}))
+	}
+	opCtx.AddReqStructure(handler.openAPIDef.Request, reqOpts...)
 
 	// Add request query structure
 	opCtx.AddReqStructure(handler.openAPIDef.RequestQuery)
@@ -87,5 +128,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(statusCode),
 		)
 	}
+}
 
+func (handler *handler) AuditDef() *AuditDef {
+	return handler.auditDef
 }

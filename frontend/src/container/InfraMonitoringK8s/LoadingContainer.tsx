@@ -1,24 +1,24 @@
 import { Skeleton } from 'antd';
 
-import './InfraMonitoringK8s.styles.scss';
+import styles from './LoadingContainer.module.scss';
 
 function LoadingContainer(): JSX.Element {
 	return (
-		<div className="k8s-list-loading-state" data-testid="loader">
+		<div className={styles.loadingState} data-testid="loader">
 			<Skeleton.Input
-				className="k8s-list-loading-state-item"
+				className={styles.loadingStateItem}
 				size="large"
 				block
 				active
 			/>
 			<Skeleton.Input
-				className="k8s-list-loading-state-item"
+				className={styles.loadingStateItem}
 				size="large"
 				block
 				active
 			/>
 			<Skeleton.Input
-				className="k8s-list-loading-state-item"
+				className={styles.loadingStateItem}
 				size="large"
 				block
 				active

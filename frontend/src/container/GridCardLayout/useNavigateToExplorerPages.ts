@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -38,7 +38,7 @@ const createGroupByFilters = (
 							op: '=',
 							value,
 						},
-				  ]
+					]
 				: [];
 		})
 		.flat();
@@ -121,7 +121,7 @@ function useNavigateToExplorerPages(): (
 ) => Promise<{
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 }> {
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(
@@ -143,7 +143,7 @@ function useNavigateToExplorerPages(): (
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[selectedDashboard, notifications],
+		[dashboardData, notifications],
 	);
 }
 

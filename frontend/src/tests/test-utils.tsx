@@ -1,12 +1,13 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
@@ -31,22 +32,22 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 // Mock ResizeObserver
 class ResizeObserverMock {
-	// eslint-disable-next-line class-methods-use-this
 	observe(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	unobserve(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	disconnect(): void {}
 }
 
-global.ResizeObserver = (ResizeObserverMock as unknown) as typeof ResizeObserver;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
+			retry: false,
+		},
+		mutations: {
 			retry: false,
 		},
 	},
@@ -118,7 +119,7 @@ export function getAppContextMock(
 				status: '',
 				updated_at: '0',
 			},
-			state: LicenseState.ACTIVE,
+			state: LicenseState.ACTIVATED,
 			status: LicenseStatus.VALID,
 			platform: LicensePlatform.CLOUD,
 			created_at: '0',
@@ -220,6 +221,9 @@ export function getAppContextMock(
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
+		hostsData: null,
+		isFetchingHosts: false,
+		hostsFetchError: null,
 		orgPreferences: [
 			{
 				name: ORG_PREFERENCES.ORG_ONBOARDING,
@@ -248,6 +252,7 @@ export function getAppContextMock(
 			ee: 'Y',
 			setupCompleted: true,
 		},
+
 		...appContextOverrides,
 	};
 }
@@ -280,25 +285,27 @@ export function AllTheProviders({
 		<QueryBuilderProvider>{children}</QueryBuilderProvider>
 	);
 
+	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
+
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
-			<QueryClientProvider client={queryClient}>
-				<Provider store={mockStored(roleValue)}>
-					<AppContext.Provider
-						value={getAppContextMock(roleValue, appContextOverridesValue)}
-					>
-						<ResourceProvider>
-							<ErrorModalProvider>
-								<TimezoneProvider>
-									<PreferenceContextProvider>
-										{queryBuilderContent}
-									</PreferenceContextProvider>
-								</TimezoneProvider>
-							</ErrorModalProvider>
-						</ResourceProvider>
-					</AppContext.Provider>
-				</Provider>
-			</QueryClientProvider>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={mockStored(roleValue)}>
+						<AppContext.Provider value={appContextValue}>
+							<ResourceProvider>
+								<ErrorModalProvider>
+									<TimezoneProvider>
+										<PreferenceContextProvider>
+											{queryBuilderContent}
+										</PreferenceContextProvider>
+									</TimezoneProvider>
+								</ErrorModalProvider>
+							</ResourceProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</NuqsAdapter>
 		</MemoryRouter>
 	);
 }
@@ -344,8 +351,6 @@ const customRender = (
 	});
 };
 
-// eslint-disable-next-line import/export -- re-exporting custom render alongside @testing-library/react
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
-// eslint-disable-next-line import/export -- custom render wraps the original
 export { customRender as render };

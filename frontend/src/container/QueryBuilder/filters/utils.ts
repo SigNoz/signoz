@@ -13,9 +13,9 @@ import {
 } from './OrderByFilter/utils';
 import { getRemoveOrderFromValue } from './QueryBuilderSearch/utils';
 
-export const handleKeyDownLimitFilter: React.KeyboardEventHandler<HTMLInputElement> = (
-	event,
-): void => {
+export const handleKeyDownLimitFilter: React.KeyboardEventHandler<
+	HTMLInputElement
+> = (event): void => {
 	const keyCode = event.keyCode || event.which;
 	const isBackspace = keyCode === 8;
 	const isNumeric =
@@ -49,7 +49,6 @@ export const getUniqueOrderByValues = (values: IOption[]): IOption[] => {
 		if (!match) {
 			return { label: item.label, value: item.value };
 		}
-		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, order] = match.data.flat() as string[];
 		if (order) {
 			return {

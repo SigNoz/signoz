@@ -76,6 +76,21 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 					alertDataRows := cmock.NewRows(cols, tc.Values)
 
 					mock := mockStore.Mock()
+					// Mock metadata queries for FetchTemporalityAndTypeMulti
+					// First query: fetchMetricsTemporalityAndType (from signoz_metrics time series table)
+					metadataCols := []cmock.ColumnType{
+						{Name: "metric_name", Type: "String"},
+						{Name: "temporality", Type: "String"},
+						{Name: "type", Type: "String"},
+						{Name: "is_monotonic", Type: "Bool"},
+					}
+					metadataRows := cmock.NewRows(metadataCols, [][]any{
+						{"probe_success", metrictypes.Unspecified, metrictypes.GaugeType, false},
+					})
+					mock.ExpectQuery("*distributed_time_series_v4*").WithArgs(nil, nil, nil).WillReturnRows(metadataRows)
+					// Second query: fetchMeterSourceMetricsTemporalityAndType (from signoz_meter table)
+					emptyMetadataRows := cmock.NewRows(metadataCols, [][]any{})
+					mock.ExpectQuery("*meter*").WithArgs(nil).WillReturnRows(emptyMetadataRows)
 
 					// Generate query arguments for the metric query
 					evalTime := time.Now().UTC()
@@ -95,11 +110,8 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {
@@ -194,13 +206,13 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 					// Create fingerprint data
 					fingerprint := uint64(12345)
 					labelsJSON := `{"__name__":"test_metric"}`
-					fingerprintData := [][]interface{}{
+					fingerprintData := [][]any{
 						{fingerprint, labelsJSON},
 					}
 					fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
 
 					// Create samples data from test case values, calculating timestamps relative to baseTime
-					validSamplesData := make([][]interface{}, 0)
+					validSamplesData := make([][]any, 0)
 					for _, v := range tc.Values {
 						// Skip NaN and Inf values in the samples data
 						if math.IsNaN(v.Value) || math.IsInf(v.Value, 0) {
@@ -208,7 +220,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 						}
 						// Calculate timestamp relative to baseTime
 						sampleTimestamp := baseTime.Add(v.Offset).UnixMilli()
-						validSamplesData = append(validSamplesData, []interface{}{
+						validSamplesData = append(validSamplesData, []any{
 							"test_metric",
 							fingerprint,
 							sampleTimestamp,
@@ -238,7 +250,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 						WillReturnRows(samplesRows)
 
 					// Create Prometheus provider for this test
-					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, store)
+					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, store)
 				},
 				ManagerOptionsHook: func(opts *ManagerOptions) {
 					// Set Prometheus provider for PromQL queries
@@ -248,11 +260,8 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {

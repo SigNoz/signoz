@@ -1,12 +1,11 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from '../constants';
 import ExpandedView from '../ExpandedView';
+import { InspectMetricsSeries } from '../types';
 import {
 	GraphPopoverData,
 	InspectionStep,
@@ -26,7 +25,6 @@ describe('ExpandedView', () => {
 		labels: {
 			host_id: 'test-id',
 		},
-		labelsArray: [],
 		title: 'TS1',
 	};
 
@@ -62,15 +60,12 @@ describe('ExpandedView', () => {
 		],
 	]);
 
-	const mockMetricInspectionOptions: MetricInspectionOptions = {
+	const mockMetricInspectionAppliedOptions: MetricInspectionOptions = {
 		timeAggregationOption: TimeAggregationOptions.MAX,
 		timeAggregationInterval: 60,
 		spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 		spaceAggregationLabels: ['host_name'],
-		filters: {
-			items: [],
-			op: 'AND',
-		},
+		filterExpression: '',
 	};
 
 	it('renders entire time series for a raw data inspection', () => {
@@ -79,7 +74,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionAppliedOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -96,8 +91,8 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.SPACE_AGGREGATION}
-				metricInspectionOptions={{
-					...mockMetricInspectionOptions,
+				metricInspectionAppliedOptions={{
+					...mockMetricInspectionAppliedOptions,
 					timeAggregationInterval: TIME_AGGREGATION_INTERVAL,
 				}}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
@@ -112,7 +107,7 @@ describe('ExpandedView', () => {
 			screen.getByText(
 				`42.123 is the ${
 					TIME_AGGREGATION_OPTIONS[
-						mockMetricInspectionOptions.timeAggregationOption as TimeAggregationOptions
+						mockMetricInspectionAppliedOptions.timeAggregationOption as TimeAggregationOptions
 					]
 				} of`,
 			),
@@ -127,7 +122,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.COMPLETED}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionAppliedOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);
@@ -139,7 +134,7 @@ describe('ExpandedView', () => {
 			screen.getByText(
 				`42.123 is the ${
 					SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
-						mockMetricInspectionOptions.spaceAggregationOption as SpaceAggregationOptions
+						mockMetricInspectionAppliedOptions.spaceAggregationOption as SpaceAggregationOptions
 					]
 				} of`,
 			),
@@ -153,7 +148,7 @@ describe('ExpandedView', () => {
 				options={mockOptions}
 				spaceAggregationSeriesMap={mockSpaceAggregationSeriesMap}
 				step={InspectionStep.TIME_AGGREGATION}
-				metricInspectionOptions={mockMetricInspectionOptions}
+				metricInspectionAppliedOptions={mockMetricInspectionAppliedOptions}
 				timeAggregatedSeriesMap={mockTimeAggregatedSeriesMap}
 			/>,
 		);

@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { SquareMinus, SquarePlus } from '@signozhq/icons';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -42,9 +42,9 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 				title={isExpandAll ? 'Collapse All' : 'Expand All'}
 			>
 				{isExpandAll ? (
-					<MinusSquareOutlined style={{ fontSize: '16px', color: '#08c' }} />
+					<SquareMinus size={16} style={{ color: 'var(--accent-primary)' }} />
 				) : (
-					<PlusSquareOutlined style={{ fontSize: '16px', color: '#08c' }} />
+					<SquarePlus size={16} style={{ color: 'var(--accent-primary)' }} />
 				)}
 			</CollapseButton>
 			<CardWrapper>
@@ -53,7 +53,6 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 					activeSpanPath={activeSpanPath}
 					setActiveHoverId={setActiveHoverId}
 					key={data.id}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...{
 						...data,
 						globalSpread,

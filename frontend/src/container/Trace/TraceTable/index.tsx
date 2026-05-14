@@ -1,7 +1,8 @@
 import { HTMLAttributes } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { TableProps, Tag, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { TableColumnsType as ColumnsType, TableProps, Tag } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -14,6 +15,7 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
@@ -25,6 +27,7 @@ import {
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { openInNewTab } from 'utils/navigation';
 import { v4 } from 'uuid';
 
 dayjs.extend(duration);
@@ -208,7 +211,7 @@ function TraceTable(): JSX.Element {
 					event.preventDefault();
 					event.stopPropagation();
 					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(record), '_blank');
+						openInNewTab(getLink(record));
 					} else {
 						history.push(getLink(record));
 					}

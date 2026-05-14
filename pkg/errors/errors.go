@@ -4,10 +4,12 @@ import (
 	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // base is the fundamental struct that implements the error interface.
-// The order of the struct is 'TCMEUA'.
+// The order of the struct is 'TCMEUAS'.
 type base struct {
 	// t denotes the custom type of the error.
 	t typ
@@ -21,16 +23,30 @@ type base struct {
 	u string
 	// a denotes any additional error messages (if present).
 	a []string
+	// s contains the stacktrace captured at error creation time.
+	s fmt.Stringer
 }
 
-func (b *base) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("type", b.t.s),
-		slog.String("code", b.c.s),
-		slog.String("message", b.m),
-		slog.String("url", b.u),
-		slog.Any("additional", b.a),
-	)
+// Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
+func (b *base) Stacktrace() string {
+	if b.s == nil {
+		return ""
+	}
+	return b.s.String()
+}
+
+// WithStacktrace replaces the auto-captured stacktrace with a pre-formatted string
+// and returns a new base error.
+func (b *base) WithStacktrace(s string) *base {
+	return &base{
+		t: b.t,
+		c: b.c,
+		m: b.m,
+		e: b.e,
+		u: b.u,
+		a: b.a,
+		s: rawStacktrace(s),
+	}
 }
 
 // base implements Error interface.
@@ -51,6 +67,7 @@ func New(t typ, code Code, message string) *base {
 		e: nil,
 		u: "",
 		a: []string{},
+		s: newStackTrace(),
 	}
 }
 
@@ -61,6 +78,7 @@ func Newf(t typ, code Code, format string, args ...any) *base {
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: nil,
+		s: newStackTrace(),
 	}
 }
 
@@ -72,6 +90,7 @@ func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: cause,
+		s: newStackTrace(),
 	}
 }
 
@@ -82,12 +101,17 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 		c: code,
 		m: message,
 		e: cause,
+		s: newStackTrace(),
 	}
 }
 
 // WithAdditionalf adds an additional error message to the existing error.
 func WithAdditionalf(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
+	var s fmt.Stringer
+	if original, ok := cause.(*base); ok {
+		s = original.s
+	}
 	b := &base{
 		t: t,
 		c: c,
@@ -95,6 +119,7 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 		e: e,
 		u: u,
 		a: a,
+		s: s,
 	}
 
 	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
@@ -109,6 +134,7 @@ func (b *base) WithUrl(u string) *base {
 		e: b.e,
 		u: u,
 		a: b.a,
+		s: b.s,
 	}
 }
 
@@ -121,6 +147,7 @@ func (b *base) WithAdditional(a ...string) *base {
 		e: b.e,
 		u: b.u,
 		a: a,
+		s: b.s,
 	}
 }
 
@@ -130,7 +157,7 @@ func (b *base) WithAdditional(a ...string) *base {
 // Otherwise, it returns TypeInternal, the original error string
 // and the error itself.
 //
-//lint:ignore ST1008 we want to return arguments in the 'TCMEUA' order of the struct
+//nolint:staticcheck // ST1008: intentional return order matching struct field order (TCMEUA)
 func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 	base, ok := cause.(*base)
 	if ok {
@@ -147,7 +174,7 @@ func Ast(cause error, typ typ) bool {
 	return t == typ
 }
 
-// Ast checks if the provided error matches the specified custom error code.
+// Asc checks if the provided error matches the specified custom error code.
 func Asc(cause error, code Code) bool {
 	_, c, _, _, _, _ := Unwrapb(cause)
 
@@ -222,4 +249,16 @@ func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
 // NewTimeoutf is a wrapper around Newf with TypeTimeout.
 func NewTimeoutf(code Code, format string, args ...any) *base {
 	return Newf(TypeTimeout, code, format, args...)
+}
+
+// Attr returns an slog.Attr with a standardized "exception" key for the given error.
+func Attr(err error) slog.Attr {
+	return slog.Any("exception", err)
+}
+
+// TypeAttr returns an OTel attribute.KeyValue with the "error.type" semconv key
+// set to the error's type string.
+func TypeAttr(err error) attribute.KeyValue {
+	t, _, _, _, _, _ := Unwrapb(err)
+	return attribute.String("error.type", t.String())
 }

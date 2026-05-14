@@ -1,12 +1,12 @@
 .collapseContainer {
-	background-color: var(--bg-ink-500);
+	background-color: var(--l1-background);
 	.ant-collapse-header {
 		padding: 12px !important;
 		align-items: center !important;
 	}
 
 	.ant-collapse-header-text {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -22,7 +22,7 @@
 
 		.min-max-input {
 			.ant-input-group-addon {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono', monospace;
 				font-size: 11px;
 				font-style: normal;
@@ -35,7 +35,7 @@
 			.ant-input {
 				padding: 4px 6px;
 
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono', monospace;
 				font-size: 11px;
 				font-style: normal;
@@ -48,9 +48,9 @@
 }
 
 .divider {
-	background-color: var(--bg-slate-400);
+	background-color: var(--l1-border);
 	margin: 0;
-	border-color: var(--bg-slate-400);
+	border-color: var(--l1-border);
 }
 
 .filter-header {
@@ -61,7 +61,7 @@
 		gap: 6px;
 
 		.ant-typography {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -72,14 +72,14 @@
 	}
 
 	.sync-icon {
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 		border: 0;
 		box-shadow: none;
 		padding: 8px;
 	}
 
 	.arrow-icon {
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 		border: 0;
 		box-shadow: none;
 		padding-top: 8px;
@@ -107,7 +107,7 @@
 }
 
 .section-card {
-	background-color: var(--bg-ink-500);
+	background-color: var(--l1-background);
 	.ant-card-body {
 		padding: 0;
 		display: flex;
@@ -136,7 +136,7 @@
 			width: 2px;
 			height: 11px;
 			border-radius: 2px;
-			background: var(--bg-cherry-500);
+			background: var(--danger-background);
 		}
 
 		.hasError-Ok {
@@ -145,52 +145,5 @@
 			border-radius: 2px;
 			background: var(--bg-forest-500);
 		}
-	}
-}
-.lightMode {
-	.collapseContainer {
-		background-color: var(--bg-vanilla-100);
-
-		.ant-collapse-header-text {
-			color: var(--bg-slate-100);
-		}
-
-		.duration-inputs {
-			.min-max-input {
-				.ant-input-group-addon {
-					color: var(--bg-slate-100);
-				}
-
-				.ant-input {
-					color: var(--bg-slate-100);
-				}
-			}
-		}
-	}
-
-	.divider {
-		background-color: var(--bg-vanilla-100);
-		border-color: var(--bg-vanilla-200);
-	}
-
-	.filter-header {
-		.filter-title {
-			.ant-typography {
-				color: var(--bg-slate-100);
-			}
-		}
-
-		.arrow-icon {
-			background-color: var(--bg-vanilla-100);
-		}
-
-		.sync-icon {
-			background-color: var(--bg-vanilla-100);
-		}
-	}
-
-	.section-card {
-		background-color: var(--bg-vanilla-100);
-		box-shadow: none;
 	}
 }

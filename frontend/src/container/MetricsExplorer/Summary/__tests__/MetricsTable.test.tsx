@@ -1,10 +1,12 @@
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
+import * as metricsGeneratedAPI from 'api/generated/services/metrics';
+import { Filter } from 'api/v5/v5';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import APIError from 'types/api/error';
 
 import MetricsTable from '../MetricsTable';
 import { MetricsListItemRowData } from '../types';
@@ -30,9 +32,8 @@ const mockData: MetricsListItemRowData[] = [
 	},
 ];
 
-const mockQueryFilters: TagFilter = {
-	items: [],
-	op: 'AND',
+const mockQueryFilterExpression: Filter = {
+	expression: '',
 };
 
 jest.mock('react-router-dom-v5-compat', () => {
@@ -52,21 +53,33 @@ describe('MetricsTable', () => {
 			} as any);
 	});
 
-	jest
-		.spyOn(useGetMetricsListFilterValues, 'useGetMetricsListFilterValues')
-		.mockReturnValue({
+	jest.spyOn(metricsGeneratedAPI, 'useListMetrics').mockReturnValue({
+		data: {
 			data: {
-				statusCode: 200,
-				payload: {
-					status: 'success',
-					data: {
-						filterValues: ['metric1', 'metric2'],
+				metrics: [
+					{
+						metricName: 'metric1',
+						description: '',
+						type: '',
+						unit: '',
+						temporality: '',
+						isMonotonic: false,
 					},
-				},
+					{
+						metricName: 'metric2',
+						description: '',
+						type: '',
+						unit: '',
+						temporality: '',
+						isMonotonic: false,
+					},
+				],
 			},
-			isLoading: false,
-			isError: false,
-		} as any);
+			status: 'success',
+		},
+		isLoading: false,
+		isError: false,
+	} as unknown as ReturnType<typeof metricsGeneratedAPI.useListMetrics>);
 
 	it('renders table with data correctly', () => {
 		render(
@@ -82,7 +95,8 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -106,8 +120,9 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
 						isLoading
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -117,12 +132,23 @@ describe('MetricsTable', () => {
 	});
 
 	it('shows error state', () => {
+		const mockError = new APIError({
+			httpStatusCode: 400,
+			error: {
+				code: '400',
+				message: 'invalid filter expression',
+				url: '',
+				errors: [],
+			},
+		});
+
 		render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
 						isError
+						error={mockError}
 						data={[]}
 						pageSize={10}
 						currentPage={1}
@@ -130,18 +156,15 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('metrics-table-error-state')).toBeInTheDocument();
-		expect(
-			screen.getByText(
-				'Error fetching metrics. If the problem persists, please contact support.',
-			),
-		).toBeInTheDocument();
+		expect(screen.getByText('400')).toBeInTheDocument();
+		expect(screen.getByText('invalid filter expression')).toBeInTheDocument();
 	});
 
 	it('shows empty state when no data', () => {
@@ -158,7 +181,8 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -187,14 +211,19 @@ describe('MetricsTable', () => {
 						setOrderBy={jest.fn()}
 						totalCount={2}
 						openMetricDetails={mockOpenMetricDetails}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
 		);
 
 		fireEvent.click(screen.getByText('Metric 1'));
-		expect(mockOpenMetricDetails).toHaveBeenCalledWith('metric1', 'list');
+		expect(mockOpenMetricDetails).toHaveBeenCalledWith(
+			'metric1',
+			'list',
+			expect.any(Object),
+		);
 	});
 
 	it('calls setOrderBy when column header is clicked', () => {
@@ -212,7 +241,8 @@ describe('MetricsTable', () => {
 						setOrderBy={mockSetOrderBy}
 						totalCount={2}
 						openMetricDetails={jest.fn()}
-						queryFilters={mockQueryFilters}
+						queryFilterExpression={mockQueryFilterExpression}
+						onFilterChange={jest.fn()}
 					/>
 				</Provider>
 			</MemoryRouter>,
@@ -222,8 +252,10 @@ describe('MetricsTable', () => {
 		fireEvent.click(samplesHeader);
 
 		expect(mockSetOrderBy).toHaveBeenCalledWith({
-			columnName: 'samples',
-			order: 'asc',
+			key: {
+				name: 'samples',
+			},
+			direction: 'asc',
 		});
 	});
 });

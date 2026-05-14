@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -8,14 +7,6 @@ import '@testing-library/jest-dom/extend-expect';
 import VariableItem from '../VariableItem';
 
 const mockOnValueUpdate = jest.fn();
-const mockSetVariablesToGetUpdated = jest.fn();
-
-const baseDependencyData = {
-	order: [],
-	graph: {},
-	parentDependencyGraph: {},
-	hasCycle: false,
-};
 
 const TEST_VARIABLE_ID = 'test_variable';
 const VARIABLE_SELECT_TESTID = 'variable-select';
@@ -31,9 +22,6 @@ const renderVariableItem = (
 				variableData={variableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				variablesToGetUpdated={[]}
-				setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-				dependencyData={baseDependencyData}
 			/>
 		</MockQueryClientProvider>,
 	);
@@ -44,7 +32,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 	});
 
 	describe('Single Select Variables', () => {
-		test('should keep previous selection value', async () => {
+		it('should keep previous selection value', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -63,10 +51,10 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('option1')).toBeInTheDocument();
+			await expect(screen.findByText('option1')).resolves.toBeInTheDocument();
 		});
 
-		test('should show placeholder when no previous and no default', async () => {
+		it('should auto-select first option when no previous and no default', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -85,12 +73,13 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			// With the new variable select strategy, the first option is auto-selected
+			await expect(screen.findByText('option1')).resolves.toBeInTheDocument();
 		});
 	});
 
 	describe('Multi Select Variables with ALL enabled', () => {
-		test('should show ALL when all options are selected', async () => {
+		it('should show ALL when all options are selected', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -110,12 +99,12 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('ALL')).toBeInTheDocument();
+			await expect(screen.findByText('ALL')).resolves.toBeInTheDocument();
 		});
 	});
 
 	describe('Multi Select Variables with ALL disabled', () => {
-		test('should show placeholder when no selection', async () => {
+		it('should show placeholder when no selection', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -134,7 +123,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(screen.getByText('Select value')).toBeInTheDocument();
+			await expect(screen.findByText('Select value')).resolves.toBeInTheDocument();
 		});
 	});
 });

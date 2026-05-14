@@ -1,8 +1,7 @@
-/* eslint-disable react/destructuring-assignment */
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { Info } from 'lucide-react';
+import type { DefaultOptionType } from 'antd/es/select';
+import { Info } from '@signozhq/icons';
 
 import './MQCommon.styles.scss';
 

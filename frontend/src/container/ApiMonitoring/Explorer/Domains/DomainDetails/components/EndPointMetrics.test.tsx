@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
@@ -100,7 +96,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			refetch: jest.fn(),
 			remove: jest.fn(),
 			...overrides,
-		} as UseQueryResult<SuccessResponse<any>, unknown>);
+		}) as UseQueryResult<SuccessResponse<any>, unknown>;
 
 	const renderComponent = (
 		endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>,
@@ -111,9 +107,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			</QueryClientProvider>,
 		);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	describe('1. V5 Query Payload with Filters', () => {
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		it('sends correct V5 payload structure with domain and endpoint filters', async () => {
 			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
 
@@ -153,7 +147,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryA.filter) {
 					expect(queryA.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryA.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -171,7 +165,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryB.filter) {
 					expect(queryB.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryB.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -185,7 +179,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				expect(queryC.aggregateOperator).toBe('count');
 				if (queryC.filter) {
 					expect(queryC.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryC.filter.expression).toContain("kind_string = 'Client'");
 					expect(queryC.filter.expression).toContain('has_error = true');
@@ -204,7 +198,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				// Verify exact domain filter expression structure
 				if (queryD.filter) {
 					expect(queryD.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryD.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -221,7 +215,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 				}
 				if (queryE.filter) {
 					expect(queryE.filter.expression).toContain(
-						"(net.peer.name = 'api.example.com' OR server.address = 'api.example.com')",
+						`http_host = 'api.example.com'`,
 					);
 					expect(queryE.filter.expression).toContain("kind_string = 'Client'");
 				}
@@ -291,7 +285,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 					expect(query.filter.expression).toContain('staging');
 					// Also verify domain filter is still present
 					expect(query.filter.expression).toContain(
-						"(net.peer.name = 'api.internal.com' OR server.address = 'api.internal.com')",
+						"http_host = 'api.internal.com'",
 					);
 					// Verify client kind filter is present
 					expect(query.filter.expression).toContain("kind_string = 'Client'");
@@ -309,7 +303,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			// Wait for skeletons to disappear
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// Verify all metric labels are displayed
@@ -348,7 +342,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// When no data, all values should show "-"

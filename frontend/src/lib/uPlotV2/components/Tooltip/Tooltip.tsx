@@ -1,94 +1,61 @@
 import { useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { TooltipContentItem, TooltipProps } from '../types';
-import { buildTooltipContent } from './utils';
+import { TooltipProps } from '../types';
+import TooltipHeader from './components/TooltipHeader/TooltipHeader';
+import TooltipList from './components/TooltipList/TooltipList';
 
-import './Tooltip.styles.scss';
-
-const TOOLTIP_LIST_MAX_HEIGHT = 330;
-const TOOLTIP_ITEM_HEIGHT = 38;
+import Styles from './Tooltip.module.scss';
 
 export default function Tooltip({
-	seriesIndex,
-	dataIndexes,
+	id,
 	uPlotInstance,
 	timezone,
-	yAxisUnit = '',
-	decimalPrecision,
+	content,
+	showTooltipHeader = true,
+	isPinned,
+	renderTooltipFooter,
+	dismiss,
 }: TooltipProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-	const headerTitle = useMemo(() => {
-		const data = uPlotInstance.data;
-		const cursorIdx = uPlotInstance.cursor.idx;
-		if (cursorIdx == null) {
-			return null;
-		}
-		return dayjs(data[0][cursorIdx] * 1000)
-			.tz(timezone)
-			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
-	}, [timezone, uPlotInstance.data, uPlotInstance.cursor.idx]);
-
-	const content = useMemo(
-		(): TooltipContentItem[] =>
-			buildTooltipContent({
-				data: uPlotInstance.data,
-				series: uPlotInstance.series,
-				dataIndexes,
-				activeSeriesIndex: seriesIndex,
-				uPlotInstance,
-				yAxisUnit,
-				decimalPrecision,
-			}),
-		[uPlotInstance, seriesIndex, dataIndexes, yAxisUnit, decimalPrecision],
+	const tooltipContent = useMemo(() => content ?? [], [content]);
+	const activeItem = useMemo(
+		() => tooltipContent.find((item) => item.isActive) ?? null,
+		[tooltipContent],
 	);
+
+	const showHeader = showTooltipHeader || activeItem != null;
+	// A single row collapses into the header when it's the active item, but
+	// must stay in the list when there's no active item (e.g. sync-driven
+	// tooltips with no focused series) — otherwise the row would vanish.
+	const showList =
+		tooltipContent.length > 1 ||
+		(tooltipContent.length === 1 && activeItem == null);
+	// The divider separates the active row in the header from the list; with
+	// no active item it has nothing to separate.
+	const showDivider = showList && showHeader && activeItem != null;
 
 	return (
 		<div
-			className={cx(
-				'uplot-tooltip-container',
-				isDarkMode ? 'darkMode' : 'lightMode',
-			)}
+			className={cx(Styles.container, {
+				[Styles.pinned]: isPinned,
+			})}
+			data-testid="uplot-tooltip-container"
 		>
-			<div className="uplot-tooltip-header">
-				<span>{headerTitle}</span>
-			</div>
-			<div
-				style={{
-					height: Math.min(
-						content.length * TOOLTIP_ITEM_HEIGHT,
-						TOOLTIP_LIST_MAX_HEIGHT,
-					),
-					minHeight: 0,
-				}}
-			>
-				{content.length > 0 ? (
-					<Virtuoso
-						className="uplot-tooltip-list"
-						data={content}
-						defaultItemHeight={TOOLTIP_ITEM_HEIGHT}
-						itemContent={(_, item): JSX.Element => (
-							<div className="uplot-tooltip-item">
-								<div
-									className="uplot-tooltip-item-marker"
-									style={{ borderColor: item.color }}
-									data-is-legend-marker={true}
-								/>
-								<div
-									className="uplot-tooltip-item-content"
-									style={{ color: item.color, fontWeight: item.isActive ? 700 : 400 }}
-								>
-									{item.label}: {item.tooltipValue}
-								</div>
-							</div>
-						)}
-					/>
-				) : null}
-			</div>
+			{showHeader && (
+				<TooltipHeader
+					uPlotInstance={uPlotInstance}
+					timezone={timezone}
+					showTooltipHeader={showTooltipHeader}
+					isPinned={isPinned}
+					activeItem={activeItem}
+				/>
+			)}
+
+			{showDivider && <span className={Styles.divider} />}
+
+			{showList && <TooltipList id={id} content={tooltipContent} />}
+
+			{renderTooltipFooter && renderTooltipFooter({ isPinned, dismiss })}
 		</div>
 	);
 }

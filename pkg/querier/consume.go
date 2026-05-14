@@ -14,14 +14,13 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/bytedance/sonic"
 )
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
-	// to be considered as final result (or target)
+	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
@@ -31,7 +30,7 @@ var (
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData
+// * Distribution- *qbtypes.DistributionData.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -70,7 +69,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
-	stepMs := uint64(step.Duration.Milliseconds())
+	stepMs := uint64(step.Milliseconds())
 
 	// Helper function to check if a timestamp represents a partial value
 	isPartialValue := func(timestamp int64) bool {
@@ -394,17 +393,11 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-
-			// Post-process JSON columns: normalize into structured values
+			// Post-process JSON columns: normalize into String value
 			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
 				switch x := val.(type) {
 				case []byte:
-					if len(x) > 0 {
-						var v any
-						if err := sonic.Unmarshal(x, &v); err == nil {
-							val = v
-						}
-					}
+					val = string(x)
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}
@@ -438,7 +431,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// numericAsFloat converts numeric types to float64 efficiently
+// numericAsFloat converts numeric types to float64 efficiently.
 func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:

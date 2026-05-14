@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { render, screen } from '@testing-library/react';
@@ -36,7 +34,7 @@ const mockChangelog: ChangelogSchema = {
 				id: 1,
 				documentId: 'doc1',
 				ext: '.webp',
-				url: '/uploads/feature1.webp',
+				url: 'assets/uploads/feature1.webp',
 				mime: 'image/webp',
 				alternativeText: null,
 			},

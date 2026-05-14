@@ -2,6 +2,7 @@ package rulebasednotification
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"sync"
 
@@ -154,6 +155,28 @@ func (r *provider) GetAllRoutePolicies(ctx context.Context, orgID string) ([]*al
 	return r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 }
 
+func (r *provider) GetRoutePoliciesByChannel(ctx context.Context, orgID string, channelName string) ([]*alertmanagertypes.RoutePolicy, error) {
+	if orgID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+
+	allRoutes, err := r.routeStore.GetAll(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	var matched []*alertmanagertypes.RoutePolicy
+	for _, route := range allRoutes {
+		for _, ch := range route.Channels {
+			if ch == channelName {
+				matched = append(matched, route)
+				break
+			}
+		}
+	}
+	return matched, nil
+}
+
 func (r *provider) DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error {
 	if routeID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")
@@ -200,6 +223,8 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	for _, route := range expressionRoutes {
 		evaluateExpr, err := r.evaluateExpr(ctx, route.Expression, set)
 		if err != nil {
+			//nolint:sloglint
+			r.settings.Logger().WarnContext(ctx, "failed to evaluate route policy expression", errors.Attr(err), slog.String("rule.id", ruleID))
 			continue
 		}
 		if evaluateExpr {
@@ -215,7 +240,7 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 // the nested structure takes precedence. That means we will replace an existing leaf at any
 // intermediate path with a map so we can materialize the deeper structure.
 // TODO(srikanthccv): we need a better solution to handle this, remove the following
-// when we update the expr to support dotted keys
+// when we update the expr to support dotted keys.
 func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.LabelSet) map[string]interface{} {
 	env := make(map[string]interface{})
 
@@ -266,7 +291,7 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 	}
 
 	if logForReview {
-		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", "labels", labelSet)
+		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", slog.Any("labels", labelSet))
 	}
 
 	return env
@@ -275,7 +300,7 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {
 	env := r.convertLabelSetToEnv(ctx, labelSet)
 
-	program, err := expr.Compile(expression, expr.Env(env))
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
 	if err != nil {
 		return false, errors.NewInternalf(errors.CodeInternal, "error compiling route policy %s: %v", expression, err)
 	}

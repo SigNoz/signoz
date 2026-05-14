@@ -25,7 +25,7 @@ type Organization struct {
 	DisplayName string `bun:"display_name,type:text,notnull" json:"displayName"`
 }
 
-func NewOrganization(displayName string) *Organization {
+func NewOrganization(displayName string, name string) *Organization {
 	id := valuer.GenerateUUID()
 	return &Organization{
 		Identifiable: Identifiable{
@@ -35,7 +35,22 @@ func NewOrganization(displayName string) *Organization {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		// Name: "default/main", TODO: take the call and uncomment this later
+		Name:        name,
+		DisplayName: displayName,
+		Key:         NewOrganizationKey(id),
+	}
+}
+
+func NewOrganizationWithID(id valuer.UUID, displayName string, name string) *Organization {
+	return &Organization{
+		Identifiable: Identifiable{
+			ID: id,
+		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:        name,
 		DisplayName: displayName,
 		Key:         NewOrganizationKey(id),
 	}
@@ -58,22 +73,10 @@ func NewTraitsFromOrganization(org *Organization) map[string]any {
 	}
 }
 
-type TTLSetting struct {
-	bun.BaseModel `bun:"table:ttl_setting"`
-	Identifiable
-	TimeAuditable
-	TransactionID  string `bun:"transaction_id,type:text,notnull"`
-	TableName      string `bun:"table_name,type:text,notnull"`
-	TTL            int    `bun:"ttl,notnull,default:0"`
-	ColdStorageTTL int    `bun:"cold_storage_ttl,notnull,default:0"`
-	Status         string `bun:"status,type:text,notnull"`
-	OrgID          string `json:"-" bun:"org_id,notnull"`
-	Condition      string `bun:"condition,type:text"`
-}
-
 type OrganizationStore interface {
 	Create(context.Context, *Organization) error
 	Get(context.Context, valuer.UUID) (*Organization, error)
+	GetByName(context.Context, string) (*Organization, error)
 	GetAll(context.Context) ([]*Organization, error)
 	ListByKeyRange(context.Context, uint32, uint32) ([]*Organization, error)
 	Update(context.Context, *Organization) error

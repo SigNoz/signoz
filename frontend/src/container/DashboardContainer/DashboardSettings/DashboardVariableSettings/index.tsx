@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { GripVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -10,19 +10,17 @@ import {
 } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, Space, Table, Typography } from 'antd';
-import { RowProps } from 'antd/lib';
+import { Button, Modal, Row, RowProps, Space, Table, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import { PenLine, Trash2 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
@@ -40,8 +38,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		id: props['data-row-key'],
 	});
 
@@ -53,7 +50,6 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	};
 
 	return (
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
 				const childElement = child as React.ReactElement;
@@ -62,12 +58,13 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
-								<HolderOutlined
-									ref={setActivatorNodeRef}
+								<GripVertical
+									ref={setActivatorNodeRef as unknown as React.Ref<SVGSVGElement>}
 									style={{ touchAction: 'none', cursor: 'move' }}
-									// eslint-disable-next-line react/jsx-props-no-spreading
+									size="md"
 									{...listeners}
 								/>
+
 								{child}
 							</div>
 						),
@@ -92,7 +89,7 @@ function VariablesSettings({
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const { dashboardData, setDashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	const { notifications } = useNotifications();
@@ -107,10 +104,8 @@ function VariablesSettings({
 		null,
 	);
 
-	const [
-		variableEditData,
-		setVariableEditData,
-	] = useState<null | IDashboardVariable>(null);
+	const [variableEditData, setVariableEditData] =
+		useState<null | IDashboardVariable>(null);
 
 	const onDoneVariableViewMode = (): void => {
 		setVariableViewMode(null);
@@ -130,7 +125,6 @@ function VariablesSettings({
 			return;
 		}
 
-		// eslint-disable-next-line no-param-reassign
 		variablesSettingsTabHandle.current = {
 			resetState: onDoneVariableViewMode,
 		};
@@ -145,7 +139,6 @@ function VariablesSettings({
 		const variableOrderArr = [];
 		const variableNamesMap = {};
 
-		// eslint-disable-next-line no-restricted-syntax
 		for (const [key, value] of Object.entries(dashboardVariables)) {
 			const { order, id, name } = value;
 
@@ -157,8 +150,7 @@ function VariablesSettings({
 			});
 
 			if (name) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				variableNamesMap[name] = name;
 			}
 
@@ -181,7 +173,7 @@ function VariablesSettings({
 		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
@@ -189,16 +181,16 @@ function VariablesSettings({
 			(currentRequestedId &&
 				updatedVariablesData[currentRequestedId || '']?.type === 'DYNAMIC' &&
 				addDynamicVariableToPanels(
-					selectedDashboard,
+					dashboardData,
 					updatedVariablesData[currentRequestedId || ''],
 					widgetIds,
 					applyToAll,
 				)) ||
-			selectedDashboard;
+			dashboardData;
 
 		updateMutation.mutateAsync(
 			{
-				id: selectedDashboard.id,
+				id: dashboardData.id,
 
 				data: {
 					...newDashboard.data,
@@ -208,7 +200,7 @@ function VariablesSettings({
 			{
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
-						setSelectedDashboard(updatedDashboard.data);
+						setDashboardData(updatedDashboard.data);
 						notifications.success({
 							message: t('variable_updated_successfully'),
 						});
@@ -401,8 +393,7 @@ function VariablesSettings({
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
+					// @ts-expect-error
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],
 						order: index,
@@ -448,7 +439,9 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> Add Variable
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> Add Variable
+							</Flex>
 						</Button>
 					</Row>
 

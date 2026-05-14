@@ -13,6 +13,9 @@ export type LogDetailProps = {
 	handleChangeSelectedView?: ChangeViewFunctionType;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
+	logs?: ILog[];
+	onNavigateLog?: (log: ILog) => void;
+	onScrollToLog?: (logId: string) => void;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
 	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;

@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	Dispatch,
 	SetStateAction,
@@ -70,7 +68,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						: Color(color).darken(0.7);
 
 					if (span.hasError) {
-						color = `var(--bg-cherry-500)`;
+						color = `var(--danger-background)`;
 					}
 
 					return (

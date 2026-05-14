@@ -1,25 +1,42 @@
+import { useCallback } from 'react';
 import { Button, Card } from 'antd';
-import { Atom } from 'lucide-react';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
+import { Atom } from '@signozhq/icons';
 
+import MetricFilters from './MetricFilters';
+import MetricNameSearch from './MetricNameSearch';
+import MetricSpaceAggregation from './MetricSpaceAggregation';
+import MetricTimeAggregation from './MetricTimeAggregation';
 import { QueryBuilderProps } from './types';
-import {
-	MetricFilters,
-	MetricNameSearch,
-	MetricSpaceAggregation,
-	MetricTimeAggregation,
-} from './utils';
 
 function QueryBuilder({
-	metricName,
-	setMetricName,
+	currentMetricName,
+	setCurrentMetricName,
+	setAppliedMetricName,
 	spaceAggregationLabels,
-	metricInspectionOptions,
+	currentMetricInspectionOptions,
 	dispatchMetricInspectionOptions,
 	inspectionStep,
 	inspectMetricsTimeSeries,
-	searchQuery,
-	metricType,
+	currentQuery,
+	setCurrentQuery,
+	isLoadingQueries,
+	handleCancelQuery,
+	onRunQuery,
 }: QueryBuilderProps): JSX.Element {
+	const applyInspectionOptions = useCallback(() => {
+		onRunQuery?.();
+		setAppliedMetricName(currentMetricName ?? '');
+		dispatchMetricInspectionOptions({
+			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
+		});
+	}, [
+		currentMetricName,
+		setAppliedMetricName,
+		dispatchMetricInspectionOptions,
+		onRunQuery,
+	]);
+
 	return (
 		<div className="inspect-metrics-query-builder">
 			<div className="inspect-metrics-query-builder-header">
@@ -31,25 +48,32 @@ function QueryBuilder({
 				>
 					Query Builder
 				</Button>
+				<RunQueryBtn
+					onStageRunQuery={applyInspectionOptions}
+					handleCancelQuery={handleCancelQuery}
+					isLoadingQueries={isLoadingQueries}
+				/>
 			</div>
 			<Card className="inspect-metrics-query-builder-content">
-				<MetricNameSearch metricName={metricName} setMetricName={setMetricName} />
+				<MetricNameSearch
+					currentMetricName={currentMetricName}
+					setCurrentMetricName={setCurrentMetricName}
+				/>
 				<MetricFilters
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
-					searchQuery={searchQuery}
-					metricName={metricName}
-					metricType={metricType || null}
+					currentQuery={currentQuery}
+					setCurrentQuery={setCurrentQuery}
 				/>
 				<MetricTimeAggregation
 					inspectionStep={inspectionStep}
-					metricInspectionOptions={metricInspectionOptions}
+					currentMetricInspectionOptions={currentMetricInspectionOptions}
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 					inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 				/>
 				<MetricSpaceAggregation
 					inspectionStep={inspectionStep}
 					spaceAggregationLabels={spaceAggregationLabels}
-					metricInspectionOptions={metricInspectionOptions}
+					currentMetricInspectionOptions={currentMetricInspectionOptions}
 					dispatchMetricInspectionOptions={dispatchMetricInspectionOptions}
 				/>
 			</Card>

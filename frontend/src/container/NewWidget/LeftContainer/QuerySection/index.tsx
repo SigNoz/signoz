@@ -1,115 +1,50 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { QueryKey } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Typography } from 'antd';
+import { Button, Tabs } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
-import {
-	getDefaultWidgetData,
-	PANEL_TYPE_TO_QUERY_TYPES,
-} from 'container/NewWidget/utils';
+import { PANEL_TYPE_TO_QUERY_TYPES } from 'container/NewWidget/utils';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-// import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo, isUndefined } from 'lodash-es';
-import { Atom, Terminal } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	getNextWidgets,
-	getPreviousWidgets,
-	getSelectedWidgetIndex,
-} from 'providers/Dashboard/util';
+import { Atom, Terminal } from '@signozhq/icons';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
+import ClickHouseQueryContainer from './QueryBuilder/ClickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
 import './QuerySection.styles.scss';
 function QuerySection({
 	selectedGraph,
-	queryRangeKey,
 	isLoadingQueries,
+	handleCancelQuery,
+	selectedWidget,
+	dashboardVersion,
+	dashboardId,
+	dashboardName,
+	isNewPanel,
 }: QueryProps): JSX.Element {
 	const {
 		currentQuery,
 		handleRunQuery: handleRunQueryFromQueryBuilder,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
-
 	const isDarkMode = useIsDarkMode();
-
-	const { widgets } = selectedDashboard?.data || {};
-
-	const getWidget = useCallback(() => {
-		const widgetId = urlQuery.get('widgetId');
-		return defaultTo(
-			widgets?.find((e) => e.id === widgetId),
-			getDefaultWidgetData(widgetId || '', selectedGraph),
-		);
-	}, [urlQuery, widgets, selectedGraph]);
-
-	const selectedWidget = getWidget() as Widgets;
 
 	const { query } = selectedWidget;
 
 	useShareBuilderUrl({ defaultValue: query });
-
-	const handleStageQuery = useCallback(
-		(query: Query): void => {
-			if (selectedDashboard === undefined) {
-				return;
-			}
-
-			const selectedWidgetIndex = getSelectedWidgetIndex(
-				selectedDashboard,
-				selectedWidget.id,
-			);
-
-			const previousWidgets = getPreviousWidgets(
-				selectedDashboard,
-				selectedWidgetIndex,
-			);
-
-			const nextWidgets = getNextWidgets(selectedDashboard, selectedWidgetIndex);
-
-			setSelectedDashboard({
-				...selectedDashboard,
-				data: {
-					...selectedDashboard?.data,
-					widgets: [
-						...previousWidgets,
-						{
-							...selectedWidget,
-							query,
-						},
-						...nextWidgets,
-					],
-				},
-			});
-			handleRunQueryFromQueryBuilder();
-		},
-		[
-			selectedDashboard,
-			selectedWidget,
-			setSelectedDashboard,
-			handleRunQueryFromQueryBuilder,
-		],
-	);
 
 	const handleQueryCategoryChange = useCallback(
 		(qCategory: string): void => {
@@ -123,19 +58,16 @@ function QuerySection({
 	);
 
 	const handleRunQuery = (): void => {
-		const widgetId = urlQuery.get('widgetId');
-		const isNewPanel = isUndefined(widgets?.find((e) => e.id === widgetId));
-
 		logEvent('Panel Edit: Stage and run query', {
 			dataSource: currentQuery.builder?.queryData?.[0]?.dataSource,
 			panelType: selectedWidget.panelTypes,
 			queryType: currentQuery.queryType,
 			widgetId: selectedWidget.id,
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
+			dashboardId,
+			dashboardName,
 			isNewPanel,
 		});
-		handleStageQuery(currentQuery);
+		handleRunQueryFromQueryBuilder();
 	};
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
@@ -164,7 +96,7 @@ function QuerySection({
 							panelType={selectedGraph}
 							filterConfigs={filterConfigs}
 							showTraceOperator={selectedGraph !== PANEL_TYPES.LIST}
-							version={selectedDashboard?.data?.version || 'v3'}
+							version={dashboardVersion || 'v3'}
 							isListViewPanel={selectedGraph === PANEL_TYPES.LIST}
 							queryComponents={queryComponents}
 							signalSourceChangeEnabled
@@ -204,7 +136,7 @@ function QuerySection({
 		queryComponents,
 		selectedGraph,
 		filterConfigs,
-		selectedDashboard?.data?.version,
+		dashboardVersion,
 		isDarkMode,
 	]);
 
@@ -247,7 +179,7 @@ function QuerySection({
 							label="Stage & Run Query"
 							onStageRunQuery={handleRunQuery}
 							isLoadingQueries={isLoadingQueries}
-							queryRangeKey={queryRangeKey}
+							handleCancelQuery={handleCancelQuery}
 						/>
 					</span>
 				}
@@ -259,8 +191,13 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	queryRangeKey?: QueryKey;
-	isLoadingQueries?: boolean;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
+	selectedWidget: Widgets;
+	dashboardVersion?: string;
+	dashboardId?: string;
+	dashboardName?: string;
+	isNewPanel?: boolean;
 }
 
 export default QuerySection;

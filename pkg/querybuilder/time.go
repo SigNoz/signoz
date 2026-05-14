@@ -18,7 +18,7 @@ const (
 	MaxAllowedSeries          = 3000
 )
 
-// ToNanoSecs takes epoch and returns it in ns
+// ToNanoSecs takes epoch and returns it in ns.
 func ToNanoSecs(epoch uint64) uint64 {
 	temp := epoch
 	count := 0
@@ -34,7 +34,7 @@ func ToNanoSecs(epoch uint64) uint64 {
 }
 
 // TODO(srikanthccv): should these be rounded to nearest multiple of 60 instead of 5 if step > 60?
-// That would make graph look nice but "nice" but should be less important than the usefulness
+// That would make graph look nice but "nice" but should be less important than the usefulness.
 func RecommendedStepInterval(start, end uint64) uint64 {
 	start = ToNanoSecs(start)
 	end = ToNanoSecs(end)
@@ -87,6 +87,23 @@ func RecommendedStepIntervalForMeter(start, end uint64) uint64 {
 	}
 
 	return recommended
+}
+
+func MinAllowedStepIntervalForMeter(start, end uint64) uint64 {
+	start = ToNanoSecs(start)
+	end = ToNanoSecs(end)
+
+	step := (end - start) / RecommendedNumberOfPoints / 1e9
+
+	// for meter queries the minimum step interval allowed is 1 hour as this is our granularity
+	if step < 3600 {
+		return 3600
+	}
+
+	// return the nearest lower multiple of 3600 ( 1 hour )
+	minAllowed := step - step%3600
+
+	return minAllowed
 }
 
 func RecommendedStepIntervalForMetric(start, end uint64) uint64 {

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateBarStepInterval } from 'container/GridCardLayout/utils';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
@@ -10,13 +11,12 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import { SuccessResponse, Warning } from 'types/api';
 import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
+	MetricQueryRangeSuccessResponse,
 	APIError | Error
 >;
 
@@ -30,10 +30,7 @@ type UseGetQueryRange = (
 		widgetIndex: number;
 		publicDashboardId: string;
 	},
-) => UseQueryResult<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-	Error
->;
+) => UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
@@ -56,37 +53,44 @@ export const useGetQueryRange: UseGetQueryRange = (
 			!firstQueryData?.filters?.items.some((filter) => filter.key?.key === 'id') &&
 			firstQueryData?.orderBy[0].columnName === 'timestamp';
 
-		const modifiedRequestData = {
+		if (
+			isListWithSingleTimestampOrder &&
+			firstQueryData?.dataSource === DataSource.LOGS
+		) {
+			return {
+				...requestData,
+				graphType:
+					requestData.graphType === PANEL_TYPES.BAR
+						? PANEL_TYPES.TIME_SERIES
+						: requestData.graphType,
+				query: {
+					...requestData.query,
+					builder: {
+						...requestData.query.builder,
+						queryData: [
+							{
+								...firstQueryData,
+								orderBy: [
+									...(firstQueryData?.orderBy || []),
+									{
+										columnName: 'id',
+										order: firstQueryData?.orderBy[0]?.order,
+									},
+								],
+							},
+						],
+					},
+				},
+			};
+		}
+
+		return {
 			...requestData,
 			graphType:
 				requestData.graphType === PANEL_TYPES.BAR
 					? PANEL_TYPES.TIME_SERIES
 					: requestData.graphType,
 		};
-
-		// If the query is a list with a single timestamp order, we need to add the id column to the order by clause
-		if (
-			isListWithSingleTimestampOrder &&
-			firstQueryData?.dataSource === DataSource.LOGS
-		) {
-			modifiedRequestData.query.builder = {
-				...requestData.query.builder,
-				queryData: [
-					{
-						...firstQueryData,
-						orderBy: [
-							...(firstQueryData?.orderBy || []),
-							{
-								columnName: 'id',
-								order: firstQueryData?.orderBy[0]?.order,
-							},
-						],
-					},
-				],
-			};
-		}
-
-		return modifiedRequestData;
 	}, [requestData]);
 
 	const queryKey = useMemo(() => {
@@ -111,8 +115,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 
 			const updatedQuery = updateBarStepInterval(
 				requestData.query,
-				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
-				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,
+				requestData.start
+					? requestData.start * 1e3
+					: Number.parseInt(start, 10) * 1e3,
+				requestData.end ? requestData.end * 1e3 : Number.parseInt(end, 10) * 1e3,
 			);
 
 			return {
@@ -129,6 +135,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 			return options.retry;
 		}
 		return (failureCount: number, error: Error): boolean => {
+			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+				return false;
+			}
+
 			let status: number | undefined;
 
 			if (error instanceof APIError) {
@@ -141,14 +151,11 @@ export const useGetQueryRange: UseGetQueryRange = (
 				return false;
 			}
 
-			return failureCount < 3;
+			return failureCount < MAX_QUERY_RETRIES;
 		};
 	}, [options?.retry]);
 
-	return useQuery<
-		SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-		APIError | Error
-	>({
+	return useQuery<MetricQueryRangeSuccessResponse, APIError | Error>({
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(
 				modifiedRequestData,

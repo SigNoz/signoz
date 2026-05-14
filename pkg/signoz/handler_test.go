@@ -10,10 +10,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/modules/role/implrole"
+	"github.com/SigNoz/signoz/pkg/modules/retention/implretention"
+	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
@@ -40,14 +46,22 @@ func TestNewHandlers(t *testing.T) {
 	emailing := emailingtest.New()
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
+	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
-	roleSetter := implrole.NewSetter(implrole.NewStore(sqlstore), nil)
-	roleGetter := implrole.NewGetter(implrole.NewStore(sqlstore))
-	grantModule := implrole.NewGranter(implrole.NewStore(sqlstore), nil)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, roleSetter, roleGetter, grantModule)
 
-	handlers := NewHandlers(modules, providerSettings, nil, nil, nil, nil, nil)
+	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
+	require.NoError(t, err)
 
+	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
+
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
+
+	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, retentionGetter, flagger, tagModule)
+
+	querierHandler := querier.NewHandler(providerSettings, nil, nil)
+	registryHandler := factory.NewHandler(nil)
+	handlers := NewHandlers(modules, providerSettings, nil, querierHandler, nil, nil, nil, nil, nil, nil, nil, registryHandler, alertmanager, nil)
 	reflectVal := reflect.ValueOf(handlers)
 	for i := 0; i < reflectVal.NumField(); i++ {
 		f := reflectVal.Field(i)

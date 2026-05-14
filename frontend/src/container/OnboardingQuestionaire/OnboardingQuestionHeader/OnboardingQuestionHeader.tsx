@@ -1,4 +1,6 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+
+import barberPoolUrl from '@/assets/svgs/barber-pool.svg';
 
 interface OnboardingQuestionHeaderProps {
 	title: string;
@@ -12,14 +14,14 @@ export function OnboardingQuestionHeader({
 	return (
 		<div className="onboarding-header-section">
 			<div className="onboarding-header-icon">
-				<img src="/svgs/barber-pool.svg" alt="SigNoz" width="32" height="32" />
+				<img src={barberPoolUrl} alt="SigNoz" width="32" height="32" />
 			</div>
 			<Typography.Title level={4} className="onboarding-header-title">
 				{title}
 			</Typography.Title>
-			<Typography.Paragraph className="onboarding-header-subtitle">
+			<Typography.Text className="onboarding-header-subtitle">
 				{subtitle}
-			</Typography.Paragraph>
+			</Typography.Text>
 		</div>
 	);
 }

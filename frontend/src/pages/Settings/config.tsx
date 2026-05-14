@@ -1,32 +1,37 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
-import APIKeys from 'container/APIKeys/APIKeys';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
-import CustomDomainSettings from 'container/CustomDomainSettings';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
+import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
+import RolesSettings from 'container/RolesSettings';
+import RoleDetailsPage from 'container/RolesSettings/RoleDetails';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
 	BellDot,
+	Bot,
 	Building,
 	Cpu,
 	CreditCard,
-	Globe,
 	Keyboard,
-	KeySquare,
 	Pencil,
 	Plus,
+	Shield,
+	Sparkles,
 	User,
-} from 'lucide-react';
+	Users,
+} from '@signozhq/icons';
 import ChannelsEdit from 'pages/ChannelsEdit';
+import MembersSettings from 'pages/MembersSettings';
+import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
 import Shortcuts from 'pages/Shortcuts';
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
@@ -109,32 +114,6 @@ export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
 	},
 ];
 
-export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: APIKeys,
-		name: (
-			<div className="periscope-tab">
-				<KeySquare size={16} /> {t('routes:api_keys').toString()}
-			</div>
-		),
-		route: ROUTES.API_KEYS,
-		key: ROUTES.API_KEYS,
-	},
-];
-
-export const customDomainSettings = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: CustomDomainSettings,
-		name: (
-			<div className="periscope-tab">
-				<Globe size={16} /> {t('routes:custom_domain_settings').toString()}
-			</div>
-		),
-		route: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-	},
-];
-
 export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: BillingContainer,
@@ -145,6 +124,45 @@ export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.BILLING,
 		key: ROUTES.BILLING,
+	},
+];
+
+export const membersSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MembersSettings,
+		name: (
+			<div className="periscope-tab">
+				<Users size={16} /> {t('routes:members').toString()}
+			</div>
+		),
+		route: ROUTES.MEMBERS_SETTINGS,
+		key: ROUTES.MEMBERS_SETTINGS,
+	},
+];
+
+export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: RolesSettings,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:roles').toString()}
+			</div>
+		),
+		route: ROUTES.ROLES_SETTINGS,
+		key: ROUTES.ROLES_SETTINGS,
+	},
+];
+
+export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: RoleDetailsPage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_details').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_DETAILS,
+		key: ROUTES.ROLE_DETAILS,
 	},
 ];
 
@@ -171,6 +189,34 @@ export const mySettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.MY_SETTINGS,
 		key: ROUTES.MY_SETTINGS,
+	},
+];
+
+export const serviceAccountsSettings = (
+	t: TFunction,
+): RouteTabProps['routes'] => [
+	{
+		Component: ServiceAccountsSettings,
+		name: (
+			<div className="periscope-tab">
+				<Bot size={16} /> {t('routes:service_accounts').toString()}
+			</div>
+		),
+		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+		key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+	},
+];
+
+export const mcpServerSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MCPServerSettings,
+		name: (
+			<div className="periscope-tab">
+				<Sparkles size={16} /> {t('routes:mcp_server').toString()}
+			</div>
+		),
+		route: ROUTES.MCP_SERVER,
+		key: ROUTES.MCP_SERVER,
 	},
 ];
 

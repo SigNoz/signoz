@@ -3,17 +3,8 @@
 	gap: 8px;
 	align-items: center;
 
-	.custom-color-typography-dark {
-		color: #fff !important;
-		font-family: 'Space Mono';
-		font-size: 12px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 16px; /* 133.333% */
-	}
-
-	.custom-color-typography-light {
-		color: #000 !important;
+	.custom-color-text {
+		color: var(--l1-foreground) !important;
 		font-family: 'Space Mono';
 		font-size: 12px;
 		font-style: normal;

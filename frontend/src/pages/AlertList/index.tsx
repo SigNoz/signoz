@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Tabs } from 'antd';
-import { TabsProps } from 'antd/lib';
+import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
@@ -11,7 +10,7 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 
 import { AlertListSubTabs, AlertListTabs } from './types';

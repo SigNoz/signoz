@@ -2,106 +2,53 @@ package authtypes
 
 import (
 	"encoding/json"
-	"slices"
-	"strings"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Resource struct {
-	Name Name `json:"name"`
-	Type Type `json:"type"`
-}
-
-type Object struct {
-	Resource Resource `json:"resource"`
-	Selector Selector `json:"selector"`
-}
-
 type Transaction struct {
-	Relation Relation `json:"relation"`
-	Object   Object   `json:"object"`
+	ID       valuer.UUID      `json:"-"`
+	Relation Relation         `json:"relation" required:"true"`
+	Object   coretypes.Object `json:"object" required:"true"`
 }
 
-func NewObject(resource Resource, selector Selector) (*Object, error) {
-	err := IsValidSelector(resource.Type, selector.val)
-	if err != nil {
+type GettableTransaction struct {
+	Relation   Relation         `json:"relation" required:"true"`
+	Object     coretypes.Object `json:"object" required:"true"`
+	Authorized bool             `json:"authorized" required:"true"`
+}
+
+type TransactionWithAuthorization struct {
+	Transaction *Transaction
+	Authorized  bool
+}
+
+func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, error) {
+	if err := coretypes.ErrIfVerbNotValidForType(relation.Verb, object.Resource.Type); err != nil {
 		return nil, err
 	}
 
-	return &Object{Resource: resource, Selector: selector}, nil
+	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
-func MustNewObject(resource Resource, selector Selector) *Object {
-	object, err := NewObject(resource, selector)
-	if err != nil {
-		panic(err)
+func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
+	gettableTransactions := make([]*GettableTransaction, len(results))
+	for i, result := range results {
+		gettableTransactions[i] = &GettableTransaction{
+			Relation:   result.Transaction.Relation,
+			Object:     result.Transaction.Object,
+			Authorized: result.Authorized,
+		}
 	}
 
-	return object
-}
-
-func MustNewObjectFromString(input string) *Object {
-	parts := strings.Split(input, "/")
-	if len(parts) != 4 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid input format: %s", input))
-	}
-
-	typeParts := strings.Split(parts[0], ":")
-	if len(typeParts) != 2 {
-		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
-	}
-
-	resource := Resource{
-		Type: MustNewType(typeParts[0]),
-		Name: MustNewName(parts[2]),
-	}
-
-	selector := MustNewSelector(resource.Type, parts[3])
-
-	return &Object{Resource: resource, Selector: selector}
-}
-
-func MustNewObjectsFromStringSlice(input []string) []*Object {
-	objects := make([]*Object, 0, len(input))
-	for _, str := range input {
-		objects = append(objects, MustNewObjectFromString(str))
-	}
-	return objects
-}
-
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
-	}
-
-	return &Transaction{Relation: relation, Object: object}, nil
-}
-
-func (object *Object) UnmarshalJSON(data []byte) error {
-	var shadow = struct {
-		Resource Resource
-		Selector Selector
-	}{}
-
-	err := json.Unmarshal(data, &shadow)
-	if err != nil {
-		return err
-	}
-
-	obj, err := NewObject(shadow.Resource, shadow.Selector)
-	if err != nil {
-		return err
-	}
-
-	*object = *obj
-	return nil
+	return gettableTransactions
 }
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
 		Relation Relation
-		Object   Object
+		Object   coretypes.Object
 	}{}
 
 	err := json.Unmarshal(data, &shadow)
@@ -116,4 +63,8 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 
 	*transaction = *txn
 	return nil
+}
+
+func (transaction *Transaction) TransactionKey() string {
+	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
 }

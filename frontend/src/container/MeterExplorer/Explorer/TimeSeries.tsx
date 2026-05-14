@@ -1,14 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
@@ -18,15 +23,23 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-function TimeSeries(): JSX.Element {
+interface TimeSeriesProps {
+	onFetchingStateChange?: (isFetching: boolean) => void;
+	isCancelled?: boolean;
+}
+
+function TimeSeries({
+	onFetchingStateChange,
+	isCancelled = false,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -65,7 +78,11 @@ function TimeSeries(): JSX.Element {
 				minTime,
 				index,
 			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+			queryFn: ({
+				signal,
+			}: {
+				signal?: AbortSignal;
+			}): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(
 					{
 						query: payload,
@@ -77,9 +94,15 @@ function TimeSeries(): JSX.Element {
 						},
 					},
 					ENTITY_VERSION_V5,
+					undefined,
+					signal,
 				),
 			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
+			retry: (failureCount: number, error: unknown): boolean => {
+				if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+					return false;
+				}
+
 				let status: number | undefined;
 
 				if (error instanceof APIError) {
@@ -92,13 +115,18 @@ function TimeSeries(): JSX.Element {
 					return false;
 				}
 
-				return failureCount < 3;
+				return failureCount < MAX_QUERY_RETRIES;
 			},
 			onError: (error: APIError): void => {
 				showErrorModal(error);
 			},
 		})),
 	);
+
+	const isFetching = queries.some((q) => q.isFetching);
+	useEffect(() => {
+		onFetchingStateChange?.(isFetching);
+	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 
@@ -110,31 +138,38 @@ function TimeSeries(): JSX.Element {
 		[data, isValidToConvertToMs],
 	);
 
-	const onUnitChangeHandler = (value: string): void => {
-		setYAxisUnit(value);
-	};
+	const hasMetricSelected = useMemo(
+		() => currentQuery.builder.queryData.some((q) => q.aggregateAttribute?.key),
+		[currentQuery],
+	);
 
 	return (
 		<div className="meter-time-series-container">
-			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
-				{responseData.map((datapoint, index) => (
-					<div
-						className="time-series-view-panel"
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-					>
-						<TimeSeriesView
-							isFilterApplied={false}
-							isError={queries[index].isError}
-							isLoading={queries[index].isLoading}
-							data={datapoint}
-							dataSource={DataSource.METRICS}
-							yAxisUnit={yAxisUnit}
-							panelType={PANEL_TYPES.BAR}
-						/>
-					</div>
-				))}
+				{!hasMetricSelected && <EmptyMetricsSearch />}
+				{isCancelled && hasMetricSelected && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					hasMetricSelected &&
+					responseData.map((datapoint, index) => (
+						<div
+							className="time-series-view-panel"
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+						>
+							<TimeSeriesView
+								isFilterApplied={false}
+								isError={queries[index].isError}
+								isLoading={queries[index].isLoading}
+								data={datapoint}
+								dataSource={DataSource.METRICS}
+								yAxisUnit={yAxisUnit}
+								panelType={PANEL_TYPES.BAR}
+							/>
+						</div>
+					))}
 			</div>
 		</div>
 	);

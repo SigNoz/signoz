@@ -1,9 +1,11 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,14 +14,11 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
 import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns the supported features and their details
@@ -34,12 +33,12 @@ export const getFeatures = (signal?: AbortSignal) => {
 };
 
 export const getGetFeaturesQueryKey = () => {
-	return ['getFeatures'] as const;
+	return [`/api/v2/features`] as const;
 };
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -65,7 +64,7 @@ export const getGetFeaturesQueryOptions = <
 export type GetFeaturesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getFeatures>>
 >;
-export type GetFeaturesQueryError = RenderErrorResponseDTO;
+export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get features
@@ -73,7 +72,7 @@ export type GetFeaturesQueryError = RenderErrorResponseDTO;
 
 export function useGetFeatures<
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -87,9 +86,7 @@ export function useGetFeatures<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

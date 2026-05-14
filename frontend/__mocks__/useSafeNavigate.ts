@@ -2,6 +2,7 @@
 interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
+	newTab?: boolean;
 }
 
 interface SafeNavigateTo {
@@ -20,9 +21,7 @@ interface UseSafeNavigateReturn {
 
 export const useSafeNavigate = (): UseSafeNavigateReturn => ({
 	safeNavigate: jest.fn(
-		(to: SafeNavigateToType, options?: SafeNavigateOptions) => {
-			console.log(`Mock safeNavigate called with:`, to, options);
-		},
+		(_to: SafeNavigateToType, _options?: SafeNavigateOptions) => {},
 	) as jest.MockedFunction<
 		(to: SafeNavigateToType, options?: SafeNavigateOptions) => void
 	>,

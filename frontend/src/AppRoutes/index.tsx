@@ -18,7 +18,8 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useThemeConfig } from 'hooks/useDarkMode';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -29,7 +30,6 @@ import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { CmdKProvider } from 'providers/cmdKProvider';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
@@ -61,12 +61,20 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
+	const [pathname, setPathname] = useState(history.location.pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	useEffect(() => {
+		return history.listen((location) => {
+			setPathname(location.pathname);
+		});
+	}, []);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -214,17 +222,41 @@ function App(): JSX.Element {
 	]);
 
 	useEffect(() => {
+		if (!isLoggedInState) {
+			return;
+		}
+
+		setRoutes((prev) => {
+			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
+			if (isAIAssistantEnabled === hasAi) {
+				return prev;
+			}
+			if (isAIAssistantEnabled) {
+				const aiRoute = defaultRoutes.find((r) => r.path === ROUTES.AI_ASSISTANT);
+				if (!aiRoute) {
+					return prev;
+				}
+				return [...prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT), aiRoute];
+			}
+			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
+		});
+	}, [isLoggedInState, isAIAssistantEnabled]);
+
+	const isDarkMode = useIsDarkMode();
+
+	useEffect(() => {
+		window.Pylon?.('setTheme', isDarkMode ? 'dark' : 'light');
+	}, [isDarkMode]);
+
+	useEffect(() => {
 		if (
 			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/')
+			pathname.startsWith('/public/dashboard/') ||
+			pathname.startsWith('/ai-assistant/')
 		) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Pylon('hideChatBubble');
+			window.Pylon?.('hideChatBubble');
 		} else {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			window.Pylon('showChatBubble');
+			window.Pylon?.('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -325,6 +357,24 @@ function App(): JSX.Element {
 					// Session Replay
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+					beforeSend(event) {
+						// Drop the event if its level is 'warning' or 'info'
+						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
+						const sessionReplayUrl = posthog.get_session_replay_url?.({
+							withTimestamp: true,
+						});
+						if (sessionReplayUrl) {
+							// eslint-disable-next-line no-param-reassign
+							event.contexts = {
+								...event.contexts,
+								posthog: { session_replay_url: sessionReplayUrl },
+							};
+						}
+						return event;
+					},
 				});
 
 				setIsSentryInitialized(true);
@@ -375,28 +425,26 @@ function App(): JSX.Element {
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AppLayout>
-															<PreferenceContextProvider>
-																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																	<Switch>
-																		{routes.map(({ path, component, exact }) => (
-																			<Route
-																				key={`${path}`}
-																				exact={exact}
-																				path={path}
-																				component={component}
-																			/>
-																		))}
-																		<Route exact path="/" component={Home} />
-																		<Route path="*" component={NotFound} />
-																	</Switch>
-																</Suspense>
-															</PreferenceContextProvider>
-														</AppLayout>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
+												<KeyboardHotkeysProvider>
+													<AppLayout>
+														<PreferenceContextProvider>
+															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																<Switch>
+																	{routes.map(({ path, component, exact }) => (
+																		<Route
+																			key={`${path}`}
+																			exact={exact}
+																			path={path}
+																			component={component}
+																		/>
+																	))}
+																	<Route exact path="/" component={Home} />
+																	<Route path="*" component={NotFound} />
+																</Switch>
+															</Suspense>
+														</PreferenceContextProvider>
+													</AppLayout>
+												</KeyboardHotkeysProvider>
 											</QueryBuilderProvider>
 										</ResourceProvider>
 									</PrivateRoute>

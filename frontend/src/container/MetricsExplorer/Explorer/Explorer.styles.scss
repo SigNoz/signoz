@@ -33,8 +33,8 @@
 	.explore-tabs {
 		margin: 15px 0;
 		.tab {
-			background-color: var(--bg-slate-500);
-			border-color: var(--bg-ink-200);
+			background-color: var(--l1-background);
+			border-color: var(--l1-border);
 			width: 180px;
 			padding: 16px 0;
 			display: flex;
@@ -51,7 +51,7 @@
 		}
 
 		.selected-view {
-			background: var(--bg-ink-500);
+			background: var(--l1-background);
 		}
 	}
 
@@ -141,11 +141,11 @@
 						.ant-input-group-addon {
 							.related-metrics-select {
 								width: 250px;
-								border: 1px solid var(--bg-slate-500) !important;
+								border: 1px solid var(--l1-border) !important;
 
 								.ant-select-selector {
 									text-align: left;
-									color: var(--text-vanilla-500) !important;
+									color: var(--muted-foreground) !important;
 								}
 							}
 						}
@@ -174,21 +174,6 @@
 						}
 					}
 				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.metrics-explorer-explore-container {
-		.explore-tabs {
-			.tab {
-				background-color: var(--bg-vanilla-100);
-				border-color: var(--bg-vanilla-400);
-			}
-
-			.selected-view {
-				background: var(--bg-vanilla-500);
 			}
 		}
 	}

@@ -18,7 +18,7 @@ var (
 	FieldDataTypeString  = FieldDataType{valuer.NewString("string")}
 	FieldDataTypeBool    = FieldDataType{valuer.NewString("bool")}
 	FieldDataTypeFloat64 = FieldDataType{valuer.NewString("float64")}
-	// int64 and number are synonyms for float64
+	// int64 and number are synonyms for float64.
 	FieldDataTypeInt64       = FieldDataType{valuer.NewString("int64")}
 	FieldDataTypeNumber      = FieldDataType{valuer.NewString("number")}
 	FieldDataTypeUnspecified = FieldDataType{valuer.NewString("")}
@@ -27,11 +27,11 @@ var (
 	FieldDataTypeArrayFloat64 = FieldDataType{valuer.NewString("[]float64")}
 	FieldDataTypeArrayBool    = FieldDataType{valuer.NewString("[]bool")}
 
-	// int64 and number are synonyms for float64
+	// int64 and number are synonyms for float64.
 	FieldDataTypeArrayInt64  = FieldDataType{valuer.NewString("[]int64")}
 	FieldDataTypeArrayNumber = FieldDataType{valuer.NewString("[]number")}
 
-	FieldDataTypeArrayObject  = FieldDataType{valuer.NewString("[]object")}
+	FieldDataTypeArrayJSON    = FieldDataType{valuer.NewString("[]json")}
 	FieldDataTypeArrayDynamic = FieldDataType{valuer.NewString("[]dynamic")}
 
 	// Map string representations to FieldDataType values
@@ -51,7 +51,7 @@ var (
 		"int8":   FieldDataTypeNumber,
 		"int16":  FieldDataTypeNumber,
 		"int32":  FieldDataTypeNumber,
-		"int64":  FieldDataTypeNumber,
+		"int64":  FieldDataTypeInt64,
 		"uint":   FieldDataTypeNumber,
 		"uint8":  FieldDataTypeNumber,
 		"uint16": FieldDataTypeNumber,
@@ -72,6 +72,8 @@ var (
 		"[]float64": FieldDataTypeArrayFloat64,
 		"[]number":  FieldDataTypeArrayNumber,
 		"[]bool":    FieldDataTypeArrayBool,
+		"[]json":    FieldDataTypeArrayJSON,
+		"[]dynamic": FieldDataTypeArrayDynamic,
 
 		// c-style array types
 		"string[]":  FieldDataTypeArrayString,
@@ -79,6 +81,8 @@ var (
 		"float64[]": FieldDataTypeArrayFloat64,
 		"number[]":  FieldDataTypeArrayNumber,
 		"bool[]":    FieldDataTypeArrayBool,
+		"json[]":    FieldDataTypeArrayJSON,
+		"dynamic[]": FieldDataTypeArrayDynamic,
 	}
 
 	fieldDataTypeToCHDataType = map[FieldDataType]string{
@@ -93,6 +97,14 @@ var (
 		FieldDataTypeArrayFloat64: "Array(Float64)",
 		FieldDataTypeArrayBool:    "Array(Bool)",
 	}
+
+	ScalerFieldTypeToArrayFieldType = map[FieldDataType]FieldDataType{
+		FieldDataTypeString:  FieldDataTypeArrayString,
+		FieldDataTypeBool:    FieldDataTypeArrayBool,
+		FieldDataTypeNumber:  FieldDataTypeArrayNumber,
+		FieldDataTypeInt64:   FieldDataTypeArrayInt64,
+		FieldDataTypeFloat64: FieldDataTypeArrayFloat64,
+	}
 )
 
 func (f FieldDataType) CHDataType() string {
@@ -106,7 +118,7 @@ func (f FieldDataType) IsArray() bool {
 	return strings.HasPrefix(f.StringValue(), "[]") || strings.HasSuffix(f.StringValue(), "[]")
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface
+// UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -127,7 +139,7 @@ func (f *FieldDataType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Scan implements the sql.Scanner interface
+// Scan implements the sql.Scanner interface.
 func (f *FieldDataType) Scan(value interface{}) error {
 	if f == nil {
 		return errors.NewInternalf(errors.CodeInternal, "fielddatatype: nil receiver")
@@ -167,5 +179,21 @@ func (f FieldDataType) TagDataType() string {
 		return "float64"
 	default:
 		return "string"
+	}
+}
+
+// Enum returns the acceptable values for FieldDataType.
+func (FieldDataType) Enum() []any {
+	return []any{
+		FieldDataTypeString,
+		FieldDataTypeBool,
+		FieldDataTypeFloat64,
+		FieldDataTypeInt64,
+		FieldDataTypeNumber,
+		// FieldDataTypeArrayString,
+		// FieldDataTypeArrayFloat64,
+		// FieldDataTypeArrayBool,
+		// FieldDataTypeArrayInt64,
+		// FieldDataTypeArrayNumber,
 	}
 }

@@ -70,7 +70,7 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhookURL},
+				URL:        config.SecretTemplateURL(webhookURL.String()),
 			},
 		},
 	})
@@ -96,7 +96,7 @@ func TestServerPutAlerts(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: &url.URL{Host: "localhost", Path: "/test-receiver"}},
+				URL:        config.SecretTemplateURL("http://localhost/test-receiver"),
 			},
 		},
 	}))
@@ -124,7 +124,7 @@ func TestServerPutAlerts(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(gettableAlerts))
-	assert.Equal(t, gettableAlerts[0].Alert.Labels["alertname"], "test-alert")
+	assert.Equal(t, gettableAlerts[0].Labels["alertname"], "test-alert")
 	assert.NoError(t, server.Stop(context.Background()))
 }
 
@@ -176,7 +176,7 @@ func TestServerTestAlert(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhook1URL},
+				URL:        config.SecretTemplateURL(webhook1URL.String()),
 			},
 		},
 	}))
@@ -186,7 +186,7 @@ func TestServerTestAlert(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhook2URL},
+				URL:        config.SecretTemplateURL(webhook2URL.String()),
 			},
 		},
 	}))
@@ -268,7 +268,7 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: webhookURL},
+				URL:        config.SecretTemplateURL(webhookURL.String()),
 			},
 		},
 	}))
@@ -278,7 +278,7 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 		WebhookConfigs: []*config.WebhookConfig{
 			{
 				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        &config.SecretURL{URL: &url.URL{Scheme: "http", Host: "localhost:1", Path: "/webhook"}},
+				URL:        config.SecretTemplateURL("http://localhost:1/webhook"),
 			},
 		},
 	}))

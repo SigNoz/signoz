@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/no-duplicate-string, simple-import-sort/imports, @typescript-eslint/indent, no-mixed-spaces-and-tabs */
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	ClickHouseQuery,
 	LogAggregation,
@@ -17,7 +17,6 @@ import {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { prepareQueryRangePayloadV5 } from './prepareQueryRangePayloadV5';
 
@@ -105,7 +104,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { A: 'Legend A', F1: 'Formula Legend' },
 				queryPayload: expect.objectContaining({
@@ -155,7 +154,10 @@ describe('prepareQueryRangePayloadV5', () => {
 		);
 
 		// Legend map combines builder and formulas
-		expect(result.legendMap).toEqual({ A: 'Legend A', F1: 'Formula Legend' });
+		expect(result.legendMap).toStrictEqual({
+			A: 'Legend A',
+			F1: 'Formula Legend',
+		});
 
 		const payload: QueryRangePayloadV5 = result.queryPayload;
 
@@ -167,10 +169,10 @@ describe('prepareQueryRangePayloadV5', () => {
 		expect(payload.formatOptions?.fillGaps).toBe(true);
 
 		// Variables mapped as { key: { value } }
-		expect(payload.variables).toEqual({
-			svc: { value: 'api' },
-			count: { value: 5 },
-			flag: { value: true },
+		expect(payload.variables).toStrictEqual({
+			svc: { value: 'api', type: undefined },
+			count: { value: 5, type: undefined },
+			flag: { value: true, type: undefined },
 		});
 
 		// Queries include one builder_query and one builder_formula
@@ -227,7 +229,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { A: 'LP' },
 				queryPayload: expect.objectContaining({
@@ -256,7 +258,7 @@ describe('prepareQueryRangePayloadV5', () => {
 			}),
 		);
 
-		expect(result.legendMap).toEqual({ A: 'LP' });
+		expect(result.legendMap).toStrictEqual({ A: 'LP' });
 
 		const payload: QueryRangePayloadV5 = result.queryPayload;
 		expect(payload.requestType).toBe('time_series');
@@ -297,7 +299,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { Q: 'LC' },
 				queryPayload: expect.objectContaining({
@@ -325,7 +327,7 @@ describe('prepareQueryRangePayloadV5', () => {
 			}),
 		);
 
-		expect(result.legendMap).toEqual({ Q: 'LC' });
+		expect(result.legendMap).toStrictEqual({ Q: 'LC' });
 
 		const payload: QueryRangePayloadV5 = result.queryPayload;
 		expect(payload.requestType).toBe('scalar');
@@ -354,7 +356,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: {},
 				queryPayload: expect.objectContaining({
@@ -398,7 +400,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { A: 'Legend A' },
 				queryPayload: expect.objectContaining({
@@ -472,7 +474,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { A: 'Legend A' },
 				queryPayload: expect.objectContaining({
@@ -586,7 +588,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result).toEqual(
+		expect(result).toStrictEqual(
 			expect.objectContaining({
 				legendMap: { A: '{{service.name}}' },
 				queryPayload: expect.objectContaining({
@@ -685,7 +687,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		const result = prepareQueryRangePayloadV5(props);
 
-		expect(result.legendMap).toEqual({ A: 'Legend A' });
+		expect(result.legendMap).toStrictEqual({ A: 'Legend A' });
 		expect(result.queryPayload.compositeQuery.queries).toHaveLength(1);
 
 		const builderQuery = result.queryPayload.compositeQuery.queries.find(
@@ -695,7 +697,7 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		expect(logSpec.name).toBe('A');
 		expect(logSpec.signal).toBe('logs');
-		expect(logSpec.filter).toEqual({
+		expect(logSpec.filter).toStrictEqual({
 			expression:
 				"service.name = 'payment-service' AND http.status_code >= 400 AND message contains 'error'",
 		});
@@ -714,7 +716,7 @@ describe('prepareQueryRangePayloadV5', () => {
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
 							filter: { expression: 'http.status_code >= 500' },
-							filters: (undefined as unknown) as IBuilderQuery['filters'],
+							filters: undefined as unknown as IBuilderQuery['filters'],
 						}),
 					],
 					queryFormulas: [],
@@ -732,7 +734,9 @@ describe('prepareQueryRangePayloadV5', () => {
 			(q) => q.type === 'builder_query',
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
-		expect(logSpec.filter).toEqual({ expression: 'http.status_code >= 500' });
+		expect(logSpec.filter).toStrictEqual({
+			expression: 'http.status_code >= 500',
+		});
 	});
 
 	it('derives expression from filters when filter is undefined', () => {
@@ -747,7 +751,7 @@ describe('prepareQueryRangePayloadV5', () => {
 					queryData: [
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
-							filter: (undefined as unknown) as IBuilderQuery['filter'],
+							filter: undefined as unknown as IBuilderQuery['filter'],
 							filters: {
 								items: [
 									{
@@ -776,7 +780,9 @@ describe('prepareQueryRangePayloadV5', () => {
 			(q) => q.type === 'builder_query',
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
-		expect(logSpec.filter).toEqual({ expression: "service.name = 'checkout'" });
+		expect(logSpec.filter).toStrictEqual({
+			expression: "service.name = 'checkout'",
+		});
 	});
 
 	it('prefers filter.expression over filters when both are present', () => {
@@ -820,7 +826,9 @@ describe('prepareQueryRangePayloadV5', () => {
 			(q) => q.type === 'builder_query',
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
-		expect(logSpec.filter).toEqual({ expression: "service.name = 'frontend'" });
+		expect(logSpec.filter).toStrictEqual({
+			expression: "service.name = 'frontend'",
+		});
 	});
 
 	it('returns empty expression when neither filter nor filters provided', () => {
@@ -835,8 +843,8 @@ describe('prepareQueryRangePayloadV5', () => {
 					queryData: [
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
-							filter: (undefined as unknown) as IBuilderQuery['filter'],
-							filters: (undefined as unknown) as IBuilderQuery['filters'],
+							filter: undefined as unknown as IBuilderQuery['filter'],
+							filters: undefined as unknown as IBuilderQuery['filters'],
 						}),
 					],
 					queryFormulas: [],
@@ -854,7 +862,7 @@ describe('prepareQueryRangePayloadV5', () => {
 			(q) => q.type === 'builder_query',
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
-		expect(logSpec.filter).toEqual({ expression: '' });
+		expect(logSpec.filter).toStrictEqual({ expression: '' });
 	});
 
 	it('returns empty expression when filters provided with empty items', () => {
@@ -888,6 +896,6 @@ describe('prepareQueryRangePayloadV5', () => {
 			(q) => q.type === 'builder_query',
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
-		expect(logSpec.filter).toEqual({ expression: '' });
+		expect(logSpec.filter).toStrictEqual({ expression: '' });
 	});
 });

@@ -93,7 +93,7 @@ function convertTimeSeriesData(
 				labels: series.labels
 					? Object.fromEntries(
 							series.labels.map((label: any) => [label.key.name, label.value]),
-					  )
+						)
 					: {},
 				labelsArray: series.labels
 					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
@@ -274,7 +274,6 @@ function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
 ): any {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
 	// Convert V5 distribution format to legacy histogram format
 	return {
 		...distributionData,
@@ -359,16 +358,19 @@ export function convertV5ResponseToLegacy(
 	const aggregationPerQuery =
 		(params as QueryRangeRequestV5)?.compositeQuery?.queries
 			?.filter((query) => query.type === 'builder_query')
-			.reduce((acc, query) => {
-				if (
-					query.type === 'builder_query' &&
-					'aggregations' in query.spec &&
-					query.spec.name
-				) {
-					acc[query.spec.name] = query.spec.aggregations;
-				}
-				return acc;
-			}, {} as Record<string, any>) || {};
+			.reduce(
+				(acc, query) => {
+					if (
+						query.type === 'builder_query' &&
+						'aggregations' in query.spec &&
+						query.spec.name
+					) {
+						acc[query.spec.name] = query.spec.aggregations;
+					}
+					return acc;
+				},
+				{} as Record<string, any>,
+			) || {};
 
 	// If formatForWeb is true, return as-is (like existing logic)
 	if (formatForWeb && v5Data?.type === 'scalar') {
@@ -388,6 +390,7 @@ export function convertV5ResponseToLegacy(
 					warnings: v5Data?.data?.warning || [],
 				},
 				warning: v5Data?.warning || undefined,
+				meta: v5Data?.meta,
 			},
 			warning: v5Data?.warning || undefined,
 		};
@@ -406,6 +409,7 @@ export function convertV5ResponseToLegacy(
 		payload: {
 			data: convertedData,
 			warning: v5Response.payload?.data?.warning || undefined,
+			meta: v5Data?.meta,
 		},
 	};
 
@@ -413,7 +417,6 @@ export function convertV5ResponseToLegacy(
 	if (legacyResponse.payload?.data?.result) {
 		legacyResponse.payload.data.result = legacyResponse.payload.data.result.map(
 			(queryData: any) => {
-				// eslint-disable-line @typescript-eslint/no-explicit-any
 				const newQueryData = cloneDeep(queryData);
 				newQueryData.legend = legendMap[queryData.queryName];
 

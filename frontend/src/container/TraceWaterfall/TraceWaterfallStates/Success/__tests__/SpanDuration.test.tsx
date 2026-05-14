@@ -14,7 +14,8 @@ const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
 
 // Mock the hooks
 jest.mock('hooks/useUrlQuery');
-jest.mock('@signozhq/badge', () => ({
+jest.mock('@signozhq/ui/badge', () => ({
+	...jest.requireActual('@signozhq/ui/badge'),
 	Badge: jest.fn(),
 }));
 
@@ -135,7 +136,6 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		const spanElement = screen
 			.getByText(SPAN_DURATION_TEXT)
 			.closest(SPAN_DURATION_CLASS);

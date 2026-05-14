@@ -1,5 +1,4 @@
-/* eslint-disable no-nested-ternary */
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import {
 	ArrowDown,
@@ -8,7 +7,7 @@ import {
 	Command,
 	CornerDownLeft,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 

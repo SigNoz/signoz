@@ -7,14 +7,16 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Button, Collapse, ColorPicker, Tooltip, Typography } from 'antd';
+import { Button, Collapse, ColorPicker, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { Palette } from 'lucide-react';
+import throttle from 'lodash-es/throttle';
+import { Palette } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -95,13 +97,24 @@ function LegendColors({
 		);
 	};
 
-	// Handle color change
-	const handleColorChange = (label: string, color: string): void => {
-		setCustomLegendColors((prev) => ({
-			...prev,
-			[label]: color,
-		}));
-	};
+	// Handle color change (throttled to avoid excessive updates)
+	const handleColorChange = useMemo(
+		() =>
+			throttle((label: string, color: string): void => {
+				setCustomLegendColors((prev) => ({
+					...prev,
+					[label]: color,
+				}));
+			}, 200), // 200ms is a good compromise between responsiveness and performance
+		[setCustomLegendColors],
+	);
+
+	// Clean up throttled handler on unmount
+	useEffect(() => {
+		return (): void => {
+			handleColorChange.cancel();
+		};
+	}, [handleColorChange]);
 
 	// Reset to default color
 	const resetToDefault = (label: string): void => {
@@ -129,7 +142,7 @@ function LegendColors({
 			children: (
 				<div className="legend-colors-content">
 					{legendLabels.length === 0 ? (
-						<Typography.Text type="secondary">
+						<Typography.Text color="muted">
 							No legends available. Run a query to see legend options.
 						</Typography.Text>
 					) : (

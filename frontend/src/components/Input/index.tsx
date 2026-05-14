@@ -34,7 +34,6 @@ function InputComponent({
 				addonBefore={addonBefore}
 				onBlur={onBlurHandler}
 				onPressEnter={onPressEnterHandler}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
 		</Form.Item>

@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Checkbox, Tooltip, Typography } from 'antd';
+import { Checkbox, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
@@ -161,9 +164,10 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	const isCheckBoxSelected = isUserSelected;
 
-	const TooTipOverLay = useMemo((): JSX.Element => <div>{keyValue}</div>, [
-		keyValue,
-	]);
+	const TooTipOverLay = useMemo(
+		(): JSX.Element => <div>{keyValue}</div>,
+		[keyValue],
+	);
 
 	return (
 		<CheckBoxContainer>
@@ -175,7 +179,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				key={keyValue}
 			>
 				<Tooltip overlay={TooTipOverLay}>
-					<ParaGraph ellipsis>{keyValue}</ParaGraph>
+					<ParaGraph truncate={1}>{keyValue}</ParaGraph>
 				</Tooltip>
 			</Checkbox>
 			{isCheckBoxSelected ? (

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Slider, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Slider } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight, Loader2, Minus } from 'lucide-react';
+import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
@@ -194,9 +195,9 @@ function OptimiseSignozNeeds({
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<Typography.Paragraph className="question">
+						<Typography.Text className="question">
 							What does your scale approximately look like?
-						</Typography.Paragraph>
+						</Typography.Text>
 					</div>
 
 					<div className="form-group">
@@ -290,9 +291,9 @@ function OptimiseSignozNeeds({
 						}`}
 						onClick={handleOnNext}
 						disabled={isUpdatingProfile || isNextDisabled}
-						suffixIcon={
+						suffix={
 							isUpdatingProfile ? (
-								<Loader2 className="animate-spin" size={12} />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
 							)

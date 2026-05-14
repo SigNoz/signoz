@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// MockNotificationManager is a simple mock implementation of NotificationManager
+// MockNotificationManager is a simple mock implementation of NotificationManager.
 type MockNotificationManager struct {
 	configs      map[string]*alertmanagertypes.NotificationConfig
 	routes       map[string]*alertmanagertypes.RoutePolicy
@@ -17,7 +17,7 @@ type MockNotificationManager struct {
 	errors       map[string]error
 }
 
-// NewMock creates a new mock notification manager
+// NewMock creates a new mock notification manager.
 func NewMock() *MockNotificationManager {
 	return &MockNotificationManager{
 		configs:      make(map[string]*alertmanagertypes.NotificationConfig),
@@ -238,6 +238,26 @@ func (m *MockNotificationManager) DeleteAllRoutePoliciesByName(ctx context.Conte
 	delete(m.routesByName, nameKey)
 
 	return nil
+}
+
+func (m *MockNotificationManager) GetRoutePoliciesByChannel(ctx context.Context, orgID string, channelName string) ([]*alertmanagertypes.RoutePolicy, error) {
+	if orgID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+
+	var matched []*alertmanagertypes.RoutePolicy
+	for _, route := range m.routes {
+		if route.OrgID != orgID {
+			continue
+		}
+		for _, ch := range route.Channels {
+			if ch == channelName {
+				matched = append(matched, route)
+				break
+			}
+		}
+	}
+	return matched, nil
 }
 
 func (m *MockNotificationManager) Match(ctx context.Context, orgID string, ruleID string, set model.LabelSet) ([]string, error) {

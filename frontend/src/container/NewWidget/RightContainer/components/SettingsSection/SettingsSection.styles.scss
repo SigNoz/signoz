@@ -1,0 +1,56 @@
+.settings-section {
+	border-top: 1px solid var(--l1-border);
+}
+
+.settings-section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 12px 12px;
+	min-height: 44px;
+	background: transparent;
+	border: none;
+	outline: none;
+	cursor: pointer;
+
+	.settings-section-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--l1-foreground);
+		font-family: 'Space Mono';
+		font-size: 13px;
+		font-weight: 400;
+		text-transform: uppercase;
+	}
+
+	.chevron-icon {
+		color: var(--l2-foreground);
+		transition: transform 0.2s ease-in-out;
+
+		&.open {
+			transform: rotate(180deg);
+		}
+	}
+}
+
+.settings-section-content {
+	padding: 0 12px 0 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	max-height: 0;
+	overflow: hidden;
+	opacity: 0;
+	transition:
+		max-height 0.1s ease,
+		opacity 0.1s ease,
+		padding 0.1s ease;
+
+	&.open {
+		padding-bottom: 24px;
+		max-height: 1000px;
+		opacity: 1;
+	}
+}

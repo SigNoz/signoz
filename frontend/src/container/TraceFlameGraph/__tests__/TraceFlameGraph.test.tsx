@@ -1,10 +1,11 @@
 import { useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, renderHook } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import store from 'store';
 
-test('loads and displays greeting', () => {
+it('loads and displays greeting', () => {
 	const { rerender } = renderHook(() => useState(''));
 
 	const { asFragment } = render(

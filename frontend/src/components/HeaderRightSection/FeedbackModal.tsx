@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/sonner';
-import { Button, Input, Radio, RadioChangeEvent, Typography } from 'antd';
+import { toast } from '@signozhq/ui/sonner';
+import { Button, Input, Radio, RadioChangeEvent } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	const [activeTab, setActiveTab] = useState('feedback');

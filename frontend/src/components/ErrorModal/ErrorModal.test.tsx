@@ -19,11 +19,8 @@ jest.mock('react-query', () => ({
 const mockError: APIError = new APIError({
 	httpStatusCode: 400,
 	error: {
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		message: 'Something went wrong while processing your request.',
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		code: 'An error occurred',
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		url: 'https://example.com/docs',
 		errors: [
 			{ message: 'First error detail' },

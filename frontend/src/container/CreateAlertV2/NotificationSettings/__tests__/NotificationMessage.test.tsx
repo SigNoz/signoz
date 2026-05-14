@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as createAlertContext from 'container/CreateAlertV2/context';
@@ -21,8 +20,8 @@ jest.mock('uplot', () => {
 });
 
 const mockSetNotificationSettings = jest.fn();
-const initialNotificationSettingsState = createMockAlertContextState()
-	.notificationSettings;
+const initialNotificationSettingsState =
+	createMockAlertContextState().notificationSettings;
 jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		notificationSettings: {
@@ -64,7 +63,7 @@ describe('NotificationMessage', () => {
 						description: 'Existing message',
 					},
 					setNotificationSettings: mockSetNotificationSettings,
-				} as any),
+				}) as any,
 		);
 
 		render(<NotificationMessage />);

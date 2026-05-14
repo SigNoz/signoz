@@ -1,25 +1,34 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover } from 'antd';
+import {
+	ClipboardList,
+	Compass,
+	Dot,
+	House,
+	Plus,
+	Wrench,
+} from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
-import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench, X } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
@@ -28,7 +37,15 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
+import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import crackerUrl from '@/assets/Icons/cracker.svg';
+import dashboardUrl from '@/assets/Icons/dashboard.svg';
+import wrenchUrl from '@/assets/Icons/wrench.svg';
+import allInOneUrl from '@/assets/Images/allInOne.svg';
+import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
+import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
 import { defaultChecklistItemsState } from './constants';
@@ -46,28 +63,20 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
+	const isDarkMode = useIsDarkMode();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
 
-	const { isCommunityUser, isCommunityEnterpriseUser } = useGetTenantLicense();
-
 	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
-
-	const [isBannerDismissed, setIsBannerDismissed] = useState(false);
-
-	useEffect(() => {
-		const bannerDismissed = localStorage.getItem(LOCALSTORAGE.BANNER_DISMISSED);
-		setIsBannerDismissed(bannerDismissed === 'true');
-	}, []);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -84,7 +93,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.LOGS,
 			},
@@ -94,7 +103,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
@@ -109,7 +118,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.TRACES,
 			},
@@ -119,7 +128,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
@@ -129,44 +138,12 @@ export default function Home(): JSX.Element {
 	);
 
 	// Detect Metrics
-	const query = useMemo(() => {
-		const baseQuery = getMetricsListQuery();
-
-		let queryStartTime = startTime;
-		let queryEndTime = endTime;
-
-		if (!startTime || !endTime) {
-			const now = new Date();
-			const startTime = new Date(now.getTime() - homeInterval);
-			const endTime = now;
-
-			queryStartTime = startTime.getTime();
-			queryEndTime = endTime.getTime();
-		}
-
-		return {
-			...baseQuery,
-			limit: 10,
-			offset: 0,
-			filters: {
-				items: [],
-				op: 'AND',
-			},
-			start: queryStartTime,
-			end: queryEndTime,
-		};
-	}, [startTime, endTime]);
-
-	const { data: metricsData } = useGetMetricsList(query, {
-		enabled: !!query,
-		queryKey: ['metricsList', query],
-	});
+	const { data: metricsOnboardingData } = useGetMetricsOnboardingStatus();
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -286,61 +263,33 @@ export default function Home(): JSX.Element {
 	}, [tracesData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		const metricsDataTotal = metricsData?.payload?.data?.total ?? 0;
-
-		if (metricsDataTotal > 0) {
+		if (metricsOnboardingData?.data?.hasMetrics) {
 			setIsMetricsIngestionActive(true);
 			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
 			handleUpdateChecklistDoneItem('SEND_METRICS');
 		}
-	}, [metricsData, handleUpdateChecklistDoneItem]);
+	}, [metricsOnboardingData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});
 	}, []);
 
-	const hideBanner = (): void => {
-		localStorage.setItem(LOCALSTORAGE.BANNER_DISMISSED, 'true');
-		setIsBannerDismissed(true);
-	};
-
-	const showBanner = useMemo(
-		() => !isBannerDismissed && (isCommunityUser || isCommunityEnterpriseUser),
-		[isBannerDismissed, isCommunityUser, isCommunityEnterpriseUser],
-	);
-
 	return (
 		<div className="home-container">
 			<div className="sticky-header">
-				{showBanner && (
-					<div className="home-container-banner">
-						<div className="home-container-banner-content">
-							Big News: SigNoz Community Edition now available with SSO (Google OAuth)
-							and API keys -
-							<a
-								href="https://signoz.io/blog/open-source-signoz-now-available-with-sso-and-api-keys/"
-								target="_blank"
-								rel="noreferrer"
-								className="home-container-banner-link"
-							>
-								<i>read more</i>
-							</a>
-						</div>
-
-						<div className="home-container-banner-close">
-							<X size={16} onClick={hideBanner} />
-						</div>
-					</div>
-				)}
-
 				<Header
 					leftComponent={
 						<div className="home-header-left">
-							<HomeIcon size={14} /> Home
+							<House size={14} /> Home
 						</div>
 					}
 					rightComponent={
 						<div className="home-header-right">
+							<HeaderRightSection
+								enableAnnouncements={false}
+								enableFeedback={false}
+								enableShare={false}
+							/>
 							{isWelcomeChecklistSkipped && (
 								<Popover
 									placement="bottomRight"
@@ -359,18 +308,11 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
-										type="default"
-										size="small"
-										className="periscope-btn secondary welcome-checklist-btn"
+										variant="solid"
+										color="secondary"
+										prefix={<ClipboardList size={14} />}
 									>
-										<img
-											src="/Icons/spinner-half-blue.svg"
-											alt="spinner-half-blue"
-											width={16}
-											height={16}
-											className="welcome-checklist-icon"
-										/>
-										&nbsp; Welcome checklist
+										Welcome checklist
 									</Button>
 								</Popover>
 							)}
@@ -390,10 +332,6 @@ export default function Home(): JSX.Element {
 						isLoading={isLogsLoading || isTracesLoading}
 					/>
 
-					<div className="divider">
-						<img src="/Images/dotted-divider.svg" alt="divider" />
-					</div>
-
 					<div className="active-ingestions-container">
 						{isLogsIngestionActive && (
 							<Card className="active-ingestion-card" size="small">
@@ -401,7 +339,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -413,12 +351,14 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											className="active-ingestion-card-actions"
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												// eslint-disable-next-line sonarjs/no-duplicate-string
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												history.push(ROUTES.LOGS_EXPLORER);
+												safeNavigate(ROUTES.LOGS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -429,7 +369,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Logs
 										</div>
 									</div>
@@ -443,7 +383,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -455,11 +395,13 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												history.push(ROUTES.TRACES_EXPLORER);
+												safeNavigate(ROUTES.TRACES_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -470,7 +412,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Traces
 										</div>
 									</div>
@@ -484,7 +426,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -496,11 +438,13 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												history.push(ROUTES.METRICS_EXPLORER);
+												safeNavigate(ROUTES.METRICS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -511,7 +455,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Metrics
 										</div>
 									</div>
@@ -528,7 +472,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/wrench.svg"
+													src={wrenchUrl}
 													alt="wrench"
 													width={16}
 													height={16}
@@ -547,42 +491,51 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												prefix={<Wrench size={14} />}
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													safeNavigate(ROUTES.LOGS_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Logs Explorer
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												prefix={<Wrench size={14} />}
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													safeNavigate(ROUTES.TRACES_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Traces Explorer
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												prefix={<Wrench size={14} />}
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													safeNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Metrics Explorer
@@ -597,12 +550,7 @@ export default function Home(): JSX.Element {
 									<div className="section-container">
 										<div className="section-content">
 											<div className="section-icon">
-												<img
-													src="/Icons/dashboard.svg"
-													alt="dashboard"
-													width={16}
-													height={16}
-												/>
+												<img src={dashboardUrl} alt="dashboard" width={16} height={16} />
 											</div>
 
 											<div className="section-title">
@@ -616,14 +564,17 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
-												onClick={(): void => {
+												prefix={<Plus size={14} />}
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													safeNavigate(ROUTES.ALL_DASHBOARD, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create dashboard
@@ -639,7 +590,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/cracker.svg"
+													src={crackerUrl}
 													alt="cracker"
 													width={16}
 													height={16}
@@ -658,14 +609,17 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
-												onClick={(): void => {
+												prefix={<Plus size={14} />}
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													safeNavigate(ROUTES.ALERTS_NEW, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create an alert
@@ -716,7 +670,7 @@ export default function Home(): JSX.Element {
 											<div className="checklist-container-right-img">
 												<div className="checklist-img-bg-container">
 													<img
-														src="/Images/perilianBackground.svg"
+														src={perilianBackgroundUrl}
 														alt="not-found"
 														className="checklist-img-bg"
 													/>
@@ -724,7 +678,7 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src="/Images/allInOne.svg"
+														src={isDarkMode ? allInOneUrl : allInOneLightModeUrl}
 														alt="checklist-img"
 														className="checklist-img"
 													/>
@@ -737,7 +691,8 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
-											type="link"
+											variant="link"
+											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
 										>

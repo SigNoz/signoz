@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -282,7 +280,7 @@ const renderEntityMetrics = (overrides = {}): any => {
 		entityWidgetInfo: mockEntityWidgetInfo,
 		getEntityQueryPayload: mockGetEntityQueryPayload,
 		queryKey: 'test-query-key',
-		category: K8sCategory.PODS,
+		category: InfraMonitoringEntity.PODS,
 		...overrides,
 	};
 

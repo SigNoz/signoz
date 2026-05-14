@@ -32,7 +32,7 @@ func (s Seasonality) IsValid() bool {
 }
 
 type AnomaliesRequest struct {
-	Params      qbtypes.QueryRangeRequest
+	Params      *qbtypes.QueryRangeRequest
 	Seasonality Seasonality
 }
 
@@ -47,7 +47,7 @@ type AnomaliesResponse struct {
 //		              |                                  |
 //			(rounded value for past peiod)    +      (seasonal growth)
 //
-// score = abs(value - prediction) / stddev (current_season_query)
+// score = abs(value - prediction) / stddev (current_season_query).
 type anomalyQueryParams struct {
 	// CurrentPeriodQuery is the query range params for period user is looking at or eval window
 	// Example: (now-5m, now), (now-30m, now), (now-1h, now)
@@ -81,7 +81,7 @@ type anomalyQueryParams struct {
 	Past3SeasonQuery qbtypes.QueryRangeRequest
 }
 
-func prepareAnomalyQueryParams(req qbtypes.QueryRangeRequest, seasonality Seasonality) *anomalyQueryParams {
+func prepareAnomalyQueryParams(req *qbtypes.QueryRangeRequest, seasonality Seasonality) *anomalyQueryParams {
 	start := req.Start
 	end := req.End
 
