@@ -8,10 +8,25 @@ import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import APIError from 'types/api/error';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
 import { v4 as uuidv4 } from 'uuid';
+
+export function isKeyNotFoundError(error: unknown): boolean {
+	if (!(error instanceof APIError)) {
+		return false;
+	}
+
+	const errorDetails = error.getErrorDetails();
+	if (errorDetails.error.code !== 'invalid_input') {
+		return false;
+	}
+
+	const errors = errorDetails.error.errors || [];
+	return errors.some((err) => err.message?.includes('not found'));
+}
 
 export const QUERY_KEYS = {
 	K8S_OBJECT_KIND: 'k8s.object.kind',

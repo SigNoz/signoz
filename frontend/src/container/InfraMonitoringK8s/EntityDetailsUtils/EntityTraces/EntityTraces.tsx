@@ -35,6 +35,7 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
 import { selectedEntityTracesColumns } from '../utils';
+import { isKeyNotFoundError } from '../utils';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY, useEntityTraces } from './hooks';
 import { getTraceListColumns } from './traceListColumns';
 import { getEntityTracesQueryPayload } from './utils';
@@ -86,6 +87,7 @@ function EntityTracesContent({
 		isLoading,
 		isFetching,
 		isError,
+		error,
 		currentCount,
 		hasMore,
 		refetch,
@@ -136,8 +138,12 @@ function EntityTracesContent({
 
 	const traceListColumns = getTraceListColumns(selectedEntityTracesColumns);
 
+	const isKeyNotFound = isKeyNotFoundError(error);
 	const isDataEmpty =
-		!isLoading && !isFetching && !isError && traces.length === 0;
+		!isLoading &&
+		!isFetching &&
+		(!isError || isKeyNotFound) &&
+		traces.length === 0;
 	const hasAdditionalFilters = !!userExpression?.trim();
 
 	const handleRowClick = useCallback(() => {
@@ -192,9 +198,9 @@ function EntityTracesContent({
 
 			{isDataEmpty && <EntityEmptyState hasFilters={hasAdditionalFilters} />}
 
-			{isError && !isLoading && <EntityError />}
+			{isError && !isKeyNotFound && !isLoading && <EntityError />}
 
-			{!isError && traces.length > 0 && (
+			{(!isError || isKeyNotFound) && traces.length > 0 && (
 				<div className={styles.entityTracesTable}>
 					<div className={styles.controls}>
 						<Controls
