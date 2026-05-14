@@ -11,12 +11,29 @@ export default {
 			{
 				kind: 'role',
 				type: 'role',
-				allowedVerbs: ['assignee', 'attach', 'create', 'delete', 'detach', 'list', 'read', 'update'],
+				allowedVerbs: [
+					'assignee',
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 			{
 				kind: 'serviceaccount',
 				type: 'serviceaccount',
-				allowedVerbs: ['attach', 'create', 'delete', 'detach', 'list', 'read', 'update'],
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 		],
 		relations: {

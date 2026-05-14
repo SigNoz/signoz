@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -23,7 +24,15 @@ export default {
 			{
 				kind: '{{ .Kind }}',
 				type: '{{ .Type }}',
+{{- if .MultiLineVerbs }}
+				allowedVerbs: [
+{{- range .AllowedVerbs }}
+					'{{ . }}',
+{{- end }}
+				],
+{{- else }}
 				allowedVerbs: [{{ range $i, $v := .AllowedVerbs }}{{ if $i }}, {{ end }}'{{ $v }}'{{ end }}],
+{{- end }}
 			},
 {{- end }}
 		],
@@ -42,9 +51,10 @@ type permissionsTypeRelation struct {
 }
 
 type permissionsTypeResource struct {
-	Kind         string
-	Type         string
-	AllowedVerbs []string
+	Kind           string
+	Type           string
+	AllowedVerbs   []string
+	MultiLineVerbs bool
 }
 
 type permissionsTypeData struct {
@@ -68,8 +78,8 @@ func runGenerateAuthz(_ context.Context) error {
 	registry := coretypes.NewRegistry()
 
 	allowedResources := map[string]bool{
-		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():        true,
-		coretypes.NewResourceRef(coretypes.ResourceRole).String():                  true,
+		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():           true,
+		coretypes.NewResourceRef(coretypes.ResourceRole).String():                     true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceFactorAPIKey).String(): true,
 	}
 
@@ -95,10 +105,18 @@ func runGenerateAuthz(_ context.Context) error {
 		}
 		sort.Strings(allowedVerbStrings)
 
+		quoted := make([]string, len(allowedVerbStrings))
+		for i, v := range allowedVerbStrings {
+			quoted[i] = "'" + v + "'"
+		}
+		oneLine := "allowedVerbs: [" + strings.Join(quoted, ", ") + "],"
+		multiLine := 4+len(oneLine) > 80
+
 		resources = append(resources, permissionsTypeResource{
-			Kind:         ref.Kind.String(),
-			Type:         ref.Type.StringValue(),
-			AllowedVerbs: allowedVerbStrings,
+			Kind:           ref.Kind.String(),
+			Type:           ref.Type.StringValue(),
+			AllowedVerbs:   allowedVerbStrings,
+			MultiLineVerbs: multiLine,
 		})
 	}
 
