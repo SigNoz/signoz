@@ -2,6 +2,8 @@ package telemetrylogs
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +16,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
+
+func bodyJSONStatus(t *testing.T, enabled bool) string {
+	t.Helper()
+
+	if enabled {
+		return "body_json_enabled"
+	}
+	return "body_json_disabled"
+}
+
+func bodyJSONReplaceSelectColumns(t *testing.T, expected string, enabled bool) string {
+	t.Helper()
+	if enabled {
+		return strings.ReplaceAll(expected, "scope_version, body,", fmt.Sprintf("scope_version, %s,", bodyAliasExpression(true)))
+	}
+	return expected
+}
 
 func TestStatementBuilderTimeSeries(t *testing.T) {
 	// Create a test release time
@@ -315,41 +334,45 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	fl := flaggertest.New(t)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper(fl)
 
-	// Create a test release time
-	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
-	cb := NewConditionBuilder(fm, fl)
+	for _, enabled := range []bool{false, true} {
+		t.Run(bodyJSONStatus(t, enabled), func(t *testing.T) {
+			fl := flaggertest.WithUseJSONBody(t, enabled)
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			fm := NewFieldMapper(fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+			// Create a test release time
+			releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+			mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
+			cb := NewConditionBuilder(fm, fl)
 
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-		fl,
-	)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
+			statementBuilder := NewLogQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				mockMetadataStore,
+				fm,
+				cb,
+				aggExprRewriter,
+				DefaultFullTextColumn,
+				GetBodyJSONKey,
+				fl,
+			)
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
-
-			if c.expectedErr != nil {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), c.expectedErr.Error())
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, q.Query)
-				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.Warnings, q.Warnings)
+			for _, c := range cases {
+				t.Run(c.name, func(t *testing.T) {
+					q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+					expectedQuery := bodyJSONReplaceSelectColumns(t, c.expected.Query, enabled)
+					if c.expectedErr != nil {
+						require.Error(t, err)
+						require.Contains(t, err.Error(), c.expectedErr.Error())
+					} else {
+						require.NoError(t, err)
+						require.Equal(t, expectedQuery, q.Query)
+						require.Equal(t, c.expected.Args, q.Args)
+						require.Equal(t, c.expected.Warnings, q.Warnings)
+					}
+				})
 			}
 		})
 	}
@@ -671,7 +694,6 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 }
 
 func TestAdjustKey(t *testing.T) {
-
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	cases := []struct {
@@ -855,39 +877,43 @@ func TestAdjustKey(t *testing.T) {
 		},
 	}
 
-	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	cb := NewConditionBuilder(fm, fl)
+	for _, useJSONBody := range []bool{false, true} {
+		t.Run(bodyJSONStatus(t, useJSONBody), func(t *testing.T) {
+			fl := flaggertest.WithUseJSONBody(t, useJSONBody)
+			fm := NewFieldMapper(fl)
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
+			cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
-	statementBuilder := NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-		fl,
-	)
+			statementBuilder := NewLogQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				mockMetadataStore,
+				fm,
+				cb,
+				aggExprRewriter,
+				DefaultFullTextColumn,
+				GetBodyJSONKey,
+				fl,
+			)
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			// Create a copy of the input key to avoid modifying the original
-			key := c.inputKey
+			for _, c := range cases {
+				t.Run(c.name, func(t *testing.T) {
+					// Create a copy of the input key to avoid modifying the original
+					key := c.inputKey
 
-			// Call adjustKey
-			statementBuilder.adjustKey(&key, c.keysMap)
+					// Call adjustKey
+					statementBuilder.adjustKey(&key, c.keysMap)
 
-			// Verify the key was adjusted as expected
-			require.Equal(t, c.expectedKey.Name, key.Name, "key name should match")
-			require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
-			require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
-			require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
-			require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
+					// Verify the key was adjusted as expected
+					require.Equal(t, c.expectedKey.Name, key.Name, "key name should match")
+					require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
+					require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
+					require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
+					require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
+				})
+			}
 		})
 	}
 }
