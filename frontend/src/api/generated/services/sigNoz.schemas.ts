@@ -4162,6 +4162,7 @@ export enum CoretypesTypeDTO {
 	role = 'role',
 	organization = 'organization',
 	metaresource = 'metaresource',
+	telemetryresource = 'telemetryresource',
 }
 export interface DashboardtypesDashboardDTO {
 	/**
