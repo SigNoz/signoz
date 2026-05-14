@@ -8,6 +8,22 @@ import { fireEvent, render, screen } from 'tests/test-utils';
 
 import RolesSettings from '../RolesSettings';
 
+jest.mock('hooks/useAuthZ/useAuthZ', () => ({
+	useAuthZ: (permissions: string[]): Record<string, unknown> => ({
+		isLoading: false,
+		isFetching: false,
+		error: null,
+		permissions: permissions.reduce(
+			(acc: Record<string, { isGranted: boolean }>, p) => {
+				acc[p] = { isGranted: true };
+				return acc;
+			},
+			{},
+		),
+		refetchPermissions: jest.fn(),
+	}),
+}));
+
 const rolesApiURL = 'http://localhost/api/v1/roles';
 
 describe('RolesSettings', () => {
