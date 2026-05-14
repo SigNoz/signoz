@@ -349,7 +349,7 @@ def test_non_body_aggregation(
 
 
 # ============================================================================
-# OrderBy — Non body paths ordered by non-body fields
+# OrderBy — ordered by non-body fields
 #
 # A single 4-log dataset with varied attributes exercises ORDER BY
 # across resource attribute, and top-level fields.
