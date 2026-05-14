@@ -448,6 +448,7 @@ components:
       - delete
       - list
       - assignee
+      - attach
       type: string
     AuthtypesRole:
       properties:
@@ -3374,7 +3375,7 @@ components:
       type: string
     InframonitoringtypesStatefulSetRecord:
       properties:
-        availablePods:
+        currentPods:
           type: integer
         desiredPods:
           type: integer
@@ -3414,7 +3415,7 @@ components:
       - statefulSetMemoryRequest
       - statefulSetMemoryLimit
       - desiredPods
-      - availablePods
+      - currentPods
       - podCountsByPhase
       - meta
       type: object
@@ -5098,18 +5099,19 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
-      type: object
-    RuletypesEvaluationEnvelope:
-      oneOf:
-      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
-      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
       required:
       - kind
       - spec
+      type: object
+    RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -5122,6 +5124,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -5429,15 +5434,12 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -5479,6 +5481,9 @@ components:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesThresholdKind:
       enum:
@@ -5656,19 +5661,17 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         name:
           type: string
       required:
       - name
-      - field_context
+      - fieldContext
       - config
       type: object
     SpantypesPostableSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
@@ -5677,7 +5680,6 @@ components:
           type: string
       required:
       - name
-      - category
       - condition
       type: object
     SpantypesSpanMapper:
@@ -5691,7 +5693,7 @@ components:
           type: string
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         group_id:
           type: string
@@ -5708,7 +5710,7 @@ components:
       - id
       - group_id
       - name
-      - field_context
+      - fieldContext
       - config
       - enabled
       type: object
@@ -5724,8 +5726,6 @@ components:
       type: object
     SpantypesSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
@@ -5750,13 +5750,11 @@ components:
       - id
       - orgId
       - name
-      - category
       - condition
       - enabled
       type: object
-    SpantypesSpanMapperGroupCategory:
-      type: object
     SpantypesSpanMapperGroupCondition:
+      nullable: true
       properties:
         attributes:
           items:
@@ -5800,7 +5798,7 @@ components:
         enabled:
           nullable: true
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
       type: object
     SpantypesUpdatableSpanMapperGroup:
@@ -10125,9 +10123,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:list
       - tokenizer:
-        - ADMIN
+        - serviceaccount:list
       summary: List service accounts
       tags:
       - serviceaccount
@@ -10187,9 +10185,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:create
       - tokenizer:
-        - ADMIN
+        - serviceaccount:create
       summary: Create service account
       tags:
       - serviceaccount
@@ -10237,9 +10235,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:delete
       - tokenizer:
-        - ADMIN
+        - serviceaccount:delete
       summary: Deletes a service account
       tags:
       - serviceaccount
@@ -10294,9 +10292,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets a service account
       tags:
       - serviceaccount
@@ -10354,9 +10352,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account
       tags:
       - serviceaccount
@@ -10408,9 +10406,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: List service account keys
       tags:
       - serviceaccount
@@ -10476,9 +10474,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -10531,9 +10529,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -10596,9 +10594,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -10657,9 +10655,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets service account roles
       tags:
       - serviceaccount
@@ -10719,9 +10717,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Create service account role
       tags:
       - serviceaccount
@@ -10768,9 +10768,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Delete service account role
       tags:
       - serviceaccount
@@ -10847,12 +10849,6 @@ paths:
         org.
       operationId: ListSpanMapperGroups
       parameters:
-      - explode: true
-        in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
-        style: deepObject
       - in: query
         name: enabled
         schema:
@@ -12959,7 +12955,7 @@ paths:
         the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest,
         statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
-        and availablePods (k8s.statefulset.current_pods) replica counts and per-group
+        and currentPods (k8s.statefulset.current_pods) replica counts and per-group
         podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
         pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
         (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
@@ -12967,11 +12963,11 @@ paths:
         for custom groupBy keys; in both modes every row aggregates pods owned by
         statefulsets in the group. Supports filtering via a filter expression, custom
         groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
-        / memory_limit / desired_pods / available_pods, and pagination via offset/limit.
+        / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
         Also reports missing required metrics and whether the requested time range
         falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
         statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
-        statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel
+        statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel
         when no data is available for that field.'
       operationId: ListStatefulSets
       requestBody:

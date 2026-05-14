@@ -186,7 +186,7 @@ func TestPostableStatefulSets_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "orderBy with valid key available_pods and direction asc",
+			name: "orderBy with valid key current_pods and direction asc",
 			req: &PostableStatefulSets{
 				Start:  1000,
 				End:    2000,
@@ -195,7 +195,7 @@ func TestPostableStatefulSets_Validate(t *testing.T) {
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: StatefulSetsOrderByAvailablePods,
+							Name: StatefulSetsOrderByCurrentPods,
 						},
 					},
 					Direction: qbtypes.OrderDirectionAsc,

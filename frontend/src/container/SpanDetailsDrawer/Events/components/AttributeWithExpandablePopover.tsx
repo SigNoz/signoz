@@ -1,5 +1,6 @@
-import { Button, Popover, Tooltip, Typography } from 'antd';
-import { Fullscreen } from 'lucide-react';
+import { Button, Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Fullscreen } from '@signozhq/icons';
 
 import './AttributeWithExpandablePopover.styles.scss';
 
@@ -33,14 +34,14 @@ function AttributeWithExpandablePopover({
 	return (
 		<div className="attribute-container" key={attributeKey}>
 			<Tooltip title={attributeKey}>
-				<Typography.Text className="attribute-key" ellipsis>
+				<Typography.Text className="attribute-key" truncate={1}>
 					{attributeKey}
 				</Typography.Text>
 			</Tooltip>
 
 			<div className="wrapper">
 				<Popover content={popoverContent} trigger="hover" placement="topRight">
-					<Typography.Text className="attribute-value" ellipsis>
+					<Typography.Text className="attribute-value" truncate={1}>
 						{attributeValue}
 					</Typography.Text>
 				</Popover>

@@ -130,15 +130,9 @@ describe('MySettings Flows', () => {
 			const updateNameButton = screen.getByText(UPDATE_NAME_BUTTON_TEXT);
 			fireEvent.click(updateNameButton);
 
-			// Find the label with class 'ant-typography' and text 'Name'
-			const nameLabels = screen.getAllByText('Name');
-			const nameLabel = nameLabels.find((el) =>
-				el.className.includes('ant-typography'),
-			);
 			const nameTextbox = screen.getByPlaceholderText('e.g. John Doe');
 			const modalUpdateNameButton = screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID);
 
-			expect(nameLabel).toBeInTheDocument();
 			expect(nameTextbox).toBeInTheDocument();
 			expect(modalUpdateNameButton).toBeInTheDocument();
 		});

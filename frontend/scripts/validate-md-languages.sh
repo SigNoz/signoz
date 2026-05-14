@@ -17,6 +17,12 @@ registered_languages=$(grep -oP "registerLanguage\('\K[^']+" "$SYNTAX_HIGHLIGHTE
 missing_languages=()
 
 for lang in $md_languages; do
+  # Skip ai-* block markers — these are custom AI block types rendered by
+  # RichCodeBlock as React components (e.g. ActionBlock, LineChartBlock),
+  # not real syntax languages, so they don't need highlighter registration.
+  if [[ "$lang" == ai-* ]]; then
+    continue
+  fi
   if ! echo "$registered_languages" | grep -qx "$lang"; then
     missing_languages+=("$lang")
   fi

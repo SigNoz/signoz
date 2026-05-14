@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Button } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
-import { CornerDownRight } from 'lucide-react';
+import { CornerDownRight } from '@signozhq/icons';
 import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';

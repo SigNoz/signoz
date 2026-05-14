@@ -28,6 +28,8 @@ func NewVerb(verb string) (Verb, error) {
 		return VerbList, nil
 	case "assignee":
 		return VerbAssignee, nil
+	case "attach":
+		return VerbAttach, nil
 	default:
 		return Verb{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerb, "verb %s is invalid, valid verbs are: %s", verb, Verb{}.Enum())
 	}
@@ -41,6 +43,7 @@ func (Verb) Enum() []any {
 		VerbDelete,
 		VerbList,
 		VerbAssignee,
+		VerbAttach,
 	}
 }
 

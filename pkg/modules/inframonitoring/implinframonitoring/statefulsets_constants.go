@@ -55,7 +55,7 @@ var orderByToStatefulSetsQueryNames = map[string][]string{
 	inframonitoringtypes.StatefulSetsOrderByMemoryRequest: {"E"},
 	inframonitoringtypes.StatefulSetsOrderByMemoryLimit:   {"F"},
 	inframonitoringtypes.StatefulSetsOrderByDesiredPods:   {"H"},
-	inframonitoringtypes.StatefulSetsOrderByAvailablePods: {"I"},
+	inframonitoringtypes.StatefulSetsOrderByCurrentPods:   {"I"},
 }
 
 // newStatefulSetsTableListQuery builds the composite QB v5 request for the statefulsets list.
@@ -222,7 +222,7 @@ func (m *module) newStatefulSetsTableListQuery() *qbtypes.QueryRangeRequest {
 				Disabled: false,
 			},
 		},
-		// Query I: k8s.statefulset.current_pods — latest known current/available replica count per group.
+		// Query I: k8s.statefulset.current_pods — latest known current replica count per group.
 		{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{

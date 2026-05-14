@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps, Switch, Typography } from 'antd';
+import { Button, Flex, SelectProps, Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -9,7 +10,8 @@ import {
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
-import { ArrowRight } from 'lucide-react';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -409,6 +411,7 @@ export function RoutingPolicyBanner({
 	notificationSettings,
 	setNotificationSettings,
 }: RoutingPolicyBannerProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	return (
 		<div className="routing-policies-info-banner">
 			<Typography.Text>
@@ -426,10 +429,10 @@ export function RoutingPolicyBanner({
 					}}
 				/>
 				<Button
-					href={ROUTING_POLICIES_ROUTE}
 					type="link"
 					className="view-routing-policies-button"
 					data-testid="view-routing-policies-button"
+					onClick={(): void => safeNavigate(ROUTING_POLICIES_ROUTE)}
 				>
 					View Routing Policies
 					<ArrowRight size={14} />

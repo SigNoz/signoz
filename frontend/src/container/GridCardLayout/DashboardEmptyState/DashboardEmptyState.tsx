@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
@@ -142,7 +143,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							<Button
 								className="add-panel-btn"
 								onClick={onEmptyWidgetHandler}
-								icon={<PlusOutlined />}
+								icon={<Plus size="md" />}
 								type="primary"
 								data-testid="add-panel"
 							>

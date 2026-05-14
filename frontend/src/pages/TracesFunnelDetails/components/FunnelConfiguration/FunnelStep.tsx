@@ -14,7 +14,7 @@ import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOpti
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { ChevronDown, PencilLine } from 'lucide-react';
+import { ChevronDown, PencilLine } from '@signozhq/icons';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';

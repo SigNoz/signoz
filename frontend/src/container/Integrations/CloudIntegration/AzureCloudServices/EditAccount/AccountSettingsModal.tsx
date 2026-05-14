@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, DrawerWrapper } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Form, Select } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
-import { Save } from 'lucide-react';
+import { Save } from '@signozhq/icons';
 
 import { useAccountSettingsModal } from '../../../../../hooks/integration/azure/useAccountSettingsModal';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';

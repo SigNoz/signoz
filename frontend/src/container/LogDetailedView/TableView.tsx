@@ -2,15 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { LinkOutlined } from '@ant-design/icons';
+import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Space,
-	TableColumnsType as ColumnsType,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
@@ -26,7 +21,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { Pin } from 'lucide-react';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
@@ -262,11 +256,7 @@ function TableView({
 											onTraceHandler(record, event);
 										}}
 									>
-										<LinkOutlined
-											style={{
-												width: '15px',
-											}}
-										/>
+										<Link size={15} />
 									</Button>
 								</Tooltip>
 							)}

@@ -21,7 +21,7 @@ import {
 	Option,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
-import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
+import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
@@ -300,7 +300,7 @@ function CustomTimePickerPopoverContent({
 								inputErrorDetails && (
 									<div className="input-error-message-container">
 										<div className="input-error-message-title">
-											<TriangleAlertIcon color={Color.BG_CHERRY_400} size={16} />
+											<TriangleAlert color={Color.BG_CHERRY_400} size={16} />
 											<span className="input-error-message-text">
 												{inputErrorDetails.message}
 											</span>
