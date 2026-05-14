@@ -231,15 +231,13 @@ describe('RoleDetailsPage', () => {
 			jest.restoreAllMocks();
 		});
 
-		// Returns the panel to scope within(panel) calls, limiting ARIA traversal to ~30 nodes.
 		async function openCreatePanel(): Promise<HTMLElement> {
 			await screen.findByText('Role — billing-manager');
-			// fireEvent avoids userEvent's pointer-event chain and async act() overhead.
 			fireEvent.click(screen.getByText('Create'));
 			await screen.findByText('Edit Create Permissions');
 			const panel = document.querySelector(
 				'.permission-side-panel',
-			)! as HTMLElement;
+			) as HTMLElement;
 			await within(panel).findByRole('button', { name: 'Role' });
 			return panel;
 		}
