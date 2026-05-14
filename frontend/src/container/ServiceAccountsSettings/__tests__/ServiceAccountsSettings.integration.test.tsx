@@ -196,15 +196,17 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 	it('saving changes in the drawer refetches the list', async () => {
 		const listRefetchSpy = jest.fn();
+		const putSpy = jest.fn();
 
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {
 				listRefetchSpy();
 				return res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI }));
 			}),
-			rest.put(SA_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
+			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
+				putSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
 		);
 
 		render(
@@ -225,7 +227,13 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
-		await screen.findByDisplayValue('CI Bot Updated');
+		// Wait for the PUT to complete with the right payload — confirms save fired
+		await waitFor(() =>
+			expect(putSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ name: 'CI Bot Updated' }),
+			),
+		);
+
 		await waitFor(() => {
 			expect(listRefetchSpy).toHaveBeenCalled();
 		});

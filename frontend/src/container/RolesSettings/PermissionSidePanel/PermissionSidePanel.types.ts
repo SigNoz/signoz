@@ -29,6 +29,7 @@ export interface PermissionSidePanelProps {
 	open: boolean;
 	onClose: () => void;
 	permissionLabel: string;
+	relation: string;
 	resources: ResourceDefinition[];
 	initialConfig?: PermissionConfig;
 	isLoading?: boolean;

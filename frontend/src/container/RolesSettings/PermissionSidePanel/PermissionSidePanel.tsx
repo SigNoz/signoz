@@ -25,10 +25,13 @@ import { PermissionScope } from './PermissionSidePanel.types';
 
 import './PermissionSidePanel.styles.scss';
 
+const RELATIONS_ALL_ONLY = new Set(['list', 'create']);
+
 interface ResourceRowProps {
 	resource: ResourceDefinition;
 	config: ResourceConfig;
 	isExpanded: boolean;
+	relation: string;
 	onToggleExpand: (id: string) => void;
 	onScopeChange: (id: string, scope: ScopeType) => void;
 	onSelectedIdsChange: (id: string, ids: string[]) => void;
@@ -38,10 +41,12 @@ function ResourceRow({
 	resource,
 	config,
 	isExpanded,
+	relation,
 	onToggleExpand,
 	onScopeChange,
 	onSelectedIdsChange,
 }: ResourceRowProps): JSX.Element {
+	const allowOnlySelected = !RELATIONS_ALL_ONLY.has(relation);
 	return (
 		<div className="psp-resource">
 			<div
@@ -78,15 +83,7 @@ function ResourceRow({
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
-						{resource.type === 'metaresources' ? (
-							<div className="psp-resource__radio-item">
-								<RadioGroupItem
-									value={PermissionScope.ONLY_SELECTED}
-									id={`${resource.id}-none`}
-								/>
-								<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
-							</div>
-						) : (
+						{allowOnlySelected ? (
 							<div className="psp-resource__radio-item">
 								<RadioGroupItem
 									value={PermissionScope.ONLY_SELECTED}
@@ -96,32 +93,39 @@ function ResourceRow({
 									Only selected
 								</RadioGroupLabel>
 							</div>
+						) : (
+							<div className="psp-resource__radio-item">
+								<RadioGroupItem
+									value={PermissionScope.ONLY_SELECTED}
+									id={`${resource.id}-none`}
+								/>
+								<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
+							</div>
 						)}
 					</RadioGroup>
 
-					{config.scope === PermissionScope.ONLY_SELECTED &&
-						resource.type !== 'metaresources' && (
-							<div className="psp-resource__select-wrapper">
-								{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
-								<Select
-									mode="tags"
-									value={config.selectedIds}
-									onChange={(vals: string[]): void =>
-										onSelectedIdsChange(resource.id, vals)
-									}
-									options={resource.options ?? []}
-									placeholder="Select resources..."
-									className="psp-resource__select"
-									popupClassName="psp-resource__select-popup"
-									showSearch
-									filterOption={(input, option): boolean =>
-										String(option?.label ?? '')
-											.toLowerCase()
-											.includes(input.toLowerCase())
-									}
-								/>
-							</div>
-						)}
+					{config.scope === PermissionScope.ONLY_SELECTED && allowOnlySelected && (
+						<div className="psp-resource__select-wrapper">
+							{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
+							<Select
+								mode="tags"
+								value={config.selectedIds}
+								onChange={(vals: string[]): void =>
+									onSelectedIdsChange(resource.id, vals)
+								}
+								options={resource.options ?? []}
+								placeholder="Select resources..."
+								className="psp-resource__select"
+								popupClassName="psp-resource__select-popup"
+								showSearch
+								filterOption={(input, option): boolean =>
+									String(option?.label ?? '')
+										.toLowerCase()
+										.includes(input.toLowerCase())
+								}
+							/>
+						</div>
+					)}
 				</div>
 			)}
 		</div>
@@ -132,6 +136,7 @@ function PermissionSidePanel({
 	open,
 	onClose,
 	permissionLabel,
+	relation,
 	resources,
 	initialConfig,
 	isLoading = false,
@@ -250,6 +255,7 @@ function PermissionSidePanel({
 									resource={resource}
 									config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
 									isExpanded={expandedIds.has(resource.id)}
+									relation={relation}
 									onToggleExpand={handleToggleExpand}
 									onScopeChange={handleScopeChange}
 									onSelectedIdsChange={handleSelectedIdsChange}

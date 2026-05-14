@@ -255,6 +255,7 @@ function RoleDetailsPage(): JSX.Element {
 						open={activePermission !== null}
 						onClose={(): void => setActivePermission(null)}
 						permissionLabel={activePermission ? capitalize(activePermission) : ''}
+						relation={activePermission ?? ''}
 						resources={resourcesForActivePermission}
 						initialConfig={initialConfig}
 						isLoading={isLoadingObjects}

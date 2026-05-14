@@ -253,6 +253,17 @@ describe('RoleDetailsPage', () => {
 			return panel;
 		}
 
+		async function openReadPanel(): Promise<HTMLElement> {
+			await screen.findByText('Role — billing-manager');
+			fireEvent.click(screen.getByText('Read'));
+			await screen.findByText('Edit Read Permissions');
+			const panel = document.querySelector(
+				'.permission-side-panel',
+			) as HTMLElement;
+			await within(panel).findByRole('button', { name: 'Role' });
+			return panel;
+		}
+
 		it('Save Changes is disabled until a resource scope is changed', async () => {
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
@@ -328,7 +339,7 @@ describe('RoleDetailsPage', () => {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			const panel = await openCreatePanel();
+			const panel = await openReadPanel();
 
 			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
 
@@ -374,7 +385,7 @@ describe('RoleDetailsPage', () => {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			const panel = await openCreatePanel();
+			const panel = await openReadPanel();
 
 			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
 			fireEvent.click(screen.getByText('Only selected'));
