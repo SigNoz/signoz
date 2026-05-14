@@ -33,7 +33,7 @@ func (t TestExpected) GetQuery() string {
 }
 
 func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -171,7 +171,7 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -494,7 +494,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -799,7 +799,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, true)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, true)
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -918,7 +918,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_SelectField(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -1006,7 +1006,7 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_OrderBy(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -1083,7 +1083,14 @@ func TestJSONStmtBuilder_OrderBy(t *testing.T) {
 }
 
 func TestResourceAggrAndGroupBy_WithJSONEnabled(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, metadataStore := buildJSONTestStatementBuilder(t, false)
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keysMap := buildCompleteFieldKeyMap(releaseTime)
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			metadataStore.SetKey(key)
+		}
+	}
 
 	cases := []struct {
 		name                string
@@ -1175,18 +1182,11 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 			mockMetadataStore.SetKey(key)
 		}
 	}
-	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
-	keysMap := buildCompleteFieldKeyMap(releaseTime)
-	for _, keys := range keysMap {
-		for _, key := range keys {
-			mockMetadataStore.SetKey(key)
-		}
-	}
 
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryStatementBuilder {
+func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
 	t.Helper()
 
 	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
@@ -1207,5 +1207,5 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 		fl,
 	)
 
-	return statementBuilder
+	return statementBuilder, mockMetadataStore
 }
