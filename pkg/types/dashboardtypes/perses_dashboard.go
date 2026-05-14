@@ -146,7 +146,7 @@ func NewGettableDashboardV2FromDashboardV2(dashboard *DashboardV2) *GettableDash
 	return gettable
 }
 
-func NewDashboardV2(orgID valuer.UUID, createdBy string, postable PostableDashboardV2, resolvedTags []*tagtypes.Tag) *DashboardV2 {
+func NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, postable PostableDashboardV2) *DashboardV2 {
 	now := time.Now()
 
 	return &DashboardV2{
@@ -160,7 +160,6 @@ func NewDashboardV2(orgID valuer.UUID, createdBy string, postable PostableDashbo
 				Metadata: postable.Metadata,
 				Data:     postable.Data,
 			},
-			Tags: resolvedTags,
 		},
 	}
 }
