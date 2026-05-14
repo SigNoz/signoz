@@ -18,6 +18,6 @@
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": ["tests/**/*.ts", "helpers/**/*.ts", "fixtures/**/*.ts", "playwright.config.ts"],
+  "include": ["tests/**/*.ts", "helpers/**/*.ts", "fixtures/**/*.ts", "bootstrap/**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
