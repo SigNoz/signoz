@@ -18,6 +18,7 @@ import type {
 	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
+	InframonitoringtypesPostableStatefulSetsDTO,
 	InframonitoringtypesPostableVolumesDTO,
 	ListClusters200,
 	ListDeployments200,
@@ -25,6 +26,7 @@ import type {
 	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
+	ListStatefulSets200,
 	ListVolumes200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
@@ -617,6 +619,90 @@ export const useListVolumes = <
 	TContext
 > => {
 	const mutationOptions = getListVolumesMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and currentPods (k8s.statefulset.current_pods) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / current_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel when no data is available for that field.
+ * @summary List StatefulSets for Infra Monitoring
+ */
+export const listStatefulSets = (
+	inframonitoringtypesPostableStatefulSetsDTO: BodyType<InframonitoringtypesPostableStatefulSetsDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListStatefulSets200>({
+		url: `/api/v2/infra_monitoring/statefulsets`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableStatefulSetsDTO,
+		signal,
+	});
+};
+
+export const getListStatefulSetsMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listStatefulSets>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listStatefulSets>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+	TContext
+> => {
+	const mutationKey = ['listStatefulSets'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listStatefulSets>>,
+		{ data: BodyType<InframonitoringtypesPostableStatefulSetsDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listStatefulSets(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListStatefulSetsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listStatefulSets>>
+>;
+export type ListStatefulSetsMutationBody =
+	BodyType<InframonitoringtypesPostableStatefulSetsDTO>;
+export type ListStatefulSetsMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List StatefulSets for Infra Monitoring
+ */
+export const useListStatefulSets = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listStatefulSets>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listStatefulSets>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+	TContext
+> => {
+	const mutationOptions = getListStatefulSetsMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
