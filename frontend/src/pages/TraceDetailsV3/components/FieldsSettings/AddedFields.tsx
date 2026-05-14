@@ -15,9 +15,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@signozhq/ui/button';
+import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import styles from './FieldsSettings.module.scss';
 
 function SortableField({
 	field,
@@ -40,14 +43,17 @@ function SortableField({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`fs-field-item ${allowDrag ? 'drag-enabled' : 'drag-disabled'}`}
+			className={cx(
+				styles.fieldItem,
+				allowDrag ? styles.isDragEnabled : styles.isDragDisabled,
+			)}
 		>
-			<div {...attributes} {...listeners} className="drag-handle">
+			<div {...attributes} {...listeners} className={styles.dragHandle}>
 				{allowDrag && <GripVertical size={14} />}
-				<span className="fs-field-key">{field.key}</span>
+				<span className={styles.fieldKey}>{field.key}</span>
 			</div>
 			<Button
-				className="remove-field-btn periscope-btn"
+				className={cx(styles.removeBtn, 'periscope-btn')}
 				variant="outlined"
 				color="destructive"
 				size="sm"
@@ -94,9 +100,9 @@ function AddedFields({
 	const allowDrag = inputValue.length === 0;
 
 	return (
-		<div className="fs-section fs-added">
-			<div className="fs-section-header">ADDED FIELDS</div>
-			<div className="fs-added-list">
+		<div className={cx(styles.section, styles.sectionAdded)}>
+			<div className={styles.sectionHeader}>ADDED FIELDS</div>
+			<div className={styles.addedList}>
 				<OverlayScrollbar>
 					<DndContext
 						sensors={sensors}
@@ -104,7 +110,7 @@ function AddedFields({
 						onDragEnd={handleDragEnd}
 					>
 						{filteredFields.length === 0 ? (
-							<div className="fs-no-values">No values found</div>
+							<div className={styles.noValues}>No values found</div>
 						) : (
 							<SortableContext
 								items={fields.map((f) => f.key)}
