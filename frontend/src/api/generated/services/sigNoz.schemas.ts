@@ -5190,6 +5190,34 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesPostableStatefulSetsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface InframonitoringtypesPostableVolumesDTO {
 	/**
 	 * @type integer
@@ -5230,6 +5258,83 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
+/**
+ * @nullable
+ */
+export type InframonitoringtypesStatefulSetRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesStatefulSetRecordDTO {
+	/**
+	 * @type integer
+	 */
+	currentPods: number;
+	/**
+	 * @type integer
+	 */
+	desiredPods: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	statefulSetName: string;
+}
+
+export interface InframonitoringtypesStatefulSetsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesStatefulSetRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 /**
  * @nullable
  */
@@ -9656,6 +9761,14 @@ export type ListPods200 = {
 
 export type ListVolumes200 = {
 	data: InframonitoringtypesVolumesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListStatefulSets200 = {
+	data: InframonitoringtypesStatefulSetsDTO;
 	/**
 	 * @type string
 	 */

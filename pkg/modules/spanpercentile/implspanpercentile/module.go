@@ -52,7 +52,7 @@ func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, req *
 
 func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	if len(queryResult.Data.Results) == 0 {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no data returned from query")
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
 	scalarData, ok := queryResult.Data.Results[0].(*qbtypes.ScalarData)
@@ -61,7 +61,7 @@ func transformToSpanPercentileResponse(queryResult *qbtypes.QueryRangeResponse) 
 	}
 
 	if len(scalarData.Data) == 0 {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "no rows returned from query")
+		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no spans found matching the specified criteria")
 	}
 
 	row := scalarData.Data[0]
