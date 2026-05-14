@@ -127,7 +127,7 @@ export const useListClusters = <
  * @summary List DaemonSets for Infra Monitoring
  */
 export const listDaemonSets = (
-	inframonitoringtypesPostableDaemonSetsDTO: BodyType<InframonitoringtypesPostableDaemonSetsDTO>,
+	inframonitoringtypesPostableDaemonSetsDTO?: BodyType<InframonitoringtypesPostableDaemonSetsDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListDaemonSets200>({
@@ -146,13 +146,13 @@ export const getListDaemonSetsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDaemonSets>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listDaemonSets>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+	{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
 	TContext
 > => {
 	const mutationKey = ['listDaemonSets'];
@@ -166,7 +166,7 @@ export const getListDaemonSetsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listDaemonSets>>,
-		{ data: BodyType<InframonitoringtypesPostableDaemonSetsDTO> }
+		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -180,7 +180,8 @@ export type ListDaemonSetsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof listDaemonSets>>
 >;
 export type ListDaemonSetsMutationBody =
-	BodyType<InframonitoringtypesPostableDaemonSetsDTO>;
+	| BodyType<InframonitoringtypesPostableDaemonSetsDTO>
+	| undefined;
 export type ListDaemonSetsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -193,18 +194,16 @@ export const useListDaemonSets = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDaemonSets>>,
 		TError,
-		{ data: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listDaemonSets>>,
 	TError,
-	{ data: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+	{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
 	TContext
 > => {
-	const mutationOptions = getListDaemonSetsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getListDaemonSetsMutationOptions(options));
 };
 /**
  * Returns a paginated list of Kubernetes Deployments with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest, deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each row also reports the latest known desiredPods (k8s.deployment.desired) and availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.deployment.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by deployments in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest, deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.
