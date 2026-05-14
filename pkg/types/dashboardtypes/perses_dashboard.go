@@ -66,9 +66,8 @@ type StoredDashboardInfo struct {
 }
 
 type DashboardMetadata struct {
-	SchemaVersion   string `json:"schemaVersion"`
-	Image           string `json:"image,omitempty"`
-	UploadedGrafana bool   `json:"uploadedGrafana"`
+	SchemaVersion string `json:"schemaVersion"`
+	Image         string `json:"image,omitempty"`
 }
 
 type PostableDashboardV2 struct {
