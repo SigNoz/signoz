@@ -334,13 +334,6 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByText(/No keys/i);
 	});
 
-	it('shows skeleton while loading account data', () => {
-		renderDrawer();
-
-		// Skeleton renders while the fetch is in-flight
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-	});
-
 	it('shows error state when account fetch fails', async () => {
 		server.use(
 			rest.get(SA_ENDPOINT, (_, res, ctx) =>

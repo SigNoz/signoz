@@ -13,12 +13,8 @@ import {
 	usePatchObjects,
 } from 'api/generated/services/role';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
-import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
-import {
-	buildRoleReadPermission,
-	buildRoleUpdatePermission,
-} from 'hooks/useAuthZ/rolePermissions';
+import { buildRoleUpdatePermission } from 'hooks/useAuthZ/rolePermissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 
 import type { AuthzResources } from '../utils';
@@ -62,17 +58,9 @@ function RoleDetailsPage(): JSX.Element {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activePermission, setActivePermission] = useState<string | null>(null);
 
-	// Read check uses wildcard — role name is not known before the role loads
-	const { permissions: readPerms, isLoading: isRolePermsLoading } = useAuthZ(
-		roleId ? [buildRoleReadPermission('*')] : [],
-		{ enabled: !!roleId },
-	);
-	const hasReadPermission =
-		readPerms?.[buildRoleReadPermission('*')]?.isGranted ?? false;
-
 	const { data, isLoading, isFetching, isError, error } = useGetRole(
 		{ id: roleId },
-		{ query: { enabled: !!roleId && hasReadPermission } },
+		{ query: { enabled: !!roleId } },
 	);
 	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
@@ -105,7 +93,7 @@ function RoleDetailsPage(): JSX.Element {
 		{ id: roleId, relation: activePermission ?? '' },
 		{
 			query: {
-				enabled: !!activePermission && !!roleId && !isManaged && hasReadPermission,
+				enabled: !!activePermission && !!roleId && !isManaged,
 			},
 		},
 	);
@@ -146,7 +134,7 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (isRolePermsLoading || isLoading || isTransitioning) {
+	if (isLoading || isTransitioning) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -154,14 +142,6 @@ function RoleDetailsPage(): JSX.Element {
 					paragraph={{ rows: 8 }}
 					className="role-details-skeleton"
 				/>
-			</div>
-		);
-	}
-
-	if (!hasReadPermission) {
-		return (
-			<div className="role-details-page">
-				<PermissionDeniedFullPage permissionName="role:read" />
 			</div>
 		);
 	}

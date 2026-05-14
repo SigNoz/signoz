@@ -31,12 +31,9 @@ import {
 } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
 	APIKeyListPermission,
-	buildSAAttachPermission,
 	buildSADeletePermission,
-	buildSADetachPermission,
+	buildSAReadPermission,
 	buildSAUpdatePermission,
-	RoleAttachWildcardPermission,
-	RoleDetachWildcardPermission,
 } from 'hooks/useAuthZ/serviceAccountPermissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
@@ -109,6 +106,22 @@ function ServiceAccountDrawer({
 
 	const queryClient = useQueryClient();
 
+	const { permissions: drawerPermissions } = useAuthZ(
+		selectedAccountId
+			? [
+					buildSAReadPermission(selectedAccountId),
+					buildSAUpdatePermission(selectedAccountId),
+					buildSADeletePermission(selectedAccountId),
+					APIKeyListPermission,
+				]
+			: [],
+		{ enabled: !!selectedAccountId },
+	);
+
+	const canRead =
+		drawerPermissions?.[buildSAReadPermission(selectedAccountId ?? '')]
+			?.isGranted ?? false;
+
 	const {
 		data: accountData,
 		isLoading: isAccountLoading,
@@ -117,7 +130,7 @@ function ServiceAccountDrawer({
 		refetch: refetchAccount,
 	} = useGetServiceAccount(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: canRead && !!selectedAccountId } },
 	);
 
 	const account = useMemo(
@@ -130,7 +143,9 @@ function ServiceAccountDrawer({
 		currentRoles,
 		isLoading: isRolesLoading,
 		applyDiff,
-	} = useServiceAccountRoleManager(selectedAccountId ?? '');
+	} = useServiceAccountRoleManager(selectedAccountId ?? '', {
+		enabled: canRead && !!selectedAccountId,
+	});
 
 	const roleSessionRef = useRef<string | null>(null);
 
@@ -177,21 +192,6 @@ function ServiceAccountDrawer({
 		error: rolesErrorObj,
 		refetch: refetchRoles,
 	} = useRoles();
-
-	const { permissions: drawerPermissions } = useAuthZ(
-		selectedAccountId
-			? [
-					buildSAUpdatePermission(selectedAccountId),
-					buildSADeletePermission(selectedAccountId),
-					buildSAAttachPermission(selectedAccountId),
-					buildSADetachPermission(selectedAccountId),
-					RoleAttachWildcardPermission,
-					RoleDetachWildcardPermission,
-					APIKeyListPermission,
-				]
-			: [],
-		{ enabled: !!selectedAccountId },
-	);
 
 	const canListKeys =
 		drawerPermissions?.[APIKeyListPermission]?.isGranted ?? false;

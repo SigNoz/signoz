@@ -77,6 +77,7 @@ function SettingsPage(): JSX.Element {
 					...item,
 					isEnabled:
 						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
 							? true
 							: item.isEnabled,
@@ -87,7 +88,6 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.ORG_SETTINGS ||
@@ -126,6 +126,7 @@ function SettingsPage(): JSX.Element {
 					...item,
 					isEnabled:
 						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
 							? true
 							: item.isEnabled,
@@ -136,7 +137,6 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
@@ -173,6 +173,7 @@ function SettingsPage(): JSX.Element {
 					...item,
 					isEnabled:
 						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
 							? true
 							: item.isEnabled,
@@ -182,9 +183,7 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS
+							item.key === ROUTES.ORG_SETTINGS || item.key === ROUTES.MEMBERS_SETTINGS
 								? true
 								: item.isEnabled,
 					}));

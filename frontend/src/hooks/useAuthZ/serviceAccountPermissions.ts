@@ -48,5 +48,7 @@ export const APIKeyCreatePermission = buildPermission(
 	'create',
 	'factor-api-key:*' as AuthZObject<'create'>,
 );
+export const buildAPIKeyUpdatePermission = (keyId: string): BrandedPermission =>
+	buildPermission('update', `factor-api-key:${keyId}` as AuthZObject<'update'>);
 export const buildAPIKeyDeletePermission = (keyId: string): BrandedPermission =>
 	buildPermission('delete', `factor-api-key:${keyId}` as AuthZObject<'delete'>);

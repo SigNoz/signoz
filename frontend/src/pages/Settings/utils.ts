@@ -63,11 +63,15 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	// Visible to all authenticated users
-	settings.push(...serviceAccountsSettings(t), ...rolesSettings(t));
+	settings.push(
+		...serviceAccountsSettings(t),
+		...rolesSettings(t),
+		...roleDetails(t),
+	);
 
-	// Admin-only: members management and role detail/edit page
+	// Admin-only: members management
 	if (isAdmin) {
-		settings.push(...membersSettings(t), ...roleDetails(t));
+		settings.push(...membersSettings(t));
 	}
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
