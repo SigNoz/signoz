@@ -1,0 +1,161 @@
+.fields-settings {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	overflow: hidden;
+
+	.fs-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 12px;
+		border-bottom: 1px solid var(--l1-border);
+
+		.fs-title {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			font-size: 13px;
+			font-weight: 500;
+		}
+
+		.fs-close-icon {
+			cursor: pointer;
+			color: var(--l2-foreground);
+
+			&:hover {
+				color: var(--l1-foreground);
+			}
+		}
+	}
+
+	.fs-search {
+		.fs-search-input {
+			background-color: var(--l1-background);
+			height: 40px;
+			border-radius: 0;
+			border-left: none;
+			border-right: none;
+		}
+	}
+
+	.fs-section {
+		display: flex;
+		flex-direction: column;
+
+		&.fs-added {
+			max-height: 40%;
+			border-bottom: 1px solid var(--l1-border);
+		}
+
+		&.fs-other {
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
+	.fs-section-header {
+		color: var(--muted-foreground);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.88px;
+		text-transform: uppercase;
+		padding: 8px 12px;
+	}
+
+	.fs-added-list {
+		overflow: hidden;
+	}
+
+	.fs-other-list {
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+
+		.ant-skeleton-input {
+			width: 300px;
+			margin: 8px 12px;
+		}
+	}
+
+	.fs-no-values {
+		padding: 8px;
+		text-align: center;
+		color: var(--l2-foreground);
+		font-size: 12px;
+	}
+
+	.fs-limit-hint {
+		padding: 8px 12px;
+		text-align: center;
+		color: var(--muted-foreground);
+		font-size: 11px;
+	}
+}
+
+.fs-field-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 12px;
+	border-radius: 4px;
+	user-select: none;
+	font-size: 13px;
+
+	.drag-handle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-grow: 1;
+	}
+
+	.fs-field-key {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&.drag-enabled {
+		cursor: grab;
+
+		&:active {
+			cursor: grabbing;
+		}
+	}
+
+	&.drag-disabled {
+		padding: 6px 12px;
+	}
+
+	&.other-field-item {
+		height: 32px;
+	}
+
+	.remove-field-btn,
+	.add-field-btn {
+		padding: 4px 10px;
+		opacity: 0;
+		transition: opacity 0.15s ease-in-out;
+		flex-shrink: 0;
+	}
+
+	&:hover {
+		background-color: var(--l2-background);
+
+		.remove-field-btn,
+		.add-field-btn {
+			opacity: 1;
+		}
+	}
+}
+
+.fs-footer {
+	display: flex;
+	gap: 12px;
+	padding: 12px;
+	border-top: 1px solid var(--l1-border);
+	justify-content: space-between;
+}

@@ -1,0 +1,89 @@
+.feedback {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 2px 0;
+	// Driven by MessageBubble's --feedback-opacity (0 normally, 1 on hover/visible).
+	opacity: var(--feedback-opacity, 0);
+	transition: opacity 0.15s ease;
+
+	&.visible {
+		--feedback-opacity: 1;
+		opacity: 1;
+	}
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.btn {
+	width: 24px !important;
+	height: 24px !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	color: var(--l3-foreground) !important;
+
+	&:hover {
+		color: var(--l1-foreground) !important;
+	}
+
+	&.active {
+		color: var(--accent-forest) !important;
+	}
+
+	&.votedUp {
+		color: var(--accent-primary) !important;
+	}
+
+	&.votedDown {
+		color: var(--accent-cherry) !important;
+	}
+}
+
+.time {
+	font-size: 10px;
+	color: var(--l3-foreground);
+	white-space: nowrap;
+	padding-left: 2px;
+	border-left: 1px solid var(--l2-border);
+}
+
+.feedbackTextarea {
+	width: 100%;
+	min-height: 96px;
+	padding: 10px 12px;
+	resize: vertical;
+	font: inherit;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--l1-foreground);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 6px;
+	outline: none;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease;
+	box-sizing: border-box;
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+
+	&:focus {
+		border-color: var(--accent-primary);
+		box-shadow: 0 0 0 1px var(--accent-primary);
+	}
+}
+
+.feedbackDialogFooter {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

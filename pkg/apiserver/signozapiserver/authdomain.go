@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/domains", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.List), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.List), handler.OpenAPIDef{
 		ID:                  "ListAuthDomains",
 		Tags:                []string{"authdomains"},
 		Summary:             "List all auth domains",
@@ -27,7 +27,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Create), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Create), handler.OpenAPIDef{
 		ID:                  "CreateAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Create auth domain",
@@ -44,7 +44,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Get auth domain by ID",
@@ -61,7 +61,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Update auth domain",
@@ -78,7 +78,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteAuthDomain",
 		Tags:                []string{"authdomains"},
 		Summary:             "Delete auth domain",

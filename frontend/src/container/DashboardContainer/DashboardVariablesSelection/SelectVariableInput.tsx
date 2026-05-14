@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import { orange } from '@ant-design/colors';
-import { WarningOutlined } from '@ant-design/icons';
-import { Popover, Tooltip, Typography } from 'antd';
+import { Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { OptionData } from 'components/NewSelect/types';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -138,7 +139,7 @@ function SelectVariableInput({
 			{errorMessage && (
 				<span style={errorIconStyle}>
 					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
-						<WarningOutlined style={{ color: orange[5] }} />
+						<SolidAlertTriangle style={{ color: orange[5] }} size="md" />
 					</Popover>
 				</span>
 			)}

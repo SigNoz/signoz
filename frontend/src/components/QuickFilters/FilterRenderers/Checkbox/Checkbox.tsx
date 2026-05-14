@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -19,7 +20,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isFunction } from 'lodash-es';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -640,16 +641,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											{filter.customRendererForValue ? (
 												filter.customRendererForValue(value)
 											) : (
-												<Typography.Text
-													className="value-string"
-													ellipsis={{
-														tooltip: {
-															placement: 'top',
-															mouseEnterDelay: 0.2,
-															mouseLeaveDelay: 0,
-														},
-													}}
-												>
+												<Typography.Text className="value-string" truncate={1}>
 													{String(value)}
 												</Typography.Text>
 											)}

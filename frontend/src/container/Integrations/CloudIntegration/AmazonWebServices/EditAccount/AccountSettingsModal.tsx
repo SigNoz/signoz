@@ -1,13 +1,14 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, DrawerWrapper } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { useAccountSettingsModal } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { Save } from 'lucide-react';
+import { Save } from '@signozhq/icons';
 
 import logEvent from '../../../../../api/common/logEvent';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';

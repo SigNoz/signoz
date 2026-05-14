@@ -1,10 +1,9 @@
-import { Button } from '@signozhq/ui';
-import { Kbd } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Kbd } from '@signozhq/ui/kbd';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { X } from 'lucide-react';
 
 import Styles from './TooltipFooter.module.scss';
-import { MousePointerClick } from '@signozhq/icons';
+import { MousePointerClick, X } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 

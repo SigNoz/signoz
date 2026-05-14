@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	CloseCircleFilled,
-	ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
 
 import { tagInputStyle } from '../PipelineListsView/config';
@@ -66,7 +63,7 @@ function TagInput({
 	const handleClearAll = (): void => {
 		Modal.confirm({
 			title: 'Confirm',
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert />,
 			content: t('remove_label_confirm'),
 			onOk() {
 				setTagsListData([]);
@@ -142,7 +139,7 @@ function TagInput({
 			/>
 
 			{isButtonVisible ? (
-				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
+				<Button onClick={handleClearAll} icon={<CircleX />} type="text" />
 			) : null}
 		</TagInputWrapper>
 	);

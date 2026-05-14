@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/credentials", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionCredentials),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetConnectionCredentials),
 		handler.OpenAPIDef{
 			ID:                  "GetConnectionCredentials",
 			Tags:                []string{"cloudintegration"},
@@ -31,7 +31,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.CreateAccount),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.CreateAccount),
 		handler.OpenAPIDef{
 			ID:                  "CreateAccount",
 			Tags:                []string{"cloudintegration"},
@@ -51,7 +51,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.ListAccounts),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.ListAccounts),
 		handler.OpenAPIDef{
 			ID:                  "ListAccounts",
 			Tags:                []string{"cloudintegration"},
@@ -71,7 +71,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetAccount),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetAccount),
 		handler.OpenAPIDef{
 			ID:                  "GetAccount",
 			Tags:                []string{"cloudintegration"},
@@ -91,7 +91,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.UpdateAccount),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.UpdateAccount),
 		handler.OpenAPIDef{
 			ID:                  "UpdateAccount",
 			Tags:                []string{"cloudintegration"},
@@ -111,7 +111,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.DisconnectAccount),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.DisconnectAccount),
 		handler.OpenAPIDef{
 			ID:                  "DisconnectAccount",
 			Tags:                []string{"cloudintegration"},
@@ -131,7 +131,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.ListServicesMetadata),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.ListServicesMetadata),
 		handler.OpenAPIDef{
 			ID:                  "ListServicesMetadata",
 			Tags:                []string{"cloudintegration"},
@@ -152,7 +152,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetService),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetService),
 		handler.OpenAPIDef{
 			ID:                  "GetService",
 			Tags:                []string{"cloudintegration"},
@@ -173,7 +173,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.UpdateService),
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.UpdateService),
 		handler.OpenAPIDef{
 			ID:                  "UpdateService",
 			Tags:                []string{"cloudintegration"},
@@ -195,7 +195,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	// Agent check-in endpoint is kept same as older one to maintain backward compatibility with already deployed agents.
 	// In the future, this endpoint will be deprecated and a new endpoint will be introduced for consistency with above endpoints.
 	if err := router.Handle("/api/v1/cloud-integrations/{cloud_provider}/agent-check-in", handler.New(
-		provider.authZ.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
+		provider.authzMiddleware.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
 		handler.OpenAPIDef{
 			ID:                  "AgentCheckInDeprecated",
 			Tags:                []string{"cloudintegration"},
@@ -215,7 +215,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/check_in", handler.New(
-		provider.authZ.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
+		provider.authzMiddleware.ViewAccess(provider.cloudIntegrationHandler.AgentCheckIn),
 		handler.OpenAPIDef{
 			ID:                  "AgentCheckIn",
 			Tags:                []string{"cloudintegration"},

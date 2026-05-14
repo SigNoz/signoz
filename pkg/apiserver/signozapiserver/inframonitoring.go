@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListHosts),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListHosts),
 		handler.OpenAPIDef{
 			ID:                  "ListHosts",
 			Tags:                []string{"inframonitoring"},
@@ -30,7 +30,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pods", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListPods),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListPods),
 		handler.OpenAPIDef{
 			ID:                  "ListPods",
 			Tags:                []string{"inframonitoring"},
@@ -49,7 +49,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNodes),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNodes),
 		handler.OpenAPIDef{
 			ID:                  "ListNodes",
 			Tags:                []string{"inframonitoring"},
@@ -68,7 +68,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/namespaces", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
 		handler.OpenAPIDef{
 			ID:                  "ListNamespaces",
 			Tags:                []string{"inframonitoring"},
@@ -87,7 +87,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/clusters", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListClusters),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListClusters),
 		handler.OpenAPIDef{
 			ID:                  "ListClusters",
 			Tags:                []string{"inframonitoring"},
@@ -106,7 +106,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pvcs", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListVolumes),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListVolumes),
 		handler.OpenAPIDef{
 			ID:                  "ListVolumes",
 			Tags:                []string{"inframonitoring"},
@@ -125,7 +125,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/deployments", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
 		handler.OpenAPIDef{
 			ID:                  "ListDeployments",
 			Tags:                []string{"inframonitoring"},
@@ -144,12 +144,12 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/statefulsets", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListStatefulSets),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListStatefulSets),
 		handler.OpenAPIDef{
 			ID:                  "ListStatefulSets",
 			Tags:                []string{"inframonitoring"},
 			Summary:             "List StatefulSets for Infra Monitoring",
-			Description:         "Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and availablePods (k8s.statefulset.current_pods) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / available_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel when no data is available for that field.",
+			Description:         "Returns a paginated list of Kubernetes StatefulSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest, statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each row also reports the latest known desiredPods (k8s.statefulset.desired_pods) and currentPods (k8s.statefulset.current_pods) replica counts and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each statefulset includes metadata attributes (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.statefulset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by statefulsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_pods / current_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (statefulSetCPU, statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest, statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel when no data is available for that field.",
 			Request:             new(inframonitoringtypes.PostableStatefulSets),
 			RequestContentType:  "application/json",
 			Response:            new(inframonitoringtypes.StatefulSets),
@@ -163,7 +163,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/jobs", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListJobs),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListJobs),
 		handler.OpenAPIDef{
 			ID:                  "ListJobs",
 			Tags:                []string{"inframonitoring"},

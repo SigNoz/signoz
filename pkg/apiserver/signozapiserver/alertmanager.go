@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/channels", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.ListChannels), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.ListChannels), handler.OpenAPIDef{
 		ID:                  "ListChannels",
 		Tags:                []string{"channels"},
 		Summary:             "List notification channels",
@@ -27,7 +27,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetChannelByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.GetChannelByID), handler.OpenAPIDef{
 		ID:                  "GetChannelByID",
 		Tags:                []string{"channels"},
 		Summary:             "Get notification channel by ID",
@@ -44,7 +44,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.CreateChannel), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateChannel), handler.OpenAPIDef{
 		ID:                  "CreateChannel",
 		Tags:                []string{"channels"},
 		Summary:             "Create notification channel",
@@ -61,7 +61,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.UpdateChannelByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateChannelByID), handler.OpenAPIDef{
 		ID:                  "UpdateChannelByID",
 		Tags:                []string{"channels"},
 		Summary:             "Update notification channel",
@@ -78,7 +78,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.DeleteChannelByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteChannelByID), handler.OpenAPIDef{
 		ID:                  "DeleteChannelByID",
 		Tags:                []string{"channels"},
 		Summary:             "Delete notification channel",
@@ -95,7 +95,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/test", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels/test", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannel",
 		Tags:                []string{"channels"},
 		Summary:             "Test notification channel",
@@ -112,7 +112,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authzMiddleware.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},
 		Summary:             "Test notification channel (deprecated)",
@@ -129,7 +129,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetAllRoutePolicies), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.GetAllRoutePolicies), handler.OpenAPIDef{
 		ID:                  "GetAllRoutePolicies",
 		Tags:                []string{"routepolicies"},
 		Summary:             "List route policies",
@@ -146,7 +146,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetRoutePolicyByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.GetRoutePolicyByID), handler.OpenAPIDef{
 		ID:                  "GetRoutePolicyByID",
 		Tags:                []string{"routepolicies"},
 		Summary:             "Get route policy by ID",
@@ -163,7 +163,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.CreateRoutePolicy), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateRoutePolicy), handler.OpenAPIDef{
 		ID:                  "CreateRoutePolicy",
 		Tags:                []string{"routepolicies"},
 		Summary:             "Create route policy",
@@ -180,7 +180,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.UpdateRoutePolicy), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateRoutePolicy), handler.OpenAPIDef{
 		ID:                  "UpdateRoutePolicy",
 		Tags:                []string{"routepolicies"},
 		Summary:             "Update route policy",
@@ -197,7 +197,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.DeleteRoutePolicyByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteRoutePolicyByID), handler.OpenAPIDef{
 		ID:                  "DeleteRoutePolicyByID",
 		Tags:                []string{"routepolicies"},
 		Summary:             "Delete route policy",
@@ -214,7 +214,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/alerts", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetAlerts), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/alerts", handler.New(provider.authzMiddleware.ViewAccess(provider.alertmanagerHandler.GetAlerts), handler.OpenAPIDef{
 		ID:                  "GetAlerts",
 		Tags:                []string{"alerts"},
 		Summary:             "Get alerts",

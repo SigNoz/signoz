@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button, Popover, Radio, Tooltip, Typography } from 'antd';
+import { Button, Popover, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
-import { Download, DownloadIcon, Loader2 } from 'lucide-react';
+import { Download, LoaderCircle } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -139,9 +140,9 @@ export default function DownloadOptionsMenu({
 					className="periscope-btn ghost"
 					icon={
 						isDownloading ? (
-							<Loader2 size={14} className="animate-spin" />
+							<LoaderCircle size={14} className="animate-spin" />
 						) : (
-							<DownloadIcon size={14} />
+							<Download size={14} />
 						)
 					}
 					data-testid={`periscope-btn-download-${dataSource}`}
