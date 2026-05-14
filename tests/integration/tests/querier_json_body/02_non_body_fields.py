@@ -203,7 +203,7 @@ def test_non_body_filter_and_groupby(
             "expression": None,
             "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count()",
-            "validate": lambda r: (lambda rows: rows.get("auth-svc") == 3 and rows.get("api-gw") == 1 and rows.get("worker") == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and rows.get("auth-svc") == 3 and rows.get("api-gw") == 1 and rows.get("worker") == 1,
         },
         # log attribute: GET×3, POST×1, DELETE×1 (no fieldContext — backend auto-resolves from metadata)
         {
@@ -212,7 +212,7 @@ def test_non_body_filter_and_groupby(
             "expression": None,
             "groupBy": [{"name": "http.method"}],
             "aggregation": "count()",
-            "validate": lambda r: (lambda rows: rows.get("GET") == 3 and rows.get("POST") == 1 and rows.get("DELETE") == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and rows.get("GET") == 3 and rows.get("POST") == 1 and rows.get("DELETE") == 1,
         },
         # top-level field: INFO×2, ERROR×2, WARN×1
         {
@@ -221,7 +221,7 @@ def test_non_body_filter_and_groupby(
             "expression": None,
             "groupBy": [{"name": "severity_text"}],
             "aggregation": "count()",
-            "validate": lambda r: (lambda rows: rows.get("INFO") == 2 and rows.get("ERROR") == 2 and rows.get("WARN") == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and rows.get("INFO") == 2 and rows.get("ERROR") == 2 and rows.get("WARN") == 1,
         },
         # multi-field: resource attr + log attr (no fieldContext on http.method — auto-resolved)
         {
@@ -231,7 +231,7 @@ def test_non_body_filter_and_groupby(
             "groupBy": [build_group_by_field("service.name"), {"name": "http.method"}],
             "aggregation": "count()",
             # auth-svc+GET=2, auth-svc+POST=1, api-gw+GET=1, worker+DELETE=1
-            "validate": lambda r: (lambda pairs: pairs.get(("auth-svc", "GET")) == 2 and pairs.get(("auth-svc", "POST")) == 1 and pairs.get(("api-gw", "GET")) == 1 and pairs.get(("worker", "DELETE")) == 1)({(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}),
+            "validate": lambda r: (pairs := {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}) and pairs.get(("auth-svc", "GET")) == 2 and pairs.get(("auth-svc", "POST")) == 1 and pairs.get(("api-gw", "GET")) == 1 and pairs.get(("worker", "DELETE")) == 1,
         },
         # resource attr group by with top-level filter: only INFO logs → auth-svc=2, no other group
         {
@@ -240,7 +240,7 @@ def test_non_body_filter_and_groupby(
             "expression": 'severity_text = "INFO"',
             "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count()",
-            "validate": lambda r: (lambda rows: rows.get("auth-svc") == 2 and len(rows) == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and rows.get("auth-svc") == 2 and len(rows) == 1,
         },
     ]
 
@@ -299,7 +299,7 @@ def test_non_body_aggregation(
             "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count()",
             # GET logs only: svc-a/GET, svc-b/GET → each service has 1
-            "validate": lambda r: (lambda rows: int(rows["svc-a"]) == 1 and int(rows["svc-b"]) == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and int(rows["svc-a"]) == 1 and int(rows["svc-b"]) == 1,
         },
         # count() by log attr, filtered by top-level
         {
@@ -309,7 +309,7 @@ def test_non_body_aggregation(
             "groupBy": [build_group_by_field("http.method", "string", "attribute")],
             "aggregation": "count()",
             # WARN logs: svc-b/GET and svc-b/DELETE; POST(INFO) excluded
-            "validate": lambda r: (lambda rows: int(rows["GET"]) == 1 and int(rows["DELETE"]) == 1 and "POST" not in rows)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and int(rows["GET"]) == 1 and int(rows["DELETE"]) == 1 and "POST" not in rows,
         },
         # count_distinct(http.method) by resource attr — aggregates a log attr grouped by resource attr
         {
@@ -319,7 +319,7 @@ def test_non_body_aggregation(
             "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count_distinct(http.method)",
             # svc-a: {GET, POST} → 2 distinct, svc-b: {GET, DELETE} → 2 distinct
-            "validate": lambda r: (lambda rows: int(rows["svc-a"]) == 2 and int(rows["svc-b"]) == 2)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and int(rows["svc-a"]) == 2 and int(rows["svc-b"]) == 2,
         },
         # count_distinct(service.name) by top-level, filtered by log attr — aggregates resource attr
         {
@@ -329,7 +329,7 @@ def test_non_body_aggregation(
             "groupBy": [{"name": "severity_text"}],
             "aggregation": "count_distinct(service.name)",
             # GET logs: svc-a/INFO and svc-b/WARN → INFO: 1 distinct svc, WARN: 1 distinct svc
-            "validate": lambda r: (lambda rows: int(rows["INFO"]) == 1 and int(rows["WARN"]) == 1)(_counts(r)),
+            "validate": lambda r: (rows := _counts(r)) and int(rows["INFO"]) == 1 and int(rows["WARN"]) == 1,
         },
         # count() by (resource, log attr) multi-key GROUP BY, filtered by top-level
         {
@@ -339,7 +339,7 @@ def test_non_body_aggregation(
             "groupBy": [build_group_by_field("service.name"), build_group_by_field("http.method", "string", "attribute")],
             "aggregation": "count()",
             # INFO logs only: svc-a/GET=1, svc-a/POST=1; svc-b logs are WARN → excluded
-            "validate": lambda r: (lambda pairs: pairs.get(("svc-a", "GET")) == 1 and pairs.get(("svc-a", "POST")) == 1 and all(k[0] != "svc-b" for k in pairs))({(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}),
+            "validate": lambda r: (pairs := {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}) and pairs.get(("svc-a", "GET")) == 1 and pairs.get(("svc-a", "POST")) == 1 and all(k[0] != "svc-b" for k in pairs),
         },
     ]
 
