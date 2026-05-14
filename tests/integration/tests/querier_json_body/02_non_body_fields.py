@@ -169,9 +169,7 @@ def test_non_body_filter_groupby_aggregation(
             "groupBy": [build_group_by_field("service.name"), {"name": "severity_text"}],
             "aggregation": "count()",
             # auth-svc+INFO=2, auth-svc+ERROR=1, api-gw+WARN=1, worker+ERROR=1
-            "validate": lambda r: (lambda p: p.get(("auth-svc", "INFO")) == 2 and p.get(("auth-svc", "ERROR")) == 1 and p.get(("api-gw", "WARN")) == 1 and p.get(("worker", "ERROR")) == 1)(
-                {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}
-            ),
+            "validate": lambda r: (p := {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}) and p.get(("auth-svc", "INFO")) == 2 and p.get(("auth-svc", "ERROR")) == 1 and p.get(("api-gw", "WARN")) == 1 and p.get(("worker", "ERROR")) == 1,
         },
         # 3. Aggregation — count_distinct(log attr) grouped by top-level
         #    ERROR logs use {POST, DELETE} → 2 distinct methods; INFO/WARN use only GET → 1.
