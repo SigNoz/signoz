@@ -232,9 +232,6 @@ importers:
       react-drag-listview:
         specifier: 2.0.0
         version: 2.0.0
-      react-error-boundary:
-        specifier: 4.0.11
-        version: 4.0.11(react@18.2.0)
       react-force-graph-2d:
         specifier: ^1.29.1
         version: 1.29.1(react@18.2.0)
@@ -7492,11 +7489,6 @@ packages:
     peerDependencies:
       react: '>= 16.3.0'
       react-dom: '>= 16.3.0'
-
-  react-error-boundary@4.0.11:
-    resolution: {integrity: sha512-U13ul67aP5DOSPNSCWQ/eO0AQEYzEFkVljULQIjMV0KlffTAhxuDoBKdO0pb/JZ8mDhMKFZ9NZi0BmLGUiNphw==}
-    peerDependencies:
-      react: '>=16.13.1'
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
@@ -17074,11 +17066,6 @@ snapshots:
       prop-types: 15.8.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-
-  react-error-boundary@4.0.11(react@18.2.0):
-    dependencies:
-      '@babel/runtime': 7.28.2
-      react: 18.2.0
 
   react-fast-compare@3.2.2: {}
 
