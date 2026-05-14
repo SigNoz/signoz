@@ -211,10 +211,13 @@ def test_non_body_filter_groupby_aggregation(
 
 
 # ============================================================================
-# OrderBy — ordered by non-body fields
+# OrderBy — non-body fields as primary sort keys
 #
-# A single 4-log dataset with varied attributes exercises ORDER BY
-# across resource attribute, and top-level fields.
+# Four cases cover every non-body context as the primary ORDER BY key:
+#   orderby.service_asc          resource attr    (service.name ASC)
+#   orderby.timestamp_desc       top-level        (timestamp DESC)
+#   orderby.severity_asc         top-level        (severity_text ASC)
+#   orderby.multi_method_then_score  log attr primary, body path secondary
 #
 # Data landscape:
 #   log1 — svc-a, GET,    INFO, score=80, ts=now-4s
