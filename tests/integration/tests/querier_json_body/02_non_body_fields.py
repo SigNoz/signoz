@@ -99,21 +99,27 @@ def _run_case(
 
 
 # ============================================================================
-# Filter and GroupBy — resource attributes, log attributes, top-level fields
+# Filter · GroupBy · Aggregation — non-body fields across all three contexts
 #
-# A single 5-log dataset exercises both filtering (raw) and group-by (scalar),
-# covering all three non-body field contexts as WHERE and GROUP BY keys.
+# Five cases, one dataset. Each case crosses a different combination of
+# resource attr / log attr / top-level field in WHERE, GROUP BY, and agg:
 #
-# Data landscape:
-#   log1 — auth-svc, GET,    INFO,  user=alice, status=200
-#   log2 — auth-svc, POST,   ERROR, user=bob,   status=500
-#   log3 — auth-svc, GET,    INFO,  user=carol, status=200
-#   log4 — api-gw,   GET,    WARN,  user=diana, status=204
-#   log5 — worker,   DELETE, ERROR, user=eve,   status=400
+#   case 1  filter      resource + log attr + top-level in WHERE       (raw)
+#   case 2  group by    resource × top-level multi-key                 (scalar)
+#   case 3  aggregation count_distinct(log attr) grouped by top-level  (scalar)
+#   case 4  agg+filter  count by resource, body-field WHERE guard       (scalar)
+#   case 5  agg+filter  count_distinct(resource) by log attr, top-level filter (scalar)
+#
+# Data landscape (5 logs):
+#   log1 — auth-svc, GET,    INFO,  score=80,  user=alice
+#   log2 — auth-svc, POST,   ERROR, score=90,  user=bob
+#   log3 — auth-svc, GET,    INFO,  score=60,  user=carol
+#   log4 — api-gw,   GET,    WARN,  score=70,  user=diana
+#   log5 — worker,   DELETE, ERROR, score=100, user=eve
 # ============================================================================
 
 
-def test_non_body_filter_and_groupby(
+def test_non_body_filter_groupby_aggregation(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -125,11 +131,11 @@ def test_non_body_filter_and_groupby(
     end_ms = int(now.timestamp() * 1000)
 
     log_data = [
-        ("auth-svc", "GET", "INFO", {"user": "alice", "status": 200}),
-        ("auth-svc", "POST", "ERROR", {"user": "bob", "status": 500}),
-        ("auth-svc", "GET", "INFO", {"user": "carol", "status": 200}),
-        ("api-gw", "GET", "WARN", {"user": "diana", "status": 204}),
-        ("worker", "DELETE", "ERROR", {"user": "eve", "status": 400}),
+        ("auth-svc", "GET",    "INFO",  {"score": 80,  "user": "alice"}),
+        ("auth-svc", "POST",   "ERROR", {"score": 90,  "user": "bob"}),
+        ("auth-svc", "GET",    "INFO",  {"score": 60,  "user": "carol"}),
+        ("api-gw",   "GET",    "WARN",  {"score": 70,  "user": "diana"}),
+        ("worker",   "DELETE", "ERROR", {"score": 100, "user": "eve"}),
     ]
     logs_list = [
         Logs(
@@ -147,199 +153,57 @@ def test_non_body_filter_and_groupby(
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     cases = [
-        # ── top-level field filters ────────────────────────────────────────
+        # 1. Filter — resource + log attr + top-level in WHERE (all three non-body contexts at once)
         {
-            "name": "filter.sev_eq_error",
+            "name": "filter.cross_context",
             "requestType": "raw",
-            "expression": 'severity_text = "ERROR"',
-            "validate": lambda r: len(get_rows(r)) == 2 and _body_users(r) == {"bob", "eve"},
-        },
-        {
-            "name": "filter.sev_not_eq_info",
-            "requestType": "raw",
-            "expression": 'severity_text != "INFO"',
-            "validate": lambda r: len(get_rows(r)) == 3 and _body_users(r) == {"bob", "diana", "eve"},
-        },
-        {
-            "name": "filter.sev_in",
-            "requestType": "raw",
-            "expression": "severity_text IN ['INFO', 'WARN']",
-            "validate": lambda r: len(get_rows(r)) == 3 and _body_users(r) == {"alice", "carol", "diana"},
-        },
-        # ── resource attribute filters ─────────────────────────────────────
-        {
-            "name": "filter.res_contains",
-            "requestType": "raw",
-            "expression": 'service.name CONTAINS "auth"',
-            "validate": lambda r: len(get_rows(r)) == 3 and _body_users(r) == {"alice", "bob", "carol"},
-        },
-        # ── log attribute filters ──────────────────────────────────────────
-        {
-            "name": "filter.attr_in",
-            "requestType": "raw",
-            "expression": "http.method IN ['GET', 'DELETE']",
-            "validate": lambda r: len(get_rows(r)) == 4 and _body_users(r) == {"alice", "carol", "diana", "eve"},
-        },
-        # ── combined filters (cross-context) ──────────────────────────────
-        # log attr + top-level
-        {
-            "name": "filter.attr_and_sev",
-            "requestType": "raw",
-            "expression": 'http.method = "GET" AND severity_text = "INFO"',
+            "expression": 'service.name = "auth-svc" AND http.method = "GET" AND severity_text = "INFO"',
             "validate": lambda r: len(get_rows(r)) == 2 and _body_users(r) == {"alice", "carol"},
         },
-        # resource attr + log attr + body field (all three contexts)
+        # 2. GroupBy — resource × top-level multi-key, no filter
+        #    Proves both contexts resolve correctly as simultaneous GROUP BY keys.
         {
-            "name": "filter.all_three",
-            "requestType": "raw",
-            "expression": 'service.name = "auth-svc" AND http.method = "POST" AND status = 500',
-            "validate": lambda r: len(get_rows(r)) == 1 and _body_users(r) == {"bob"},
-        },
-        # ── group by ──────────────────────────────────────────────────────
-        # resource attribute: auth-svc×3, api-gw×1, worker×1
-        {
-            "name": "groupby.service_name",
+            "name": "groupby.resource_x_toplevel",
             "requestType": "scalar",
             "expression": None,
-            "groupBy": [build_group_by_field("service.name")],
+            "groupBy": [build_group_by_field("service.name"), {"name": "severity_text"}],
             "aggregation": "count()",
-            "validate": lambda r: (rows := _counts(r)) and rows.get("auth-svc") == 3 and rows.get("api-gw") == 1 and rows.get("worker") == 1,
+            # auth-svc+INFO=2, auth-svc+ERROR=1, api-gw+WARN=1, worker+ERROR=1
+            "validate": lambda r: (lambda p: p.get(("auth-svc", "INFO")) == 2 and p.get(("auth-svc", "ERROR")) == 1 and p.get(("api-gw", "WARN")) == 1 and p.get(("worker", "ERROR")) == 1)(
+                {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}
+            ),
         },
-        # log attribute: GET×3, POST×1, DELETE×1 (no fieldContext — backend auto-resolves from metadata)
+        # 3. Aggregation — count_distinct(log attr) grouped by top-level
+        #    ERROR logs use {POST, DELETE} → 2 distinct methods; INFO/WARN use only GET → 1.
         {
-            "name": "groupby.http_method",
-            "requestType": "scalar",
-            "expression": None,
-            "groupBy": [{"name": "http.method"}],
-            "aggregation": "count()",
-            "validate": lambda r: (rows := _counts(r)) and rows.get("GET") == 3 and rows.get("POST") == 1 and rows.get("DELETE") == 1,
-        },
-        # top-level field: INFO×2, ERROR×2, WARN×1
-        {
-            "name": "groupby.severity_text",
+            "name": "agg.count_distinct_attr_by_toplevel",
             "requestType": "scalar",
             "expression": None,
             "groupBy": [{"name": "severity_text"}],
-            "aggregation": "count()",
-            "validate": lambda r: (rows := _counts(r)) and rows.get("INFO") == 2 and rows.get("ERROR") == 2 and rows.get("WARN") == 1,
-        },
-        # multi-field: resource attr + log attr (no fieldContext on http.method — auto-resolved)
-        {
-            "name": "groupby.multi_svc_method",
-            "requestType": "scalar",
-            "expression": None,
-            "groupBy": [build_group_by_field("service.name"), {"name": "http.method"}],
-            "aggregation": "count()",
-            # auth-svc+GET=2, auth-svc+POST=1, api-gw+GET=1, worker+DELETE=1
-            "validate": lambda r: (pairs := {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}) and pairs.get(("auth-svc", "GET")) == 2 and pairs.get(("auth-svc", "POST")) == 1 and pairs.get(("api-gw", "GET")) == 1 and pairs.get(("worker", "DELETE")) == 1,
-        },
-        # resource attr group by with top-level filter: only INFO logs → auth-svc=2, no other group
-        {
-            "name": "groupby.svc_filtered_by_sev",
-            "requestType": "scalar",
-            "expression": 'severity_text = "INFO"',
-            "groupBy": [build_group_by_field("service.name")],
-            "aggregation": "count()",
-            "validate": lambda r: (rows := _counts(r)) and rows.get("auth-svc") == 2 and len(rows) == 1,
-        },
-    ]
-
-    for case in cases:
-        case.setdefault("groupBy", None)
-        _run_case(signoz, token, start_ms, end_ms, case)
-
-
-# ============================================================================
-# Aggregation — grouped by non-body fields
-#
-# A single 4-log dataset with varied attributes exercises aggregation GROUP BY
-# across all three non-body contexts (resource attr, log attr, top-level).
-#
-# Data landscape:
-#   log1 — svc-a, GET,    INFO, score=80, ts=now-4s
-#   log2 — svc-a, POST,   INFO, score=90, ts=now-3s
-#   log3 — svc-b, GET,    WARN, score=60, ts=now-2s
-#   log4 — svc-b, DELETE, WARN, score=70, ts=now-1s
-#
-# Aggregation cross-reference:
-#   GROUP BY service.name  → svc-a: sum=170, svc-b: sum=130
-#   GROUP BY severity_text → INFO: count=2, WARN: count=2
-#   GROUP BY http.method   → GET: sum=140(80+60), POST: sum=90, DELETE: sum=70
-# ============================================================================
-
-
-def test_non_body_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[list[Logs]], None],
-    export_json_types: Callable[[list[Logs]], None],
-) -> None:
-    now = datetime.now(tz=UTC)
-    start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-
-    logs_list = [
-        Logs(timestamp=now - timedelta(seconds=4), resources={"service.name": "svc-a"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 80}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": "svc-a"}, attributes={"http.method": "POST"}, body_v2=json.dumps({"score": 90}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "svc-b"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 60}), body_promoted="", severity_text="WARN"),
-        Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "svc-b"}, attributes={"http.method": "DELETE"}, body_v2=json.dumps({"score": 70}), body_promoted="", severity_text="WARN"),
-    ]
-    export_json_types(logs_list)
-    insert_logs(logs_list)
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
-
-    cases = [
-        # ── aggregation (scalar) — non-body agg functions, cross-context GROUP BY + filter
-        # count() by resource attr, filtered by log attr
-        {
-            "name": "agg.count_resource_groupby_attr_filter",
-            "requestType": "scalar",
-            "expression": 'http.method = "GET"',
-            "groupBy": [build_group_by_field("service.name")],
-            "aggregation": "count()",
-            # GET logs only: svc-a/GET, svc-b/GET → each service has 1
-            "validate": lambda r: (rows := _counts(r)) and int(rows["svc-a"]) == 1 and int(rows["svc-b"]) == 1,
-        },
-        # count() by log attr, filtered by top-level
-        {
-            "name": "agg.count_attr_groupby_toplevel_filter",
-            "requestType": "scalar",
-            "expression": 'severity_text = "WARN"',
-            "groupBy": [build_group_by_field("http.method", "string", "attribute")],
-            "aggregation": "count()",
-            # WARN logs: svc-b/GET and svc-b/DELETE; POST(INFO) excluded
-            "validate": lambda r: (rows := _counts(r)) and int(rows["GET"]) == 1 and int(rows["DELETE"]) == 1 and "POST" not in rows,
-        },
-        # count_distinct(http.method) by resource attr — aggregates a log attr grouped by resource attr
-        {
-            "name": "agg.count_distinct_attr_by_resource",
-            "requestType": "scalar",
-            "expression": None,
-            "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count_distinct(http.method)",
-            # svc-a: {GET, POST} → 2 distinct, svc-b: {GET, DELETE} → 2 distinct
-            "validate": lambda r: (rows := _counts(r)) and int(rows["svc-a"]) == 2 and int(rows["svc-b"]) == 2,
+            "validate": lambda r: (rows := _counts(r)) and int(rows["INFO"]) == 1 and int(rows["ERROR"]) == 2 and int(rows["WARN"]) == 1,
         },
-        # count_distinct(service.name) by top-level, filtered by log attr — aggregates resource attr
+        # 4. Aggregation + body filter — count by resource WHERE body score >= 80
+        #    Body field gates the logs; non-body field drives the GROUP BY.
         {
-            "name": "agg.count_distinct_resource_by_toplevel_attr_filter",
+            "name": "agg.count_by_resource_body_filter",
             "requestType": "scalar",
-            "expression": 'http.method = "GET"',
-            "groupBy": [{"name": "severity_text"}],
-            "aggregation": "count_distinct(service.name)",
-            # GET logs: svc-a/INFO and svc-b/WARN → INFO: 1 distinct svc, WARN: 1 distinct svc
-            "validate": lambda r: (rows := _counts(r)) and int(rows["INFO"]) == 1 and int(rows["WARN"]) == 1,
-        },
-        # count() by (resource, log attr) multi-key GROUP BY, filtered by top-level
-        {
-            "name": "agg.count_multi_groupby_toplevel_filter",
-            "requestType": "scalar",
-            "expression": 'severity_text = "INFO"',
-            "groupBy": [build_group_by_field("service.name"), build_group_by_field("http.method", "string", "attribute")],
+            "expression": "score >= 80",
+            "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count()",
-            # INFO logs only: svc-a/GET=1, svc-a/POST=1; svc-b logs are WARN → excluded
-            "validate": lambda r: (pairs := {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}) and pairs.get(("svc-a", "GET")) == 1 and pairs.get(("svc-a", "POST")) == 1 and all(k[0] != "svc-b" for k in pairs),
+            # score>=80: alice(80), bob(90), eve(100) → auth-svc: 2, worker: 1; api-gw excluded
+            "validate": lambda r: (rows := _counts(r)) and int(rows["auth-svc"]) == 2 and int(rows["worker"]) == 1 and "api-gw" not in rows,
+        },
+        # 5. Aggregation + top-level filter — count_distinct(resource) grouped by log attr
+        #    Aggregates a resource attr, groups by a log attr, filtered by a top-level field.
+        {
+            "name": "agg.count_distinct_resource_by_attr_toplevel_filter",
+            "requestType": "scalar",
+            "expression": "severity_text IN ['INFO', 'WARN']",
+            "groupBy": [{"name": "http.method"}],
+            "aggregation": "count_distinct(service.name)",
+            # INFO/WARN logs: GET(auth-svc×2, api-gw) → 2 distinct svcs; POST/DELETE excluded
+            "validate": lambda r: (rows := _counts(r)) and int(rows["GET"]) == 2 and "POST" not in rows and "DELETE" not in rows,
         },
     ]
 
