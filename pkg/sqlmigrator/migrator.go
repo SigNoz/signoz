@@ -70,9 +70,6 @@ func (migrator *migrator) Migrate(ctx context.Context) error {
 
 func (migrator *migrator) Check(ctx context.Context) error {
 	migrator.settings.Logger().InfoContext(ctx, "checking sqlstore migrations", slog.String("dialect", migrator.dialect))
-	if err := migrator.migrator.Init(ctx); err != nil {
-		return err
-	}
 
 	migrations, err := migrator.migrator.MigrationsWithStatus(ctx)
 	if err != nil {
