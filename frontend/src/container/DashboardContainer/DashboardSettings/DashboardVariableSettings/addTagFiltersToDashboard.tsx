@@ -227,7 +227,7 @@ const removeVariableFromExpression = (
 		return expression;
 	}
 
-	return removeKeysFromExpression(expression, keysToRemove, true);
+	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
 };
 
 const removeVariablePlaceholders = (
@@ -253,9 +253,17 @@ const removeVariableReferencesFromQueryData = (
 
 	if (dynamicVariablesAttribute) {
 		const filters = updatedQueryData.filters?.items || [];
-		const filteredItems = filters.filter(
-			(item) => item.key?.key !== dynamicVariablesAttribute,
-		);
+		const filteredItems = filters.filter((item) => {
+			if (item.key?.key !== dynamicVariablesAttribute) {
+				return true;
+			}
+			if (isArray(item.value)) {
+				return !(item.value as (string | number | boolean)[]).some((v) =>
+					matchesVariablePlaceholder(String(v), variableName),
+				);
+			}
+			return !matchesVariablePlaceholder(String(item.value), variableName);
+		});
 
 		updatedQueryData = {
 			...updatedQueryData,
@@ -269,13 +277,13 @@ const removeVariableReferencesFromQueryData = (
 				expression: removeKeysFromExpression(
 					updatedQueryData.filter?.expression ?? '',
 					[dynamicVariablesAttribute],
-					true,
+					`$${variableName}`,
 				),
 			},
 			expression: removeKeysFromExpression(
 				updatedQueryData.expression ?? '',
 				[dynamicVariablesAttribute],
-				true,
+				`$${variableName}`,
 			),
 		};
 	}

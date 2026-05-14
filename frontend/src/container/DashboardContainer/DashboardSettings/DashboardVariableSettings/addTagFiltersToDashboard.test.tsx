@@ -458,4 +458,498 @@ describe('removeVariableReferencesFromDashboard', () => {
 		expect(widget.title).toBe('Traffic for');
 		expect(widget.description).toBe('Metrics scoped to environment');
 	});
+
+	it('removes only the matching variable clause when two variables share the same filter key', () => {
+		// Two variables both backed by deployment.environment.
+		// Deleting $env_region must preserve $env, not remove the first $-valued clause.
+		const dashboard: Dashboard = {
+			id: 'dash-shared-key',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Shared Key Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-shared',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'Shared Key Widget',
+						description: '',
+						query: {
+							id: 'query-shared',
+							queryType: EQueryType.QUERY_BUILDER,
+							promql: [],
+							clickhouse_sql: [],
+							builder: {
+								queryData: [
+									{
+										queryName: 'q1',
+										dataSource: DataSource.METRICS,
+										functions: [],
+										groupBy: [],
+										expression:
+											"deployment.environment = $env AND deployment.environment = $env_region AND status = 'ok'",
+										filter: {
+											expression:
+												"deployment.environment = $env AND deployment.environment = $env_region AND status = 'ok'",
+										},
+										filters: {
+											items: [
+												{
+													id: 'f1',
+													key: {
+														id: 'deployment.environment',
+														key: 'deployment.environment',
+														type: '',
+													},
+													op: '=',
+													value: '$env',
+												},
+												{
+													id: 'f2',
+													key: {
+														id: 'deployment.environment',
+														key: 'deployment.environment',
+														type: '',
+													},
+													op: '=',
+													value: '$env_region',
+												},
+											],
+											op: 'AND',
+										},
+										legend: '',
+										disabled: false,
+										having: [],
+										limit: null,
+										stepInterval: null,
+										orderBy: [],
+										selectColumns: [],
+										source: '',
+									},
+								],
+								queryFormulas: [],
+								queryTraceOperator: [],
+							},
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'env_region',
+			'deployment.environment',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		const queryData = widget.query.builder.queryData[0];
+
+		// $env_region clause removed; $env clause must survive
+		expect(queryData.filter.expression).toBe(
+			"deployment.environment = $env AND status = 'ok'",
+		);
+		expect(queryData.expression).toBe(
+			"deployment.environment = $env AND status = 'ok'",
+		);
+		// filter item for $env_region gone, $env item stays
+		expect(queryData.filters.items).toHaveLength(1);
+		expect(queryData.filters.items[0].value).toBe('$env');
+	});
+
+	it('does not remove $environment clause when deleting $env from filter expression', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-boundary-expr',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Boundary Expression Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-boundary-expr',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'Widget',
+						description: '',
+						query: {
+							id: 'query-boundary-expr',
+							queryType: EQueryType.QUERY_BUILDER,
+							promql: [],
+							clickhouse_sql: [],
+							builder: {
+								queryData: [
+									{
+										queryName: 'q1',
+										dataSource: DataSource.METRICS,
+										functions: [],
+										groupBy: [],
+										expression: 'env = $env AND deployment.environment = $environment',
+										filter: {
+											expression: 'env = $env AND deployment.environment = $environment',
+										},
+										filters: {
+											items: [],
+											op: 'AND',
+										},
+										legend: '',
+										disabled: false,
+										having: [],
+										limit: null,
+										stepInterval: null,
+										orderBy: [],
+										selectColumns: [],
+										source: '',
+									},
+								],
+								queryFormulas: [],
+								queryTraceOperator: [],
+							},
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'env',
+			'env',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		const queryData = widget.query.builder.queryData[0];
+
+		// env = $env removed; deployment.environment = $environment must be untouched
+		expect(queryData.filter.expression).toBe(
+			'deployment.environment = $environment',
+		);
+		expect(queryData.expression).toBe('deployment.environment = $environment');
+	});
+
+	it('keeps a literal clause for the same key when removing its variable clause', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-mixed',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Mixed Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-mixed',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'Mixed Widget',
+						description: '',
+						query: {
+							id: 'query-mixed',
+							queryType: EQueryType.QUERY_BUILDER,
+							promql: [],
+							clickhouse_sql: [],
+							builder: {
+								queryData: [
+									{
+										queryName: 'q1',
+										dataSource: DataSource.METRICS,
+										functions: [],
+										groupBy: [],
+										expression:
+											"service.name IN $service AND service.name = 'api-gateway'",
+										filter: {
+											expression:
+												"service.name IN $service AND service.name = 'api-gateway'",
+										},
+										filters: {
+											items: [
+												{
+													id: 'f1',
+													key: { id: 'service.name', key: 'service.name', type: '' },
+													op: 'IN',
+													value: '$service',
+												},
+												{
+													id: 'f2',
+													key: { id: 'service.name', key: 'service.name', type: '' },
+													op: '=',
+													value: 'api-gateway',
+												},
+											],
+											op: 'AND',
+										},
+										legend: '',
+										disabled: false,
+										having: [],
+										limit: null,
+										stepInterval: null,
+										orderBy: [],
+										selectColumns: [],
+										source: '',
+									},
+								],
+								queryFormulas: [],
+								queryTraceOperator: [],
+							},
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'service',
+			'service.name',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		const queryData = widget.query.builder.queryData[0];
+
+		// $service clause removed; literal 'api-gateway' clause must survive
+		expect(queryData.filter.expression).toBe("service.name = 'api-gateway'");
+		expect(queryData.filters.items).toHaveLength(1);
+		expect(queryData.filters.items[0].value).toBe('api-gateway');
+	});
+
+	it('removes only the variable entry from a multi-value array filter item, keeping literals', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-multivalue',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Multi-value Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-multivalue',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'Multi-value Widget',
+						description: '',
+						query: {
+							id: 'query-multivalue',
+							queryType: EQueryType.QUERY_BUILDER,
+							promql: [],
+							clickhouse_sql: [],
+							builder: {
+								queryData: [
+									{
+										queryName: 'q1',
+										dataSource: DataSource.METRICS,
+										functions: [],
+										groupBy: [],
+										expression: '',
+										filter: { expression: '' },
+										filters: {
+											items: [
+												{
+													id: 'f1',
+													key: { id: 'service.name', key: 'service.name', type: '' },
+													op: 'IN',
+													value: ['$service', 'api-gateway'],
+												},
+											],
+											op: 'AND',
+										},
+										legend: '',
+										disabled: false,
+										having: [],
+										limit: null,
+										stepInterval: null,
+										orderBy: [],
+										selectColumns: [],
+										source: '',
+									},
+								],
+								queryFormulas: [],
+								queryTraceOperator: [],
+							},
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'service',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		const queryData = widget.query.builder.queryData[0];
+
+		// item is kept but $service is removed from the array; literal stays
+		expect(queryData.filters.items).toHaveLength(1);
+		expect(queryData.filters.items[0].value).toStrictEqual(['api-gateway']);
+	});
+
+	it('removes variable placeholders from clickhouse_sql query and legend', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-clickhouse',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'ClickHouse Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-clickhouse',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'ClickHouse Widget',
+						description: '',
+						query: {
+							id: 'query-clickhouse',
+							queryType: EQueryType.CLICKHOUSE,
+							promql: [],
+							clickhouse_sql: [
+								{
+									name: 'ch1',
+									query:
+										"SELECT count() FROM signoz_logs WHERE service_name = '$service'",
+									legend: '$service log count',
+									disabled: false,
+								},
+							],
+							builder: EMPTY_BUILDER,
+							unit: '',
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'service',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		expect(widget.query.clickhouse_sql[0].query).toBe(
+			"SELECT count() FROM signoz_logs WHERE service_name = ''",
+		);
+		expect(widget.query.clickhouse_sql[0].legend).toBe('log count');
+	});
+
+	it('is idempotent — calling twice produces the same result', () => {
+		const dashboard = buildDashboard();
+
+		const once = removeVariableReferencesFromDashboard(
+			dashboard,
+			'service',
+			'service.name',
+		);
+		const twice = removeVariableReferencesFromDashboard(
+			once,
+			'service',
+			'service.name',
+		);
+
+		expect(twice).toStrictEqual(once);
+	});
+
+	it('handles a dashboard with no widgets without throwing', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-empty',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Empty Dashboard',
+				widgets: undefined,
+				variables: {},
+			},
+		};
+
+		expect(() =>
+			removeVariableReferencesFromDashboard(dashboard, 'service'),
+		).not.toThrow();
+	});
+
+	it('returns expression unchanged when the variable has no clauses in it', () => {
+		const dashboard: Dashboard = {
+			id: 'dash-unrelated',
+			createdAt: '',
+			updatedAt: '',
+			createdBy: '',
+			updatedBy: '',
+			data: {
+				title: 'Unrelated Dashboard',
+				widgets: [
+					{
+						...BASE_WIDGET,
+						id: 'widget-unrelated',
+						panelTypes: PANEL_TYPES.TIME_SERIES,
+						title: 'Unrelated Widget',
+						description: '',
+						query: {
+							id: 'query-unrelated',
+							queryType: EQueryType.QUERY_BUILDER,
+							promql: [],
+							clickhouse_sql: [],
+							builder: {
+								queryData: [
+									{
+										queryName: 'q1',
+										dataSource: DataSource.METRICS,
+										functions: [],
+										groupBy: [],
+										expression: "env = 'prod'",
+										filter: { expression: "env = 'prod'" },
+										filters: {
+											items: [
+												{
+													id: 'f1',
+													key: { id: 'env', key: 'env', type: '' },
+													op: '=',
+													value: 'prod',
+												},
+											],
+											op: 'AND',
+										},
+										legend: 'production',
+										disabled: false,
+										having: [],
+										limit: null,
+										stepInterval: null,
+										orderBy: [],
+										selectColumns: [],
+										source: '',
+									},
+								],
+								queryFormulas: [],
+								queryTraceOperator: [],
+							},
+						},
+					},
+				],
+				variables: {},
+			},
+		};
+
+		const cleanedDashboard = removeVariableReferencesFromDashboard(
+			dashboard,
+			'service',
+		);
+
+		const widget = cleanedDashboard!.data.widgets![0] as any;
+		const queryData = widget.query.builder.queryData[0];
+
+		expect(queryData.filter.expression).toBe("env = 'prod'");
+		expect(queryData.filters.items).toHaveLength(1);
+		expect(queryData.legend).toBe('production');
+	});
 });
