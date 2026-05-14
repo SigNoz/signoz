@@ -40,6 +40,7 @@ import { validateQuery } from 'utils/queryValidationUtils';
 
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
+import { isKeyNotFoundError } from '../utils';
 import { K8S_ENTITY_LOGS_EXPRESSION_KEY, useInfiniteEntityLogs } from './hooks';
 import { getEntityLogsQueryPayload } from './utils';
 
@@ -110,6 +111,7 @@ function EntityLogsContent({
 		isLoading,
 		isFetching,
 		isError,
+		error,
 		refetch,
 		cancel,
 	} = useInfiniteEntityLogs({
@@ -228,7 +230,9 @@ function EntityLogsContent({
 
 	const showInitialLoading = isLoading || (isFetching && logs.length === 0);
 
-	const isDataEmpty = !showInitialLoading && !isError && logs.length === 0;
+	const isKeyNotFound = isKeyNotFoundError(error);
+	const isDataEmpty =
+		!showInitialLoading && (!isError || isKeyNotFound) && logs.length === 0;
 	const hasAdditionalFilters = !!userExpression?.trim();
 
 	return (
@@ -267,8 +271,8 @@ function EntityLogsContent({
 			<div className={styles.logs}>
 				{showInitialLoading && <LogsLoading />}
 				{isDataEmpty && <EntityEmptyState hasFilters={hasAdditionalFilters} />}
-				{isError && !showInitialLoading && <EntityError />}
-				{!showInitialLoading && !isError && logs.length > 0 && (
+				{isError && !isKeyNotFound && !showInitialLoading && <EntityError />}
+				{!showInitialLoading && (!isError || isKeyNotFound) && logs.length > 0 && (
 					<div className={styles.listContainer} data-log-detail-ignore="true">
 						{renderContent}
 					</div>

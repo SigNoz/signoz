@@ -22,6 +22,7 @@ import { AlignedData, Options } from 'uplot';
 import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
 
 import { useEntityMetrics } from './hooks';
+import { isKeyNotFoundError } from '../utils';
 
 import styles from './EntityMetrics.module.scss';
 import { MetricsTable } from './MetricsTable';
@@ -152,7 +153,7 @@ function EntityMetrics<T>({
 			return <Skeleton />;
 		}
 
-		if (query.error) {
+		if (query.error && !isKeyNotFoundError(query.error)) {
 			const errorMessage =
 				(query.error as Error)?.message || 'Something went wrong';
 			return <div>{errorMessage}</div>;
