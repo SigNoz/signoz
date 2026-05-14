@@ -9,6 +9,7 @@ import {
 } from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -33,7 +34,7 @@ import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
-import './TraceDetailsHeader.styles.scss';
+import styles from './TraceDetailsHeader.module.scss';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface FilterMetadata {
@@ -68,7 +69,7 @@ function DetailsLoader(): JSX.Element {
 					key={i}
 					active
 					size="small"
-					className="trace-details-header__skeleton"
+					className={styles.skeleton}
 				/>
 			))}
 		</>
@@ -120,15 +121,15 @@ function TraceDetailsHeader({
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
-		<div className="trace-details-header-wrapper">
-			<div className="trace-details-header">
+		<div className={styles.wrapper}>
+			<div className={styles.header}>
 				{!isFilterExpanded && (
 					<>
 						<Button
 							variant="solid"
 							color="secondary"
 							size="md"
-							className="trace-details-header__back-btn"
+							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
 						>
 							<ArrowLeft size={14} />
@@ -151,7 +152,7 @@ function TraceDetailsHeader({
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className="trace-details-header__analytics-btn"
+												className={styles.analyticsBtn}
 												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 											>
 												<ChartPie size={14} />
@@ -167,11 +168,7 @@ function TraceDetailsHeader({
 								/>
 							</>
 						)}
-						<div
-							className={`trace-details-header__filter${
-								isFilterExpanded ? ' trace-details-header__filter--expanded' : ''
-							}`}
-						>
+						<div className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
@@ -187,7 +184,7 @@ function TraceDetailsHeader({
 								variant="solid"
 								color="secondary"
 								size="sm"
-								className="trace-details-header__old-view-btn"
+								className={styles.oldViewBtn}
 								onClick={handleSwitchToOldView}
 							>
 								Legacy View
@@ -198,22 +195,22 @@ function TraceDetailsHeader({
 			</div>
 
 			{showTraceDetails && (
-				<div className="trace-details-header__sub-header">
+				<div className={styles.subHeader}>
 					{traceMetadata ? (
 						<>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<Server size={13} />
 								{traceMetadata.rootServiceName}
-								<span className="trace-details-header__separator">—</span>
-								<span className="trace-details-header__entry-point-badge">
+								<span className={styles.separator}>—</span>
+								<span className={styles.entryPointBadge}>
 									{traceMetadata.rootServiceEntryPoint}
 								</span>
 							</span>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<Timer size={13} />
 								{parseFloat(formattedDuration.toFixed(2))} {timeUnitName}
 							</span>
-							<span className="trace-details-header__sub-item">
+							<span className={styles.subItem}>
 								<CalendarClock size={13} />
 								{dayjs(traceMetadata.startTimestampMillis).format(
 									DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,

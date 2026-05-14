@@ -10,7 +10,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import AddedFields from './AddedFields';
 import OtherFields from './OtherFields';
 
-import './FieldsSettings.styles.scss';
+import styles from './FieldsSettings.module.scss';
 
 const MAX_FIELDS_DEFAULT = 10;
 
@@ -89,18 +89,18 @@ function FieldsSettings({
 	const isAtLimit = draftFields.length >= maxFields;
 
 	return (
-		<div className="fields-settings">
-			<div className="fs-header">
-				<div className="fs-title">
+		<div className={styles.root}>
+			<div className={styles.header}>
+				<div className={styles.title}>
 					<TableColumnsSplit size={16} />
 					{title}
 				</div>
-				<X className="fs-close-icon" size={16} onClick={onClose} />
+				<X className={styles.closeIcon} size={16} onClick={onClose} />
 			</div>
 
-			<section className="fs-search">
+			<section>
 				<Input
-					className="fs-search-input"
+					className={styles.searchInput}
 					type="text"
 					value={inputValue}
 					placeholder="Search for a field..."
@@ -123,7 +123,7 @@ function FieldsSettings({
 			/>
 
 			{hasUnsavedChanges && (
-				<div className="fs-footer">
+				<div className={styles.footer}>
 					<Button
 						variant="outlined"
 						color="secondary"

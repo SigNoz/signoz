@@ -5,7 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import ROUTES from 'constants/routes';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 
-import './LinkedSpans.styles.scss';
+import styles from './LinkedSpans.module.scss';
 
 interface SpanReference {
 	traceId: string;
@@ -56,12 +56,12 @@ export function LinkedSpansToggle({
 	toggleOpen: () => void;
 }): JSX.Element {
 	if (count === 0) {
-		return <span className="linked-spans__label">0 linked spans</span>;
+		return <span className={styles.label}>0 linked spans</span>;
 	}
 
 	return (
-		<button type="button" className="linked-spans__toggle" onClick={toggleOpen}>
-			<span className="linked-spans__label">
+		<button type="button" className={styles.toggle} onClick={toggleOpen}>
+			<span className={styles.label}>
 				{count} linked span{count !== 1 ? 's' : ''}
 			</span>
 			{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -87,7 +87,7 @@ export function LinkedSpansPanel({
 	}
 
 	return (
-		<div className="linked-spans__list">
+		<div className={styles.list}>
 			{linkedSpans.map((item) => (
 				<KeyValueLabel
 					key={item.spanId}
@@ -108,7 +108,7 @@ function LinkedSpans({ references }: LinkedSpansProps): JSX.Element {
 	const { linkedSpans, count, isOpen, toggleOpen } = useLinkedSpans(references);
 
 	return (
-		<div className="linked-spans">
+		<div className={styles.root}>
 			<LinkedSpansToggle count={count} isOpen={isOpen} toggleOpen={toggleOpen} />
 			<LinkedSpansPanel linkedSpans={linkedSpans} isOpen={isOpen} />
 		</div>
