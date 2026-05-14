@@ -29,6 +29,18 @@ if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
 }
 
+if (typeof window.IntersectionObserver === 'undefined') {
+	class IntersectionObserverMock {
+		observe(): void {}
+		unobserve(): void {}
+		disconnect(): void {}
+		takeRecords(): IntersectionObserverEntry[] {
+			return [];
+		}
+	}
+	(window as any).IntersectionObserver = IntersectionObserverMock;
+}
+
 // Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
 // These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
 // jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),

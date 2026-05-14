@@ -1,0 +1,36 @@
+.message {
+	margin: 0 0 10px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	line-height: 1.5;
+}
+
+.actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.answered {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	opacity: 0.7;
+}
+
+.icon {
+	flex-shrink: 0;
+
+	&.ok {
+		color: var(--accent-forest);
+	}
+	&.no {
+		color: var(--accent-cherry);
+	}
+}
+
+.answerText {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}

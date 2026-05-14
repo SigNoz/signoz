@@ -1,15 +1,20 @@
-import type React from 'react';
+import React from 'react';
 import { act, renderHook } from '@testing-library/react';
+import { AllTheProviders } from 'tests/test-utils';
 
 import { useFlamegraphHover } from '../hooks/useFlamegraphHover';
 import type { SpanRect } from '../types';
 import { MOCK_SPAN, MOCK_TRACE_METADATA } from './testUtils';
 
+function wrapper({ children }: { children: React.ReactNode }): JSX.Element {
+	return <AllTheProviders>{children}</AllTheProviders>;
+}
+
 function createMockCanvas(): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
 	canvas.width = 800;
 	canvas.height = 400;
-	canvas.getBoundingClientRect = jest.fn(
+	jest.spyOn(canvas, 'getBoundingClientRect').mockImplementation(
 		(): DOMRect =>
 			({
 				left: 0,
@@ -59,7 +64,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('sets hoveredSpanId and tooltipContent when hovering on span', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleHoverMouseMove({
@@ -76,7 +83,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('clears hover when moving to empty area', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleHoverMouseMove({
@@ -99,7 +108,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('clears hover on mouse leave', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleHoverMouseMove({
@@ -117,7 +128,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('suppresses click when drag distance exceeds threshold', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleMouseDownForClick({
@@ -137,7 +150,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('calls onSpanClick when clicking on span', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleClick({
@@ -150,7 +165,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('uses clientX/clientY for tooltip positioning', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 
 		act(() => {
 			result.current.handleHoverMouseMove({
@@ -164,7 +181,9 @@ describe('useFlamegraphHover', () => {
 	});
 
 	it('does not update hover during drag', () => {
-		const { result } = renderHook(() => useFlamegraphHover(defaultArgs));
+		const { result } = renderHook(() => useFlamegraphHover(defaultArgs), {
+			wrapper,
+		});
 		defaultArgs.isDraggingRef.current = true;
 
 		act(() => {

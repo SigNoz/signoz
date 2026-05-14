@@ -11,13 +11,9 @@ import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
 import { getVisibleSpans } from './utils';
 
-import './TraceWaterfall.styles.scss';
+import { IInterestedSpan } from './types';
 
-export interface IInterestedSpan {
-	spanId: string;
-	isUncollapsed: boolean;
-	scrollToSpan?: boolean;
-}
+import './TraceWaterfall.styles.scss';
 
 interface ITraceWaterfallProps {
 	traceId: string;
