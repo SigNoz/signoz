@@ -30,7 +30,6 @@
     "node": ">=22.0.0",
     "pnpm": ">=10.0.0 <11.0.0"
   },
-  "packageManager": "pnpm@10.25.0",
   "author": "",
   "license": "ISC",
   "dependencies": {
