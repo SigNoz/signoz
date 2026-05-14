@@ -57,17 +57,15 @@ export function buildBaseConfig({
 				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value)
 		: undefined;
 
-	const persistSelectionPreference = panelMode
-		? [PanelMode.DASHBOARD_VIEW, PanelMode.STANDALONE_VIEW].includes(panelMode)
-		: false;
-
 	const builder = new UPlotConfigBuilder({
 		id,
 		onDragSelect,
 		tzDate,
-		shouldSaveSelectionPreference: persistSelectionPreference,
-		selectionPreferencesSource: persistSelectionPreference
-			? SelectionPreferencesSource.LOCAL_STORAGE
+		shouldSaveSelectionPreference: panelMode === PanelMode.DASHBOARD_VIEW,
+		selectionPreferencesSource: panelMode
+			? [PanelMode.DASHBOARD_VIEW, PanelMode.STANDALONE_VIEW].includes(panelMode)
+				? SelectionPreferencesSource.LOCAL_STORAGE
+				: SelectionPreferencesSource.IN_MEMORY
 			: SelectionPreferencesSource.IN_MEMORY,
 		stepInterval,
 	});

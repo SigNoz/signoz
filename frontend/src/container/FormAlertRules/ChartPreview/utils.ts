@@ -205,7 +205,7 @@ export const buildAlertChartConfig = ({
 	const builder = buildBaseConfig({
 		id,
 		panelType,
-		panelMode: PanelMode.STANDALONE_VIEW,
+		panelMode: PanelMode.DASHBOARD_VIEW,
 		thresholds,
 		apiResponse,
 		yAxisUnit,
