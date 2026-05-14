@@ -127,7 +127,7 @@
     "timestamp-nano": "^1.0.0",
     "typescript": "5.9.3",
     "uplot": "1.6.31",
-    "uuid": "^8.3.2",
+    "uuid": "^14.0.0",
     "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-html": "3.2.2",
     "zod": "4.3.6",
