@@ -3,7 +3,7 @@ FROM node:22-bookworm AS build
 WORKDIR /opt/
 COPY ./frontend/ ./
 ENV NODE_OPTIONS=--max-old-space-size=8192
-RUN CI=1 npm i -g pnpm
+RUN CI=1 npm i -g pnpm@10
 RUN CI=1 pnpm install
 RUN CI=1 pnpm build
 

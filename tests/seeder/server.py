@@ -42,9 +42,7 @@ SEEDER_MARKER = {"seeder": "true"}
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    conn = clickhouse_connect.get_client(
-        host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD
-    )
+    conn = clickhouse_connect.get_client(host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD)
     app.state.ch = conn
     try:
         yield
@@ -164,7 +162,7 @@ def seed_golden() -> dict[str, int]:
     """Re-seed the golden dataset with timestamps rebased to `now`.
     Called by Playwright globalSetup before every test session so chart
     assertions land within default panel time windows."""
-    from fixtures import seed_golden_dataset  # local import: fast cold-start
+    from fixtures import seed_golden_dataset  # noqa: PLC0415 — local import keeps cold-start fast
 
     try:
         return seed_golden_dataset.seed("http://localhost:8080")

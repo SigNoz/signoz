@@ -71,10 +71,7 @@ def _generate_metrics() -> list[dict]:
                 latency_sum = 0
                 for i in range(n_buckets):
                     minutes_ago = (_WINDOW_HOURS * 60) - (i + 1) * _BUCKET_MINUTES
-                    bucket_calls = int(
-                        weight
-                        * (50 + 20 * (1 + i % 12 / 12.0) + rng.randint(0, 10))
-                    )
+                    bucket_calls = int(weight * (50 + 20 * (1 + i % 12 / 12.0) + rng.randint(0, 10)))
                     counter += bucket_calls
                     latency_sum += bucket_calls * rng.randint(100_000, 500_000)
                     resource_attrs = {
@@ -118,9 +115,7 @@ def _generate_metrics() -> list[dict]:
                             "k8s.namespace.name": f"signoz-{service}",
                         },
                         "attributes": {
-                            "db.system": "postgresql"
-                            if service == "cartservice"
-                            else "mongodb",
+                            "db.system": "postgresql" if service == "cartservice" else "mongodb",
                         },
                         "is_monotonic": True,
                     }
@@ -135,9 +130,7 @@ def _generate_traces() -> list[dict]:
     for service in _SERVICES:
         for operation in _OPERATIONS[service]:
             for i in range(n_buckets):
-                minutes_ago = int(
-                    (_WINDOW_HOURS * 60) - i * (_WINDOW_HOURS * 60 / n_buckets)
-                )
+                minutes_ago = int((_WINDOW_HOURS * 60) - i * (_WINDOW_HOURS * 60 / n_buckets))
                 http_status = "500" if rng.random() < 0.05 else "200"
                 samples.append(
                     {
@@ -152,9 +145,7 @@ def _generate_traces() -> list[dict]:
                             "k8s.namespace.name": f"signoz-{service}",
                         },
                         "attributes": {
-                            "http.method": "GET"
-                            if "get" in operation.lower() or operation == "/"
-                            else "POST",
+                            "http.method": "GET" if "get" in operation.lower() or operation == "/" else "POST",
                             "http.route": operation,
                             "http.status_code": http_status,
                         },
@@ -177,9 +168,7 @@ def _generate_logs() -> list[dict]:
     n_buckets = 24
     for service in _SERVICES:
         for i in range(n_buckets):
-            minutes_ago = int(
-                (_WINDOW_HOURS * 60) - i * (_WINDOW_HOURS * 60 / n_buckets)
-            )
+            minutes_ago = int((_WINDOW_HOURS * 60) - i * (_WINDOW_HOURS * 60 / n_buckets))
             r = rng.random()
             cumulative = 0.0
             severity = "INFO"
@@ -246,11 +235,7 @@ def _read_jsonl(path: Path) -> Iterator[dict]:
 
 def _iso_minus_minutes(now: datetime.datetime, minutes: float) -> str:
     ts = now - datetime.timedelta(minutes=minutes)
-    return (
-        ts.replace(tzinfo=datetime.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return ts.replace(tzinfo=datetime.UTC).isoformat().replace("+00:00", "Z")
 
 
 def _rebased_metric(sample: dict, now: datetime.datetime) -> dict:
@@ -267,9 +252,7 @@ def _rebased_trace(sample: dict, now: datetime.datetime) -> dict:
         "span_id": sample.get("span_id") or os.urandom(8).hex(),
         "name": sample["name"],
         "kind": _KIND_TO_INT.get(str(sample.get("kind", "SERVER")).upper(), 2),
-        "status_code": _STATUS_TO_INT.get(
-            str(sample.get("status", "UNSET")).upper(), 0
-        ),
+        "status_code": _STATUS_TO_INT.get(str(sample.get("status", "UNSET")).upper(), 0),
         "resources": sample.get("resource_attributes", {}),
         "attributes": sample.get("attributes", {}),
     }
@@ -285,9 +268,7 @@ def _rebased_log(sample: dict, now: datetime.datetime) -> dict:
     }
 
 
-def _post_batches(
-    url: str, rows: Iterator[dict], batch_size: int, timeout: int
-) -> int:
+def _post_batches(url: str, rows: Iterator[dict], batch_size: int, timeout: int) -> int:
     batch: list[dict] = []
     total = 0
     for row in rows:
@@ -318,14 +299,9 @@ def seed(
     earlier sessions seeded."""
     for path in (METRICS_PATH, TRACES_PATH, LOGS_PATH):
         if not path.exists():
-            raise FileNotFoundError(
-                f"golden dataset missing at {path} — run "
-                "`uv run python -m fixtures.seed_golden_dataset regenerate`"
-            )
+            raise FileNotFoundError(f"golden dataset missing at {path} — run `uv run python -m fixtures.seed_golden_dataset regenerate`")
 
-    now = datetime.datetime.now(datetime.timezone.utc).replace(
-        microsecond=0, tzinfo=None
-    )
+    now = datetime.datetime.now(datetime.UTC).replace(microsecond=0, tzinfo=None)
     base = seeder_base_url.rstrip("/")
     if clear_first:
         for signal in ("metrics", "traces", "logs"):
@@ -370,18 +346,14 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
     if len(sys.argv) < 2:
-        sys.stderr.write(
-            "usage: seed_golden_dataset.py seed <seeder-base-url> | regenerate\n"
-        )
+        sys.stderr.write("usage: seed_golden_dataset.py seed <seeder-base-url> | regenerate\n")
         sys.exit(2)
     cmd = sys.argv[1]
     if cmd == "regenerate":
         print(f"wrote {regenerate()}")
     elif cmd == "seed":
         if len(sys.argv) != 3:
-            sys.stderr.write(
-                "usage: seed_golden_dataset.py seed <seeder-base-url>\n"
-            )
+            sys.stderr.write("usage: seed_golden_dataset.py seed <seeder-base-url>\n")
             sys.exit(2)
         print(f"seeded {seed(sys.argv[2])}")
     else:

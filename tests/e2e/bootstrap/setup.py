@@ -39,11 +39,16 @@ def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     apply_license: types.Operation,  # pylint: disable=unused-argument
-    seeder: types.TestContainerDocker,
+    seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
+    pytestconfig: pytest.Config,
 ) -> None:
     """Truncate seeded telemetry; containers come down via fixture
     dependency under `--teardown`."""
-    base = seeder.host_configs["8080"].base().rstrip("/")
+    cached = pytestconfig.cache.get("seeder", None)
+    if not cached:
+        return
+    restored = types.TestContainerDocker.from_cache(cached)
+    base = restored.host_configs["8080"].base().rstrip("/")
     for signal in ("metrics", "traces", "logs"):
         try:
             requests.delete(f"{base}/telemetry/{signal}", timeout=30).raise_for_status()
