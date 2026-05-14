@@ -291,7 +291,7 @@ describe('RoleDetailsPage', () => {
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { kind: 'role', type: 'metaresources' },
+							resource: { kind: 'role', type: 'role' },
 							selectors: ['*'],
 						},
 					],
@@ -313,8 +313,6 @@ describe('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
@@ -324,11 +322,10 @@ describe('RoleDetailsPage', () => {
 			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
 
 			const combobox = within(panel).getByRole('combobox');
-			await user.type(combobox, 'role-001');
-			await user.keyboard('{Enter}');
+			fireEvent.change(combobox, { target: { value: 'role-001' } });
+			fireEvent.keyDown(combobox, { key: 'Enter', keyCode: 13 });
 
-			// user.click waits for the tag-addition state to settle before clicking.
-			await user.click(
+			fireEvent.click(
 				within(panel).getByRole('button', { name: /save changes/i }),
 			);
 
@@ -336,7 +333,7 @@ describe('RoleDetailsPage', () => {
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { kind: 'role', type: 'metaresources' },
+							resource: { kind: 'role', type: 'role' },
 							selectors: ['role-001'],
 						},
 					],
@@ -379,7 +376,7 @@ describe('RoleDetailsPage', () => {
 					additions: null,
 					deletions: [
 						{
-							resource: { kind: 'role', type: 'metaresources' },
+							resource: { kind: 'role', type: 'role' },
 							selectors: ['*'],
 						},
 					],
