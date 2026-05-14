@@ -264,11 +264,12 @@ func (m *defaultFieldMapper) FieldFor(
 	case schema.ColumnTypeEnumJSON:
 		switch key.FieldContext {
 		case telemetrytypes.FieldContextScope:
-			switch key.Name {
+			scopeKey, _ := strings.CutPrefix(key.Name, "scope.") // required for support current implementation of select fields
+			switch scopeKey {
 			case "name", "version":
-				return fmt.Sprintf("%s.%s::String", column.Name, key.Name), nil
+				return fmt.Sprintf("%s.%s::String", column.Name, scopeKey), nil
 			default:
-				return fmt.Sprintf("%s.attributes.`%s`::String", column.Name, key.Name), nil
+				return fmt.Sprintf("%s.attributes.`%s`::String", column.Name, scopeKey), nil
 			}
 		case telemetrytypes.FieldContextResource:
 			oldColumn := indexV3Columns["resources_string"]

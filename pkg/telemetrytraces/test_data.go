@@ -118,7 +118,7 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
-		"scope.version": {
+		"version": {
 			{
 				Name:          "version",
 				FieldContext:  telemetrytypes.FieldContextScope,
