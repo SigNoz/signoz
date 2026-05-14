@@ -136,6 +136,7 @@ function PermissionSidePanel({
 	initialConfig,
 	isLoading = false,
 	isSaving = false,
+	canEdit = true,
 	onSave,
 }: PermissionSidePanelProps): JSX.Element | null {
 	const [config, setConfig] = useState<PermissionConfig>(() =>
@@ -285,7 +286,7 @@ function PermissionSidePanel({
 							size="sm"
 							onClick={handleSave}
 							loading={isSaving}
-							disabled={isLoading || unsavedCount === 0}
+							disabled={isLoading || unsavedCount === 0 || !canEdit}
 						>
 							Save Changes
 						</Button>

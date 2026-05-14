@@ -33,5 +33,6 @@ export interface PermissionSidePanelProps {
 	initialConfig?: PermissionConfig;
 	isLoading?: boolean;
 	isSaving?: boolean;
+	canEdit?: boolean;
 	onSave: (config: PermissionConfig) => void;
 }

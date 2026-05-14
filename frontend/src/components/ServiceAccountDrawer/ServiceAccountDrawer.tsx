@@ -30,6 +30,7 @@ import {
 	useServiceAccountRoleManager,
 } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
+	APIKeyListPermission,
 	buildSAAttachPermission,
 	buildSADeletePermission,
 	buildSADetachPermission,
@@ -186,10 +187,14 @@ function ServiceAccountDrawer({
 					buildSADetachPermission(selectedAccountId),
 					RoleAttachWildcardPermission,
 					RoleDetachWildcardPermission,
+					APIKeyListPermission,
 				]
 			: [],
 		{ enabled: !!selectedAccountId },
 	);
+
+	const canListKeys =
+		drawerPermissions?.[APIKeyListPermission]?.isGranted ?? false;
 
 	const canUpdate =
 		drawerPermissions?.[buildSAUpdatePermission(selectedAccountId ?? '')]
@@ -197,7 +202,7 @@ function ServiceAccountDrawer({
 
 	const { data: keysData, isLoading: keysLoading } = useListServiceAccountKeys(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: !!selectedAccountId && canListKeys } },
 	);
 	const keys = keysData?.data ?? [];
 

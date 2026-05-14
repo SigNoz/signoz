@@ -3,7 +3,6 @@ import { LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Input } from '@signozhq/ui/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
@@ -114,43 +113,18 @@ function OverviewTab({
 						<LockKeyhole size={14} className="sa-drawer__lock-icon" />
 					</div>
 				) : (
-					<AuthZTooltip
-						checks={[
-							{
-								relation: 'attach',
-								object: `serviceaccount:${account.id}`,
-								permissionName: 'serviceaccount:attach',
-							},
-							{
-								relation: 'attach',
-								object: 'role:*',
-								permissionName: 'role:attach',
-							},
-							{
-								relation: 'detach',
-								object: `serviceaccount:${account.id}`,
-								permissionName: 'serviceaccount:detach',
-							},
-							{
-								relation: 'detach',
-								object: 'role:*',
-								permissionName: 'role:detach',
-							},
-						]}
-					>
-						<RolesSelect
-							id="sa-roles"
-							mode="multiple"
-							roles={availableRoles}
-							loading={rolesLoading}
-							isError={rolesError}
-							error={rolesErrorObj}
-							onRefetch={onRefetchRoles}
-							value={localRoles}
-							onChange={onRolesChange}
-							placeholder="Select roles"
-						/>
-					</AuthZTooltip>
+					<RolesSelect
+						id="sa-roles"
+						mode="multiple"
+						roles={availableRoles}
+						loading={rolesLoading}
+						isError={rolesError}
+						error={rolesErrorObj}
+						onRefetch={onRefetchRoles}
+						value={localRoles}
+						onChange={onRolesChange}
+						placeholder="Select roles"
+					/>
 				)}
 			</div>
 

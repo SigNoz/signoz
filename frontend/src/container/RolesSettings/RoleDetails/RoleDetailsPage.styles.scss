@@ -9,8 +9,9 @@
 
 	.role-details-header {
 		display: flex;
-		flex-direction: column;
-		gap: 0;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
 	}
 
 	.role-details-title {
@@ -26,44 +27,6 @@
 		cursor: default !important;
 		pointer-events: none;
 		opacity: 0.55;
-	}
-
-	.role-details-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.role-details-tab {
-		gap: 4px;
-		padding: 0 16px;
-		height: 32px;
-		border-radius: 0;
-		font-size: 12px;
-		overflow: hidden;
-		font-weight: 400;
-		line-height: 18px;
-		letter-spacing: -0.06px;
-
-		&[data-state='on'] {
-			border-radius: 2px 0 0 2px;
-		}
-	}
-
-	.role-details-tab-count {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 20px;
-		padding: 0 6px;
-		border-radius: 50px;
-		background: var(--secondary);
-		font-size: 12px;
-		font-weight: 400;
-		line-height: 20px;
-		color: var(--foreground);
-		letter-spacing: -0.06px;
-		text-transform: uppercase;
 	}
 
 	.role-details-actions {

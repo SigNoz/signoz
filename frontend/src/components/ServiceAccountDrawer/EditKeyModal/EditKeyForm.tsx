@@ -142,10 +142,19 @@ function EditKeyForm({
 
 			<div className="edit-key-modal__footer">
 				<AuthZTooltip
-					relation="update"
-					object={`serviceaccount:${accountId}`}
-					permissionName="serviceaccount:update"
-					enabled={!!accountId}
+					checks={[
+						{
+							relation: 'delete',
+							object: `factor-api-key:${keyItem?.id ?? ''}`,
+							permissionName: 'factor-api-key:delete',
+						},
+						{
+							relation: 'detach',
+							object: `serviceaccount:${accountId}`,
+							permissionName: 'serviceaccount:detach',
+						},
+					]}
+					enabled={!!accountId && !!keyItem?.id}
 				>
 					<Button variant="link" color="destructive" onClick={onRevokeClick}>
 						<Trash2 size={12} />
@@ -159,9 +168,9 @@ function EditKeyForm({
 					</Button>
 					<AuthZTooltip
 						relation="update"
-						object={`serviceaccount:${accountId}`}
-						permissionName="serviceaccount:update"
-						enabled={!!accountId}
+						object={`factor-api-key:${keyItem?.id ?? ''}`}
+						permissionName="factor-api-key:update"
+						enabled={!!accountId && !!keyItem?.id}
 					>
 						<Button
 							type="submit"

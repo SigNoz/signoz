@@ -37,8 +37,13 @@ export const RoleDetachWildcardPermission = buildPermission(
 );
 
 // API key (factor-api-key) permissions.
+// Listing keys: factor-api-key:list.
 // Creating a key: factor-api-key:create (wildcard) + serviceaccount:attach.
 // Revoking a key: factor-api-key:delete (specific key) + serviceaccount:detach.
+export const APIKeyListPermission = buildPermission(
+	'list',
+	'factor-api-key:*' as AuthZObject<'list'>,
+);
 export const APIKeyCreatePermission = buildPermission(
 	'create',
 	'factor-api-key:*' as AuthZObject<'create'>,

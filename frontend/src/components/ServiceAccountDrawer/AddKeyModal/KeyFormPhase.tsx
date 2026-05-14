@@ -115,9 +115,18 @@ function KeyFormPhase({
 						Cancel
 					</Button>
 					<AuthZTooltip
-						relation="update"
-						object={`serviceaccount:${accountId ?? ''}`}
-						permissionName="serviceaccount:update"
+						checks={[
+							{
+								relation: 'create',
+								object: 'factor-api-key:*',
+								permissionName: 'factor-api-key:create',
+							},
+							{
+								relation: 'attach',
+								object: `serviceaccount:${accountId ?? ''}`,
+								permissionName: 'serviceaccount:attach',
+							},
+						]}
 						enabled={!!accountId}
 					>
 						<Button

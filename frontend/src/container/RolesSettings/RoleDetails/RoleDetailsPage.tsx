@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Table2, Trash2, Users } from '@signozhq/icons';
+import { Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import {
 	getGetObjectsQueryKey,
@@ -14,7 +13,13 @@ import {
 	usePatchObjects,
 } from 'api/generated/services/role';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
+import {
+	buildRoleReadPermission,
+	buildRoleUpdatePermission,
+} from 'hooks/useAuthZ/rolePermissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 
 import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -35,13 +40,10 @@ import {
 	deriveResourcesForRelation,
 	objectsToPermissionConfig,
 } from '../utils';
-import MembersTab from './components/MembersTab';
 import OverviewTab from './components/OverviewTab';
 import { ROLE_ID_REGEX } from './constants';
 
 import './RoleDetailsPage.styles.scss';
-
-type TabKey = 'overview' | 'members';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RoleDetailsPage(): JSX.Element {
@@ -63,18 +65,35 @@ function RoleDetailsPage(): JSX.Element {
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
 
-	const [activeTab, setActiveTab] = useState<TabKey>('overview');
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activePermission, setActivePermission] = useState<string | null>(null);
 
+	// Read check uses wildcard — role name is not known before the role loads
+	const { permissions: readPerms, isLoading: isRolePermsLoading } = useAuthZ(
+		roleId ? [buildRoleReadPermission('*')] : [],
+		{ enabled: !!roleId },
+	);
+	const hasReadPermission =
+		readPerms?.[buildRoleReadPermission('*')]?.isGranted ?? false;
+
 	const { data, isLoading, isFetching, isError, error } = useGetRole(
 		{ id: roleId },
-		{ query: { enabled: !!roleId } },
+		{ query: { enabled: !!roleId && hasReadPermission } },
 	);
 	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
 	const isManaged = role?.type === RoleType.MANAGED;
+
+	const roleName = role?.name ?? '';
+
+	// Update check uses role name once loaded
+	const { permissions: updatePerms } = useAuthZ(
+		roleName && !isManaged ? [buildRoleUpdatePermission(roleName)] : [],
+		{ enabled: !!roleName && !isManaged },
+	);
+	const hasUpdatePermission =
+		updatePerms?.[buildRoleUpdatePermission(roleName)]?.isGranted ?? false;
 
 	const permissionTypes = useMemo(
 		() => derivePermissionTypes(authzResources?.relations ?? null),
@@ -91,7 +110,11 @@ function RoleDetailsPage(): JSX.Element {
 
 	const { data: objectsData, isLoading: isLoadingObjects } = useGetObjects(
 		{ id: roleId, relation: activePermission ?? '' },
-		{ query: { enabled: !!activePermission && !!roleId && !isManaged } },
+		{
+			query: {
+				enabled: !!activePermission && !!roleId && !isManaged && hasReadPermission,
+			},
+		},
 	);
 
 	const initialConfig = useMemo(() => {
@@ -130,7 +153,12 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (!IS_ROLE_DETAILS_AND_CRUD_ENABLED || isLoading || isTransitioning) {
+	if (
+		!IS_ROLE_DETAILS_AND_CRUD_ENABLED ||
+		isRolePermsLoading ||
+		isLoading ||
+		isTransitioning
+	) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -138,6 +166,14 @@ function RoleDetailsPage(): JSX.Element {
 					paragraph={{ rows: 8 }}
 					className="role-details-skeleton"
 				/>
+			</div>
+		);
+	}
+
+	if (!hasReadPermission) {
+		return (
+			<div className="role-details-page">
+				<PermissionDeniedFullPage permissionName="role:read" />
 			</div>
 		);
 	}
@@ -186,35 +222,11 @@ function RoleDetailsPage(): JSX.Element {
 		<div className="role-details-page">
 			<div className="role-details-header">
 				<h2 className="role-details-title">Role — {role.name}</h2>
-			</div>
-
-			<div className="role-details-nav">
-				<ToggleGroup
-					type="single"
-					value={activeTab}
-					onChange={(val): void => {
-						if (val) {
-							setActiveTab(val as TabKey);
-						}
-					}}
-					className="role-details-tabs"
-				>
-					<ToggleGroupItem value="overview" className="role-details-tab">
-						<Table2 size={14} />
-						Overview
-					</ToggleGroupItem>
-					<ToggleGroupItem value="members" className="role-details-tab">
-						<Users size={14} />
-						Members
-						<span className="role-details-tab-count">0</span>
-					</ToggleGroupItem>
-				</ToggleGroup>
-
 				{!isManaged && (
 					<div className="role-details-actions">
 						<AuthZTooltip
 							relation="delete"
-							object={`role:${roleId}`}
+							object={`role:${role.name}`}
 							permissionName="role:delete"
 						>
 							<Button
@@ -228,7 +240,7 @@ function RoleDetailsPage(): JSX.Element {
 						</AuthZTooltip>
 						<AuthZTooltip
 							relation="update"
-							object={`role:${roleId}`}
+							object={`role:${role.name}`}
 							permissionName="role:update"
 						>
 							<Button
@@ -243,16 +255,12 @@ function RoleDetailsPage(): JSX.Element {
 				)}
 			</div>
 
-			{activeTab === 'overview' && (
-				<OverviewTab
-					role={role || null}
-					isManaged={isManaged}
-					permissionTypes={permissionTypes}
-					onPermissionClick={(key): void => setActivePermission(key)}
-				/>
-			)}
-			{activeTab === 'members' && <MembersTab />}
-
+			<OverviewTab
+				role={role || null}
+				isManaged={isManaged}
+				permissionTypes={permissionTypes}
+				onPermissionClick={(key): void => setActivePermission(key)}
+			/>
 			{!isManaged && (
 				<>
 					<PermissionSidePanel
@@ -263,6 +271,7 @@ function RoleDetailsPage(): JSX.Element {
 						initialConfig={initialConfig}
 						isLoading={isLoadingObjects}
 						isSaving={isSaving}
+						canEdit={hasUpdatePermission}
 						onSave={handleSave}
 					/>
 
