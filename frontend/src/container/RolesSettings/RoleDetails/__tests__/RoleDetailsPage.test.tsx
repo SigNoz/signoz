@@ -1,6 +1,3 @@
-jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
-
-import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,
 	managedRoleResponse,
