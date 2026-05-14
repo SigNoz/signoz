@@ -12,6 +12,7 @@ from fixtures.querier import (
     build_group_by_field,
     build_logs_aggregation,
     build_order_by,
+    build_raw_query,
     build_scalar_query,
     get_rows,
     get_scalar_table_data,
@@ -30,10 +31,9 @@ def _raw(
     order: list[dict] | None = None,
     limit: int = 100,
 ) -> requests.Response:
-    q = build_scalar_query(
+    q = build_raw_query(
         name=name,
         signal="logs",
-        aggregations=[build_logs_aggregation("count()")],
         filter_expression=expression,
         order=order or [build_order_by("timestamp", "desc")],
         limit=limit,
@@ -131,11 +131,11 @@ def test_non_body_filter_groupby_aggregation(
     end_ms = int(now.timestamp() * 1000)
 
     log_data = [
-        ("auth-svc", "GET",    "INFO",  {"score": 80,  "user": "alice"}),
-        ("auth-svc", "POST",   "ERROR", {"score": 90,  "user": "bob"}),
-        ("auth-svc", "GET",    "INFO",  {"score": 60,  "user": "carol"}),
-        ("api-gw",   "GET",    "WARN",  {"score": 70,  "user": "diana"}),
-        ("worker",   "DELETE", "ERROR", {"score": 100, "user": "eve"}),
+        ("auth-svc", "GET", "INFO", {"score": 80, "user": "alice"}),
+        ("auth-svc", "POST", "ERROR", {"score": 90, "user": "bob"}),
+        ("auth-svc", "GET", "INFO", {"score": 60, "user": "carol"}),
+        ("api-gw", "GET", "WARN", {"score": 70, "user": "diana"}),
+        ("worker", "DELETE", "ERROR", {"score": 100, "user": "eve"}),
     ]
     logs_list = [
         Logs(
