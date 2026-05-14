@@ -12,6 +12,7 @@ const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 jest.mock('@signozhq/ui/drawer', () => ({
@@ -114,6 +115,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
 			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -224,6 +228,8 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		const nameInput = await screen.findByDisplayValue('CI Bot');
 		fireEvent.change(nameInput, { target: { value: 'CI Bot Updated' } });
+
+		await screen.findByDisplayValue('CI Bot Updated');
 
 		fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
