@@ -19,12 +19,8 @@ import {
 	PERMISSION_ICON_MAP,
 } from './RoleDetails/constants';
 
-export type AuthzResource = CoretypesResourceRefDTO & {
-	allowedVerbs?: ReadonlyArray<string>;
-};
-
 export type AuthzResources = {
-	resources: ReadonlyArray<AuthzResource>;
+	resources: ReadonlyArray<CoretypesResourceRefDTO>;
 	relations: Readonly<Record<string, ReadonlyArray<string>>>;
 };
 
@@ -73,7 +69,6 @@ export function deriveResourcesForRelation(
 	const supportedTypes = authzResources.relations[relation] ?? [];
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
-		.filter((r) => !r.allowedVerbs || r.allowedVerbs.includes(relation))
 		.map((r) => ({
 			id: r.kind,
 			label: capitalize(r.kind).replaceAll('_', ' '),
@@ -123,14 +118,10 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const found = authzRes.resources.find((r) => r.kind === res.id);
-		if (!found) {
+		const resourceDef = authzRes.resources.find((r) => r.kind === res.id);
+		if (!resourceDef) {
 			continue;
 		}
-		const resourceDef: CoretypesResourceRefDTO = {
-			kind: found.kind,
-			type: found.type,
-		};
 
 		const initialScope = initial?.scope ?? PermissionScope.ONLY_SELECTED;
 		const currentScope = current?.scope ?? PermissionScope.ONLY_SELECTED;

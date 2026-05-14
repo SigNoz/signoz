@@ -10,7 +10,7 @@ import type {
 } from '../PermissionSidePanel/PermissionSidePanel.types';
 
 type AuthzResources = {
-	resources: (CoretypesResourceRefDTO & { allowedVerbs?: string[] })[];
+	resources: CoretypesResourceRefDTO[];
 	relations: Record<string, string[]>;
 };
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
@@ -386,29 +386,5 @@ describe('deriveResourcesForRelation', () => {
 		expect(
 			deriveResourcesForRelation(baseAuthzResources, 'nonexistent'),
 		).toHaveLength(0);
-	});
-
-	it('excludes resources whose allowedVerbs does not include the relation', () => {
-		const resources: AuthzResources = {
-			resources: [
-				{
-					kind: 'dashboard',
-					type: 'metaresource' as CoretypesTypeDTO,
-					allowedVerbs: ['create', 'read', 'update', 'delete', 'list'],
-				},
-				{
-					kind: 'alert',
-					type: 'metaresource' as CoretypesTypeDTO,
-					allowedVerbs: ['create', 'read', 'update', 'delete', 'list', 'attach'],
-				},
-			],
-			relations: {
-				attach: ['metaresource'],
-			},
-		};
-
-		const result = deriveResourcesForRelation(resources, 'attach');
-		expect(result).toHaveLength(1);
-		expect(result[0].id).toBe('alert');
 	});
 });
