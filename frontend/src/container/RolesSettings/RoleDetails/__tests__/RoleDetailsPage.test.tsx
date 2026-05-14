@@ -1,12 +1,20 @@
 jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
 
+import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,
 	managedRoleResponse,
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import RoleDetailsPage from '../RoleDetailsPage';
 
@@ -205,40 +213,53 @@ describe('RoleDetailsPage', () => {
 	});
 
 	describe('permission side panel', () => {
-		// Callers must register GET .../relations/:relation/objects before rendering.
-		async function openCreatePanel(
-			user: ReturnType<typeof userEvent.setup>,
-		): Promise<void> {
+		beforeEach(() => {
+			// Both hooks mocked so data renders synchronously — no React Query scheduler or MSW round-trip.
+			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+				data: customRoleResponse,
+				isLoading: false,
+				isFetching: false,
+				isError: false,
+				error: null,
+			} as any);
+			jest
+				.spyOn(roleApi, 'useGetObjects')
+				.mockReturnValue({ data: emptyObjectsResponse, isLoading: false } as any);
+		});
+
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		// Returns the panel to scope within(panel) calls, limiting ARIA traversal to ~30 nodes.
+		async function openCreatePanel(): Promise<HTMLElement> {
 			await screen.findByText('Role — billing-manager');
-			await user.click(screen.getByText('Create'));
+			// fireEvent avoids userEvent's pointer-event chain and async act() overhead.
+			fireEvent.click(screen.getByText('Create'));
 			await screen.findByText('Edit Create Permissions');
-			await screen.findByRole('button', { name: 'Role' });
+			const panel = document.querySelector(
+				'.permission-side-panel',
+			)! as HTMLElement;
+			await within(panel).findByRole('button', { name: 'Role' });
+			return panel;
 		}
 
 		it('Save Changes is disabled until a resource scope is changed', async () => {
-			setupDefaultHandlers();
-			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relations/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
-			);
-
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
-
-			expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
-
-			await user.click(screen.getByRole('button', { name: 'Role' }));
-			await user.click(screen.getByText('All'));
+			const panel = await openCreatePanel();
 
 			expect(
-				screen.getByRole('button', { name: /save changes/i }),
+				within(panel).getByRole('button', { name: /save changes/i }),
+			).toBeDisabled();
+
+			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(screen.getByText('All'));
+
+			expect(
+				within(panel).getByRole('button', { name: /save changes/i }),
 			).not.toBeDisabled();
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 		});
@@ -246,12 +267,7 @@ describe('RoleDetailsPage', () => {
 		it('set scope to All → patchObjects additions: ["*"], deletions: null', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relations/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
 				rest.patch(
 					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
@@ -261,17 +277,17 @@ describe('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			await user.click(screen.getByRole('button', { name: 'Role' }));
-			await user.click(screen.getByText('All'));
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(screen.getByText('All'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
@@ -289,12 +305,7 @@ describe('RoleDetailsPage', () => {
 		it('set scope to Only selected with IDs → patchObjects additions contain those IDs', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relations/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
 				rest.patch(
 					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
@@ -310,16 +321,18 @@ describe('RoleDetailsPage', () => {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			await user.click(screen.getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
 
-			const combobox = screen.getByRole('combobox');
-			await user.click(combobox);
+			const combobox = within(panel).getByRole('combobox');
 			await user.type(combobox, 'role-001');
 			await user.keyboard('{Enter}');
 
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
+			// user.click waits for the tag-addition state to settle before clicking.
+			await user.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
@@ -337,13 +350,11 @@ describe('RoleDetailsPage', () => {
 		it('existing All scope changed to Only selected (empty) → patchObjects deletions: ["*"], additions: null', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
+			jest.spyOn(roleApi, 'useGetObjects').mockReturnValue({
+				data: allScopeObjectsResponse,
+				isLoading: false,
+			} as any);
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relations/:relation/objects`,
-					(_req, res, ctx) =>
-						res(ctx.status(200), ctx.json(allScopeObjectsResponse)),
-				),
 				rest.patch(
 					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
@@ -353,17 +364,17 @@ describe('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			await user.click(screen.getByRole('button', { name: 'Role' }));
-			await user.click(screen.getByText('Only selected'));
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(screen.getByText('Only selected'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
@@ -379,33 +390,25 @@ describe('RoleDetailsPage', () => {
 		});
 
 		it('unsaved changes counter shown on scope change, Discard resets it', async () => {
-			setupDefaultHandlers();
-			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relations/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
-			);
-
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
 
-			await user.click(screen.getByRole('button', { name: 'Role' }));
-			await user.click(screen.getByText('All'));
+			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(screen.getByText('All'));
 
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 
-			await user.click(screen.getByRole('button', { name: /discard/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: /discard/i }));
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+			expect(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			).toBeDisabled();
 		});
 	});
 });
