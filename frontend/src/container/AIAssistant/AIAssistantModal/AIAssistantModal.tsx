@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
 
@@ -132,7 +132,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 						</div>
 
 						<div className={styles.actions}>
-							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+							<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
 								<Button
 									variant="ghost"
 									size="icon"
@@ -142,9 +142,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<History size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="New conversation">
+							<TooltipSimple title="New conversation">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -153,9 +153,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Plus size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Open full screen">
+							<TooltipSimple title="Open full screen">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -165,9 +165,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Maximize2 size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Minimize to side panel">
+							<TooltipSimple title="Minimize to side panel">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -176,9 +176,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Minus size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Close">
+							<TooltipSimple title="Close">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -187,7 +187,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<X size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 						</div>
 					</div>
 

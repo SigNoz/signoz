@@ -1840,6 +1840,7 @@ export enum AuthtypesRelationDTO {
 	list = 'list',
 	assignee = 'assignee',
 	attach = 'attach',
+	detach = 'detach',
 }
 export interface AuthtypesRoleDTO {
 	/**
@@ -4161,7 +4162,7 @@ export enum CoretypesTypeDTO {
 	role = 'role',
 	organization = 'organization',
 	metaresource = 'metaresource',
-	metaresources = 'metaresources',
+	telemetryresource = 'telemetryresource',
 }
 export interface DashboardtypesDashboardDTO {
 	/**

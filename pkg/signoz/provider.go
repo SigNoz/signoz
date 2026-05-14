@@ -200,6 +200,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
 		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
 	)
 }
 

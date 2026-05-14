@@ -1,8 +1,11 @@
 """Tests for resource-level FGA on service account endpoints.
 
 Validates that a custom role with specific SA permissions gets exactly
-the access it was granted, and that SA role assignment requires BOTH
-serviceaccount:attach AND role:attach.
+the access it was granted, and that:
+- SA role assignment requires BOTH serviceaccount:attach AND role:attach.
+- SA role removal requires BOTH serviceaccount:detach AND role:detach.
+- Factor API key creation requires factor-api-key:create AND serviceaccount:attach.
+- Factor API key revocation requires factor-api-key:delete AND serviceaccount:detach.
 """
 
 from collections.abc import Callable
@@ -80,14 +83,36 @@ def test_create_custom_role_readonly_sa(
         ],
     )
 
-    # Grant list on serviceaccount collection.
+    # Grant list on serviceaccount (now on the serviceaccount type directly).
     patch_role_objects(
         signoz,
         admin_token,
         role_id,
         "list",
         additions=[
-            object_group("metaresources", "serviceaccount", ["*"]),
+            object_group("serviceaccount", "serviceaccount", ["*"]),
+        ],
+    )
+
+    # Grant read on factor-api-key (needed for listing keys).
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "read",
+        additions=[
+            object_group("metaresource", "factor-api-key", ["*"]),
+        ],
+    )
+
+    # Grant list on factor-api-key.
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "list",
+        additions=[
+            object_group("metaresource", "factor-api-key", ["*"]),
         ],
     )
 
@@ -203,7 +228,7 @@ def test_readonly_role_forbidden_operations(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"delete SA: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Assign role to SA — forbidden.
+    # Assign role to SA — forbidden (needs attach on both SA and role).
     resp = requests.post(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles"),
         json={"id": viewer_role_id},
@@ -212,7 +237,7 @@ def test_readonly_role_forbidden_operations(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign SA role: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Remove role from SA — forbidden.
+    # Remove role from SA — forbidden (needs detach on both SA and role).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles/{viewer_role_id}"),
         headers={"Authorization": f"Bearer {token}"},
@@ -220,7 +245,7 @@ def test_readonly_role_forbidden_operations(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"remove SA role: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Create key — forbidden (needs update).
+    # Create key — forbidden (needs factor-api-key:create + serviceaccount:attach).
     resp = requests.post(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/keys"),
         json={"name": "fga-key-fail", "expiresAt": 0},
@@ -229,7 +254,7 @@ def test_readonly_role_forbidden_operations(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"create key: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Revoke key — forbidden (needs update).
+    # Revoke key — forbidden (needs factor-api-key:delete + serviceaccount:detach).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/keys/{key_id}"),
         headers={"Authorization": f"Bearer {token}"},
@@ -253,14 +278,14 @@ def test_patch_role_add_write_permissions(
     sa_id = find_service_account_by_name(signoz, admin_token, SA_FGA_TARGET_SA_NAME)["id"]
     viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
 
-    # Grant create on collection.
+    # Grant create on serviceaccount (now on serviceaccount type directly).
     patch_role_objects(
         signoz,
         admin_token,
         role_id,
         "create",
         additions=[
-            object_group("metaresources", "serviceaccount", ["*"]),
+            object_group("serviceaccount", "serviceaccount", ["*"]),
         ],
     )
 
@@ -281,6 +306,44 @@ def test_patch_role_add_write_permissions(
         admin_token,
         role_id,
         "delete",
+        additions=[
+            object_group("serviceaccount", "serviceaccount", ["*"]),
+        ],
+    )
+
+    # Grant factor-api-key create/delete + serviceaccount attach/detach for key operations.
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "create",
+        additions=[
+            object_group("metaresource", "factor-api-key", ["*"]),
+        ],
+    )
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "delete",
+        additions=[
+            object_group("metaresource", "factor-api-key", ["*"]),
+        ],
+    )
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "attach",
+        additions=[
+            object_group("serviceaccount", "serviceaccount", ["*"]),
+        ],
+    )
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "detach",
         additions=[
             object_group("serviceaccount", "serviceaccount", ["*"]),
         ],
@@ -307,7 +370,7 @@ def test_patch_role_add_write_permissions(
     )
     assert resp.status_code == HTTPStatus.NO_CONTENT, f"update SA: {resp.text}"
 
-    # Create key — now allowed (update permission covers key create).
+    # Create key — now allowed (factor-api-key:create + serviceaccount:attach).
     key_resp = requests.post(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{new_sa_id}/keys"),
         json={"name": "fga-write-key", "expiresAt": 0},
@@ -317,7 +380,7 @@ def test_patch_role_add_write_permissions(
     assert key_resp.status_code == HTTPStatus.CREATED, f"create key: {key_resp.text}"
     new_key_id = key_resp.json()["data"]["id"]
 
-    # Revoke key — now allowed (update permission covers key revoke).
+    # Revoke key — now allowed (factor-api-key:delete + serviceaccount:detach).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{new_sa_id}/keys/{new_key_id}"),
         headers={"Authorization": f"Bearer {custom_token}"},
@@ -333,7 +396,7 @@ def test_patch_role_add_write_permissions(
     )
     assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete SA: {resp.text}"
 
-    # Role assignment still forbidden (no attach).
+    # Role assignment still forbidden (has attach on SA but not on role).
     resp = requests.post(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles"),
         json={"id": viewer_role_id},
@@ -342,6 +405,7 @@ def test_patch_role_add_write_permissions(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign SA role: expected 403, got {resp.status_code}: {resp.text}"
 
+    # Role removal still forbidden (has detach on SA but not on role).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles/{viewer_role_id}"),
         headers={"Authorization": f"Bearer {custom_token}"},
@@ -351,7 +415,7 @@ def test_patch_role_add_write_permissions(
 
 
 # ---------------------------------------------------------------------------
-# 6. Dual-attach: SA attach only (no role attach) → forbidden
+# 6. Dual-attach: SA attach only (no role attach) → assign forbidden
 # ---------------------------------------------------------------------------
 
 
@@ -361,21 +425,10 @@ def test_attach_with_only_sa_attach_forbidden(
     get_token: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_by_name(signoz, admin_token, SA_FGA_CUSTOM_ROLE_NAME)
     sa_id = find_service_account_by_name(signoz, admin_token, SA_FGA_TARGET_SA_NAME)["id"]
     viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
 
-    # Grant attach on serviceaccount only.
-    patch_role_objects(
-        signoz,
-        admin_token,
-        role_id,
-        "attach",
-        additions=[
-            object_group("serviceaccount", "serviceaccount", ["*"]),
-        ],
-    )
-
+    # SA attach already granted from previous test; role attach not yet granted.
     custom_token = get_token(SA_FGA_CUSTOM_USER_EMAIL, SA_FGA_CUSTOM_USER_PASSWORD)
 
     # Assign role — forbidden (has SA attach, missing role attach).
@@ -387,17 +440,36 @@ def test_attach_with_only_sa_attach_forbidden(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign with only SA attach: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Remove role — forbidden (CheckAll: role attach group fails).
+
+# ---------------------------------------------------------------------------
+# 7. Dual-detach: SA detach only (no role detach) → remove forbidden
+# ---------------------------------------------------------------------------
+
+
+def test_detach_with_only_sa_detach_forbidden(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    sa_id = find_service_account_by_name(signoz, admin_token, SA_FGA_TARGET_SA_NAME)["id"]
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
+
+    # SA detach already granted from test_patch_role_add_write_permissions;
+    # role detach not yet granted.
+    custom_token = get_token(SA_FGA_CUSTOM_USER_EMAIL, SA_FGA_CUSTOM_USER_PASSWORD)
+
+    # Remove role — forbidden (has SA detach, missing role detach).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles/{viewer_role_id}"),
         headers={"Authorization": f"Bearer {custom_token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.FORBIDDEN, f"remove with only SA attach: expected 403, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"remove with only SA detach: expected 403, got {resp.status_code}: {resp.text}"
 
 
 # ---------------------------------------------------------------------------
-# 7. Dual-attach: role attach only (no SA attach) → forbidden
+# 8. Dual-attach: role attach only (no SA attach) → assign forbidden
 # ---------------------------------------------------------------------------
 
 
@@ -432,21 +504,49 @@ def test_attach_with_only_role_attach_forbidden(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"assign with only role attach: expected 403, got {resp.status_code}: {resp.text}"
 
-    # Remove role — forbidden (CheckAll: SA attach group fails).
+
+# ---------------------------------------------------------------------------
+# 9. Dual-detach: role detach only (no SA detach) → remove forbidden
+# ---------------------------------------------------------------------------
+
+
+def test_detach_with_only_role_detach_forbidden(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    role_id = find_role_by_name(signoz, admin_token, SA_FGA_CUSTOM_ROLE_NAME)
+    sa_id = find_service_account_by_name(signoz, admin_token, SA_FGA_TARGET_SA_NAME)["id"]
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
+
+    # Remove SA detach, grant role detach.
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "detach",
+        additions=[object_group("role", "role", ["*"])],
+        deletions=[object_group("serviceaccount", "serviceaccount", ["*"])],
+    )
+
+    custom_token = get_token(SA_FGA_CUSTOM_USER_EMAIL, SA_FGA_CUSTOM_USER_PASSWORD)
+
+    # Remove role — forbidden (SA detach check fails).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles/{viewer_role_id}"),
         headers={"Authorization": f"Bearer {custom_token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.FORBIDDEN, f"remove with only role attach: expected 403, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"remove with only role detach: expected 403, got {resp.status_code}: {resp.text}"
 
 
 # ---------------------------------------------------------------------------
-# 8. Dual-attach: both SA + role attach → succeeds
+# 10. Both attach + detach → assign and remove succeed
 # ---------------------------------------------------------------------------
 
 
-def test_attach_with_both_permissions_succeeds(
+def test_attach_detach_with_both_permissions_succeeds(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -455,12 +555,21 @@ def test_attach_with_both_permissions_succeeds(
     role_id = find_role_by_name(signoz, admin_token, SA_FGA_CUSTOM_ROLE_NAME)
     sa_id = find_service_account_by_name(signoz, admin_token, SA_FGA_TARGET_SA_NAME)["id"]
 
-    # Add back SA attach (role attach already present from previous test).
+    # Add back SA attach and SA detach (role attach/detach already present from previous tests).
     patch_role_objects(
         signoz,
         admin_token,
         role_id,
         "attach",
+        additions=[
+            object_group("serviceaccount", "serviceaccount", ["*"]),
+        ],
+    )
+    patch_role_objects(
+        signoz,
+        admin_token,
+        role_id,
+        "detach",
         additions=[
             object_group("serviceaccount", "serviceaccount", ["*"]),
         ],
@@ -480,17 +589,17 @@ def test_attach_with_both_permissions_succeeds(
     )
     assert resp.status_code == HTTPStatus.NO_CONTENT, f"assign with both attach: {resp.text}"
 
-    # Remove the editor role — should succeed (CheckAll: both groups pass).
+    # Remove the editor role — should succeed (both SA detach + role detach).
     resp = requests.delete(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{sa_id}/roles/{editor_role_id}"),
         headers={"Authorization": f"Bearer {custom_token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.NO_CONTENT, f"remove with both attach: {resp.text}"
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"remove with both detach: {resp.text}"
 
 
 # ---------------------------------------------------------------------------
-# 9. Revoke read/list → verify access lost
+# 11. Revoke read/list → verify access lost
 # ---------------------------------------------------------------------------
 
 
@@ -514,14 +623,14 @@ def test_remove_read_permissions_revokes_access(
         ],
     )
 
-    # Revoke list.
+    # Revoke list (now on serviceaccount type directly).
     patch_role_objects(
         signoz,
         admin_token,
         role_id,
         "list",
         deletions=[
-            object_group("metaresources", "serviceaccount", ["*"]),
+            object_group("serviceaccount", "serviceaccount", ["*"]),
         ],
     )
 
@@ -545,7 +654,7 @@ def test_remove_read_permissions_revokes_access(
 
 
 # ---------------------------------------------------------------------------
-# 10. Clean up: delete custom role
+# 12. Clean up: delete custom role
 # ---------------------------------------------------------------------------
 
 
