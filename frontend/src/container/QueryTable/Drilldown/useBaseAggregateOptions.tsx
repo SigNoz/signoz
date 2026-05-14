@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -112,7 +112,7 @@ const useBaseAggregateOptions = ({
 			return allLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
 					key={id}
-					icon={<LinkOutlined />}
+					icon={<Link size="md" />}
 					onClick={(): void => {
 						openInNewTab(url);
 						onClose?.();
@@ -228,7 +228,13 @@ const useBaseAggregateOptions = ({
 									return (
 										<ContextMenu.Item
 											key={key}
-											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											icon={
+												isLoading ? (
+													<Loader className="animate-spin" size="md" />
+												) : (
+													<span style={{ color: aggregateData?.seriesColor }}>{icon}</span>
+												)
+											}
 											onClick={(): void => onClick()}
 											disabled={isLoading}
 										>

@@ -1,7 +1,8 @@
 import { Fragment, memo, ReactNode, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Row, Typography } from 'antd';
-import { Minus, Plus } from 'lucide-react';
+import { Col, Row } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Minus, Plus } from '@signozhq/icons';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';

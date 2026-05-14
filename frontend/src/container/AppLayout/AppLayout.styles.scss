@@ -48,14 +48,13 @@
 	}
 
 	.app-content {
-		width: calc(100% - 54px); // width of the sidebar
+		flex: 1;
+		min-width: 0; // allow shrinking below natural width when AI panel is open
 		z-index: 0;
 		background: var(--l1-background);
 
-		margin: 0 auto;
-
 		&.full-screen-content {
-			width: 100% !important;
+			width: 100%;
 		}
 
 		.content-container {
@@ -65,12 +64,6 @@
 			flex-direction: column;
 			height: 100%;
 			width: 100%;
-		}
-	}
-
-	&.side-nav-pinned {
-		.app-content {
-			width: calc(100% - 240px);
 		}
 	}
 }

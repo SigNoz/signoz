@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import {
-	Button,
-	Input,
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
-} from '@signozhq/ui';
-import { Typography } from 'antd';
+} from '@signozhq/ui/radio-group';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import '../OnboardingQuestionaire.styles.scss';
 
@@ -133,9 +133,9 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 				<Typography.Title level={4} className="onboarding-header-title">
 					Welcome to SigNoz Cloud
 				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
+				<Typography.Text className="onboarding-header-subtitle">
 					Let&apos;s get you started
-				</Typography.Paragraph>
+				</Typography.Text>
 			</div>
 
 			<div className="questions-form-container">

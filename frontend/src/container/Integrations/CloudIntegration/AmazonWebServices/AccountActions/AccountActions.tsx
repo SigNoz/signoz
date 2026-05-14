@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
@@ -13,7 +13,7 @@ import {
 	IntegrationType,
 } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
+import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';

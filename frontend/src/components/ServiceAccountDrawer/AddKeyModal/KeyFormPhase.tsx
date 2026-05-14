@@ -1,6 +1,8 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Button, Input, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -106,7 +108,7 @@ function KeyFormPhase({
 
 			<div className="add-key-modal__footer">
 				<div className="add-key-modal__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
+					<Button variant="solid" color="secondary" onClick={onClose}>
 						Cancel
 					</Button>
 					<Button
@@ -115,7 +117,6 @@ function KeyFormPhase({
 						form={FORM_ID}
 						variant="solid"
 						color="primary"
-						size="sm"
 						loading={isSubmitting}
 						disabled={!isValid}
 					>

@@ -32,6 +32,9 @@
 			],
 			"@/*": [
 				"./src/*"
+			],
+			"test-mocks/*": [
+				"./__mocks__/*"
 			]
 		},
 		"plugins": [
@@ -39,11 +42,7 @@
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": [
-			"vite/client",
-			"node",
-			"jest"
-		]
+		"types": ["vite/client", "node", "jest", "testing-library__jest-dom"]
 	},
 	"exclude": [
 		"node_modules",

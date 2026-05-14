@@ -188,6 +188,87 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByTestId('suffix-content')).toBeInTheDocument();
 			});
 		});
+
+		it('renders total count when showTotalCount is true', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 100');
+			});
+		});
+
+		it('renders total count with label when totalCountLabel is provided', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 50,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+						totalCountLabel: 'Pods',
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 50 Pods');
+			});
+		});
+
+		it('does not render total count when showTotalCount is false', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: false,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not render total count when total is 0', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 0,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('table')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	describe('sorting', () => {
@@ -388,6 +469,101 @@ describe('TanStackTableView Integration', () => {
 			// For now, just verify the renderExpandedRow prop is wired correctly
 			// by checking the table renders without errors
 			expect(screen.getByRole('table')).toBeInTheDocument();
+		});
+
+		it('renders without errors when expanded state exists but expansion is disabled', async () => {
+			// This tests that the table handles the case where URL has expanded state
+			// but renderExpandedRow is undefined (expansion disabled).
+			// The table's useEffect should reset expanded state automatically.
+			renderTanStackTable({
+				props: {
+					enableQueryParams: true,
+					// renderExpandedRow is undefined - expansion disabled
+				},
+				queryParams: { expanded: '["1"]' },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// Table should render without any expanded rows
+			expect(screen.queryByTestId('expanded-content')).not.toBeInTheDocument();
+		});
+
+		it('renders expanded rows with unique keys in non-virtualized mode', async () => {
+			// This tests that row and expansion items have unique keys to avoid
+			// React's "duplicate key" warning when disableVirtualScroll is true
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+					enableQueryParams: true,
+					renderExpandedRow: (row) => (
+						<div data-testid={`expanded-${row.id}`}>Expanded: {row.name}</div>
+					),
+					getRowCanExpand: () => true,
+					getRowKey: (row) => row.id,
+				},
+				queryParams: { expanded: '["1"]' },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// Both the row and its expansion content should be rendered
+			expect(screen.getByTestId('expanded-1')).toBeInTheDocument();
+			expect(screen.getByText('Expanded: Item 1')).toBeInTheDocument();
+
+			// Verify all 3 data rows plus 1 expansion row = 4 tr elements in tbody
+			const tbody = screen.getByRole('table').querySelector('tbody');
+			expect(tbody?.querySelectorAll('tr')).toHaveLength(4);
+		});
+	});
+
+	describe('disableVirtualScroll', () => {
+		it('throws error when used with onEndReached', () => {
+			expect(() => {
+				renderTanStackTable({
+					props: {
+						disableVirtualScroll: true,
+						onEndReached: jest.fn(),
+					},
+				});
+			}).toThrow(
+				'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
+			);
+		});
+
+		it('renders all rows without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+				expect(screen.getByText('Item 2')).toBeInTheDocument();
+				expect(screen.getByText('Item 3')).toBeInTheDocument();
+			});
+
+			// Verify table structure exists
+			expect(screen.getByRole('table')).toBeInTheDocument();
+		});
+
+		it('renders column headers without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('ID')).toBeInTheDocument();
+				expect(screen.getByText('Name')).toBeInTheDocument();
+				expect(screen.getByText('Value')).toBeInTheDocument();
+			});
 		});
 	});
 

@@ -894,12 +894,12 @@ func TestAdjustKey(t *testing.T) {
 
 func TestStmtBuilderBodyField(t *testing.T) {
 	cases := []struct {
-		name                string
-		requestType         qbtypes.RequestType
-		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		name              string
+		requestType       qbtypes.RequestType
+		query             qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 		enableUseJSONBody bool
-		expected            qbtypes.Statement
-		expectedErr         error
+		expected          qbtypes.Statement
+		expectedErr       error
 	}{
 		{
 			name:        "body_exists",
@@ -1039,15 +1039,15 @@ func TestStmtBuilderBodyField(t *testing.T) {
 
 func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 	cases := []struct {
-		name                string
-		requestType         qbtypes.RequestType
-		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		name              string
+		requestType       qbtypes.RequestType
+		query             qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 		enableUseJSONBody bool
-		expected            qbtypes.Statement
-		expectedErr         error
+		expected          qbtypes.Statement
+		expectedErr       error
 	}{
 		{
-			name:        "body_contains",
+			name:        "fts",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1056,13 +1056,30 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 			},
 			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
 			},
 			expectedErr: nil,
 		},
 		{
-			name:        "body_contains_disabled",
+			name:        "fts_2",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "error"},
+				Limit:  10,
+			},
+			enableUseJSONBody: true,
+			expected: qbtypes.Statement{
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "fts_disabled",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,

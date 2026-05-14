@@ -25,8 +25,8 @@ import {
 	Table,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -73,7 +73,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -435,7 +435,6 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
 										<div className="dashboard-action-content">
 											<section className="section-1">
@@ -493,6 +492,7 @@ function DashboardsList(): JSX.Element {
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger="click"
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"

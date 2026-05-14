@@ -18,7 +18,7 @@ func TestProviderStartStop(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
 
-	openfgaDataStore, err := NewSQLStore(sqlstore)
+	openfgaDataStore, err := NewSQLStore(sqlstore, authz.Config{OpenFGA: authz.OpenFGAConfig{MaxTuplesPerWrite: 100}})
 	require.NoError(t, err)
 
 	expectedModel := `module base 

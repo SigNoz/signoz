@@ -13,15 +13,14 @@ export type K8sBaseFilters = {
 	orderBy?: OrderBySchemaType;
 };
 
-export type K8sRenderedRowData = {
-	/**
-	 * The unique ID for the row
-	 */
+/**
+ * Type for table row data with required key fields.
+ * Used when rendering raw data in the table.
+ */
+export type K8sTableRowData<T> = T & {
 	key: string;
-	/**
-	 * The ID to the selectedItem
-	 */
+	id: string;
 	itemKey: string;
-	groupedByMeta: Record<string, string>;
-	[key: string]: unknown;
+	/** Metadata about which attributes were used for grouping */
+	groupedByMeta?: Record<string, string>;
 };

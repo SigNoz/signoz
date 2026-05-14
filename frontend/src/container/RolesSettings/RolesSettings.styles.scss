@@ -51,35 +51,6 @@
 			border-radius: 2px;
 		}
 	}
-
-	// todo: https://github.com/SigNoz/components/issues/116
-	.roles-search-wrapper {
-		flex: 1;
-
-		input {
-			width: 100%;
-			background: var(--l3-background);
-			border: 1px solid var(--l1-border);
-			border-radius: 2px;
-			padding: 6px 6px 6px 8px;
-			font-family: Inter;
-			font-size: 14px;
-			font-weight: 400;
-			line-height: 18px;
-			letter-spacing: -0.07px;
-			color: var(--l1-foreground);
-			outline: none;
-			height: 32px;
-
-			&::placeholder {
-				color: var(--l3-foreground);
-			}
-
-			&:focus {
-				border-color: var(--input);
-			}
-		}
-	}
 }
 
 .roles-description-tooltip {

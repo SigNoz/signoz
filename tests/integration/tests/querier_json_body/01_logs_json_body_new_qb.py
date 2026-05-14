@@ -1212,13 +1212,21 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages,
         },
-        # FTS — bare keyword
+        # FTS — String bare keyword
         {
             "name": "msg.fts_quoted",
             "requestType": "raw",
             "expression": '"Payment"',
             "aggregation": "count()",
-            "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)),
+            "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
+        },
+        # FTS — bare keyword
+        {
+            "name": "msg.fts_quoted_without_quotes",
+            "requestType": "raw",
+            "expression": "Payment",
+            "aggregation": "count()",
+            "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
         # = operator via body.message — tests exact match path
         {

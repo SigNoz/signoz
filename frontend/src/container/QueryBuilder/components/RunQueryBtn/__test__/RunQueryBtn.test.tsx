@@ -64,35 +64,31 @@ describe('RunQueryBtn', () => {
 	});
 
 	it('shows Command + CornerDownLeft on mac', () => {
-		const { container } = render(
+		render(
 			<RunQueryBtn
 				onStageRunQuery={jest.fn()}
 				handleCancelQuery={jest.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
-		expect(container.querySelector('.lucide-command')).toBeInTheDocument();
-		expect(
-			container.querySelector('.lucide-corner-down-left'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-modifier-mac')).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-enter')).toBeInTheDocument();
 	});
 
 	it('shows ChevronUp + CornerDownLeft on non-mac', () => {
 		(getUserOperatingSystem as jest.Mock).mockReturnValue(
 			UserOperatingSystem.WINDOWS,
 		);
-		const { container } = render(
+		render(
 			<RunQueryBtn
 				onStageRunQuery={jest.fn()}
 				handleCancelQuery={jest.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
-		expect(container.querySelector('.lucide-chevron-up')).toBeInTheDocument();
-		expect(container.querySelector('.lucide-command')).not.toBeInTheDocument();
-		expect(
-			container.querySelector('.lucide-corner-down-left'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-modifier-non-mac')).toBeInTheDocument();
+		expect(screen.queryByTestId('cmd-hint-modifier-mac')).not.toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-enter')).toBeInTheDocument();
 	});
 
 	it('renders custom label when provided', () => {

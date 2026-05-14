@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Button, Select, Spin, Tag, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -33,7 +34,7 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -187,9 +188,7 @@ function QueryBuilderSearch({
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={chipValue}>
 					<TypographyText
-						ellipsis
 						$isInNin={isInNin}
-						disabled={isDisabled}
 						$isEnabled={!!searchValue}
 						onClick={(): void => {
 							if (!isDisabled) {

@@ -1,21 +1,21 @@
+import { Typography } from '@signozhq/ui/typography';
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
 import {
-	Modal,
-	Select,
-	Spin,
-	Tooltip,
-	Tree,
-	TreeDataNode,
-	Typography,
-} from 'antd';
+	OctagonAlert,
+	Bolt,
+	Check,
+	ChevronDown,
+	ChevronRight,
+	Loader,
+	X,
+} from '@signozhq/icons';
+import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { History } from 'history';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Bolt, Check, OctagonAlert, X } from 'lucide-react';
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
@@ -84,7 +84,7 @@ function ErrorTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-error-title">
-				<Typography.Text className="tree-text" ellipsis={{ tooltip: title }}>
+				<Typography.Text title={title} className="tree-text" truncate={1}>
 					{title}
 				</Typography.Text>
 				<Tooltip title={errorMsg}>
@@ -125,7 +125,7 @@ function treeTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-success-title">
-				<Typography.Text className="tree-text" ellipsis={{ tooltip: title }}>
+				<Typography.Text title={title} className="tree-text" truncate={1}>
 					{title}
 				</Typography.Text>
 				{isLeaf && (
@@ -139,6 +139,10 @@ function treeTitleAndKey({
 		),
 		isLeaf,
 	};
+}
+
+function renderSwitcherIcon(props: { expanded?: boolean }): JSX.Element {
+	return props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
 }
 
 function generateTreeDataNodes(
@@ -229,7 +233,7 @@ function AttributeCheckList({
 		>
 			{loading ? (
 				<div className="loader-container">
-					<Spin indicator={<LoadingOutlined spin />} size="large" />
+					<Spin indicator={<Loader className="animate-spin" />} size="large" />
 				</div>
 			) : (
 				<div className="modal-content">
@@ -254,7 +258,7 @@ function AttributeCheckList({
 					/>
 					<Tree
 						showLine
-						switcherIcon={<CaretDownOutlined />}
+						switcherIcon={renderSwitcherIcon}
 						treeData={treeData}
 						height={450}
 						className="attribute-tree"

@@ -1,8 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Tooltip, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
@@ -21,7 +22,7 @@ import { Button, ButtonContainer, RightActionContainer } from './styles';
 
 import './AllAlertChannels.styles.scss';
 
-const { Paragraph } = Typography;
+const { Text } = Typography;
 
 function AlertChannels(): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -60,9 +61,9 @@ function AlertChannels(): JSX.Element {
 	return (
 		<div className="alert-channels-container">
 			<ButtonContainer>
-				<Paragraph ellipsis type="secondary">
+				<Text truncate={1} color="muted">
 					{t('sending_channels_note')}
-				</Paragraph>
+				</Text>
 
 				<RightActionContainer>
 					<TextToolTip
@@ -77,12 +78,10 @@ function AlertChannels(): JSX.Element {
 								: undefined
 						}
 					>
-						<Button
-							onClick={onToggleHandler}
-							icon={<PlusOutlined />}
-							disabled={!addNewChannelPermission}
-						>
-							{t('button_new_channel')}
+						<Button onClick={onToggleHandler} disabled={!addNewChannelPermission}>
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> {t('button_new_channel')}
+							</Flex>
 						</Button>
 					</Tooltip>
 				</RightActionContainer>

@@ -8,7 +8,8 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -28,19 +29,16 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import {
-	BarChart2,
+	BarChart,
 	ChevronsLeftRight,
 	Compass,
 	DraftingCompass,
 	Package2,
 	ScrollText,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from 'store/globalTime/utils';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -190,16 +188,19 @@ function K8sBaseDetails<T>({
 	);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
 
-	const { startMs, endMs } = useMemo(() => {
-		const { minTime: startNs, maxTime: endNs } = getMinMaxTime(selectedTime);
-
-		return {
-			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
-			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
-		};
-	}, [getMinMaxTime, selectedTime]);
+	const { startMs, endMs } = useMemo(
+		() => ({
+			startMs: Math.floor(lastComputedMinMax.minTime / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(lastComputedMinMax.maxTime / NANO_SECOND_MULTIPLIER),
+		}),
+		[lastComputedMinMax],
+	);
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,
@@ -246,7 +247,7 @@ function K8sBaseDetails<T>({
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime],
+		[getAutoRefreshQueryKey, queryKeyPrefix, selectedItem, selectedTime],
 	);
 
 	const {
@@ -621,7 +622,7 @@ function K8sBaseDetails<T>({
 		>
 			{isEntityLoading && <LoadingContainer />}
 			{isEntityError && (
-				<Typography.Text type="danger">
+				<Typography.Text color="danger">
 					{entityResponse?.error || 'Failed to load entity details'}
 				</Typography.Text>
 			)}
@@ -633,7 +634,7 @@ function K8sBaseDetails<T>({
 								{metadataConfig.map((config) => (
 									<Typography.Text
 										key={config.label}
-										type="secondary"
+										color="muted"
 										className="entity-details-metadata-label"
 									>
 										{config.label}
@@ -677,7 +678,7 @@ function K8sBaseDetails<T>({
 										value={VIEW_TYPES.METRICS}
 									>
 										<div className="view-title">
-											<BarChart2 size={14} />
+											<BarChart size={14} />
 											Metrics
 										</div>
 									</Radio.Button>

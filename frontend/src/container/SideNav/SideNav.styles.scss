@@ -16,7 +16,7 @@
 	min-width: 54px;
 	width: 54px;
 	border-right: 1px solid var(--l1-border);
-	background: var(--l1-background);
+	background: var(--l2-background);
 
 	padding-bottom: 48px;
 	transition:
@@ -472,7 +472,7 @@
 				background: linear-gradient(
 					180deg,
 					transparent 0%,
-					var(--l1-background) 27.11%
+					var(--l2-background) 27.11%
 				);
 
 				&::-webkit-scrollbar {
@@ -567,6 +567,11 @@
 				justify-content: center;
 			}
 		}
+	}
+
+	// add sparkle animation to the ai assistant icon
+	.ai-assistant-icon {
+		color: var(--primary);
 	}
 
 	.nav-item-label {
@@ -848,7 +853,6 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
-		background: var(--l1-background);
 
 		.brand-container {
 			padding: 8px 15px;

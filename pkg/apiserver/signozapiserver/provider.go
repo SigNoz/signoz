@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -40,7 +41,8 @@ type provider struct {
 	config                  apiserver.Config
 	settings                factory.ScopedProviderSettings
 	router                  *mux.Router
-	authZ                   *middleware.AuthZ
+	authzMiddleware         *middleware.AuthZ
+	authzService            authz.AuthZ
 	orgHandler              organization.Handler
 	userHandler             user.Handler
 	sessionHandler          session.Handler
@@ -67,11 +69,12 @@ type provider struct {
 	alertmanagerHandler     alertmanager.Handler
 	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
+	llmPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewFactory(
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -96,6 +99,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
@@ -105,7 +109,7 @@ func NewFactory(
 			providerSettings,
 			config,
 			orgGetter,
-			authz,
+			authzService,
 			orgHandler,
 			userHandler,
 			sessionHandler,
@@ -130,6 +134,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
 		)
@@ -141,7 +146,7 @@ func newProvider(
 	providerSettings factory.ProviderSettings,
 	config apiserver.Config,
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -166,6 +171,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
@@ -178,6 +184,7 @@ func newProvider(
 		router:                  router,
 		orgHandler:              orgHandler,
 		userHandler:             userHandler,
+		authzService:            authzService,
 		sessionHandler:          sessionHandler,
 		authDomainHandler:       authDomainHandler,
 		preferenceHandler:       preferenceHandler,
@@ -202,9 +209,10 @@ func newProvider(
 		alertmanagerHandler:     alertmanagerHandler,
 		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
+		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
@@ -314,6 +322,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addTraceDetailRoutes(router); err != nil {
 		return err
 	}
@@ -326,14 +338,18 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 }
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
-	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
-	}
+	return newScopedSecuritySchemes([]string{role.String()})
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
+	}
+}
+
+func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
 	}
 }

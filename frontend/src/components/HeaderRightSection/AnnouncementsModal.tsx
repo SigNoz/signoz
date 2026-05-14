@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 function AnnouncementsModal(): JSX.Element {
 	return (

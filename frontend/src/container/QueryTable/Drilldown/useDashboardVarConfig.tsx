@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
-import { ArrowLeft, Plus, Settings, X } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, X } from '@signozhq/icons';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 // import { PANEL_TYPES } from 'constants/queryBuilder';

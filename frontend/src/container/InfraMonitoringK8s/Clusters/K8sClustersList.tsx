@@ -19,9 +19,9 @@ import {
 	k8sClusterInitialLogTracesFilter,
 } from './constants';
 import {
-	k8sClustersColumns,
+	getK8sClusterItemKey,
+	getK8sClusterRowKey,
 	k8sClustersColumnsConfig,
-	k8sClustersRenderRowData,
 } from './table.config';
 
 function K8sClustersList({
@@ -91,10 +91,10 @@ function K8sClustersList({
 			<K8sBaseList<K8sClusterData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.CLUSTERS}
-				tableColumnsDefinitions={k8sClustersColumns}
 				tableColumns={k8sClustersColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sClustersRenderRowData}
+				getRowKey={getK8sClusterRowKey}
+				getItemKey={getK8sClusterItemKey}
 				eventCategory={InfraMonitoringEvents.Cluster}
 			/>
 
