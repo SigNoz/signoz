@@ -32,3 +32,7 @@ func (resourceTelemetryResource *resourceTelemetryResource) Object(orgID valuer.
 func (resourceTelemetryResource *resourceTelemetryResource) Scope(verb Verb) string {
 	return resourceTelemetryResource.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceTelemetryResource) AllowedVerbs() []Verb {
+	return TypeTelemetryResource.AllowedVerbs()
+}

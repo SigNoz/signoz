@@ -19,8 +19,12 @@ import {
 	PERMISSION_ICON_MAP,
 } from './RoleDetails/constants';
 
+export type AuthzResource = CoretypesResourceRefDTO & {
+	allowedVerbs?: ReadonlyArray<string>;
+};
+
 export type AuthzResources = {
-	resources: ReadonlyArray<CoretypesResourceRefDTO>;
+	resources: ReadonlyArray<AuthzResource>;
 	relations: Readonly<Record<string, ReadonlyArray<string>>>;
 };
 
@@ -69,6 +73,7 @@ export function deriveResourcesForRelation(
 	const supportedTypes = authzResources.relations[relation] ?? [];
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
+		.filter((r) => !r.allowedVerbs || r.allowedVerbs.includes(relation))
 		.map((r) => ({
 			id: r.kind,
 			label: capitalize(r.kind).replaceAll('_', ' '),

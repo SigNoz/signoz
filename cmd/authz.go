@@ -23,6 +23,7 @@ export default {
 			{
 				kind: '{{ .Kind }}',
 				type: '{{ .Type }}',
+				allowedVerbs: [{{ range $i, $v := .AllowedVerbs }}{{ if $i }}, {{ end }}'{{ $v }}'{{ end }}],
 			},
 {{- end }}
 		],
@@ -41,8 +42,9 @@ type permissionsTypeRelation struct {
 }
 
 type permissionsTypeResource struct {
-	Kind string
-	Type string
+	Kind         string
+	Type         string
+	AllowedVerbs []string
 }
 
 type permissionsTypeData struct {
@@ -80,9 +82,23 @@ func runGenerateAuthz(_ context.Context) error {
 			continue
 		}
 		allowedTypes[ref.Type.StringValue()] = true
+
+		resource, err := coretypes.NewResourceFromTypeAndKind(ref.Type, ref.Kind)
+		if err != nil {
+			return err
+		}
+
+		verbs := resource.AllowedVerbs()
+		allowedVerbStrings := make([]string, 0, len(verbs))
+		for _, verb := range verbs {
+			allowedVerbStrings = append(allowedVerbStrings, verb.StringValue())
+		}
+		sort.Strings(allowedVerbStrings)
+
 		resources = append(resources, permissionsTypeResource{
-			Kind: ref.Kind.String(),
-			Type: ref.Type.StringValue(),
+			Kind:         ref.Kind.String(),
+			Type:         ref.Type.StringValue(),
+			AllowedVerbs: allowedVerbStrings,
 		})
 	}
 
