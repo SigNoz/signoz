@@ -2,13 +2,6 @@
 	cursor: not-allowed;
 }
 
-.disabledFieldset {
-	border: none;
-	margin: 0;
-	padding: 0;
-	display: contents;
-}
-
 .errorContent {
 	background: var(--callout-error-background) !important;
 	border-color: var(--callout-error-border) !important;

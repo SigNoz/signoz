@@ -254,6 +254,13 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await screen.findByText('CI Bot');
 
+		// Wait for authz check to resolve before clicking
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', { name: /New Service Account/i }),
+			).not.toBeDisabled(),
+		);
+
 		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));
 
 		await screen.findByRole('dialog', { name: /New Service Account/i });

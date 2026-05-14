@@ -2,6 +2,7 @@ import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { buildSADeletePermission } from 'hooks/useAuthZ/serviceAccountPermissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -66,7 +67,7 @@ function DeleteAccountModal(): JSX.Element {
 	}
 
 	function handleCancel(): void {
-		setIsDeleteOpen(null);
+		void setIsDeleteOpen(null);
 	}
 
 	const content = (
@@ -84,9 +85,7 @@ function DeleteAccountModal(): JSX.Element {
 				Cancel
 			</Button>
 			<AuthZTooltip
-				relation="delete"
-				object={`serviceaccount:${accountId}`}
-				permissionName="serviceaccount:delete"
+				checks={[buildSADeletePermission(accountId ?? '')]}
 				enabled={!!accountId}
 			>
 				<Button

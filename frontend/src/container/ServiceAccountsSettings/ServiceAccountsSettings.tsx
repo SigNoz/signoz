@@ -14,7 +14,10 @@ import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccount
 import ServiceAccountsTable, {
 	PAGE_SIZE,
 } from 'components/ServiceAccountsTable/ServiceAccountsTable';
-import { SAListPermission } from 'hooks/useAuthZ/serviceAccountPermissions';
+import {
+	SACreatePermission,
+	SAListPermission,
+} from 'hooks/useAuthZ/serviceAccountPermissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
@@ -260,11 +263,7 @@ function ServiceAccountsSettings(): JSX.Element {
 							/>
 						</div>
 
-						<AuthZTooltip
-							relation="create"
-							object="serviceaccount:*"
-							permissionName="serviceaccount:create"
-						>
+						<AuthZTooltip checks={[SACreatePermission]}>
 							<Button
 								variant="solid"
 								color="primary"

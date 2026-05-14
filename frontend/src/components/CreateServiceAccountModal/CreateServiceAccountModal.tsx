@@ -3,6 +3,7 @@ import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { SACreatePermission } from 'hooks/useAuthZ/serviceAccountPermissions';
 import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
@@ -133,11 +134,7 @@ function CreateServiceAccountModal(): JSX.Element {
 					Cancel
 				</Button>
 
-				<AuthZTooltip
-					relation="create"
-					object="serviceaccount:*"
-					permissionName="serviceaccount:create"
-				>
+				<AuthZTooltip checks={[SACreatePermission]}>
 					<Button
 						type="submit"
 						// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput

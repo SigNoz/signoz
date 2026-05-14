@@ -5,6 +5,10 @@ import { Input } from '@signozhq/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	APIKeyCreatePermission,
+	buildSAAttachPermission,
+} from 'hooks/useAuthZ/serviceAccountPermissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';
@@ -116,16 +120,8 @@ function KeyFormPhase({
 					</Button>
 					<AuthZTooltip
 						checks={[
-							{
-								relation: 'create',
-								object: 'factor-api-key:*',
-								permissionName: 'factor-api-key:create',
-							},
-							{
-								relation: 'attach',
-								object: `serviceaccount:${accountId ?? ''}`,
-								permissionName: 'serviceaccount:attach',
-							},
+							APIKeyCreatePermission,
+							buildSAAttachPermission(accountId ?? ''),
 						]}
 						enabled={!!accountId}
 					>

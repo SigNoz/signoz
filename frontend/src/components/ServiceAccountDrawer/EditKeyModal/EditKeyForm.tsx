@@ -8,6 +8,11 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	buildAPIKeyDeletePermission,
+	buildAPIKeyUpdatePermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/serviceAccountPermissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate, formatLastObservedAt } from '../utils';
@@ -143,16 +148,8 @@ function EditKeyForm({
 			<div className="edit-key-modal__footer">
 				<AuthZTooltip
 					checks={[
-						{
-							relation: 'delete',
-							object: `factor-api-key:${keyItem?.id ?? ''}`,
-							permissionName: 'factor-api-key:delete',
-						},
-						{
-							relation: 'detach',
-							object: `serviceaccount:${accountId}`,
-							permissionName: 'serviceaccount:detach',
-						},
+						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
+						buildSADetachPermission(accountId ?? ''),
 					]}
 					enabled={!!accountId && !!keyItem?.id}
 				>
@@ -167,9 +164,7 @@ function EditKeyForm({
 						Cancel
 					</Button>
 					<AuthZTooltip
-						relation="update"
-						object={`factor-api-key:${keyItem?.id ?? ''}`}
-						permissionName="factor-api-key:update"
+						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 						enabled={!!accountId && !!keyItem?.id}
 					>
 						<Button

@@ -2,6 +2,10 @@ import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	buildAPIKeyDeletePermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/serviceAccountPermissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -43,16 +47,8 @@ export function RevokeKeyFooter({
 			</Button>
 			<AuthZTooltip
 				checks={[
-					{
-						relation: 'delete',
-						object: `factor-api-key:${keyId ?? ''}`,
-						permissionName: 'factor-api-key:delete',
-					},
-					{
-						relation: 'detach',
-						object: `serviceaccount:${accountId ?? ''}`,
-						permissionName: 'serviceaccount:detach',
-					},
+					buildAPIKeyDeletePermission(keyId ?? ''),
+					buildSADetachPermission(accountId ?? ''),
 				]}
 				enabled={!!accountId && !!keyId}
 			>

@@ -5,6 +5,12 @@ import { Skeleton, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	APIKeyCreatePermission,
+	buildAPIKeyDeletePermission,
+	buildSAAttachPermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/serviceAccountPermissions';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
@@ -100,16 +106,8 @@ function buildColumns({
 			render: (_, record): JSX.Element => (
 				<AuthZTooltip
 					checks={[
-						{
-							relation: 'delete',
-							object: `factor-api-key:${record.id}`,
-							permissionName: 'factor-api-key:delete',
-						},
-						{
-							relation: 'detach',
-							object: `serviceaccount:${accountId}`,
-							permissionName: 'serviceaccount:detach',
-						},
+						buildAPIKeyDeletePermission(record.id),
+						buildSADetachPermission(accountId),
 					]}
 					enabled={!isDisabled && !!accountId}
 				>
@@ -203,18 +201,7 @@ function KeysTab({
 					</a>
 				</p>
 				<AuthZTooltip
-					checks={[
-						{
-							relation: 'create',
-							object: 'factor-api-key:*',
-							permissionName: 'factor-api-key:create',
-						},
-						{
-							relation: 'attach',
-							object: `serviceaccount:${accountId}`,
-							permissionName: 'serviceaccount:attach',
-						},
-					]}
+					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
 					enabled={!isDisabled && !!accountId}
 				>
 					<Button

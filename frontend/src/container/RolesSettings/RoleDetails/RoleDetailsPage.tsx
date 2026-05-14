@@ -14,7 +14,10 @@ import {
 } from 'api/generated/services/role';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
-import { buildRoleUpdatePermission } from 'hooks/useAuthZ/rolePermissions';
+import {
+	buildRoleDeletePermission,
+	buildRoleUpdatePermission,
+} from 'hooks/useAuthZ/rolePermissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 
 import type { AuthzResources } from '../utils';
@@ -192,11 +195,7 @@ function RoleDetailsPage(): JSX.Element {
 				<h2 className="role-details-title">Role — {role.name}</h2>
 				{!isManaged && (
 					<div className="role-details-actions">
-						<AuthZTooltip
-							relation="delete"
-							object={`role:${role.name}`}
-							permissionName="role:delete"
-						>
+						<AuthZTooltip checks={[buildRoleDeletePermission(role.name)]}>
 							<Button
 								variant="link"
 								color="destructive"
@@ -206,11 +205,7 @@ function RoleDetailsPage(): JSX.Element {
 								<Trash2 size={12} />
 							</Button>
 						</AuthZTooltip>
-						<AuthZTooltip
-							relation="update"
-							object={`role:${role.name}`}
-							permissionName="role:update"
-						>
+						<AuthZTooltip checks={[buildRoleUpdatePermission(role.name)]}>
 							<Button
 								variant="solid"
 								color="secondary"

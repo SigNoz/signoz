@@ -5,103 +5,77 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
-import type {
-	AuthZObject,
-	AuthZRelation,
-	BrandedPermission,
-} from 'hooks/useAuthZ/types';
+import type { BrandedPermission } from 'hooks/useAuthZ/types';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { buildPermission } from 'hooks/useAuthZ/utils';
+import { parsePermission } from 'hooks/useAuthZ/utils';
 import styles from './AuthZTooltip.module.scss';
 
-type AuthZCheck = {
-	relation: AuthZRelation;
-	object: string;
-	permissionName: string;
-};
-
 interface AuthZTooltipProps {
-	relation?: AuthZRelation;
-	object?: string;
-	permissionName?: string;
-	checks?: AuthZCheck[];
+	checks: BrandedPermission[];
 	children: ReactElement;
 	enabled?: boolean;
+	tooltipMessage?: string;
 }
 
-function buildPermissionFromCheck(check: AuthZCheck): BrandedPermission {
-	return buildPermission(
-		check.relation,
-		check.object as AuthZObject<typeof check.relation>,
-	);
+function formatDeniedMessage(
+	denied: BrandedPermission[],
+	override?: string,
+): string {
+	if (override) {
+		return override;
+	}
+	const labels = denied.map((p) => {
+		const { relation, object } = parsePermission(p);
+		const resource = object.split(':')[0];
+		return `${relation} ${resource}`;
+	});
+	return labels.length === 1
+		? `You don't have ${labels[0]} permission`
+		: `You don't have ${labels.join(', ')} permissions`;
 }
 
 function AuthZTooltip({
-	relation,
-	object,
-	permissionName,
 	checks,
 	children,
 	enabled = true,
+	tooltipMessage,
 }: AuthZTooltipProps): JSX.Element {
-	const normalisedChecks: AuthZCheck[] = useMemo(() => {
-		if (checks && checks.length > 0) {
-			return checks;
-		}
-		if (relation && object && permissionName) {
-			return [{ relation, object, permissionName }];
-		}
-		return [];
-	}, [checks, relation, object, permissionName]);
+	const shouldCheck = enabled && checks.length > 0;
 
-	const permissions = useMemo(
-		() => normalisedChecks.map(buildPermissionFromCheck),
-		[normalisedChecks],
-	);
+	const { permissions, isLoading } = useAuthZ(checks, { enabled: shouldCheck });
 
-	const { permissions: authZResult, isLoading } = useAuthZ(
-		permissions as BrandedPermission[],
-		{ enabled: enabled && normalisedChecks.length > 0 },
-	);
-
-	const deniedChecks = useMemo(() => {
-		if (isLoading || !authZResult) {
+	const deniedPermissions = useMemo(() => {
+		if (!permissions) {
 			return [];
 		}
-		return normalisedChecks.filter((c) => {
-			const perm = buildPermissionFromCheck(c);
-			return authZResult[perm as BrandedPermission]?.isGranted === false;
-		});
-	}, [authZResult, isLoading, normalisedChecks]);
+		return checks.filter((p) => permissions[p]?.isGranted === false);
+	}, [checks, permissions]);
 
-	if (isLoading || deniedChecks.length === 0) {
-		return children;
+	if (shouldCheck && isLoading) {
+		return (
+			<span className={styles.wrapper}>
+				{cloneElement(children, { disabled: true })}
+			</span>
+		);
 	}
 
-	const deniedNames = deniedChecks.map((c) => c.permissionName);
-	const tooltipMessage =
-		deniedNames.length === 1
-			? `You don't have ${deniedNames[0]} permission`
-			: `You don't have ${deniedNames.join(', ')} permissions`;
+	if (!shouldCheck || deniedPermissions.length === 0) {
+		return children;
+	}
 
 	return (
 		<TooltipProvider>
 			<TooltipRoot>
 				<TooltipTrigger asChild>
-					<span className={styles.wrapper}>
-						<fieldset
-							disabled
-							className={styles.disabledFieldset}
-							data-denied-permissions={deniedNames.join(',')}
-						>
-							{cloneElement(children, {
-								disabled: true,
-							})}
-						</fieldset>
+					<span
+						className={styles.wrapper}
+						data-denied-permissions={deniedPermissions.join(',')}
+					>
+						{cloneElement(children, { disabled: true })}
 					</span>
 				</TooltipTrigger>
 				<TooltipContent className={styles.errorContent}>
-					{tooltipMessage}
+					{formatDeniedMessage(deniedPermissions, tooltipMessage)}
 				</TooltipContent>
 			</TooltipRoot>
 		</TooltipProvider>

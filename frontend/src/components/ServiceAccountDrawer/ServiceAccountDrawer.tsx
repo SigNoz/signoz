@@ -30,7 +30,9 @@ import {
 	useServiceAccountRoleManager,
 } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
+	APIKeyCreatePermission,
 	APIKeyListPermission,
+	buildSAAttachPermission,
 	buildSADeletePermission,
 	buildSAReadPermission,
 	buildSAUpdatePermission,
@@ -429,16 +431,8 @@ function ServiceAccountDrawer({
 				{activeTab === ServiceAccountDrawerTab.Keys && (
 					<AuthZTooltip
 						checks={[
-							{
-								relation: 'create',
-								object: 'factor-api-key:*',
-								permissionName: 'factor-api-key:create',
-							},
-							{
-								relation: 'attach',
-								object: `serviceaccount:${selectedAccountId ?? ''}`,
-								permissionName: 'serviceaccount:attach',
-							},
+							APIKeyCreatePermission,
+							buildSAAttachPermission(selectedAccountId ?? ''),
 						]}
 						enabled={!isDeleted && !!selectedAccountId}
 					>
@@ -545,9 +539,7 @@ function ServiceAccountDrawer({
 				<>
 					{!isDeleted && (
 						<AuthZTooltip
-							relation="delete"
-							object={`serviceaccount:${selectedAccountId ?? ''}`}
-							permissionName="serviceaccount:delete"
+							checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 							enabled={!!selectedAccountId}
 						>
 							<Button
@@ -569,9 +561,7 @@ function ServiceAccountDrawer({
 								Cancel
 							</Button>
 							<AuthZTooltip
-								relation="update"
-								object={`serviceaccount:${selectedAccountId ?? ''}`}
-								permissionName="serviceaccount:update"
+								checks={[buildSAUpdatePermission(selectedAccountId ?? '')]}
 								enabled={!!selectedAccountId}
 							>
 								<Button

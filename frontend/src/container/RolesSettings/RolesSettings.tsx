@@ -3,6 +3,7 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { RoleCreatePermission } from 'hooks/useAuthZ/rolePermissions';
 
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';
@@ -29,11 +30,7 @@ function RolesSettings(): JSX.Element {
 						value={searchQuery}
 						onChange={(e): void => setSearchQuery(e.target.value)}
 					/>
-					<AuthZTooltip
-						relation="create"
-						object="role:*"
-						permissionName="role:create"
-					>
+					<AuthZTooltip checks={[RoleCreatePermission]}>
 						<Button
 							variant="solid"
 							color="primary"

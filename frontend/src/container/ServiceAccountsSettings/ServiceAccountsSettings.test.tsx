@@ -1,29 +1,12 @@
-import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 import ServiceAccountsSettings from './ServiceAccountsSettings';
 
-const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 const SA_LIST_URL = 'http://localhost/api/v1/service_accounts';
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 function renderPage(): ReturnType<typeof render> {
 	return render(
