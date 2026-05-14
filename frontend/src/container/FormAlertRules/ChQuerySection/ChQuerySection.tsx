@@ -37,17 +37,13 @@ function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 						showIcon
 						title={
 							<span>
-								<a href={docLink} target="_blank" rel="noreferrer">
+								<a href={docLink} target="_blank" rel="noopener">
 									Learn to write faster, optimized queries
 								</a>
 								{showAgentSkill && (
 									<>
 										{' · Using AI? '}
-										<a
-											href={DOCLINKS.AGENT_SKILL_INSTALL}
-											target="_blank"
-											rel="noreferrer"
-										>
+										<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
 											Install the SigNoz ClickHouse query agent skill
 										</a>
 									</>
