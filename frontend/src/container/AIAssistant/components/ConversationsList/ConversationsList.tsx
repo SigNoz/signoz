@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Plus, Search } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
@@ -157,7 +157,7 @@ export default function ConversationsList({
 				{isLoadingThreads && <HeaderLoadingDots />}
 
 				{!isLoadingThreads && showAddNewConversation && (
-					<Tooltip title="New conversation">
+					<TooltipSimple title="New conversation">
 						<Button
 							variant="solid"
 							size="sm"
@@ -167,7 +167,7 @@ export default function ConversationsList({
 						>
 							<Plus size={12} />
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 				)}
 			</div>
 

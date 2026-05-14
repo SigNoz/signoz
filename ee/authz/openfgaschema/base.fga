@@ -7,17 +7,27 @@ type organization
 
 type user
   relations
+    define create: [user, serviceaccount, role#assignee]
+    define list: [user, serviceaccount, role#assignee]
+
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
     define delete: [user, serviceaccount, role#assignee]
+
     define attach: [user, serviceaccount, role#assignee]
+    define detach: [user, serviceaccount, role#assignee]
 
 type serviceaccount
   relations
+    define create: [user, serviceaccount, role#assignee]
+    define list: [user, serviceaccount, role#assignee]
+
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
     define delete: [user, serviceaccount, role#assignee]
+
     define attach: [user, serviceaccount, role#assignee]
+    define detach: [user, serviceaccount, role#assignee]
 
 type anonymous
 
@@ -25,25 +35,28 @@ type role
   relations
     define assignee: [user, serviceaccount, anonymous]
 
+    define create: [user, serviceaccount, role#assignee]
+    define list: [user, serviceaccount, role#assignee]
+
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
     define delete: [user, serviceaccount, role#assignee]
-    define attach: [user, serviceaccount, role#assignee]
 
-type metaresources
+    define attach: [user, serviceaccount, role#assignee]
+    define detach: [user, serviceaccount, role#assignee]
+
+type metaresource
   relations
     define create: [user, serviceaccount, role#assignee]
     define list: [user, serviceaccount, role#assignee]
 
-type metaresource
-  relations
-      define read: [user, serviceaccount, anonymous, role#assignee]
-      define update: [user, serviceaccount, role#assignee]
-      define delete: [user, serviceaccount, role#assignee]
+    define read: [user, serviceaccount, anonymous, role#assignee]
+    define update: [user, serviceaccount, role#assignee]
+    define delete: [user, serviceaccount, role#assignee]
 
-      define block: [user, serviceaccount, role#assignee]
+    define block: [user, serviceaccount, role#assignee]
 
 
 type telemetryresource
   relations
-      define read: [user, serviceaccount, role#assignee]
+    define read: [user, serviceaccount, role#assignee]
