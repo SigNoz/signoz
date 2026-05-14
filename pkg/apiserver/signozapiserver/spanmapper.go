@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/gorilla/mux"
 )
@@ -47,6 +49,12 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcesSpanMapperGroup,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.ResponseJSONPath("data.id"),
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -65,6 +73,12 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:         false,
 			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceSpanMapperGroup,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("groupId"),
+		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -85,6 +99,12 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceSpanMapperGroup,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("groupId"),
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -125,6 +145,22 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesSpanMapper,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachAuditDef{
+				AttachedResource:   coretypes.ResourceMetaResourceSpanMapper,
+				AttachedResourceID: handler.ResponseJSONPath("data.id"),
+				TargetResource:     coretypes.ResourceMetaResourceSpanMapperGroup,
+				TargetResourceID:   handler.PathParam("groupId"),
+				Verb:               coretypes.VerbAttach,
+				Category:           audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -143,6 +179,12 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:         false,
 			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceSpanMapper,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("mapperId"),
+		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -163,6 +205,12 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceSpanMapper,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("mapperId"),
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

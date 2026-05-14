@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -16,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 const (
@@ -59,6 +62,14 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			string(semconv.HTTPRouteKey), path,
 		}
 
+		// Pre-buffer the request body if the route declares any AuditDefs that
+		// might want to extract from it after the handler has consumed the body.
+		var requestBody []byte
+		if len(auditDefsFromRequest(req)) > 0 && req.Body != nil {
+			requestBody, _ = io.ReadAll(req.Body)
+			req.Body = io.NopCloser(bytes.NewReader(requestBody))
+		}
+
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
 		next.ServeHTTP(writer, req)
@@ -70,7 +81,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		middleware.emitAuditEvent(req, writer, path)
+		middleware.emitAuditEvent(req, writer, path, requestBody)
 
 		fields = append(fields,
 			string(semconv.HTTPResponseStatusCodeKey), statusCode,
@@ -89,51 +100,72 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string) {
+func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string, requestBody []byte) {
 	if middleware.auditor == nil {
 		return
 	}
 
-	def := auditDefFromRequest(req)
-	if def == nil {
+	defs := auditDefsFromRequest(req)
+	if len(defs) == 0 {
 		return
 	}
 
-	// extract claims
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
-
-	// extract status code
 	statusCode := writer.StatusCode()
-
-	// extract traces.
 	span := trace.SpanFromContext(req.Context())
 
-	// extract error details.
 	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
-	event := audittypes.NewAuditEventFromHTTPRequest(
-		req,
-		routeTemplate,
-		statusCode,
-		span.SpanContext().TraceID(),
-		span.SpanContext().SpanID(),
-		def.Action,
-		def.Category,
-		claims,
-		resourceIDFromRequest(req, def.ResourceIDParam),
-		def.ResourceKind,
-		errorType,
-		errorCode,
-	)
+	extractorCtx := handler.ExtractorContext{
+		Request:      req,
+		RequestBody:  requestBody,
+		ResponseBody: writer.BodyBytes(),
+	}
 
-	middleware.auditor.Audit(req.Context(), event)
+	for _, def := range defs {
+		resolved, err := resolveAuditDef(extractorCtx, def)
+		if err != nil {
+			middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
+			continue
+		}
+
+		if len(resolved) == 0 {
+			if _, attach := def.(handler.AttachManyAuditDef); attach {
+				middleware.logger.WarnContext(req.Context(), "audit AttachManyAuditDef resolved to zero events", slog.Int("request_body_size", len(requestBody)), slog.String("request_body_head", truncate(requestBody, 256)))
+			}
+		}
+
+		for _, r := range resolved {
+			event := audittypes.NewAuditEventFromHTTPRequest(
+				req,
+				routeTemplate,
+				statusCode,
+				span.SpanContext().TraceID(),
+				span.SpanContext().SpanID(),
+				r.Verb,
+				r.Category,
+				claims,
+				r.ResourceAttributes,
+				errorType,
+				errorCode,
+			)
+
+			middleware.auditor.Audit(req.Context(), event)
+		}
+	}
 }
 
-func auditDefFromRequest(req *http.Request) *handler.AuditDef {
+type resolvedAuditDef struct {
+	Verb               coretypes.Verb
+	Category           audittypes.ActionCategory
+	ResourceAttributes audittypes.ResourceAttributes
+}
+
+func auditDefsFromRequest(req *http.Request) []handler.AuditDef {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
@@ -152,18 +184,84 @@ func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 		return nil
 	}
 
-	return provider.AuditDef()
+	return provider.AuditDefs()
 }
 
-func resourceIDFromRequest(req *http.Request, param string) string {
-	if param == "" {
-		return ""
+func resolveAuditDef(ctx handler.ExtractorContext, def handler.AuditDef) ([]resolvedAuditDef, error) {
+	switch d := def.(type) {
+	case handler.BasicAuditDef:
+		resourceID, err := extractResourceID(ctx, d.ResourceID)
+		if err != nil {
+			return nil, err
+		}
+
+		return []resolvedAuditDef{{
+			Verb:               d.Verb,
+			Category:           d.Category,
+			ResourceAttributes: audittypes.NewResourceAttributes(d.Resource, resourceID),
+		}}, nil
+	case handler.AttachAuditDef:
+		attachedID, err := extractResourceID(ctx, d.AttachedResourceID)
+		if err != nil {
+			return nil, err
+		}
+
+		targetID, err := extractResourceID(ctx, d.TargetResourceID)
+		if err != nil {
+			return nil, err
+		}
+
+		return []resolvedAuditDef{{
+			Verb:               d.Verb,
+			Category:           d.Category,
+			ResourceAttributes: audittypes.NewAttachResourceAttributes(d.AttachedResource, attachedID, d.TargetResource, targetID),
+		}}, nil
+	case handler.AttachManyAuditDef:
+		ids, err := extractResourceIDs(ctx, d.AttachedResourceIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		targetID, err := extractResourceID(ctx, d.TargetResourceID)
+		if err != nil {
+			return nil, err
+		}
+
+		resolved := make([]resolvedAuditDef, 0, len(ids))
+		for _, id := range ids {
+			resolved = append(resolved, resolvedAuditDef{
+				Verb:               d.Verb,
+				Category:           d.Category,
+				ResourceAttributes: audittypes.NewAttachResourceAttributes(d.AttachedResource, id, d.TargetResource, targetID),
+			})
+		}
+
+		return resolved, nil
 	}
 
-	vars := mux.Vars(req)
-	if vars == nil {
-		return ""
+	return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unknown AuditDef implementation %T", def)
+}
+
+func extractResourceID(ctx handler.ExtractorContext, extractor handler.ResourceIDExtractor) (string, error) {
+	if extractor == nil {
+		return "", nil
 	}
 
-	return vars[param]
+	return extractor(ctx)
+}
+
+func extractResourceIDs(ctx handler.ExtractorContext, extractor handler.ResourceIDsExtractor) ([]string, error) {
+	if extractor == nil {
+		return nil, nil
+	}
+
+	return extractor(ctx)
+}
+
+func truncate(b []byte, n int) string {
+	if len(b) <= n {
+		return string(b)
+	}
+
+	return string(b[:n]) + "..."
 }

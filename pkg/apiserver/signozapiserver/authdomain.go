@@ -5,7 +5,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -27,20 +29,28 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Create), handler.OpenAPIDef{
-		ID:                  "CreateAuthDomain",
-		Tags:                []string{"authdomains"},
-		Summary:             "Create auth domain",
-		Description:         "This endpoint creates an auth domain",
-		Request:             new(authtypes.PostableAuthDomain),
-		RequestContentType:  "application/json",
-		Response:            new(types.Identifiable),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/domains", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Create),
+		handler.OpenAPIDef{
+			ID:                  "CreateAuthDomain",
+			Tags:                []string{"authdomains"},
+			Summary:             "Create auth domain",
+			Description:         "This endpoint creates an auth domain",
+			Request:             new(authtypes.PostableAuthDomain),
+			RequestContentType:  "application/json",
+			Response:            new(types.Identifiable),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesAuthDomain,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -61,37 +71,55 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
-		ID:                  "UpdateAuthDomain",
-		Tags:                []string{"authdomains"},
-		Summary:             "Update auth domain",
-		Description:         "This endpoint updates an auth domain",
-		Request:             new(authtypes.UpdatableAuthDomain),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Update),
+		handler.OpenAPIDef{
+			ID:                  "UpdateAuthDomain",
+			Tags:                []string{"authdomains"},
+			Summary:             "Update auth domain",
+			Description:         "This endpoint updates an auth domain",
+			Request:             new(authtypes.UpdatableAuthDomain),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceAuthDomain,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryAccessControl,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
-		ID:                  "DeleteAuthDomain",
-		Tags:                []string{"authdomains"},
-		Summary:             "Delete auth domain",
-		Description:         "This endpoint deletes an auth domain",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Delete),
+		handler.OpenAPIDef{
+			ID:                  "DeleteAuthDomain",
+			Tags:                []string{"authdomains"},
+			Summary:             "Delete auth domain",
+			Description:         "This endpoint deletes an auth domain",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceAuthDomain,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryAccessControl,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

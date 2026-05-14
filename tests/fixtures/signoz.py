@@ -16,7 +16,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def create_signoz(
+def create_signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
     zeus: types.TestContainerDocker,
     gateway: types.TestContainerDocker,
@@ -26,10 +26,15 @@ def create_signoz(
     pytestconfig: pytest.Config,
     cache_key: str = "signoz",
     env_overrides: dict | None = None,
+    volume_mappings: list[tuple[str, str]] | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
-    Accepts optional env_overrides to customize the container environment.
+
+    Accepts optional env_overrides to customize the container environment, and
+    optional volume_mappings (host_path, container_path) tuples to mount host
+    directories into the container — mirrors how sqlite/clickhouse fixtures
+    expose tmp paths back to the test runner.
     """
 
     def create() -> types.SigNoz:
@@ -103,6 +108,10 @@ def create_signoz(
                 dir_path,
                 "rw",
             )
+
+        if volume_mappings:
+            for host_path, container_path in volume_mappings:
+                container.with_volume_mapping(host_path, container_path, "rw")
 
         container.start()
 

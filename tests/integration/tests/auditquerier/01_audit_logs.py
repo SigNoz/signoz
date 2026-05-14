@@ -37,7 +37,7 @@ def test_audit_list_all(
                     "signoz.audit.principal.id": "user-010",
                     "signoz.audit.principal.email": "ops@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "create",
+                    "signoz.audit.verb": "create",
                     "signoz.audit.outcome": "success",
                 },
                 body="ops@acme.com (user-010) created alert-rule (alert-001)",
@@ -55,7 +55,7 @@ def test_audit_list_all(
                     "signoz.audit.principal.id": "user-010",
                     "signoz.audit.principal.email": "ops@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.outcome": "success",
                 },
                 body="ops@acme.com (user-010) updated saved-view (view-001)",
@@ -73,7 +73,7 @@ def test_audit_list_all(
                     "signoz.audit.principal.id": "user-010",
                     "signoz.audit.principal.email": "ops@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.action_category": "access_control",
                     "signoz.audit.outcome": "success",
                 },
@@ -146,7 +146,7 @@ def test_audit_list_all(
             id="filter_by_principal_type",
         ),
         pytest.param(
-            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
+            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.verb = 'delete'",
             1,
             {"dashboard.deleted"},
             id="filter_by_resource_kind_and_action",
@@ -177,7 +177,7 @@ def test_audit_filter(
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "create",
+                    "signoz.audit.verb": "create",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "success",
                 },
@@ -195,7 +195,7 @@ def test_audit_filter(
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "success",
                 },
@@ -213,7 +213,7 @@ def test_audit_filter(
                     "signoz.audit.principal.id": "user-002",
                     "signoz.audit.principal.email": "viewer@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "delete",
+                    "signoz.audit.verb": "delete",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "failure",
                     "signoz.audit.error.type": "forbidden",
@@ -234,7 +234,7 @@ def test_audit_filter(
                     "signoz.audit.principal.id": "sa-001",
                     "signoz.audit.principal.email": "",
                     "signoz.audit.principal.type": "service_account",
-                    "signoz.audit.action": "create",
+                    "signoz.audit.verb": "create",
                     "signoz.audit.action_category": "access_control",
                     "signoz.audit.outcome": "success",
                 },
@@ -252,7 +252,7 @@ def test_audit_filter(
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "login",
+                    "signoz.audit.verb": "login",
                     "signoz.audit.action_category": "access_control",
                     "signoz.audit.outcome": "success",
                 },
@@ -310,7 +310,7 @@ def test_audit_scalar_count_failures(
                 attributes={
                     "signoz.audit.principal.id": "user-050",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "delete",
+                    "signoz.audit.verb": "delete",
                     "signoz.audit.outcome": "failure",
                 },
                 body="user-050 failed to delete dashboard",
@@ -327,7 +327,7 @@ def test_audit_scalar_count_failures(
                 attributes={
                     "signoz.audit.principal.id": "user-060",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.outcome": "failure",
                 },
                 body="user-060 failed to update alert-rule",
@@ -344,7 +344,7 @@ def test_audit_scalar_count_failures(
                 attributes={
                     "signoz.audit.principal.id": "user-050",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.outcome": "success",
                 },
                 body="user-050 updated dashboard",
@@ -400,7 +400,7 @@ def test_audit_does_not_leak_into_logs(
                 attributes={
                     "signoz.audit.principal.id": "user-admin",
                     "signoz.audit.principal.type": "user",
-                    "signoz.audit.action": "update",
+                    "signoz.audit.verb": "update",
                     "signoz.audit.outcome": "success",
                 },
                 body="user-admin updated organization (org-999)",
@@ -430,5 +430,5 @@ def test_audit_does_not_leak_into_logs(
 
     rows = response.json()["data"]["data"]["results"][0].get("rows") or []
 
-    audit_bodies = [row["data"]["body"] for row in rows if "signoz.audit" in row["data"].get("attributes_string", {}).get("signoz.audit.action", "")]
+    audit_bodies = [row["data"]["body"] for row in rows if "signoz.audit" in row["data"].get("attributes_string", {}).get("signoz.audit.verb", "")]
     assert len(audit_bodies) == 0

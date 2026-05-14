@@ -5,7 +5,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -46,6 +48,11 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesCloudIntegration,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryConfigurationChange,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -106,6 +113,12 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceCloudIntegration,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -126,6 +139,12 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceCloudIntegration,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -188,6 +207,12 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceCloudIntegrationService,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("service_id"),
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}

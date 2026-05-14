@@ -6,6 +6,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -44,54 +46,80 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateChannel), handler.OpenAPIDef{
-		ID:                  "CreateChannel",
-		Tags:                []string{"channels"},
-		Summary:             "Create notification channel",
-		Description:         "This endpoint creates a notification channel",
-		Request:             new(alertmanagertypes.PostableChannel),
-		RequestContentType:  "application/json",
-		Response:            new(alertmanagertypes.Channel),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateChannel),
+		handler.OpenAPIDef{
+			ID:                  "CreateChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Create notification channel",
+			Description:         "This endpoint creates a notification channel",
+			Request:             new(alertmanagertypes.PostableChannel),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.Channel),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesNotificationChannel,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryConfigurationChange,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateChannelByID), handler.OpenAPIDef{
-		ID:                  "UpdateChannelByID",
-		Tags:                []string{"channels"},
-		Summary:             "Update notification channel",
-		Description:         "This endpoint updates a notification channel by ID",
-		Request:             new(alertmanagertypes.Receiver),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateChannelByID),
+		handler.OpenAPIDef{
+			ID:                  "UpdateChannelByID",
+			Tags:                []string{"channels"},
+			Summary:             "Update notification channel",
+			Description:         "This endpoint updates a notification channel by ID",
+			Request:             new(alertmanagertypes.Receiver),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteChannelByID), handler.OpenAPIDef{
-		ID:                  "DeleteChannelByID",
-		Tags:                []string{"channels"},
-		Summary:             "Delete notification channel",
-		Description:         "This endpoint deletes a notification channel by ID",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/channels/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteChannelByID),
+		handler.OpenAPIDef{
+			ID:                  "DeleteChannelByID",
+			Tags:                []string{"channels"},
+			Summary:             "Delete notification channel",
+			Description:         "This endpoint deletes a notification channel by ID",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
@@ -163,54 +191,91 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateRoutePolicy), handler.OpenAPIDef{
-		ID:                  "CreateRoutePolicy",
-		Tags:                []string{"routepolicies"},
-		Summary:             "Create route policy",
-		Description:         "This endpoint creates a route policy",
-		Request:             new(alertmanagertypes.PostableRoutePolicy),
-		RequestContentType:  "application/json",
-		Response:            new(alertmanagertypes.GettableRoutePolicy),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/route_policies", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.CreateRoutePolicy),
+		handler.OpenAPIDef{
+			ID:                  "CreateRoutePolicy",
+			Tags:                []string{"routepolicies"},
+			Summary:             "Create route policy",
+			Description:         "This endpoint creates a route policy",
+			Request:             new(alertmanagertypes.PostableRoutePolicy),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.GettableRoutePolicy),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesRoutePolicy,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachManyAuditDef{
+				AttachedResource:    coretypes.ResourceMetaResourceNotificationChannel,
+				AttachedResourceIDs: handler.BodyJSONArray("channels"),
+				TargetResource:      coretypes.ResourceMetaResourceRoutePolicy,
+				TargetResourceID:    handler.ResponseJSONPath("data.id"),
+				Verb:                coretypes.VerbAttach,
+				Category:            audittypes.ActionCategoryConfigurationChange,
+			},
+		),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateRoutePolicy), handler.OpenAPIDef{
-		ID:                  "UpdateRoutePolicy",
-		Tags:                []string{"routepolicies"},
-		Summary:             "Update route policy",
-		Description:         "This endpoint updates a route policy by ID",
-		Request:             new(alertmanagertypes.PostableRoutePolicy),
-		RequestContentType:  "application/json",
-		Response:            new(alertmanagertypes.GettableRoutePolicy),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.UpdateRoutePolicy),
+		handler.OpenAPIDef{
+			ID:                  "UpdateRoutePolicy",
+			Tags:                []string{"routepolicies"},
+			Summary:             "Update route policy",
+			Description:         "This endpoint updates a route policy by ID",
+			Request:             new(alertmanagertypes.PostableRoutePolicy),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.GettableRoutePolicy),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceRoutePolicy,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteRoutePolicyByID), handler.OpenAPIDef{
-		ID:                  "DeleteRoutePolicyByID",
-		Tags:                []string{"routepolicies"},
-		Summary:             "Delete route policy",
-		Description:         "This endpoint deletes a route policy by ID",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.alertmanagerHandler.DeleteRoutePolicyByID),
+		handler.OpenAPIDef{
+			ID:                  "DeleteRoutePolicyByID",
+			Tags:                []string{"routepolicies"},
+			Summary:             "Delete route policy",
+			Description:         "This endpoint deletes a route policy by ID",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceRoutePolicy,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

@@ -69,6 +69,18 @@ var Resources = []Resource{
 	ResourceMetaResourcesLogsField,
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourcesTracesField,
+	ResourceMetaResourceLLMPricingRule,
+	ResourceMetaResourcesLLMPricingRule,
+	ResourceMetaResourceSpanMapperGroup,
+	ResourceMetaResourcesSpanMapperGroup,
+	ResourceMetaResourceSpanMapper,
+	ResourceMetaResourcesSpanMapper,
+	ResourceMetaResourceZeusProfile,
+	ResourceMetaResourcesZeusProfile,
+	ResourceMetaResourceZeusHost,
+	ResourceMetaResourcesZeusHost,
+	ResourceMetaResourceMetricField,
+	ResourceMetaResourcesMetricField,
 }
 
 var (
@@ -140,4 +152,16 @@ var (
 	ResourceMetaResourcesLogsField                        = NewResourceMetaResources(KindLogsField)
 	ResourceMetaResourceTracesField                       = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourcesTracesField                      = NewResourceMetaResources(KindTracesField)
+	ResourceMetaResourceLLMPricingRule                    = NewResourceMetaResource(KindLLMPricingRule)
+	ResourceMetaResourcesLLMPricingRule                   = NewResourceMetaResources(KindLLMPricingRule)
+	ResourceMetaResourceSpanMapperGroup                   = NewResourceMetaResource(KindSpanMapperGroup)
+	ResourceMetaResourcesSpanMapperGroup                  = NewResourceMetaResources(KindSpanMapperGroup)
+	ResourceMetaResourceSpanMapper                        = NewResourceMetaResource(KindSpanMapper)
+	ResourceMetaResourcesSpanMapper                       = NewResourceMetaResources(KindSpanMapper)
+	ResourceMetaResourceZeusProfile                       = NewResourceMetaResource(KindZeusProfile)
+	ResourceMetaResourcesZeusProfile                      = NewResourceMetaResources(KindZeusProfile)
+	ResourceMetaResourceZeusHost                          = NewResourceMetaResource(KindZeusHost)
+	ResourceMetaResourcesZeusHost                         = NewResourceMetaResources(KindZeusHost)
+	ResourceMetaResourceMetricField                       = NewResourceMetaResource(KindMetricField)
+	ResourceMetaResourcesMetricField                      = NewResourceMetaResources(KindMetricField)
 )

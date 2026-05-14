@@ -15,13 +15,13 @@ type ServeOpenAPIFunc func(openapi.OperationContext)
 type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
-	AuditDef() *AuditDef
+	AuditDefs() []AuditDef
 }
 
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
-	auditDef    *AuditDef
+	auditDefs   []AuditDef
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -130,6 +130,6 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	}
 }
 
-func (handler *handler) AuditDef() *AuditDef {
-	return handler.auditDef
+func (handler *handler) AuditDefs() []AuditDef {
+	return handler.auditDefs
 }

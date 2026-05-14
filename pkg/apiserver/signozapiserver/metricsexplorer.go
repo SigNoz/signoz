@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/gorilla/mux"
 )
@@ -122,7 +124,14 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceMetricField,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("metric_name"),
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
