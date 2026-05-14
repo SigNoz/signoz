@@ -16,7 +16,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, nil)
 	var storableDashboard *dashboardtypes.StorableDashboard
 
-	err := module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
 		if err != nil {
 			return err
