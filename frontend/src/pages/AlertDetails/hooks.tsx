@@ -12,6 +12,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createRule,
 	deleteRuleByID,
+	invalidateGetRuleByID,
 	updateRuleByID,
 	useGetRuleByID,
 	useListRules,
@@ -408,6 +409,7 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
@@ -416,6 +418,7 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,

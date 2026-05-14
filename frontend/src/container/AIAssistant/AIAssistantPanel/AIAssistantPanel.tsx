@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
 
@@ -125,7 +125,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 
 					<div className={styles.actions}>
-						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+						<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
 							<Button
 								variant="ghost"
 								size="icon"
@@ -135,9 +135,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 							>
 								<History size={14} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 
-						<Tooltip title="New conversation">
+						<TooltipSimple title="New conversation">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -147,9 +147,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 							>
 								<Plus size={14} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 
-						<Tooltip title="Open full screen">
+						<TooltipSimple title="Open full screen">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -160,9 +160,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 							>
 								<Maximize2 size={14} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 
-						<Tooltip title="Close">
+						<TooltipSimple title="Close">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -172,7 +172,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 							>
 								<X size={14} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 					</div>
 				</div>
 

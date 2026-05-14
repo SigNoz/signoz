@@ -17,7 +17,7 @@ export default function AlertState({
 	let label;
 	const isDarkMode = useIsDarkMode();
 	switch (state) {
-		case 'no-data':
+		case 'nodata':
 			icon = (
 				<CircleOff
 					size={18}
