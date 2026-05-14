@@ -709,7 +709,6 @@ function FormAlertRules({
 					panelType={panelType || PANEL_TYPES.TIME_SERIES}
 				/>
 			}
-			name=""
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
@@ -729,7 +728,6 @@ function FormAlertRules({
 					panelType={panelType || PANEL_TYPES.TIME_SERIES}
 				/>
 			}
-			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}

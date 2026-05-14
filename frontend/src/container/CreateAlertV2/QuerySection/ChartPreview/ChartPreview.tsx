@@ -91,7 +91,6 @@ function ChartPreview({
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={headline}
-			name=""
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
@@ -107,7 +106,6 @@ function ChartPreview({
 	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreviewComponent
 			headline={headline}
-			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}

@@ -52,6 +52,28 @@ export function normalizePlotValue(
 	return value as number;
 }
 
+/**
+ * Returns true if at most one entry in `values` is a valid plot value.
+ *
+ * Used to decide whether a series should render as a single point (drawStyle:
+ * Points) vs a line — a continuous line with only one visible sample is
+ * invisible to the user.
+ */
+export function hasSingleVisiblePoint(
+	values: ReadonlyArray<readonly [unknown, unknown]> | undefined,
+): boolean {
+	let validPointCount = 0;
+	for (const [, rawValue] of values ?? []) {
+		if (!isInvalidPlotValue(rawValue)) {
+			validPointCount += 1;
+			if (validPointCount > 1) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 export interface SeriesSpanGapsOption {
 	spanGaps?: boolean | number;
 }

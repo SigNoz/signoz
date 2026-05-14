@@ -15,12 +15,11 @@ import {
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
+import { hasSingleVisiblePoint } from 'lib/uPlotV2/utils/dataUtils';
 import get from 'lodash-es/get';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
 
 import { PanelMode } from '../types';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
@@ -34,22 +33,6 @@ export const prepareChartData = (
 
 	return [timestampArr, ...yAxisValuesArr];
 };
-
-function hasSingleVisiblePointForSeries(series: QueryData): boolean {
-	const rawValues = series.values ?? [];
-	let validPointCount = 0;
-
-	for (const [, rawValue] of rawValues) {
-		if (!isInvalidPlotValue(rawValue)) {
-			validPointCount += 1;
-			if (validPointCount > 1) {
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
 
 export const prepareUPlotConfig = ({
 	widget,
@@ -107,7 +90,7 @@ export const prepareUPlotConfig = ({
 	}
 
 	apiResponse.data.result.forEach((series) => {
-		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
+		const hasSingleValidPoint = hasSingleVisiblePoint(series.values);
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query

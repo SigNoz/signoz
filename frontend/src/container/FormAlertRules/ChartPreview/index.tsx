@@ -15,8 +15,6 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
 import { Threshold } from 'container/CreateAlertV2/context/types';
-import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
-import GridPanelSwitch from 'container/GridPanelSwitch';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -32,7 +30,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -41,7 +39,6 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
-import { LegendPosition } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -52,13 +49,16 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { AlertDetectionTypes } from '..';
+import ChartContent from './ChartContent';
 import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
 import './ChartPreview.styles.scss';
 
+// Height reserved for the `.chart-preview-header` strip rendered above the chart.
+const CHART_PREVIEW_HEADER_HEIGHT = 48;
+
 export interface ChartPreviewProps {
-	name: string;
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
@@ -77,7 +77,6 @@ export interface ChartPreviewProps {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ChartPreview({
-	name,
 	query,
 	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
@@ -113,14 +112,6 @@ function ChartPreview({
 
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
-	const [graphVisibility, setGraphVisibility] = useState<boolean[]>([]);
-	const legendScrollPositionRef = useRef<{
-		scrollTop: number;
-		scrollLeft: number;
-	}>({
-		scrollTop: 0,
-		scrollLeft: 0,
-	});
 	const { currentQuery } = useQueryBuilder();
 
 	const {
@@ -219,18 +210,6 @@ function ChartPreview({
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
 
-	// Initialize graph visibility from localStorage
-	useEffect(() => {
-		if (queryResponse?.data?.payload?.data?.result) {
-			const { graphVisibilityStates: localStoredVisibilityState } =
-				getLocalStorageGraphVisibilityState({
-					apiResponse: queryResponse.data.payload.data.result,
-					name: 'alert-chart-preview',
-				});
-			setGraphVisibility(localStoredVisibilityState);
-		}
-	}, [queryResponse?.data?.payload?.data?.result]);
-
 	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
@@ -288,59 +267,9 @@ function ChartPreview({
 		return LegendPosition.RIGHT;
 	}, [queryResponse?.data?.payload?.data?.result?.length, showSideLegend]);
 
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions({
-				id: 'alert_legend_widget',
-				yAxisUnit,
-				apiResponse: queryResponse?.data?.payload,
-				dimensions: {
-					height: containerDimensions?.height ? containerDimensions.height - 48 : 0,
-					width: containerDimensions?.width,
-				},
-				minTimeScale,
-				maxTimeScale,
-				isDarkMode,
-				onDragSelect,
-				thresholds: getThresholds(thresholds, t, optionName, yAxisUnit),
-				softMax: null,
-				softMin: null,
-				panelType: graphType,
-				tzDate: (timestamp: number) =>
-					uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
-				timezone: timezone.value,
-				currentQuery,
-				query: query || currentQuery,
-				graphsVisibilityStates: graphVisibility,
-				setGraphsVisibilityStates: setGraphVisibility,
-				enhancedLegend: true,
-				legendPosition,
-				legendScrollPosition: legendScrollPositionRef.current,
-				setLegendScrollPosition: (position: {
-					scrollTop: number;
-					scrollLeft: number;
-				}) => {
-					legendScrollPositionRef.current = position;
-				},
-			}),
-		[
-			yAxisUnit,
-			queryResponse?.data?.payload,
-			containerDimensions,
-			minTimeScale,
-			maxTimeScale,
-			isDarkMode,
-			onDragSelect,
-			thresholds,
-			t,
-			optionName,
-			graphType,
-			timezone.value,
-			currentQuery,
-			query,
-			graphVisibility,
-			legendPosition,
-		],
+	const resolvedThresholds = useMemo(
+		() => getThresholds(thresholds, t, optionName, yAxisUnit),
+		[thresholds, t, optionName, yAxisUnit],
 	);
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
@@ -361,6 +290,12 @@ function ChartPreview({
 			?.active || false;
 
 	const isWarning = !isEmpty(queryResponse.data?.warning);
+
+	const chartWidth = containerDimensions?.width ?? 0;
+	const chartHeight = containerDimensions?.height
+		? containerDimensions.height - CHART_PREVIEW_HEADER_HEIGHT
+		: 0;
+
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
 			<ChartContainer>
@@ -384,16 +319,21 @@ function ChartPreview({
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (
-						<GridPanelSwitch
-							options={options}
+						<ChartContent
 							panelType={graphType}
-							data={chartData}
-							name={name || 'Chart Preview'}
-							panelData={
-								queryResponse.data?.payload?.data?.newResult?.data?.result || []
-							}
-							query={query || initialQueriesMap.metrics}
+							query={query || currentQuery}
+							apiResponse={queryResponse.data?.payload}
+							data={chartData as uPlot.AlignedData}
+							thresholds={resolvedThresholds}
 							yAxisUnit={yAxisUnit}
+							legendPosition={legendPosition}
+							isDarkMode={isDarkMode}
+							timezone={timezone}
+							width={chartWidth}
+							height={chartHeight}
+							minTimeScale={minTimeScale}
+							maxTimeScale={maxTimeScale}
+							onDragSelect={onDragSelect}
 						/>
 					)}
 
