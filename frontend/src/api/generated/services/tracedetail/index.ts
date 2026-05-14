@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation } from 'react-query';
 import type {
@@ -27,7 +28,7 @@ import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
  */
 export const getWaterfall = (
 	{ traceID }: GetWaterfallPathParameters,
-	tracedetailtypesPostableWaterfallDTO: BodyType<TracedetailtypesPostableWaterfallDTO>,
+	tracedetailtypesPostableWaterfallDTO?: BodyType<TracedetailtypesPostableWaterfallDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetWaterfall200>({
@@ -48,7 +49,7 @@ export const getGetWaterfallMutationOptions = <
 		TError,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
+			data?: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		},
 		TContext
 	>;
@@ -57,7 +58,7 @@ export const getGetWaterfallMutationOptions = <
 	TError,
 	{
 		pathParams: GetWaterfallPathParameters;
-		data: BodyType<TracedetailtypesPostableWaterfallDTO>;
+		data?: BodyType<TracedetailtypesPostableWaterfallDTO>;
 	},
 	TContext
 > => {
@@ -74,7 +75,7 @@ export const getGetWaterfallMutationOptions = <
 		Awaited<ReturnType<typeof getWaterfall>>,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
+			data?: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -89,7 +90,8 @@ export type GetWaterfallMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getWaterfall>>
 >;
 export type GetWaterfallMutationBody =
-	BodyType<TracedetailtypesPostableWaterfallDTO>;
+	| BodyType<TracedetailtypesPostableWaterfallDTO>
+	| undefined;
 export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -104,7 +106,7 @@ export const useGetWaterfall = <
 		TError,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
+			data?: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		},
 		TContext
 	>;
@@ -113,11 +115,9 @@ export const useGetWaterfall = <
 	TError,
 	{
 		pathParams: GetWaterfallPathParameters;
-		data: BodyType<TracedetailtypesPostableWaterfallDTO>;
+		data?: BodyType<TracedetailtypesPostableWaterfallDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getGetWaterfallMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getGetWaterfallMutationOptions(options));
 };
