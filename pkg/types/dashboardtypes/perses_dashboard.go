@@ -62,7 +62,7 @@ type DashboardInfo struct {
 // StoredDashboardInfo is exactly what serializes into the dashboard.data column.
 type StoredDashboardInfo struct {
 	Metadata DashboardMetadata `json:"metadata"`
-	Data     DashboardData     `json:"data"`
+	Spec     DashboardSpec     `json:"spec"`
 }
 
 type DashboardMetadata struct {
@@ -91,13 +91,13 @@ func (p *PostableDashboardV2) Validate() error {
 	if p.Metadata.SchemaVersion != SchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "metadata.schemaVersion must be %q, got %q", SchemaVersion, p.Metadata.SchemaVersion)
 	}
-	if p.Data.Display == nil || p.Data.Display.Name == "" {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "data.display.name is required")
+	if p.Spec.Display == nil || p.Spec.Display.Name == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.display.name is required")
 	}
 	if err := p.validateTags(); err != nil {
 		return err
 	}
-	return p.Data.Validate()
+	return p.Spec.Validate()
 }
 
 func (p *PostableDashboardV2) validateTags() error {
@@ -158,7 +158,7 @@ func NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, postable Pos
 		Info: DashboardInfo{
 			StoredDashboardInfo: StoredDashboardInfo{
 				Metadata: postable.Metadata,
-				Data:     postable.Data,
+				Spec:     postable.Spec,
 			},
 		},
 	}

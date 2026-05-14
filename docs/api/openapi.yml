@@ -2374,7 +2374,14 @@ components:
         updatedBy:
           type: string
       type: object
-    DashboardtypesDashboardData:
+    DashboardtypesDashboardMetadata:
+      properties:
+        image:
+          type: string
+        schemaVersion:
+          type: string
+      type: object
+    DashboardtypesDashboardSpec:
       properties:
         datasources:
           additionalProperties:
@@ -2404,15 +2411,6 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesVariable'
           type: array
-      type: object
-    DashboardtypesDashboardMetadata:
-      properties:
-        image:
-          type: string
-        schemaVersion:
-          type: string
-        uploadedGrafana:
-          type: boolean
       type: object
     DashboardtypesDatasourcePlugin:
       oneOf:
@@ -2460,10 +2458,10 @@ components:
       type: string
     DashboardtypesGettableDashboardInfo:
       properties:
-        data:
-          $ref: '#/components/schemas/DashboardtypesDashboardData'
         metadata:
           $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
         tags:
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
@@ -2754,10 +2752,10 @@ components:
       type: object
     DashboardtypesPostableDashboardV2:
       properties:
-        data:
-          $ref: '#/components/schemas/DashboardtypesDashboardData'
         metadata:
           $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
         tags:
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
