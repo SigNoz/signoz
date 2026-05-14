@@ -1,5 +1,5 @@
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -149,7 +149,7 @@ export function SpanHoverCard({
 
 	return (
 		<TooltipProvider>
-			<Tooltip open={hoverCardData !== null} onOpenChange={onOpenChange}>
+			<TooltipRoot open={hoverCardData !== null} onOpenChange={onOpenChange}>
 				<TooltipTrigger asChild>
 					<div
 						className="span-hover-card-anchor"
@@ -168,7 +168,7 @@ export function SpanHoverCard({
 				>
 					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
 				</TooltipContent>
-			</Tooltip>
+			</TooltipRoot>
 		</TooltipProvider>
 	);
 }

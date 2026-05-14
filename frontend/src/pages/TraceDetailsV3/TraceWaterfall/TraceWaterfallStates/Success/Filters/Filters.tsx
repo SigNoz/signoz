@@ -15,7 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -269,7 +269,7 @@ function Filters({
 		<>
 			{isFetching && <Loader className="animate-spin" />}
 			{error && (
-				<Tooltip>
+				<TooltipRoot>
 					<TooltipTrigger asChild>
 						<span className="filter-status filter-status--error">
 							<Info />
@@ -279,7 +279,7 @@ function Filters({
 					<TooltipContent>
 						{(error as AxiosError)?.message || 'Something went wrong'}
 					</TooltipContent>
-				</Tooltip>
+				</TooltipRoot>
 			)}
 			{!error && noData && (
 				<Typography.Text className="filter-status">
@@ -304,7 +304,7 @@ function Filters({
 			<TooltipProvider>
 				<div className="trace-v3-filter-row collapsed">
 					{expression ? (
-						<Tooltip>
+						<TooltipRoot>
 							<TooltipTrigger asChild>{pill}</TooltipTrigger>
 							<TooltipContent side="bottom" align="start">
 								<div className="filter-pill-popover">
@@ -328,7 +328,7 @@ function Filters({
 									<div className="filter-pill-popover__expression">{expression}</div>
 								</div>
 							</TooltipContent>
-						</Tooltip>
+						</TooltipRoot>
 					) : (
 						pill
 					)}

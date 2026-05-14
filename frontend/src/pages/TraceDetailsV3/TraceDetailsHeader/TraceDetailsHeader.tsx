@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -145,7 +145,7 @@ function TraceDetailsHeader({
 						{!isFilterExpanded && (
 							<>
 								<TooltipProvider>
-									<Tooltip>
+									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
@@ -158,7 +158,7 @@ function TraceDetailsHeader({
 											</Button>
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
-									</Tooltip>
+									</TooltipRoot>
 								</TooltipProvider>
 								<TraceOptionsMenu
 									showTraceDetails={showTraceDetails}
