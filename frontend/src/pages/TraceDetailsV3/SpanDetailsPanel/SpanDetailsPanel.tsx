@@ -7,7 +7,7 @@ import {
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -497,7 +497,7 @@ function SpanDetailsPanel({
 				key: 'dock-toggle',
 				component: (
 					<TooltipProvider>
-						<Tooltip>
+						<TooltipRoot>
 							<TooltipTrigger asChild>
 								<Button
 									variant="ghost"
@@ -515,7 +515,7 @@ function SpanDetailsPanel({
 							<TooltipContent className="dock-toggle-tooltip">
 								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
 							</TooltipContent>
-						</Tooltip>
+						</TooltipRoot>
 					</TooltipProvider>
 				),
 			});

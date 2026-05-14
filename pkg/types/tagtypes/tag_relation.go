@@ -1,6 +1,8 @@
 package tagtypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,6 +16,7 @@ type TagRelation struct {
 	Kind       coretypes.Kind `json:"kind" required:"true" bun:"kind,type:text,notnull"`
 	ResourceID valuer.UUID    `json:"resourceId" required:"true" bun:"resource_id,type:text,notnull"`
 	TagID      valuer.UUID    `json:"tagId" required:"true" bun:"tag_id,type:text,notnull"`
+	CreatedAt  time.Time      `json:"createdAt" bun:"created_at,notnull"`
 }
 
 func NewTagRelation(kind coretypes.Kind, resourceID valuer.UUID, tagID valuer.UUID) *TagRelation {
@@ -22,6 +25,7 @@ func NewTagRelation(kind coretypes.Kind, resourceID valuer.UUID, tagID valuer.UU
 		Kind:         kind,
 		ResourceID:   resourceID,
 		TagID:        tagID,
+		CreatedAt:    time.Now(),
 	}
 }
 
