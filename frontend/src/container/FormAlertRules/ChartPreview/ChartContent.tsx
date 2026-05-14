@@ -11,7 +11,10 @@ import uPlot from 'uplot';
 
 import { AlertChartPanelType, buildAlertChartConfig } from './utils';
 
-const CHART_ID = 'alert_legend_widget';
+const CHART_ID_PREFIX = 'alert_legend_widget';
+
+const buildChartId = (alertId?: string): string =>
+	alertId ? `${CHART_ID_PREFIX}_${alertId}` : CHART_ID_PREFIX;
 
 // Panel types that render through the UPlotConfigBuilder pipeline.
 // To support a new modern-chart panel type, add an entry here and extend
@@ -30,6 +33,7 @@ const isSupportedPanelType = (
 
 export interface ChartContentProps {
 	panelType: PANEL_TYPES;
+	alertId?: string;
 	query: Query;
 	apiResponse?: MetricRangePayloadProps;
 	data: uPlot.AlignedData;
@@ -47,6 +51,7 @@ export interface ChartContentProps {
 
 export default function ChartContent({
 	panelType,
+	alertId,
 	query,
 	thresholds,
 	apiResponse,
@@ -66,7 +71,7 @@ export default function ChartContent({
 	const config = useMemo(
 		() =>
 			buildAlertChartConfig({
-				id: CHART_ID,
+				id: buildChartId(alertId),
 				panelType: panelType as AlertChartPanelType,
 				query,
 				thresholds,
@@ -79,6 +84,7 @@ export default function ChartContent({
 				onDragSelect,
 			}),
 		[
+			alertId,
 			panelType,
 			query,
 			thresholds,

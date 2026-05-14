@@ -321,6 +321,7 @@ function ChartPreview({
 					{chartDataAvailable && !isAnomalyDetectionAlert && (
 						<ChartContent
 							panelType={graphType}
+							alertId={alertDef?.id}
 							query={query || currentQuery}
 							apiResponse={queryResponse.data?.payload}
 							data={chartData as uPlot.AlignedData}
