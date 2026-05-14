@@ -87,7 +87,7 @@ func (migrator *migrator) Check(ctx context.Context) error {
 		names = append(names, migration.Name)
 	}
 
-	return errors.Newf(errors.TypeInternal, ErrCodePendingSQLMigrations, "%d pending migration(s): %v", len(unapplied), names)
+	return errors.Newf(errors.TypeNotFound, ErrCodePendingSQLMigrations, "%d pending migration(s): %v", len(unapplied), names)
 }
 
 func (migrator *migrator) Rollback(ctx context.Context) error {
