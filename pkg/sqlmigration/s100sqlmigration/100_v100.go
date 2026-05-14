@@ -49,13 +49,14 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		{
 			Name: "users",
 			Columns: []*sqlschema.Column{
+				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
+				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("display_name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("email"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("role"), DataType: sqlschema.DataTypeText, Nullable: false, Default: "'VIEWER'"},
-				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
-				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
 				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("is_root"), DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("status"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
@@ -155,8 +156,8 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			Name: "org_preference",
 			Columns: []*sqlschema.Column{
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("preference_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("preference_value"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("value"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
@@ -168,8 +169,8 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			Name: "user_preference",
 			Columns: []*sqlschema.Column{
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("preference_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("preference_value"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("value"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("user_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
@@ -362,6 +363,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("token"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("password_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("expires_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
@@ -372,21 +374,17 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			Name: "factor_api_key",
 			Columns: []*sqlschema.Column{
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("key"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("created_by"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("updated_by"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("token"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("role"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("expires_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("last_used"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("revoked"), DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "false"},
-				{Name: sqlschema.ColumnName("user_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("expires_at"), DataType: sqlschema.DataTypeInteger, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("last_observed_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("service_account_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-				{ReferencingColumnName: sqlschema.ColumnName("user_id"), ReferencedTableName: sqlschema.TableName("users"), ReferencedColumnName: sqlschema.ColumnName("id")},
+				{ReferencingColumnName: sqlschema.ColumnName("service_account_id"), ReferencedTableName: sqlschema.TableName("service_account"), ReferencedColumnName: sqlschema.ColumnName("id")},
 			},
 		},
 		{
@@ -496,31 +494,14 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			},
 		},
 		{
-			Name: "user_invite",
+			Name: "auth_domain",
 			Columns: []*sqlschema.Column{
 				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
-				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
-				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("email"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("token"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("role"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-			},
-			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
-			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
-				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
-			},
-		},
-		{
-			Name: "org_domains",
-			Columns: []*sqlschema.Column{
-				{Name: sqlschema.ColumnName("id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("name"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
 				{Name: sqlschema.ColumnName("data"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
-				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
-				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: true, Default: ""},
+				{Name: sqlschema.ColumnName("org_id"), DataType: sqlschema.DataTypeText, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("created_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
+				{Name: sqlschema.ColumnName("updated_at"), DataType: sqlschema.DataTypeTimestamp, Nullable: false, Default: ""},
 			},
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("id")}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
@@ -598,6 +579,143 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "user_role",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "user_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "role_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("user_id"), ReferencedTableName: sqlschema.TableName("users"), ReferencedColumnName: sqlschema.ColumnName("id")},
+				{ReferencingColumnName: sqlschema.ColumnName("role_id"), ReferencedTableName: sqlschema.TableName("role"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "service_account",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "email", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "status", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "service_account_role",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "service_account_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "role_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("service_account_id"), ReferencedTableName: sqlschema.TableName("service_account"), ReferencedColumnName: sqlschema.ColumnName("id")},
+				{ReferencingColumnName: sqlschema.ColumnName("role_id"), ReferencedTableName: sqlschema.TableName("role"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "llm_pricing_rule",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "source_id", DataType: sqlschema.DataTypeText, Nullable: true},
+				{Name: "model", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "provider", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "model_pattern", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "unit", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "pricing", DataType: sqlschema.DataTypeText, Nullable: false, Default: "'{}'"},
+				{Name: "is_override", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "false"},
+				{Name: "synced_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
+				{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
+				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "span_mapper_group",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "condition", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
+				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "span_mapper",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "field_context", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "config", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
+				{Name: "group_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("group_id"), ReferencedTableName: sqlschema.TableName("span_mapper_group"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "tag",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "key", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "value", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+				{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("org_id"), ReferencedTableName: sqlschema.TableName("organizations"), ReferencedColumnName: sqlschema.ColumnName("id")},
+			},
+		},
+		{
+			Name: "tag_relation",
+			Columns: []*sqlschema.Column{
+				{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "resource_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
+				{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			},
+			PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+			ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+				{ReferencingColumnName: sqlschema.ColumnName("tag_id"), ReferencedTableName: sqlschema.TableName("tag"), ReferencedColumnName: sqlschema.ColumnName("id")},
 			},
 		},
 	}
@@ -757,9 +875,10 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			TableName:   sqlschema.TableName("organizations"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("key")},
 		},
-		&sqlschema.UniqueIndex{
+		&sqlschema.PartialUniqueIndex{
 			TableName:   sqlschema.TableName("users"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("email"), sqlschema.ColumnName("org_id")},
+			Where:       "status != 'deleted'",
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("alertmanager_config"),
@@ -771,11 +890,11 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("org_preference"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("preference_id"), sqlschema.ColumnName("org_id")},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("user_preference"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("preference_id"), sqlschema.ColumnName("user_id")},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("user_id")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("installed_integration"),
@@ -803,7 +922,11 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("factor_api_key"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("token")},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("key")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("factor_api_key"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("service_account_id")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("license"),
@@ -822,15 +945,7 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("element_id"), sqlschema.ColumnName("element_type"), sqlschema.ColumnName("version_id")},
 		},
 		&sqlschema.UniqueIndex{
-			TableName:   sqlschema.TableName("user_invite"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("email"), sqlschema.ColumnName("org_id")},
-		},
-		&sqlschema.UniqueIndex{
-			TableName:   sqlschema.TableName("user_invite"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("token")},
-		},
-		&sqlschema.UniqueIndex{
-			TableName:   sqlschema.TableName("org_domains"),
+			TableName:   sqlschema.TableName("auth_domain"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
 		},
 		&sqlschema.UniqueIndex{
@@ -840,6 +955,41 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("role"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("user_role"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("user_id"), sqlschema.ColumnName("role_id")},
+		},
+		&sqlschema.PartialUniqueIndex{
+			TableName:   sqlschema.TableName("service_account"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("name"), sqlschema.ColumnName("org_id")},
+			Where:       "status != 'deleted'",
+		},
+		&sqlschema.PartialUniqueIndex{
+			TableName:   sqlschema.TableName("service_account"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("email"), sqlschema.ColumnName("org_id")},
+			Where:       "status != 'deleted'",
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("service_account_role"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("service_account_id"), sqlschema.ColumnName("role_id")},
+		},
+		&sqlschema.PartialUniqueIndex{
+			TableName:   sqlschema.TableName("llm_pricing_rule"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id"), sqlschema.ColumnName("source_id")},
+			Where:       "source_id IS NOT NULL",
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("span_mapper_group"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("org_id"), sqlschema.ColumnName("name")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("span_mapper"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("group_id"), sqlschema.ColumnName("name")},
+		},
+		&sqlschema.UniqueIndex{
+			TableName:   sqlschema.TableName("tag_relation"),
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("kind"), sqlschema.ColumnName("resource_id"), sqlschema.ColumnName("tag_id")},
 		},
 		&sqlschema.UniqueIndex{
 			TableName:   sqlschema.TableName("tuple"),
@@ -857,9 +1007,10 @@ func (migration *v100) Up(ctx context.Context, db *bun.DB) error {
 			TableName:   sqlschema.TableName("apdex_setting"),
 			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("service_name"), sqlschema.ColumnName("org_id")},
 		},
-		&sqlschema.UniqueIndex{
+		&sqlschema.PartialUniqueIndex{
 			TableName:   sqlschema.TableName("cloud_integration"),
-			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("provider"), sqlschema.ColumnName("org_id")},
+			ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName("account_id"), sqlschema.ColumnName("provider"), sqlschema.ColumnName("org_id")},
+			Where:       "removed_at IS NULL",
 		},
 	}
 
