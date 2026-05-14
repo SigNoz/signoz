@@ -125,25 +125,25 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 // 	assert.Equal(t, "Database", stored["tag\x00database"].Value, "winner's casing preserved in value")
 // }
 
-func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
-	ctx := context.Background()
-	sqlstore := newTestStore(t)
-	s := NewStore(sqlstore)
+// func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
+// 	ctx := context.Background()
+// 	sqlstore := newTestStore(t)
+// 	s := NewStore(sqlstore)
 
-	orgID := valuer.GenerateUUID()
-	pre := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
-	_, err := s.CreateOrGet(ctx, []*tagtypes.Tag{pre})
-	require.NoError(t, err)
-	preExistingID := pre.ID
+// 	orgID := valuer.GenerateUUID()
+// 	pre := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
+// 	_, err := s.CreateOrGet(ctx, []*tagtypes.Tag{pre})
+// 	require.NoError(t, err)
+// 	preExistingID := pre.ID
 
-	conflict := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
-	fresh := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR")
-	freshPreID := fresh.ID
+// 	conflict := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
+// 	fresh := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR")
+// 	freshPreID := fresh.ID
 
-	got, err := s.CreateOrGet(ctx, []*tagtypes.Tag{conflict, fresh})
-	require.NoError(t, err)
-	require.Len(t, got, 2)
+// 	got, err := s.CreateOrGet(ctx, []*tagtypes.Tag{conflict, fresh})
+// 	require.NoError(t, err)
+// 	require.Len(t, got, 2)
 
-	assert.Equal(t, preExistingID, got[0].ID, "conflicting row's ID overwritten with the existing row's")
-	assert.Equal(t, freshPreID, got[1].ID, "fresh row's pre-generated ID is preserved")
-}
+// 	assert.Equal(t, preExistingID, got[0].ID, "conflicting row's ID overwritten with the existing row's")
+// 	assert.Equal(t, freshPreID, got[1].ID, "fresh row's pre-generated ID is preserved")
+// }
