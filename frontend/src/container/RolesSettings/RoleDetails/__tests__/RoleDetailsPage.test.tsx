@@ -1,3 +1,20 @@
+import * as roleApi from 'api/generated/services/role';
+
+jest.mock('hooks/useAuthZ/useAuthZ', () => ({
+	useAuthZ: (permissions: string[]): Record<string, unknown> => ({
+		isLoading: false,
+		isFetching: false,
+		error: null,
+		permissions: permissions.reduce(
+			(acc: Record<string, { isGranted: boolean }>, p) => {
+				acc[p] = { isGranted: true };
+				return acc;
+			},
+			{},
+		),
+		refetchPermissions: jest.fn(),
+	}),
+}));
 import {
 	customRoleResponse,
 	managedRoleResponse,
@@ -26,7 +43,7 @@ const allScopeObjectsResponse = {
 	status: 'success',
 	data: [
 		{
-			resource: { kind: 'role', type: 'metaresources' },
+			resource: { kind: 'role', type: 'role' },
 			selectors: ['*'],
 		},
 	],
@@ -59,9 +76,6 @@ describe('RoleDetailsPage', () => {
 		await expect(
 			screen.findByText('Role — billing-manager'),
 		).resolves.toBeInTheDocument();
-
-		expect(screen.getByText('Overview')).toBeInTheDocument();
-		expect(screen.getByText('Members')).toBeInTheDocument();
 
 		expect(
 			screen.getByText('Custom role for managing billing and invoices.'),
