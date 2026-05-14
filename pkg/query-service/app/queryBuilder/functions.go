@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // funcCutOffMin cuts off values below the threshold and replaces them with NaN
@@ -300,8 +301,8 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 	case v3.FunctionNameMedian7:
 		return funcMedian7(result)
 	case v3.FunctionNameTimeShift:
-		shift, ok := fn.Args[0].(float64)
-		if !ok {
+		shift, err := valuer.ParseTimeShiftSeconds(fn.Args[0])
+		if err != nil {
 			return result
 		}
 		return funcTimeShift(result, shift)
