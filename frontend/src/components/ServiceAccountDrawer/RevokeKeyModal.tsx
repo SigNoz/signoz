@@ -25,6 +25,7 @@ export interface RevokeKeyFooterProps {
 	onCancel: () => void;
 	onConfirm: () => void;
 	accountId?: string;
+	keyId?: string;
 }
 
 export function RevokeKeyFooter({
@@ -32,6 +33,7 @@ export function RevokeKeyFooter({
 	onCancel,
 	onConfirm,
 	accountId,
+	keyId,
 }: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
@@ -40,10 +42,19 @@ export function RevokeKeyFooter({
 				Cancel
 			</Button>
 			<AuthZTooltip
-				relation="update"
-				object={`serviceaccount:${accountId ?? ''}`}
-				permissionName="serviceaccount:update"
-				enabled={!!accountId}
+				checks={[
+					{
+						relation: 'delete',
+						object: `factor-api-key:${keyId ?? ''}`,
+						permissionName: 'factor-api-key:delete',
+					},
+					{
+						relation: 'detach',
+						object: `serviceaccount:${accountId ?? ''}`,
+						permissionName: 'serviceaccount:detach',
+					},
+				]}
+				enabled={!!accountId && !!keyId}
 			>
 				<Button
 					variant="solid"
@@ -126,6 +137,7 @@ function RevokeKeyModal(): JSX.Element {
 					onCancel={handleCancel}
 					onConfirm={handleConfirm}
 					accountId={accountId ?? undefined}
+					keyId={revokeKeyId || undefined}
 				/>
 			}
 		>

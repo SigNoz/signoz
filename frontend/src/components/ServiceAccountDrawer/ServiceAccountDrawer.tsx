@@ -32,8 +32,10 @@ import {
 import {
 	buildSAAttachPermission,
 	buildSADeletePermission,
+	buildSADetachPermission,
 	buildSAUpdatePermission,
 	RoleAttachWildcardPermission,
+	RoleDetachWildcardPermission,
 } from 'hooks/useAuthZ/serviceAccountPermissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
@@ -181,7 +183,9 @@ function ServiceAccountDrawer({
 					buildSAUpdatePermission(selectedAccountId),
 					buildSADeletePermission(selectedAccountId),
 					buildSAAttachPermission(selectedAccountId),
+					buildSADetachPermission(selectedAccountId),
 					RoleAttachWildcardPermission,
+					RoleDetachWildcardPermission,
 				]
 			: [],
 		{ enabled: !!selectedAccountId },
@@ -419,9 +423,18 @@ function ServiceAccountDrawer({
 				</ToggleGroup>
 				{activeTab === ServiceAccountDrawerTab.Keys && (
 					<AuthZTooltip
-						relation="update"
-						object={`serviceaccount:${selectedAccountId ?? ''}`}
-						permissionName="serviceaccount:update"
+						checks={[
+							{
+								relation: 'create',
+								object: 'factor-api-key:*',
+								permissionName: 'factor-api-key:create',
+							},
+							{
+								relation: 'attach',
+								object: `serviceaccount:${selectedAccountId ?? ''}`,
+								permissionName: 'serviceaccount:attach',
+							},
+						]}
 						enabled={!isDeleted && !!selectedAccountId}
 					>
 						<Button
@@ -457,8 +470,7 @@ function ServiceAccountDrawer({
 				{!isAccountLoading && !isAccountError && selectedAccountId && (
 					<GuardAuthZ
 						relation="read"
-						// object={`serviceaccount:${selectedAccountId}`}
-						object={`serviceaccount:*`}
+						object={`serviceaccount:${selectedAccountId}`}
 						fallbackOnNoPermissions={(): JSX.Element => (
 							<PermissionDeniedCallout permissionName="serviceaccount:read" />
 						)}

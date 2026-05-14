@@ -126,6 +126,16 @@ function OverviewTab({
 								object: 'role:*',
 								permissionName: 'role:attach',
 							},
+							{
+								relation: 'detach',
+								object: `serviceaccount:${account.id}`,
+								permissionName: 'serviceaccount:detach',
+							},
+							{
+								relation: 'detach',
+								object: 'role:*',
+								permissionName: 'role:detach',
+							},
 						]}
 					>
 						<RolesSelect

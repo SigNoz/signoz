@@ -8,16 +8,14 @@ import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import Spinner from 'components/Spinner';
-import type { AuthZObject } from 'hooks/useAuthZ/types';
-import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { buildPermission } from 'hooks/useAuthZ/utils';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
 	PAGE_SIZE,
 } from 'components/ServiceAccountsTable/ServiceAccountsTable';
+import { SAListPermission } from 'hooks/useAuthZ/serviceAccountPermissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
 	parseAsInteger,
@@ -58,13 +56,11 @@ function ServiceAccountsSettings(): JSX.Element {
 		parseAsBoolean.withDefault(false),
 	);
 
-	const listPermission = buildPermission(
-		'list',
-		'serviceaccount' as AuthZObject<'list'>,
-	);
-	const { permissions: authZPermissions } = useAuthZ([listPermission]);
-	const hasListPermission =
-		authZPermissions?.[listPermission]?.isGranted ?? false;
+	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
+		SAListPermission,
+	]);
+
+	const hasListPermission = listPerms?.[SAListPermission]?.isGranted ?? false;
 
 	const {
 		data: serviceAccountsData,
@@ -225,14 +221,11 @@ function ServiceAccountsSettings(): JSX.Element {
 				</div>
 			</div>
 
-			<GuardAuthZ
-				relation="list"
-				object={'serviceaccount' as AuthZObject<'list'>}
-				fallbackOnLoading={<Spinner height="50vh" />}
-				fallbackOnNoPermissions={(): JSX.Element => (
-					<PermissionDeniedFullPage permissionName="serviceaccount:list" />
-				)}
-			>
+			{isAuthZLoading || isLoading ? (
+				<Spinner height="50vh" />
+			) : !hasListPermission ? (
+				<PermissionDeniedFullPage permissionName="serviceaccount:list" />
+			) : (
 				<div className="sa-settings__list-section">
 					<div className="sa-settings__controls">
 						<Dropdown
@@ -269,7 +262,7 @@ function ServiceAccountsSettings(): JSX.Element {
 
 						<AuthZTooltip
 							relation="create"
-							object="serviceaccount"
+							object="serviceaccount:*"
 							permissionName="serviceaccount:create"
 						>
 							<Button
@@ -300,7 +293,7 @@ function ServiceAccountsSettings(): JSX.Element {
 						/>
 					)}
 				</div>
-			</GuardAuthZ>
+			)}
 
 			<CreateServiceAccountModal />
 

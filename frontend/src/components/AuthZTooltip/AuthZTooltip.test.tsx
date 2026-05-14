@@ -40,7 +40,7 @@ describe('AuthZTooltip — single check', () => {
 		render(
 			<AuthZTooltip
 				relation="create"
-				object="serviceaccount"
+				object="serviceaccount:*"
 				permissionName="serviceaccount:create"
 			>
 				<TestButton />
@@ -63,7 +63,7 @@ describe('AuthZTooltip — single check', () => {
 		render(
 			<AuthZTooltip
 				relation="create"
-				object="serviceaccount"
+				object="serviceaccount:*"
 				permissionName="serviceaccount:create"
 			>
 				<TestButton />
@@ -89,7 +89,7 @@ describe('AuthZTooltip — single check', () => {
 		render(
 			<AuthZTooltip
 				relation="create"
-				object="serviceaccount"
+				object="serviceaccount:*"
 				permissionName="serviceaccount:create"
 			>
 				<TestButton />

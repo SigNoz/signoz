@@ -1,6 +1,6 @@
 import { ReactElement, cloneElement, useMemo } from 'react';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -86,7 +86,7 @@ function AuthZTooltip({
 
 	return (
 		<TooltipProvider>
-			<Tooltip>
+			<TooltipRoot>
 				<TooltipTrigger asChild>
 					<span className={styles.wrapper}>
 						<fieldset
@@ -103,7 +103,7 @@ function AuthZTooltip({
 				<TooltipContent className={styles.errorContent}>
 					{tooltipMessage}
 				</TooltipContent>
-			</Tooltip>
+			</TooltipRoot>
 		</TooltipProvider>
 	);
 }

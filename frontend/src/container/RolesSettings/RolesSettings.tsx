@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 
 import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from './config';
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
@@ -30,15 +31,21 @@ function RolesSettings(): JSX.Element {
 						onChange={(e): void => setSearchQuery(e.target.value)}
 					/>
 					{IS_ROLE_DETAILS_AND_CRUD_ENABLED && (
-						<Button
-							variant="solid"
-							color="primary"
-							className="role-settings-toolbar-button"
-							onClick={(): void => setIsCreateModalOpen(true)}
+						<AuthZTooltip
+							relation="create"
+							object="role:*"
+							permissionName="role:create"
 						>
-							<Plus size={14} />
-							Custom role
-						</Button>
+							<Button
+								variant="solid"
+								color="primary"
+								className="role-settings-toolbar-button"
+								onClick={(): void => setIsCreateModalOpen(true)}
+							>
+								<Plus size={14} />
+								Custom role
+							</Button>
+						</AuthZTooltip>
 					)}
 				</div>
 				<RolesListingTable searchQuery={searchQuery} />

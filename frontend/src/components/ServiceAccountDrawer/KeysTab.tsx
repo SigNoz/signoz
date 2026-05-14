@@ -99,9 +99,18 @@ function buildColumns({
 			align: 'right' as const,
 			render: (_, record): JSX.Element => (
 				<AuthZTooltip
-					relation="update"
-					object={`serviceaccount:${accountId}`}
-					permissionName="serviceaccount:update"
+					checks={[
+						{
+							relation: 'delete',
+							object: `factor-api-key:${record.id}`,
+							permissionName: 'factor-api-key:delete',
+						},
+						{
+							relation: 'detach',
+							object: `serviceaccount:${accountId}`,
+							permissionName: 'serviceaccount:detach',
+						},
+					]}
 					enabled={!isDisabled && !!accountId}
 				>
 					<Button
@@ -194,9 +203,18 @@ function KeysTab({
 					</a>
 				</p>
 				<AuthZTooltip
-					relation="update"
-					object={`serviceaccount:${accountId}`}
-					permissionName="serviceaccount:update"
+					checks={[
+						{
+							relation: 'create',
+							object: 'factor-api-key:*',
+							permissionName: 'factor-api-key:create',
+						},
+						{
+							relation: 'attach',
+							object: `serviceaccount:${accountId}`,
+							permissionName: 'serviceaccount:attach',
+						},
+					]}
 					enabled={!isDisabled && !!accountId}
 				>
 					<Button

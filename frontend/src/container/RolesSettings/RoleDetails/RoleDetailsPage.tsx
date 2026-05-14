@@ -13,6 +13,7 @@ import {
 	useGetRole,
 	usePatchObjects,
 } from 'api/generated/services/role';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
 
 import type { AuthzResources } from '../utils';
@@ -211,21 +212,33 @@ function RoleDetailsPage(): JSX.Element {
 
 				{!isManaged && (
 					<div className="role-details-actions">
-						<Button
-							variant="link"
-							color="destructive"
-							onClick={(): void => setIsDeleteModalOpen(true)}
-							aria-label="Delete role"
+						<AuthZTooltip
+							relation="delete"
+							object={`role:${roleId}`}
+							permissionName="role:delete"
 						>
-							<Trash2 size={12} />
-						</Button>
-						<Button
-							variant="solid"
-							color="secondary"
-							onClick={(): void => setIsEditModalOpen(true)}
+							<Button
+								variant="link"
+								color="destructive"
+								onClick={(): void => setIsDeleteModalOpen(true)}
+								aria-label="Delete role"
+							>
+								<Trash2 size={12} />
+							</Button>
+						</AuthZTooltip>
+						<AuthZTooltip
+							relation="update"
+							object={`role:${roleId}`}
+							permissionName="role:update"
 						>
-							Edit Role Details
-						</Button>
+							<Button
+								variant="solid"
+								color="secondary"
+								onClick={(): void => setIsEditModalOpen(true)}
+							>
+								Edit Role Details
+							</Button>
+						</AuthZTooltip>
 					</div>
 				)}
 			</div>

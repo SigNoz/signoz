@@ -135,7 +135,7 @@ function CreateServiceAccountModal(): JSX.Element {
 
 				<AuthZTooltip
 					relation="create"
-					object="serviceaccount"
+					object="serviceaccount:*"
 					permissionName="serviceaccount:create"
 				>
 					<Button
