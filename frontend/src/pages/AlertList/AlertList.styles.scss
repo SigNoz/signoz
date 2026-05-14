@@ -1,15 +1,44 @@
 .alerts-container {
-	.ant-tabs-nav {
-		padding: 0 8px;
+	.top-level-tab.periscope-tab {
+		padding: 2px 0;
+	}
+
+	.ant-tabs {
+		&-nav {
+			padding: 0 8px;
+			margin-bottom: 0 !important;
+
+			&::before {
+				border-bottom: 1px solid var(--l1-border) !important;
+			}
+		}
+
+		&-tab {
+			&[data-node-key='TriggeredAlerts'] {
+				margin-left: 16px;
+			}
+
+			&:not(:first-of-type) {
+				margin-left: 24px !important;
+			}
+
+			[aria-selected='false'] {
+				.periscope-tab {
+					color: var(--l2-foreground);
+				}
+			}
+		}
 	}
 
 	.configuration-tabs {
-		margin-top: -16px;
-
 		.ant-tabs-nav {
 			.ant-tabs-nav-wrap {
 				padding: 0 8px;
 			}
 		}
+	}
+
+	.alert-rules-container {
+		margin-top: 10px;
 	}
 }

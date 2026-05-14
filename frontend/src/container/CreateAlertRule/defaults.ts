@@ -208,3 +208,11 @@ export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
 	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: exceptionAlertDefaults,
 };
+
+export const ALERT_TYPE_BREADCRUMB_TITLE: Record<AlertTypes, string> = {
+	[AlertTypes.ANOMALY_BASED_ALERT]: 'Anomaly-Based Alert',
+	[AlertTypes.METRICS_BASED_ALERT]: 'Metric-Based Alert',
+	[AlertTypes.LOGS_BASED_ALERT]: 'Log-Based Alert',
+	[AlertTypes.TRACES_BASED_ALERT]: 'Traces-Based Alert',
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]: 'Exceptions-Based Alert',
+};

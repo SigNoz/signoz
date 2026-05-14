@@ -1,11 +1,22 @@
 import ROUTES from 'constants/routes';
 import * as usePrefillAlertConditions from 'container/FormAlertRules/usePrefillAlertConditions';
-import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
 import CreateAlertPage from 'pages/CreateAlert';
 import { act, fireEvent, render } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { ALERT_TYPE_TO_TITLE, ALERT_TYPE_URL_MAP } from './constants';
+
+jest.mock('react-router-dom-v5-compat', () => ({
+	...jest.requireActual('react-router-dom-v5-compat'),
+	useNavigationType: jest.fn(() => 'PUSH'),
+	useLocation: jest.fn(() => ({
+		pathname: '/alerts/new',
+		search: '',
+		hash: '',
+		state: null,
+	})),
+	useSearchParams: jest.fn(() => [new URLSearchParams(), jest.fn()]),
+}));
 
 jest
 	.spyOn(usePrefillAlertConditions, 'usePrefillAlertConditions')
@@ -54,20 +65,13 @@ describe('Alert rule documentation redirection', () => {
 		window.open = mockWindowOpen;
 	});
 
-	jest.mock('react-router-dom', () => ({
-		...jest.requireActual('react-router-dom'),
-		useLocation: (): { pathname: string } => ({
-			pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.ALERT_TYPE_SELECTION}`,
-		}),
-	}));
-
 	beforeEach(() => {
 		act(() => {
 			renderResult = render(
-				<AlertTypeSelectionPage />,
+				<CreateAlertPage />,
 				{},
 				{
-					initialRoute: ROUTES.ALERT_TYPE_SELECTION,
+					initialRoute: ROUTES.ALERTS_NEW,
 				},
 			);
 		});

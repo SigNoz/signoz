@@ -1,0 +1,75 @@
+.create-alert-tabs {
+	&__extra {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+}
+
+.create-alert-wrapper {
+	margin-top: 10px;
+
+	.divider {
+		border-color: var(--l1-border);
+		margin: 16px 0;
+	}
+
+	.breadcrumb-divider {
+		margin-top: 10px;
+	}
+}
+
+.create-alert__breadcrumb {
+	padding-left: 16px;
+
+	ol {
+		align-items: center;
+	}
+
+	.breadcrumb-item {
+		color: var(--l2-foreground);
+		font-size: 14px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+		padding: 0;
+	}
+
+	.ant-breadcrumb-separator,
+	.breadcrumb-item--last {
+		color: var(--muted-foreground);
+		font-family: 'Geist Mono';
+	}
+}
+
+.alerts-container {
+	.top-level-tab.periscope-tab {
+		padding: 2px 0;
+	}
+
+	.ant-tabs {
+		&-nav {
+			padding: 0 8px;
+			margin-bottom: 0 !important;
+
+			&::before {
+				border-bottom: 1px solid var(--l1-border) !important;
+			}
+		}
+
+		&-tab {
+			&[data-node-key='TriggeredAlerts'] {
+				margin-left: 16px;
+			}
+
+			&:not(:first-of-type) {
+				margin-left: 24px !important;
+			}
+
+			[aria-selected='false'] {
+				.periscope-tab {
+					color: var(--l2-foreground);
+				}
+			}
+		}
+	}
+}

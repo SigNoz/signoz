@@ -111,7 +111,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				number: allAlertRules?.length,
 				layout: 'new',
 			});
-			safeNavigate(ROUTES.ALERT_TYPE_SELECTION, {
+			safeNavigate(ROUTES.ALERTS_NEW, {
 				newTab: isModifierKeyPressed(e),
 			});
 		},
