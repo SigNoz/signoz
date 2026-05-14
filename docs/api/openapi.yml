@@ -2374,13 +2374,6 @@ components:
         updatedBy:
           type: string
       type: object
-    DashboardtypesDashboardMetadata:
-      properties:
-        image:
-          type: string
-        schemaVersion:
-          type: string
-      type: object
     DashboardtypesDashboardSpec:
       properties:
         datasources:
@@ -2456,17 +2449,6 @@ components:
       - gradient
       - none
       type: string
-    DashboardtypesGettableDashboardInfo:
-      properties:
-        metadata:
-          $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
-        spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
-        tags:
-          items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
-          type: array
-      type: object
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -2474,16 +2456,14 @@ components:
           type: string
         createdBy:
           type: string
+        data:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Data'
         id:
           type: string
-        info:
-          $ref: '#/components/schemas/DashboardtypesGettableDashboardInfo'
         locked:
           type: boolean
         orgId:
           type: string
-        publicConfig:
-          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
         updatedAt:
           format: date-time
           type: string
@@ -2491,6 +2471,25 @@ components:
           type: string
       required:
       - id
+      type: object
+    DashboardtypesGettableDashboardV2Data:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Metadata'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+      type: object
+    DashboardtypesGettableDashboardV2Metadata:
+      properties:
+        image:
+          type: string
+        schemaVersion:
+          type: string
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
       type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
@@ -2753,12 +2752,20 @@ components:
     DashboardtypesPostableDashboardV2:
       properties:
         metadata:
-          $ref: '#/components/schemas/DashboardtypesDashboardMetadata'
+          $ref: '#/components/schemas/DashboardtypesPostableDashboardV2Metadata'
         spec:
           $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+      type: object
+    DashboardtypesPostableDashboardV2Metadata:
+      properties:
+        image:
+          type: string
+        schemaVersion:
+          type: string
         tags:
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
           type: array
       type: object
     DashboardtypesPostablePublicDashboard:
