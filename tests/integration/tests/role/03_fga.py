@@ -162,7 +162,7 @@ def test_role_readonly_forbidden_operations(
     # Patch role — forbidden.
     resp = requests.patch(
         signoz.self.host_configs["8080"].get(f"{ROLES_BASE}/{target_role_id}"),
-        json={"name": "role-fga-renamed"},
+        json={"description": "role-fga-renamed"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -226,7 +226,7 @@ def test_role_grant_write_permissions(
     # Patch role — now allowed.
     resp = requests.patch(
         signoz.self.host_configs["8080"].get(f"{ROLES_BASE}/{new_role_id}"),
-        json={"name": "role-fga-write-renamed"},
+        json={"description": "role-fga-write-renamed"},
         headers={"Authorization": f"Bearer {custom_token}"},
         timeout=5,
     )
