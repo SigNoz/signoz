@@ -201,6 +201,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
+		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
 	)
 }
 
