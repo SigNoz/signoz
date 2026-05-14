@@ -449,6 +449,7 @@ components:
       - list
       - assignee
       - attach
+      - detach
       type: string
     AuthtypesRole:
       properties:
@@ -2206,7 +2207,7 @@ components:
       - role
       - organization
       - metaresource
-      - metaresources
+      - telemetryresource
       type: string
     DashboardtypesDashboard:
       properties:
@@ -9296,9 +9297,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:list
       - tokenizer:
-        - ADMIN
+        - role:list
       summary: List roles
       tags:
       - role
@@ -9370,9 +9371,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:create
       - tokenizer:
-        - ADMIN
+        - role:create
       summary: Create role
       tags:
       - role
@@ -9432,9 +9433,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:delete
       - tokenizer:
-        - ADMIN
+        - role:delete
       summary: Delete role
       tags:
       - role
@@ -9483,9 +9484,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get role
       tags:
       - role
@@ -9549,9 +9550,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch role
       tags:
       - role
@@ -9627,9 +9628,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get objects for a role by relation
       tags:
       - role
@@ -9705,9 +9706,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch objects for a role by relation
       tags:
       - role
@@ -10311,9 +10312,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:read
+        - factor-api-key:list
       - tokenizer:
-        - serviceaccount:read
+        - factor-api-key:list
       summary: List service account keys
       tags:
       - serviceaccount
@@ -10379,9 +10380,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:update
+        - factor-api-key:create
+        - serviceaccount:attach
       - tokenizer:
-        - serviceaccount:update
+        - factor-api-key:create
+        - serviceaccount:attach
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -10434,9 +10437,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:update
+        - factor-api-key:delete
+        - serviceaccount:detach
       - tokenizer:
-        - serviceaccount:update
+        - factor-api-key:delete
+        - serviceaccount:detach
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -10499,9 +10504,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:update
+        - factor-api-key:update
       - tokenizer:
-        - serviceaccount:update
+        - factor-api-key:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -10673,11 +10678,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - serviceaccount:attach
-        - role:attach
+        - serviceaccount:detach
+        - role:detach
       - tokenizer:
-        - serviceaccount:attach
-        - role:attach
+        - serviceaccount:detach
+        - role:detach
       summary: Delete service account role
       tags:
       - serviceaccount
