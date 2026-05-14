@@ -2520,6 +2520,29 @@ components:
         enabled:
           type: boolean
       type: object
+    InframonitoringtypesAssociatedComponent:
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesOnboardingComponentType'
+      required:
+      - type
+      - name
+      type: object
+    InframonitoringtypesAttributesComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - attributes
+      - associatedComponent
+      type: object
     InframonitoringtypesClusterRecord:
       properties:
         clusterCPU:
@@ -2728,6 +2751,57 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesMetricsComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        metrics:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - metrics
+      - associatedComponent
+      type: object
+    InframonitoringtypesMissingAttributesComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        documentationLink:
+          type: string
+        message:
+          type: string
+      required:
+      - attributes
+      - associatedComponent
+      - message
+      - documentationLink
+      type: object
+    InframonitoringtypesMissingMetricsComponentEntry:
+      properties:
+        associatedComponent:
+          $ref: '#/components/schemas/InframonitoringtypesAssociatedComponent'
+        documentationLink:
+          type: string
+        message:
+          type: string
+        metrics:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - metrics
+      - associatedComponent
+      - message
+      - documentationLink
+      type: object
     InframonitoringtypesNamespaceRecord:
       properties:
         meta:
@@ -2854,6 +2928,71 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesOnboarding:
+      properties:
+        missingDefaultEnabledMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingMetricsComponentEntry'
+          nullable: true
+          type: array
+        missingOptionalMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingMetricsComponentEntry'
+          nullable: true
+          type: array
+        missingRequiredAttributes:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMissingAttributesComponentEntry'
+          nullable: true
+          type: array
+        presentDefaultEnabledMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMetricsComponentEntry'
+          nullable: true
+          type: array
+        presentOptionalMetrics:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesMetricsComponentEntry'
+          nullable: true
+          type: array
+        presentRequiredAttributes:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesAttributesComponentEntry'
+          nullable: true
+          type: array
+        ready:
+          type: boolean
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesOnboardingType'
+      required:
+      - type
+      - ready
+      - presentDefaultEnabledMetrics
+      - presentOptionalMetrics
+      - presentRequiredAttributes
+      - missingDefaultEnabledMetrics
+      - missingOptionalMetrics
+      - missingRequiredAttributes
+      type: object
+    InframonitoringtypesOnboardingComponentType:
+      enum:
+      - receiver
+      - processor
+      type: string
+    InframonitoringtypesOnboardingType:
+      enum:
+      - hosts
+      - processes
+      - pods
+      - nodes
+      - deployments
+      - daemonsets
+      - statefulsets
+      - jobs
+      - namespaces
+      - clusters
+      - volumes
+      type: string
     InframonitoringtypesPodCountsByPhase:
       properties:
         failed:
@@ -12448,6 +12587,72 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Nodes for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/onboarding:
+    get:
+      deprecated: false
+      description: 'Returns the per-tab readiness of the infra-monitoring section
+        selected by the ''type'' query parameter (hosts, processes, pods, nodes, deployments,
+        daemonsets, statefulsets, jobs, namespaces, clusters, volumes). For each collector
+        receiver or processor that contributes required metrics or attributes, lists
+        what is present and what is missing, with a prebuilt user-facing message and
+        a docs link per missing component. Default-enabled metrics are those expected
+        as soon as the receiver is configured; optional metrics require ''enabled:
+        true'' in receiver config. ''ready'' is true only when every missing list
+        is empty.'
+      operationId: GetOnboarding
+      parameters:
+      - in: query
+        name: type
+        required: true
+        schema:
+          $ref: '#/components/schemas/InframonitoringtypesOnboardingType'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesOnboarding'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get Onboarding Status for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/infra_monitoring/pods:

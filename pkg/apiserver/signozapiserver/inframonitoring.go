@@ -162,5 +162,23 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra_monitoring/onboarding", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.GetOnboarding),
+		handler.OpenAPIDef{
+			ID:                  "GetOnboarding",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "Get Onboarding Status for Infra Monitoring",
+			Description:         "Returns the per-tab readiness of the infra-monitoring section selected by the 'type' query parameter (hosts, processes, pods, nodes, deployments, daemonsets, statefulsets, jobs, namespaces, clusters, volumes). For each collector receiver or processor that contributes required metrics or attributes, lists what is present and what is missing, with a prebuilt user-facing message and a docs link per missing component. Default-enabled metrics are those expected as soon as the receiver is configured; optional metrics require 'enabled: true' in receiver config. 'ready' is true only when every missing list is empty.",
+			RequestQuery:        new(inframonitoringtypes.PostableOnboarding),
+			Response:            new(inframonitoringtypes.Onboarding),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -4,14 +4,22 @@
  * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
 
 import type {
+	GetOnboarding200,
+	GetOnboardingParams,
 	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableDeploymentsDTO,
 	InframonitoringtypesPostableHostsDTO,
@@ -454,6 +462,106 @@ export const useListNodes = <
 
 	return useMutation(mutationOptions);
 };
+/**
+ * Returns the per-tab readiness of the infra-monitoring section selected by the 'type' query parameter (hosts, processes, pods, nodes, deployments, daemonsets, statefulsets, jobs, namespaces, clusters, volumes). For each collector receiver or processor that contributes required metrics or attributes, lists what is present and what is missing, with a prebuilt user-facing message and a docs link per missing component. Default-enabled metrics are those expected as soon as the receiver is configured; optional metrics require 'enabled: true' in receiver config. 'ready' is true only when every missing list is empty.
+ * @summary Get Onboarding Status for Infra Monitoring
+ */
+export const getOnboarding = (
+	params: GetOnboardingParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetOnboarding200>({
+		url: `/api/v2/infra_monitoring/onboarding`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetOnboardingQueryKey = (params?: GetOnboardingParams) => {
+	return [
+		`/api/v2/infra_monitoring/onboarding`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetOnboardingQueryOptions = <
+	TData = Awaited<ReturnType<typeof getOnboarding>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params: GetOnboardingParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getOnboarding>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetOnboardingQueryKey(params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getOnboarding>>> = ({
+		signal,
+	}) => getOnboarding(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getOnboarding>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetOnboardingQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getOnboarding>>
+>;
+export type GetOnboardingQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get Onboarding Status for Infra Monitoring
+ */
+
+export function useGetOnboarding<
+	TData = Awaited<ReturnType<typeof getOnboarding>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params: GetOnboardingParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getOnboarding>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetOnboardingQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get Onboarding Status for Infra Monitoring
+ */
+export const invalidateGetOnboarding = async (
+	queryClient: QueryClient,
+	params: GetOnboardingParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetOnboardingQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * Returns a paginated list of Kubernetes pods with key metrics: CPU usage, CPU request/limit utilization, memory working set, memory request/limit utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data), and pod age (ms since start time). Each pod includes metadata attributes (namespace, node, workload owner such as deployment/statefulset/daemonset/job/cronjob, cluster). Supports filtering via a filter expression, custom groupBy to aggregate pods by any attribute, ordering by any of the six metrics (cpu, cpu_request, cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit. The response type is 'list' for the default k8s.pod.uid grouping (each row is one pod with its current phase) or 'grouped_list' for custom groupBy keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase: { pending, running, succeeded, failed, unknown } derived from each pod's latest phase in the window). Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no data is available for that field.
  * @summary List Pods for Infra Monitoring

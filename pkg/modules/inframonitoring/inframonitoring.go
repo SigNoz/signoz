@@ -17,6 +17,7 @@ type Handler interface {
 	ListVolumes(http.ResponseWriter, *http.Request)
 	ListDeployments(http.ResponseWriter, *http.Request)
 	ListStatefulSets(http.ResponseWriter, *http.Request)
+	GetOnboarding(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
@@ -28,4 +29,5 @@ type Module interface {
 	ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error)
 	ListDeployments(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (*inframonitoringtypes.Deployments, error)
 	ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error)
+	GetOnboarding(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableOnboarding) (*inframonitoringtypes.Onboarding, error)
 }

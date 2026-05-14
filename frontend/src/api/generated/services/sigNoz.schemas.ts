@@ -4568,6 +4568,23 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface InframonitoringtypesAssociatedComponentDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	type: InframonitoringtypesOnboardingComponentTypeDTO;
+}
+
+export interface InframonitoringtypesAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	attributes: string[] | null;
+}
+
 /**
  * @nullable
  */
@@ -4790,6 +4807,49 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	metrics: string[] | null;
+}
+
+export interface InframonitoringtypesMissingAttributesComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+}
+
+export interface InframonitoringtypesMissingMetricsComponentEntryDTO {
+	associatedComponent: InframonitoringtypesAssociatedComponentDTO;
+	/**
+	 * @type string
+	 */
+	documentationLink: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	metrics: string[] | null;
+}
+
 /**
  * @nullable
  */
@@ -4916,6 +4976,71 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesOnboardingDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingDefaultEnabledMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingOptionalMetrics:
+		| InframonitoringtypesMissingMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingRequiredAttributes:
+		| InframonitoringtypesMissingAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	presentDefaultEnabledMetrics:
+		| InframonitoringtypesMetricsComponentEntryDTO[]
+		| null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	presentOptionalMetrics: InframonitoringtypesMetricsComponentEntryDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	presentRequiredAttributes:
+		| InframonitoringtypesAttributesComponentEntryDTO[]
+		| null;
+	/**
+	 * @type boolean
+	 */
+	ready: boolean;
+	type: InframonitoringtypesOnboardingTypeDTO;
+}
+
+export enum InframonitoringtypesOnboardingComponentTypeDTO {
+	receiver = 'receiver',
+	processor = 'processor',
+}
+export enum InframonitoringtypesOnboardingTypeDTO {
+	hosts = 'hosts',
+	processes = 'processes',
+	pods = 'pods',
+	nodes = 'nodes',
+	deployments = 'deployments',
+	daemonsets = 'daemonsets',
+	statefulsets = 'statefulsets',
+	jobs = 'jobs',
+	namespaces = 'namespaces',
+	clusters = 'clusters',
+	volumes = 'volumes',
+}
 export interface InframonitoringtypesPodCountsByPhaseDTO {
 	/**
 	 * @type integer
@@ -9745,6 +9870,21 @@ export type ListNamespaces200 = {
 
 export type ListNodes200 = {
 	data: InframonitoringtypesNodesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetOnboardingParams = {
+	/**
+	 * @description undefined
+	 */
+	type: InframonitoringtypesOnboardingTypeDTO;
+};
+
+export type GetOnboarding200 = {
+	data: InframonitoringtypesOnboardingDTO;
 	/**
 	 * @type string
 	 */
