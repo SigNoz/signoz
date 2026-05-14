@@ -71,6 +71,7 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "resource_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
