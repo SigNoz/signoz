@@ -36,8 +36,8 @@ func buildDaemonSetRecords(
 			DaemonSetMemoryRequest: -1,
 			DaemonSetMemoryLimit:   -1,
 			DesiredNodes:           -1,
-			AvailableNodes:         -1,
-			Meta:                   map[string]any{},
+			CurrentNodes:           -1,
+			Meta:                   map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -63,7 +63,7 @@ func buildDaemonSetRecords(
 				record.DesiredNodes = int(v)
 			}
 			if v, exists := metrics["I"]; exists {
-				record.AvailableNodes = int(v)
+				record.CurrentNodes = int(v)
 			}
 		}
 

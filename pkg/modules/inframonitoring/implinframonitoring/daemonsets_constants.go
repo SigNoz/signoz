@@ -48,14 +48,14 @@ var daemonSetAttrKeysForMetadata = []string{
 // used for ranking daemonset groups. v2 B/C/E/F are direct metrics, no
 // formula deps — so unlike v1 we don't carry A/D.
 var orderByToDaemonSetsQueryNames = map[string][]string{
-	inframonitoringtypes.DaemonSetsOrderByCPU:            {"A"},
-	inframonitoringtypes.DaemonSetsOrderByCPURequest:     {"B"},
-	inframonitoringtypes.DaemonSetsOrderByCPULimit:       {"C"},
-	inframonitoringtypes.DaemonSetsOrderByMemory:         {"D"},
-	inframonitoringtypes.DaemonSetsOrderByMemoryRequest:  {"E"},
-	inframonitoringtypes.DaemonSetsOrderByMemoryLimit:    {"F"},
-	inframonitoringtypes.DaemonSetsOrderByDesiredNodes:   {"H"},
-	inframonitoringtypes.DaemonSetsOrderByAvailableNodes: {"I"},
+	inframonitoringtypes.DaemonSetsOrderByCPU:           {"A"},
+	inframonitoringtypes.DaemonSetsOrderByCPURequest:    {"B"},
+	inframonitoringtypes.DaemonSetsOrderByCPULimit:      {"C"},
+	inframonitoringtypes.DaemonSetsOrderByMemory:        {"D"},
+	inframonitoringtypes.DaemonSetsOrderByMemoryRequest: {"E"},
+	inframonitoringtypes.DaemonSetsOrderByMemoryLimit:   {"F"},
+	inframonitoringtypes.DaemonSetsOrderByDesiredNodes:  {"H"},
+	inframonitoringtypes.DaemonSetsOrderByCurrentNodes:  {"I"},
 }
 
 // newDaemonSetsTableListQuery builds the composite QB v5 request for the daemonsets list.

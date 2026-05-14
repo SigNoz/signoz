@@ -4633,14 +4633,14 @@ export interface InframonitoringtypesClustersDTO {
  * @nullable
  */
 export type InframonitoringtypesDaemonSetRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesDaemonSetRecordDTO {
 	/**
 	 * @type integer
 	 */
-	availableNodes: number;
+	currentNodes: number;
 	/**
 	 * @type number
 	 * @format double
