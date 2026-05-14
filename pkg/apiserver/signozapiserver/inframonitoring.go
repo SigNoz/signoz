@@ -162,5 +162,24 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra_monitoring/jobs", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListJobs),
+		handler.OpenAPIDef{
+			ID:                  "ListJobs",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "List Jobs for Infra Monitoring",
+			Description:         "Returns a paginated list of Kubernetes Jobs with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the job, plus average CPU/memory request and limit utilization (jobCPURequest, jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the latest known job-level counters from kube-state-metrics: desiredSuccessfulPods (k8s.job.desired_successful_pods, the target completion count), activePods (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative). It also reports per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value); note podCountsByPhase.failed (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric). Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.job.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by jobs in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_successful_pods / active_pods / failed_pods / successful_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods) return -1 as a sentinel when no data is available for that field.",
+			Request:             new(inframonitoringtypes.PostableJobs),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.Jobs),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

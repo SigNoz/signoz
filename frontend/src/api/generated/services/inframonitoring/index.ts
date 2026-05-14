@@ -15,6 +15,7 @@ import type {
 	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableDeploymentsDTO,
 	InframonitoringtypesPostableHostsDTO,
+	InframonitoringtypesPostableJobsDTO,
 	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
@@ -23,6 +24,7 @@ import type {
 	ListClusters200,
 	ListDeployments200,
 	ListHosts200,
+	ListJobs200,
 	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
@@ -283,6 +285,90 @@ export const useListHosts = <
 	TContext
 > => {
 	const mutationOptions = getListHostsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes Jobs with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the job, plus average CPU/memory request and limit utilization (jobCPURequest, jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the latest known job-level counters from kube-state-metrics: desiredSuccessfulPods (k8s.job.desired_successful_pods, the target completion count), activePods (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative). It also reports per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value); note podCountsByPhase.failed (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric). Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.job.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by jobs in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_successful_pods / active_pods / failed_pods / successful_pods, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest, jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods) return -1 as a sentinel when no data is available for that field.
+ * @summary List Jobs for Infra Monitoring
+ */
+export const listJobs = (
+	inframonitoringtypesPostableJobsDTO: BodyType<InframonitoringtypesPostableJobsDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListJobs200>({
+		url: `/api/v2/infra_monitoring/jobs`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableJobsDTO,
+		signal,
+	});
+};
+
+export const getListJobsMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listJobs>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listJobs>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
+	TContext
+> => {
+	const mutationKey = ['listJobs'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listJobs>>,
+		{ data: BodyType<InframonitoringtypesPostableJobsDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listJobs(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListJobsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listJobs>>
+>;
+export type ListJobsMutationBody =
+	BodyType<InframonitoringtypesPostableJobsDTO>;
+export type ListJobsMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Jobs for Infra Monitoring
+ */
+export const useListJobs = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listJobs>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listJobs>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableJobsDTO> },
+	TContext
+> => {
+	const mutationOptions = getListJobsMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

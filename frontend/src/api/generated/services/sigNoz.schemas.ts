@@ -4793,6 +4793,91 @@ export interface InframonitoringtypesHostsDTO {
 /**
  * @nullable
  */
+export type InframonitoringtypesJobRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesJobRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activePods: number;
+	/**
+	 * @type integer
+	 */
+	desiredSuccessfulPods: number;
+	/**
+	 * @type integer
+	 */
+	failedPods: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	jobName: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesJobRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type integer
+	 */
+	successfulPods: number;
+}
+
+export interface InframonitoringtypesJobsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesJobRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
 export type InframonitoringtypesNamespaceRecordDTOMeta = {
 	[key: string]: string;
 } | null;
@@ -5085,6 +5170,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableJobsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -9729,6 +9842,14 @@ export type ListDeployments200 = {
 
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListJobs200 = {
+	data: InframonitoringtypesJobsDTO;
 	/**
 	 * @type string
 	 */

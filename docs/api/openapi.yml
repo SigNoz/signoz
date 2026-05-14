@@ -2728,6 +2728,82 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesJobRecord:
+      properties:
+        activePods:
+          type: integer
+        desiredSuccessfulPods:
+          type: integer
+        failedPods:
+          type: integer
+        jobCPU:
+          format: double
+          type: number
+        jobCPULimit:
+          format: double
+          type: number
+        jobCPURequest:
+          format: double
+          type: number
+        jobMemory:
+          format: double
+          type: number
+        jobMemoryLimit:
+          format: double
+          type: number
+        jobMemoryRequest:
+          format: double
+          type: number
+        jobName:
+          type: string
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        successfulPods:
+          type: integer
+      required:
+      - jobName
+      - jobCPU
+      - jobCPURequest
+      - jobCPULimit
+      - jobMemory
+      - jobMemoryRequest
+      - jobMemoryLimit
+      - desiredSuccessfulPods
+      - activePods
+      - failedPods
+      - successfulPods
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesJobs:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesJobRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
     InframonitoringtypesNamespaceRecord:
       properties:
         meta:
@@ -3012,6 +3088,32 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableJobs:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -12309,6 +12411,84 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Hosts for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/jobs:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes Jobs with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the job, plus average CPU/memory request and limit utilization (jobCPURequest,
+        jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the
+        latest known job-level counters from kube-state-metrics: desiredSuccessfulPods
+        (k8s.job.desired_successful_pods, the target completion count), activePods
+        (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across
+        the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative).
+        It also reports per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } from each pod''s latest k8s.pod.phase value); note podCountsByPhase.failed
+        (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric).
+        Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.job.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods owned by
+        jobs in the group. Supports filtering via a filter expression, custom groupBy,
+        ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
+        / desired_successful_pods / active_pods / failed_pods / successful_pods, and
+        pagination via offset/limit. Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest,
+        jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods)
+        return -1 as a sentinel when no data is available for that field.'
+      operationId: ListJobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableJobs'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesJobs'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Jobs for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/infra_monitoring/namespaces:
