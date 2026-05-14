@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { TooltipSimple, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Copy } from '@signozhq/icons';
 import './CopyIconButton.styles.scss';
 
@@ -19,20 +19,22 @@ function CopyIconButton({
 		: 'Copy to clipboard';
 
 	return (
-		<TooltipSimple title={tooltipTitle}>
-			<span>
-				<Button
-					color="secondary"
-					variant="ghost"
-					size="icon"
-					aria-label={ariaLabel}
-					disabled={disabled}
-					className="mcp-copy-btn"
-					prefix={<Copy size={14} />}
-					onClick={onCopy}
-				/>
-			</span>
-		</TooltipSimple>
+		<TooltipProvider>
+			<TooltipSimple title={tooltipTitle}>
+				<span>
+					<Button
+						color="secondary"
+						variant="ghost"
+						size="icon"
+						aria-label={ariaLabel}
+						disabled={disabled}
+						className="mcp-copy-btn"
+						prefix={<Copy size={14} />}
+						onClick={onCopy}
+					/>
+				</span>
+			</TooltipSimple>
+		</TooltipProvider>
 	);
 }
 

@@ -2,13 +2,13 @@
 // `top` is updated by the parent to track the hovered row's Y; its `left`
 // is the sidebar/timeline boundary so the popover always opens at the same
 // X regardless of which row is hovered.
-.span-hover-card-anchor {
+.anchor {
 	position: absolute;
 	width: 1px;
 	pointer-events: none;
 }
 
-.span-hover-card-popover {
+.popover {
 	// Hover card may be rendered while the SpanDetailsPanel is docked as
 	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
@@ -20,31 +20,29 @@
 	color: var(--l1-foreground);
 }
 
-// Flamegraph tooltip — rendered as a portal, uses same semantic tokens.
-// Position is set inline on the element (left/top track the cursor); the
-// static layout/decoration lives here.
-.flamegraph-tooltip {
-	position: fixed;
-	z-index: 1000;
-	pointer-events: none;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
-}
-
-.span-hover-card-content {
+.content {
 	font-size: 12px;
 	color: var(--l1-foreground);
+}
 
-	&__name {
-		font-weight: 600;
-		margin-bottom: 4px;
-	}
+.name {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
 
-	&__row {
-		line-height: 1.5;
-		color: var(--l2-foreground);
-	}
+.row {
+	line-height: 1.5;
+	color: var(--l2-foreground);
+}
+
+.preview {
+	// container for additional preview rows
+}
+
+.previewKey {
+	color: var(--l2-foreground);
+}
+
+.previewValue {
+	color: var(--l1-foreground);
 }

@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -33,7 +34,7 @@ import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
  * @summary Export raw data
  */
 export const handleExportRawDataPOST = (
-	querybuildertypesv5QueryRangeRequestDTO: BodyType<Querybuildertypesv5QueryRangeRequestDTO>,
+	querybuildertypesv5QueryRangeRequestDTO?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>,
 	params?: HandleExportRawDataPOSTParams,
 	signal?: AbortSignal,
 ) => {
@@ -55,7 +56,7 @@ export const getHandleExportRawDataPOSTMutationOptions = <
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 		TError,
 		{
-			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 			params?: HandleExportRawDataPOSTParams;
 		},
 		TContext
@@ -64,7 +65,7 @@ export const getHandleExportRawDataPOSTMutationOptions = <
 	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 	TError,
 	{
-		data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 		params?: HandleExportRawDataPOSTParams;
 	},
 	TContext
@@ -81,7 +82,7 @@ export const getHandleExportRawDataPOSTMutationOptions = <
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 		{
-			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 			params?: HandleExportRawDataPOSTParams;
 		}
 	> = (props) => {
@@ -97,7 +98,8 @@ export type HandleExportRawDataPOSTMutationResult = NonNullable<
 	Awaited<ReturnType<typeof handleExportRawDataPOST>>
 >;
 export type HandleExportRawDataPOSTMutationBody =
-	BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+	| BodyType<Querybuildertypesv5QueryRangeRequestDTO>
+	| undefined;
 export type HandleExportRawDataPOSTMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -112,7 +114,7 @@ export const useHandleExportRawDataPOST = <
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 		TError,
 		{
-			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 			params?: HandleExportRawDataPOSTParams;
 		},
 		TContext
@@ -121,14 +123,12 @@ export const useHandleExportRawDataPOST = <
 	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 	TError,
 	{
-		data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 		params?: HandleExportRawDataPOSTParams;
 	},
 	TContext
 > => {
-	const mutationOptions = getHandleExportRawDataPOSTMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getHandleExportRawDataPOSTMutationOptions(options));
 };
 /**
  * This endpoints promotes and indexes paths
@@ -198,9 +198,7 @@ export function useListPromotedAndIndexedPaths<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -223,7 +221,7 @@ export const invalidateListPromotedAndIndexedPaths = async (
  * @summary Promote and index paths
  */
 export const handlePromoteAndIndexPaths = (
-	promotetypesPromotePathDTONull: BodyType<
+	promotetypesPromotePathDTONull?: BodyType<
 		PromotetypesPromotePathDTO[] | null
 	> | null,
 	signal?: AbortSignal,
@@ -244,13 +242,13 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 		TError,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 	TError,
-	{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+	{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 	TContext
 > => {
 	const mutationKey = ['handlePromoteAndIndexPaths'];
@@ -264,7 +262,7 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> }
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -277,9 +275,9 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 export type HandlePromoteAndIndexPathsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>
 >;
-export type HandlePromoteAndIndexPathsMutationBody = BodyType<
-	PromotetypesPromotePathDTO[] | null
->;
+export type HandlePromoteAndIndexPathsMutationBody =
+	| BodyType<PromotetypesPromotePathDTO[] | null>
+	| undefined;
 export type HandlePromoteAndIndexPathsMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -293,16 +291,14 @@ export const useHandlePromoteAndIndexPaths = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 		TError,
-		{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+		{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
 	TError,
-	{ data: BodyType<PromotetypesPromotePathDTO[] | null> },
+	{ data?: BodyType<PromotetypesPromotePathDTO[] | null> },
 	TContext
 > => {
-	const mutationOptions = getHandlePromoteAndIndexPathsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getHandlePromoteAndIndexPathsMutationOptions(options));
 };

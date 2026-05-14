@@ -1,10 +1,15 @@
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import {
+	TooltipRoot,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Link } from '@signozhq/icons';
 import { Span } from 'types/api/trace/getTraceV2';
 
-import './SpanLineActionButtons.styles.scss';
+import styles from './SpanLineActionButtons.module.scss';
 
 export interface SpanLineActionButtonsProps {
 	span: Span;
@@ -15,18 +20,23 @@ export default function SpanLineActionButtons({
 	const { onSpanCopy } = useCopySpanLink(span);
 
 	return (
-		<div className="span-line-action-buttons">
-			<TooltipSimple title="Copy Span Link">
-				<Button
-					variant="ghost"
-					size="icon"
-					color="secondary"
-					onClick={onSpanCopy}
-					className="copy-span-btn"
-				>
-					<Link size={14} />
-				</Button>
-			</TooltipSimple>
+		<div className={styles.root}>
+			<TooltipProvider>
+				<TooltipRoot>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							onClick={onSpanCopy}
+							className={styles.copyBtn}
+						>
+							<Link size={14} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent className={styles.tooltip}>Copy Span Link</TooltipContent>
+				</TooltipRoot>
+			</TooltipProvider>
 		</div>
 	);
 }

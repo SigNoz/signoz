@@ -117,8 +117,7 @@ describe('CreateEdit Modal', () => {
 		});
 	});
 
-	// Todo: to fixed properly - failing with - due to timeout > 5000ms
-	describe.skip('Form Validation', () => {
+	describe('Form Validation', () => {
 		it('shows validation error when submitting without required fields', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -127,7 +126,7 @@ describe('CreateEdit Modal', () => {
 			const configureButtons = await screen.findAllByRole('button', {
 				name: /configure/i,
 			});
-			await user.click(configureButtons[0]);
+			fireEvent.click(configureButtons[0]);
 
 			const saveButton = await screen.findByRole('button', {
 				name: /save changes/i,
@@ -338,11 +337,8 @@ describe('CreateEdit Modal', () => {
 		});
 	});
 
-	// Todo: to fixed properly - failing with - due to timeout > 5000ms
-	describe.skip('Modal Actions', () => {
-		it('calls onClose when cancel button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+	describe('Modal Actions', () => {
+		it('calls onClose when cancel button is clicked', () => {
 			render(
 				<CreateEdit
 					isCreate={false}
@@ -352,7 +348,7 @@ describe('CreateEdit Modal', () => {
 			);
 
 			const cancelButton = screen.getByRole('button', { name: /cancel/i });
-			await user.click(cancelButton);
+			fireEvent.click(cancelButton);
 
 			expect(mockOnClose).toHaveBeenCalled();
 		});
