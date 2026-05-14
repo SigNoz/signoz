@@ -3,7 +3,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { Check, ChevronDown, Loader2, PlusIcon } from 'lucide-react';
+import { Check, ChevronDown, Loader, Plus } from '@signozhq/icons';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
@@ -69,7 +69,7 @@ function SpanPercentilePanel({
 						onClick={(): void => setShowResourceAttributesSelector(false)}
 					/>
 				) : (
-					<PlusIcon
+					<Plus
 						size={16}
 						className="cursor-pointer span-percentile-panel__header-icon"
 						onClick={(): void => setShowResourceAttributesSelector(true)}
@@ -137,7 +137,7 @@ function SpanPercentilePanel({
 						</span>
 					) : (
 						<span className="span-percentile-panel__content-loader">
-							<Loader2 size={12} className="animate-spin" />
+							<Loader size={12} className="animate-spin" />
 						</span>
 					)}{' '}
 					out of the distribution for this resource evaluated for {selectedTimeRange}{' '}

@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
+import { Info, Search } from '@signozhq/icons';
 import { Popconfirm, PopconfirmProps } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import history from 'lib/history';
-import { Info } from 'lucide-react';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
@@ -27,7 +26,7 @@ export const getColumnSearchProps = (
 	search: string,
 ): ColumnType<ServicesList> => ({
 	filterDropdown,
-	filterIcon: <SearchOutlined />,
+	filterIcon: <Search size="md" />,
 	onFilter: (
 		value: string | number | boolean,
 		record: ServicesList,

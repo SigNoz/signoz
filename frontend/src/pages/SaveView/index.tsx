@@ -34,7 +34,7 @@ import {
 	Search,
 	Trash2,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';

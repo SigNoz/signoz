@@ -64,9 +64,13 @@
 		min-height: 0;
 		overflow-y: auto;
 		scrollbar-width: none;
+		display: flex;
+		flex-direction: column;
 
 		[role='tabpanel'] {
 			padding: 0;
+			flex: 1;
+			min-height: 0;
 		}
 	}
 
@@ -112,7 +116,8 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--success-500);
+		background: var(--accent-forest);
+		flex-shrink: 0;
 	}
 
 	&__trace-id {
@@ -121,6 +126,17 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		display: block;
+	}
+
+	&__trace-id-copy {
+		display: block;
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		padding: 0;
+		height: auto;
+		justify-content: flex-start;
 	}
 
 	&__key-attributes {

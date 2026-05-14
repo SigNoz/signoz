@@ -429,3 +429,10 @@ authz:
   openfga:
     # maximum tuples allowed per openfga write operation.
     max_tuples_per_write: 300
+
+##################### Meter Reporter #####################
+meterreporter:
+  # The interval between collection ticks. Minimum 5m.
+  interval: 6h
+  # Whether to backfill sealed days from the license creation day.
+  backfill: true

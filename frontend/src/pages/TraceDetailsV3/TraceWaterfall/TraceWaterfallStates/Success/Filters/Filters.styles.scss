@@ -3,18 +3,114 @@
 	align-items: center;
 	gap: 12px;
 
+	&.expanded {
+		flex: 1;
+	}
+
+	.filter-search-container {
+		flex: 1;
+		min-width: 0;
+	}
+
 	.query-builder-search-v2 {
 		width: 100%;
 	}
 
+	// --- Collapsed pill ---
+	.filter-pill {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 10px;
+		border: 1px solid var(--l1-border);
+		border-radius: 4px;
+		cursor: pointer;
+		max-width: 220px;
+		min-width: 120px;
+		height: 32px;
+		background: var(--l1-background);
+
+		&:hover {
+			border-color: var(--l3-border);
+		}
+
+		&__text {
+			font-size: 12px;
+			color: var(--l2-foreground);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			flex: 1;
+		}
+
+		&__indicator {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: var(--primary-background);
+			flex-shrink: 0;
+		}
+	}
+
+	// --- Collapsed pill popover ---
+	.filter-pill-popover {
+		max-width: 400px;
+
+		&__header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 8px;
+		}
+
+		&__expression {
+			font-family: 'Geist Mono', 'Fira Code', monospace;
+			font-size: 12px;
+			color: var(--l1-foreground);
+			word-break: break-all;
+			padding: 6px 8px;
+			background: var(--l2-background);
+			border-radius: 4px;
+		}
+	}
+
+	// --- ToggleGroup override: size to content, don't stretch items ---
+	[class*='toggle-group'] {
+		flex-shrink: 0;
+
+		[class*='toggle-group-item'] {
+			flex: 0 0 auto;
+		}
+	}
+
+	// --- Collapse button ---
+	.filter-collapse-btn {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: none;
+	}
+
+	// --- Highlight errors toggle ---
+	.highlight-errors-toggle {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-shrink: 0;
+		white-space: nowrap;
+	}
+
+	// --- Prev/next navigation ---
 	.pre-next-toggle {
 		display: flex;
 		flex-shrink: 0;
 		gap: 12px;
 
-		.ant-typography {
+		&__count {
 			display: flex;
 			align-items: center;
+			margin: auto;
 			color: var(--l2-foreground);
 			font-family: 'Geist Mono';
 			font-size: 12px;
@@ -30,14 +126,20 @@
 		}
 	}
 
-	.no-results {
+	.filter-status {
 		display: flex;
 		align-items: center;
+		gap: 6px;
 		flex-shrink: 0;
 		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 18px;
+
+		&--error {
+			color: var(--destructive);
+			cursor: help;
+		}
 	}
 }

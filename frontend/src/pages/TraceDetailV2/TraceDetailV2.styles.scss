@@ -2,6 +2,13 @@
 	.funnel-icon {
 		transform: rotate(180deg);
 	}
+
+	.trace-detail-header-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding-right: 16px;
+	}
 	.trace-module {
 		.ant-tabs-tab {
 			.tab-item {

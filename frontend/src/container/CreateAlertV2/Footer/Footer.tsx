@@ -7,7 +7,7 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, Loader, Send, X } from 'lucide-react';
+import { Check, Loader, Send, X } from '@signozhq/icons';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
@@ -179,9 +179,9 @@ function Footer(): JSX.Element {
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
 				{isCreatingAlertRule || isUpdatingAlertRule ? (
-					<Loader size={14} />
+					<Loader data-testid="save-alert-rule-loader-icon" size={14} />
 				) : (
-					<Check size={14} />
+					<Check data-testid="save-alert-rule-check-icon" size={14} />
 				)}
 				Save Alert Rule
 			</Button>
@@ -206,7 +206,11 @@ function Footer(): JSX.Element {
 				onClick={handleTestNotification}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
-				{isTestingAlertRule ? <Loader size={14} /> : <Send size={14} />}
+				{isTestingAlertRule ? (
+					<Loader data-testid="test-notification-loader-icon" size={14} />
+				) : (
+					<Send data-testid="test-notification-send-icon" size={14} />
+				)}
 				Test Notification
 			</Button>
 		);

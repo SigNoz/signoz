@@ -1,4 +1,4 @@
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import { Tag } from 'antd';
 import styled from 'styled-components';
 
@@ -18,7 +18,7 @@ export const TypographyText = styled.span<{
 	${({ $disabled }): string => ($disabled ? 'opacity: 0.6' : '')}
 `;
 
-export const StyledCheckOutlined = styled(CheckOutlined)`
+export const StyledCheckOutlined = styled(Check)`
 	float: right;
 `;
 

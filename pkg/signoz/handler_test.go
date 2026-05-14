@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/retention/implretention"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -52,7 +53,8 @@ func TestNewHandlers(t *testing.T) {
 	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, flagger)
+	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, retentionGetter, flagger)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)
 	registryHandler := factory.NewHandler(nil)

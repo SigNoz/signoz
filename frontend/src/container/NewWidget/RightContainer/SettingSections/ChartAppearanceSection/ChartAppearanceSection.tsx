@@ -6,7 +6,7 @@ import {
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush } from '@signozhq/icons';
 
 import DisconnectValuesSelector from '../../components/DisconnectValuesSelector/DisconnectValuesSelector';
 import FillModeSelector from '../../components/FillModeSelector/FillModeSelector';

@@ -1,7 +1,7 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
 export interface AlertmanagertypesChannelDTO {
@@ -1839,6 +1839,7 @@ export enum AuthtypesRelationDTO {
 	delete = 'delete',
 	list = 'list',
 	assignee = 'assignee',
+	attach = 'attach',
 }
 export interface AuthtypesRoleDTO {
 	/**
@@ -4567,6 +4568,143 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+/**
+ * @nullable
+ */
+export type InframonitoringtypesClusterRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesClusterRecordDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPUAllocatable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	clusterName: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesClusterRecordDTOMeta;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesClustersDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesClusterRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesDeploymentRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesDeploymentRecordDTO {
+	/**
+	 * @type integer
+	 */
+	availablePods: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	deploymentName: string;
+	/**
+	 * @type integer
+	 */
+	desiredPods: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesDeploymentRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesDeploymentsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesDeploymentRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export interface InframonitoringtypesHostFilterDTO {
 	/**
 	 * @type string
@@ -4643,6 +4781,55 @@ export interface InframonitoringtypesHostsDTO {
 	 * @nullable true
 	 */
 	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNamespaceRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesNamespaceRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceMemory: number;
+	/**
+	 * @type string
+	 */
+	namespaceName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNamespacesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesNamespaceRecordDTO[] | null;
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4835,6 +5022,62 @@ export interface InframonitoringtypesPodsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesPostableClustersDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableDeploymentsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface InframonitoringtypesPostableHostsDTO {
 	/**
 	 * @type integer
@@ -4842,6 +5085,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNamespacesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -4919,6 +5190,62 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesPostableStatefulSetsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableVolumesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface InframonitoringtypesRequiredMetricsCheckDTO {
 	/**
 	 * @type array
@@ -4931,6 +5258,151 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
+/**
+ * @nullable
+ */
+export type InframonitoringtypesStatefulSetRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesStatefulSetRecordDTO {
+	/**
+	 * @type integer
+	 */
+	currentPods: number;
+	/**
+	 * @type integer
+	 */
+	desiredPods: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	statefulSetName: string;
+}
+
+export interface InframonitoringtypesStatefulSetsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesStatefulSetRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesVolumeRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesVolumeRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesVolumeRecordDTOMeta;
+	/**
+	 * @type string
+	 */
+	persistentVolumeClaimName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeAvailable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeCapacity: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesFree: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesUsed: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeUsage: number;
+}
+
+export interface InframonitoringtypesVolumesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesVolumeRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export interface LlmpricingruletypesGettablePricingRulesDTO {
 	/**
 	 * @type array
@@ -7313,7 +7785,7 @@ export interface SpantypesPostableSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7321,7 +7793,6 @@ export interface SpantypesPostableSpanMapperDTO {
 }
 
 export interface SpantypesPostableSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type boolean
@@ -7348,7 +7819,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7381,7 +7852,6 @@ export interface SpantypesSpanMapperConfigDTO {
 }
 
 export interface SpantypesSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type string
@@ -7419,11 +7889,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpantypesSpanMapperGroupCategoryDTO {
-	[key: string]: unknown;
-}
-
-export interface SpantypesSpanMapperGroupConditionDTO {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array
 	 * @nullable true
@@ -7434,7 +7903,7 @@ export interface SpantypesSpanMapperGroupConditionDTO {
 	 * @nullable true
 	 */
 	resource: string[] | null;
-}
+} | null;
 
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
@@ -7460,7 +7929,7 @@ export interface SpantypesUpdatableSpanMapperDTO {
 	 * @nullable true
 	 */
 	enabled?: boolean | null;
-	field_context?: SpantypesFieldContextDTO;
+	fieldContext?: SpantypesFieldContextDTO;
 }
 
 export interface SpantypesUpdatableSpanMapperGroupDTO {
@@ -9009,10 +9478,6 @@ export type GetMyServiceAccount200 = {
 
 export type ListSpanMapperGroupsParams = {
 	/**
-	 * @description undefined
-	 */
-	category?: SpantypesSpanMapperGroupCategoryDTO;
-	/**
 	 * @type boolean
 	 * @nullable true
 	 * @description undefined
@@ -9246,8 +9711,32 @@ export type Healthz503 = {
 	status: string;
 };
 
+export type ListClusters200 = {
+	data: InframonitoringtypesClustersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDeployments200 = {
+	data: InframonitoringtypesDeploymentsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNamespaces200 = {
+	data: InframonitoringtypesNamespacesDTO;
 	/**
 	 * @type string
 	 */
@@ -9264,6 +9753,22 @@ export type ListNodes200 = {
 
 export type ListPods200 = {
 	data: InframonitoringtypesPodsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListVolumes200 = {
+	data: InframonitoringtypesVolumesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListStatefulSets200 = {
+	data: InframonitoringtypesStatefulSetsDTO;
 	/**
 	 * @type string
 	 */
