@@ -13,15 +13,15 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		return nil, err
 	}
 
-	dashboard := dashboardtypes.NewDashboardV2WithoutTags(orgID, createdBy, postable)
+	dashboard := postable.NewDashboardV2WithoutTags(orgID, createdBy)
 	var storableDashboard *dashboardtypes.StorableDashboard
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
+		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Metadata.Tags)
 		if err != nil {
 			return err
 		}
-		dashboard.Info.Tags = resolvedTags
+		dashboard.Data.Metadata.Tags = resolvedTags
 
 		storable, err := dashboard.ToStorableDashboard()
 		if err != nil {

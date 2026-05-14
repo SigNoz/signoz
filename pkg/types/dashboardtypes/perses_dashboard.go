@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -47,32 +48,61 @@ type DashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID        valuer.UUID      `json:"orgId"`
-	Locked       bool             `json:"locked"`
-	Info         DashboardInfo    `json:"info"`
-	PublicConfig *PublicDashboard `json:"publicConfig,omitempty"`
+	OrgID  valuer.UUID     `json:"orgId"`
+	Locked bool            `json:"locked"`
+	Data   DashboardV2Data `json:"data"`
 }
 
-// DashboardInfo is the serializable view of a dashboard's contents — what the UI renders as "the dashboard JSON".
-type DashboardInfo struct {
-	StoredDashboardInfo
-	Tags []*tagtypes.Tag `json:"tags,omitempty"`
+type DashboardV2Data struct {
+	Metadata DashboardV2Metadata `json:"metadata"`
+	Spec     DashboardSpec       `json:"spec"`
 }
 
-// StoredDashboardInfo is exactly what serializes into the dashboard.data column.
-type StoredDashboardInfo struct {
-	Metadata DashboardMetadata `json:"metadata"`
-	Spec     DashboardSpec     `json:"spec"`
+type DashboardV2Metadata struct {
+	DashboardV2MetadataBase
+	Tags []*tagtypes.Tag `json:"tags"`
 }
 
-type DashboardMetadata struct {
+type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion"`
 	Image         string `json:"image,omitempty"`
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// Postable
+// ════════════════════════════════════════════════════════════════════════
+
 type PostableDashboardV2 struct {
-	StoredDashboardInfo
-	Tags []tagtypes.PostableTag `json:"tags,omitempty"`
+	Metadata PostableDashboardV2Metadata `json:"metadata"`
+	Spec     DashboardSpec               `json:"spec"`
+}
+
+func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string) *DashboardV2 {
+	now := time.Now()
+
+	return &DashboardV2{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		OrgID:         orgID,
+		Locked:        false,
+		Data: DashboardV2Data{
+			Metadata: postable.Metadata.toDashboardV2Metadata(orgID),
+			Spec:     postable.Spec,
+		},
+	}
+}
+
+type PostableDashboardV2Metadata struct {
+	DashboardV2MetadataBase
+	Tags []tagtypes.PostableTag `json:"tags"`
+}
+
+func (m PostableDashboardV2Metadata) toDashboardV2Metadata(orgID valuer.UUID) DashboardV2Metadata {
+	return DashboardV2Metadata{
+		DashboardV2MetadataBase: m.DashboardV2MetadataBase,
+		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, m.Tags),
+	}
 }
 
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
@@ -101,10 +131,10 @@ func (p *PostableDashboardV2) Validate() error {
 }
 
 func (p *PostableDashboardV2) validateTags() error {
-	if len(p.Tags) > MaxTagsPerDashboard {
+	if len(p.Metadata.Tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	for _, tag := range p.Tags {
+	for _, tag := range p.Metadata.Tags {
 		if _, reserved := reservedDSLKeys[DSLKey(strings.ToLower(strings.TrimSpace(tag.Key)))]; reserved {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "tag key %q is reserved", tag.Key)
 		}
@@ -112,60 +142,89 @@ func (p *PostableDashboardV2) validateTags() error {
 	return nil
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// Gettable
+// ════════════════════════════════════════════════════════════════════════
+
 type GettableDashboardV2 struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID        valuer.UUID               `json:"orgId"`
-	Locked       bool                      `json:"locked"`
-	Info         GettableDashboardInfo     `json:"info"`
-	PublicConfig *GettablePublicDasbhboard `json:"publicConfig,omitempty"`
+	OrgID  valuer.UUID             `json:"orgId"`
+	Locked bool                    `json:"locked"`
+	Data   GettableDashboardV2Data `json:"data"`
 }
 
-type GettableDashboardInfo struct {
-	StoredDashboardInfo
-	Tags []*tagtypes.GettableTag `json:"tags,omitempty"`
+type GettableDashboardV2Data struct {
+	Metadata GettableDashboardV2Metadata `json:"metadata"`
+	Spec     DashboardSpec               `json:"spec"`
 }
 
-func NewGettableDashboardV2FromDashboardV2(dashboard *DashboardV2) *GettableDashboardV2 {
-	gettable := &GettableDashboardV2{
-		Identifiable:  dashboard.Identifiable,
-		TimeAuditable: dashboard.TimeAuditable,
-		UserAuditable: dashboard.UserAuditable,
-		OrgID:         dashboard.OrgID,
-		Locked:        dashboard.Locked,
-		Info: GettableDashboardInfo{
-			StoredDashboardInfo: dashboard.Info.StoredDashboardInfo,
-			Tags:                tagtypes.NewGettableTagsFromTags(dashboard.Info.Tags),
+type GettableDashboardV2Metadata struct {
+	DashboardV2MetadataBase
+	Tags []*tagtypes.GettableTag `json:"tags"`
+}
+
+func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
+	return GettableDashboardV2{
+		Identifiable:  d.Identifiable,
+		TimeAuditable: d.TimeAuditable,
+		UserAuditable: d.UserAuditable,
+		OrgID:         d.OrgID,
+		Locked:        d.Locked,
+		Data:          d.Data.toGettableDashboardData(),
+	}
+}
+
+func (d DashboardV2Data) toGettableDashboardData() GettableDashboardV2Data {
+	return GettableDashboardV2Data{
+		Metadata: GettableDashboardV2Metadata{
+			DashboardV2MetadataBase: d.Metadata.DashboardV2MetadataBase,
+			Tags:                    tagtypes.NewGettableTagsFromTags(d.Metadata.Tags),
 		},
-	}
-	if dashboard.PublicConfig != nil {
-		gettable.PublicConfig = NewGettablePublicDashboard(dashboard.PublicConfig)
-	}
-	return gettable
-}
-
-func NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, postable PostableDashboardV2) *DashboardV2 {
-	now := time.Now()
-
-	return &DashboardV2{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
-		OrgID:         orgID,
-		Locked:        false,
-		Info: DashboardInfo{
-			StoredDashboardInfo: StoredDashboardInfo{
-				Metadata: postable.Metadata,
-				Spec:     postable.Spec,
-			},
-		},
+		Spec: d.Spec,
 	}
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// Storable
+// ════════════════════════════════════════════════════════════════════════
+
+// StorableDashboardV2Data is exactly what serializes into the dashboard.data column.
+type StorableDashboardV2Data struct {
+	Metadata StorableDashboardV2Metadata `json:"metadata"`
+	Spec     DashboardSpec               `json:"spec"`
+}
+
+func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardData, error) {
+	raw, err := json.Marshal(s)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal v2 dashboard data")
+	}
+	out := StorableDashboardData{}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal v2 dashboard data")
+	}
+	return out, nil
+}
+
+type StorableDashboardV2Metadata = DashboardV2MetadataBase
+
+// ════════════════════════════════════════════════════════════════════════
+// Convertors
+// ════════════════════════════════════════════════════════════════════════
 
 func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
-	data, err := d.Info.toStorableDashboardData()
+	storableDashboardV2Data := StorableDashboardV2Data{
+		Metadata: StorableDashboardV2Metadata{
+			SchemaVersion: d.Data.Metadata.SchemaVersion,
+			Image:         d.Data.Metadata.Image,
+		},
+		Spec: d.Data.Spec,
+	}
+
+	data, err := storableDashboardV2Data.toStorableDashboardData()
 	if err != nil {
 		return nil, err
 	}
@@ -177,16 +236,4 @@ func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 		Locked:        d.Locked,
 		Data:          data,
 	}, nil
-}
-
-func (s StoredDashboardInfo) toStorableDashboardData() (StorableDashboardData, error) {
-	raw, err := json.Marshal(s)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal v2 dashboard data")
-	}
-	out := StorableDashboardData{}
-	if err := json.Unmarshal(raw, &out); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal v2 dashboard data")
-	}
-	return out, nil
 }

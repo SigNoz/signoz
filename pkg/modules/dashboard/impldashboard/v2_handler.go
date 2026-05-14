@@ -40,5 +40,5 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
+	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
 }
