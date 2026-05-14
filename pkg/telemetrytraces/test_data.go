@@ -111,16 +111,16 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
 		},
-		"name": { // using "scope.name" here is colliding with instrinsic "name" field
+		"scope.name": {
 			{
-				Name:          "name",
+				Name:          "scope.name",
 				FieldContext:  telemetrytypes.FieldContextScope,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
-		"version": {
+		"scope.version": {
 			{
-				Name:          "version",
+				Name:          "scope.version",
 				FieldContext:  telemetrytypes.FieldContextScope,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},

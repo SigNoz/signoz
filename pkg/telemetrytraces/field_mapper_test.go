@@ -79,7 +79,7 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Scope field - name",
+			name: "Scope field - name (normalized)",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "name",
 				FieldContext: telemetrytypes.FieldContextScope,
@@ -88,9 +88,27 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Scope field - version",
+			name: "Scope field - name (un-normalized)",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.name::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - version (normalized)",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "version",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.version::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - version (un-normalized)",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.version",
 				FieldContext: telemetrytypes.FieldContextScope,
 			},
 			expectedResult: "scope.version::String",
