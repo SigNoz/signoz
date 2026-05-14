@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "i18n:generate-hash": "node ./i18-generate-hash.cjs",
     "dev": "vite",
     "build": "vite build",
@@ -26,7 +27,8 @@
     "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0 <11.0.0"
   },
   "author": "",
   "license": "ISC",
