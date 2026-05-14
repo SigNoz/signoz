@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useQueryStates, parseAsInteger } from 'nuqs';
+import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 import { Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
@@ -67,6 +69,23 @@ function TriggeredAlerts(): JSX.Element {
 		page: DEFAULT_PAGE,
 		limit: DEFAULT_LIMIT,
 	});
+
+	const [, setTableQueryParams] = useQueryStates({
+		[QUERY_PARAMS_CONFIG.orderBy]: parseAsJsonNoValidate(),
+		[QUERY_PARAMS_CONFIG.page]: parseAsInteger,
+		[QUERY_PARAMS_CONFIG.limit]: parseAsInteger,
+	});
+
+	useEffect(
+		() => (): void => {
+			void setTableQueryParams({
+				[QUERY_PARAMS_CONFIG.orderBy]: null,
+				[QUERY_PARAMS_CONFIG.page]: null,
+				[QUERY_PARAMS_CONFIG.limit]: null,
+			});
+		},
+		[setTableQueryParams],
+	);
 
 	const selectedFilter = useMemo(
 		(): FilterValue[] => (filterValues ?? []).map((v: string) => ({ value: v })),
