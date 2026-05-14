@@ -21,7 +21,7 @@ func NewStore(sqlstore sqlstore.SQLStore) dashboardtypes.Store {
 func (store *store) Create(ctx context.Context, storabledashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(storabledashboard).
 		Exec(ctx)
