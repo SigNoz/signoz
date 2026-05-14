@@ -3,7 +3,7 @@ import { Button, Divider, Flex, Form, Input, Modal, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
-import { Check, Loader, X } from 'lucide-react';
+import { Check, Loader, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';

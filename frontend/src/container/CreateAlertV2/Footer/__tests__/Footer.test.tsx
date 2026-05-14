@@ -72,9 +72,10 @@ const SAVE_ALERT_RULE_TEXT = 'Save Alert Rule';
 const TEST_NOTIFICATION_TEXT = 'Test Notification';
 const DISCARD_TEXT = 'Discard';
 
-const LOADER_ICON_SELECTOR = 'svg.lucide-loader';
-const CHECK_ICON_SELECTOR = 'svg.lucide-check';
-const PLAY_ICON_SELECTOR = 'svg.lucide-play';
+const SAVE_ALERT_RULE_CHECK_ICON = 'save-alert-rule-check-icon';
+const SAVE_ALERT_RULE_LOADER_ICON = 'save-alert-rule-loader-icon';
+const TEST_NOTIFICATION_LOADER_ICON = 'test-notification-loader-icon';
+const TEST_NOTIFICATION_SEND_ICON = 'test-notification-send-icon';
 
 describe('Footer', () => {
 	beforeEach(() => {
@@ -260,16 +261,14 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<Footer />);
 
 		// When testing alert rule, the play icon is replaced with a loader icon
-		const playIconForTestNotificationButton =
-			container.querySelector(PLAY_ICON_SELECTOR);
-		expect(playIconForTestNotificationButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(TEST_NOTIFICATION_SEND_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForTestNotificationButton =
-			container.querySelector(LOADER_ICON_SELECTOR);
-		expect(loaderIconForTestNotificationButton).toBeInTheDocument();
+		expect(screen.getByTestId(TEST_NOTIFICATION_LOADER_ICON)).toBeInTheDocument();
 	});
 
 	it('should not show check icon on save alert rule button when updating alert rule', () => {
@@ -277,16 +276,14 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<Footer />);
 
 		// When updating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton =
-			container.querySelector(CHECK_ICON_SELECTOR);
-		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton =
-			container.querySelector(LOADER_ICON_SELECTOR);
-		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
+		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});
 
 	it('should not show check icon on save alert rule button when creating alert rule', () => {
@@ -294,15 +291,13 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
-		const { container } = render(<Footer />);
+		render(<Footer />);
 
 		// When creating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton =
-			container.querySelector(CHECK_ICON_SELECTOR);
-		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(SAVE_ALERT_RULE_CHECK_ICON),
+		).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton =
-			container.querySelector(LOADER_ICON_SELECTOR);
-		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
+		expect(screen.getByTestId(SAVE_ALERT_RULE_LOADER_ICON)).toBeInTheDocument();
 	});
 });

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoaderCircle } from '@signozhq/icons';
+import { LoaderCircle, Check } from '@signozhq/icons';
 import { Button, Input, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check } from 'lucide-react';
 
 import '../Integrations/Integrations.styles.scss';
 

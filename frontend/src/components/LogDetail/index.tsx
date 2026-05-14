@@ -36,17 +36,17 @@ import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
-	BarChart2,
 	Braces,
 	ChevronDown,
 	ChevronUp,
 	Compass,
 	Copy,
 	Filter,
+	Histogram,
 	Table,
 	TextSelect,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
@@ -228,7 +228,7 @@ function LogDetailInner({
 			}
 
 			return log?.body || '';
-		} catch (error) {
+		} catch {
 			return log?.body || '';
 		}
 	}, [isBodyJsonQueryEnabled, log?.body]);
@@ -499,7 +499,7 @@ function LogDetailInner({
 							value={VIEW_TYPES.INFRAMETRICS}
 						>
 							<div className="view-title">
-								<BarChart2 size={14} />
+								<Histogram size="md" />
 								Metrics
 							</div>
 						</Radio.Button>
@@ -517,7 +517,7 @@ function LogDetailInner({
 									variant="link"
 									color="secondary"
 									size="sm"
-									prefix={<Filter size={12} />}
+									prefix={<Filter size="lg" />}
 									onClick={handleFilterVisible}
 								/>
 							</Tooltip>

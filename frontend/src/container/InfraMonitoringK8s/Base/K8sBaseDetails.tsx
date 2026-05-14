@@ -29,14 +29,14 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import {
-	BarChart2,
+	BarChart,
 	ChevronsLeftRight,
 	Compass,
 	DraftingCompass,
 	Package2,
 	ScrollText,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -678,7 +678,7 @@ function K8sBaseDetails<T>({
 										value={VIEW_TYPES.METRICS}
 									>
 										<div className="view-title">
-											<BarChart2 size={14} />
+											<BarChart size={14} />
 											Metrics
 										</div>
 									</Radio.Button>

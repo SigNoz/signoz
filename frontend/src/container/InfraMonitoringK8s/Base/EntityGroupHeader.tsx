@@ -1,4 +1,4 @@
-import { Group } from 'lucide-react';
+import { Group } from '@signozhq/icons';
 
 import styles from './EntityGroupHeader.module.scss';
 

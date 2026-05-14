@@ -19,7 +19,12 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { isArray } from 'lodash-es';
-import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import {
+	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
+	LoaderCircle,
+} from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -324,7 +329,11 @@ export default function Events({
 					</Button>
 
 					{(isFetching || isLoading) && (
-						<Loader2 className="animate-spin" size={16} color={Color.BG_ROBIN_500} />
+						<LoaderCircle
+							className="animate-spin"
+							size={16}
+							color={Color.BG_ROBIN_500}
+						/>
 					)}
 				</div>
 			)}

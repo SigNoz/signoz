@@ -628,17 +628,27 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		return &qbtypes.ScalarData{QueryName: queryName}
 	}
 
-	columns := []*qbtypes.ColumnDescriptor{}
-
-	// Add group columns from first series
-	if len(tsData.Aggregations[0].Series) > 0 {
-		for _, label := range tsData.Aggregations[0].Series[0].Labels {
-			columns = append(columns, &qbtypes.ColumnDescriptor{
-				TelemetryFieldKey: label.Key,
-				QueryName:         queryName,
-				Type:              qbtypes.ColumnTypeGroup,
-			})
+	// Series can have ragged label sets; build the column schema from the
+	// union of all label keys (first-seen order) and fill rows by key lookup.
+	keyOrder := []telemetrytypes.TelemetryFieldKey{}
+	keyIndex := map[string]int{}
+	for _, series := range tsData.Aggregations[0].Series {
+		for _, label := range series.Labels {
+			if _, ok := keyIndex[label.Key.Name]; ok {
+				continue
+			}
+			keyIndex[label.Key.Name] = len(keyOrder)
+			keyOrder = append(keyOrder, label.Key)
 		}
+	}
+
+	columns := make([]*qbtypes.ColumnDescriptor, 0, len(keyOrder)+len(tsData.Aggregations))
+	for _, key := range keyOrder {
+		columns = append(columns, &qbtypes.ColumnDescriptor{
+			TelemetryFieldKey: key,
+			QueryName:         queryName,
+			Type:              qbtypes.ColumnTypeGroup,
+		})
 	}
 
 	// Add aggregation columns
@@ -656,18 +666,18 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		})
 	}
 
-	// Build rows
+	// Build rows.
+	groupColCount := len(keyOrder)
 	data := [][]any{}
 	for seriesIdx, series := range tsData.Aggregations[0].Series {
 		row := make([]any, len(columns))
 
-		// Add group values
-		for i, label := range series.Labels {
-			row[i] = label.Value
+		// Place each label under its key's column (by lookup, not index).
+		for _, label := range series.Labels {
+			row[keyIndex[label.Key.Name]] = label.Value
 		}
 
 		// Add aggregation values (last value)
-		groupColCount := len(series.Labels)
 		for aggIdx, agg := range tsData.Aggregations {
 			if seriesIdx < len(agg.Series) && len(agg.Series[seriesIdx].Values) > 0 {
 				lastValue := agg.Series[seriesIdx].Values[len(agg.Series[seriesIdx].Values)-1].Value

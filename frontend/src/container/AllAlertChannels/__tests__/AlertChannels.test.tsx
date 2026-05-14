@@ -41,7 +41,7 @@ describe('Alert Channels Settings List page', () => {
 			expect(screen.getByText('button_new_channel')).toBeInTheDocument();
 		});
 		it('Should check if the help icon is visible and displays "tooltip_notification_channels', async () => {
-			const helpIcon = screen.getByLabelText('question-circle');
+			const helpIcon = screen.getByRole('img', { name: /help/i });
 
 			fireEvent.mouseOver(helpIcon);
 
