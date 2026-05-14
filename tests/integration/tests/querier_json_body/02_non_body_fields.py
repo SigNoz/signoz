@@ -125,11 +125,11 @@ def test_non_body_filter_and_groupby(
     end_ms = int(now.timestamp() * 1000)
 
     log_data = [
-        ("auth-svc", "GET",    "INFO",  {"user": "alice", "status": 200}),
-        ("auth-svc", "POST",   "ERROR", {"user": "bob",   "status": 500}),
-        ("auth-svc", "GET",    "INFO",  {"user": "carol", "status": 200}),
-        ("api-gw",   "GET",    "WARN",  {"user": "diana", "status": 204}),
-        ("worker",   "DELETE", "ERROR", {"user": "eve",   "status": 400}),
+        ("auth-svc", "GET", "INFO", {"user": "alice", "status": 200}),
+        ("auth-svc", "POST", "ERROR", {"user": "bob", "status": 500}),
+        ("auth-svc", "GET", "INFO", {"user": "carol", "status": 200}),
+        ("api-gw", "GET", "WARN", {"user": "diana", "status": 204}),
+        ("worker", "DELETE", "ERROR", {"user": "eve", "status": 400}),
     ]
     logs_list = [
         Logs(
@@ -231,9 +231,7 @@ def test_non_body_filter_and_groupby(
             "groupBy": [build_group_by_field("service.name"), {"name": "http.method"}],
             "aggregation": "count()",
             # auth-svc+GET=2, auth-svc+POST=1, api-gw+GET=1, worker+DELETE=1
-            "validate": lambda r: (lambda pairs: pairs.get(("auth-svc", "GET")) == 2 and pairs.get(("auth-svc", "POST")) == 1 and pairs.get(("api-gw", "GET")) == 1 and pairs.get(("worker", "DELETE")) == 1)(
-                {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}
-            ),
+            "validate": lambda r: (lambda pairs: pairs.get(("auth-svc", "GET")) == 2 and pairs.get(("auth-svc", "POST")) == 1 and pairs.get(("api-gw", "GET")) == 1 and pairs.get(("worker", "DELETE")) == 1)({(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}),
         },
         # resource attr group by with top-level filter: only INFO logs → auth-svc=2, no other group
         {
@@ -282,9 +280,9 @@ def test_non_body_aggregation(
     end_ms = int(now.timestamp() * 1000)
 
     logs_list = [
-        Logs(timestamp=now - timedelta(seconds=4), resources={"service.name": "svc-a"}, attributes={"http.method": "GET"},    body_v2=json.dumps({"score": 80}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": "svc-a"}, attributes={"http.method": "POST"},   body_v2=json.dumps({"score": 90}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "svc-b"}, attributes={"http.method": "GET"},    body_v2=json.dumps({"score": 60}), body_promoted="", severity_text="WARN"),
+        Logs(timestamp=now - timedelta(seconds=4), resources={"service.name": "svc-a"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 80}), body_promoted="", severity_text="INFO"),
+        Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": "svc-a"}, attributes={"http.method": "POST"}, body_v2=json.dumps({"score": 90}), body_promoted="", severity_text="INFO"),
+        Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "svc-b"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 60}), body_promoted="", severity_text="WARN"),
         Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "svc-b"}, attributes={"http.method": "DELETE"}, body_v2=json.dumps({"score": 70}), body_promoted="", severity_text="WARN"),
     ]
     export_json_types(logs_list)
@@ -341,15 +339,14 @@ def test_non_body_aggregation(
             "groupBy": [build_group_by_field("service.name"), build_group_by_field("http.method", "string", "attribute")],
             "aggregation": "count()",
             # INFO logs only: svc-a/GET=1, svc-a/POST=1; svc-b logs are WARN → excluded
-            "validate": lambda r: (lambda pairs: pairs.get(("svc-a", "GET")) == 1 and pairs.get(("svc-a", "POST")) == 1 and all(k[0] != "svc-b" for k in pairs))(
-                {(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}
-            ),
-        }
+            "validate": lambda r: (lambda pairs: pairs.get(("svc-a", "GET")) == 1 and pairs.get(("svc-a", "POST")) == 1 and all(k[0] != "svc-b" for k in pairs))({(str(row[0]), str(row[1])): row[-1] for row in get_scalar_table_data(r.json()) if len(row) >= 3}),
+        },
     ]
 
     for case in cases:
         case.setdefault("groupBy", None)
         _run_case(signoz, token, start_ms, end_ms, case)
+
 
 # ============================================================================
 # OrderBy — Non body paths ordered by non-body fields
@@ -382,9 +379,9 @@ def test_non_body_orderby(
     end_ms = int(now.timestamp() * 1000)
 
     logs_list = [
-        Logs(timestamp=now - timedelta(seconds=4), resources={"service.name": "svc-a"}, attributes={"http.method": "GET"},    body_v2=json.dumps({"score": 80}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": "svc-a"}, attributes={"http.method": "POST"},   body_v2=json.dumps({"score": 90}), body_promoted="", severity_text="INFO"),
-        Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "svc-b"}, attributes={"http.method": "GET"},    body_v2=json.dumps({"score": 60}), body_promoted="", severity_text="WARN"),
+        Logs(timestamp=now - timedelta(seconds=4), resources={"service.name": "svc-a"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 80}), body_promoted="", severity_text="INFO"),
+        Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": "svc-a"}, attributes={"http.method": "POST"}, body_v2=json.dumps({"score": 90}), body_promoted="", severity_text="INFO"),
+        Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": "svc-b"}, attributes={"http.method": "GET"}, body_v2=json.dumps({"score": 60}), body_promoted="", severity_text="WARN"),
         Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "svc-b"}, attributes={"http.method": "DELETE"}, body_v2=json.dumps({"score": 70}), body_promoted="", severity_text="WARN"),
     ]
     export_json_types(logs_list)
