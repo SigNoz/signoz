@@ -45,17 +45,16 @@ export function useExpression(): string {
 
 export function useQuerySearchOnChange(): (expression: string) => void {
 	const store = useQuerySearchV2Store();
-	const initialExpression = useStore(store, (s) => s.initialExpression);
 
 	return useCallback(
 		(expression: string): void => {
 			const userOnly = getUserExpressionFromCombined(
-				initialExpression,
+				store.getState().initialExpression,
 				expression,
 			);
 			store.getState().setInputExpression(userOnly);
 		},
-		[store, initialExpression],
+		[store],
 	);
 }
 
