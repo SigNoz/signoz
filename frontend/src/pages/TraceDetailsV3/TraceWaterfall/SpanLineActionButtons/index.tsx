@@ -1,6 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -22,7 +22,7 @@ export default function SpanLineActionButtons({
 	return (
 		<div className={styles.root}>
 			<TooltipProvider>
-				<Tooltip>
+				<TooltipRoot>
 					<TooltipTrigger asChild>
 						<Button
 							variant="ghost"
@@ -35,7 +35,7 @@ export default function SpanLineActionButtons({
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent className={styles.tooltip}>Copy Span Link</TooltipContent>
-				</Tooltip>
+				</TooltipRoot>
 			</TooltipProvider>
 		</div>
 	);
