@@ -37,6 +37,7 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty, isEqual } from 'lodash-es';
 import Tabs2 from 'periscope/components/Tabs2';
+import { useAlertRuleOptional } from 'providers/Alert';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
@@ -91,7 +92,6 @@ const ALERT_SETUP_GUIDE_URLS: Record<AlertTypes, string> = {
 		'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
 	alertType,
 	formInstance,
@@ -158,6 +158,32 @@ function FormAlertRules({
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
+
+	const alertRuleContext = useAlertRuleOptional();
+	const providerAlertName = alertRuleContext?.alertRuleName;
+	useEffect(() => {
+		if (providerAlertName) {
+			setAlertDef((prev) => {
+				if (prev.alert === providerAlertName) {
+					return prev;
+				}
+				return { ...prev, alert: providerAlertName };
+			});
+			formInstance.setFieldsValue({ alert: providerAlertName });
+		}
+	}, [providerAlertName, formInstance]);
+
+	// Wrap setAlertDef to sync alert name to provider when user types
+	const handleSetAlertDef = useCallback(
+		(newDef: AlertDef) => {
+			setAlertDef(newDef);
+			// Sync alert name change to provider for header display
+			if (newDef.alert !== alertDef.alert && alertRuleContext?.setAlertRuleName) {
+				alertRuleContext.setAlertRuleName(newDef.alert);
+			}
+		},
+		[alertDef.alert, alertRuleContext],
+	);
 
 	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
 
@@ -582,7 +608,6 @@ function FormAlertRules({
 				`${ruleId}`,
 			]);
 
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			setTimeout(() => {
 				urlQuery.delete(QueryParams.compositeQuery);
 				urlQuery.delete(QueryParams.panelTypes);
@@ -696,7 +721,7 @@ function FormAlertRules({
 	const renderBasicInfo = (): JSX.Element => (
 		<BasicInfo
 			alertDef={alertDef}
-			setAlertDef={setAlertDef}
+			setAlertDef={handleSetAlertDef}
 			isNewRule={isNewRule}
 		/>
 	);

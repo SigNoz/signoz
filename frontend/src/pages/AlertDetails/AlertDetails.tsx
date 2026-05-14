@@ -13,6 +13,7 @@ import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/ut
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { useAlertRule } from 'providers/Alert';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
@@ -60,6 +61,7 @@ function AlertDetails(): JSX.Element {
 	const { pathname } = useLocation();
 	const { routes } = useRouteTabUtils();
 	const params = useUrlQuery();
+	const { alertRuleName } = useAlertRule();
 
 	const { isLoading, isError, ruleId, isValidRuleId, alertDetailsResponse } =
 		useGetAlertRuleDetails();
@@ -69,7 +71,7 @@ function AlertDetails(): JSX.Element {
 	}, [params]);
 
 	const getDocumentTitle = useMemo(() => {
-		const alertTitle = alertDetailsResponse?.data?.alert;
+		const alertTitle = alertRuleName ?? alertDetailsResponse?.data?.alert;
 		if (alertTitle) {
 			return alertTitle;
 		}
@@ -80,7 +82,7 @@ function AlertDetails(): JSX.Element {
 			return document.title;
 		}
 		return 'Alert Not Found';
-	}, [alertDetailsResponse?.data?.alert, isTestAlert, isLoading]);
+	}, [alertRuleName, alertDetailsResponse?.data?.alert, isTestAlert, isLoading]);
 
 	useEffect(() => {
 		document.title = getDocumentTitle;

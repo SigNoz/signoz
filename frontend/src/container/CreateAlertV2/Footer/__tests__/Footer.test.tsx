@@ -7,6 +7,7 @@ import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationS
 
 import * as createAlertState from '../../context';
 import Footer from '../Footer';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 // Mock the hooks used by Footer component
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -64,6 +65,12 @@ const mockAlertContextState = createMockAlertContextState({
 	},
 });
 
+const WrappedFooter = (): JSX.Element => (
+	<MockQueryClientProvider>
+		<Footer />
+	</MockQueryClientProvider>
+);
+
 jest
 	.spyOn(createAlertState, 'useCreateAlertState')
 	.mockReturnValue(mockAlertContextState);
@@ -97,20 +104,20 @@ describe('Footer', () => {
 	});
 
 	it('should render the component with 3 buttons', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		expect(screen.getByText(SAVE_ALERT_RULE_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(TEST_NOTIFICATION_TEXT)).toBeInTheDocument();
 		expect(screen.getByText(DISCARD_TEXT)).toBeInTheDocument();
 	});
 
 	it('discard action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(DISCARD_TEXT));
 		expect(mockDiscardAlertRule).toHaveBeenCalled();
 	});
 
 	it('save alert rule action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
 		expect(mockCreateAlertRule).toHaveBeenCalled();
 	});
@@ -120,13 +127,13 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isEditMode: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
 		expect(mockUpdateAlertRule).toHaveBeenCalled();
 	});
 
 	it('test notification action works correctly', () => {
-		render(<Footer />);
+		render(<WrappedFooter />);
 		fireEvent.click(screen.getByText(TEST_NOTIFICATION_TEXT));
 		expect(mockTestAlertRule).toHaveBeenCalled();
 	});
@@ -136,7 +143,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -152,7 +159,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// Target the button elements directly instead of the text spans inside them
 		expect(
@@ -169,7 +176,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// Target the button elements directly instead of the text spans inside them
 		expect(
@@ -189,7 +196,7 @@ describe('Footer', () => {
 				name: '',
 			},
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -217,7 +224,7 @@ describe('Footer', () => {
 			},
 		});
 
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -245,7 +252,7 @@ describe('Footer', () => {
 			},
 		});
 
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
@@ -261,7 +268,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isTestingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When testing alert rule, the play icon is replaced with a loader icon
 		expect(
@@ -276,7 +283,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isUpdatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When updating alert rule, the check icon is replaced with a loader icon
 		expect(
@@ -291,7 +298,7 @@ describe('Footer', () => {
 			...mockAlertContextState,
 			isCreatingAlertRule: true,
 		});
-		render(<Footer />);
+		render(<WrappedFooter />);
 
 		// When creating alert rule, the check icon is replaced with a loader icon
 		expect(
