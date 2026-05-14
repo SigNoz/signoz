@@ -221,11 +221,6 @@ def test_non_body_filter_groupby_aggregation(
 #   log2 — svc-a, POST,   INFO, score=90, ts=now-3s
 #   log3 — svc-b, GET,    WARN, score=60, ts=now-2s
 #   log4 — svc-b, DELETE, WARN, score=70, ts=now-1s
-#
-# Aggregation cross-reference:
-#   GROUP BY service.name  → svc-a: sum=170, svc-b: sum=130
-#   GROUP BY severity_text → INFO: count=2, WARN: count=2
-#   GROUP BY http.method   → GET: sum=140(80+60), POST: sum=90, DELETE: sum=70
 # ============================================================================
 
 
