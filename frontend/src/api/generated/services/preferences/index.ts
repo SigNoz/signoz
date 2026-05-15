@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -99,9 +100,7 @@ export function useListOrgPreferences<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -202,9 +201,7 @@ export function useGetOrgPreference<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -229,13 +226,15 @@ export const invalidateGetOrgPreference = async (
  */
 export const updateOrgPreference = (
 	{ name }: UpdateOrgPreferencePathParameters,
-	preferencetypesUpdatablePreferenceDTO: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	preferencetypesUpdatablePreferenceDTO?: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/org/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
+		signal,
 	});
 };
 
@@ -248,7 +247,7 @@ export const getUpdateOrgPreferenceMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -257,7 +256,7 @@ export const getUpdateOrgPreferenceMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateOrgPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
@@ -274,7 +273,7 @@ export const getUpdateOrgPreferenceMutationOptions = <
 		Awaited<ReturnType<typeof updateOrgPreference>>,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -289,7 +288,8 @@ export type UpdateOrgPreferenceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateOrgPreference>>
 >;
 export type UpdateOrgPreferenceMutationBody =
-	BodyType<PreferencetypesUpdatablePreferenceDTO>;
+	| BodyType<PreferencetypesUpdatablePreferenceDTO>
+	| undefined;
 export type UpdateOrgPreferenceMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -305,7 +305,7 @@ export const useUpdateOrgPreference = <
 		TError,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -314,13 +314,11 @@ export const useUpdateOrgPreference = <
 	TError,
 	{
 		pathParams: UpdateOrgPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateOrgPreferenceMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateOrgPreferenceMutationOptions(options));
 };
 /**
  * This endpoint lists all user preferences
@@ -388,9 +386,7 @@ export function useListUserPreferences<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -491,9 +487,7 @@ export function useGetUserPreference<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -518,13 +512,15 @@ export const invalidateGetUserPreference = async (
  */
 export const updateUserPreference = (
 	{ name }: UpdateUserPreferencePathParameters,
-	preferencetypesUpdatablePreferenceDTO: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	preferencetypesUpdatablePreferenceDTO?: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/user/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
+		signal,
 	});
 };
 
@@ -537,7 +533,7 @@ export const getUpdateUserPreferenceMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -546,7 +542,7 @@ export const getUpdateUserPreferenceMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateUserPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
@@ -563,7 +559,7 @@ export const getUpdateUserPreferenceMutationOptions = <
 		Awaited<ReturnType<typeof updateUserPreference>>,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -578,7 +574,8 @@ export type UpdateUserPreferenceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUserPreference>>
 >;
 export type UpdateUserPreferenceMutationBody =
-	BodyType<PreferencetypesUpdatablePreferenceDTO>;
+	| BodyType<PreferencetypesUpdatablePreferenceDTO>
+	| undefined;
 export type UpdateUserPreferenceMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -594,7 +591,7 @@ export const useUpdateUserPreference = <
 		TError,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -603,11 +600,9 @@ export const useUpdateUserPreference = <
 	TError,
 	{
 		pathParams: UpdateUserPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateUserPreferenceMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateUserPreferenceMutationOptions(options));
 };

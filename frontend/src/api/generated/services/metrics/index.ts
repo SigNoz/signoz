@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -122,9 +123,7 @@ export function useListMetrics<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -226,9 +225,7 @@ export function useGetMetricAlerts<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -343,9 +340,7 @@ export function useGetMetricAttributes<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -451,9 +446,7 @@ export function useGetMetricDashboards<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -558,9 +551,7 @@ export function useGetMetricHighlights<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -662,9 +653,7 @@ export function useGetMetricMetadata<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -689,7 +678,7 @@ export const invalidateGetMetricMetadata = async (
  */
 export const updateMetricMetadata = (
 	{ metricName }: UpdateMetricMetadataPathParameters,
-	metricsexplorertypesUpdateMetricMetadataRequestDTO: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
+	metricsexplorertypesUpdateMetricMetadataRequestDTO?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
@@ -710,7 +699,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		},
 		TContext
 	>;
@@ -719,7 +708,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 	},
 	TContext
 > => {
@@ -736,7 +725,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -751,7 +740,8 @@ export type UpdateMetricMetadataMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMetricMetadata>>
 >;
 export type UpdateMetricMetadataMutationBody =
-	BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+	| BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>
+	| undefined;
 export type UpdateMetricMetadataMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -767,7 +757,7 @@ export const useUpdateMetricMetadata = <
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		},
 		TContext
 	>;
@@ -776,20 +766,18 @@ export const useUpdateMetricMetadata = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateMetricMetadataMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateMetricMetadataMutationOptions(options));
 };
 /**
  * Returns raw time series data points for a metric within a time range (max 30 minutes). Each series includes labels and timestamp/value pairs.
  * @summary Inspect raw metric data points
  */
 export const inspectMetrics = (
-	metricsexplorertypesInspectMetricsRequestDTO: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>,
+	metricsexplorertypesInspectMetricsRequestDTO?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<InspectMetrics200>({
@@ -808,13 +796,13 @@ export const getInspectMetricsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['inspectMetrics'];
@@ -828,7 +816,7 @@ export const getInspectMetricsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof inspectMetrics>>,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -842,7 +830,8 @@ export type InspectMetricsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof inspectMetrics>>
 >;
 export type InspectMetricsMutationBody =
-	BodyType<MetricsexplorertypesInspectMetricsRequestDTO>;
+	| BodyType<MetricsexplorertypesInspectMetricsRequestDTO>
+	| undefined;
 export type InspectMetricsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -855,18 +844,16 @@ export const useInspectMetrics = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getInspectMetricsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getInspectMetricsMutationOptions(options));
 };
 /**
  * Lightweight endpoint that checks if any non-SigNoz metrics have been ingested, used for onboarding status detection
@@ -936,9 +923,7 @@ export function useGetMetricsOnboardingStatus<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -961,7 +946,7 @@ export const invalidateGetMetricsOnboardingStatus = async (
  * @summary Get metrics statistics
  */
 export const getMetricsStats = (
-	metricsexplorertypesStatsRequestDTO: BodyType<MetricsexplorertypesStatsRequestDTO>,
+	metricsexplorertypesStatsRequestDTO?: BodyType<MetricsexplorertypesStatsRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricsStats200>({
@@ -980,13 +965,13 @@ export const getGetMetricsStatsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['getMetricsStats'];
@@ -1000,7 +985,7 @@ export const getGetMetricsStatsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsStats>>,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1014,7 +999,8 @@ export type GetMetricsStatsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsStats>>
 >;
 export type GetMetricsStatsMutationBody =
-	BodyType<MetricsexplorertypesStatsRequestDTO>;
+	| BodyType<MetricsexplorertypesStatsRequestDTO>
+	| undefined;
 export type GetMetricsStatsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1027,25 +1013,23 @@ export const useGetMetricsStats = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getGetMetricsStatsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getGetMetricsStatsMutationOptions(options));
 };
 /**
  * This endpoint returns a treemap visualization showing the proportional distribution of metrics by sample count or time series count
  * @summary Get metrics treemap
  */
 export const getMetricsTreemap = (
-	metricsexplorertypesTreemapRequestDTO: BodyType<MetricsexplorertypesTreemapRequestDTO>,
+	metricsexplorertypesTreemapRequestDTO?: BodyType<MetricsexplorertypesTreemapRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricsTreemap200>({
@@ -1064,13 +1048,13 @@ export const getGetMetricsTreemapMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['getMetricsTreemap'];
@@ -1084,7 +1068,7 @@ export const getGetMetricsTreemapMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1098,7 +1082,8 @@ export type GetMetricsTreemapMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsTreemap>>
 >;
 export type GetMetricsTreemapMutationBody =
-	BodyType<MetricsexplorertypesTreemapRequestDTO>;
+	| BodyType<MetricsexplorertypesTreemapRequestDTO>
+	| undefined;
 export type GetMetricsTreemapMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1111,16 +1096,14 @@ export const useGetMetricsTreemap = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getGetMetricsTreemapMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getGetMetricsTreemapMutationOptions(options));
 };

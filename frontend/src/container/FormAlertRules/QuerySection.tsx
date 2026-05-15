@@ -56,7 +56,9 @@ function QuerySection({
 
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
 
-	const renderChQueryUI = (): JSX.Element => <ChQuerySection />;
+	const renderChQueryUI = (): JSX.Element => (
+		<ChQuerySection alertType={alertType} />
+	);
 
 	const isDarkMode = useIsDarkMode();
 

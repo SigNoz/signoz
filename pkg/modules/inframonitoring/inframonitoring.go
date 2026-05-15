@@ -16,6 +16,9 @@ type Handler interface {
 	ListClusters(http.ResponseWriter, *http.Request)
 	ListVolumes(http.ResponseWriter, *http.Request)
 	ListDeployments(http.ResponseWriter, *http.Request)
+	ListStatefulSets(http.ResponseWriter, *http.Request)
+	ListJobs(http.ResponseWriter, *http.Request)
+	ListDaemonSets(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
@@ -26,4 +29,7 @@ type Module interface {
 	ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error)
 	ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error)
 	ListDeployments(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (*inframonitoringtypes.Deployments, error)
+	ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error)
+	ListJobs(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (*inframonitoringtypes.Jobs, error)
+	ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDaemonSets) (*inframonitoringtypes.DaemonSets, error)
 }

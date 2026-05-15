@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -98,9 +99,7 @@ export function useListAuthDomains<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -123,7 +122,7 @@ export const invalidateListAuthDomains = async (
  * @summary Create auth domain
  */
 export const createAuthDomain = (
-	authtypesPostableAuthDomainDTO: BodyType<AuthtypesPostableAuthDomainDTO>,
+	authtypesPostableAuthDomainDTO?: BodyType<AuthtypesPostableAuthDomainDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateAuthDomain201>({
@@ -142,13 +141,13 @@ export const getCreateAuthDomainMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 	TContext
 > => {
 	const mutationKey = ['createAuthDomain'];
@@ -162,7 +161,7 @@ export const getCreateAuthDomainMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAuthDomain>>,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> }
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -176,7 +175,8 @@ export type CreateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAuthDomain>>
 >;
 export type CreateAuthDomainMutationBody =
-	BodyType<AuthtypesPostableAuthDomainDTO>;
+	| BodyType<AuthtypesPostableAuthDomainDTO>
+	| undefined;
 export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -189,27 +189,29 @@ export const useCreateAuthDomain = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateAuthDomainMutationOptions(options));
 };
 /**
  * This endpoint deletes an auth domain
  * @summary Delete auth domain
  */
-export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) => {
+export const deleteAuthDomain = (
+	{ id }: DeleteAuthDomainPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -275,9 +277,7 @@ export const useDeleteAuthDomain = <
 	{ pathParams: DeleteAuthDomainPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteAuthDomainMutationOptions(options));
 };
 /**
  * This endpoint returns an auth domain by ID
@@ -361,9 +361,7 @@ export function useGetAuthDomain<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -388,13 +386,15 @@ export const invalidateGetAuthDomain = async (
  */
 export const updateAuthDomain = (
 	{ id }: UpdateAuthDomainPathParameters,
-	authtypesUpdatableAuthDomainDTO: BodyType<AuthtypesUpdatableAuthDomainDTO>,
+	authtypesUpdatableAuthDomainDTO?: BodyType<AuthtypesUpdatableAuthDomainDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesUpdatableAuthDomainDTO,
+		signal,
 	});
 };
 
@@ -407,7 +407,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -416,7 +416,7 @@ export const getUpdateAuthDomainMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {
@@ -433,7 +433,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -448,7 +448,8 @@ export type UpdateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAuthDomain>>
 >;
 export type UpdateAuthDomainMutationBody =
-	BodyType<AuthtypesUpdatableAuthDomainDTO>;
+	| BodyType<AuthtypesUpdatableAuthDomainDTO>
+	| undefined;
 export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -463,7 +464,7 @@ export const useUpdateAuthDomain = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -472,11 +473,9 @@ export const useUpdateAuthDomain = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateAuthDomainMutationOptions(options));
 };

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import styles from './SpanDetailsPanel.module.scss';
 import { TraceIdField } from './TraceIdField';
 
 interface HighlightedOption {
@@ -17,7 +18,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
 				<Badge color="vanilla">
-					<span className="span-details-panel__service-dot" />
+					<span className={styles.serviceDot} />
 					{span['service.name']}
 				</Badge>
 			) : null,

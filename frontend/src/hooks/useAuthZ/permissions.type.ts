@@ -4,12 +4,8 @@ export default {
 	data: {
 		resources: [
 			{
-				kind: 'role',
-				type: 'metaresources',
-			},
-			{
-				kind: 'serviceaccount',
-				type: 'metaresources',
+				kind: 'factor-api-key',
+				type: 'metaresource',
 			},
 			{
 				kind: 'role',
@@ -22,12 +18,13 @@ export default {
 		],
 		relations: {
 			assignee: ['role'],
-			attach: ['role', 'serviceaccount'],
-			create: ['metaresources'],
-			delete: ['role', 'serviceaccount'],
-			list: ['metaresources'],
-			read: ['role', 'serviceaccount'],
-			update: ['role', 'serviceaccount'],
+			attach: ['metaresource', 'role', 'serviceaccount'],
+			create: ['metaresource', 'role', 'serviceaccount'],
+			delete: ['metaresource', 'role', 'serviceaccount'],
+			detach: ['metaresource', 'role', 'serviceaccount'],
+			list: ['metaresource', 'role', 'serviceaccount'],
+			read: ['metaresource', 'role', 'serviceaccount'],
+			update: ['metaresource', 'role', 'serviceaccount'],
 		},
 	},
 } as const;
