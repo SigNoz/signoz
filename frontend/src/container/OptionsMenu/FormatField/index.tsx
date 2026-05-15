@@ -1,21 +1,24 @@
+import './FormatField.styles.scss';
+
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RadioChangeEvent } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { LogViewMode } from 'container/LogsTable';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
-import { FormatFieldWrapper, RadioButton, RadioGroup } from './styles';
+import { FormatFieldWrapper } from './styles';
 
 function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 
 	const onChange = useCallback(
-		(event: RadioChangeEvent) => {
+		(value: string) => {
 			if (!config) {
 				return;
 			}
 
-			config.onChange(event.target.value);
+			config.onChange(value as LogViewMode);
 		},
 		[config],
 	);
@@ -27,16 +30,23 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 	return (
 		<FormatFieldWrapper direction="vertical">
 			<FieldTitle>{t('options_menu.format')}</FieldTitle>
-			<RadioGroup
-				size="small"
-				buttonStyle="solid"
+			<ToggleGroup
+				type="single"
+				size="sm"
 				value={config.value}
 				onChange={onChange}
+				className="format-field-toggle-group"
 			>
-				<RadioButton value="raw">{t('options_menu.raw')}</RadioButton>
-				<RadioButton value="list">{t('options_menu.default')}</RadioButton>
-				<RadioButton value="table">{t('options_menu.column')}</RadioButton>
-			</RadioGroup>
+				<ToggleGroupItem value="raw" className="format-field-toggle-item">
+					{t('options_menu.raw')}
+				</ToggleGroupItem>
+				<ToggleGroupItem value="list" className="format-field-toggle-item">
+					{t('options_menu.default')}
+				</ToggleGroupItem>
+				<ToggleGroupItem value="table" className="format-field-toggle-item">
+					{t('options_menu.column')}
+				</ToggleGroupItem>
+			</ToggleGroup>
 		</FormatFieldWrapper>
 	);
 }

@@ -4,9 +4,9 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Divider, Drawer, Tooltip } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
-import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -197,8 +197,8 @@ function LogDetailInner({
 
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleModeChange = (value: string): void => {
+		setSelectedView(value as VIEWS);
 		setIsEdit(false);
 		setIsFilterVisible(false);
 	};
@@ -452,12 +452,13 @@ function LogDetailInner({
 				</div>
 
 				<div className="tabs-and-search">
-					<Radio.Group
+					<ToggleGroup
+						type="single"
 						className="views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
 					>
-						<Radio.Button
+						<ToggleGroupItem
 							className={
 								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 							}
@@ -467,8 +468,8 @@ function LogDetailInner({
 								<Table size={14} />
 								Overview
 							</div>
-						</Radio.Button>
-						<Radio.Button
+						</ToggleGroupItem>
+						<ToggleGroupItem
 							className={
 								selectedView === VIEW_TYPES.JSON ? 'selected_view tab' : 'tab'
 							}
@@ -478,8 +479,8 @@ function LogDetailInner({
 								<Braces size={14} />
 								JSON
 							</div>
-						</Radio.Button>
-						<Radio.Button
+						</ToggleGroupItem>
+						<ToggleGroupItem
 							className={
 								selectedView === VIEW_TYPES.CONTEXT ? 'selected_view tab' : 'tab'
 							}
@@ -489,8 +490,8 @@ function LogDetailInner({
 								<TextSelect size={14} />
 								Context
 							</div>
-						</Radio.Button>
-						<Radio.Button
+						</ToggleGroupItem>
+						<ToggleGroupItem
 							className={
 								selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
 							}
@@ -500,8 +501,8 @@ function LogDetailInner({
 								<Histogram size="md" />
 								Metrics
 							</div>
-						</Radio.Button>
-					</Radio.Group>
+						</ToggleGroupItem>
+					</ToggleGroup>
 
 					<div className="log-detail-drawer__actions">
 						{selectedView === VIEW_TYPES.CONTEXT && (

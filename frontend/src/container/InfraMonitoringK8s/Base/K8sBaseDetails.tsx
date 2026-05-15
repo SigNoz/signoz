@@ -8,9 +8,9 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Button, Divider, Drawer, Tooltip } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
-import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
@@ -330,8 +330,8 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [getMinMaxTime, selectedTime]);
 
-	const handleTabChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleTabChange = (value: string): void => {
+		setSelectedView(value);
 		setLogFiltersParam(null);
 		setTracesFiltersParam(null);
 		setEventsFiltersParam(null);
@@ -339,7 +339,7 @@ export default function K8sBaseDetails<T>({
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
 			category: eventCategory,
-			view: e.target.value,
+			view: value,
 		});
 	};
 
@@ -520,13 +520,14 @@ export default function K8sBaseDetails<T>({
 
 					{!hideDetailViewTabs && (
 						<div className="views-tabs-container">
-							<Radio.Group
+							<ToggleGroup
+								type="single"
 								className="views-tabs"
 								onChange={handleTabChange}
 								value={selectedView}
 							>
 								{tabVisibility.showMetrics && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 										}
@@ -536,10 +537,10 @@ export default function K8sBaseDetails<T>({
 											<BarChart size={14} />
 											Metrics
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{tabVisibility.showLogs && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
 										}
@@ -549,10 +550,10 @@ export default function K8sBaseDetails<T>({
 											<ScrollText size={14} />
 											Logs
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{tabVisibility.showTraces && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
 										}
@@ -562,10 +563,10 @@ export default function K8sBaseDetails<T>({
 											<DraftingCompass size={14} />
 											Traces
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{tabVisibility.showEvents && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
 										}
@@ -575,10 +576,10 @@ export default function K8sBaseDetails<T>({
 											<ChevronsLeftRight size={14} />
 											Events
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{tabVisibility.showContainers && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
 										}
@@ -588,10 +589,10 @@ export default function K8sBaseDetails<T>({
 											<Package2 size={14} />
 											Containers
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{tabVisibility.showProcesses && (
-									<Radio.Button
+									<ToggleGroupItem
 										className={
 											selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
 										}
@@ -601,10 +602,10 @@ export default function K8sBaseDetails<T>({
 											<ChevronsLeftRight size={14} />
 											Processes
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								)}
 								{customTabs?.map((tab) => (
-									<Radio.Button
+									<ToggleGroupItem
 										key={tab.key}
 										className={selectedView === tab.key ? 'selected_view tab' : 'tab'}
 										value={tab.key}
@@ -613,9 +614,9 @@ export default function K8sBaseDetails<T>({
 											{tab.icon}
 											{tab.label}
 										</div>
-									</Radio.Button>
+									</ToggleGroupItem>
 								))}
-							</Radio.Group>
+							</ToggleGroup>
 
 							{selectedView === VIEW_TYPES.LOGS && (
 								<Tooltip title="Go to Logs Explorer" placement="left">

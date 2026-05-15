@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Radio } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -61,20 +61,23 @@ function MessagingQueuesOptions({
 		const detailTypes =
 			MQServiceDetailTypePerView(producerLatencyOption)[selectedView] || [];
 		return detailTypes.map((detailType) => (
-			<Radio.Button key={detailType} value={detailType}>
+			<ToggleGroupItem key={detailType} value={detailType}>
 				{ConsumerLagDetailTitle[detailType]}
-			</Radio.Button>
+			</ToggleGroupItem>
 		));
 	};
 
 	return (
-		<Radio.Group
-			onChange={(e): void => handleChange(e.target.value)}
+		<ToggleGroup
+			type="single"
+			onChange={(value): void =>
+				handleChange(value as MessagingQueueServiceDetailType)
+			}
 			value={currentTab}
 			className="mq-details-options"
 		>
 			{renderRadioButtons()}
-		</Radio.Group>
+		</ToggleGroup>
 	);
 }
 
