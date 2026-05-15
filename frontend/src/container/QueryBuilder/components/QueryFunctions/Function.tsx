@@ -7,7 +7,6 @@ import {
 	metricQueryFunctionOptions,
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,7 +31,6 @@ export default function Function({
 	handleUpdateFunctionName,
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
 	const { showInput, disabled, inputType, selectOptions } =
@@ -89,9 +87,7 @@ export default function Function({
 				dropdownStyle={{
 					minWidth: 200,
 					borderRadius: '4px',
-					border: isDarkMode
-						? '1px solid var(--bg-slate-400)'
-						: '1px solid var(--bg-vanilla-300)',
+					border: '1px solid var(--border)',
 					boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
 				}}
 				placement="bottomRight"
@@ -116,9 +112,7 @@ export default function Function({
 						dropdownStyle={{
 							minWidth: 160,
 							borderRadius: '4px',
-							border: isDarkMode
-								? '1px solid var(--bg-slate-400)'
-								: '1px solid var(--bg-vanilla-300)',
+							border: '1px solid var(--border)',
 							boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
 						}}
 						style={{ minWidth: '120px' }}
