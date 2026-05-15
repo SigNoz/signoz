@@ -56,6 +56,25 @@ func ErrIfVerbNotValidForType(verb Verb, typed Type) error {
 	return nil
 }
 
+func ErrIfVerbNotValidForResource(verb Verb, ref ResourceRef) error {
+	if err := ErrIfVerbNotValidForType(verb, ref.Type); err != nil {
+		return err
+	}
+
+	resource, err := NewResourceFromTypeAndKind(ref.Type, ref.Kind)
+	if err != nil {
+		return err
+	}
+
+	for _, allowed := range resource.AllowedVerbs() {
+		if verb == allowed {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for resource %s:%s", verb.StringValue(), ref.Type.StringValue(), ref.Kind.String())
+}
+
 func (typed *Type) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)

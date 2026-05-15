@@ -140,6 +140,14 @@ function TanStackTableInner<TData>(
 		limit: pagination?.defaultLimit,
 	});
 
+	const setOrderBy = useCallback(
+		(sort: SortState | null) => {
+			internalSetOrderBy(sort);
+			onSort?.(sort);
+		},
+		[internalSetOrderBy, onSort],
+	);
+
 	const setPage = useCallback(
 		(p: number) => {
 			internalSetPage(p);
@@ -155,14 +163,6 @@ function TanStackTableInner<TData>(
 			pagination?.onLimitChange?.(l);
 		},
 		[internalSetLimit, internalSetPage, pagination],
-	);
-
-	const setOrderBy = useCallback(
-		(sort: SortState | null) => {
-			internalSetOrderBy(sort);
-			onSort?.(sort);
-		},
-		[internalSetOrderBy, onSort],
 	);
 
 	const isGrouped = (groupBy?.length ?? 0) > 0;
@@ -632,15 +632,19 @@ function TanStackTableInner<TData>(
 								total={effectiveTotalCount}
 								onPageChange={(p): void => {
 									setPage(p);
+									pagination.onPageChange?.(p);
 								}}
 							/>
-							{(pagination.showPageSize ?? true) && (
+							{pagination.showPageSize !== false && (
 								<div className={viewStyles.paginationPageSize}>
 									<ComboboxSimple
 										testId="pagination-page-size"
 										value={limit?.toString()}
 										defaultValue="10"
-										onChange={(value): void => setLimit(+value)}
+										onChange={(value): void => {
+											setLimit(+value);
+											pagination.onLimitChange?.(+value);
+										}}
 										items={paginationPageSizeItems}
 									/>
 								</div>
