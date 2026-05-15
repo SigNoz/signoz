@@ -70,6 +70,7 @@ function ExpandedAlertsTable({
 					onPageChange: handlePageChange,
 				}}
 				paginationClassname={styles.expandedPagination}
+				enableAlternatingRowColors
 			/>
 		</div>
 	);

@@ -59,6 +59,20 @@
 	--tanstack-cell-padding-left-override: 5px;
 	--tanstack-cell-padding-right-override: 5px;
 
+	--tanstack-cell-padding-left-override: 16px;
+	--tanstack-cell-padding-right-override: 16px;
+
+	--tanstack-table-row-odd-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 2%,
+		transparent
+	);
+	--tanstack-table-row-even-bg: color-mix(
+		in srgb,
+		var(--l1-foreground) 1%,
+		transparent
+	);
+
 	--tanstack-expansion-first-col-padding-left: 20px;
 
 	--badge-cursor: pointer;

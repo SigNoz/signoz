@@ -1,8 +1,38 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen } from '@testing-library/react';
 
 import LabelColumn from './LabelColumn';
+
+let resizeCallback: ResizeObserverCallback | null = null;
+
+class MockResizeObserver {
+	constructor(callback: ResizeObserverCallback) {
+		resizeCallback = callback;
+	}
+
+	observe = jest.fn();
+	unobserve = jest.fn();
+	disconnect = jest.fn();
+}
+
+function triggerResize(width: number): void {
+	if (resizeCallback) {
+		act(() => {
+			resizeCallback?.(
+				[{ contentRect: { width } } as ResizeObserverEntry],
+				{} as ResizeObserver,
+			);
+		});
+	}
+}
+
+beforeAll(() => {
+	global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+});
+
+afterEach(() => {
+	resizeCallback = null;
+});
 
 function renderWithProviders(
 	ui: React.ReactElement,
@@ -21,17 +51,20 @@ describe('LabelColumn', () => {
 		expect(screen.getByTestId('label-tag-region')).toBeInTheDocument();
 	});
 
-	it('should truncate labels and show +N badge when more than 5 labels', () => {
+	it('should truncate labels and show +N badge when container is narrow', () => {
 		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
 
 		renderWithProviders(<LabelColumn labels={labels} />);
+
+		// Simulate narrow container that fits ~3 badges (500px = 3 badges + overflow)
+		triggerResize(500);
 
 		// First 3 visible
 		expect(screen.getByTestId('label-tag-env')).toBeInTheDocument();
 		expect(screen.getByTestId('label-tag-service')).toBeInTheDocument();
 		expect(screen.getByTestId('label-tag-region')).toBeInTheDocument();
 
-		// +3 badge for remaining
+		// Remaining in overflow badge
 		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
 	});
 
@@ -58,18 +91,18 @@ describe('LabelColumn', () => {
 		expect(screen.getByTestId('label-tag-service')).toHaveTextContent('service');
 	});
 
-	it('should show popover with all labels when clicking +N badge', async () => {
-		const user = userEvent.setup();
+	it('should show overflow badge with remaining count when container is narrow', () => {
 		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
 
 		renderWithProviders(<LabelColumn labels={labels} />);
 
-		await user.click(screen.getByTestId('label-overflow-badge'));
+		// Simulate narrow container to trigger overflow (shows 3 labels)
+		triggerResize(500);
 
-		// All labels should appear in popover
-		expect(screen.getByTestId('label-popover')).toBeInTheDocument();
-		expect(screen.getByTestId('label-popover-item-env')).toBeInTheDocument();
-		expect(screen.getByTestId('label-popover-item-version')).toBeInTheDocument();
+		// Overflow badge shows +3 (remaining labels)
+		const overflowBadge = screen.getByTestId('label-overflow-badge');
+		expect(overflowBadge).toBeInTheDocument();
+		expect(overflowBadge).toHaveTextContent('+3');
 	});
 
 	it('should render empty when no labels provided', () => {
@@ -85,5 +118,22 @@ describe('LabelColumn', () => {
 		renderWithProviders(<LabelColumn labels={labels} />);
 
 		expect(screen.getByTestId('label-tag-env')).toBeInTheDocument();
+	});
+
+	it('should show all labels when container is wide enough', () => {
+		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
+
+		renderWithProviders(<LabelColumn labels={labels} />);
+
+		// Simulate wide container
+		triggerResize(1000);
+
+		// All labels visible
+		labels.forEach((label) => {
+			expect(screen.getByTestId(`label-tag-${label}`)).toBeInTheDocument();
+		});
+
+		// No overflow badge
+		expect(screen.queryByTestId('label-overflow-badge')).not.toBeInTheDocument();
 	});
 });

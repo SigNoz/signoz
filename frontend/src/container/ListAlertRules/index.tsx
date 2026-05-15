@@ -96,9 +96,11 @@ function ListAlertRules(): JSX.Element {
 			...columns,
 			{
 				id: 'actions',
-				header: '',
+				header: (): JSX.Element => (
+					<span style={{ textAlign: 'right', display: 'block' }}>Actions</span>
+				),
 				accessorKey: 'id',
-				width: { min: 50, default: 50 },
+				width: { fixed: '80px', ignoreLastColumnFill: true },
 				enableSort: false,
 				enableRemove: false,
 				enableMove: false,
@@ -189,6 +191,7 @@ function ListAlertRules(): JSX.Element {
 							showTotalCount: true,
 						}}
 						paginationClassname={styles.paginationContainer}
+						enableAlternatingRowColors
 					/>
 				)}
 			</div>

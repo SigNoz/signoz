@@ -1,5 +1,13 @@
+import { Copy } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { toast } from '@signozhq/ui/sonner';
+import {
+	TooltipContent,
+	TooltipRoot,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 
 import LabelTag from './LabelTag';
 
@@ -24,54 +32,110 @@ export interface LabelColumnProps {
 	value?: { [key: string]: string };
 }
 
-const MAX_LABELS_TO_DISPLAY = 5;
+const BADGE_GAP = 4;
+const OVERFLOW_BADGE_WIDTH = 40;
+const ESTIMATED_BADGE_WIDTH = 120;
 
 function LabelColumn({
 	labels,
 	value,
 	color = 'primary',
 }: LabelColumnProps): JSX.Element {
-	const visibleLabels =
-		labels.length > MAX_LABELS_TO_DISPLAY ? labels.slice(0, 3) : labels;
-	const remainingLabels =
-		labels.length > MAX_LABELS_TO_DISPLAY ? labels.slice(3) : [];
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [maxVisibleCount, setMaxVisibleCount] = useState(labels.length);
+	const [, copyToClipboard] = useCopyToClipboard();
+
+	const calculateMaxVisible = useCallback(
+		(width: number): number => {
+			if (width <= 0) {
+				return 1;
+			}
+
+			const availableWidth = width - OVERFLOW_BADGE_WIDTH - BADGE_GAP;
+			const badgeSlotWidth = ESTIMATED_BADGE_WIDTH + BADGE_GAP;
+			const maxFit = Math.max(1, Math.floor(availableWidth / badgeSlotWidth));
+
+			return Math.min(maxFit, labels.length);
+		},
+		[labels.length],
+	);
+
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) {
+			return;
+		}
+
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (entry && entry.contentRect.width > 0) {
+				setMaxVisibleCount(calculateMaxVisible(entry.contentRect.width));
+			}
+		});
+
+		observer.observe(container);
+
+		if (container.clientWidth > 0) {
+			setMaxVisibleCount(calculateMaxVisible(container.clientWidth));
+		}
+
+		return (): void => observer.disconnect();
+	}, [calculateMaxVisible]);
+
+	const needsOverflow = labels.length > maxVisibleCount;
+	const visibleLabels = needsOverflow
+		? labels.slice(0, maxVisibleCount)
+		: labels;
+	const remainingLabels = needsOverflow ? labels.slice(maxVisibleCount) : [];
 
 	return (
-		<div className={styles.labelColumn} data-testid="label-column">
+		<div
+			ref={containerRef}
+			className={styles.labelColumn}
+			data-testid="label-column"
+		>
 			{visibleLabels.map((label) => (
 				<LabelTag key={label} label={label} color={color} value={value?.[label]} />
 			))}
 			{remainingLabels.length > 0 && (
-				<Popover>
-					<PopoverTrigger asChild>
-						<Badge
-							color={color}
-							className={styles.labelBadge}
-							variant="outline"
-							data-testid="label-overflow-badge"
-						>
-							+{remainingLabels.length}
-						</Badge>
-					</PopoverTrigger>
-					<PopoverContent
-						side="bottom"
-						align="end"
-						className={styles.labelPopover}
-						data-testid="label-popover"
-					>
-						{labels.map((label) => (
+				<TooltipRoot>
+					<TooltipTrigger asChild>
+						<span>
 							<Badge
-								key={label}
 								color={color}
-								className={styles.labelBadgePopover}
+								className={styles.overflowBadge}
 								variant="outline"
-								data-testid={`label-popover-item-${label}`}
+								data-testid="label-overflow-badge"
 							>
-								{value?.[label] ? `${label}: ${value?.[label]}` : label}
+								+{remainingLabels.length}
 							</Badge>
-						))}
-					</PopoverContent>
-				</Popover>
+						</span>
+					</TooltipTrigger>
+					<TooltipContent side="bottom" align="end">
+						<div className={styles.tooltipContent}>
+							<span>
+								{remainingLabels
+									.map((label) => (value?.[label] ? `${label}: ${value[label]}` : label))
+									.join(', ')}
+							</span>
+							<button
+								type="button"
+								className={styles.copyButton}
+								onClick={(e): void => {
+									e.stopPropagation();
+									const searchFormat = remainingLabels
+										.map((label) => (value?.[label] ? `${label} ${value[label]}` : label))
+										.join(' ');
+									copyToClipboard(searchFormat);
+									toast.success('Copied! Use in search to filter alerts.');
+								}}
+								aria-label="Copy to clipboard"
+							>
+								<Copy size={12} />
+							</button>
+						</div>
+					</TooltipContent>
+				</TooltipRoot>
 			)}
 		</div>
 	);

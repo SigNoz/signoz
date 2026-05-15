@@ -74,6 +74,7 @@ export type TableColumnDef<
 		min?: number | string;
 		default?: number | string;
 		max?: number | string;
+		ignoreLastColumnFill?: boolean;
 	};
 };
 

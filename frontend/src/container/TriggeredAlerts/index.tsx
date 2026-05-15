@@ -246,6 +246,7 @@ function TriggeredAlerts(): JSX.Element {
 							showTotalCount: true,
 						}}
 						paginationClassname={styles.paginationContainer}
+						enableAlternatingRowColors
 					/>
 				)}
 			</div>
