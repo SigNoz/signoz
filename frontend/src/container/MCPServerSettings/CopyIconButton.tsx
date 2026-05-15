@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { TooltipSimple, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Copy } from '@signozhq/icons';
 import './CopyIconButton.styles.scss';
 
@@ -20,7 +20,7 @@ function CopyIconButton({
 
 	return (
 		<TooltipProvider>
-			<Tooltip title={tooltipTitle}>
+			<TooltipSimple title={tooltipTitle}>
 				<span>
 					<Button
 						color="secondary"
@@ -33,7 +33,7 @@ function CopyIconButton({
 						onClick={onCopy}
 					/>
 				</span>
-			</Tooltip>
+			</TooltipSimple>
 		</TooltipProvider>
 	);
 }
