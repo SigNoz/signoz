@@ -103,5 +103,5 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	if err != nil {
 		return err
 	}
-	return module.store.Update(ctx, orgID, storable)
+	return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
 }
