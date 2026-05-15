@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Divider } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button, Divider, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -79,13 +79,15 @@ export function AlertsEmptyState(): JSX.Element {
 							<Button
 								className="add-alert-btn"
 								onClick={onClickNewAlertHandler}
-								icon={<PlusOutlined />}
 								disabled={!addNewAlert}
 								loading={loading}
 								type="primary"
 								data-testid="add-alert"
 							>
-								New Alert Rule
+								<Flex align="center" justify="center" gap={4}>
+									<Plus size="md" />
+									New Alert Rule
+								</Flex>
 							</Button>
 							<InfoLinkText
 								infoText="Watch a tutorial on creating a sample alert"

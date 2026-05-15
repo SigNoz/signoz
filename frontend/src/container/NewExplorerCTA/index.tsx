@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Undo } from 'lucide-react';
+import { Undo } from '@signozhq/icons';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { buttonText, RIBBON_STYLES } from './config';

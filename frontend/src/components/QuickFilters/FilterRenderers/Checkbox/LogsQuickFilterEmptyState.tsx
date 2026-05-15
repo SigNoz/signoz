@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@signozhq/icons';
 
 const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	severity_text: 'severity-text',

@@ -1110,7 +1110,7 @@ describe('SpanDetailsDrawer', () => {
 
 			// Click the check icon to close the selector
 			const checkIcon = screen.getByTestId('check-icon');
-			await user.click(checkIcon);
+			fireEvent.click(checkIcon);
 
 			// Verify resource attributes selector is hidden
 			await waitFor(() => {

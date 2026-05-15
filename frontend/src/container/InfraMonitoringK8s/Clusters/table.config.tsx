@@ -7,8 +7,9 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sClusterData, K8sClustersListPayload } from './api';
-import { Boxes } from 'lucide-react';
+import { Boxes } from '@signozhq/icons';
 
 export function getK8sClusterRowKey(cluster: K8sClusterData): string {
 	return (
@@ -85,7 +86,11 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpu}>
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="CPU metric"
+				>
 					<TanStackTable.Text>{cpu}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -100,7 +105,11 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpuAllocatable = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpuAllocatable}>
+				<ValidateColumnValueWrapper
+					value={cpuAllocatable}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="CPU allocatable metric"
+				>
 					<TanStackTable.Text>{cpuAllocatable}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -115,7 +124,11 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memory}>
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="memory metric"
+				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -130,7 +143,11 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memoryAllocatable = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memoryAllocatable}>
+				<ValidateColumnValueWrapper
+					value={memoryAllocatable}
+					entity={InfraMonitoringEntity.CLUSTERS}
+					attribute="memory allocatable metric"
+				>
 					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);

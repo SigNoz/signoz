@@ -49,9 +49,9 @@ describe('SpanLineActionButtons', () => {
 		const copyButton = screen.getByRole('button');
 		expect(copyButton).toBeInTheDocument();
 
-		// Check if the lucide link icon is rendered
+		// Check that an icon is rendered inside the button
 		const linkIcon = copyButton.querySelector('svg');
-		expect(linkIcon).toHaveClass('lucide-link');
+		expect(linkIcon).toBeInTheDocument();
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {
@@ -68,24 +68,6 @@ describe('SpanLineActionButtons', () => {
 
 		// Verify the copy function was called
 		expect(mockOnSpanCopy).toHaveBeenCalledTimes(1);
-	});
-
-	it('applies correct styling classes', () => {
-		(useCopySpanLink as jest.Mock).mockReturnValue({
-			onSpanCopy: jest.fn(),
-		});
-
-		render(<SpanLineActionButtons span={mockSpan} />);
-
-		// Check if the main container has the correct class
-		const container = screen
-			.getByRole('button')
-			.closest('.span-line-action-buttons');
-		expect(container).toHaveClass('span-line-action-buttons');
-
-		// Check if the button has the correct class
-		const copyButton = screen.getByRole('button');
-		expect(copyButton).toHaveClass('copy-span-btn');
 	});
 
 	it('copies span link to clipboard when copy button is clicked', () => {

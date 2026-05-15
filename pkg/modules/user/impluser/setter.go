@@ -874,45 +874,22 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
 	}
 
-	// check if user already has this role
-	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
-	if err != nil {
-		return err
-	}
-
-	existingRoles := make([]string, len(existingUserRoles))
-	for idx, role := range existingUserRoles {
-		existingRoles[idx] = role.Role.Name
-	}
-
-	// grant via authz (idempotent)
-	if err := module.authz.ModifyGrant(
+	// grant via authz (additive, idempotent — OpenFGA uses OnDuplicate: "ignore")
+	if err := module.authz.Grant(
 		ctx,
 		orgID,
-		existingRoles,
 		[]string{roleName},
 		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
 
-	// create user_role entry
+	// create user_role entry (swallow AlreadyExists for idempotency — DB has unique constraint on user_id+role_id)
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID)
-		if err != nil {
+	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+		if !errors.Ast(err, errors.TypeAlreadyExists) {
 			return err
 		}
-
-		err := module.userRoleStore.CreateUserRoles(ctx, userRoles)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return module.tokenizer.DeleteIdentity(ctx, userID)

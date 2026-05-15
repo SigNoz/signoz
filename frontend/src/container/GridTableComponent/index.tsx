@@ -1,6 +1,6 @@
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ExclamationCircleFilled } from '@ant-design/icons';
+import { CircleAlert, Compass } from '@signozhq/icons';
 import { Space, Tooltip } from 'antd';
 import { TableColumnType as ColumnType } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -8,7 +8,6 @@ import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import { getColumnUnit, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
-import { Compass } from 'lucide-react';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import styled from 'styled-components';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -176,10 +175,9 @@ function GridTableComponent({
 										overlayClassName: 'long-text-tooltip',
 									}}
 								/>
-
 								{hasMultipleMatches && (
 									<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
-										<ExclamationCircleFilled className="value-graph-icon" />
+										<CircleAlert className="value-graph-icon" />
 									</Tooltip>
 								)}
 							</Space>
