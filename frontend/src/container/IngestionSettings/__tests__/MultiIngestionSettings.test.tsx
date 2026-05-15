@@ -79,12 +79,12 @@ describe('MultiIngestionSettings Page', () => {
 				keys: [
 					{
 						name: 'Key One',
-						expires_at: new Date(TEST_EXPIRES_AT),
+						expires_at: TEST_EXPIRES_AT,
 						value: 'secret',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k1',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
 						tags: [],
 						limits: [
 							{
@@ -160,12 +160,12 @@ describe('MultiIngestionSettings Page', () => {
 				keys: [
 					{
 						name: 'Key Logs',
-						expires_at: new Date(TEST_EXPIRES_AT),
+						expires_at: TEST_EXPIRES_AT,
 						value: 'secret',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k2',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
 						tags: [],
 						limits: [
 							{
@@ -238,12 +238,12 @@ describe('MultiIngestionSettings Page', () => {
 				keys: [
 					{
 						name: KEY_NAME,
-						expires_at: new Date(TEST_EXPIRES_AT),
+						expires_at: TEST_EXPIRES_AT,
 						value: 'secret',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k1',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
 						tags: [],
 						limits: [
 							{
@@ -299,12 +299,12 @@ describe('MultiIngestionSettings Page', () => {
 				keys: [
 					{
 						name: 'Key Regular',
-						expires_at: new Date(TEST_EXPIRES_AT),
+						expires_at: TEST_EXPIRES_AT,
 						value: 'secret1',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k1',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
 						tags: [],
 						limits: [],
 					},
@@ -319,12 +319,12 @@ describe('MultiIngestionSettings Page', () => {
 				keys: [
 					{
 						name: 'Key Search Result',
-						expires_at: new Date(TEST_EXPIRES_AT),
+						expires_at: TEST_EXPIRES_AT,
 						value: 'secret2',
 						workspace_id: TEST_WORKSPACE_ID,
 						id: 'k2',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
+						created_at: TEST_CREATED_UPDATED,
+						updated_at: TEST_CREATED_UPDATED,
 						tags: [],
 						limits: [],
 					},

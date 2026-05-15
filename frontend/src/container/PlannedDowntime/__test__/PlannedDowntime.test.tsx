@@ -27,10 +27,10 @@ const MOCK_DATE_3 = '2024-01-03';
 const MOCK_DOWNTIME_1 = createMockDowntime({
 	id: '1',
 	name: MOCK_DOWNTIME_1_NAME,
-	createdAt: new Date(MOCK_DATE_1),
-	updatedAt: new Date(MOCK_DATE_1),
+	createdAt: MOCK_DATE_1,
+	updatedAt: MOCK_DATE_1,
 	schedule: buildSchedule({
-		startTime: new Date(MOCK_DATE_1),
+		startTime: MOCK_DATE_1,
 		timezone: 'UTC',
 	}),
 	alertIds: [],
@@ -39,10 +39,10 @@ const MOCK_DOWNTIME_1 = createMockDowntime({
 const MOCK_DOWNTIME_2 = createMockDowntime({
 	id: '2',
 	name: MOCK_DOWNTIME_2_NAME,
-	createdAt: new Date(MOCK_DATE_2),
-	updatedAt: new Date(MOCK_DATE_2),
+	createdAt: MOCK_DATE_2,
+	updatedAt: MOCK_DATE_2,
 	schedule: buildSchedule({
-		startTime: new Date(MOCK_DATE_2),
+		startTime: MOCK_DATE_2,
 		timezone: 'UTC',
 	}),
 	alertIds: [],
@@ -51,10 +51,10 @@ const MOCK_DOWNTIME_2 = createMockDowntime({
 const MOCK_DOWNTIME_3 = createMockDowntime({
 	id: '3',
 	name: MOCK_DOWNTIME_3_NAME,
-	createdAt: new Date(MOCK_DATE_3),
-	updatedAt: new Date(MOCK_DATE_3),
+	createdAt: MOCK_DATE_3,
+	updatedAt: MOCK_DATE_3,
 	schedule: buildSchedule({
-		startTime: new Date(MOCK_DATE_3),
+		startTime: MOCK_DATE_3,
 		timezone: 'UTC',
 	}),
 	alertIds: [],

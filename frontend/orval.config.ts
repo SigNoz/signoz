@@ -27,7 +27,7 @@ export default defineConfig({
 					signal: true,
 					useOperationIdAsQueryKey: false,
 				},
-				useDates: true,
+				useDates: false,
 				useNamedParameters: true,
 				enumGenerationType: 'enum',
 				mutator: {

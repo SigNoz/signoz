@@ -13,9 +13,9 @@ describe('filterAlerts', () => {
 	const mockAlertBase: Partial<RuletypesRuleDTO> = {
 		state: 'active' as RuletypesAlertStateDTO,
 		disabled: false,
-		createdAt: new Date('2024-01-01T00:00:00Z'),
+		createdAt: '2024-01-01T00:00:00Z',
 		createdBy: 'test-user',
-		updatedAt: new Date('2024-01-01T00:00:00Z'),
+		updatedAt: '2024-01-01T00:00:00Z',
 		updatedBy: 'test-user',
 		version: '1',
 		condition: {
