@@ -99,40 +99,6 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublicV2), handler.OpenAPIDef{
-		ID:                  "CreatePublicDashboardV2",
-		Tags:                []string{"dashboard"},
-		Summary:             "Make a dashboard v2 public",
-		Description:         "This endpoint creates the public sharing config for a v2 dashboard and returns the dashboard with the new public config attached. Lock state does not gate this endpoint.",
-		Request:             new(dashboardtypes.PostablePublicDashboard),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.GettableDashboardV2),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublicV2), handler.OpenAPIDef{
-		ID:                  "UpdatePublicDashboardV2",
-		Tags:                []string{"dashboard"},
-		Summary:             "Update public sharing config for a dashboard v2",
-		Description:         "This endpoint updates the public sharing config (time range settings) of an already-public v2 dashboard. Lock state does not gate this endpoint.",
-		Request:             new(dashboardtypes.UpdatablePublicDashboard),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.GettableDashboardV2),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},

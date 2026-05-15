@@ -3,7 +3,6 @@ package impldashboard
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -90,16 +89,6 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	}
 
 	return existing, nil
-}
-
-// CreatePublicV2 is not supported in the community build.
-func (module *module) CreatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-// UpdatePublicV2 is not supported in the community build.
-func (module *module) UpdatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {

@@ -71,6 +71,29 @@ func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string,
 	return nil
 }
 
+func (d *DashboardV2) canLockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	if d.Locked == lock {
+		if lock {
+			return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "dashboard is already locked")
+		}
+		return errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "dashboard is already unlocked")
+	}
+	return nil
+}
+
+func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.canLockUnlock(lock, isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
 type DashboardV2Data struct {
 	Metadata DashboardV2Metadata `json:"metadata"`
 	Spec     DashboardSpec       `json:"spec"`

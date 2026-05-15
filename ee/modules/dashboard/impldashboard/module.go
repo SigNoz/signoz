@@ -215,48 +215,6 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	existing, err := module.pkgDashboardModule.GetV2(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-	if existing.PublicConfig != nil {
-		return nil, errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", id)
-	}
-
-	publicDashboard := dashboardtypes.NewPublicDashboard(postable.TimeRangeEnabled, postable.DefaultTimeRange, id)
-	if err := module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard)); err != nil {
-		return nil, err
-	}
-
-	existing.PublicConfig = publicDashboard
-	return existing, nil
-}
-
-func (module *module) UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	existing, err := module.pkgDashboardModule.GetV2(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-	if existing.PublicConfig == nil {
-		return nil, errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodePublicDashboardNotFound, "dashboard with id %s isn't public", id)
-	}
-
-	existing.PublicConfig.Update(updatable.TimeRangeEnabled, updatable.DefaultTimeRange)
-	if err := module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(existing.PublicConfig)); err != nil {
-		return nil, err
-	}
-	return existing, nil
-}
-
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }
