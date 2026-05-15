@@ -2580,6 +2580,76 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesDaemonSetRecord:
+      properties:
+        currentNodes:
+          type: integer
+        daemonSetCPU:
+          format: double
+          type: number
+        daemonSetCPULimit:
+          format: double
+          type: number
+        daemonSetCPURequest:
+          format: double
+          type: number
+        daemonSetMemory:
+          format: double
+          type: number
+        daemonSetMemoryLimit:
+          format: double
+          type: number
+        daemonSetMemoryRequest:
+          format: double
+          type: number
+        daemonSetName:
+          type: string
+        desiredNodes:
+          type: integer
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - daemonSetName
+      - daemonSetCPU
+      - daemonSetCPURequest
+      - daemonSetCPULimit
+      - daemonSetMemory
+      - daemonSetMemoryRequest
+      - daemonSetMemoryLimit
+      - desiredNodes
+      - currentNodes
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesDaemonSets:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
     InframonitoringtypesDeploymentRecord:
       properties:
         availablePods:
@@ -3031,6 +3101,32 @@ components:
       - endTimeBeforeRetention
       type: object
     InframonitoringtypesPostableClusters:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableDaemonSets:
       properties:
         end:
           format: int64
@@ -12273,6 +12369,83 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Clusters for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/daemonsets:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes DaemonSets with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the daemonset, plus average CPU/memory request and limit utilization (daemonSetCPURequest,
+        daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
+        also reports the latest known node-level counters from kube-state-metrics:
+        desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
+        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on) — note these are node
+        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
+        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
+        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
+        k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
+        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
+        row aggregates pods owned by daemonsets in the group. Supports filtering via
+        a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
+        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
+        and pagination via offset/limit. Also reports missing required metrics and
+        whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit,
+        daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes,
+        currentNodes) return -1 as a sentinel when no data is available for that field.'
+      operationId: ListDaemonSets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableDaemonSets'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesDaemonSets'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List DaemonSets for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/infra_monitoring/deployments:

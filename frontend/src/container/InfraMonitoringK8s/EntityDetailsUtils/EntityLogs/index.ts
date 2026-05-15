@@ -1,3 +1,3 @@
-import EntityLogs from './EntityLogsDetailedView';
+import EntityLogs from './EntityLogs';
 
 export default EntityLogs;

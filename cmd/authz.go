@@ -5,6 +5,7 @@ import (
 	"context"
 	"os"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -23,6 +24,7 @@ export default {
 			{
 				kind: '{{ .Kind }}',
 				type: '{{ .Type }}',
+{{ .FormattedAllowedVerbs }}
 			},
 {{- end }}
 		],
@@ -41,13 +43,38 @@ type permissionsTypeRelation struct {
 }
 
 type permissionsTypeResource struct {
-	Kind string
-	Type string
+	Kind                  string
+	Type                  string
+	FormattedAllowedVerbs string
 }
 
 type permissionsTypeData struct {
 	Resources []permissionsTypeResource
 	Relations []permissionsTypeRelation
+}
+
+// formatAllowedVerbs returns a prettier-compatible formatted allowedVerbs line.
+// indentLevel is the number of tabs for the property (matching kind/type indent).
+// printWidth is prettier's printWidth; tabWidth is assumed to be 1 (each \t = 1 char).
+func formatAllowedVerbs(verbs []string, indentLevel int, printWidth int) string {
+	quoted := make([]string, len(verbs))
+	for i, v := range verbs {
+		quoted[i] = "'" + v + "'"
+	}
+	indent := strings.Repeat("\t", indentLevel)
+
+	oneLine := indent + "allowedVerbs: [" + strings.Join(quoted, ", ") + "],"
+	if len(oneLine) <= printWidth {
+		return oneLine
+	}
+
+	var b strings.Builder
+	b.WriteString(indent + "allowedVerbs: [\n")
+	for _, q := range quoted {
+		b.WriteString(indent + "\t" + q + ",\n")
+	}
+	b.WriteString(indent + "],")
+	return b.String()
 }
 
 func registerGenerateAuthz(parentCmd *cobra.Command) {
@@ -66,8 +93,8 @@ func runGenerateAuthz(_ context.Context) error {
 	registry := coretypes.NewRegistry()
 
 	allowedResources := map[string]bool{
-		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():        true,
-		coretypes.NewResourceRef(coretypes.ResourceRole).String():                  true,
+		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():           true,
+		coretypes.NewResourceRef(coretypes.ResourceRole).String():                     true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceFactorAPIKey).String(): true,
 	}
 
@@ -80,9 +107,23 @@ func runGenerateAuthz(_ context.Context) error {
 			continue
 		}
 		allowedTypes[ref.Type.StringValue()] = true
+
+		resource, err := coretypes.NewResourceFromTypeAndKind(ref.Type, ref.Kind)
+		if err != nil {
+			return err
+		}
+
+		verbs := resource.AllowedVerbs()
+		allowedVerbStrings := make([]string, 0, len(verbs))
+		for _, verb := range verbs {
+			allowedVerbStrings = append(allowedVerbStrings, verb.StringValue())
+		}
+		sort.Strings(allowedVerbStrings)
+
 		resources = append(resources, permissionsTypeResource{
-			Kind: ref.Kind.String(),
-			Type: ref.Type.StringValue(),
+			Kind:                  ref.Kind.String(),
+			Type:                  ref.Type.StringValue(),
+			FormattedAllowedVerbs: formatAllowedVerbs(allowedVerbStrings, 4, 80),
 		})
 	}
 

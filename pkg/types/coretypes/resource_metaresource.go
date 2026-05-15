@@ -5,11 +5,15 @@ import (
 )
 
 type resourceMetaResource struct {
-	kind Kind
+	kind         Kind
+	allowedVerbs []Verb
 }
 
-func NewResourceMetaResource(kind Kind) Resource {
-	return &resourceMetaResource{kind: kind}
+func NewResourceMetaResource(kind Kind, allowedVerbs ...Verb) Resource {
+	if len(allowedVerbs) == 0 {
+		allowedVerbs = TypeMetaResource.AllowedVerbs()
+	}
+	return &resourceMetaResource{kind: kind, allowedVerbs: allowedVerbs}
 }
 
 func (*resourceMetaResource) Type() Type {
@@ -31,4 +35,8 @@ func (resourceMetaResource *resourceMetaResource) Object(orgID valuer.UUID, sele
 
 func (resourceMetaResource *resourceMetaResource) Scope(verb Verb) string {
 	return resourceMetaResource.Kind().String() + ":" + verb.StringValue()
+}
+
+func (resourceMetaResource *resourceMetaResource) AllowedVerbs() []Verb {
+	return resourceMetaResource.allowedVerbs
 }
