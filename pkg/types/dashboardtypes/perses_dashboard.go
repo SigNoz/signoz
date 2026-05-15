@@ -70,6 +70,22 @@ func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string,
 	d.UpdatedAt = time.Now()
 	return nil
 }
+func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	return nil
+}
+
+func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.CanLockUnlock(isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
 
 type DashboardV2Data struct {
 	Metadata DashboardV2Metadata `json:"metadata"`

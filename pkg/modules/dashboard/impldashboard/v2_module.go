@@ -90,3 +90,18 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 
 	return existing, nil
 }
+
+func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	if err := existing.LockUnlock(lock, isAdmin, updatedBy); err != nil {
+		return err
+	}
+	storable, err := existing.ToStorableDashboard()
+	if err != nil {
+		return err
+	}
+	return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+}

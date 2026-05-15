@@ -59,6 +59,8 @@ type Module interface {
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 }
 
 type Handler interface {
@@ -90,4 +92,8 @@ type Handler interface {
 	GetV2(http.ResponseWriter, *http.Request)
 
 	UpdateV2(http.ResponseWriter, *http.Request)
+
+	LockV2(http.ResponseWriter, *http.Request)
+
+	UnlockV2(http.ResponseWriter, *http.Request)
 }
