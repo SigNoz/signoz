@@ -1,12 +1,12 @@
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import {
 	ChevronUp,
 	Command,
 	CornerDownLeft,
-	Loader2,
+	LoaderCircle,
 	Play,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import './RunQueryBtn.scss';
@@ -43,7 +43,7 @@ function RunQueryBtn({
 		<Button
 			color="destructive"
 			type="button"
-			prefix={<Loader2 size={14} className="loading-icon animate-spin" />}
+			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
 			className={cx('cancel-query-btn', className)}
 			onClick={handleCancelQuery}
 		>
@@ -60,8 +60,12 @@ function RunQueryBtn({
 		>
 			{label || 'Run Query'}
 			<div className="cmd-hint">
-				{isMac ? <Command size={12} /> : <ChevronUp size={12} />}
-				<CornerDownLeft size={12} />
+				{isMac ? (
+					<Command size={12} data-testid="cmd-hint-modifier-mac" />
+				) : (
+					<ChevronUp size={12} data-testid="cmd-hint-modifier-non-mac" />
+				)}
+				<CornerDownLeft size={12} data-testid="cmd-hint-enter" />
 			</div>
 		</Button>
 	);

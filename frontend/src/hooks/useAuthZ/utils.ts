@@ -80,19 +80,6 @@ export function permissionToTransactionDto(
 	permission: BrandedPermission,
 ): AuthtypesTransactionDTO {
 	const { relation, object: objectStr } = parsePermission(permission);
-	const directType = resolveType(relation, objectStr);
-	if (directType === 'metaresources') {
-		return {
-			relation: relation as AuthtypesRelationDTO,
-			object: {
-				resource: {
-					kind: objectStr as ResourceName,
-					type: directType as CoretypesTypeDTO,
-				},
-				selector: '*',
-			},
-		};
-	}
 	const { resourceName, selector } = splitObjectString(objectStr);
 	const type = resolveType(relation, resourceName) ?? 'metaresource';
 
@@ -117,9 +104,6 @@ export function gettableTransactionToPermission(
 	} = item;
 	const resourceName = String(resource.kind);
 	const selectorStr = typeof selector === 'string' ? selector : '*';
-	const objectStr =
-		resource.type === 'metaresources'
-			? resourceName
-			: `${resourceName}${ObjectSeparator}${selectorStr}`;
+	const objectStr = `${resourceName}${ObjectSeparator}${selectorStr}`;
 	return `${relation}${PermissionSeparator}${objectStr}` as BrandedPermission;
 }

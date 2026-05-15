@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Badge, Button, DrawerWrapper, Input, toast } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -99,7 +103,7 @@ function EditMemberDrawer({
 	const { user: currentUser } = useAppContext();
 
 	const [localDisplayName, setLocalDisplayName] = useState('');
-	const [localRole, setLocalRole] = useState('');
+	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -137,7 +141,7 @@ function EditMemberDrawer({
 	} = useRoles();
 
 	const {
-		fetchedRoleIds,
+		currentRoles: currentMemberRoles,
 		isLoading: isMemberRolesLoading,
 		applyDiff,
 	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
@@ -184,16 +188,24 @@ function EditMemberDrawer({
 		if (!member?.id) {
 			roleSessionRef.current = null;
 		} else if (member.id !== roleSessionRef.current && !isMemberRolesLoading) {
-			setLocalRole(fetchedRoleIds[0] ?? '');
+			setLocalRoles(
+				currentMemberRoles.map((r) => r.id).filter(Boolean) as string[],
+			);
 			roleSessionRef.current = member.id;
 		}
-	}, [member?.id, fetchedRoleIds, isMemberRolesLoading]);
+	}, [member?.id, currentMemberRoles, isMemberRolesLoading]);
 
 	const isDirty =
 		member !== null &&
 		fetchedUser != null &&
 		(localDisplayName !== fetchedDisplayName ||
-			localRole !== (fetchedRoleIds[0] ?? ''));
+			JSON.stringify([...localRoles].sort()) !==
+				JSON.stringify(
+					currentMemberRoles
+						.map((r) => r.id)
+						.filter(Boolean)
+						.sort(),
+				));
 
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
@@ -268,7 +280,14 @@ function EditMemberDrawer({
 		setIsSaving(true);
 		try {
 			const nameChanged = localDisplayName !== fetchedDisplayName;
-			const rolesChanged = localRole !== (fetchedRoleIds[0] ?? '');
+			const rolesChanged =
+				JSON.stringify([...localRoles].sort()) !==
+				JSON.stringify(
+					currentMemberRoles
+						.map((r) => r.id)
+						.filter(Boolean)
+						.sort(),
+				);
 
 			const namePromise = nameChanged
 				? isSelf
@@ -282,7 +301,7 @@ function EditMemberDrawer({
 			const [nameResult, rolesResult] = await Promise.allSettled([
 				namePromise,
 				rolesChanged
-					? applyDiff([localRole].filter(Boolean), availableRoles)
+					? applyDiff([...localRoles], availableRoles)
 					: Promise.resolve([]),
 			]);
 
@@ -301,10 +320,7 @@ function EditMemberDrawer({
 					context: 'Roles update',
 					apiError: toSaveApiError(rolesResult.reason),
 					onRetry: async (): Promise<void> => {
-						const failures = await applyDiff(
-							[localRole].filter(Boolean),
-							availableRoles,
-						);
+						const failures = await applyDiff([...localRoles], availableRoles);
 						setSaveErrors((prev) => {
 							const rest = prev.filter((e) => e.context !== 'Roles update');
 							return [
@@ -349,9 +365,9 @@ function EditMemberDrawer({
 		isDirty,
 		isSelf,
 		localDisplayName,
-		localRole,
+		localRoles,
 		fetchedDisplayName,
-		fetchedRoleIds,
+		currentMemberRoles,
 		updateMyUser,
 		updateUser,
 		applyDiff,
@@ -499,10 +515,15 @@ function EditMemberDrawer({
 					>
 						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
 							<div className="edit-member-drawer__disabled-roles">
-								{localRole ? (
-									<Badge color="vanilla">
-										{availableRoles.find((r) => r.id === localRole)?.name ?? localRole}
-									</Badge>
+								{localRoles.length > 0 ? (
+									localRoles.map((roleId) => {
+										const role = availableRoles.find((r) => r.id === roleId);
+										return (
+											<Badge key={roleId} color="vanilla">
+												{role?.name ?? roleId}
+											</Badge>
+										);
+									})
 								) : (
 									<span className="edit-member-drawer__email-text">—</span>
 								)}
@@ -513,14 +534,15 @@ function EditMemberDrawer({
 				) : (
 					<RolesSelect
 						id="member-role"
+						mode="multiple"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}
 						error={rolesErrorObj}
 						onRefetch={refetchRoles}
-						value={localRole}
-						onChange={(role): void => {
-							setLocalRole(role ?? '');
+						value={localRoles}
+						onChange={(roles): void => {
+							setLocalRoles(roles);
 							setSaveErrors((prev) =>
 								prev.filter(
 									(err) =>
@@ -528,8 +550,7 @@ function EditMemberDrawer({
 								),
 							);
 						}}
-						placeholder="Select role"
-						allowClear={false}
+						placeholder="Select roles"
 					/>
 				)}
 			</div>

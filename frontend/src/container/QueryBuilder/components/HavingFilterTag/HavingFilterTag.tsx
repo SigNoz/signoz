@@ -13,9 +13,9 @@ export function HavingFilterTag({
 
 	return (
 		<StyledTag closable={closable} onClose={onClose}>
-			<StyledText ellipsis onClick={handleClick}>
-				{value}
-			</StyledText>
+			<span role="button" tabIndex={0} onClick={handleClick}>
+				<StyledText>{value}</StyledText>
+			</span>
 		</StyledTag>
 	);
 }

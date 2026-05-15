@@ -134,7 +134,7 @@ type RuleStateHistory struct {
 	// One of ["normal", "firing"]
 	OverallState        AlertState `json:"overallState" ch:"overall_state"`
 	OverallStateChanged bool       `json:"overallStateChanged" ch:"overall_state_changed"`
-	// One of ["normal", "firing", "no_data", "muted"]
+	// One of ["normal", "firing", "nodata", "muted"]
 	State        AlertState   `json:"state" ch:"state"`
 	StateChanged bool         `json:"stateChanged" ch:"state_changed"`
 	UnixMilli    int64        `json:"unixMilli" ch:"unix_milli"`

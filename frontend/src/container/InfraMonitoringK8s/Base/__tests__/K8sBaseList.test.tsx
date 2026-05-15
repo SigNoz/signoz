@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { TooltipProvider } from '@signozhq/ui';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -37,8 +37,8 @@ jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
 
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
-jest.mock('@signozhq/ui', () => {
-	const actual = jest.requireActual('@signozhq/ui');
+jest.mock('@signozhq/ui/drawer', () => {
+	const actual = jest.requireActual('@signozhq/ui/drawer');
 	return {
 		...actual,
 		DrawerWrapper: ({

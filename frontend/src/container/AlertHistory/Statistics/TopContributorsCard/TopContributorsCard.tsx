@@ -4,7 +4,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';

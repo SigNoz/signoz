@@ -1,0 +1,168 @@
+import {
+	TooltipRoot,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
+import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
+import { useMemo } from 'react';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
+import { toFixed } from 'utils/toFixed';
+
+import styles from './SpanHoverCard.module.scss';
+
+/**
+ * Span-level fields that the tooltip always shows (as the colored title or
+ * one of the status/start/duration rows). Preview rows for these keys are
+ * filtered out to avoid duplication.
+ */
+export const RESERVED_PREVIEW_KEYS: ReadonlySet<string> = new Set([
+	'name',
+	'has_error',
+	'timestamp',
+	'duration_nano',
+]);
+
+export interface SpanPreviewRow {
+	key: string;
+	value: string;
+}
+
+export interface SpanTooltipContentProps {
+	spanName: string;
+	color: string;
+	hasError: boolean;
+	relativeStartMs: number;
+	durationMs: number;
+	previewRows?: SpanPreviewRow[];
+}
+
+export function SpanTooltipContent({
+	spanName,
+	color,
+	hasError,
+	relativeStartMs,
+	durationMs,
+	previewRows,
+}: SpanTooltipContentProps): JSX.Element {
+	const { time: formattedDuration, timeUnitName } =
+		convertTimeToRelevantUnit(durationMs);
+
+	return (
+		<div className={styles.content}>
+			<div className={styles.name} style={{ color }}>
+				{spanName}
+			</div>
+			<div className={styles.row}>status: {hasError ? 'error' : 'ok'}</div>
+			<div className={styles.row}>start: {toFixed(relativeStartMs, 2)} ms</div>
+			<div className={styles.row}>
+				duration: {toFixed(formattedDuration, 2)} {timeUnitName}
+			</div>
+			{previewRows && previewRows.length > 0 && (
+				<div className={styles.preview}>
+					{previewRows.map((row) => (
+						<div key={row.key} className={styles.row}>
+							<span className={styles.previewKey}>{row.key}:</span>{' '}
+							<span className={styles.previewValue}>{row.value}</span>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
+/**
+ * Single hover card anchored at a fixed X (sidebar/timeline boundary). The
+ * Y of the anchor is derived from the hovered span's index in the list,
+ * so the card slides vertically in place rather than jumping with the cursor.
+ *
+ * Mount this inside the scrollable waterfall body so `anchorTop` is in
+ * content coordinates — Radix portals the content layer out automatically.
+ */
+export interface SpanHoverCardProps {
+	hoveredSpanId: string | null;
+	onOpenChange: (open: boolean) => void;
+	anchorLeft: number;
+	rowHeight: number;
+	spans: SpanV3[];
+	traceStartTime: number;
+}
+
+export function SpanHoverCard({
+	hoveredSpanId,
+	onOpenChange,
+	anchorLeft,
+	rowHeight,
+	spans,
+	traceStartTime,
+}: SpanHoverCardProps): JSX.Element {
+	const previewFields = useTraceStore((s) => s.previewFields);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+
+	const hoverCardData = useMemo(() => {
+		if (!hoveredSpanId) {
+			return null;
+		}
+		const idx = spans.findIndex((s) => s.span_id === hoveredSpanId);
+		if (idx === -1) {
+			return null;
+		}
+		const span = spans[idx];
+		const previewRows: SpanPreviewRow[] = previewFields
+			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.key))
+			.map((f) => {
+				const value = getSpanAttribute(span, f.key);
+				return value !== undefined && value !== ''
+					? { key: f.key, value: String(value) }
+					: null;
+			})
+			.filter((r): r is SpanPreviewRow => r !== null);
+
+		return {
+			anchorTop: idx * rowHeight,
+			tooltip: {
+				spanName: span.name,
+				color: resolveSpanColor(span, colorByFieldName),
+				hasError: span.has_error,
+				relativeStartMs: span.timestamp - traceStartTime,
+				durationMs: span.duration_nano / 1e6,
+				previewRows,
+			},
+		};
+	}, [
+		hoveredSpanId,
+		spans,
+		previewFields,
+		colorByFieldName,
+		rowHeight,
+		traceStartTime,
+	]);
+
+	return (
+		<TooltipProvider>
+			<TooltipRoot open={hoverCardData !== null} onOpenChange={onOpenChange}>
+				<TooltipTrigger asChild>
+					<div
+						className={styles.anchor}
+						style={{
+							top: hoverCardData?.anchorTop ?? 0,
+							left: anchorLeft,
+							height: rowHeight,
+						}}
+					/>
+				</TooltipTrigger>
+				<TooltipContent
+					side="right"
+					align="start"
+					sideOffset={8}
+					className={styles.popover}
+				>
+					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
+				</TooltipContent>
+			</TooltipRoot>
+		</TooltipProvider>
+	);
+}

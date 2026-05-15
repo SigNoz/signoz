@@ -1,5 +1,6 @@
 import { Skeleton } from 'antd';
-import { Badge, Button } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import { Info, KeyRound } from '@signozhq/icons';
 import CopyIconButton from '../CopyIconButton';
 

@@ -1,7 +1,10 @@
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { Button, Switch, Tabs, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
+import { Switch } from '@signozhq/ui/switch';
+import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
@@ -21,7 +24,7 @@ import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Save, X } from 'lucide-react';
+import { Save, X } from '@signozhq/icons';
 
 import S3BucketsSelector from '../S3BucketsSelector/S3BucketsSelector';
 

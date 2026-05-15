@@ -6,6 +6,7 @@
  * Adds custom matchers from the react testing library to all tests
  */
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import 'jest-styled-components';
 
 import { server } from './src/mocks-server/server';
@@ -26,6 +27,18 @@ window.matchMedia =
 
 if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
+}
+
+if (typeof window.IntersectionObserver === 'undefined') {
+	class IntersectionObserverMock {
+		observe(): void {}
+		unobserve(): void {}
+		disconnect(): void {}
+		takeRecords(): IntersectionObserverEntry[] {
+			return [];
+		}
+	}
+	(window as any).IntersectionObserver = IntersectionObserverMock;
 }
 
 // Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
