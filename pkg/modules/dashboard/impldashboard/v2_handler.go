@@ -2,11 +2,11 @@ package impldashboard
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -30,8 +30,8 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypes.PostableDashboardV2{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var req dashboardtypes.PostableDashboardV2
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -42,7 +42,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, dashboardtypes.NewGettableDashboardV2FromDashboardV2(dashboard))
+	render.Success(rw, http.StatusCreated, dashboard.ToGettableDashboardV2())
 }
 
 func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {

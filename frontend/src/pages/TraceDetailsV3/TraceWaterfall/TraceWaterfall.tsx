@@ -13,7 +13,7 @@ import { getVisibleSpans } from './utils';
 
 import { IInterestedSpan } from './types';
 
-import './TraceWaterfall.styles.scss';
+import styles from './TraceWaterfall.module.scss';
 
 interface ITraceWaterfallProps {
 	traceId: string;
@@ -100,7 +100,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		switch (traceWaterfallState) {
 			case TraceWaterfallStates.LOADING:
 				return (
-					<div className="loading-skeleton">
+					<div className={styles.loadingSkeleton}>
 						<Skeleton active paragraph={{ rows: 6 }} />
 					</div>
 				);
@@ -158,7 +158,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		uncollapsedNodes,
 	]);
 
-	return <div className="trace-waterfall">{getContent}</div>;
+	return <div className={styles.root}>{getContent}</div>;
 }
 
 export default TraceWaterfall;

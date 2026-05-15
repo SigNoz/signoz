@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dot, Sparkles } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
@@ -97,7 +97,7 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<Tooltip title="AI Assistant">
+					<TooltipSimple title="AI Assistant">
 						<Button
 							variant="solid"
 							color="secondary"
@@ -113,7 +113,7 @@ function HeaderRightSection({
 						>
 							AI Assistant
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 				</div>
 			)}
 

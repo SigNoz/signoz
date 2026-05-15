@@ -5,6 +5,8 @@ import { toast } from '@signozhq/ui/sonner';
 import ROUTES from 'constants/routes';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import styles from './SpanDetailsPanel.module.scss';
+
 interface TraceIdFieldProps {
 	span: SpanV3;
 }
@@ -36,7 +38,7 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 			<Button
 				variant="link"
 				color="secondary"
-				className="span-details-panel__trace-id-copy"
+				className={styles.traceIdCopy}
 				onClick={handleCopy}
 				title="Click to copy trace ID"
 			>
@@ -51,7 +53,7 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 				pathname: `/trace/${span.trace_id}`,
 				search: window.location.search,
 			}}
-			className="span-details-panel__trace-id"
+			className={styles.traceId}
 		>
 			{span.trace_id}
 		</Link>

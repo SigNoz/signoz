@@ -437,11 +437,16 @@ export function convertTraceOperatorToV5(
 				panelType,
 			);
 
-			// Skip aggregation for raw request type
+			// Skip aggregation for raw request type. Force dataSource to traces so
+			// createAggregation never takes the metrics branch (which would emit a
+			// metricName field the backend rejects for trace operators).
 			const aggregations =
 				requestType === 'raw'
 					? undefined
-					: createAggregation(traceOperatorData, panelType);
+					: createAggregation(
+							{ ...traceOperatorData, dataSource: DataSource.TRACES },
+							panelType,
+						);
 
 			const spec: QueryEnvelope['spec'] = {
 				name: queryName,
