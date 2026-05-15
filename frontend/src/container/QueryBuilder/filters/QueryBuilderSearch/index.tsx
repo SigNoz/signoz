@@ -12,7 +12,10 @@ import { useLocation } from 'react-router-dom';
 import { Button, Select, Spin, Tag, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	INFRA_LONG_TO_SHORT_OPERATOR_MAP,
+	OPERATORS,
+} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
@@ -68,26 +71,13 @@ import {
 
 import './QueryBuilderSearch.styles.scss';
 
-/**
- * Maps long-form operators to short-form for InfraMonitoring when typed by user.
- * This ensures NOT_IN typed by user becomes 'nin' internally.
- */
-const INFRA_TYPED_OPERATOR_MAP: Record<string, string> = {
-	NOT_IN: 'NIN',
-	NOT_LIKE: 'NLIKE',
-	NOT_ILIKE: 'NOTILIKE',
-	NOT_REGEX: 'NREGEX',
-	NOT_EXISTS: 'NEXISTS',
-	NOT_CONTAINS: 'NCONTAINS',
-};
-
 function getOperatorValueForContext(
 	op: string,
 	isInfraMonitoring?: boolean,
 ): string {
 	const mappedOp =
-		isInfraMonitoring && INFRA_TYPED_OPERATOR_MAP[op]
-			? INFRA_TYPED_OPERATOR_MAP[op]
+		isInfraMonitoring && INFRA_LONG_TO_SHORT_OPERATOR_MAP[op]
+			? INFRA_LONG_TO_SHORT_OPERATOR_MAP[op]
 			: op;
 	return getOperatorValue(mappedOp);
 }

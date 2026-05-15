@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { INFRA_SHORT_TO_LONG_OPERATOR_MAP } from 'constants/queryBuilder';
 import {
 	checkCommaInValue,
 	getTagToken,
@@ -12,19 +13,6 @@ import { WhereClauseConfig } from './useAutoComplete';
 import { useOperators } from './useOperators';
 
 export const WHERE_CLAUSE_CUSTOM_SUFFIX = '-custom';
-
-/**
- * Maps short form operators to long form labels for InfraMonitoring display.
- * Value stays as short form (NIN), label shows as long form (NOT_IN).
- */
-const INFRA_OPERATOR_LABEL_MAP: Record<string, string> = {
-	NIN: 'NOT_IN',
-	NLIKE: 'NOT_LIKE',
-	NOTILIKE: 'NOT_ILIKE',
-	NREGEX: 'NOT_REGEX',
-	NEXISTS: 'NOT_EXISTS',
-	NCONTAINS: 'NOT_CONTAINS',
-};
 
 export const useOptions = (
 	key: string,
@@ -123,8 +111,8 @@ export const useOptions = (
 				: operators;
 			const operatorsOptions = filteredOperators?.map((op) => {
 				const labelOp =
-					isInfraMonitoring && INFRA_OPERATOR_LABEL_MAP[op]
-						? INFRA_OPERATOR_LABEL_MAP[op]
+					isInfraMonitoring && INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
+						? INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
 						: op;
 				return {
 					value: `${partialKey} ${op} `,

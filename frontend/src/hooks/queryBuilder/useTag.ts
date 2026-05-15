@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { INFRA_SHORT_TO_LONG_OPERATOR_MAP } from 'constants/queryBuilder';
 import {
 	getOperatorFromValue,
 	getTagToken,
@@ -14,18 +15,6 @@ import {
 import { WhereClauseConfig } from './useAutoComplete';
 
 /**
- * Maps short form operators to long form for display in InfraMonitoring.
- */
-const INFRA_OPERATOR_DISPLAY_MAP: Record<string, string> = {
-	NIN: 'NOT_IN',
-	NLIKE: 'NOT_LIKE',
-	NOTILIKE: 'NOT_ILIKE',
-	NREGEX: 'NOT_REGEX',
-	NEXISTS: 'NOT_EXISTS',
-	NCONTAINS: 'NOT_CONTAINS',
-};
-
-/**
  * Helper for formatting a TagFilter object into filter item strings
  * @param {TagFilter} filters - query filter object to be converted
  * @param {boolean} isInfraMonitoring - whether to use long form operator display
@@ -38,8 +27,8 @@ export function queryFilterTags(
 	return (filter?.items || []).map((ele) => {
 		const rawOp = getOperatorFromValue(ele.op);
 		const displayOp =
-			isInfraMonitoring && INFRA_OPERATOR_DISPLAY_MAP[rawOp]
-				? INFRA_OPERATOR_DISPLAY_MAP[rawOp]
+			isInfraMonitoring && INFRA_SHORT_TO_LONG_OPERATOR_MAP[rawOp]
+				? INFRA_SHORT_TO_LONG_OPERATOR_MAP[rawOp]
 				: rawOp;
 
 		if (isInNInOperator(rawOp)) {
