@@ -30,11 +30,8 @@ import type {
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
-	LockDashboardV2PathParameters,
 	RenderErrorResponseDTO,
 	UpdatePublicDashboardPathParameters,
-	UpdatePublicDashboardV2200,
-	UpdatePublicDashboardV2PathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
