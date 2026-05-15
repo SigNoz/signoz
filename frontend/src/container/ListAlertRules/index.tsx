@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useQueryStates, parseAsInteger } from 'nuqs';
-import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+import { useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import TanStackTable from 'components/TanStackTableView';
+import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
@@ -44,26 +43,20 @@ function ListAlertRules(): JSX.Element {
 	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
 		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { orderBy, page, limit } = useTableParams(QUERY_PARAMS_CONFIG, {
-		page: DEFAULT_PAGE,
-		limit: DEFAULT_LIMIT,
+
+	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
+		rowHeight: 42,
 	});
 
-	const [, setTableQueryParams] = useQueryStates({
-		[QUERY_PARAMS_CONFIG.orderBy]: parseAsJsonNoValidate(),
-		[QUERY_PARAMS_CONFIG.page]: parseAsInteger,
-		[QUERY_PARAMS_CONFIG.limit]: parseAsInteger,
-	});
-
-	useEffect(
-		() => (): void => {
-			void setTableQueryParams({
-				[QUERY_PARAMS_CONFIG.orderBy]: null,
-				[QUERY_PARAMS_CONFIG.page]: null,
-				[QUERY_PARAMS_CONFIG.limit]: null,
-			});
+	const { orderBy, page, limit, setLimit } = useTableParams(
+		QUERY_PARAMS_CONFIG,
+		{
+			page: DEFAULT_PAGE,
+			limit: DEFAULT_LIMIT,
+			storageKey: 'alert-rules',
+			calculatedPageSize,
+			cleanupOnUnmount: true,
 		},
-		[setTableQueryParams],
 	);
 
 	const { filteredRules, isFetching, isError, allRules, refetch } =
@@ -161,7 +154,7 @@ function ListAlertRules(): JSX.Element {
 				</div>
 			)}
 
-			<div className={styles.tableContainer}>
+			<div ref={containerRef} className={styles.tableContainer}>
 				{isError ? (
 					<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
@@ -186,8 +179,8 @@ function ListAlertRules(): JSX.Element {
 						onRowClickNewTab={handleRowClickNewTab}
 						pagination={{
 							total: filteredRules.length,
-							defaultPage: DEFAULT_PAGE,
-							defaultLimit: DEFAULT_LIMIT,
+							calculatedPageSize,
+							onLimitChange: setLimit,
 							showTotalCount: true,
 						}}
 						paginationClassname={styles.paginationContainer}

@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useQueryStates, parseAsInteger } from 'nuqs';
-import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+import { useCallback, useMemo } from 'react';
 import { Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
@@ -9,6 +7,7 @@ import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import type { FilterValue } from 'components/Alerts/types';
 import TanStackTable from 'components/TanStackTableView';
+import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useTimezone } from 'providers/Timezone';
@@ -65,26 +64,20 @@ function TriggeredAlerts(): JSX.Element {
 	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
 		useUrlSearchState(TRIGGERED_ALERTS_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { orderBy, page, limit } = useTableParams(QUERY_PARAMS_CONFIG, {
-		page: DEFAULT_PAGE,
-		limit: DEFAULT_LIMIT,
+
+	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
+		rowHeight: 42,
 	});
 
-	const [, setTableQueryParams] = useQueryStates({
-		[QUERY_PARAMS_CONFIG.orderBy]: parseAsJsonNoValidate(),
-		[QUERY_PARAMS_CONFIG.page]: parseAsInteger,
-		[QUERY_PARAMS_CONFIG.limit]: parseAsInteger,
-	});
-
-	useEffect(
-		() => (): void => {
-			void setTableQueryParams({
-				[QUERY_PARAMS_CONFIG.orderBy]: null,
-				[QUERY_PARAMS_CONFIG.page]: null,
-				[QUERY_PARAMS_CONFIG.limit]: null,
-			});
+	const { page, limit, setLimit, orderBy } = useTableParams(
+		QUERY_PARAMS_CONFIG,
+		{
+			page: DEFAULT_PAGE,
+			limit: DEFAULT_LIMIT,
+			storageKey: 'triggered-alerts',
+			calculatedPageSize,
+			cleanupOnUnmount: true,
 		},
-		[setTableQueryParams],
 	);
 
 	const selectedFilter = useMemo(
@@ -199,7 +192,7 @@ function TriggeredAlerts(): JSX.Element {
 				/>
 			</div>
 
-			<div className={styles.tableContainer}>
+			<div ref={containerRef} className={styles.tableContainer}>
 				{isError ? (
 					<ErrorEmptyState title="Failed to load alerts" onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
@@ -223,8 +216,8 @@ function TriggeredAlerts(): JSX.Element {
 						enableQueryParams={QUERY_PARAMS_CONFIG}
 						pagination={{
 							total: groupedData.length,
-							defaultPage: DEFAULT_PAGE,
-							defaultLimit: DEFAULT_LIMIT,
+							calculatedPageSize,
+							onLimitChange: setLimit,
 						}}
 						paginationClassname={styles.paginationContainer}
 					/>
@@ -241,9 +234,8 @@ function TriggeredAlerts(): JSX.Element {
 						enableQueryParams={QUERY_PARAMS_CONFIG}
 						pagination={{
 							total: filteredAlerts.length,
-							defaultPage: DEFAULT_PAGE,
-							defaultLimit: DEFAULT_LIMIT,
-							showTotalCount: true,
+							calculatedPageSize,
+							onLimitChange: setLimit,
 						}}
 						paginationClassname={styles.paginationContainer}
 						enableAlternatingRowColors

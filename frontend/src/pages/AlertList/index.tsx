@@ -114,8 +114,11 @@ function AllAlertList(): JSX.Element {
 					urlQuery.delete('subTab');
 				}
 
-				// Clear search when navigating to any tab
+				// Clear search and table params when navigating to any tab
 				urlQuery.delete('search');
+				urlQuery.delete('page');
+				urlQuery.delete('limit');
+				urlQuery.delete('orderBy');
 
 				safeNavigate(`/alerts?${urlQuery.toString()}`);
 			}}
