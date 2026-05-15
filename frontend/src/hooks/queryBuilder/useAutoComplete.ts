@@ -67,6 +67,7 @@ export const useAutoComplete = (
 		query,
 		setSearchKey,
 		whereClauseConfig,
+		isInfraMonitoring,
 	);
 
 	const handleSelect = useCallback(

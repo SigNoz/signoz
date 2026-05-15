@@ -68,6 +68,30 @@ import {
 
 import './QueryBuilderSearch.styles.scss';
 
+/**
+ * Maps long-form operators to short-form for InfraMonitoring when typed by user.
+ * This ensures NOT_IN typed by user becomes 'nin' internally.
+ */
+const INFRA_TYPED_OPERATOR_MAP: Record<string, string> = {
+	NOT_IN: 'NIN',
+	NOT_LIKE: 'NLIKE',
+	NOT_ILIKE: 'NOTILIKE',
+	NOT_REGEX: 'NREGEX',
+	NOT_EXISTS: 'NEXISTS',
+	NOT_CONTAINS: 'NCONTAINS',
+};
+
+function getOperatorValueForContext(
+	op: string,
+	isInfraMonitoring?: boolean,
+): string {
+	const mappedOp =
+		isInfraMonitoring && INFRA_TYPED_OPERATOR_MAP[op]
+			? INFRA_TYPED_OPERATOR_MAP[op]
+			: op;
+	return getOperatorValue(mappedOp);
+}
+
 function QueryBuilderSearch({
 	query,
 	onChange,
@@ -301,7 +325,7 @@ function QueryBuilderSearch({
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
 				},
-				op: getOperatorValue(tagOperator),
+				op: getOperatorValueForContext(tagOperator, isInfraMonitoring),
 				value: computedTagValue,
 			};
 		});
