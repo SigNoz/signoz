@@ -99,5 +99,9 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	if err := existing.LockUnlock(lock, isAdmin, updatedBy); err != nil {
 		return err
 	}
-	return module.store.LockUnlockV2(ctx, orgID, id, lock, updatedBy)
+	storable, err := existing.ToStorableDashboard()
+	if err != nil {
+		return err
+	}
+	return module.store.Update(ctx, orgID, storable)
 }

@@ -132,30 +132,6 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
-func (store *store) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("locked = ?", locked).
-		Set("updated_by = ?", updatedBy).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
-}
-
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.
