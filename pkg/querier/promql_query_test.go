@@ -5,16 +5,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/prometheus/prometheus/promql/parser"
-
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveAllVarMatchers(t *testing.T) {
 	logger := slog.Default()
-	q := &promqlQuery{logger: logger, parser: parser.NewParser(parser.Options{})}
+	q := &promqlQuery{logger: logger, parser: prometheus.NewParser()}
 
 	tests := []struct {
 		name      string

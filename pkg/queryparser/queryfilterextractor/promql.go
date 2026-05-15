@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
@@ -17,7 +18,7 @@ type PromQLFilterExtractor struct {
 // NewPromQLFilterExtractor creates a new PromQL filter extractor.
 func NewPromQLFilterExtractor() *PromQLFilterExtractor {
 	return &PromQLFilterExtractor{
-		parser: parser.NewParser(parser.Options{}),
+		parser: prometheus.NewParser(),
 	}
 }
 

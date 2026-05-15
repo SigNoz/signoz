@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/storage/remote"
 )
@@ -19,7 +18,7 @@ var _ prometheus.Prometheus = (*Provider)(nil)
 type Provider struct {
 	queryable storage.SampleAndChunkQueryable
 	engine    *prometheus.Engine
-	parser    parser.Parser
+	parser    prometheus.Parser
 }
 
 var stCallback = func() (int64, error) {
@@ -38,7 +37,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	return &Provider{
 		engine:    engine,
-		parser:    parser.NewParser(parser.Options{}),
+		parser:    prometheus.NewParser(),
 		queryable: queryable,
 	}
 }
@@ -51,7 +50,7 @@ func (provider *Provider) Storage() storage.Queryable {
 	return provider.queryable
 }
 
-func (provider *Provider) Parser() parser.Parser {
+func (provider *Provider) Parser() prometheus.Parser {
 	return provider.parser
 }
 

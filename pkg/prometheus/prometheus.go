@@ -8,8 +8,10 @@ import (
 
 type Engine = promql.Engine
 
+type Parser = parser.Parser
+
 type Prometheus interface {
 	Engine() *Engine
 	Storage() storage.Queryable
-	Parser() parser.Parser
+	Parser() Parser
 }
