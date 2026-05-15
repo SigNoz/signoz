@@ -66,8 +66,8 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
 		if err != nil {
 			return err
 		}

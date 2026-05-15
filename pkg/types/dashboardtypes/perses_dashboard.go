@@ -53,6 +53,24 @@ type DashboardV2 struct {
 	Data   DashboardV2Data `json:"data"`
 }
 
+func (d *DashboardV2) CanUpdate() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	return nil
+}
+
+func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if err := d.CanUpdate(); err != nil {
+		return err
+	}
+	d.Data.Metadata = updateable.Metadata.toDashboardV2Metadata(d.OrgID)
+	d.Data.Spec = updateable.Spec
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
 type DashboardV2Data struct {
 	Metadata DashboardV2Metadata `json:"metadata"`
 	Spec     DashboardSpec       `json:"spec"`
@@ -104,8 +122,6 @@ func (m PostableDashboardV2Metadata) toDashboardV2Metadata(orgID valuer.UUID) Da
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, m.Tags),
 	}
 }
-
-type UpdateableDashboardV2 = PostableDashboardV2
 
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
@@ -222,6 +238,12 @@ func (stored StorableDashboardV2Data) toDashboardV2Data(tags []*tagtypes.Tag) Da
 		Spec: stored.Spec,
 	}
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// Updateable
+// ════════════════════════════════════════════════════════════════════════
+
+type UpdateableDashboardV2 = PostableDashboardV2
 
 // ════════════════════════════════════════════════════════════════════════
 // Convertors
