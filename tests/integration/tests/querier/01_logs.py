@@ -2117,6 +2117,7 @@ def test_logs_fill_zero_formula_with_group_by(
             context=f"logs/fillZero/F1/{service_name}",
         )
 
+
 def test_logs_formula_orderby_and_limit(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -2271,12 +2272,8 @@ def test_logs_formula_orderby_and_limit(
     # Top 3 are not in the tie region, so prefix equality is safe.
     f1_services, f1_values = extract_services_and_values("F1")
     assert len(f1_services) == 3, f"F1: expected 3 rows after limit, got {len(f1_services)}"
-    assert f1_services == f2_services[:3], (
-        f"F1 services {f1_services} are not the prefix of F2 services {f2_services}"
-    )
-    assert f1_values == f2_values[:3], (
-        f"F1 values {f1_values} are not the prefix of F2 values {f2_values}"
-    )
+    assert f1_services == f2_services[:3], f"F1 services {f1_services} are not the prefix of F2 services {f2_services}"
+    assert f1_values == f2_values[:3], f"F1 values {f1_values} are not the prefix of F2 values {f2_values}"
 
     # F4: asc, no limit -> 12 rows in ascending order by value.
     f4_services, f4_values = extract_services_and_values("F4")
@@ -2294,12 +2291,5 @@ def test_logs_formula_orderby_and_limit(
     # two tied INFO-only entries can swap order between formula evaluations.
     f3_services, f3_values = extract_services_and_values("F3")
     assert len(f3_services) == 3, f"F3: expected 3 rows after limit, got {len(f3_services)}"
-    assert f3_values == f4_values[:3], (
-        f"F3 values {f3_values} do not match F4[:3] values {f4_values[:3]}"
-    )
-    assert set(f3_services) == set(f4_services[:3]), (
-        f"F3 services {f3_services} do not match F4[:3] services {f4_services[:3]}"
-    )
-
-
-
+    assert f3_values == f4_values[:3], f"F3 values {f3_values} do not match F4[:3] values {f4_values[:3]}"
+    assert set(f3_services) == set(f4_services[:3]), f"F3 services {f3_services} do not match F4[:3] services {f4_services[:3]}"
