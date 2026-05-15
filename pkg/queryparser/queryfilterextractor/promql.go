@@ -10,16 +10,20 @@ import (
 )
 
 // PromQLFilterExtractor extracts metric names and grouping keys from PromQL queries.
-type PromQLFilterExtractor struct{}
+type PromQLFilterExtractor struct {
+	parser parser.Parser
+}
 
 // NewPromQLFilterExtractor creates a new PromQL filter extractor.
 func NewPromQLFilterExtractor() *PromQLFilterExtractor {
-	return &PromQLFilterExtractor{}
+	return &PromQLFilterExtractor{
+		parser: parser.NewParser(parser.Options{}),
+	}
 }
 
 // Extract parses a PromQL query and extracts metric names and grouping keys.
 func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
-	expr, err := parser.NewParser(parser.Options{}).ParseExpr(query)
+	expr, err := e.parser.ParseExpr(query)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse promql query: %s", err.Error())
 	}
