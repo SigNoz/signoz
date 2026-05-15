@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func unmarshalDashboard(data []byte) (*DashboardData, error) {
-	var d DashboardData
+func unmarshalDashboard(data []byte) (*DashboardSpec, error) {
+	var d DashboardSpec
 	if err := json.Unmarshal(data, &d); err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func TestInvalidateNotAJSON(t *testing.T) {
 }
 
 // TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
-// DashboardData.UnmarshalJSON. The wrap stamps a consistent type/code on
+// DashboardSpec.UnmarshalJSON. The wrap stamps a consistent type/code on
 // decode failures, but must not smother the rich messages produced by nested
 // UnmarshalJSON methods (panel/query/variable/datasource plugin envelopes).
 func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
@@ -820,7 +820,7 @@ func TestPersesFixtureStorageRoundTrip(t *testing.T) {
 	raw, err := os.ReadFile("testdata/perses.json")
 	require.NoError(t, err)
 
-	var data DashboardData
+	var data DashboardSpec
 	require.NoError(t, json.Unmarshal(raw, &data), "initial unmarshal")
 
 	marshaled, err := json.Marshal(data)
@@ -832,7 +832,7 @@ func TestPersesFixtureStorageRoundTrip(t *testing.T) {
 	remarshaled, err := json.Marshal(asMap)
 	require.NoError(t, err, "map → JSON (read-back shape)")
 
-	var roundtripped DashboardData
+	var roundtripped DashboardSpec
 	require.NoError(t, json.Unmarshal(remarshaled, &roundtripped), "JSON → typed (the failure mode)")
 }
 

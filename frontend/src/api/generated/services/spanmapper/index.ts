@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -118,9 +119,7 @@ export function useListSpanMapperGroups<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -144,7 +143,7 @@ export const invalidateListSpanMapperGroups = async (
  * @summary Create a span attribute mapping group
  */
 export const createSpanMapperGroup = (
-	spantypesPostableSpanMapperGroupDTO: BodyType<SpantypesPostableSpanMapperGroupDTO>,
+	spantypesPostableSpanMapperGroupDTO?: BodyType<SpantypesPostableSpanMapperGroupDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateSpanMapperGroup201>({
@@ -163,13 +162,13 @@ export const getCreateSpanMapperGroupMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSpanMapperGroup>>,
 		TError,
-		{ data: BodyType<SpantypesPostableSpanMapperGroupDTO> },
+		{ data?: BodyType<SpantypesPostableSpanMapperGroupDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createSpanMapperGroup>>,
 	TError,
-	{ data: BodyType<SpantypesPostableSpanMapperGroupDTO> },
+	{ data?: BodyType<SpantypesPostableSpanMapperGroupDTO> },
 	TContext
 > => {
 	const mutationKey = ['createSpanMapperGroup'];
@@ -183,7 +182,7 @@ export const getCreateSpanMapperGroupMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createSpanMapperGroup>>,
-		{ data: BodyType<SpantypesPostableSpanMapperGroupDTO> }
+		{ data?: BodyType<SpantypesPostableSpanMapperGroupDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -197,7 +196,8 @@ export type CreateSpanMapperGroupMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createSpanMapperGroup>>
 >;
 export type CreateSpanMapperGroupMutationBody =
-	BodyType<SpantypesPostableSpanMapperGroupDTO>;
+	| BodyType<SpantypesPostableSpanMapperGroupDTO>
+	| undefined;
 export type CreateSpanMapperGroupMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -211,29 +211,29 @@ export const useCreateSpanMapperGroup = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSpanMapperGroup>>,
 		TError,
-		{ data: BodyType<SpantypesPostableSpanMapperGroupDTO> },
+		{ data?: BodyType<SpantypesPostableSpanMapperGroupDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createSpanMapperGroup>>,
 	TError,
-	{ data: BodyType<SpantypesPostableSpanMapperGroupDTO> },
+	{ data?: BodyType<SpantypesPostableSpanMapperGroupDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateSpanMapperGroupMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateSpanMapperGroupMutationOptions(options));
 };
 /**
  * Hard-deletes a mapping group and cascades to all its mappers.
  * @summary Delete a span attribute mapping group
  */
-export const deleteSpanMapperGroup = ({
-	groupId,
-}: DeleteSpanMapperGroupPathParameters) => {
+export const deleteSpanMapperGroup = (
+	{ groupId }: DeleteSpanMapperGroupPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_mapper_groups/${groupId}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -300,9 +300,7 @@ export const useDeleteSpanMapperGroup = <
 	{ pathParams: DeleteSpanMapperGroupPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteSpanMapperGroupMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteSpanMapperGroupMutationOptions(options));
 };
 /**
  * Partially updates an existing mapping group's name, condition, or enabled state.
@@ -310,13 +308,15 @@ export const useDeleteSpanMapperGroup = <
  */
 export const updateSpanMapperGroup = (
 	{ groupId }: UpdateSpanMapperGroupPathParameters,
-	spantypesUpdatableSpanMapperGroupDTO: BodyType<SpantypesUpdatableSpanMapperGroupDTO>,
+	spantypesUpdatableSpanMapperGroupDTO?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_mapper_groups/${groupId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: spantypesUpdatableSpanMapperGroupDTO,
+		signal,
 	});
 };
 
@@ -329,7 +329,7 @@ export const getUpdateSpanMapperGroupMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateSpanMapperGroupPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
 		},
 		TContext
 	>;
@@ -338,7 +338,7 @@ export const getUpdateSpanMapperGroupMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateSpanMapperGroupPathParameters;
-		data: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+		data?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
 	},
 	TContext
 > => {
@@ -355,7 +355,7 @@ export const getUpdateSpanMapperGroupMutationOptions = <
 		Awaited<ReturnType<typeof updateSpanMapperGroup>>,
 		{
 			pathParams: UpdateSpanMapperGroupPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -370,7 +370,8 @@ export type UpdateSpanMapperGroupMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateSpanMapperGroup>>
 >;
 export type UpdateSpanMapperGroupMutationBody =
-	BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+	| BodyType<SpantypesUpdatableSpanMapperGroupDTO>
+	| undefined;
 export type UpdateSpanMapperGroupMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -386,7 +387,7 @@ export const useUpdateSpanMapperGroup = <
 		TError,
 		{
 			pathParams: UpdateSpanMapperGroupPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
 		},
 		TContext
 	>;
@@ -395,13 +396,11 @@ export const useUpdateSpanMapperGroup = <
 	TError,
 	{
 		pathParams: UpdateSpanMapperGroupPathParameters;
-		data: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
+		data?: BodyType<SpantypesUpdatableSpanMapperGroupDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateSpanMapperGroupMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateSpanMapperGroupMutationOptions(options));
 };
 /**
  * Returns all mappers belonging to a mapping group.
@@ -486,9 +485,7 @@ export function useListSpanMappers<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -513,7 +510,7 @@ export const invalidateListSpanMappers = async (
  */
 export const createSpanMapper = (
 	{ groupId }: CreateSpanMapperPathParameters,
-	spantypesPostableSpanMapperDTO: BodyType<SpantypesPostableSpanMapperDTO>,
+	spantypesPostableSpanMapperDTO?: BodyType<SpantypesPostableSpanMapperDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateSpanMapper201>({
@@ -534,7 +531,7 @@ export const getCreateSpanMapperMutationOptions = <
 		TError,
 		{
 			pathParams: CreateSpanMapperPathParameters;
-			data: BodyType<SpantypesPostableSpanMapperDTO>;
+			data?: BodyType<SpantypesPostableSpanMapperDTO>;
 		},
 		TContext
 	>;
@@ -543,7 +540,7 @@ export const getCreateSpanMapperMutationOptions = <
 	TError,
 	{
 		pathParams: CreateSpanMapperPathParameters;
-		data: BodyType<SpantypesPostableSpanMapperDTO>;
+		data?: BodyType<SpantypesPostableSpanMapperDTO>;
 	},
 	TContext
 > => {
@@ -560,7 +557,7 @@ export const getCreateSpanMapperMutationOptions = <
 		Awaited<ReturnType<typeof createSpanMapper>>,
 		{
 			pathParams: CreateSpanMapperPathParameters;
-			data: BodyType<SpantypesPostableSpanMapperDTO>;
+			data?: BodyType<SpantypesPostableSpanMapperDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -575,7 +572,8 @@ export type CreateSpanMapperMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createSpanMapper>>
 >;
 export type CreateSpanMapperMutationBody =
-	BodyType<SpantypesPostableSpanMapperDTO>;
+	| BodyType<SpantypesPostableSpanMapperDTO>
+	| undefined;
 export type CreateSpanMapperMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -590,7 +588,7 @@ export const useCreateSpanMapper = <
 		TError,
 		{
 			pathParams: CreateSpanMapperPathParameters;
-			data: BodyType<SpantypesPostableSpanMapperDTO>;
+			data?: BodyType<SpantypesPostableSpanMapperDTO>;
 		},
 		TContext
 	>;
@@ -599,25 +597,24 @@ export const useCreateSpanMapper = <
 	TError,
 	{
 		pathParams: CreateSpanMapperPathParameters;
-		data: BodyType<SpantypesPostableSpanMapperDTO>;
+		data?: BodyType<SpantypesPostableSpanMapperDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getCreateSpanMapperMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateSpanMapperMutationOptions(options));
 };
 /**
  * Hard-deletes a mapper from a mapping group.
  * @summary Delete a span mapper
  */
-export const deleteSpanMapper = ({
-	groupId,
-	mapperId,
-}: DeleteSpanMapperPathParameters) => {
+export const deleteSpanMapper = (
+	{ groupId, mapperId }: DeleteSpanMapperPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_mapper_groups/${groupId}/span_mappers/${mapperId}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -683,9 +680,7 @@ export const useDeleteSpanMapper = <
 	{ pathParams: DeleteSpanMapperPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteSpanMapperMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteSpanMapperMutationOptions(options));
 };
 /**
  * Partially updates an existing mapper's field context, config, or enabled state.
@@ -693,13 +688,15 @@ export const useDeleteSpanMapper = <
  */
 export const updateSpanMapper = (
 	{ groupId, mapperId }: UpdateSpanMapperPathParameters,
-	spantypesUpdatableSpanMapperDTO: BodyType<SpantypesUpdatableSpanMapperDTO>,
+	spantypesUpdatableSpanMapperDTO?: BodyType<SpantypesUpdatableSpanMapperDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_mapper_groups/${groupId}/span_mappers/${mapperId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: spantypesUpdatableSpanMapperDTO,
+		signal,
 	});
 };
 
@@ -712,7 +709,7 @@ export const getUpdateSpanMapperMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateSpanMapperPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperDTO>;
 		},
 		TContext
 	>;
@@ -721,7 +718,7 @@ export const getUpdateSpanMapperMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateSpanMapperPathParameters;
-		data: BodyType<SpantypesUpdatableSpanMapperDTO>;
+		data?: BodyType<SpantypesUpdatableSpanMapperDTO>;
 	},
 	TContext
 > => {
@@ -738,7 +735,7 @@ export const getUpdateSpanMapperMutationOptions = <
 		Awaited<ReturnType<typeof updateSpanMapper>>,
 		{
 			pathParams: UpdateSpanMapperPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -753,7 +750,8 @@ export type UpdateSpanMapperMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateSpanMapper>>
 >;
 export type UpdateSpanMapperMutationBody =
-	BodyType<SpantypesUpdatableSpanMapperDTO>;
+	| BodyType<SpantypesUpdatableSpanMapperDTO>
+	| undefined;
 export type UpdateSpanMapperMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -768,7 +766,7 @@ export const useUpdateSpanMapper = <
 		TError,
 		{
 			pathParams: UpdateSpanMapperPathParameters;
-			data: BodyType<SpantypesUpdatableSpanMapperDTO>;
+			data?: BodyType<SpantypesUpdatableSpanMapperDTO>;
 		},
 		TContext
 	>;
@@ -777,11 +775,9 @@ export const useUpdateSpanMapper = <
 	TError,
 	{
 		pathParams: UpdateSpanMapperPathParameters;
-		data: BodyType<SpantypesUpdatableSpanMapperDTO>;
+		data?: BodyType<SpantypesUpdatableSpanMapperDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateSpanMapperMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateSpanMapperMutationOptions(options));
 };

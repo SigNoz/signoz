@@ -12,7 +12,7 @@ import {
 import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,
@@ -524,9 +524,9 @@ export default function ActionsSection({
 					);
 
 					return tooltip ? (
-						<Tooltip key={key} title={tooltip}>
+						<TooltipSimple key={key} title={tooltip}>
 							{chip}
-						</Tooltip>
+						</TooltipSimple>
 					) : (
 						<span key={key}>{chip}</span>
 					);

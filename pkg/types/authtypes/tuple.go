@@ -47,6 +47,42 @@ func NewTuplesFromTransactions(transactions []*Transaction, subject string, orgI
 	return tuples, nil
 }
 
+// NewTuplesFromTransactionsWithCorrelations converts transactions to tuples for BatchCheck,
+// and for each transaction whose selector is not already a wildcard, generates an additional
+// tuple with the wildcard selector. This ensures that permissions granted via wildcard
+// selectors (e.g., dashboard:*) are checked alongside exact selectors (e.g., dashboard:abc-123).
+//
+// Returns:
+//   - tuples: all tuples to check (exact + correlated), keyed by transaction ID or generated correlation ID
+//   - correlations: maps transaction ID to a slice of correlation IDs for the additional tuples
+func NewTuplesFromTransactionsWithCorrelations(transactions []*Transaction, subject string, orgID valuer.UUID) (tuples map[string]*openfgav1.TupleKey, correlations map[string][]string, err error) {
+	tuples = make(map[string]*openfgav1.TupleKey)
+	correlations = make(map[string][]string)
+
+	for _, txn := range transactions {
+		resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		txnID := txn.ID.StringValue()
+
+		txnTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{txn.Object.Selector}, orgID)
+		tuples[txnID] = txnTuples[0]
+
+		if txn.Object.Selector.String() != coretypes.WildCardSelectorString {
+			wildcardSelector := txn.Object.Resource.Type.MustSelector(coretypes.WildCardSelectorString)
+			wildcardTuples := NewTuples(resource, subject, txn.Relation, []coretypes.Selector{wildcardSelector}, orgID)
+
+			correlationID := valuer.GenerateUUID().StringValue()
+			tuples[correlationID] = wildcardTuples[0]
+			correlations[txnID] = append(correlations[txnID], correlationID)
+		}
+	}
+
+	return tuples, correlations, nil
+}
+
 // NewTuplesFromTransactionsWithManagedRoles converts transactions to tuples for BatchCheck.
 // Direct role-assignment transactions (TypeRole + VerbAssignee) produce one tuple keyed by txn ID.
 // Other transactions are expanded via managedRolesByTransaction into role-assignee checks, keyed by "txnID:roleName".

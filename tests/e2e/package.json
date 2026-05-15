@@ -4,6 +4,7 @@
   "description": "E2E tests for SigNoz frontend with Playwright",
   "main": "index.js",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "test": "playwright test",
     "test:staging": "SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud playwright test",
     "test:ui": "playwright test --ui",
@@ -41,6 +42,7 @@
     "typescript": "^5.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "pnpm": ">=10.0.0 <11.0.0"
   }
 }

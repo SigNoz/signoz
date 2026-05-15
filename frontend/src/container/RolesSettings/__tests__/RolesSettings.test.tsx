@@ -4,24 +4,27 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import RolesSettings from '../RolesSettings';
 
 const rolesApiURL = 'http://localhost/api/v1/roles';
 
 describe('RolesSettings', () => {
-	afterEach(() => {
-		jest.clearAllMocks();
-	});
-
-	it('renders the header and search input', () => {
+	beforeEach(() => {
 		server.use(
 			rest.get(rolesApiURL, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
 			),
 		);
+	});
 
+	afterEach(() => {
+		jest.clearAllMocks();
+		server.resetHandlers();
+	});
+
+	it('renders the header and search input', () => {
 		render(<RolesSettings />);
 
 		expect(screen.getByText('Roles')).toBeInTheDocument();
@@ -34,12 +37,6 @@ describe('RolesSettings', () => {
 	});
 
 	it('displays roles grouped by managed and custom sections', async () => {
-		server.use(
-			rest.get(rolesApiURL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
-
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
@@ -68,20 +65,13 @@ describe('RolesSettings', () => {
 	});
 
 	it('filters roles by search query on name', async () => {
-		server.use(
-			rest.get(rolesApiURL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
-
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const searchInput = screen.getByPlaceholderText('Search for roles...');
-
-		await user.type(searchInput, 'billing');
+		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
+			target: { value: 'billing' },
+		});
 
 		await expect(
 			screen.findByText('billing-manager'),
@@ -92,20 +82,13 @@ describe('RolesSettings', () => {
 	});
 
 	it('filters roles by search query on description', async () => {
-		server.use(
-			rest.get(rolesApiURL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
-
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const searchInput = screen.getByPlaceholderText('Search for roles...');
-
-		await user.type(searchInput, 'read-only');
+		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
+			target: { value: 'read-only' },
+		});
 
 		await expect(screen.findByText('signoz-viewer')).resolves.toBeInTheDocument();
 		expect(screen.queryByText('signoz-admin')).not.toBeInTheDocument();
@@ -113,20 +96,13 @@ describe('RolesSettings', () => {
 	});
 
 	it('shows empty state when search matches nothing', async () => {
-		server.use(
-			rest.get(rolesApiURL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
-
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const searchInput = screen.getByPlaceholderText('Search for roles...');
-
-		await user.type(searchInput, 'nonexistentrole');
+		fireEvent.change(screen.getByPlaceholderText('Search for roles...'), {
+			target: { value: 'nonexistentrole' },
+		});
 
 		await expect(
 			screen.findByText('No roles match your search.'),
@@ -183,12 +159,6 @@ describe('RolesSettings', () => {
 	});
 
 	it('renders descriptions for all roles', async () => {
-		server.use(
-			rest.get(rolesApiURL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-			),
-		);
-
 		render(<RolesSettings />);
 
 		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();

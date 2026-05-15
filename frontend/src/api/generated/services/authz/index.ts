@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation } from 'react-query';
 import type {
@@ -25,7 +26,7 @@ import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
  * @summary Check permissions
  */
 export const authzCheck = (
-	authtypesTransactionDTO: BodyType<AuthtypesTransactionDTO[]>,
+	authtypesTransactionDTO?: BodyType<AuthtypesTransactionDTO[]>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AuthzCheck200>({
@@ -44,13 +45,13 @@ export const getAuthzCheckMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
 		TError,
-		{ data: BodyType<AuthtypesTransactionDTO[]> },
+		{ data?: BodyType<AuthtypesTransactionDTO[]> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof authzCheck>>,
 	TError,
-	{ data: BodyType<AuthtypesTransactionDTO[]> },
+	{ data?: BodyType<AuthtypesTransactionDTO[]> },
 	TContext
 > => {
 	const mutationKey = ['authzCheck'];
@@ -64,7 +65,7 @@ export const getAuthzCheckMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof authzCheck>>,
-		{ data: BodyType<AuthtypesTransactionDTO[]> }
+		{ data?: BodyType<AuthtypesTransactionDTO[]> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -77,7 +78,9 @@ export const getAuthzCheckMutationOptions = <
 export type AuthzCheckMutationResult = NonNullable<
 	Awaited<ReturnType<typeof authzCheck>>
 >;
-export type AuthzCheckMutationBody = BodyType<AuthtypesTransactionDTO[]>;
+export type AuthzCheckMutationBody =
+	| BodyType<AuthtypesTransactionDTO[]>
+	| undefined;
 export type AuthzCheckMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -90,16 +93,14 @@ export const useAuthzCheck = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
 		TError,
-		{ data: BodyType<AuthtypesTransactionDTO[]> },
+		{ data?: BodyType<AuthtypesTransactionDTO[]> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof authzCheck>>,
 	TError,
-	{ data: BodyType<AuthtypesTransactionDTO[]> },
+	{ data?: BodyType<AuthtypesTransactionDTO[]> },
 	TContext
 > => {
-	const mutationOptions = getAuthzCheckMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getAuthzCheckMutationOptions(options));
 };

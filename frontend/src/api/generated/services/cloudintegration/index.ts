@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -56,7 +57,7 @@ import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
  */
 export const agentCheckInDeprecated = (
 	{ cloudProvider }: AgentCheckInDeprecatedPathParameters,
-	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
+	cloudintegrationtypesPostableAgentCheckInDTO?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AgentCheckInDeprecated200>({
@@ -77,7 +78,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -86,7 +87,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -103,7 +104,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		Awaited<ReturnType<typeof agentCheckInDeprecated>>,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -118,7 +119,8 @@ export type AgentCheckInDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckInDeprecated>>
 >;
 export type AgentCheckInDeprecatedMutationBody =
-	BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+	| BodyType<CloudintegrationtypesPostableAgentCheckInDTO>
+	| undefined;
 export type AgentCheckInDeprecatedMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -135,7 +137,7 @@ export const useAgentCheckInDeprecated = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -144,13 +146,11 @@ export const useAgentCheckInDeprecated = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getAgentCheckInDeprecatedMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getAgentCheckInDeprecatedMutationOptions(options));
 };
 /**
  * This endpoint lists the accounts for the specified cloud provider
@@ -235,9 +235,7 @@ export function useListAccounts<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -262,7 +260,7 @@ export const invalidateListAccounts = async (
  */
 export const createAccount = (
 	{ cloudProvider }: CreateAccountPathParameters,
-	cloudintegrationtypesPostableAccountDTO: BodyType<CloudintegrationtypesPostableAccountDTO>,
+	cloudintegrationtypesPostableAccountDTO?: BodyType<CloudintegrationtypesPostableAccountDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateAccount201>({
@@ -283,7 +281,7 @@ export const getCreateAccountMutationOptions = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -292,7 +290,7 @@ export const getCreateAccountMutationOptions = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
@@ -309,7 +307,7 @@ export const getCreateAccountMutationOptions = <
 		Awaited<ReturnType<typeof createAccount>>,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -324,7 +322,8 @@ export type CreateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAccount>>
 >;
 export type CreateAccountMutationBody =
-	BodyType<CloudintegrationtypesPostableAccountDTO>;
+	| BodyType<CloudintegrationtypesPostableAccountDTO>
+	| undefined;
 export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -339,7 +338,7 @@ export const useCreateAccount = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -348,25 +347,24 @@ export const useCreateAccount = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getCreateAccountMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateAccountMutationOptions(options));
 };
 /**
  * This endpoint disconnects an account for the specified cloud provider
  * @summary Disconnect account
  */
-export const disconnectAccount = ({
-	cloudProvider,
-	id,
-}: DisconnectAccountPathParameters) => {
+export const disconnectAccount = (
+	{ cloudProvider, id }: DisconnectAccountPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -432,9 +430,7 @@ export const useDisconnectAccount = <
 	{ pathParams: DisconnectAccountPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDisconnectAccountMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDisconnectAccountMutationOptions(options));
 };
 /**
  * This endpoint gets an account for the specified cloud provider
@@ -518,9 +514,7 @@ export function useGetAccount<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -545,13 +539,15 @@ export const invalidateGetAccount = async (
  */
 export const updateAccount = (
 	{ cloudProvider, id }: UpdateAccountPathParameters,
-	cloudintegrationtypesUpdatableAccountDTO: BodyType<CloudintegrationtypesUpdatableAccountDTO>,
+	cloudintegrationtypesUpdatableAccountDTO?: BodyType<CloudintegrationtypesUpdatableAccountDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: cloudintegrationtypesUpdatableAccountDTO,
+		signal,
 	});
 };
 
@@ -564,7 +560,7 @@ export const getUpdateAccountMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 		},
 		TContext
 	>;
@@ -573,7 +569,7 @@ export const getUpdateAccountMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+		data?: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 	},
 	TContext
 > => {
@@ -590,7 +586,7 @@ export const getUpdateAccountMutationOptions = <
 		Awaited<ReturnType<typeof updateAccount>>,
 		{
 			pathParams: UpdateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -605,7 +601,8 @@ export type UpdateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAccount>>
 >;
 export type UpdateAccountMutationBody =
-	BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+	| BodyType<CloudintegrationtypesUpdatableAccountDTO>
+	| undefined;
 export type UpdateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -620,7 +617,7 @@ export const useUpdateAccount = <
 		TError,
 		{
 			pathParams: UpdateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 		},
 		TContext
 	>;
@@ -629,13 +626,11 @@ export const useUpdateAccount = <
 	TError,
 	{
 		pathParams: UpdateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+		data?: BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateAccountMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateAccountMutationOptions(options));
 };
 /**
  * This endpoint updates a service for the specified cloud provider
@@ -643,13 +638,15 @@ export const useUpdateAccount = <
  */
 export const updateService = (
 	{ cloudProvider, id, serviceId }: UpdateServicePathParameters,
-	cloudintegrationtypesUpdatableServiceDTO: BodyType<CloudintegrationtypesUpdatableServiceDTO>,
+	cloudintegrationtypesUpdatableServiceDTO?: BodyType<CloudintegrationtypesUpdatableServiceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: cloudintegrationtypesUpdatableServiceDTO,
+		signal,
 	});
 };
 
@@ -662,7 +659,7 @@ export const getUpdateServiceMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 		},
 		TContext
 	>;
@@ -671,7 +668,7 @@ export const getUpdateServiceMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateServicePathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+		data?: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 	},
 	TContext
 > => {
@@ -688,7 +685,7 @@ export const getUpdateServiceMutationOptions = <
 		Awaited<ReturnType<typeof updateService>>,
 		{
 			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -703,7 +700,8 @@ export type UpdateServiceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateService>>
 >;
 export type UpdateServiceMutationBody =
-	BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+	| BodyType<CloudintegrationtypesUpdatableServiceDTO>
+	| undefined;
 export type UpdateServiceMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -718,7 +716,7 @@ export const useUpdateService = <
 		TError,
 		{
 			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+			data?: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 		},
 		TContext
 	>;
@@ -727,13 +725,11 @@ export const useUpdateService = <
 	TError,
 	{
 		pathParams: UpdateServicePathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+		data?: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateServiceMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateServiceMutationOptions(options));
 };
 /**
  * This endpoint is called by the deployed agent to check in
@@ -741,7 +737,7 @@ export const useUpdateService = <
  */
 export const agentCheckIn = (
 	{ cloudProvider }: AgentCheckInPathParameters,
-	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
+	cloudintegrationtypesPostableAgentCheckInDTO?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AgentCheckIn200>({
@@ -762,7 +758,7 @@ export const getAgentCheckInMutationOptions = <
 		TError,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -771,7 +767,7 @@ export const getAgentCheckInMutationOptions = <
 	TError,
 	{
 		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -788,7 +784,7 @@ export const getAgentCheckInMutationOptions = <
 		Awaited<ReturnType<typeof agentCheckIn>>,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -803,7 +799,8 @@ export type AgentCheckInMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckIn>>
 >;
 export type AgentCheckInMutationBody =
-	BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+	| BodyType<CloudintegrationtypesPostableAgentCheckInDTO>
+	| undefined;
 export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -818,7 +815,7 @@ export const useAgentCheckIn = <
 		TError,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+			data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -827,13 +824,11 @@ export const useAgentCheckIn = <
 	TError,
 	{
 		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		data?: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getAgentCheckInMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getAgentCheckInMutationOptions(options));
 };
 /**
  * This endpoint retrieves the connection credentials required for integration
@@ -923,9 +918,7 @@ export function useGetConnectionCredentials<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1040,9 +1033,7 @@ export function useListServicesMetadata<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1156,9 +1147,7 @@ export function useGetService<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

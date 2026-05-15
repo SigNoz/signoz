@@ -5,9 +5,15 @@ cd frontend && pnpm run commitlint --edit $1
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
-color_red="$(tput setaf 1)"
-bold="$(tput bold)"
-reset="$(tput sgr0)"
+if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+  color_red="$(tput setaf 1)"
+  bold="$(tput bold)"
+  reset="$(tput sgr0)"
+else
+  color_red=""
+  bold=""
+  reset=""
+fi
 
 if [ "$branch" = "main" ]; then
   echo "${color_red}${bold}You can't commit directly to the main branch${reset}"
