@@ -24,8 +24,6 @@ import type {
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
 	DeletePublicDashboardPathParameters,
-	GetDashboardV2200,
-	GetDashboardV2PathParameters,
 	GetPublicDashboard200,
 	GetPublicDashboardData200,
 	GetPublicDashboardDataPathParameters,
@@ -33,8 +31,6 @@ import type {
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
 	RenderErrorResponseDTO,
-	UpdateDashboardV2200,
-	UpdateDashboardV2PathParameters,
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
