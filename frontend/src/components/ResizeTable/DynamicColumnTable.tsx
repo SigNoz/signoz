@@ -5,7 +5,7 @@ import type {
 	TableColumnType as ColumnType,
 } from 'antd';
 import { Button, Dropdown, Flex, MenuProps } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';

@@ -1,5 +1,5 @@
 import { Button, Flex, SelectProps } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';

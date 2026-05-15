@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Form, Input, Select, Space } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { ProcessorData } from 'types/api/pipeline/def';
 

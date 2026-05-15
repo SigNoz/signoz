@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Input, Select, Tag } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';

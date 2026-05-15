@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Radio, RadioChangeEvent, Tag } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';

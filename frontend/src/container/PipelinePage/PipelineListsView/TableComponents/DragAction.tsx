@@ -1,5 +1,5 @@
 import { GripVertical } from '@signozhq/icons';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 
 import { holdIconStyle } from '../config';
 import { LastActionColumn } from '../styles';

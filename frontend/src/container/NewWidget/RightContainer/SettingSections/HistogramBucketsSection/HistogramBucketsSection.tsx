@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InputNumber } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

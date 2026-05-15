@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { Delete } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';

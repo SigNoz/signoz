@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Tooltip } from 'antd';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';

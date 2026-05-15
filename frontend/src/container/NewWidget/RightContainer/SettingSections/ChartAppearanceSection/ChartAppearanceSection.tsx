@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Switch } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	FillMode,
