@@ -32,9 +32,4 @@ type Store interface {
 	DeletePublic(context.Context, string) error
 
 	RunInTx(context.Context, func(context.Context) error) error
-
-	// ════════════════════════════════════════════════════════════════════════
-	// v2 dashboard methods
-	// ════════════════════════════════════════════════════════════════════════
-	GetV2(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, *StorablePublicDashboard, error)
 }

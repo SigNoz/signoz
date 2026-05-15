@@ -2,11 +2,9 @@ package impldashboard
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -63,46 +61,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	}
 
 	return storableDashboard, nil
-}
-
-func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, *dashboardtypes.StorablePublicDashboard, error) {
-	type joinedRow struct {
-		*dashboardtypes.StorableDashboard `bun:",extend"`
-
-		PublicID               *valuer.UUID `bun:"public_id"`
-		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
-		PublicUpdatedAt        *time.Time   `bun:"public_updated_at"`
-		PublicTimeRangeEnabled *bool        `bun:"public_time_range_enabled"`
-		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
-	}
-
-	row := &joinedRow{StorableDashboard: new(dashboardtypes.StorableDashboard)}
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(row).
-		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
-		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
-		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
-		Where("dashboard.id = ?", id).
-		Where("dashboard.org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-
-	if row.PublicID == nil {
-		return row.StorableDashboard, nil, nil
-	}
-	public := &dashboardtypes.StorablePublicDashboard{
-		Identifiable:     types.Identifiable{ID: *row.PublicID},
-		TimeAuditable:    types.TimeAuditable{CreatedAt: *row.PublicCreatedAt, UpdatedAt: *row.PublicUpdatedAt},
-		TimeRangeEnabled: *row.PublicTimeRangeEnabled,
-		DefaultTimeRange: *row.PublicDefaultTimeRange,
-		DashboardID:      row.ID.StringValue(),
-	}
-	return row.StorableDashboard, public, nil
 }
 
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
