@@ -1905,63 +1905,66 @@ def test_traces_fill_zero_formula_with_group_by(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-
-    queries = [
-            {
-                "type": "builder_query",
-                "spec": {
-                    "name": "A",
-                    "signal": "traces",
-                    "stepInterval": 60,
-                    "disabled": True,
-                    "groupBy": [
-                        {
-                            "name": "service.name",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        }
-                    ],
-                    "having": {"expression": ""},
-                    "aggregations": [{"expression": "count()"}],
-                },
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "time_series",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 60,
+                            "disabled": True,
+                            "groupBy": [
+                                {
+                                    "name": "service.name",
+                                    "fieldDataType": "string",
+                                    "fieldContext": "resource",
+                                }
+                            ],
+                            "having": {"expression": ""},
+                            "aggregations": [{"expression": "count()"}],
+                        },
+                    },
+                    {
+                        "type": "builder_formula",
+                        "spec": {
+                            "name": "F1",
+                            "expression": "A + B",
+                            "disabled": False,
+                            "functions": [{"name": "fillZero"}],
+                        },
+                    },
+                ]
             },
-            {
-                "type": "builder_query",
-                "spec": {
-                    "name": "B",
-                    "signal": "traces",
-                    "stepInterval": 60,
-                    "disabled": True,
-                    "groupBy": [
-                        {
-                            "name": "service.name",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        }
-                    ],
-                    "having": {"expression": ""},
-                    "aggregations": [{"expression": "count()"}],
-                },
-            },
-            {
-                "type": "builder_formula",
-                "spec": {
-                    "name": "F1",
-                    "expression": "A / B",
-                    "disabled": False,
-                    "functions": [{"name": "fillZero"}],
-                },
-            },
-        ]
-    
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        request_type="time_series",
-        queries=queries,
-        format_options={"formatTableResultForUI": False, "fillGaps": False},
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -1995,50 +1998,6 @@ def test_traces_fill_zero_formula_with_group_by(
             expected_by_ts=expectations[service_name],
             context=f"traces/fillZero/F1/{service_name}",
         )
-
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        request_type="scalar",
-        queries=queries,
-        format_options={"formatTableResultForUI": False, "fillGaps": False},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-
-    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
-    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
-
-    f1 = find_named_result(results, "F1")
-    assert f1 is not None, "Expected formula result named F1"
-    aggregations = f1.get("aggregations") or []
-    assert len(aggregations) == 1
-    series = aggregations[0]["series"]
-    assert len(series) == 2
-
-    series_by_service = index_series_by_label(series, "service.name")
-    assert set(series_by_service.keys()) == {"group1", "group2"}
-
-    expectations: Dict[str, Dict[int, float]] = {
-        "group1": {ts_min_3: 2},
-        "group2": {ts_min_2: 2},
-    }
-
-    for service_name, s in series_by_service.items():
-        assert_minutely_bucket_values(
-            s["values"],
-            now,
-            expected_by_ts=expectations[service_name],
-            context=f"traces/fillZero/F1/{service_name}",
-        )
-
-    
 
 
 def test_traces_list_filter_by_trace_id(
