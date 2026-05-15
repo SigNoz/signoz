@@ -12626,6 +12626,59 @@ paths:
       summary: Create dashboard (v2)
       tags:
       - dashboard
+  /api/v2/dashboards/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns a v2-shape dashboard with its tags and public
+        sharing config (if any).
+      operationId: GetDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get dashboard (v2)
+      tags:
+      - dashboard
   /api/v2/factor_password/forgot:
     post:
       deprecated: false

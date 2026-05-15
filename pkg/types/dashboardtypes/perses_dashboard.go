@@ -211,6 +211,16 @@ func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardDat
 
 type StorableDashboardV2Metadata = DashboardV2MetadataBase
 
+func (stored StorableDashboardV2Data) toDashboardV2Data(tags []*tagtypes.Tag) DashboardV2Data {
+	return DashboardV2Data{
+		Metadata: DashboardV2Metadata{
+			DashboardV2MetadataBase: stored.Metadata,
+			Tags:                    tags,
+		},
+		Spec: stored.Spec,
+	}
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Convertors
 // ════════════════════════════════════════════════════════════════════════
@@ -235,5 +245,28 @@ func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 		OrgID:         d.OrgID,
 		Locked:        d.Locked,
 		Data:          data,
+	}, nil
+}
+
+func (storable StorableDashboard) ToDashboardV2(tags []*tagtypes.Tag) (*DashboardV2, error) {
+	metadata, _ := storable.Data["metadata"].(map[string]any)
+	if metadata == nil || metadata["schemaVersion"] != SchemaVersion {
+		return nil, errors.Newf(errors.TypeUnsupported, ErrCodeDashboardInvalidData, "dashboard %s is not in %s schema", storable.ID, SchemaVersion)
+	}
+	raw, err := json.Marshal(storable.Data)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal stored v2 dashboard data")
+	}
+	var stored StorableDashboardV2Data
+	if err := json.Unmarshal(raw, &stored); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal stored v2 dashboard data")
+	}
+	return &DashboardV2{
+		Identifiable:  storable.Identifiable,
+		TimeAuditable: storable.TimeAuditable,
+		UserAuditable: storable.UserAuditable,
+		OrgID:         storable.OrgID,
+		Locked:        storable.Locked,
+		Data:          stored.toDashboardV2Data(tags),
 	}, nil
 }

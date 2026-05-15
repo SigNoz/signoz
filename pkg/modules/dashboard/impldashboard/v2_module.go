@@ -37,3 +37,17 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
+
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable.ToDashboardV2(tags)
+}

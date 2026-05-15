@@ -203,6 +203,10 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, postable)
 }
 
+func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
+}
+
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }
