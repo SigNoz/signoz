@@ -112,6 +112,14 @@ export type TableRowContext<TData> = {
 	enableAlternatingRowColors?: boolean;
 };
 
+export type AutoPageSizeConfig = {
+	rowHeight?: number;
+	headerHeight?: number;
+	paginationHeight?: number;
+	minPageSize?: number;
+	maxPageSize?: number;
+};
+
 export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
@@ -124,6 +132,12 @@ export type PaginationProps = {
 	onLimitChange?: (limit: number) => void;
 	showTotalCount?: boolean;
 	totalCountLabel?: string;
+	/**
+	 * Auto-calculated page size for the current container.
+	 * When set, shows as "Auto (N)" option in the page size dropdown.
+	 * Consumer is responsible for calculating this via useCalculatedPageSize.
+	 */
+	calculatedPageSize?: number | null;
 };
 
 export type TanstackTableQueryParamsConfig = {

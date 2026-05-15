@@ -7,6 +7,7 @@ import {
 } from 'nuqs/adapters/testing';
 
 import { useTableParams } from '../useTableParams';
+import { usePreferredPageSizeStore } from '../usePreferredPageSize.store';
 
 function createNuqsWrapper(
 	queryParams?: Record<string, string>,
@@ -541,5 +542,408 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 			'row-a': true,
 			'row-b': true,
 		});
+	});
+});
+
+describe('useTableParams (cleanupOnUnmount option)', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		localStorage.clear();
+		usePreferredPageSizeStore.setState({ tables: {} });
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	it('clears URL params on unmount when cleanupOnUnmount is true', async () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+
+		const { result, unmount } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit', orderBy: 'orderBy' },
+					{
+						page: 1,
+						limit: 10,
+						cleanupOnUnmount: true,
+					},
+				),
+			{ wrapper },
+		);
+
+		// Set some values
+		await act(async () => {
+			result.current.setLimit(50);
+			result.current.setPage(3);
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		// Verify values set
+		expect(result.current.limit).toBe(50);
+		expect(result.current.page).toBe(3);
+
+		// Unmount triggers cleanup
+		unmount();
+
+		await act(async () => {
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		// Last URL update should have cleared params
+		const lastUpdate = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+		expect(lastUpdate[0].searchParams.get('limit')).toBeNull();
+		expect(lastUpdate[0].searchParams.get('page')).toBeNull();
+	});
+
+	it('does not clear URL params on unmount when cleanupOnUnmount is false', async () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+
+		const { result, unmount } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						cleanupOnUnmount: false,
+					},
+				),
+			{ wrapper },
+		);
+
+		await act(async () => {
+			result.current.setLimit(50);
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		expect(result.current.limit).toBe(50);
+
+		unmount();
+
+		await act(async () => {
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		// No new URL updates after unmount (or same count)
+		const lastUpdate = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+		expect(lastUpdate[0].searchParams.get('limit')).toBe('50');
+	});
+
+	it('defaults cleanupOnUnmount to false', async () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+
+		const { result, unmount } = renderHook(
+			() =>
+				useTableParams({ page: 'page', limit: 'limit' }, { page: 1, limit: 10 }),
+			{ wrapper },
+		);
+
+		await act(async () => {
+			result.current.setLimit(50);
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		unmount();
+
+		await act(async () => {
+			jest.runAllTimers();
+			await Promise.resolve();
+		});
+
+		// URL should still have limit=50 (cleanup not triggered)
+		const lastUpdate = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+		expect(lastUpdate[0].searchParams.get('limit')).toBe('50');
+	});
+});
+
+describe('useTableParams (auto page size with storageKey)', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		localStorage.clear();
+		usePreferredPageSizeStore.setState({ tables: {} });
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	it('uses explicit default when no URL, no calculated, no preferred', () => {
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: null,
+					},
+				),
+			{ wrapper },
+		);
+
+		// Should use explicit default (10), NOT the internal DEFAULT_LIMIT (50)
+		expect(result.current.limit).toBe(10);
+	});
+
+	it('uses calculatedPageSize when available and no preferred', () => {
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		expect(result.current.limit).toBe(42);
+	});
+
+	it('prefers stored value over calculatedPageSize', () => {
+		// Pre-populate the store
+		localStorage.setItem(
+			'@signoz/table-columns/test-table-preferred-page-size',
+			'25',
+		);
+
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		// Should use preferred (25), not calculated (42)
+		expect(result.current.limit).toBe(25);
+	});
+
+	it('preserves URL limit over calculated and preferred', () => {
+		localStorage.setItem(
+			'@signoz/table-columns/test-table-preferred-page-size',
+			'25',
+		);
+
+		const wrapper = createNuqsWrapper({ limit: '30' });
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		// Should use URL (30), not preferred (25) or calculated (42)
+		expect(result.current.limit).toBe(30);
+	});
+
+	it('persists user selection when different from calculated', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		// User selects 30 (different from calculated 42)
+		act(() => {
+			result.current.setLimit(30);
+			jest.runAllTimers();
+		});
+
+		expect(result.current.limit).toBe(30);
+		expect(
+			localStorage.getItem('@signoz/table-columns/test-table-preferred-page-size'),
+		).toBe('30');
+	});
+
+	it('clears preference when user selects calculated value', () => {
+		// Pre-set a preference
+		localStorage.setItem(
+			'@signoz/table-columns/test-table-preferred-page-size',
+			'30',
+		);
+		usePreferredPageSizeStore.setState({ tables: { 'test-table': 30 } });
+
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		// User selects 42 (same as calculated)
+		act(() => {
+			result.current.setLimit(42);
+			jest.runAllTimers();
+		});
+
+		expect(result.current.limit).toBe(42);
+		// Preference should be cleared (null removes from storage)
+		expect(
+			localStorage.getItem('@signoz/table-columns/test-table-preferred-page-size'),
+		).toBeNull();
+	});
+
+	it('returns calculated value even before URL is synced', () => {
+		const wrapper = createNuqsWrapper();
+
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		// Limit should be 42 (calculated) even if URL sync is async
+		expect(result.current.limit).toBe(42);
+	});
+
+	it('does not override URL when it already has a value', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({ limit: '30' }, onUrlUpdate);
+
+		const { result } = renderHook(
+			() =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table',
+						calculatedPageSize: 42,
+					},
+				),
+			{ wrapper },
+		);
+
+		act(() => {
+			jest.runAllTimers();
+		});
+
+		// Limit should stay at 30 (from URL), not change to 42
+		expect(result.current.limit).toBe(30);
+	});
+
+	it('handles calculatedPageSize changing from null to number', () => {
+		const wrapper = createNuqsWrapper();
+
+		const { result, rerender } = renderHook(
+			({ calculated }) =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table-2',
+						calculatedPageSize: calculated,
+					},
+				),
+			{ wrapper, initialProps: { calculated: null as number | null } },
+		);
+
+		// Initially should use explicit default (10)
+		expect(result.current.limit).toBe(10);
+
+		// When calculated becomes available, should update
+		rerender({ calculated: 42 });
+
+		act(() => {
+			jest.runAllTimers();
+		});
+
+		// Limit should now be 42
+		expect(result.current.limit).toBe(42);
+	});
+
+	it('keeps user selection when calculatedPageSize changes', () => {
+		const wrapper = createNuqsWrapper();
+
+		const { result, rerender } = renderHook(
+			({ calculated }) =>
+				useTableParams(
+					{ page: 'page', limit: 'limit' },
+					{
+						page: 1,
+						limit: 10,
+						storageKey: 'test-table-3',
+						calculatedPageSize: calculated,
+					},
+				),
+			{ wrapper, initialProps: { calculated: 42 as number | null } },
+		);
+
+		expect(result.current.limit).toBe(42);
+
+		// User selects 30
+		act(() => {
+			result.current.setLimit(30);
+			jest.runAllTimers();
+		});
+
+		expect(result.current.limit).toBe(30);
+
+		// calculatedPageSize changes (e.g., window resize)
+		rerender({ calculated: 50 });
+
+		act(() => {
+			jest.runAllTimers();
+		});
+
+		// Should keep user's selection (30), not change to new calculated (50)
+		expect(result.current.limit).toBe(30);
 	});
 });

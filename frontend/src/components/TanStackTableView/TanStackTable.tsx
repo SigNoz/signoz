@@ -16,7 +16,7 @@ import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
@@ -51,7 +51,7 @@ import { useEffectiveData } from './useEffectiveData';
 import { useFlatItems } from './useFlatItems';
 import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
-import { buildTanstackColumnDef } from './utils';
+import { buildPageSizeItems, buildTanstackColumnDef } from './utils';
 import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -65,14 +65,6 @@ const COLUMN_DND_AUTO_SCROLL = {
 const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
 
 const noopColumnVisibility = (): void => {};
-
-const paginationPageSizeItems: ComboboxSimpleItem[] = [10, 20, 30, 50, 100].map(
-	(value) => ({
-		value: value.toString(),
-		label: value.toString(),
-		displayValue: value.toString(),
-	}),
-);
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function TanStackTableInner<TData>(
@@ -137,8 +129,13 @@ function TanStackTableInner<TData>(
 		setExpanded,
 	} = useTableParams(enableQueryParams, {
 		page: pagination?.defaultPage,
-		limit: pagination?.defaultLimit,
+		limit: pagination?.defaultLimit ?? pagination?.calculatedPageSize ?? 10,
 	});
+
+	const pageSizeItems = useMemo(
+		() => buildPageSizeItems(pagination?.calculatedPageSize),
+		[pagination?.calculatedPageSize],
+	);
 
 	const setOrderBy = useCallback(
 		(sort: SortState | null) => {
@@ -645,7 +642,7 @@ function TanStackTableInner<TData>(
 											setLimit(+value);
 											pagination.onLimitChange?.(+value);
 										}}
-										items={paginationPageSizeItems}
+										items={pageSizeItems}
 									/>
 								</div>
 							)}
