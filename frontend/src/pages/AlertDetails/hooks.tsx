@@ -12,6 +12,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createRule,
 	deleteRuleByID,
+	invalidateGetRuleByID,
 	updateRuleByID,
 	useGetRuleByID,
 	useListRules,
@@ -37,7 +38,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
 import history from 'lib/history';
-import { History, Table } from 'lucide-react';
+import { History, Table } from '@signozhq/icons';
 import EditRules from 'pages/EditRules';
 import { OrderPreferenceItems } from 'pages/Logs/config';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
@@ -408,6 +409,7 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
@@ -416,6 +418,7 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,

@@ -1,0 +1,327 @@
+.message {
+	display: flex;
+	padding: 8px 16px;
+	// CSS variable consumed by MessageFeedback to fade in on hover.
+	--feedback-opacity: 0;
+
+	&:hover {
+		--feedback-opacity: 1;
+	}
+
+	&.compact {
+		padding: 6px;
+	}
+}
+
+.user {
+	justify-content: flex-end;
+}
+
+.assistant {
+	justify-content: flex-start;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	max-width: 80%;
+
+	&.compact {
+		max-width: 90%;
+	}
+
+	.user & {
+		align-items: flex-end;
+	}
+
+	.assistant & {
+		align-items: flex-start;
+	}
+}
+
+.bubble {
+	border-radius: var(--radius-2);
+	padding: 8px;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 153.846% */
+	letter-spacing: -0.065px;
+	max-width: 100%;
+
+	.user & {
+		background: var(--accent-primary);
+		color: var(--primary-foreground);
+		border-bottom-right-radius: var(--radius-2);
+	}
+
+	.assistant & {
+		// Flex column for text blocks, tool steps and cards. No parent
+		// gap — auxiliary blocks (Thinking / ToolCall / actions) stack
+		// flush, and the prose `.markdown` block adds its own 24px top
+		// and bottom margins to mark itself as the message's focal point.
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		background: var(--l2-background);
+		color: var(--l1-foreground);
+		border-bottom-left-radius: var(--radius-2);
+	}
+}
+
+.text {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+// User-bubble row: pencil button sits to the LEFT of the bubble within
+// the right-aligned message line, so it visually "ends" at the bubble's
+// right edge while keeping the bubble in its original position.
+.bubbleRow {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	max-width: 100%;
+}
+
+.markdown {
+	width: 100%;
+	word-break: break-word;
+	// Anchor the prose block apart from any auxiliary rows (Thinking /
+	// ToolCall / Suggested actions) above and below it. Reset when this
+	// is the only / first / last child so the bubble doesn't grow taller
+	// than its content.
+	margin: 12px 0;
+
+	&:first-child {
+		margin-top: 0;
+	}
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+
+	p {
+		margin: 0 0 0.65em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	ul,
+	ol {
+		margin: 0 0 0.65em;
+		padding-left: 1.5em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	li {
+		margin-bottom: 0.3em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		ul,
+		ol {
+			margin-top: 0.25em;
+			margin-bottom: 0;
+		}
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-weight: 600;
+		line-height: 1.35;
+		margin: 0.9em 0 0.4em;
+		color: var(--l1-foreground);
+
+		&:first-child {
+			margin-top: 0;
+		}
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	h1 {
+		font-size: 1.15em;
+	}
+	h2 {
+		font-size: 1.08em;
+	}
+	h3 {
+		font-size: 1em;
+	}
+	h4,
+	h5,
+	h6 {
+		font-size: 0.95em;
+	}
+
+	strong {
+		font-weight: 600;
+	}
+	em {
+		font-style: italic;
+	}
+
+	a {
+		color: var(--accent-primary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		text-decoration-thickness: 1px;
+
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+
+	blockquote {
+		border-left: 3px solid var(--l2-border);
+		padding: 0.1em 0 0.1em 0.8em;
+		color: var(--l2-foreground);
+		font-style: italic;
+		margin: 0 0 0.65em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		p {
+			margin-bottom: 0;
+		}
+	}
+
+	hr {
+		border: none;
+		border-top: 1px solid var(--l2-border);
+		margin: 0.75em 0;
+	}
+
+	code {
+		font-family: 'Geist Mono', 'Fira Code', monospace;
+		font-size: 11.5px;
+		border-radius: var(--radius-2);
+		padding: 1px 4px;
+		background: var(--l3-background);
+		color: var(--l1-foreground);
+	}
+
+	pre {
+		margin: 0 0 0.65em;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	pre code {
+		display: block;
+		padding: 10px;
+		overflow-x: auto;
+		border-radius: var(--radius-2);
+		white-space: pre;
+	}
+
+	table {
+		border-collapse: collapse;
+		font-size: 12px;
+		margin: 0 0 0.65em;
+		width: 100%;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+
+		th,
+		td {
+			padding: 5px 10px;
+			border: 1px solid var(--l2-border);
+			text-align: left;
+		}
+
+		th {
+			background: var(--l2-background);
+			color: var(--l1-foreground);
+			font-weight: 600;
+		}
+
+		td {
+			color: var(--l1-foreground);
+		}
+	}
+}
+
+.attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.attachmentImage {
+	max-width: 200px;
+	max-height: 160px;
+	border-radius: var(--radius-2);
+	object-fit: cover;
+}
+
+.attachmentFile {
+	font-size: 11px;
+	padding: 3px 8px;
+	border-radius: var(--radius-2);
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	max-width: 180px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.typingIndicator {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 0;
+	height: 20px;
+
+	span {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--l2-foreground);
+		animation: bounce 1.2s infinite ease-in-out;
+
+		&:nth-child(2) {
+			animation-delay: 0.2s;
+		}
+		&:nth-child(3) {
+			animation-delay: 0.4s;
+		}
+	}
+}
+
+@keyframes bounce {
+	0%,
+	80%,
+	100% {
+		transform: scale(0.7);
+		opacity: 0.5;
+	}
+	40% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}

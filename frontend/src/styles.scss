@@ -794,6 +794,14 @@ notifications	-  2050
 	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
 }
 
+body.ai-assistant-panel-open {
+	.PylonChat-bubbleFrameContainer,
+	.PylonChat-chatWindowFrameContainer {
+		right: calc(var(--ai-assistant-panel-width, 380px) + 8px) !important;
+		left: auto !important;
+	}
+}
+
 [role='tab'] {
 	color: var(--foreground) !important;
 }

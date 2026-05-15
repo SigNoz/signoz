@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
 import { Button, Flex, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Plus } from '@signozhq/icons';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -386,14 +386,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<Flex gap={12}>
+				<Flex gap={12} align="center">
 					{addNewAlert && (
-						<Button
-							type="primary"
-							onClick={onClickNewAlertHandler}
-							icon={<PlusOutlined />}
-						>
-							New Alert
+						<Button type="primary" onClick={onClickNewAlertHandler}>
+							<Flex align="center" gap={4}>
+								<Plus size="md" />
+								New Alert
+							</Flex>
 						</Button>
 					)}
 					<TextToolTip

@@ -12,9 +12,9 @@ import {
 	ChevronRight,
 	Minus,
 	Plus,
-	Sliders,
+	SlidersVertical,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 
 import './LogsFormatOptionsMenu.styles.scss';
 
@@ -473,7 +473,7 @@ function LogsFormatOptionsMenu({
 			<Tooltip title="Options">
 				<Button
 					className="periscope-btn ghost"
-					icon={<Sliders size={14} />}
+					icon={<SlidersVertical size="md" />}
 					data-testid="periscope-btn-format-options"
 				/>
 			</Tooltip>

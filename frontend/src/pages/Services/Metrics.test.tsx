@@ -12,7 +12,7 @@ describe('Services', () => {
 		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
 		const application = screen.getByRole('columnheader', {
-			name: /application search/i,
+			name: /application/i,
 		});
 		expect(application).toBeInTheDocument();
 

@@ -1,0 +1,133 @@
+.clarification {
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: 10px 12px;
+	background: var(--l2-background);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: 100%;
+
+	&.submitted {
+		border-color: var(--l2-border);
+		background: transparent;
+		flex-direction: row;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 10px;
+	}
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.headerIcon {
+	flex-shrink: 0;
+	color: var(--accent-primary);
+}
+
+.headerLabel {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.message {
+	font-size: 13px;
+	color: var(--l1-foreground);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.icon {
+	color: var(--accent-forest);
+	flex-shrink: 0;
+}
+
+.statusText {
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+.fields {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.label {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--l2-foreground);
+}
+
+.required {
+	color: var(--accent-cherry);
+	margin-left: 2px;
+}
+
+.input,
+.select {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: 5px 8px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	outline: none;
+	transition: border-color 0.12s;
+
+	&:focus {
+		border-color: var(--accent-primary);
+	}
+}
+
+.select {
+	cursor: pointer;
+}
+
+// Constrain the Radix-based SelectContent popover so it never grows wider
+// than the trigger button. `--radix-select-trigger-width` is set by Radix
+// at the popper layer when `position: 'popper'` (the default).
+.selectContent {
+	width: var(--radix-select-trigger-width);
+	min-width: var(--radix-select-trigger-width);
+}
+
+.radioGroup,
+.checkboxGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.radioLabel,
+.checkboxLabel {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	cursor: pointer;
+}
+
+.radio,
+.checkbox {
+	accent-color: var(--accent-primary);
+	cursor: pointer;
+}
+
+.actions {
+	display: flex;
+	gap: 6px;
+	margin-top: 16px;
+}

@@ -55,7 +55,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 					toast.success(t('success', { ns: 'common' }), {
 						position: 'top-right',
 					});
-					updateOrg(orgId, data.displayName ?? '');
+					updateOrg(orgId, data?.displayName ?? '');
 				},
 				onError: (error) => {
 					showErrorModal(
