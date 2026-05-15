@@ -384,7 +384,7 @@ export const Query = memo(function Query({
 															Select Aggregate Operator
 															<Typography.Link
 																className="learn-more"
-																href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+																href="https://signoz.io/docs/querying/aggregation-grouping/?utm_source=product&utm_medium=query-builder#core-aggregation-functions-logs--traces"
 																target="_blank"
 																style={{ textDecoration: 'underline' }}
 															>
@@ -483,7 +483,7 @@ export const Query = memo(function Query({
 											<div style={{ textAlign: 'center' }}>
 												Select Aggregate Operator
 												<Typography.Link
-													href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+													href="https://signoz.io/docs/querying/aggregation-grouping/?utm_source=product&utm_medium=query-builder#core-aggregation-functions-logs--traces"
 													target="_blank"
 													style={{ textDecoration: 'underline' }}
 												>
@@ -602,7 +602,7 @@ export const Query = memo(function Query({
 										Name of legend
 										<Typography.Link
 											style={{ textDecoration: 'underline' }}
-											href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#legend-format"
+											href="https://signoz.io/docs/querying/aggregation-grouping/?utm_source=product&utm_medium=query-builder#legend-formatting"
 											target="_blank"
 										>
 											{' '}

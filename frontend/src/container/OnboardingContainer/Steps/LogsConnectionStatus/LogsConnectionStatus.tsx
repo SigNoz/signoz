@@ -198,7 +198,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						entity="nodejs"
 						heading="Collecting NodeJS winston logs"
 						imgURL={nodeJsSvgUrl}
-						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
+						docsURL="https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
 						imgClassName="supported-logs-type-img"
 					/>
 				);
@@ -220,7 +220,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						docsURL={
 							logType === ApplicationLogsType.FROM_LOG_FILE
 								? 'https://signoz.io/docs/userguide/collect_logs_from_file/'
-								: 'https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/'
+								: 'https://signoz.io/docs/logs-management/send-logs/java-logs/'
 						}
 						imgClassName="supported-logs-type-img"
 					/>
