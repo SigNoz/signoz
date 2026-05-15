@@ -15,13 +15,13 @@ import {
 	Modal,
 	Row,
 	Select,
-	Switch,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
@@ -1184,8 +1184,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableDailyLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.day?.enabled}
+																								value={activeSignal?.config?.day?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev
@@ -1274,8 +1273,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableSecondLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.second?.enabled}
+																								value={activeSignal?.config?.second?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev

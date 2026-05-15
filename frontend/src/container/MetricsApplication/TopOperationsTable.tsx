@@ -5,11 +5,11 @@ import { useParams } from 'react-router-dom';
 import { Search } from '@signozhq/icons';
 import {
 	InputRef,
-	Switch,
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
@@ -212,11 +212,7 @@ function TopOperationsTable({
 					/>
 				</div>
 				<div className="top-operation__entry-point">
-					<Switch
-						checked={isEntryPoint}
-						onChange={onEntryPointToggle}
-						size="small"
-					/>
+					<Switch value={isEntryPoint} onChange={onEntryPointToggle} />
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 					<TextToolTip
 						text={entryPointSpanInfo.text}
