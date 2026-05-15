@@ -80,9 +80,6 @@ func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		if key.Name == querybuilder.FTSInternalKey {
-			return []*schema.Column{logsV2Columns["resources_string"]}, nil
-		}
 		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
 		return columns, nil
 	case telemetrytypes.FieldContextScope:
@@ -277,6 +274,10 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
+			if key.Name == querybuilder.FTSInternalKey {
+				return fmt.Sprintf("LOWER(toString(%s))", columnName), nil
+			}
+
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))

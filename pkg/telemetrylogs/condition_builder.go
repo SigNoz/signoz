@@ -16,6 +16,10 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+var (
+	ErrCodeInvalidFTSOperator = errors.MustNewCode("invalid_fts_operator")
+)
+
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
 	fl flagger.Flagger
@@ -44,6 +48,10 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	if key.Name == querybuilder.FTSInternalKey && operator != qbtypes.FilterOperatorRegexp {
+		return "", errors.NewInternalf(ErrCodeInvalidFTSOperator, "only regexp operator is supported for fts")
+	}
+
 	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
@@ -127,7 +135,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		if key.Name == querybuilder.FTSInternalKey {
 			rawVal := fmt.Sprintf("%v", value)
@@ -140,13 +147,6 @@ func (c *conditionBuilder) conditionFor(
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
 		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
-		if key.Name == querybuilder.FTSInternalKey {
-			rawVal := fmt.Sprintf("%v", value)
-			keysExpr, valsExpr := ftsMapExprs(columns[0])
-			keysCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), keysExpr)
-			valsCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), valsExpr)
-			return "NOT " + sb.Or(keysCond, valsCond), nil
-		}
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
 		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil

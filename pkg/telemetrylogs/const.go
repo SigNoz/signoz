@@ -132,7 +132,7 @@ var (
 	// path; entries with Name==FTSInternalKey are short-circuited in conditionFor
 	// to emit arrayExists conditions over mapKeys/mapValues without arrayConcat.
 	DefaultFTSFieldKeys = []*telemetrytypes.TelemetryFieldKey{
-		{Name: LogsV2BodyColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextBody, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: LogsV2SeverityTextColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: LogsV2TraceIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: LogsV2SpanIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
