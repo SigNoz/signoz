@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -22,7 +21,6 @@ import (
 
 type module struct {
 	store       dashboardtypes.Store
-	sqlstore    sqlstore.SQLStore
 	settings    factory.ScopedProviderSettings
 	analytics   analytics.Analytics
 	orgGetter   organization.Getter
@@ -30,11 +28,10 @@ type module struct {
 	tagModule   tag.Module
 }
 
-func NewModule(store dashboardtypes.Store, sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, tagModule tag.Module) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, tagModule tag.Module) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard")
 	return &module{
 		store:       store,
-		sqlstore:    sqlstore,
 		settings:    scopedProviderSettings,
 		analytics:   analytics,
 		orgGetter:   orgGetter,

@@ -1,6 +1,6 @@
 package dashboardtypes
 
-// TestDashboardDataMatchesPerses asserts that DashboardData
+// TestDashboardSpecMatchesPerses asserts that DashboardData
 // and every nested SigNoz-owned type cover the JSON field set of their Perses
 // counterpart.
 
@@ -16,13 +16,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDashboardDataMatchesPerses(t *testing.T) {
+func TestDashboardSpecMatchesPerses(t *testing.T) {
 	cases := []struct {
 		name   string
 		ours   reflect.Type
 		perses reflect.Type
 	}{
-		{"DashboardSpec", typeOf[DashboardData](), typeOf[v1.DashboardSpec]()},
+		{"DashboardSpec", typeOf[DashboardSpec](), typeOf[v1.DashboardSpec]()},
 		{"Panel", typeOf[Panel](), typeOf[v1.Panel]()},
 		{"PanelSpec", typeOf[PanelSpec](), typeOf[v1.PanelSpec]()},
 		{"Query", typeOf[Query](), typeOf[v1.Query]()},
@@ -38,10 +38,10 @@ func TestDashboardDataMatchesPerses(t *testing.T) {
 			missing, extra := drift(c.ours, c.perses)
 
 			assert.Empty(t, missing,
-				"DashboardData (%s) is missing json fields present on Perses %s — upstream likely added or renamed a field",
+				"DashboardSpec (%s) is missing json fields present on Perses %s — upstream likely added or renamed a field",
 				c.ours.Name(), c.perses.Name())
 			assert.Empty(t, extra,
-				"DashboardData (%s) has json fields absent on Perses %s — upstream likely removed a field or we added one without the counterpart",
+				"DashboardSpec (%s) has json fields absent on Perses %s — upstream likely removed a field or we added one without the counterpart",
 				c.ours.Name(), c.perses.Name())
 		})
 	}

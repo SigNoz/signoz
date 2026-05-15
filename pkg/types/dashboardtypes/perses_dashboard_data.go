@@ -12,11 +12,11 @@ import (
 	"github.com/perses/perses/pkg/model/api/v1/common"
 )
 
-// DashboardData is the SigNoz dashboard v2 spec shape. It mirrors
+// DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // v1.DashboardSpec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
 // per-site discriminated oneOf.
-type DashboardData struct {
+type DashboardSpec struct {
 	Display         *common.Display            `json:"display,omitempty"`
 	Datasources     map[string]*DatasourceSpec `json:"datasources,omitempty"`
 	Variables       []Variable                 `json:"variables,omitempty"`
@@ -31,15 +31,15 @@ type DashboardData struct {
 // Unmarshal + validate entry point
 // ══════════════════════════════════════════════
 
-func (d *DashboardData) UnmarshalJSON(data []byte) error {
+func (d *DashboardSpec) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	type alias DashboardData
+	type alias DashboardSpec
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid dashboard spec")
 	}
-	*d = DashboardData(tmp)
+	*d = DashboardSpec(tmp)
 	return d.Validate()
 }
 
@@ -47,7 +47,7 @@ func (d *DashboardData) UnmarshalJSON(data []byte) error {
 // Cross-field validation
 // ══════════════════════════════════════════════
 
-func (d *DashboardData) Validate() error {
+func (d *DashboardSpec) Validate() error {
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
