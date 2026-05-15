@@ -19,7 +19,7 @@ func NewPromQLFilterExtractor() *PromQLFilterExtractor {
 
 // Extract parses a PromQL query and extracts metric names and grouping keys.
 func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
-	expr, err := parser.ParseExpr(query)
+	expr, err := parser.NewParser(parser.Options{}).ParseExpr(query)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse promql query: %s", err.Error())
 	}

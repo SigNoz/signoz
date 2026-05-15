@@ -150,7 +150,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 		return query, nil
 	}
 
-	expr, err := parser.ParseExpr(query)
+	expr, err := parser.NewParser(parser.Options{}).ParseExpr(query)
 	if err != nil {
 		return "", enhancePromQLError(query, err)
 	}
