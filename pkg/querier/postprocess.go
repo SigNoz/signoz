@@ -335,11 +335,8 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			}
 		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
-			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
-				results[name] = result
-			}
-		}
+			// For scalar results, apply limit by processScalarFormula itself since it needs to be applied before converting back to scalar format
+			results[name] = result
 	}
 
 	return results
@@ -527,9 +524,6 @@ func (q *querier) processScalarFormula(
 	}
 
 	// Apply ordering (and limit) before converting to scalar format.
-	// The outer applySeriesLimit call in applyFormulas only handles
-	// *TimeSeriesData, so scalar formula results must be sorted here;
-	// otherwise formula.Order is silently ignored for table/pie/value panels.
 	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
 
 	// Convert back to scalar format
