@@ -3,6 +3,7 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
@@ -85,9 +86,7 @@ export function useGetHosts<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -110,13 +109,15 @@ export const invalidateGetHosts = async (
  * @summary Put host in Zeus for a deployment.
  */
 export const putHost = (
-	zeustypesPostableHostDTO: BodyType<ZeustypesPostableHostDTO>,
+	zeustypesPostableHostDTO?: BodyType<ZeustypesPostableHostDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/zeus/hosts`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: zeustypesPostableHostDTO,
+		signal,
 	});
 };
 
@@ -127,13 +128,13 @@ export const getPutHostMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
 		TError,
-		{ data: BodyType<ZeustypesPostableHostDTO> },
+		{ data?: BodyType<ZeustypesPostableHostDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putHost>>,
 	TError,
-	{ data: BodyType<ZeustypesPostableHostDTO> },
+	{ data?: BodyType<ZeustypesPostableHostDTO> },
 	TContext
 > => {
 	const mutationKey = ['putHost'];
@@ -147,7 +148,7 @@ export const getPutHostMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putHost>>,
-		{ data: BodyType<ZeustypesPostableHostDTO> }
+		{ data?: BodyType<ZeustypesPostableHostDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -160,7 +161,9 @@ export const getPutHostMutationOptions = <
 export type PutHostMutationResult = NonNullable<
 	Awaited<ReturnType<typeof putHost>>
 >;
-export type PutHostMutationBody = BodyType<ZeustypesPostableHostDTO>;
+export type PutHostMutationBody =
+	| BodyType<ZeustypesPostableHostDTO>
+	| undefined;
 export type PutHostMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -173,31 +176,31 @@ export const usePutHost = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
 		TError,
-		{ data: BodyType<ZeustypesPostableHostDTO> },
+		{ data?: BodyType<ZeustypesPostableHostDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof putHost>>,
 	TError,
-	{ data: BodyType<ZeustypesPostableHostDTO> },
+	{ data?: BodyType<ZeustypesPostableHostDTO> },
 	TContext
 > => {
-	const mutationOptions = getPutHostMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPutHostMutationOptions(options));
 };
 /**
  * This endpoint saves the profile of a deployment to zeus.
  * @summary Put profile in Zeus for a deployment.
  */
 export const putProfile = (
-	zeustypesPostableProfileDTO: BodyType<ZeustypesPostableProfileDTO>,
+	zeustypesPostableProfileDTO?: BodyType<ZeustypesPostableProfileDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/zeus/profiles`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: zeustypesPostableProfileDTO,
+		signal,
 	});
 };
 
@@ -208,13 +211,13 @@ export const getPutProfileMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,
 		TError,
-		{ data: BodyType<ZeustypesPostableProfileDTO> },
+		{ data?: BodyType<ZeustypesPostableProfileDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putProfile>>,
 	TError,
-	{ data: BodyType<ZeustypesPostableProfileDTO> },
+	{ data?: BodyType<ZeustypesPostableProfileDTO> },
 	TContext
 > => {
 	const mutationKey = ['putProfile'];
@@ -228,7 +231,7 @@ export const getPutProfileMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putProfile>>,
-		{ data: BodyType<ZeustypesPostableProfileDTO> }
+		{ data?: BodyType<ZeustypesPostableProfileDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -241,7 +244,9 @@ export const getPutProfileMutationOptions = <
 export type PutProfileMutationResult = NonNullable<
 	Awaited<ReturnType<typeof putProfile>>
 >;
-export type PutProfileMutationBody = BodyType<ZeustypesPostableProfileDTO>;
+export type PutProfileMutationBody =
+	| BodyType<ZeustypesPostableProfileDTO>
+	| undefined;
 export type PutProfileMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -254,16 +259,14 @@ export const usePutProfile = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,
 		TError,
-		{ data: BodyType<ZeustypesPostableProfileDTO> },
+		{ data?: BodyType<ZeustypesPostableProfileDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof putProfile>>,
 	TError,
-	{ data: BodyType<ZeustypesPostableProfileDTO> },
+	{ data?: BodyType<ZeustypesPostableProfileDTO> },
 	TContext
 > => {
-	const mutationOptions = getPutProfileMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPutProfileMutationOptions(options));
 };

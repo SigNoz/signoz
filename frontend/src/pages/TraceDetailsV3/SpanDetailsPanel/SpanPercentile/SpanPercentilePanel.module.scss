@@ -1,0 +1,217 @@
+// Panel — collapsible, renders below the row
+.root {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
+	backdrop-filter: blur(20px);
+	margin: 8px 16px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+}
+
+.contentTitle {
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-20);
+}
+
+.contentHighlight {
+	color: var(--destructive);
+}
+
+.contentLoader {
+	display: inline-flex;
+	align-items: flex-end;
+	margin: 0 4px;
+	line-height: 18px;
+}
+
+.timerange {
+	width: 100%;
+}
+
+.timerangeSelect {
+	width: 100%;
+	margin-top: 8px;
+	margin-bottom: 16px;
+
+	:global(.ant-select-selector) {
+		border-radius: 50px;
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
+		color: var(--l1-foreground);
+		font-size: 12px;
+		height: 32px;
+	}
+}
+
+.tableHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.tableHeaderText {
+	color: var(--l1-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 20px;
+	text-transform: uppercase;
+}
+
+.tableRows {
+	margin-top: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tableSkeleton {
+	:global(.ant-skeleton-title) {
+		width: 100% !important;
+		margin-top: 0 !important;
+	}
+
+	:global(.ant-skeleton-paragraph) {
+		margin-top: 8px;
+
+		& > li + li {
+			margin-top: 10px;
+			width: 100% !important;
+		}
+	}
+}
+
+.tableRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 0 4px;
+}
+
+.tableRowKey {
+	flex: 0 0 auto;
+	color: var(--l1-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.tableRowValue {
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 20px;
+}
+
+.tableRowDash {
+	flex: 1;
+	height: 0;
+	margin: 0 8px;
+	border-top: 1px solid transparent;
+	border-image: repeating-linear-gradient(
+			to right,
+			var(--l1-border) 0,
+			var(--l1-border) 10px,
+			transparent 10px,
+			transparent 20px
+		)
+		1 stretch;
+}
+
+.isCurrent {
+	border-radius: 2px;
+	background: rgba(78, 116, 248, 0.2);
+
+	.tableRowKey {
+		color: var(--text-robin-300);
+	}
+
+	.tableRowDash {
+		border-image: repeating-linear-gradient(
+				to right,
+				#abbdff 0,
+				#abbdff 10px,
+				transparent 10px,
+				transparent 20px
+			)
+			1 stretch;
+	}
+
+	.tableRowValue {
+		color: var(--text-robin-400);
+	}
+}
+
+.resourceSelector {
+	overflow: hidden;
+	width: calc(100% + 16px);
+	position: absolute;
+	top: 32px;
+	left: -8px;
+	z-index: 1000;
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	background: var(--l1-background);
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(20px);
+}
+
+.resourceSelectorHeader {
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.resourceSelectorInput {
+	border-radius: 0;
+	border: none !important;
+	box-shadow: none !important;
+	height: 36px;
+}
+
+.resourceSelectorItems {
+	height: 200px;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+		height: 0.3rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--l3-background);
+	}
+}
+
+.resourceSelectorItem {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+}
+
+.resourceSelectorItemValue {
+	color: var(--l1-foreground);
+	font-size: 13px;
+	line-height: 20px;
+}

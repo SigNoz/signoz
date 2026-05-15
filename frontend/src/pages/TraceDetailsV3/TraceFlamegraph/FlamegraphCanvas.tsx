@@ -16,7 +16,7 @@ import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
-import './FlamegraphCanvas.styles.scss';
+import styles from './FlamegraphCanvas.module.scss';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const {
@@ -194,7 +194,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 	const tooltipElement = tooltipContent
 		? createPortal(
 				<div
-					className="span-hover-card-popover flamegraph-tooltip"
+					className={styles.tooltip}
 					style={{
 						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
 						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
@@ -223,7 +223,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		: null;
 
 	return (
-		<div className="flamegraph-canvas">
+		<div className={styles.root}>
 			{tooltipElement}
 			<TimelineV3
 				startTimestamp={viewStartTs}
@@ -234,7 +234,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 			/>
 			<div
 				ref={containerRef}
-				className="flamegraph-canvas__viewport"
+				className={styles.viewport}
 				onMouseEnter={(): void => {
 					isOverFlamegraphRef.current = true;
 				}}
@@ -242,7 +242,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 			>
 				<canvas
 					ref={canvasRef}
-					className="flamegraph-canvas__main"
+					className={styles.main}
 					onMouseDown={(e): void => {
 						handleMouseDown(e);
 						handleMouseDownForClick(e);
@@ -251,7 +251,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 					onMouseUp={handleMouseUp}
 					onClick={handleClick}
 				/>
-				<canvas ref={overlayCanvasRef} className="flamegraph-canvas__overlay" />
+				<canvas ref={overlayCanvasRef} className={styles.overlay} />
 			</div>
 		</div>
 	);
