@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
-import { SACreatePermission } from 'hooks/useAuthZ/serviceAccountPermissions';
+import { SACreatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';

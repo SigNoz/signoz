@@ -1,5 +1,5 @@
-import { buildPermission } from './utils';
-import type { BrandedPermission } from './types';
+import { buildPermission } from '../utils';
+import type { BrandedPermission } from '../types';
 
 // Collection-level — no specific role id needed
 export const RoleCreatePermission = buildPermission('create', 'role:*');

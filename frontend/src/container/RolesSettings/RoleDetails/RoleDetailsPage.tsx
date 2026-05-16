@@ -17,7 +17,7 @@ import permissionsType from 'hooks/useAuthZ/permissions.type';
 import {
 	buildRoleDeletePermission,
 	buildRoleUpdatePermission,
-} from 'hooks/useAuthZ/rolePermissions';
+} from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 
 import type { AuthzResources } from '../utils';
@@ -72,12 +72,13 @@ function RoleDetailsPage(): JSX.Element {
 	const roleName = role?.name ?? '';
 
 	// Update check uses role name once loaded
-	const { permissions: updatePerms } = useAuthZ(
+	const { permissions: updatePerms, isLoading: isAuthZLoading } = useAuthZ(
 		roleName && !isManaged ? [buildRoleUpdatePermission(roleName)] : [],
 		{ enabled: !!roleName && !isManaged },
 	);
-	const hasUpdatePermission =
-		updatePerms?.[buildRoleUpdatePermission(roleName)]?.isGranted ?? false;
+	const hasUpdatePermission = isAuthZLoading
+		? false
+		: (updatePerms?.[buildRoleUpdatePermission(roleName)]?.isGranted ?? false);
 
 	const permissionTypes = useMemo(
 		() => derivePermissionTypes(authzResources?.relations ?? null),

@@ -2,12 +2,16 @@ import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import {
-	AUTHZ_CHECK_URL,
-	authzMockResponse,
 	setupAuthzAdmin,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
 } from 'tests/authz-test-utils';
+import {
+	APIKeyListPermission,
+	buildSADeletePermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
@@ -109,20 +113,7 @@ describe('ServiceAccountDrawer — permissions', () => {
 	});
 
 	it('shows PermissionDeniedCallout inside drawer when read permission is denied', async () => {
-		server.use(
-			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = await req.json();
-				return res(
-					ctx.status(200),
-					ctx.json(
-						authzMockResponse(
-							payload,
-							payload.map(() => false),
-						),
-					),
-				);
-			}),
-		);
+		server.use(setupAuthzDenyAll());
 
 		renderDrawer();
 
@@ -140,48 +131,21 @@ describe('ServiceAccountDrawer — permissions', () => {
 		expect(screen.queryByText(/serviceaccount:read/)).not.toBeInTheDocument();
 	});
 
-	it('disables Save button when update permission is denied', async () => {
-		server.use(
-			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = await req.json();
-				return res(
-					ctx.status(200),
-					ctx.json({
-						data: payload.map((txn: { relation: string; object: string }) => ({
-							relation: txn.relation,
-							object: txn.object,
-							authorized: txn.relation !== 'update',
-						})),
-						status: 'success',
-					}),
-				);
-			}),
-		);
+	it('shows PermissionDeniedCallout in Keys tab when list-keys permission is denied', async () => {
+		server.use(setupAuthzDeny(APIKeyListPermission));
 
 		renderDrawer();
-		await screen.findByText('CI Bot');
+		await screen.findByDisplayValue('CI Bot');
 
-		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
-		await waitFor(() => expect(saveBtn).toBeDisabled());
+		fireEvent.click(screen.getByRole('radio', { name: /keys/i }));
+
+		await waitFor(() => {
+			expect(screen.getByText(/factor-api-key:list/)).toBeInTheDocument();
+		});
 	});
 
 	it('disables Delete button when delete permission is denied', async () => {
-		server.use(
-			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = await req.json();
-				return res(
-					ctx.status(200),
-					ctx.json({
-						data: payload.map((txn: { relation: string; object: string }) => ({
-							relation: txn.relation,
-							object: txn.object,
-							authorized: txn.relation !== 'delete',
-						})),
-						status: 'success',
-					}),
-				);
-			}),
-		);
+		server.use(setupAuthzDeny(buildSADeletePermission('sa-1')));
 
 		renderDrawer();
 		await screen.findByDisplayValue('CI Bot');

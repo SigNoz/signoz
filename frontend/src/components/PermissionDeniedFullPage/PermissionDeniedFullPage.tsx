@@ -21,7 +21,7 @@ function PermissionDeniedFullPage({
 				</p>
 				<p className={styles.subtitle}>
 					You need <code className={styles.permission}>{permissionName}</code> to
-					view this page. Ask your SigNoz administrator to grant access.
+					view this page. Please ask your SigNoz administrator to grant access.
 				</p>
 			</div>
 		</div>

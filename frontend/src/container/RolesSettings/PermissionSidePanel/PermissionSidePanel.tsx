@@ -46,7 +46,7 @@ function ResourceRow({
 	onScopeChange,
 	onSelectedIdsChange,
 }: ResourceRowProps): JSX.Element {
-	const allowOnlySelected = !RELATIONS_ALL_ONLY.has(relation);
+	const showOnlySelected = !RELATIONS_ALL_ONLY.has(relation);
 	return (
 		<div className="psp-resource">
 			<div
@@ -83,7 +83,7 @@ function ResourceRow({
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
-						{allowOnlySelected ? (
+						{showOnlySelected && (
 							<div className="psp-resource__radio-item">
 								<RadioGroupItem
 									value={PermissionScope.ONLY_SELECTED}
@@ -93,36 +93,30 @@ function ResourceRow({
 									Only selected
 								</RadioGroupLabel>
 							</div>
-						) : (
-							<div className="psp-resource__radio-item">
-								<RadioGroupItem
-									value={PermissionScope.ONLY_SELECTED}
-									id={`${resource.id}-none`}
-								/>
-								<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
-							</div>
 						)}
+
+						<div className="psp-resource__radio-item">
+							<RadioGroupItem
+								value={PermissionScope.NONE}
+								id={`${resource.id}-none`}
+							/>
+							<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
+						</div>
 					</RadioGroup>
 
-					{config.scope === PermissionScope.ONLY_SELECTED && allowOnlySelected && (
+					{config.scope === PermissionScope.ONLY_SELECTED && showOnlySelected && (
 						<div className="psp-resource__select-wrapper">
-							{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
 							<Select
 								mode="tags"
+								open={false}
+								allowClear
+								suffixIcon={null}
 								value={config.selectedIds}
 								onChange={(vals: string[]): void =>
 									onSelectedIdsChange(resource.id, vals)
 								}
-								options={resource.options ?? []}
-								placeholder="Select resources..."
+								placeholder="Type and press Enter to add..."
 								className="psp-resource__select"
-								popupClassName="psp-resource__select-popup"
-								showSearch
-								filterOption={(input, option): boolean =>
-									String(option?.label ?? '')
-										.toLowerCase()
-										.includes(input.toLowerCase())
-								}
 							/>
 						</div>
 					)}

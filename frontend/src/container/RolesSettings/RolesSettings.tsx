@@ -3,7 +3,7 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
-import { RoleCreatePermission } from 'hooks/useAuthZ/rolePermissions';
+import { RoleCreatePermission } from 'hooks/useAuthZ/permissions/role.permissions';
 
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';

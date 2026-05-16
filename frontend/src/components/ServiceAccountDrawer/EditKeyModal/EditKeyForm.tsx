@@ -12,7 +12,7 @@ import {
 	buildAPIKeyDeletePermission,
 	buildAPIKeyUpdatePermission,
 	buildSADetachPermission,
-} from 'hooks/useAuthZ/serviceAccountPermissions';
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate, formatLastObservedAt } from '../utils';
@@ -55,13 +55,34 @@ function EditKeyForm({
 					<label className="edit-key-modal__label" htmlFor="edit-key-name">
 						Name
 					</label>
-					<Input
-						id="edit-key-name"
-						className="edit-key-modal__input"
-						placeholder="Enter key name"
-						disabled={!canUpdate}
-						{...register('name')}
-					/>
+					{!canUpdate ? (
+						<AuthZTooltip
+							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
+							enabled={!!keyItem?.id}
+						>
+							<div className="edit-key-modal__key-display">
+								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
+								<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
+							</div>
+						</AuthZTooltip>
+					) : (
+						<Input
+							id="edit-key-name"
+							className="edit-key-modal__input"
+							placeholder="Enter key name"
+							{...register('name')}
+						/>
+					)}
+				</div>
+
+				<div className="edit-key-modal__field">
+					<label className="edit-key-modal__label" htmlFor="edit-key-id">
+						ID
+					</label>
+					<div id="edit-key-id" className="edit-key-modal__key-display">
+						<span className="edit-key-modal__id-text">{keyItem?.id || '—'}</span>
+						<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
+					</div>
 				</div>
 
 				<div className="edit-key-modal__field">

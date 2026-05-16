@@ -17,7 +17,7 @@ import ServiceAccountsTable, {
 import {
 	SACreatePermission,
 	SAListPermission,
-} from 'hooks/useAuthZ/serviceAccountPermissions';
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,

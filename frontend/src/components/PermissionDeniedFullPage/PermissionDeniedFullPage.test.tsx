@@ -10,7 +10,7 @@ describe('PermissionDeniedFullPage', () => {
 		).toBeInTheDocument();
 		expect(screen.getByText(/serviceaccount:list/)).toBeInTheDocument();
 		expect(
-			screen.getByText(/Ask your SigNoz administrator to grant access/),
+			screen.getByText(/Please ask your SigNoz administrator to grant access/),
 		).toBeInTheDocument();
 	});
 

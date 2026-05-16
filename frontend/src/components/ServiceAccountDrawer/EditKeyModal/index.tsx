@@ -16,7 +16,7 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
-import { buildAPIKeyUpdatePermission } from 'hooks/useAuthZ/serviceAccountPermissions';
+import { buildAPIKeyUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -71,14 +71,15 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 
 	const expiryMode = watch('expiryMode');
 
-	const { permissions: editPermissions } = useAuthZ(
+	const { permissions: editPermissions, isLoading: isAuthZLoading } = useAuthZ(
 		editKeyId ? [buildAPIKeyUpdatePermission(editKeyId)] : [],
 		{ enabled: !!editKeyId },
 	);
 
-	const canUpdate =
-		editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]?.isGranted ??
-		true;
+	const canUpdate = isAuthZLoading
+		? false
+		: (editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]
+				?.isGranted ?? true);
 
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {

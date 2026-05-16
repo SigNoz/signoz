@@ -36,7 +36,7 @@ import {
 	buildSADeletePermission,
 	buildSAReadPermission,
 	buildSAUpdatePermission,
-} from 'hooks/useAuthZ/serviceAccountPermissions';
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	parseAsBoolean,
@@ -108,7 +108,7 @@ function ServiceAccountDrawer({
 
 	const queryClient = useQueryClient();
 
-	const { permissions: drawerPermissions } = useAuthZ(
+	const { permissions: drawerPermissions, isLoading: isAuthZLoading } = useAuthZ(
 		selectedAccountId
 			? [
 					buildSAReadPermission(selectedAccountId),
@@ -457,7 +457,9 @@ function ServiceAccountDrawer({
 					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
 				}`}
 			>
-				{isAccountLoading && <Skeleton active paragraph={{ rows: 6 }} />}
+				{(isAuthZLoading || isAccountLoading) && (
+					<Skeleton active paragraph={{ rows: 6 }} />
+				)}
 				{isAccountError && (
 					<ErrorInPlace
 						error={toAPIError(
@@ -466,49 +468,55 @@ function ServiceAccountDrawer({
 						)}
 					/>
 				)}
-				{!isAccountLoading && !isAccountError && selectedAccountId && (
-					<GuardAuthZ
-						relation="read"
-						object={`serviceaccount:${selectedAccountId}`}
-						fallbackOnNoPermissions={(): JSX.Element => (
-							<PermissionDeniedCallout permissionName="serviceaccount:read" />
-						)}
-					>
-						<>
-							{activeTab === ServiceAccountDrawerTab.Overview && account && (
-								<OverviewTab
-									account={account}
-									localName={localName}
-									onNameChange={handleNameChange}
-									localRoles={localRoles}
-									onRolesChange={(roles): void => {
-										setLocalRoles(roles);
-										clearRoleErrors();
-									}}
-									isDisabled={isDeleted}
-									canUpdate={canUpdate}
-									availableRoles={availableRoles}
-									rolesLoading={rolesLoading}
-									rolesError={rolesError}
-									rolesErrorObj={rolesErrorObj}
-									onRefetchRoles={refetchRoles}
-									saveErrors={saveErrors}
-								/>
+				{!isAuthZLoading &&
+					!isAccountLoading &&
+					!isAccountError &&
+					selectedAccountId && (
+						<GuardAuthZ
+							relation="read"
+							object={`serviceaccount:${selectedAccountId}`}
+							fallbackOnNoPermissions={(): JSX.Element => (
+								<PermissionDeniedCallout permissionName="serviceaccount:read" />
 							)}
-							{activeTab === ServiceAccountDrawerTab.Keys && (
-								<KeysTab
-									keys={keys}
-									isLoading={keysLoading}
-									isDisabled={isDeleted}
-									canUpdate={canUpdate}
-									accountId={selectedAccountId}
-									currentPage={keysPage}
-									pageSize={PAGE_SIZE}
-								/>
-							)}
-						</>
-					</GuardAuthZ>
-				)}
+						>
+							<>
+								{activeTab === ServiceAccountDrawerTab.Overview && account && (
+									<OverviewTab
+										account={account}
+										localName={localName}
+										onNameChange={handleNameChange}
+										localRoles={localRoles}
+										onRolesChange={(roles): void => {
+											setLocalRoles(roles);
+											clearRoleErrors();
+										}}
+										isDisabled={isDeleted}
+										canUpdate={canUpdate}
+										availableRoles={availableRoles}
+										rolesLoading={rolesLoading}
+										rolesError={rolesError}
+										rolesErrorObj={rolesErrorObj}
+										onRefetchRoles={refetchRoles}
+										saveErrors={saveErrors}
+									/>
+								)}
+								{activeTab === ServiceAccountDrawerTab.Keys &&
+									(canListKeys ? (
+										<KeysTab
+											keys={keys}
+											isLoading={keysLoading}
+											isDisabled={isDeleted}
+											canUpdate={canUpdate}
+											accountId={selectedAccountId}
+											currentPage={keysPage}
+											pageSize={PAGE_SIZE}
+										/>
+									) : (
+										<PermissionDeniedCallout permissionName="factor-api-key:list" />
+									))}
+							</>
+						</GuardAuthZ>
+					)}
 			</div>
 		</div>
 	);
@@ -560,20 +568,15 @@ function ServiceAccountDrawer({
 								<X size={14} />
 								Cancel
 							</Button>
-							<AuthZTooltip
-								checks={[buildSAUpdatePermission(selectedAccountId ?? '')]}
-								enabled={!!selectedAccountId}
+							<Button
+								variant="solid"
+								color="primary"
+								loading={isSaving}
+								disabled={!isDirty}
+								onClick={handleSave}
 							>
-								<Button
-									variant="solid"
-									color="primary"
-									loading={isSaving}
-									disabled={!isDirty}
-									onClick={handleSave}
-								>
-									Save Changes
-								</Button>
-							</AuthZTooltip>
+								Save Changes
+							</Button>
 						</div>
 					)}
 				</>

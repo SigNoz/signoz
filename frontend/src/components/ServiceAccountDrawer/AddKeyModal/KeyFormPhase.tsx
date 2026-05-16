@@ -8,7 +8,7 @@ import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
-} from 'hooks/useAuthZ/serviceAccountPermissions';
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton, Table } from 'antd';
@@ -10,7 +10,7 @@ import {
 	buildAPIKeyDeletePermission,
 	buildSAAttachPermission,
 	buildSADetachPermission,
-} from 'hooks/useAuthZ/serviceAccountPermissions';
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
@@ -103,6 +103,13 @@ function buildColumns({
 			key: 'action',
 			width: 48,
 			align: 'right' as const,
+			onCell: (): {
+				onClick: (e: React.MouseEvent) => void;
+				style: React.CSSProperties;
+			} => ({
+				onClick: (e): void => e.stopPropagation(),
+				style: { cursor: 'default' },
+			}),
 			render: (_, record): JSX.Element => (
 				<AuthZTooltip
 					checks={[
@@ -116,8 +123,7 @@ function buildColumns({
 						size="sm"
 						color="destructive"
 						disabled={isDisabled}
-						onClick={(e): void => {
-							e.stopPropagation();
+						onClick={(): void => {
 							onRevokeClick(record.id);
 						}}
 						className="keys-tab__revoke-btn"
@@ -161,7 +167,7 @@ function KeysTab({
 
 	const onRevokeClick = useCallback(
 		(keyId: string): void => {
-			setRevokeKeyId(keyId);
+			void setRevokeKeyId(keyId);
 		},
 		[setRevokeKeyId],
 	);

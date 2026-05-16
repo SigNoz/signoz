@@ -1,20 +1,4 @@
 import * as roleApi from 'api/generated/services/role';
-
-jest.mock('hooks/useAuthZ/useAuthZ', () => ({
-	useAuthZ: (permissions: string[]): Record<string, unknown> => ({
-		isLoading: false,
-		isFetching: false,
-		error: null,
-		permissions: permissions.reduce(
-			(acc: Record<string, { isGranted: boolean }>, p) => {
-				acc[p] = { isGranted: true };
-				return acc;
-			},
-			{},
-		),
-		refetchPermissions: jest.fn(),
-	}),
-}));
 import {
 	customRoleResponse,
 	managedRoleResponse,
@@ -29,8 +13,12 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
-
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
 import RoleDetailsPage from '../RoleDetailsPage';
+
+jest.mock('hooks/useAuthZ/useAuthZ');
+const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
@@ -59,6 +47,10 @@ function setupDefaultHandlers(roleId = CUSTOM_ROLE_ID): void {
 		),
 	);
 }
+
+beforeEach(() => {
+	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+});
 
 afterEach(() => {
 	jest.clearAllMocks();
@@ -249,7 +241,7 @@ describe('RoleDetailsPage', () => {
 			const panel = document.querySelector(
 				'.permission-side-panel',
 			) as HTMLElement;
-			await within(panel).findByRole('button', { name: 'Role' });
+			await within(panel).findByRole('button', { name: 'role' });
 			return panel;
 		}
 
@@ -260,7 +252,7 @@ describe('RoleDetailsPage', () => {
 			const panel = document.querySelector(
 				'.permission-side-panel',
 			) as HTMLElement;
-			await within(panel).findByRole('button', { name: 'Role' });
+			await within(panel).findByRole('button', { name: 'role' });
 			return panel;
 		}
 
@@ -275,7 +267,7 @@ describe('RoleDetailsPage', () => {
 				within(panel).getByRole('button', { name: /save changes/i }),
 			).toBeDisabled();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 
 			expect(
@@ -303,7 +295,7 @@ describe('RoleDetailsPage', () => {
 
 			const panel = await openCreatePanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 			fireEvent.click(
 				within(panel).getByRole('button', { name: /save changes/i }),
@@ -341,7 +333,9 @@ describe('RoleDetailsPage', () => {
 
 			const panel = await openReadPanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			// Default is NONE, so switch to Only selected first to reveal the combobox
+			fireEvent.click(screen.getByText('Only selected'));
 
 			const combobox = within(panel).getByRole('combobox');
 			fireEvent.change(combobox, { target: { value: 'role-001' } });
@@ -360,6 +354,48 @@ describe('RoleDetailsPage', () => {
 						},
 					],
 					deletions: null,
+				}),
+			);
+		});
+
+		it('set scope to None on create panel (existing All) → patchObjects deletions: ["*"], additions: null', async () => {
+			const patchSpy = jest.fn();
+
+			jest.spyOn(roleApi, 'useGetObjects').mockReturnValue({
+				data: allScopeObjectsResponse,
+				isLoading: false,
+			} as any);
+			server.use(
+				rest.patch(
+					`${rolesApiBase}/:id/relations/:relation/objects`,
+					async (req, res, ctx) => {
+						patchSpy(await req.json());
+						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
+					},
+				),
+			);
+
+			render(<RoleDetailsPage />, undefined, {
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+			});
+
+			const panel = await openCreatePanel();
+
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('None'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
+
+			await waitFor(() =>
+				expect(patchSpy).toHaveBeenCalledWith({
+					additions: null,
+					deletions: [
+						{
+							resource: { kind: 'role', type: 'role' },
+							selectors: ['*'],
+						},
+					],
 				}),
 			);
 		});
@@ -387,7 +423,7 @@ describe('RoleDetailsPage', () => {
 
 			const panel = await openReadPanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('Only selected'));
 			fireEvent.click(
 				within(panel).getByRole('button', { name: /save changes/i }),
@@ -415,7 +451,7 @@ describe('RoleDetailsPage', () => {
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();

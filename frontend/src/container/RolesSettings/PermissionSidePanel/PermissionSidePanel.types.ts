@@ -14,6 +14,7 @@ export interface ResourceDefinition {
 export enum PermissionScope {
 	ALL = 'all',
 	ONLY_SELECTED = 'only_selected',
+	NONE = 'none',
 }
 
 export type ScopeType = PermissionScope;

@@ -1,5 +1,5 @@
-import { buildPermission } from './utils';
-import type { BrandedPermission } from './types';
+import { buildPermission } from '../utils';
+import type { BrandedPermission } from '../types';
 
 // Collection-level — wildcard selector required for correct response key matching
 export const SAListPermission = buildPermission('list', 'serviceaccount:*');

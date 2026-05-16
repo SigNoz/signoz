@@ -4,10 +4,10 @@ import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedCallout from 'components/PermissionDeniedCallout/PermissionDeniedCallout';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
-import { RoleListPermission } from 'hooks/useAuthZ/rolePermissions';
+import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
@@ -30,7 +30,9 @@ interface RolesListingTableProps {
 function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
-	const { permissions: listPerms } = useAuthZ([RoleListPermission]);
+	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
+		RoleListPermission,
+	]);
 	const hasListPermission = listPerms?.[RoleListPermission]?.isGranted ?? false;
 
 	const { data, isLoading, isError, error } = useListRoles({
@@ -158,14 +160,10 @@ function RolesListingTable({
 	);
 
 	if (!hasListPermission && listPerms !== null) {
-		return (
-			<div className="roles-listing-table">
-				<PermissionDeniedCallout permissionName="role:list" />
-			</div>
-		);
+		return <PermissionDeniedFullPage permissionName="role:list" />;
 	}
 
-	if (isLoading) {
+	if (isAuthZLoading || isLoading) {
 		return (
 			<div className="roles-listing-table">
 				<Skeleton active paragraph={{ rows: 5 }} />
