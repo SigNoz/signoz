@@ -30,7 +30,7 @@ import {
 	LayoutList,
 	Pyramid,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {

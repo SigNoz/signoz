@@ -220,6 +220,7 @@ export function buildCreateThresholdAlertRulePayload(
 		builderQueries: {
 			...mapQueryDataToApi(query.builder.queryData, 'queryName').data,
 			...mapQueryDataToApi(query.builder.queryFormulas, 'queryName').data,
+			...mapQueryDataToApi(query.builder.queryTraceOperator, 'queryName').data,
 		},
 		promQueries: mapQueryDataToApi(query.promql, 'name').data,
 		chQueries: mapQueryDataToApi(query.clickhouse_sql, 'name').data,

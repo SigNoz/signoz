@@ -46,13 +46,13 @@ describe('Alert Channels Settings List page (Normal User)', () => {
 
 		it('Should check if "New Alert Channel" Button is visble and disabled', async () => {
 			const newAlertButton = screen.getByRole('button', {
-				name: 'plus button_new_channel',
+				name: /button_new_channel/i,
 			});
 			await waitFor(() => expect(newAlertButton).toBeInTheDocument());
 			expect(newAlertButton).toBeDisabled();
 		});
 		it('Should check if the help icon is visible and displays "tooltip_notification_channels', async () => {
-			const helpIcon = screen.getByLabelText('question-circle');
+			const helpIcon = screen.getByRole('img', { name: /help/i });
 			fireEvent.mouseOver(helpIcon);
 
 			await waitFor(() => {

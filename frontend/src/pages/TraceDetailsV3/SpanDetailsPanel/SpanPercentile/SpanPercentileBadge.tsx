@@ -1,9 +1,9 @@
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
 
-import './SpanPercentile.styles.scss';
+import styles from './SpanPercentileBadge.module.scss';
 
 type SpanPercentileBadgeProps = Pick<
 	UseSpanPercentileReturn,
@@ -25,8 +25,8 @@ function SpanPercentileBadge({
 }: SpanPercentileBadgeProps): JSX.Element | null {
 	if (loading) {
 		return (
-			<div className="span-percentile-badge__loader">
-				<Loader2 size={14} className="animate-spin" />
+			<div className={styles.loader}>
+				<Loader size={14} className="animate-spin" />
 			</div>
 		);
 	}
@@ -37,7 +37,7 @@ function SpanPercentileBadge({
 
 	return (
 		<div
-			className="span-percentile-badge"
+			className={styles.root}
 			onClick={toggleOpen}
 			role="button"
 			tabIndex={0}
@@ -50,12 +50,12 @@ function SpanPercentileBadge({
 			<KeyValueLabel
 				badgeKey={`p${percentileValue}`}
 				badgeValue={
-					<span className="span-percentile-badge__value">
+					<span className={styles.value}>
 						{duration}
 						{isOpen ? (
-							<ChevronUp size={14} className="span-percentile-badge__icon" />
+							<ChevronUp size={14} className={styles.icon} />
 						) : (
-							<ChevronDown size={14} className="span-percentile-badge__icon" />
+							<ChevronDown size={14} className={styles.icon} />
 						)}
 					</span>
 				}

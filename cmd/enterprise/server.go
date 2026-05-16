@@ -18,14 +18,15 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/metercollector/staticmetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/telemetrymetercollector"
+	"github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
-	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
-	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -36,14 +37,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	pkgflagger "github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -52,9 +56,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -88,13 +90,6 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	// print the version
 	version.Info.PrettyPrint(config.Version)
 
-	// add enterprise sqlstore factories to the community sqlstore factories
-	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
-	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory())); err != nil {
-		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", errors.Attr(err))
-		return err
-	}
-
 	signoz, err := signoz.New(
 		ctx,
 		config,
@@ -107,15 +102,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(config.Global),
-		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
-			existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
-			if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
-				panic(err)
-			}
-
-			return existingFactories
-		},
-		sqlstoreFactories,
+		sqlschemaProviderFactories,
+		sqlstoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			samlCallbackAuthN, err := samlcallbackauthn.New(ctx, store, licensing)
@@ -160,6 +148,20 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				panic(err)
 			}
 			return factories
+		},
+		func(ctx context.Context, providerSettings factory.ProviderSettings, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
+			factories := signoz.NewMeterReporterProviderFactories()
+
+			collectorFactories := factory.MustNewNamedMap(
+				staticmetercollector.NewFactory(),
+				telemetrymetercollector.NewFactory(telemetryStore, retentionGetter),
+			)
+
+			if err := factories.Add(httpmeterreporter.NewFactory(collectorFactories, meterConfigs, flagger, licensing, orgGetter, zeus)); err != nil {
+				panic(err)
+			}
+
+			return factories, "http"
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)

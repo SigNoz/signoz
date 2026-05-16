@@ -118,10 +118,14 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const resourceDef = authzRes.resources.find((r) => r.kind === res.id);
-		if (!resourceDef) {
+		const found = authzRes.resources.find((r) => r.kind === res.id);
+		if (!found) {
 			continue;
 		}
+		const resourceDef: CoretypesResourceRefDTO = {
+			kind: found.kind,
+			type: found.type,
+		};
 
 		const initialScope = initial?.scope ?? PermissionScope.ONLY_SELECTED;
 		const currentScope = current?.scope ?? PermissionScope.ONLY_SELECTED;

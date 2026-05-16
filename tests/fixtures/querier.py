@@ -69,7 +69,7 @@ class BuilderQuery:
 class TraceOperatorQuery:
     name: str
     expression: str
-    return_spans_from: str
+    return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
 
@@ -77,8 +77,9 @@ class TraceOperatorQuery:
         spec: dict[str, Any] = {
             "name": self.name,
             "expression": self.expression,
-            "returnSpansFrom": self.return_spans_from,
         }
+        if self.return_spans_from is not None:
+            spec["returnSpansFrom"] = self.return_spans_from
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:
@@ -445,6 +446,35 @@ def build_scalar_query(
 
     if having_expression:
         spec["having"] = {"expression": having_expression}
+
+    return {"type": "builder_query", "spec": spec}
+
+
+def build_raw_query(
+    name: str,
+    signal: str,
+    *,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+) -> dict:
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "disabled": disabled,
+    }
+
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
 
     return {"type": "builder_query", "spec": spec}
 

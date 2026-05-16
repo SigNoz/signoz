@@ -21,7 +21,7 @@ import {
 	ArrowUpFromDot,
 	Ellipsis,
 	RefreshCw,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { useTimezone } from 'providers/Timezone';
 import {

@@ -1,0 +1,116 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	flex-shrink: 0;
+	width: 100%;
+	padding: 8px;
+	margin-top: 16px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+
+	// Background, padding-x, and rounding are inherited from the parent
+	// bubble — the section sits inside the assistant bubble as its last
+	// block, so it matches the bubble's width by definition.
+}
+
+.heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--l3-foreground);
+}
+
+.headingIcon {
+	color: var(--primary);
+	flex-shrink: 0;
+}
+
+.list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 10px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px; /* 163.636% */
+	letter-spacing: -0.055px;
+	cursor: pointer;
+	transition:
+		background 0.12s ease,
+		border-color 0.12s ease,
+		color 0.12s ease;
+
+	&:hover:not(:disabled) {
+		background: var(--l2-background);
+		border-color: var(--l3-border);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.55;
+	}
+
+	&.error {
+		border-color: var(--accent-cherry);
+		color: var(--accent-cherry);
+	}
+
+	svg {
+		flex-shrink: 0;
+		color: var(--l3-foreground);
+	}
+
+	&:hover:not(:disabled) svg {
+		color: var(--accent-primary);
+	}
+
+	&.error svg {
+		color: var(--accent-cherry);
+	}
+}
+
+.spin {
+	color: var(--accent-primary) !important;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.chipLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 220px;
+}
+
+.chipState {
+	font-size: 10px;
+	font-weight: 500;
+	color: var(--l3-foreground);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 1px 5px;
+	border: 1px solid var(--l2-border);
+	border-radius: 999px;
+	margin-left: 2px;
+}

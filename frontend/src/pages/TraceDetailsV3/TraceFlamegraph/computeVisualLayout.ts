@@ -6,6 +6,9 @@ export interface ConnectorLine {
 	childRow: number;
 	timestampMs: number;
 	serviceName: string;
+	// Snapshot of the child span's resource so draw-time can resolve the
+	// `colorByField` group value without crossing the worker boundary.
+	resource?: Record<string, string>;
 }
 
 export interface VisualLayout {
@@ -357,6 +360,7 @@ export function computeVisualLayout(spans: FlamegraphSpan[][]): VisualLayout {
 				childRow,
 				timestampMs: child.timestamp,
 				serviceName: child.serviceName,
+				resource: child.resource,
 			});
 		}
 	}

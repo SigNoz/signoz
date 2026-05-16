@@ -7,7 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass, Crosshair, X } from 'lucide-react';
+import { Compass, Crosshair, X } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

@@ -160,21 +160,21 @@ export const getNamespaceMetricsQueryPayload = (
 		'k8s.replicaset.available',
 		'k8s_replicaset_available',
 	);
-	const k8sDaemonsetDesiredScheduledNamespacesKey = getKey(
-		'k8s.daemonset.desired.scheduled.namespaces',
-		'k8s_daemonset_desired_scheduled_namespaces',
+	const k8sDaemonsetDesiredScheduledNodesKey = getKey(
+		'k8s.daemonset.desired_scheduled_nodes',
+		'k8s_daemonset_desired_scheduled_nodes',
 	);
-	const k8sDaemonsetCurrentScheduledNamespacesKey = getKey(
-		'k8s.daemonset.current.scheduled.namespaces',
-		'k8s_daemonset_current_scheduled_namespaces',
+	const k8sDaemonsetCurrentScheduledNodesKey = getKey(
+		'k8s.daemonset.current_scheduled_nodes',
+		'k8s_daemonset_current_scheduled_nodes',
 	);
-	const k8sDaemonsetReadyNamespacesKey = getKey(
-		'k8s.daemonset.ready.namespaces',
-		'k8s_daemonset_ready_namespaces',
+	const k8sDaemonsetReadyNodesKey = getKey(
+		'k8s.daemonset.ready_nodes',
+		'k8s_daemonset_ready_nodes',
 	);
-	const k8sDaemonsetMisscheduledNamespacesKey = getKey(
-		'k8s.daemonset.misscheduled.namespaces',
-		'k8s_daemonset_misscheduled_namespaces',
+	const k8sDaemonsetMisscheduledNodesKey = getKey(
+		'k8s.daemonset.misscheduled_nodes',
+		'k8s_daemonset_misscheduled_nodes',
 	);
 	const k8sDeploymentDesiredKey = getKey(
 		'k8s.deployment.desired',
@@ -1310,8 +1310,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetDesiredScheduledNamespacesKey,
-								key: k8sDaemonsetDesiredScheduledNamespacesKey,
+								id: k8sDaemonsetDesiredScheduledNodesKey,
+								key: k8sDaemonsetDesiredScheduledNodesKey,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1356,8 +1356,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetCurrentScheduledNamespacesKey,
-								key: k8sDaemonsetCurrentScheduledNamespacesKey,
+								id: k8sDaemonsetCurrentScheduledNodesKey,
+								key: k8sDaemonsetCurrentScheduledNodesKey,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1402,8 +1402,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetReadyNamespacesKey,
-								key: k8sDaemonsetReadyNamespacesKey,
+								id: k8sDaemonsetReadyNodesKey,
+								key: k8sDaemonsetReadyNodesKey,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1448,8 +1448,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetMisscheduledNamespacesKey,
-								key: k8sDaemonsetMisscheduledNamespacesKey,
+								id: k8sDaemonsetMisscheduledNodesKey,
+								key: k8sDaemonsetMisscheduledNodesKey,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',

@@ -3,7 +3,7 @@ import { Input } from 'antd';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { useUpdateFunnelSteps } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
 import { FunnelStepPopoverProps } from './FunnelStepPopover';

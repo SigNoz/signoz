@@ -1,0 +1,28 @@
+// Badge — wraps a KeyValueLabel, clickable to toggle panel
+.root {
+	cursor: pointer;
+
+	// KeyValueLabel renders its key with a global class; recolor only the badge
+	// instance inside this badge wrapper.
+	:global(.key-value-label__key) {
+		color: var(--destructive);
+	}
+}
+
+.loader {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 4px;
+	color: var(--foreground);
+}
+
+.value {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.icon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+}

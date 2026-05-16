@@ -13,6 +13,7 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
@@ -34,6 +35,7 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -50,6 +52,12 @@ import {
 } from 'utils/explorerUtils';
 import { v4 } from 'uuid';
 
+import {
+	tracesAddFilterAction,
+	tracesChangeViewAction,
+	tracesRunQueryAction,
+	tracesSaveViewAction,
+} from './aiActions';
 import TimeSeriesView from './TimeSeriesView';
 
 import './TracesExplorer.styles.scss';
@@ -61,7 +69,12 @@ function TracesExplorer(): JSX.Element {
 		handleRunQuery,
 		stagedQuery,
 		handleSetConfig,
+		currentQuery,
+		handleSetQueryData,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
@@ -130,6 +143,45 @@ function TracesExplorer(): JSX.Element {
 		},
 		[handleExplorerTabChange, handleSetConfig],
 	);
+
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
+	const aiActions = useMemo(
+		() =>
+			isAIAssistantEnabled
+				? [
+						tracesRunQueryAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						tracesAddFilterAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						tracesChangeViewAction({
+							onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
+						}),
+						tracesSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+					]
+				: [],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			handleSetQueryData,
+			redirectWithQueryBuilderData,
+			handleChangeSelectedView,
+		],
+	);
+	usePageActions('traces-explorer', aiActions);
+	// ───────────────────────────────────────────────────────────────────────────
 
 	const exportDefaultQuery = useMemo(
 		() =>

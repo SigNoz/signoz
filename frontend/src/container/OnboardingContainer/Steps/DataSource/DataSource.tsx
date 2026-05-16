@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoaderCircle } from '@signozhq/icons';
+import { Blocks, Check, LoaderCircle } from '@signozhq/icons';
 import { Button, Card, Form, Input, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -21,7 +21,6 @@ import {
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Blocks, Check } from 'lucide-react';
 import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -272,7 +271,7 @@ export default function DataSource(): JSX.Element {
 										className="periscope-btn primary"
 										icon={
 											isSubmittingRequestForDataSource ? (
-												<LoaderCircle className="animate-spin" />
+												<LoaderCircle size="md" className="animate-spin" />
 											) : (
 												<Check size={12} />
 											)
