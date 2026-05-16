@@ -1,7 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Flex, Tag, Typography } from 'antd';
+import { Button, Collapse, Flex, Tag } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { PenLine, Trash2 } from 'lucide-react';
+import { PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { USER_ROLES } from 'types/roles';
@@ -27,10 +28,7 @@ function PolicyListItemHeader({
 			justify="space-between"
 			align="center"
 		>
-			<Typography.Text
-				className="policy-list-item-header-title"
-				ellipsis={{ tooltip: name }}
-			>
+			<Typography.Text className="policy-list-item-header-title" truncate={1}>
 				{name}
 			</Typography.Text>
 			{isEditEnabled && (
@@ -106,13 +104,13 @@ function PolicyListItemContent({
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Expression</Typography>
-				<Typography.Text ellipsis={{ tooltip: routingPolicy.expression || '-' }}>
+				<Typography.Text truncate={1}>
 					{routingPolicy.expression || '-'}
 				</Typography.Text>
 			</div>
 			<div className="policy-list-item-content-row">
 				<Typography>Description</Typography>
-				<Typography.Text ellipsis={{ tooltip: routingPolicy.description || '-' }}>
+				<Typography.Text truncate={1}>
 					{routingPolicy.description || '-'}
 				</Typography.Text>
 			</div>

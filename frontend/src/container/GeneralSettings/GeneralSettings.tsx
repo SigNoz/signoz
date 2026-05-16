@@ -2,9 +2,8 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Compass, ScrollText } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { BarChart, Compass, Loader, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
@@ -17,7 +16,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
-import { BarChart2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -459,7 +457,7 @@ function GeneralSettings({
 		{
 			name: 'Metrics',
 			type: 'metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -480,7 +478,11 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -523,7 +525,11 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -565,7 +571,11 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (

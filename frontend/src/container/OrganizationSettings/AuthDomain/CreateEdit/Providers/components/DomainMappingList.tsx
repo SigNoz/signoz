@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from '@signozhq/icons';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import { Form } from 'antd';
 
 import './DomainMappingList.styles.scss';

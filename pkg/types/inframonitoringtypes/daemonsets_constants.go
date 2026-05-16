@@ -7,8 +7,8 @@ const (
 	DaemonSetsOrderByMemory         = "memory"
 	DaemonSetsOrderByMemoryRequest  = "memory_request"
 	DaemonSetsOrderByMemoryLimit    = "memory_limit"
-	DaemonSetsOrderByDesiredNodes   = "desired_nodes"
-	DaemonSetsOrderByAvailableNodes = "available_nodes"
+	DaemonSetsOrderByDesiredNodes = "desired_nodes"
+	DaemonSetsOrderByCurrentNodes = "current_nodes"
 )
 
 var DaemonSetsValidOrderByKeys = []string{
@@ -19,6 +19,6 @@ var DaemonSetsValidOrderByKeys = []string{
 	DaemonSetsOrderByMemoryRequest,
 	DaemonSetsOrderByMemoryLimit,
 	DaemonSetsOrderByDesiredNodes,
-	DaemonSetsOrderByAvailableNodes,
+	DaemonSetsOrderByCurrentNodes,
 	OrderByName,
 }

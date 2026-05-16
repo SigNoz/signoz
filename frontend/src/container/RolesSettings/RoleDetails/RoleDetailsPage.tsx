@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Table2, Trash2, Users } from '@signozhq/icons';
-import { Button, toast, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import {
 	getGetObjectsQueryKey,

@@ -1,6 +1,6 @@
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import { Compass, TowerControl, Workflow } from 'lucide-react';
+import { Compass, TowerControl, Workflow } from '@signozhq/icons';
 import LogsExplorer from 'pages/LogsExplorer';
 import Pipelines from 'pages/Pipelines';
 import SaveView from 'pages/SaveView';

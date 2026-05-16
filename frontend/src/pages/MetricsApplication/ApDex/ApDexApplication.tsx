@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SettingOutlined } from '@ant-design/icons';
 import { Popover } from 'antd';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 
-import { Button } from '../styles';
+import { Button, ButtonContainer } from '../styles';
 import ApDexSettings from './ApDexSettings';
+import { Settings } from '@signozhq/icons';
 
 function ApDexApplication(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
@@ -59,8 +59,10 @@ function ApDexApplication(): JSX.Element {
 			}
 		>
 			<div className="ap-dex-settings-popover-content">
-				<Button size="middle" icon={<SettingOutlined />}>
-					Settings
+				<Button size="middle">
+					<ButtonContainer>
+						<Settings size="md" /> Settings
+					</ButtonContainer>
 				</Button>
 			</div>
 		</Popover>

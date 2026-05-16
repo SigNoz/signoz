@@ -61,6 +61,8 @@ const fallbackDurationInNanoSeconds = 30 * 1000 * NANO_SECOND_MULTIPLIER; // 30s
  * Parse the selectedTime string to get min/max time values.
  * For relative times, computes fresh values based on Date.now().
  * For custom times, extracts the stored min/max values.
+ *
+ * @throws Error - When selectedTime is relativeTime and it's invalid
  */
 export function parseSelectedTime(selectedTime: string): ParsedTimeRange {
 	if (isCustomTimeRange(selectedTime)) {
@@ -76,6 +78,18 @@ export function parseSelectedTime(selectedTime: string): ParsedTimeRange {
 	// It's a relative time like '15m', '1h', etc.
 	// Use getMinMaxForSelectedTime which computes from Date.now()
 	return getMinMaxForSelectedTime(selectedTime as Time, 0, 0);
+}
+
+/**
+ * The {@ref parseSelectedTime} can throw errors, this handles and fallbacks to 0,0 if invalid selected time is provided
+ */
+export function safeParseSelectedTime(selectedTime: string): ParsedTimeRange {
+	try {
+		return parseSelectedTime(selectedTime);
+	} catch (e) {
+		console.error('Error parsing selected time:', e);
+		return { minTime: 0, maxTime: 0 };
+	}
 }
 
 /**

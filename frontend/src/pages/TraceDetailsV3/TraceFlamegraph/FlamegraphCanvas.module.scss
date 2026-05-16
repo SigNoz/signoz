@@ -1,0 +1,42 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding: 0 15px;
+}
+
+.viewport {
+	flex: 1;
+	overflow: hidden;
+	position: relative;
+}
+
+.main {
+	display: block;
+	width: 100%;
+	cursor: grab;
+}
+
+.overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	pointer-events: none;
+}
+
+// Flamegraph tooltip — rendered as a portal, follows the cursor.
+// Position is set inline on the element (left/top); the layout/decoration
+// lives here. Shares visual treatment with the waterfall hover popover
+// but is positioned `fixed` instead of anchored.
+.tooltip {
+	position: fixed;
+	z-index: 1000;
+	pointer-events: none;
+	background-color: var(--l1-background);
+	padding: 8px 12px;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--l2-border);
+	color: var(--l1-foreground);
+}

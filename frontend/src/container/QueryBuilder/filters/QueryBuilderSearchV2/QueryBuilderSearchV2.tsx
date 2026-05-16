@@ -38,7 +38,7 @@ import {
 	isUndefined,
 	unset,
 } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -961,9 +961,7 @@ function QueryBuilderSearchV2(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
 								if (!isDisabled) {

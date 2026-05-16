@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Button, Card, Typography } from 'antd';
-import { ArrowRight } from 'lucide-react';
+import { Button, Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { ArrowRight } from '@signozhq/icons';
 
 import { GraphPopoverProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
@@ -52,7 +53,7 @@ function GraphPopover({
 		>
 			<Card className="inspect-graph-popover-content" size="small">
 				<div className="inspect-graph-popover-row">
-					<Typography.Text type="secondary">
+					<Typography.Text color="muted">
 						{formatTimestampToFullDateTime(closestTimestamp)}
 					</Typography.Text>
 					<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>

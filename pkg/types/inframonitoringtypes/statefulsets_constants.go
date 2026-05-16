@@ -8,7 +8,7 @@ const (
 	StatefulSetsOrderByMemoryRequest = "memory_request"
 	StatefulSetsOrderByMemoryLimit   = "memory_limit"
 	StatefulSetsOrderByDesiredPods   = "desired_pods"
-	StatefulSetsOrderByAvailablePods = "available_pods"
+	StatefulSetsOrderByCurrentPods   = "current_pods"
 )
 
 var StatefulSetsValidOrderByKeys = []string{
@@ -19,6 +19,6 @@ var StatefulSetsValidOrderByKeys = []string{
 	StatefulSetsOrderByMemoryRequest,
 	StatefulSetsOrderByMemoryLimit,
 	StatefulSetsOrderByDesiredPods,
-	StatefulSetsOrderByAvailablePods,
+	StatefulSetsOrderByCurrentPods,
 	OrderByName,
 }

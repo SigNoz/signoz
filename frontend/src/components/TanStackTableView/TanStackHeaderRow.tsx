@@ -4,12 +4,18 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
-import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
+import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	Ellipsis,
+	GripVertical,
+	X,
+} from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
-import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical } from 'lucide-react';
 
 import { SortState, TableColumnDef } from './types';
 
@@ -213,7 +219,7 @@ function TanStackHeaderRow<TData>({
 									event.stopPropagation();
 								}}
 							>
-								<MoreOutlined />
+								<Ellipsis size="md" />
 							</span>
 						</PopoverTrigger>
 						<PopoverContent
@@ -230,9 +236,7 @@ function TanStackHeaderRow<TData>({
 									onRemoveColumn?.(column.id);
 								}}
 							>
-								<CloseOutlined
-									className={headerStyles.tanstackRemoveColumnActionIcon}
-								/>
+								<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
 								Remove column
 							</button>
 						</PopoverContent>

@@ -1,0 +1,19 @@
+---
+description: Prefer SigNoz UI and icons across frontend code
+globs: **/*.{ts,tsx,js,jsx}
+alwaysApply: true
+---
+
+# UI Components and Icons Source of Truth
+
+For all frontend implementation work in this repository:
+
+- Always use UI primitives/components from `@signozhq/ui`.
+- Always use icons from `@signozhq/icons`.
+- Do not introduce new usage of icon libraries directly (for example `lucide-react`) in app code.
+- Do not mix multiple component systems for the same UI surface when an equivalent exists in `@signozhq/ui`.
+
+## Migration guidance
+
+- If touching a file that already uses non-`@signozhq/icons` icons, prefer migrating that file to `@signozhq/icons` as part of the same change when practical.
+- If a required component or icon is missing from SigNoz packages, call this out explicitly in the PR/summary before introducing alternatives.

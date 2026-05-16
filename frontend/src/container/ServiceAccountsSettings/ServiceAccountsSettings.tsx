@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';

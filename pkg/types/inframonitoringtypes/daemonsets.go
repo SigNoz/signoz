@@ -25,10 +25,10 @@ type DaemonSetRecord struct {
 	DaemonSetMemory        float64          `json:"daemonSetMemory" required:"true"`
 	DaemonSetMemoryRequest float64          `json:"daemonSetMemoryRequest" required:"true"`
 	DaemonSetMemoryLimit   float64          `json:"daemonSetMemoryLimit" required:"true"`
-	DesiredNodes           int              `json:"desiredNodes" required:"true"`
-	AvailableNodes         int              `json:"availableNodes" required:"true"`
-	PodCountsByPhase       PodCountsByPhase `json:"podCountsByPhase" required:"true"`
-	Meta                   map[string]any   `json:"meta" required:"true"`
+	DesiredNodes           int               `json:"desiredNodes" required:"true"`
+	CurrentNodes           int               `json:"currentNodes" required:"true"`
+	PodCountsByPhase       PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
+	Meta                   map[string]string `json:"meta" required:"true"`
 }
 
 // PostableDaemonSets is the request body for the v2 daemonsets list API.

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Button } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -20,7 +20,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
@@ -218,7 +218,7 @@ function SpanLogs({
 					<Virtuoso
 						className="span-logs-virtuoso"
 						key="span-logs-virtuoso"
-						style={logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}}
+						style={{ height: '100%' }}
 						data={logs}
 						totalCount={logs.length}
 						itemContent={getItemContent}

@@ -448,6 +448,8 @@ components:
       - delete
       - list
       - assignee
+      - attach
+      - detach
       type: string
     AuthtypesRole:
       properties:
@@ -2205,7 +2207,7 @@ components:
       - role
       - organization
       - metaresource
-      - metaresources
+      - telemetryresource
       type: string
     DashboardtypesDashboard:
       properties:
@@ -2580,7 +2582,7 @@ components:
       type: object
     InframonitoringtypesDaemonSetRecord:
       properties:
-        availableNodes:
+        currentNodes:
           type: integer
         daemonSetCPU:
           format: double
@@ -2605,7 +2607,8 @@ components:
         desiredNodes:
           type: integer
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
         podCountsByPhase:
@@ -2619,7 +2622,7 @@ components:
       - daemonSetMemoryRequest
       - daemonSetMemoryLimit
       - desiredNodes
-      - availableNodes
+      - currentNodes
       - podCountsByPhase
       - meta
       type: object
@@ -3374,7 +3377,7 @@ components:
       type: string
     InframonitoringtypesStatefulSetRecord:
       properties:
-        availablePods:
+        currentPods:
           type: integer
         desiredPods:
           type: integer
@@ -3414,7 +3417,7 @@ components:
       - statefulSetMemoryRequest
       - statefulSetMemoryLimit
       - desiredPods
-      - availablePods
+      - currentPods
       - podCountsByPhase
       - meta
       type: object
@@ -5098,18 +5101,19 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
-      type: object
-    RuletypesEvaluationEnvelope:
-      oneOf:
-      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
-      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
       required:
       - kind
       - spec
+      type: object
+    RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -5122,6 +5126,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -5429,15 +5436,12 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -5479,6 +5483,9 @@ components:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesThresholdKind:
       enum:
@@ -5656,19 +5663,17 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         name:
           type: string
       required:
       - name
-      - field_context
+      - fieldContext
       - config
       type: object
     SpantypesPostableSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
@@ -5677,7 +5682,6 @@ components:
           type: string
       required:
       - name
-      - category
       - condition
       type: object
     SpantypesSpanMapper:
@@ -5691,7 +5695,7 @@ components:
           type: string
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         group_id:
           type: string
@@ -5708,7 +5712,7 @@ components:
       - id
       - group_id
       - name
-      - field_context
+      - fieldContext
       - config
       - enabled
       type: object
@@ -5724,8 +5728,6 @@ components:
       type: object
     SpantypesSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
@@ -5750,13 +5752,11 @@ components:
       - id
       - orgId
       - name
-      - category
       - condition
       - enabled
       type: object
-    SpantypesSpanMapperGroupCategory:
-      type: object
     SpantypesSpanMapperGroupCondition:
+      nullable: true
       properties:
         attributes:
           items:
@@ -5800,7 +5800,7 @@ components:
         enabled:
           nullable: true
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
       type: object
     SpantypesUpdatableSpanMapperGroup:
@@ -9393,9 +9393,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:list
       - tokenizer:
-        - ADMIN
+        - role:list
       summary: List roles
       tags:
       - role
@@ -9467,9 +9467,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:create
       - tokenizer:
-        - ADMIN
+        - role:create
       summary: Create role
       tags:
       - role
@@ -9529,9 +9529,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:delete
       - tokenizer:
-        - ADMIN
+        - role:delete
       summary: Delete role
       tags:
       - role
@@ -9580,9 +9580,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get role
       tags:
       - role
@@ -9646,9 +9646,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch role
       tags:
       - role
@@ -9724,9 +9724,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get objects for a role by relation
       tags:
       - role
@@ -9802,9 +9802,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch objects for a role by relation
       tags:
       - role
@@ -10125,9 +10125,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:list
       - tokenizer:
-        - ADMIN
+        - serviceaccount:list
       summary: List service accounts
       tags:
       - serviceaccount
@@ -10187,9 +10187,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:create
       - tokenizer:
-        - ADMIN
+        - serviceaccount:create
       summary: Create service account
       tags:
       - serviceaccount
@@ -10237,9 +10237,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:delete
       - tokenizer:
-        - ADMIN
+        - serviceaccount:delete
       summary: Deletes a service account
       tags:
       - serviceaccount
@@ -10294,9 +10294,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets a service account
       tags:
       - serviceaccount
@@ -10354,9 +10354,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account
       tags:
       - serviceaccount
@@ -10408,9 +10408,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:list
       - tokenizer:
-        - ADMIN
+        - factor-api-key:list
       summary: List service account keys
       tags:
       - serviceaccount
@@ -10476,9 +10476,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:create
+        - serviceaccount:attach
       - tokenizer:
-        - ADMIN
+        - factor-api-key:create
+        - serviceaccount:attach
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -10531,9 +10533,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:delete
+        - serviceaccount:detach
       - tokenizer:
-        - ADMIN
+        - factor-api-key:delete
+        - serviceaccount:detach
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -10596,9 +10600,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:update
       - tokenizer:
-        - ADMIN
+        - factor-api-key:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -10657,9 +10661,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets service account roles
       tags:
       - serviceaccount
@@ -10719,9 +10723,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Create service account role
       tags:
       - serviceaccount
@@ -10768,9 +10774,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:detach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:detach
+        - role:detach
       summary: Delete service account role
       tags:
       - serviceaccount
@@ -10847,12 +10855,6 @@ paths:
         org.
       operationId: ListSpanMapperGroups
       parameters:
-      - explode: true
-        in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
-        style: deepObject
       - in: query
         name: enabled
         schema:
@@ -12378,22 +12380,21 @@ paths:
         daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
         also reports the latest known node-level counters from kube-state-metrics:
         desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
-        daemonset wants to run on) and availableNodes (k8s.daemonset.current_scheduled_nodes,
-        the number of nodes it currently runs on) — note these are node counts, not
-        pod counts. It also reports per-group podCountsByPhase ({ pending, running,
-        succeeded, failed, unknown } from each pod''s latest k8s.pod.phase value).
-        Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
+        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on) — note these are node
+        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
+        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
+        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
         k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
         grouping or ''grouped_list'' for custom groupBy keys; in both modes every
         row aggregates pods owned by daemonsets in the group. Supports filtering via
         a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
-        / memory / memory_request / memory_limit / desired_nodes / available_nodes,
+        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
         and pagination via offset/limit. Also reports missing required metrics and
         whether the requested time range falls before the data retention boundary.
         Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit,
         daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes,
-        availableNodes) return -1 as a sentinel when no data is available for that
-        field.'
+        currentNodes) return -1 as a sentinel when no data is available for that field.'
       operationId: ListDaemonSets
       requestBody:
         content:
@@ -12959,7 +12960,7 @@ paths:
         the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest,
         statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
-        and availablePods (k8s.statefulset.current_pods) replica counts and per-group
+        and currentPods (k8s.statefulset.current_pods) replica counts and per-group
         podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
         pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
         (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
@@ -12967,11 +12968,11 @@ paths:
         for custom groupBy keys; in both modes every row aggregates pods owned by
         statefulsets in the group. Supports filtering via a filter expression, custom
         groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
-        / memory_limit / desired_pods / available_pods, and pagination via offset/limit.
+        / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
         Also reports missing required metrics and whether the requested time range
         falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
         statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
-        statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel
+        statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel
         when no data is available for that field.'
       operationId: ListStatefulSets
       requestBody:

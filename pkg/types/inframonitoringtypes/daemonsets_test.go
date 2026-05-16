@@ -186,7 +186,7 @@ func TestPostableDaemonSets_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "orderBy with valid key available_nodes and direction asc",
+			name: "orderBy with valid key current_nodes and direction asc",
 			req: &PostableDaemonSets{
 				Start:  1000,
 				End:    2000,
@@ -195,7 +195,7 @@ func TestPostableDaemonSets_Validate(t *testing.T) {
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: DaemonSetsOrderByAvailableNodes,
+							Name: DaemonSetsOrderByCurrentNodes,
 						},
 					},
 					Direction: qbtypes.OrderDirectionAsc,

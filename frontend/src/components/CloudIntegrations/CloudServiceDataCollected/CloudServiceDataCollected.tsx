@@ -3,7 +3,7 @@ import {
 	CloudintegrationtypesCollectedLogAttributeDTO,
 	CloudintegrationtypesCollectedMetricDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { BarChart2, ScrollText } from 'lucide-react';
+import { BarChart, ScrollText } from '@signozhq/icons';
 
 import './CloudServiceDataCollected.styles.scss';
 
@@ -82,7 +82,7 @@ function CloudServiceDataCollected({
 			{metricsData && metricsData.length > 0 && (
 				<div className="cloud-service-data-collected-table">
 					<div className="cloud-service-data-collected-table-heading">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 					<Table

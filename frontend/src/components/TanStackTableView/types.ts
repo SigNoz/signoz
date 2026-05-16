@@ -115,6 +115,8 @@ export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
 	defaultLimit?: number;
+	showTotalCount?: boolean;
+	totalCountLabel?: string;
 };
 
 export type TanstackTableQueryParamsConfig = {
