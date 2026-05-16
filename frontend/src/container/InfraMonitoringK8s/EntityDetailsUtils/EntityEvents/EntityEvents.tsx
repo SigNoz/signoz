@@ -1,225 +1,183 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
-import { Button, Table, TableColumnsType } from 'antd';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
-import { VIEWS } from 'container/InfraMonitoringK8s/constants';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Table, TableColumnsType } from 'antd';
+import logEvent from 'api/common/logEvent';
+import {
+	QuerySearchV2Provider,
+	useExpression,
+	useInitialExpression,
+	useInputExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnChange,
+	useQuerySearchOnRun,
+	useUserExpression,
+} from 'components/QueryBuilderV2';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import {
+	combineInitialAndUserExpression,
+	getUserExpressionFromCombined,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
+import { InfraMonitoringEvents } from 'constants/events';
+import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
-import { INITIAL_PAGE_SIZE } from 'container/LogsContextList/configs';
-import LogsError from 'container/LogsError/LogsError';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { isArray } from 'lodash-es';
-import {
-	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
-	LoaderCircle,
-} from '@signozhq/icons';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
+import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+import { validateQuery } from 'utils/queryValidationUtils';
 
-import {
-	EntityDetailsEmptyContainer,
-	getEntityEventsOrLogsQueryPayload,
-	QUERY_KEYS,
-} from '../utils';
+import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
+import EntityError from '../EntityError/EntityError';
+import { EventContents } from './EventsContent';
+import EventsNotConfigured from './EventsNotConfigured';
+import { K8S_ENTITY_EVENTS_EXPRESSION_KEY, useEntityEvents } from './hooks';
+import { getEntityEventsQueryPayload, isEventsKeyNotFoundError } from './utils';
 
-import './entityEvents.styles.scss';
+import styles from './EntityEvents.module.scss';
 
 interface EventDataType {
 	key: string;
 	timestamp: string;
 	body: string;
 	id: string;
-	attributes_bool?: Record<string, boolean>;
-	attributes_number?: Record<string, number>;
+	severity: string;
 	attributes_string?: Record<string, string>;
 	resources_string?: Record<string, string>;
-	scope_name?: string;
-	scope_string?: Record<string, string>;
-	scope_version?: string;
-	severity_number?: number;
-	severity_text?: string;
-	span_id?: string;
-	trace_flags?: number;
-	trace_id?: string;
-	severity?: string;
 }
 
-interface IEntityEventsProps {
+interface Props {
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	handleChangeEventFilters: (
-		filters: IBuilderQuery['filters'],
-		view: VIEWS,
-	) => void;
-	filters: IBuilderQuery['filters'];
 	isModalTimeSelection: boolean;
 	handleTimeChange: (
 		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => void;
 	selectedInterval: Time;
-	category: InfraMonitoringEntity;
 	queryKey: string;
+	category: InfraMonitoringEntity;
+	initialExpression: string;
 }
 
-const EventsPageSize = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-export default function Events({
+const handleExpandRow = (record: EventDataType): JSX.Element => (
+	<EventContents
+		data={{ ...record.attributes_string, ...record.resources_string }}
+	/>
+);
+
+function EntityEventsContent({
 	timeRange,
-	handleChangeEventFilters,
-	filters,
 	isModalTimeSelection,
 	handleTimeChange,
 	selectedInterval,
-	category,
 	queryKey,
-}: IEntityEventsProps): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
+	category,
+}: Omit<Props, 'initialExpression'>): JSX.Element {
+	const expression = useExpression();
+	const inputExpression = useInputExpression();
+	const userExpression = useUserExpression();
+	const initialExpression = useInitialExpression();
+	const querySearchOnChange = useQuerySearchOnChange();
+	const querySearchOnRun = useQuerySearchOnRun();
+	const querySearchInitialExpressionProp = useQuerySearchInitialExpressionProp();
 
-	const [formattedEntityEvents, setFormattedEntityEvents] = useState<
-		EventDataType[]
-	>([]);
-
-	const [hasReachedEndOfEvents, setHasReachedEndOfEvents] = useState(false);
-
-	const [page, setPage] = useState(1);
-
-	const updatedCurrentQuery = useMemo(
-		() => ({
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: [
-					{
-						...currentQuery.builder.queryData[0],
-						dataSource: DataSource.LOGS,
-						aggregateOperator: 'noop',
-						aggregateAttribute: {
-							...currentQuery.builder.queryData[0].aggregateAttribute,
-						},
-						filters: {
-							items: filters?.items?.filter(
-								(item) =>
-									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
-									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-							),
-							op: 'AND',
-						},
-					},
-				],
-			},
-		}),
-		[currentQuery, filters],
+	const [pagination, setPagination] = useQueryState(
+		'eventsPagination',
+		parseAsJsonNoValidate<{ offset: number; limit: number }>(),
 	);
 
-	const query = updatedCurrentQuery?.builder?.queryData[0] || null;
-
-	const queryPayload = useMemo(() => {
-		const basePayload = getEntityEventsOrLogsQueryPayload(
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		);
-
-		basePayload.query.builder.queryData[0].pageSize = INITIAL_PAGE_SIZE;
-		basePayload.query.builder.queryData[0].offset =
-			(page - 1) * INITIAL_PAGE_SIZE;
-		basePayload.query.builder.queryData[0].orderBy = [
-			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
-			{ columnName: 'id', order: ORDERBY_FILTERS.DESC },
-		];
-
-		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, filters, page]);
+	const pageSize = pagination?.limit || PAGE_SIZE_OPTIONS[0];
+	const offset = pagination?.offset || 0;
 
 	const {
-		data: eventsData,
+		events,
 		isLoading,
 		isFetching,
 		isError,
-	} = useQuery({
-		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters, page],
-		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
-		enabled: !!queryPayload,
+		error,
+		currentCount,
+		hasMore,
+		refetch,
+		cancel,
+	} = useEntityEvents({
+		queryKey,
+		timeRange,
+		expression,
+		offset,
+		pageSize,
 	});
+
+	const handleRunQuery = useCallback(
+		(updatedExpression?: string): void => {
+			const newUserExpression = updatedExpression
+				? getUserExpressionFromCombined(initialExpression, updatedExpression)
+				: inputExpression;
+			const validation = validateQuery(
+				initialExpression
+					? combineInitialAndUserExpression(initialExpression, newUserExpression)
+					: newUserExpression || '',
+			);
+			if (validation.isValid) {
+				querySearchOnRun(newUserExpression || '');
+
+				logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: InfraMonitoringEvents.K8sEntity,
+					page: InfraMonitoringEvents.DetailedPage,
+					category,
+					view: InfraMonitoringEvents.EventsView,
+				});
+
+				refetch();
+			}
+		},
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
+	);
+
+	const queryData = useMemo(
+		() =>
+			getEntityEventsQueryPayload({
+				start: timeRange.startTime,
+				end: timeRange.endTime,
+				expression: userExpression || '',
+			}).queryData,
+		[timeRange.startTime, timeRange.endTime, userExpression],
+	);
+
+	const formattedEvents = useMemo<EventDataType[]>(
+		() =>
+			events.map((event) => ({
+				key: event.data.id,
+				id: event.data.id,
+				timestamp: event.timestamp,
+				body: event.data.body,
+				severity: event.data.severity_text,
+				attributes_string: event.data.attributes_string,
+				resources_string: event.data.resources_string,
+			})),
+		[events],
+	);
 
 	const columns: TableColumnsType<EventDataType> = [
 		{ title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100 },
 		{
 			title: 'Timestamp',
 			dataIndex: 'timestamp',
-			width: 200,
+			width: 240,
 			ellipsis: true,
 			key: 'timestamp',
 		},
 		{ title: 'Body', dataIndex: 'body', key: 'body' },
 	];
-
-	useEffect(() => {
-		if (eventsData?.payload?.data?.newResult?.data?.result) {
-			const responsePayload =
-				eventsData?.payload.data.newResult.data.result[0].list || [];
-
-			const formattedData = responsePayload?.map(
-				(event): EventDataType => ({
-					timestamp: event.timestamp,
-					severity: event.data.severity_text,
-					body: event.data.body,
-					id: event.data.id,
-					key: event.data.id,
-					resources_string: event.data.resources_string,
-					attributes_string: event.data.attributes_string,
-				}),
-			);
-
-			setFormattedEntityEvents(formattedData);
-
-			if (
-				!responsePayload ||
-				(responsePayload &&
-					isArray(responsePayload) &&
-					responsePayload.length < EventsPageSize)
-			) {
-				setHasReachedEndOfEvents(true);
-			} else {
-				setHasReachedEndOfEvents(false);
-			}
-		}
-	}, [eventsData]);
-
-	const handleExpandRow = (record: EventDataType): JSX.Element => (
-		<EventContents
-			data={{ ...record.attributes_string, ...record.resources_string }}
-		/>
-	);
-
-	const handlePrev = (): void => {
-		if (!formattedEntityEvents.length) {
-			return;
-		}
-		setPage(page - 1);
-	};
-
-	const handleNext = (): void => {
-		if (!formattedEntityEvents.length) {
-			return;
-		}
-		setPage(page + 1);
-	};
 
 	const handleExpandRowIcon = ({
 		expanded,
@@ -232,39 +190,36 @@ export default function Events({
 			e: React.MouseEvent<HTMLElement, MouseEvent>,
 		) => void;
 		record: EventDataType;
-	}): JSX.Element =>
-		expanded ? (
-			<ChevronDown
-				className="periscope-btn-icon"
-				size={14}
-				onClick={(e): void =>
-					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
-				}
-			/>
+	}): JSX.Element => {
+		const handleClick = (e: React.MouseEvent<SVGSVGElement>): void => {
+			onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>);
+		};
+
+		return expanded ? (
+			<ChevronDown className={styles.expandIcon} size={14} onClick={handleClick} />
 		) : (
 			<ChevronRight
-				className="periscope-btn-icon"
+				className={styles.expandIcon}
 				size={14}
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				onClick={(e): void =>
-					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
-				}
+				onClick={handleClick}
 			/>
 		);
+	};
+
+	useEffect(() => {
+		return (): void => {
+			void setPagination(null);
+		};
+	}, [setPagination]);
+
+	const isDataEmpty =
+		!isLoading && !isFetching && !isError && formattedEvents.length === 0;
+	const hasAdditionalFilters = !!userExpression?.trim();
 
 	return (
-		<div className="entity-events-container">
-			<div className="entity-events-header">
-				<div className="filter-section">
-					{query && (
-						<QueryBuilderSearch
-							query={query as IBuilderQuery}
-							onChange={(value): void => handleChangeEventFilters(value, VIEWS.EVENTS)}
-							disableNavigationShortcuts
-						/>
-					)}
-				</div>
-				<div className="datetime-section">
+		<div className={styles.container}>
+			<div className={styles.filterContainer}>
+				<div className={styles.filterContainerTime}>
 					<DateTimeSelectionV2
 						showAutoRefresh
 						showRefreshText={false}
@@ -276,67 +231,95 @@ export default function Events({
 						modalInitialStartTime={timeRange.startTime * 1000}
 						modalInitialEndTime={timeRange.endTime * 1000}
 					/>
+
+					<RunQueryBtn
+						isLoadingQueries={isFetching}
+						onStageRunQuery={(): void => handleRunQuery()}
+						handleCancelQuery={cancel}
+					/>
+				</div>
+
+				<div className={styles.filterQuerySearch}>
+					<QuerySearch
+						onChange={querySearchOnChange}
+						queryData={queryData}
+						dataSource={DataSource.LOGS}
+						onRun={handleRunQuery}
+						initialExpression={querySearchInitialExpressionProp}
+					/>
 				</div>
 			</div>
 
-			{isLoading && formattedEntityEvents.length === 0 && <LoadingContainer />}
+			{isLoading && formattedEvents.length === 0 && <LoadingContainer />}
 
-			{!isLoading && !isError && formattedEntityEvents.length === 0 && (
-				<EntityDetailsEmptyContainer category={category} view="events" />
+			{isDataEmpty && <EntityEmptyState hasFilters={hasAdditionalFilters} />}
+
+			{isError && !isLoading && isEventsKeyNotFoundError(error) && (
+				<EventsNotConfigured />
 			)}
 
-			{isError && !isLoading && <LogsError />}
+			{isError && !isLoading && !isEventsKeyNotFoundError(error) && (
+				<EntityError />
+			)}
 
-			{!isLoading && !isError && formattedEntityEvents.length > 0 && (
-				<div className="entity-events-list-container">
-					<div className="entity-events-list-card">
-						<Table<EventDataType>
-							loading={isLoading && page > 1}
-							columns={columns}
-							expandable={{
-								expandedRowRender: handleExpandRow,
-								rowExpandable: (record): boolean => record.body !== 'Not Expandable',
-								expandIcon: handleExpandRowIcon,
+			{!isLoading && !isError && formattedEvents.length > 0 && (
+				<div className={styles.eventsTable}>
+					<div className={styles.controls}>
+						<Controls
+							totalCount={hasMore ? currentCount + 1 : currentCount}
+							countPerPage={pageSize}
+							offset={offset}
+							perPageOptions={PAGE_SIZE_OPTIONS}
+							isLoading={isFetching}
+							handleNavigatePrevious={(): void => {
+								void setPagination({
+									offset: Math.max(0, offset - pageSize),
+									limit: pageSize,
+								});
 							}}
-							dataSource={formattedEntityEvents}
-							pagination={false}
-							rowKey={(record): string => record.id}
+							handleNavigateNext={(): void => {
+								void setPagination({
+									offset: offset + pageSize,
+									limit: pageSize,
+								});
+							}}
+							handleCountItemsPerPageChange={(value): void => {
+								void setPagination({
+									offset: 0,
+									limit: value,
+								});
+							}}
 						/>
 					</div>
-				</div>
-			)}
 
-			{!isError && formattedEntityEvents.length > 0 && (
-				<div className="entity-events-footer">
-					<Button
-						className="entity-events-footer-button periscope-btn ghost"
-						type="link"
-						onClick={handlePrev}
-						disabled={page === 1 || isFetching || isLoading}
-					>
-						{!isFetching && <ChevronLeft size={14} />}
-						Prev
-					</Button>
-
-					<Button
-						className="entity-events-footer-button periscope-btn ghost"
-						type="link"
-						onClick={handleNext}
-						disabled={hasReachedEndOfEvents || isFetching || isLoading}
-					>
-						Next
-						{!isFetching && <ChevronRight size={14} />}
-					</Button>
-
-					{(isFetching || isLoading) && (
-						<LoaderCircle
-							className="animate-spin"
-							size={16}
-							color={Color.BG_ROBIN_500}
-						/>
-					)}
+					<Table<EventDataType>
+						loading={isFetching && formattedEvents.length === 0}
+						columns={columns}
+						expandable={{
+							expandedRowRender: handleExpandRow,
+							rowExpandable: (record): boolean => record.body !== 'Not Expandable',
+							expandIcon: handleExpandRowIcon,
+						}}
+						dataSource={formattedEvents}
+						pagination={false}
+						rowKey={(record): string => record.id}
+					/>
 				</div>
 			)}
 		</div>
 	);
 }
+
+function EntityEvents({ initialExpression, ...rest }: Props): JSX.Element {
+	return (
+		<QuerySearchV2Provider
+			queryParamKey={K8S_ENTITY_EVENTS_EXPRESSION_KEY}
+			initialExpression={initialExpression}
+			persistOnUnmount
+		>
+			<EntityEventsContent {...rest} />
+		</QuerySearchV2Provider>
+	);
+}
+
+export default EntityEvents;
