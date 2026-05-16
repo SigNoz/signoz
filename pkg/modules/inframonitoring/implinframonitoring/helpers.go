@@ -193,8 +193,7 @@ func paginateWithBackfill(
 // paginateMetadataByName returns metadataMap groups sorted by name
 // (lexicographic, asc or desc), paginated by offset/limit, and rebuilt into
 // label maps using groupBy. When sortByMetaKey is non-empty, groups are sorted
-// by metadataMap[k][sortByMetaKey] (composite key is the stable tie-breaker);
-// otherwise sorted by composite key directly.
+// by metadataMap[k][sortByMetaKey]; otherwise sorted by composite key directly.
 func paginateMetadataByName(
 	metadataMap map[string]map[string]string,
 	groupBy []qbtypes.GroupByKey,
