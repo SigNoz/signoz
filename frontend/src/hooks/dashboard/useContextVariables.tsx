@@ -233,7 +233,12 @@ const resolveText = (
 
 	return text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		// Try the variable name as-is, then with the '_' prefix used by useContextVariables
+		// for custom (per-row) variables to avoid conflicts with dashboard/global variables.
+		let value = processedVariables[varName];
+		if (value == null) {
+			value = processedVariables[`_${varName}`];
+		}
 
 		if (value != null) {
 			const parts = value.split('-|-');
@@ -254,7 +259,11 @@ const resolveTextWithTruncation = (
 
 	const result = text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		// Try the variable name as-is, then with the '_' prefix
+		let value = processedVariables[varName];
+		if (value == null) {
+			value = processedVariables[`_${varName}`];
+		}
 
 		if (value != null) {
 			const parts = value.split('-|-');
