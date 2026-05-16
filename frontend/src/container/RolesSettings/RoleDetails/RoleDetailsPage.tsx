@@ -13,9 +13,11 @@ import {
 	usePatchObjects,
 } from 'api/generated/services/role';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
 import {
 	buildRoleDeletePermission,
+	buildRoleReadPermission,
 	buildRoleUpdatePermission,
 } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
@@ -45,7 +47,7 @@ import './RoleDetailsPage.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RoleDetailsPage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const history = useHistory();
 
 	const queryClient = useQueryClient();
@@ -53,9 +55,17 @@ function RoleDetailsPage(): JSX.Element {
 
 	const authzResources = permissionsType.data as unknown as AuthzResources;
 
-	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	// Extract roleId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
+
+	// Role name passed as query param by the listing page — used to check read permission
+	// before the role details API resolves. Absent when navigating directly (e.g. deep link),
+	// in which case we skip the FGA check and fall back to the BE guard.
+	const nameFromQuery = useMemo(
+		() => new URLSearchParams(search).get('name') ?? '',
+		[search],
+	);
 
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -70,6 +80,16 @@ function RoleDetailsPage(): JSX.Element {
 	const isManaged = role?.type === RoleType.MANAGED;
 
 	const roleName = role?.name ?? '';
+
+	// Read check — fires immediately using the name query param so we can gate the page
+	// before the role details API resolves. Skipped when name is absent.
+	const { permissions: readPerms, isLoading: isReadAuthZLoading } = useAuthZ(
+		nameFromQuery ? [buildRoleReadPermission(nameFromQuery)] : [],
+		{ enabled: !!nameFromQuery },
+	);
+	const hasReadPermission = nameFromQuery
+		? (readPerms?.[buildRoleReadPermission(nameFromQuery)]?.isGranted ?? true)
+		: true;
 
 	// Update check uses role name once loaded
 	const { permissions: updatePerms, isLoading: isAuthZLoading } = useAuthZ(
@@ -138,7 +158,11 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (isLoading || isTransitioning) {
+	if (!hasReadPermission && readPerms !== null) {
+		return <PermissionDeniedFullPage permissionName="role:read" />;
+	}
+
+	if (isLoading || isTransitioning || (!!nameFromQuery && isReadAuthZLoading)) {
 		return (
 			<div className="role-details-page">
 				<Skeleton

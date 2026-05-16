@@ -118,6 +118,17 @@
 		margin: 0;
 	}
 
+	.role-details-permissions-learn-more {
+		color: var(--primary);
+		font-size: var(--font-size-xs);
+		text-decoration: none;
+		white-space: nowrap;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
 	.role-details-permission-list {
 		display: flex;
 		flex-direction: column;

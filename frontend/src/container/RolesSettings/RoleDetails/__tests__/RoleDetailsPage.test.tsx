@@ -14,7 +14,10 @@ import {
 	within,
 } from 'tests/test-utils';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import {
+	mockUseAuthZDenyAll,
+	mockUseAuthZGrantAll,
+} from 'tests/authz-test-utils';
 import RoleDetailsPage from '../RoleDetailsPage';
 
 jest.mock('hooks/useAuthZ/useAuthZ');
@@ -213,6 +216,18 @@ describe('RoleDetailsPage', () => {
 				screen.queryByText(/Are you sure you want to delete the role/),
 			).not.toBeInTheDocument(),
 		);
+	});
+
+	it('shows PermissionDeniedFullPage when read permission is denied via query param', async () => {
+		mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
+
+		render(<RoleDetailsPage />, undefined, {
+			initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}?name=billing-manager`,
+		});
+
+		await expect(
+			screen.findByText(/you don't have permission to view this page/i),
+		).resolves.toBeInTheDocument();
 	});
 
 	describe('permission side panel', () => {

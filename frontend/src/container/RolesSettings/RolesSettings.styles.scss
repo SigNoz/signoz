@@ -22,11 +22,20 @@
 			color: var(--foreground);
 			font-family: Inter;
 			font-style: normal;
-			font-size: 14px;
-			font-weight: 400;
+			font-size: var(--paragraph-base-400-font-size);
+			font-weight: var(--paragraph-base-400-font-weight);
 			line-height: 20px;
 			letter-spacing: -0.07px;
 			margin: 0;
+		}
+
+		.roles-settings-header-learn-more {
+			color: var(--primary);
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 

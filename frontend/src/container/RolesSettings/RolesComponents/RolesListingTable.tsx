@@ -194,8 +194,9 @@ function RolesListingTable({
 		);
 	}
 
-	const navigateToRole = (roleId: string): void => {
-		history.push(ROUTES.ROLE_DETAILS.replace(':roleId', roleId));
+	const navigateToRole = (roleId: string, roleName?: string): void => {
+		const search = roleName ? `?name=${encodeURIComponent(roleName)}` : '';
+		history.push(`${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}${search}`);
 	};
 
 	// todo: use table from periscope when its available for consumption
@@ -207,12 +208,12 @@ function RolesListingTable({
 			tabIndex={0}
 			onClick={(): void => {
 				if (role.id) {
-					navigateToRole(role.id);
+					navigateToRole(role.id, role.name);
 				}
 			}}
 			onKeyDown={(e): void => {
 				if ((e.key === 'Enter' || e.key === ' ') && role.id) {
-					navigateToRole(role.id);
+					navigateToRole(role.id, role.name);
 				}
 			}}
 		>
