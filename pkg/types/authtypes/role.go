@@ -28,7 +28,7 @@ var (
 
 var (
 	roleNameRegex     = regexp.MustCompile("^[a-z-]{1,50}$")
-	managedRolePrefix = "signoz-"
+	managedRolePrefix = "signoz"
 )
 
 var (
