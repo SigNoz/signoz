@@ -133,7 +133,9 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const found = authzRes.resources.find((r) => r.kind === res.id);
+		const found = authzRes.resources.find(
+			(r) => r.kind === res.kind && r.type === res.type,
+		);
 		if (!found) {
 			continue;
 		}
