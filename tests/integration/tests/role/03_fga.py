@@ -60,13 +60,14 @@ def test_create_role_with_signoz_prefix_rejected(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    resp = requests.post(
-        signoz.self.host_configs["8080"].get(ROLES_BASE),
-        json={"name": "signoz-custom"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert resp.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {resp.status_code}: {resp.text}"
+    for name in ("signoz-custom", "signozcustom"):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ROLES_BASE),
+            json={"name": name},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.BAD_REQUEST, f"expected 400 for role name '{name}', got {resp.status_code}: {resp.text}"
 
 
 # ---------------------------------------------------------------------------
