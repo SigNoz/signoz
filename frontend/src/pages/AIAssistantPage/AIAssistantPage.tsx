@@ -6,7 +6,6 @@ import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { AIAssistantEvents } from 'container/AIAssistant/events';
-import type { AIAssistantRouteState } from 'container/AIAssistant/events';
 import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
@@ -21,17 +20,14 @@ interface RouteParams {
 
 export default function AIAssistantPage(): JSX.Element {
 	const history = useHistory();
-	const location = useLocation<AIAssistantRouteState | undefined>();
+	const location = useLocation<{ fromInApp?: boolean } | undefined>();
 	const { pathname } = location;
 	const { conversationId } = useParams<RouteParams>();
 
-	// Fire once per page mount — the full-screen route is a deeplink entry
-	// point. Skip when the user expanded an already-open drawer/modal: that
-	// already emitted its own `Opened` with the correct entry-point source
-	// (icon / shortcut), and we don't want to double-count. The expand handlers
-	// in panel/modal pass `{ fromInApp: true }` via router state; we read it
-	// here. Router state survives StrictMode double-mount (refs don't) and
-	// aborted navigations (a module flag would stick around).
+	// Skip the mount-time Opened fire when the user expanded an already-open
+	// drawer/modal — that surface already emitted Opened with the right source.
+	// Router state (vs a module flag) survives StrictMode double-mount and
+	// aborted navigations.
 	const fromInApp = location.state?.fromInApp === true;
 	useEffect(() => {
 		if (fromInApp) {

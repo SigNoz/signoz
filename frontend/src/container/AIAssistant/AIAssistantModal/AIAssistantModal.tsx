@@ -11,7 +11,6 @@ import logEvent from 'api/common/logEvent';
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { AIAssistantEvents } from '../events';
-import type { AIAssistantRouteState } from '../events';
 import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
@@ -91,14 +90,12 @@ export default function AIAssistantModal(): JSX.Element | null {
 			return;
 		}
 		closeModal();
-		// Tell AIAssistantPage to skip its mount-time Opened fire: the assistant
-		// was already open in the modal, so this is a surface switch, not a new
-		// open. Router state survives aborted navigations and StrictMode double-
-		// invocation in a way a module flag cannot.
-		const state: AIAssistantRouteState = { fromInApp: true };
+		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
+		// the assistant was already open in the modal, so this is a surface
+		// switch, not a new open.
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			state,
+			{ fromInApp: true },
 		);
 	}, [activeConversationId, closeModal, history]);
 
