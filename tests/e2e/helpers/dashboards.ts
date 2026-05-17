@@ -3,6 +3,10 @@ import path from 'path';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 
 import apmMetricsTemplate from '../testdata/apm-metrics.json';
+import queriesData from '../testdata/queries.json';
+
+export type SignalType = 'metrics' | 'logs' | 'traces';
+export type QueriesData = typeof queriesData;
 
 // ─── Constants ───────────────────────────────────────────────────────────
 //
@@ -176,4 +180,146 @@ export async function openDashboardActionMenu(
 	await icon.scrollIntoViewIfNeeded();
 	await icon.click();
 	return page.getByRole('tooltip');
+}
+
+// ─── Dashboard detail page helpers ──────────────────────────────────────────
+
+/**
+ * Click the Configure button (`data-testid="show-drawer"`) on a dashboard
+ * detail page and wait for the settings drawer (`.settings-container-root`) to
+ * be visible. Works from both the empty-state view and the populated toolbar —
+ * both render the same testid.
+ *
+ * Returns the drawer locator so callers can scope further assertions to it.
+ */
+export async function openDashboardSettingsDrawer(page: Page): Promise<Locator> {
+	await page.getByTestId('show-drawer').first().click();
+	const drawer = page.locator('.settings-container-root');
+	await drawer.waitFor({ state: 'visible' });
+	return drawer;
+}
+
+/**
+ * Click `data-testid="save-dashboard-config"` and wait for the resulting
+ * `PUT /api/v1/dashboards/<id>` response. The Save button is only rendered
+ * when there is at least one unsaved change — callers must ensure the drawer
+ * has been dirtied before calling this.
+ */
+export async function saveDashboardSettings(page: Page): Promise<void> {
+	const patchResponse = page.waitForResponse(
+		(r) =>
+			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
+	);
+	await page.getByTestId('save-dashboard-config').click();
+	await patchResponse;
+}
+
+/**
+ * Rename a dashboard via the toolbar options popover:
+ * opens the popover (`data-testid="options"`), clicks "Rename", fills the
+ * input, clicks "Rename Dashboard", and waits for the PUT response.
+ *
+ * Pre-condition: the caller must be on the dashboard detail page.
+ */
+export async function renameDashboardViaToolbar(
+	page: Page,
+	newTitle: string,
+): Promise<void> {
+	await page.getByTestId('options').click();
+	await page.getByRole('button', { name: 'Rename' }).click();
+
+	const modal = page.getByRole('dialog');
+	await modal.waitFor({ state: 'visible' });
+
+	const input = modal.getByTestId('dashboard-name');
+	await input.clear();
+	await input.fill(newTitle);
+
+	const patchResponse = page.waitForResponse(
+		(r) =>
+			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
+	);
+	await page.getByRole('button', { name: 'Rename Dashboard' }).click();
+	await patchResponse;
+
+	await modal.waitFor({ state: 'hidden' });
+}
+
+// ─── Add panel flow ─────────────────────────────────────────────────────────
+
+/**
+ * From the dashboard detail page (must already be loaded), drive the full
+ * "Add Panel" flow for the given signal type:
+ *   1. Click the empty-state `add-panel` CTA to open the New Panel modal.
+ *   2. Pick the Time Series panel type.
+ *   3. Fill the panel name in the right pane (drives the post-save assertion).
+ *   4. For metrics: type the metric name from `queries.json` into the metric
+ *      AutoComplete and select it from the dropdown. For logs/traces: switch
+ *      the data-source selector to LOGS / TRACES; default Query Builder state
+ *      is sufficient (queries.json query strings are empty by design).
+ *   5. Click Save Changes, confirm the modal, and wait for the
+ *      PUT /api/v1/dashboards/<id> response.
+ *
+ * Throws if the PUT response is not 2xx. After return, the page is back on
+ * the dashboard detail page; the caller asserts the panel rendered.
+ */
+export async function configureAndSavePanel(
+	page: Page,
+	signal: SignalType,
+	panelTitle: string,
+): Promise<void> {
+	await page.getByTestId('add-panel').click();
+
+	const newPanelModal = page
+		.getByRole('dialog')
+		.filter({ hasText: 'New Panel' });
+	await newPanelModal.waitFor({ state: 'visible' });
+	await newPanelModal.getByTestId('panel-type-graph').click();
+
+	await page.getByTestId('new-widget-save').waitFor({ state: 'visible' });
+	await page.getByTestId('panel-name-input').fill(panelTitle);
+
+	if (signal === 'metrics') {
+		const metricName = queriesData.metrics.metricName;
+		// The testid is on the Ant Select wrapper <div>; the editable input
+		// lives inside it. Target the descendant input for fill().
+		const metricInput = page.getByTestId('metric-name-selector-0').locator('input');
+		await metricInput.click();
+		await metricInput.fill(metricName);
+		// AutoComplete debounces and fetches; wait for the option then click.
+		await page
+			.locator('.ant-select-item-option-content', { hasText: metricName })
+			.first()
+			.click();
+	} else {
+		// logs / traces — switch the data source. Default query is sufficient.
+		await page.getByTestId('query-data-source-selector-0').click();
+		await page
+			.locator('.ant-select-item-option-content', {
+				hasText: signal.toUpperCase(),
+			})
+			.click();
+	}
+
+	const putResponse = page.waitForResponse(
+		(r) =>
+			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
+	);
+	await page.getByTestId('new-widget-save').click();
+
+	// Confirmation modal (title varies: "Save Widget" vs "Unsaved Changes" —
+	// don't assert title, just click OK on the topmost dialog).
+	const confirmModal = page.getByRole('dialog').last();
+	await confirmModal.waitFor({ state: 'visible' });
+	await confirmModal.getByRole('button', { name: /^OK$/i }).click();
+
+	const res = await putResponse;
+	if (!res.ok()) {
+		throw new Error(
+			`PUT /api/v1/dashboards failed ${res.status()}: ${await res.text()}`,
+		);
+	}
+
+	// Save navigates back to /dashboard/<id> (no /new suffix).
+	await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
 }
