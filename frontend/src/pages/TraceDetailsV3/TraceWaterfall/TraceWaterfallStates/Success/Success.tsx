@@ -863,8 +863,6 @@ function Success(props: ISuccessProps): JSX.Element {
 				<div
 					className={styles.splitBody}
 					style={{
-						// Bottom padding so the last span isn't flush against
-						// the scroll boundary.
 						minHeight: virtualizer.getTotalSize() + WATERFALL_BOTTOM_PADDING,
 						height: '100%',
 					}}
