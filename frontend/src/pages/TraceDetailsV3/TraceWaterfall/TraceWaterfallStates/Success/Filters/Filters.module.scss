@@ -101,21 +101,45 @@
 	white-space: nowrap;
 }
 
-.preNextToggle {
-	display: flex;
+// Fixed-width slot for the result-nav cluster. Always present (even when no
+// expression is active) so the filter input width stays stable — no lateral
+// layout shift when the count/arrows/clear pop in.
+.resultNavSlot {
+	width: 220px;
 	flex-shrink: 0;
-	gap: 12px;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
 }
 
-.preNextCount {
+// Result-nav cluster: count + ↑↓ + clear (X), sits between the filter input
+// and the right-side status/highlight controls. Visible whenever there's an
+// active expression; count + ↑↓ collapse out when no results, clear stays.
+.resultNav {
 	display: flex;
 	align-items: center;
-	margin: auto;
+	flex-shrink: 0;
+	gap: 2px;
 	color: var(--l2-foreground);
 	font-family: 'Geist Mono';
 	font-size: 12px;
-	font-weight: 400;
-	line-height: 18px;
+}
+
+.resultNavCount {
+	padding: 0 6px;
+	white-space: nowrap;
+	color: var(--l1-foreground);
+	font-family: 'Geist Mono';
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.resultNavDivider {
+	width: 1px;
+	height: 14px;
+	background: var(--l3-border);
+	margin: 0 4px;
+	flex-shrink: 0;
 }
 
 .filterStatus {

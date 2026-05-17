@@ -3,6 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
 	ChevronDown,
+	ChevronsRight,
 	ChevronUp,
 	Copy,
 	Info,
@@ -106,6 +107,12 @@ function Filters({
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
 	const expressionRef = useRef<string>('');
 	const containerRef = useRef<HTMLDivElement>(null);
+	// Ref to the Clear (×) button so we can suppress the search-container
+	// onBlur → runQuery path when focus moves to it. Otherwise the editor
+	// loses focus before our click handler runs, runQuery commits the (still
+	// bad) expression, and React Query re-fires the failing request on the
+	// way to being cleared.
+	const clearBtnRef = useRef<HTMLButtonElement>(null);
 
 	const runQuery = useCallback(
 		(value: string): void => {
@@ -151,6 +158,18 @@ function Filters({
 	const handleBlur = useCallback((): void => {
 		runQuery(expressionRef.current);
 	}, [runQuery]);
+
+	// Clear filter — reset expression + filters + results in one shot.
+	// Wired to the X button in the result-nav cluster.
+	const handleClear = useCallback((): void => {
+		setExpression('');
+		expressionRef.current = '';
+		setFilters({ items: [], op: 'AND' });
+		setFilteredSpanIds([]);
+		onFilteredSpansChange?.([], false);
+		setCurrentSearchedIndex(0);
+		setNoData(false);
+	}, [onFilteredSpansChange]);
 
 	// Expression-based filter hooks
 	const filterProps = {
@@ -266,10 +285,71 @@ function Filters({
 		</div>
 	);
 
-	const statusIndicators = (
-		<>
-			{isFetching && <Loader className="animate-spin" />}
-			{error && (
+	const hasExpression = expression.trim().length > 0;
+	const hasResults = filteredSpanIds.length > 0;
+
+	// Result-nav cluster: count + ↑↓ + clear (X), all OUTSIDE the input.
+	// - The cluster appears whenever there's an active expression.
+	// - Count + ↑↓ are hidden when there are no results to navigate (no-data or
+	//   API error); clear (X) stays so the user can always reset.
+	const resultNav = hasExpression ? (
+		<div className={styles.resultNav}>
+			{hasResults && (
+				<>
+					<Typography.Text className={styles.resultNavCount}>
+						{currentSearchedIndex + 1} / {filteredSpanIds.length}
+					</Typography.Text>
+					<Button
+						variant="ghost"
+						size="icon"
+						color="secondary"
+						disabled={currentSearchedIndex === 0}
+						onClick={(): void => {
+							handlePrevNext(currentSearchedIndex - 1);
+							setCurrentSearchedIndex((prev) => prev - 1);
+						}}
+					>
+						<ChevronUp size={14} />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						color="secondary"
+						disabled={currentSearchedIndex === filteredSpanIds.length - 1}
+						onClick={(): void => {
+							handlePrevNext(currentSearchedIndex + 1);
+							setCurrentSearchedIndex((prev) => prev + 1);
+						}}
+					>
+						<ChevronDown size={14} />
+					</Button>
+					<span className={styles.resultNavDivider} />
+				</>
+			)}
+			<TooltipRoot>
+				<TooltipTrigger asChild>
+					<Button
+						ref={clearBtnRef}
+						variant="ghost"
+						size="icon"
+						color="secondary"
+						onClick={handleClear}
+					>
+						<X size={14} />
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>Clear filter</TooltipContent>
+			</TooltipRoot>
+		</div>
+	) : null;
+
+	// Status indicator (right side): "No results found" (muted) or "API error"
+	// (red ring + tooltip). Shown only when there's an active expression and
+	// either no matches came back or the API itself failed.
+	let statusIndicator: JSX.Element | null = null;
+	if (hasExpression && !isFetching) {
+		if (error) {
+			statusIndicator = (
 				<TooltipRoot>
 					<TooltipTrigger asChild>
 						<span className={cx(styles.filterStatus, styles.hasError)}>
@@ -281,14 +361,19 @@ function Filters({
 						{(error as AxiosError)?.message || 'Something went wrong'}
 					</TooltipContent>
 				</TooltipRoot>
-			)}
-			{!error && noData && (
+			);
+		} else if (noData) {
+			statusIndicator = (
 				<Typography.Text className={styles.filterStatus}>
 					No results found
 				</Typography.Text>
-			)}
-		</>
-	);
+			);
+		}
+	}
+
+	const fetchingIndicator = isFetching ? (
+		<Loader className="animate-spin" />
+	) : null;
 
 	// --- COLLAPSED VIEW ---
 	if (!isExpanded) {
@@ -334,7 +419,8 @@ function Filters({
 						pill
 					)}
 					{highlightErrorsToggle}
-					{statusIndicators}
+					{statusIndicator}
+					{fetchingIndicator}
 				</div>
 			</TooltipProvider>
 		);
@@ -365,7 +451,10 @@ function Filters({
 					className={styles.searchContainer}
 					ref={containerRef}
 					onBlur={(e): void => {
-						if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+						const relatedTarget = e.relatedTarget as Node | null;
+						const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
+						const blurredIntoClear = !!clearBtnRef.current?.contains(relatedTarget);
+						if (!blurredIntoSelf && !blurredIntoClear) {
 							handleBlur();
 						}
 					}}
@@ -382,48 +471,24 @@ function Filters({
 						placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
 					/>
 				</div>
-				{filteredSpanIds.length > 0 && (
-					<div className={styles.preNextToggle}>
-						<Typography.Text className={styles.preNextCount}>
-							{currentSearchedIndex + 1} / {filteredSpanIds.length}
-						</Typography.Text>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							disabled={currentSearchedIndex === 0}
-							onClick={(): void => {
-								handlePrevNext(currentSearchedIndex - 1);
-								setCurrentSearchedIndex((prev) => prev - 1);
-							}}
-						>
-							<ChevronUp size={14} />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							disabled={currentSearchedIndex === filteredSpanIds.length - 1}
-							onClick={(): void => {
-								handlePrevNext(currentSearchedIndex + 1);
-								setCurrentSearchedIndex((prev) => prev + 1);
-							}}
-						>
-							<ChevronDown size={14} />
-						</Button>
-					</div>
-				)}
-				<Button
-					variant="ghost"
-					size="icon"
-					color="secondary"
-					className={styles.collapseBtn}
-					onClick={onCollapse}
-				>
-					<X size={14} />
-				</Button>
+				<div className={styles.resultNavSlot}>{resultNav}</div>
 				{highlightErrorsToggle}
-				{statusIndicators}
+				{statusIndicator}
+				{fetchingIndicator}
+				<TooltipRoot>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							className={styles.collapseBtn}
+							onClick={onCollapse}
+						>
+							<ChevronsRight size={14} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Collapse filters</TooltipContent>
+				</TooltipRoot>
 			</div>
 		</TooltipProvider>
 	);
