@@ -6,6 +6,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { AIAssistantEvents } from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -54,7 +55,7 @@ function HeaderRightSection({
 	const handleOpenAIAssistant = useCallback((): void => {
 		void logEvent(AIAssistantEvents.Opened, {
 			source: 'icon',
-			currentPage: location.pathname,
+			currentPage: normalizePage(location.pathname),
 		});
 		openAIAssistant();
 	}, [location.pathname]);

@@ -5,10 +5,9 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
-import {
-	AIAssistantEvents,
-	consumeExpandFromInApp,
-} from 'container/AIAssistant/events';
+import { AIAssistantEvents } from 'container/AIAssistant/events';
+import type { AIAssistantRouteState } from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { Sparkles } from '@signozhq/icons';
@@ -22,20 +21,25 @@ interface RouteParams {
 
 export default function AIAssistantPage(): JSX.Element {
 	const history = useHistory();
-	const { pathname } = useLocation();
+	const location = useLocation<AIAssistantRouteState | undefined>();
+	const { pathname } = location;
 	const { conversationId } = useParams<RouteParams>();
 
 	// Fire once per page mount — the full-screen route is a deeplink entry
 	// point. Skip when the user expanded an already-open drawer/modal: that
-	// already emitted its own Sidepane opened with the correct entry-point
-	// source (icon / shortcut), and we don't want to double-count.
+	// already emitted its own `Opened` with the correct entry-point source
+	// (icon / shortcut), and we don't want to double-count. The expand handlers
+	// in panel/modal pass `{ fromInApp: true }` via router state; we read it
+	// here. Router state survives StrictMode double-mount (refs don't) and
+	// aborted navigations (a module flag would stick around).
+	const fromInApp = location.state?.fromInApp === true;
 	useEffect(() => {
-		if (consumeExpandFromInApp()) {
+		if (fromInApp) {
 			return;
 		}
 		void logEvent(AIAssistantEvents.Opened, {
 			source: 'deeplink',
-			currentPage: pathname,
+			currentPage: normalizePage(pathname),
 		});
 		// Only on mount; route param changes inside the same page aren't a re-open.
 		// eslint-disable-next-line react-hooks/exhaustive-deps

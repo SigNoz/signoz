@@ -163,6 +163,7 @@ export default function VirtualizedMessages({
 							onClick={(): void => {
 								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
 									promptId: s.text,
+									category: 'empty_state',
 								});
 								onSendSuggestedPrompt(s.text);
 							}}

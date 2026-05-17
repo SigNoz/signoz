@@ -460,11 +460,18 @@ export default function ChatInput({
 
 	const startVoiceInput = useCallback(
 		(source: 'button' | 'shortcut') => {
+			// Defense in depth: the button is hidden when `voiceUnavailable` is
+			// true, but the PTT shortcut listener can still call us. Bailing here
+			// keeps a single source of truth and prevents repeat `Voice input
+			// failed` events in the same session.
+			if (voiceUnavailable) {
+				return;
+			}
 			voiceStartedAtRef.current = Date.now();
 			voiceSourceRef.current = source;
 			start();
 		},
-		[start],
+		[start, voiceUnavailable],
 	);
 
 	const fireVoiceInputEvent = useCallback(
@@ -512,7 +519,7 @@ export default function ChatInput({
 	// "session active" ref so a held key only calls `start()` once.
 	const pttActiveRef = useRef(false);
 	useEffect(() => {
-		if (!isSupported || micPermission === 'denied') {
+		if (!isSupported || micPermission === 'denied' || voiceUnavailable) {
 			return undefined;
 		}
 
@@ -563,6 +570,7 @@ export default function ChatInput({
 	}, [
 		isSupported,
 		micPermission,
+		voiceUnavailable,
 		disabled,
 		isStreaming,
 		startVoiceInput,

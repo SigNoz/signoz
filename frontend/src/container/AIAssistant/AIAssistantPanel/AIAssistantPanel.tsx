@@ -9,7 +9,8 @@ import logEvent from 'api/common/logEvent';
 
 import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents, markExpandFromInApp } from '../events';
+import { AIAssistantEvents } from '../events';
+import type { AIAssistantRouteState } from '../events';
 import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
@@ -42,13 +43,15 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		if (!activeConversationId) {
 			return;
 		}
-		// Tell AIAssistantPage to skip its mount-time Sidepane opened fire:
-		// the assistant was already open in the drawer, so this is a surface
-		// switch, not a new open.
-		markExpandFromInApp();
 		closeDrawer();
+		// Tell AIAssistantPage to skip its mount-time Opened fire: the assistant
+		// was already open in the drawer, so this is a surface switch, not a new
+		// open. Router state survives aborted navigations and StrictMode double-
+		// invocation in a way a module flag cannot.
+		const state: AIAssistantRouteState = { fromInApp: true };
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+			state,
 		);
 	}, [activeConversationId, closeDrawer, history]);
 

@@ -485,6 +485,16 @@ export default function ActionsSection({
 			}
 			case MessageActionKindDTO.follow_up: {
 				if (action.label) {
+					// Fire SuggestedPromptClicked + MessageSent so analytics can compute
+					// both the click-through rate against follow-ups offered *and* keep
+					// the unified send funnel intact. `category` distinguishes server-
+					// emitted follow-ups from the empty-state grid.
+					void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
+						threadId,
+						messageId,
+						promptId: action.label,
+						category: 'follow_up',
+					});
 					void logEvent(AIAssistantEvents.MessageSent, {
 						threadId,
 						page,

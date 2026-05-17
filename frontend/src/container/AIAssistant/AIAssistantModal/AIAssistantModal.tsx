@@ -10,8 +10,12 @@ import logEvent from 'api/common/logEvent';
 
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents, markExpandFromInApp } from '../events';
-import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
+import { AIAssistantEvents } from '../events';
+import type { AIAssistantRouteState } from '../events';
+import {
+	normalizePage,
+	useAIAssistantAnalyticsContext,
+} from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -63,7 +67,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					setShowHistory(false);
 					void logEvent(AIAssistantEvents.Opened, {
 						source: 'shortcut',
-						currentPage: pathname,
+						currentPage: normalizePage(pathname),
 					});
 					openModal();
 				}
@@ -86,13 +90,15 @@ export default function AIAssistantModal(): JSX.Element | null {
 		if (!activeConversationId) {
 			return;
 		}
-		// Tell AIAssistantPage to skip its mount-time Sidepane opened fire:
-		// the assistant was already open in the modal, so this is a surface
-		// switch, not a new open.
-		markExpandFromInApp();
 		closeModal();
+		// Tell AIAssistantPage to skip its mount-time Opened fire: the assistant
+		// was already open in the modal, so this is a surface switch, not a new
+		// open. Router state survives aborted navigations and StrictMode double-
+		// invocation in a way a module flag cannot.
+		const state: AIAssistantRouteState = { fromInApp: true };
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+			state,
 		);
 	}, [activeConversationId, closeModal, history]);
 

@@ -10,23 +10,18 @@
  */
 
 /**
- * Set by drawer/modal `handleExpand` before navigating to the full-screen
- * page so the subsequent `AIAssistantPage` mount knows the user *expanded*
- * the already-open assistant rather than landing fresh via URL/SideNav.
- * `AIAssistantPage` consumes (reads + clears) this flag and skips firing
- * `Sidepane opened` when it's true. Module-level state is intentional —
- * the value is transient (lifetime: one mount) and not part of the store.
+ * Shape of the router state attached by drawer/modal `handleExpand` when
+ * navigating to the full-screen page. `AIAssistantPage` reads it from
+ * `useLocation().state` and suppresses its mount-time `Opened` fire when
+ * `fromInApp === true` — the open already counted on the prior surface.
+ *
+ * Lives here (next to the events) so any future expand entry point can
+ * import the same shape and stay consistent. Router state — not a module
+ * flag — because flags are not StrictMode-safe (consumed on first mount,
+ * gone for the second) and survive aborted navigations.
  */
-let didExpandFromInApp = false;
-
-export function markExpandFromInApp(): void {
-	didExpandFromInApp = true;
-}
-
-export function consumeExpandFromInApp(): boolean {
-	const v = didExpandFromInApp;
-	didExpandFromInApp = false;
-	return v;
+export interface AIAssistantRouteState {
+	fromInApp?: boolean;
 }
 
 /**
@@ -44,6 +39,59 @@ export interface BrowserInfo {
 	userAgent: string;
 }
 
+interface UABrand {
+	brand: string;
+	version: string;
+}
+
+/**
+ * Branded subset of `Navigator` that exposes the (still partly experimental)
+ * `userAgentData` surface plus Brave's `isBrave()` probe. Both are Chromium-
+ * only, both are optional at runtime, and TS lib types don't declare them.
+ */
+type NavigatorWithBrandHints = Navigator & {
+	userAgentData?: { brands: UABrand[] };
+	brave?: { isBrave: () => Promise<boolean> };
+};
+
+/**
+ * Priority order for picking a brand out of `userAgentData.brands`. Listed
+ * derivative-first so a Chromium fork that advertises both its own brand
+ * AND "Chromium" / "Google Chrome" resolves to the derivative — which is
+ * exactly the signal we need to triage `Voice input failed` (derivatives
+ * lack the Google Speech API key). Matching is case-insensitive and
+ * substring-based to tolerate "Microsoft Edge", "Brave Browser", etc.
+ */
+const BRAND_PRIORITY = [
+	'Edge',
+	'Opera',
+	'Brave',
+	'Vivaldi',
+	'Helium',
+	'Arc',
+	'Yandex',
+	'Samsung',
+	'Google Chrome',
+	'Chrome',
+	'Chromium',
+] as const;
+
+function pickBrand(brands: UABrand[]): UABrand | null {
+	const real = brands.filter((b) => !/not.*brand/i.test(b.brand));
+	for (const target of BRAND_PRIORITY) {
+		const hit = real.find((b) =>
+			b.brand.toLowerCase().includes(target.toLowerCase()),
+		);
+		if (hit) {
+			return hit;
+		}
+	}
+	// Fall back to the first non-decoy entry — better than silently
+	// reporting 'unknown' when the browser surfaces a brand we haven't
+	// catalogued yet.
+	return real[0] ?? null;
+}
+
 export function getBrowserInfo(): BrowserInfo {
 	if (typeof navigator === 'undefined') {
 		return {
@@ -53,31 +101,37 @@ export function getBrowserInfo(): BrowserInfo {
 			userAgent: 'unknown',
 		};
 	}
-	const ua = navigator.userAgent;
-	// Prefer the modern, structured userAgentData when present — it
-	// distinguishes Chrome / Chromium / Edge cleanly without UA parsing
-	// gymnastics. Fall back to UA sniffing on Safari/Firefox.
-	const brands = (
-		navigator as Navigator & {
-			userAgentData?: { brands: { brand: string; version: string }[] };
-		}
-	).userAgentData?.brands;
+	const nav = navigator as NavigatorWithBrandHints;
+	const ua = nav.userAgent;
 	let browserName = 'unknown';
 	let browserVersion = 'unknown';
+
+	// Prefer `userAgentData.brands` — structured, less spoofable than UA
+	// sniffing — but only trust it when it produces a *specific* identity.
+	// Generic "Chromium" / "Google Chrome" matches are kept as a soft hit
+	// and overridden if UA sniffing finds a derivative (Edg/, OPR/, …).
+	const brands = nav.userAgentData?.brands;
+	let isGenericBrand = false;
 	if (brands?.length) {
-		// Skip the spec-mandated "Not/A)Brand" decoy entry that browsers
-		// include to discourage UA-based feature detection.
-		const real = brands.find((b) => !/not.*brand/i.test(b.brand));
-		if (real) {
-			browserName = real.brand;
-			browserVersion = real.version;
+		const picked = pickBrand(brands);
+		if (picked) {
+			browserName = picked.brand;
+			browserVersion = picked.version;
+			isGenericBrand = /^(google\s+)?chrom(e|ium)$/i.test(picked.brand);
 		}
 	}
-	if (browserName === 'unknown') {
-		// Order matters: Edge has "Chrome" in its UA, Chrome has "Safari".
+
+	// UA sniffing — runs when brands didn't resolve, or when it resolved to
+	// a generic Chrome/Chromium entry that a derivative might be hiding
+	// behind. Order matters: Edge / Opera include "Chrome" in their UA;
+	// Chrome includes "Safari".
+	if (browserName === 'unknown' || isGenericBrand) {
 		const matchers: { name: string; re: RegExp }[] = [
-			{ name: 'Edge', re: /Edg\/([\d.]+)/ },
+			{ name: 'Edge', re: /Edg(?:e|A|iOS)?\/([\d.]+)/ },
 			{ name: 'Opera', re: /OPR\/([\d.]+)/ },
+			{ name: 'Vivaldi', re: /Vivaldi\/([\d.]+)/ },
+			{ name: 'Yandex', re: /YaBrowser\/([\d.]+)/ },
+			{ name: 'Samsung', re: /SamsungBrowser\/([\d.]+)/ },
 			{ name: 'Chrome', re: /Chrome\/([\d.]+)/ },
 			{ name: 'Firefox', re: /Firefox\/([\d.]+)/ },
 			{ name: 'Safari', re: /Version\/([\d.]+).*Safari/ },
@@ -91,10 +145,20 @@ export function getBrowserInfo(): BrowserInfo {
 			}
 		}
 	}
+
+	// Brave is invisible in both `userAgentData.brands` (advertises Chrome)
+	// and the UA string (identical to Chrome) — it only declares itself via
+	// `navigator.brave?.isBrave()`. The check is async, so we can't await
+	// it here; instead surface the probe's *presence* as a strong signal.
+	// Same browser surface every time, so caching the read is fine.
+	if (nav.brave?.isBrave) {
+		browserName = 'Brave';
+	}
+
 	return {
 		browserName,
 		browserVersion,
-		platform: navigator.platform || 'unknown',
+		platform: nav.platform || 'unknown',
 		userAgent: ua,
 	};
 }
