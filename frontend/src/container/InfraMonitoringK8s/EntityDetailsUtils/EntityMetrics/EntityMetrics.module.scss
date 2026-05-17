@@ -1,0 +1,52 @@
+.entityMetricsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	margin-top: 1rem;
+	margin-left: -12px;
+	margin-right: -12px;
+}
+
+.entityMetricsCol {
+	flex: 0 0 50%;
+	max-width: 50%;
+	padding-left: 12px;
+	padding-right: 12px;
+	box-sizing: border-box;
+}
+
+.entityMetricsTitle {
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+}
+
+.metricsHeader {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 1rem;
+
+	gap: 8px;
+	padding: 12px;
+	border-radius: 3px;
+	border: 1px solid var(--l1-border);
+}
+
+.entityMetricsCard {
+	position: relative;
+	margin: 8px 0 1rem 0;
+	height: 300px;
+	padding: 10px;
+	border: 1px solid var(--l1-border);
+	border-radius: 3px;
+
+	.chartContainer {
+		width: 100%;
+		height: 100%;
+	}
+
+	.noDataContainer {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}

@@ -12,6 +12,8 @@ import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
@@ -25,7 +27,6 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import {
@@ -41,7 +42,6 @@ import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
-	IBuilderQuery,
 	TagFilter,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -52,15 +52,15 @@ import {
 import { openInNewTab } from 'utils/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
-import { filterDuplicateFilters } from '../commonUtils';
-import { InfraMonitoringEntity, VIEW_TYPES, VIEWS } from '../constants';
+import { InfraMonitoringEntity, VIEW_TYPES } from '../constants';
 import EntityContainers from '../EntityDetailsUtils/EntityContainers';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
 import EntityLogs from '../EntityDetailsUtils/EntityLogs';
+import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityLogs/hooks';
 import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
 import EntityProcesses from '../EntityDetailsUtils/EntityProcesses';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
 	useInfraMonitoringEventsFilters,
 	useInfraMonitoringLogFilters,
@@ -71,6 +71,7 @@ import {
 import LoadingContainer from '../LoadingContainer';
 
 import '../EntityDetailsUtils/entityDetails.styles.scss';
+import { parseAsString, useQueryState } from 'nuqs';
 
 const TimeRangeOffset = 1000000000;
 
@@ -99,6 +100,9 @@ export interface K8sBaseDetailsProps<T> {
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
+	/**
+	 * @deprecated It's not needed anymore, remove in the next PR
+	 */
 	primaryFilterKeys: string[];
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	entityWidgetInfo: {
@@ -157,7 +161,7 @@ export function createFilterItem(
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function K8sBaseDetails<T>({
+export default function K8sBaseDetails<T>({
 	category,
 	eventCategory,
 	getSelectedItemFilters,
@@ -165,7 +169,6 @@ function K8sBaseDetails<T>({
 	getEntityName,
 	getInitialLogTracesFilters,
 	getInitialEventsFilters,
-	primaryFilterKeys,
 	metadataConfig,
 	entityWidgetInfo,
 	getEntityQueryPayload,
@@ -174,6 +177,85 @@ function K8sBaseDetails<T>({
 	tabsConfig,
 	customTabs,
 }: K8sBaseDetailsProps<T>): JSX.Element {
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
+
+	const isDarkMode = useIsDarkMode();
+
+	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+
+	const entityQueryKey = useMemo(
+		() =>
+			getAutoRefreshQueryKey(
+				selectedTime,
+				`${queryKeyPrefix}EntityDetails`,
+				selectedItem,
+			),
+		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+	);
+
+	const {
+		data: entityResponse,
+		isLoading: isEntityLoading,
+		isError: isEntityError,
+		error: entityError,
+	} = useQuery({
+		queryKey: entityQueryKey,
+		queryFn: ({ signal }) => {
+			if (!selectedItem) {
+				return { data: null };
+			}
+			const filters = getSelectedItemFilters(selectedItem);
+			const { minTime, maxTime } = getMinMaxTime();
+
+			return fetchEntityData(
+				{
+					filters,
+					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+				},
+				signal,
+			);
+		},
+		enabled: !!selectedItem,
+	});
+
+	const entity = entityResponse?.data ?? null;
+	const hasResponseError = !!entityResponse?.error;
+
+	const logsAndTracesInitialExpression = useMemo(() => {
+		if (!entity) {
+			return '';
+		}
+		const primaryFiltersOnly = {
+			op: 'AND' as const,
+			items: getInitialLogTracesFilters(entity),
+		};
+		return convertFiltersToExpression(primaryFiltersOnly).expression;
+	}, [entity, getInitialLogTracesFilters]);
+
+	const eventsInitialExpression = useMemo(() => {
+		if (!entity) {
+			return '';
+		}
+		const primaryFiltersOnly = {
+			op: 'AND' as const,
+			items: getInitialEventsFilters(entity),
+		};
+		return convertFiltersToExpression(primaryFiltersOnly).expression;
+	}, [entity, getInitialEventsFilters]);
+
+	const handleClose = useCallback((): void => {
+		setSelectedItem(null);
+	}, [setSelectedItem]);
+
+	const entityName = entity ? getEntityName(entity) : '';
+
+	// Content state (previously in K8sBaseDetailsContent)
 	const tabVisibility = useMemo(
 		() => ({
 			showMetrics: true,
@@ -185,13 +267,6 @@ function K8sBaseDetails<T>({
 			...tabsConfig,
 		}),
 		[tabsConfig],
-	);
-
-	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
-	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
-	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
-	const getAutoRefreshQueryKey = useGlobalTimeStore(
-		(s) => s.getAutoRefreshQueryKey,
 	);
 
 	const { startMs, endMs } = useMemo(
@@ -220,102 +295,17 @@ function K8sBaseDetails<T>({
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
 	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
 
-	const [logFiltersParam, setLogFiltersParam] = useInfraMonitoringLogFilters();
-	const [tracesFiltersParam, setTracesFiltersParam] =
-		useInfraMonitoringTracesFilters();
-	const [eventsFiltersParam, setEventsFiltersParam] =
-		useInfraMonitoringEventsFilters();
-	const isDarkMode = useIsDarkMode();
-
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
-	const urlQuery = useUrlQuery();
-
-	useEffect(() => {
-		if (
-			hideDetailViewTabs &&
-			selectedItem &&
-			selectedView !== VIEW_TYPES.METRICS
-		) {
-			setSelectedView(VIEW_TYPES.METRICS);
-		}
-	}, [hideDetailViewTabs, selectedItem, selectedView, setSelectedView]);
-
-	const entityQueryKey = useMemo(
-		() =>
-			getAutoRefreshQueryKey(
-				selectedTime,
-				`${queryKeyPrefix}EntityDetails`,
-				selectedItem,
-			),
-		[getAutoRefreshQueryKey, queryKeyPrefix, selectedItem, selectedTime],
+	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
+	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
+	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
+	const [userLogsExpression] = useQueryState(
+		K8S_ENTITY_LOGS_EXPRESSION_KEY,
+		parseAsString,
 	);
-
-	const {
-		data: entityResponse,
-		isLoading: isEntityLoading,
-		isError: isEntityError,
-	} = useQuery({
-		queryKey: entityQueryKey,
-		queryFn: ({ signal }) => {
-			if (!selectedItem) {
-				return { data: null };
-			}
-			const filters = getSelectedItemFilters(selectedItem);
-			const { minTime, maxTime } = getMinMaxTime();
-
-			return fetchEntityData(
-				{
-					filters,
-					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
-					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
-				},
-				signal,
-			);
-		},
-		enabled: !!selectedItem,
-	});
-
-	const entity = entityResponse?.data ?? null;
-
-	const initialFilters = useMemo(() => {
-		const filters =
-			effectiveView === VIEW_TYPES.LOGS ? logFiltersParam : tracesFiltersParam;
-		if (filters) {
-			return filters;
-		}
-		if (!entity) {
-			return { op: 'AND', items: [] };
-		}
-		return {
-			op: 'AND',
-			items: getInitialLogTracesFilters(entity),
-		};
-	}, [
-		entity,
-		effectiveView,
-		logFiltersParam,
-		tracesFiltersParam,
-		getInitialLogTracesFilters,
-	]);
-
-	const initialEventsFilters = useMemo(() => {
-		if (eventsFiltersParam) {
-			return eventsFiltersParam;
-		}
-		if (!entity) {
-			return { op: 'AND', items: [] };
-		}
-		return {
-			op: 'AND',
-			items: getInitialEventsFilters(entity),
-		};
-	}, [entity, eventsFiltersParam, getInitialEventsFilters]);
-
-	const [logsAndTracesFilters, setLogsAndTracesFilters] =
-		useState<IBuilderQuery['filters']>(initialFilters);
-
-	const [eventsFilters, setEventsFilters] =
-		useState<IBuilderQuery['filters']>(initialEventsFilters);
+	const [userTracesExpression] = useQueryState(
+		K8S_ENTITY_TRACES_EXPRESSION_KEY,
+		parseAsString,
+	);
 
 	useEffect(() => {
 		if (entity) {
@@ -326,11 +316,6 @@ function K8sBaseDetails<T>({
 			});
 		}
 	}, [entity, eventCategory]);
-
-	useEffect(() => {
-		setLogsAndTracesFilters(initialFilters);
-		setEventsFilters(initialEventsFilters);
-	}, [initialFilters, initialEventsFilters]);
 
 	useEffect(() => {
 		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
@@ -388,143 +373,9 @@ function K8sBaseDetails<T>({
 		[eventCategory, effectiveView],
 	);
 
-	const handleChangeLogFilters = useCallback(
-		(value: IBuilderQuery['filters'], view: VIEWS) => {
-			setLogsAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters?.items?.filter((item) =>
-					primaryFilterKeys.includes(item.key?.key ?? ''),
-				);
-				const paginationFilter = value?.items?.find(
-					(item) => item.key?.key === 'id',
-				);
-				const newFilters = value?.items?.filter(
-					(item) =>
-						item.key?.key !== 'id' &&
-						!primaryFilterKeys.includes(item.key?.key ?? ''),
-				);
-
-				if (newFilters && newFilters?.length > 0) {
-					logEvent(InfraMonitoringEvents.FilterApplied, {
-						entity: InfraMonitoringEvents.K8sEntity,
-						page: InfraMonitoringEvents.DetailedPage,
-						category: eventCategory,
-						view: selectedView,
-					});
-				}
-
-				const updatedFilters = {
-					op: 'AND',
-					items: filterDuplicateFilters(
-						[
-							...(primaryFilters || []),
-							...(newFilters || []),
-							...(paginationFilter ? [paginationFilter] : []),
-						].filter((item): item is TagFilterItem => item !== undefined),
-					),
-				};
-
-				setLogFiltersParam(updatedFilters);
-				setSelectedView(view);
-
-				return updatedFilters;
-			});
-		},
-		[
-			setLogFiltersParam,
-			setSelectedView,
-			primaryFilterKeys,
-			eventCategory,
-			selectedView,
-		],
-	);
-
-	const handleChangeTracesFilters = useCallback(
-		(value: IBuilderQuery['filters'], view: VIEWS) => {
-			setLogsAndTracesFilters((prevFilters) => {
-				const primaryFilters = prevFilters?.items?.filter((item) =>
-					primaryFilterKeys.includes(item.key?.key ?? ''),
-				);
-
-				if (value?.items && value?.items?.length > 0) {
-					logEvent(InfraMonitoringEvents.FilterApplied, {
-						entity: InfraMonitoringEvents.K8sEntity,
-						page: InfraMonitoringEvents.DetailedPage,
-						category: eventCategory,
-						view: selectedView,
-					});
-				}
-
-				const updatedFilters = {
-					op: 'AND',
-					items: filterDuplicateFilters(
-						[
-							...(primaryFilters || []),
-							...(value?.items?.filter(
-								(item) => !primaryFilterKeys.includes(item.key?.key ?? ''),
-							) || []),
-						].filter((item): item is TagFilterItem => item !== undefined),
-					),
-				};
-
-				setTracesFiltersParam(updatedFilters);
-				setSelectedView(view);
-
-				return updatedFilters;
-			});
-		},
-		[
-			setTracesFiltersParam,
-			setSelectedView,
-			primaryFilterKeys,
-			eventCategory,
-			selectedView,
-		],
-	);
-
-	const handleChangeEventsFilters = useCallback(
-		(value: IBuilderQuery['filters'], view: VIEWS) => {
-			setEventsFilters((prevFilters) => {
-				const kindFilter = prevFilters?.items?.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_KIND,
-				);
-				const nameFilter = prevFilters?.items?.find(
-					(item) => item.key?.key === QUERY_KEYS.K8S_OBJECT_NAME,
-				);
-
-				if (value?.items && value?.items?.length > 0) {
-					logEvent(InfraMonitoringEvents.FilterApplied, {
-						entity: InfraMonitoringEvents.K8sEntity,
-						page: InfraMonitoringEvents.DetailedPage,
-						category: eventCategory,
-						view: selectedView,
-					});
-				}
-
-				const updatedFilters = {
-					op: 'AND',
-					items: filterDuplicateFilters(
-						[
-							kindFilter,
-							nameFilter,
-							...(value?.items?.filter(
-								(item) =>
-									item.key?.key !== QUERY_KEYS.K8S_OBJECT_KIND &&
-									item.key?.key !== QUERY_KEYS.K8S_OBJECT_NAME,
-							) || []),
-						].filter((item): item is TagFilterItem => item !== undefined),
-					),
-				};
-
-				setEventsFiltersParam(updatedFilters);
-				setSelectedView(view);
-
-				return updatedFilters;
-			});
-		},
-		[eventCategory, selectedView, setEventsFiltersParam, setSelectedView],
-	);
-
 	const handleExplorePagesRedirect = (): void => {
+		const urlQuery = new URLSearchParams();
+
 		if (selectedInterval !== 'custom') {
 			urlQuery.set(QueryParams.relativeTime, selectedInterval);
 		} else {
@@ -541,12 +392,10 @@ function K8sBaseDetails<T>({
 		});
 
 		if (selectedView === VIEW_TYPES.LOGS) {
-			const filtersWithoutPagination = {
-				...logsAndTracesFilters,
-				items:
-					logsAndTracesFilters?.items?.filter((item) => item.key?.key !== 'id') ||
-					[],
-			};
+			const fullExpression = combineInitialAndUserExpression(
+				logsAndTracesInitialExpression,
+				userLogsExpression || '',
+			);
 
 			const compositeQuery = {
 				...initialQueryState,
@@ -557,7 +406,8 @@ function K8sBaseDetails<T>({
 						{
 							...initialQueryBuilderFormValuesMap.logs,
 							aggregateOperator: LogsAggregatorOperator.NOOP,
-							filters: filtersWithoutPagination,
+							expression: fullExpression,
+							filter: { expression: fullExpression },
 						},
 					],
 				},
@@ -567,6 +417,11 @@ function K8sBaseDetails<T>({
 
 			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
+			const fullExpression = combineInitialAndUserExpression(
+				logsAndTracesInitialExpression,
+				userTracesExpression || '',
+			);
+
 			const compositeQuery = {
 				...initialQueryState,
 				queryType: 'builder',
@@ -576,7 +431,8 @@ function K8sBaseDetails<T>({
 						{
 							...initialQueryBuilderFormValuesMap.traces,
 							aggregateOperator: TracesAggregatorOperator.NOOP,
-							filters: logsAndTracesFilters,
+							expression: fullExpression,
+							filter: { expression: fullExpression },
 						},
 					],
 				},
@@ -588,25 +444,19 @@ function K8sBaseDetails<T>({
 		}
 	};
 
-	const handleClose = (): void => {
-		lastSelectedInterval.current = null;
-
-		setSelectedItem(null);
-		setSelectedView(null);
-		setTracesFiltersParam(null);
-		setEventsFiltersParam(null);
-		setLogFiltersParam(null);
-	};
-
-	const entityName = entity ? getEntityName(entity) : '';
-
 	return (
 		<Drawer
 			width="70%"
 			title={
 				<>
 					<Divider type="vertical" />
-					<Typography.Text className="title">{entityName}</Typography.Text>
+					<Typography.Text className="title">
+						{entityName ||
+							((isEntityError || hasResponseError) &&
+								'Failed to load entity details') ||
+							(isEntityLoading && 'Loading...') ||
+							'-'}
+					</Typography.Text>
 				</>
 			}
 			placement="right"
@@ -621,12 +471,17 @@ function K8sBaseDetails<T>({
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
 			{isEntityLoading && <LoadingContainer />}
-			{isEntityError && (
-				<Typography.Text color="danger">
-					{entityResponse?.error || 'Failed to load entity details'}
-				</Typography.Text>
+			{(isEntityError || hasResponseError) && (
+				<div className="entity-error-container">
+					<Typography.Text color="danger">
+						{entityResponse?.error ||
+							(entityError instanceof Error
+								? entityError.message
+								: 'Failed to load entity details')}
+					</Typography.Text>
+				</div>
 			)}
-			{entity && !isEntityLoading && (
+			{entity && !isEntityLoading && !hasResponseError && (
 				<>
 					<div className="entity-detail-drawer__entity">
 						<div className="entity-details-grid">
@@ -762,13 +617,23 @@ function K8sBaseDetails<T>({
 								))}
 							</Radio.Group>
 
-							{(selectedView === VIEW_TYPES.LOGS ||
-								selectedView === VIEW_TYPES.TRACES) && (
-								<Button
-									icon={<Compass size={18} />}
-									className="compass-button"
-									onClick={handleExplorePagesRedirect}
-								/>
+							{selectedView === VIEW_TYPES.LOGS && (
+								<Tooltip title="Go to Logs Explorer" placement="left">
+									<Button
+										icon={<Compass size={18} />}
+										className="compass-button"
+										onClick={handleExplorePagesRedirect}
+									/>
+								</Tooltip>
+							)}
+							{selectedView === VIEW_TYPES.TRACES && (
+								<Tooltip title="Go to Traces Explorer" placement="left">
+									<Button
+										icon={<Compass size={18} />}
+										className="compass-button"
+										onClick={handleExplorePagesRedirect}
+									/>
+								</Tooltip>
 							)}
 						</div>
 					)}
@@ -791,12 +656,10 @@ function K8sBaseDetails<T>({
 							timeRange={modalTimeRange}
 							isModalTimeSelection
 							handleTimeChange={handleTimeChange}
-							handleChangeLogFilters={handleChangeLogFilters}
-							logFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
-							queryKeyFilters={primaryFilterKeys}
 							queryKey={`${queryKeyPrefix}Logs`}
 							category={category}
+							initialExpression={logsAndTracesInitialExpression}
 						/>
 					)}
 					{effectiveView === VIEW_TYPES.TRACES && (
@@ -804,12 +667,10 @@ function K8sBaseDetails<T>({
 							timeRange={modalTimeRange}
 							isModalTimeSelection
 							handleTimeChange={handleTimeChange}
-							handleChangeTracesFilters={handleChangeTracesFilters}
-							tracesFilters={logsAndTracesFilters}
 							selectedInterval={selectedInterval}
 							queryKey={`${queryKeyPrefix}Traces`}
-							category={eventCategory}
-							queryKeyFilters={primaryFilterKeys}
+							category={category}
+							initialExpression={logsAndTracesInitialExpression}
 						/>
 					)}
 					{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
@@ -817,11 +678,10 @@ function K8sBaseDetails<T>({
 							timeRange={modalTimeRange}
 							isModalTimeSelection
 							handleTimeChange={handleTimeChange}
-							handleChangeEventFilters={handleChangeEventsFilters}
-							filters={eventsFilters}
 							selectedInterval={selectedInterval}
 							category={category}
 							queryKey={`${queryKeyPrefix}Events`}
+							initialExpression={eventsInitialExpression}
 						/>
 					)}
 					{effectiveView === VIEW_TYPES.CONTAINERS &&
@@ -846,5 +706,3 @@ function K8sBaseDetails<T>({
 		</Drawer>
 	);
 }
-
-export default K8sBaseDetails;

@@ -39,6 +39,7 @@ import {
 } from './TanStackTableStateContext';
 import {
 	FlatItem,
+	SortState,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
@@ -88,6 +89,7 @@ function TanStackTableInner<TData>(
 		enableQueryParams,
 		pagination,
 		paginationClassname,
+		onSort,
 		onEndReached,
 		getRowKey,
 		getItemKey,
@@ -130,13 +132,21 @@ function TanStackTableInner<TData>(
 		setPage,
 		setLimit,
 		orderBy,
-		setOrderBy,
+		setOrderBy: internalSetOrderBy,
 		expanded,
 		setExpanded,
 	} = useTableParams(enableQueryParams, {
 		page: pagination?.defaultPage,
 		limit: pagination?.defaultLimit,
 	});
+
+	const setOrderBy = useCallback(
+		(sort: SortState | null) => {
+			internalSetOrderBy(sort);
+			onSort?.(sort);
+		},
+		[internalSetOrderBy, onSort],
+	);
 
 	const isGrouped = (groupBy?.length ?? 0) > 0;
 
@@ -605,16 +615,22 @@ function TanStackTableInner<TData>(
 								total={effectiveTotalCount}
 								onPageChange={(p): void => {
 									setPage(p);
+									pagination.onPageChange?.(p);
 								}}
 							/>
-							<div className={viewStyles.paginationPageSize}>
-								<ComboboxSimple
-									value={limit?.toString()}
-									defaultValue="10"
-									onChange={(value): void => setLimit(+value)}
-									items={paginationPageSizeItems}
-								/>
-							</div>
+							{pagination.showPageSize !== false && (
+								<div className={viewStyles.paginationPageSize}>
+									<ComboboxSimple
+										value={limit?.toString()}
+										defaultValue="10"
+										onChange={(value): void => {
+											setLimit(+value);
+											pagination.onLimitChange?.(+value);
+										}}
+										items={paginationPageSizeItems}
+									/>
+								</div>
+							)}
 							{suffixPaginationContent}
 						</div>
 					)}

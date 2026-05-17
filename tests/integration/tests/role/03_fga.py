@@ -49,7 +49,29 @@ def test_apply_license(
 
 
 # ---------------------------------------------------------------------------
-# 2. Create custom role + user with read/list on roles
+# 2. Reject role names starting with "signoz-"
+# ---------------------------------------------------------------------------
+
+
+def test_create_role_with_signoz_prefix_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    for name in ("signoz-custom", "signozcustom"):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ROLES_BASE),
+            json={"name": name},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.BAD_REQUEST, f"expected 400 for role name '{name}', got {resp.status_code}: {resp.text}"
+
+
+# ---------------------------------------------------------------------------
+# 3. Create custom role + user with read/list on roles
 # ---------------------------------------------------------------------------
 
 

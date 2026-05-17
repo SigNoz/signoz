@@ -181,5 +181,24 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/infra_monitoring/daemonsets", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDaemonSets),
+		handler.OpenAPIDef{
+			ID:                  "ListDaemonSets",
+			Tags:                []string{"inframonitoring"},
+			Summary:             "List DaemonSets for Infra Monitoring",
+			Description:         "Returns a paginated list of Kubernetes DaemonSets with key aggregated pod metrics: CPU usage and memory working set summed across pods owned by the daemonset, plus average CPU/memory request and limit utilization (daemonSetCPURequest, daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row also reports the latest known node-level counters from kube-state-metrics: desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes, the number of nodes the daemonset currently runs on) — note these are node counts, not pod counts. It also reports per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.daemonset.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods owned by daemonsets in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit / desired_nodes / current_nodes, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit, daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes, currentNodes) return -1 as a sentinel when no data is available for that field.",
+			Request:             new(inframonitoringtypes.PostableDaemonSets),
+			RequestContentType:  "application/json",
+			Response:            new(inframonitoringtypes.DaemonSets),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }
