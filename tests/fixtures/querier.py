@@ -450,6 +450,35 @@ def build_scalar_query(
     return {"type": "builder_query", "spec": spec}
 
 
+def build_raw_query(
+    name: str,
+    signal: str,
+    *,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+) -> dict:
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "disabled": disabled,
+    }
+
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    return {"type": "builder_query", "spec": spec}
+
+
 def build_group_by_field(
     name: str,
     field_data_type: str = "string",

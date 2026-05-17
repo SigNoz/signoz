@@ -4,22 +4,27 @@ import (
 	"sort"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
 // PromQLFilterExtractor extracts metric names and grouping keys from PromQL queries.
-type PromQLFilterExtractor struct{}
+type PromQLFilterExtractor struct {
+	parser parser.Parser
+}
 
 // NewPromQLFilterExtractor creates a new PromQL filter extractor.
 func NewPromQLFilterExtractor() *PromQLFilterExtractor {
-	return &PromQLFilterExtractor{}
+	return &PromQLFilterExtractor{
+		parser: prometheus.NewParser(),
+	}
 }
 
 // Extract parses a PromQL query and extracts metric names and grouping keys.
 func (e *PromQLFilterExtractor) Extract(query string) (*FilterResult, error) {
-	expr, err := parser.ParseExpr(query)
+	expr, err := e.parser.ParseExpr(query)
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse promql query: %s", err.Error())
 	}

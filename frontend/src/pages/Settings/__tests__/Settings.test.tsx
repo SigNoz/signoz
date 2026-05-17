@@ -78,11 +78,14 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['workspace', 'account'])('renders "%s" element', (id) => {
-			expect(screen.getByTestId(id)).toBeInTheDocument();
-		});
+		it.each(['workspace', 'account', 'roles', 'service-accounts'])(
+			'renders "%s" element',
+			(id) => {
+				expect(screen.getByTestId(id)).toBeInTheDocument();
+			},
+		);
 
-		it.each(['billing', 'roles'])('does not render "%s" element', (id) => {
+		it.each(['billing'])('does not render "%s" element', (id) => {
 			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
 		});
 
