@@ -53,7 +53,7 @@ function RoleDetailsPage(): JSX.Element {
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
-	const authzResources = permissionsType.data as unknown as AuthzResources;
+	const authzResources: AuthzResources = permissionsType.data;
 
 	// Extract roleId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
