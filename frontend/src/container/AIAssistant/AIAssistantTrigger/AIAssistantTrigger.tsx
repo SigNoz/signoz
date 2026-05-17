@@ -1,9 +1,12 @@
+import { useCallback } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { Bot } from '@signozhq/icons';
 
+import { AIAssistantEvents } from '../events';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -25,6 +28,14 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 		exact: true,
 	});
 
+	const handleOpen = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'icon',
+			currentPage: pathname,
+		});
+		openAIAssistant();
+	}, [pathname]);
+
 	if (isDrawerOpen || isModalOpen || isFullScreenPage) {
 		return null;
 	}
@@ -35,7 +46,7 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 				variant="solid"
 				color="primary"
 				className={styles.trigger}
-				onClick={openAIAssistant}
+				onClick={handleOpen}
 				aria-label="Open AI Assistant"
 			>
 				<Bot size={20} />

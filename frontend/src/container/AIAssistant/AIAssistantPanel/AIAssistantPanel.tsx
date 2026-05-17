@@ -5,8 +5,12 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
 import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
+import { AIAssistantEvents, markExpandFromInApp } from '../events';
+import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -32,11 +36,16 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
+	const analyticsCtx = useAIAssistantAnalyticsContext();
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
 			return;
 		}
+		// Tell AIAssistantPage to skip its mount-time Sidepane opened fire:
+		// the assistant was already open in the drawer, so this is a surface
+		// switch, not a new open.
+		markExpandFromInApp();
 		closeDrawer();
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
@@ -44,9 +53,18 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	}, [activeConversationId, closeDrawer, history]);
 
 	const handleNew = useCallback(() => {
+		void logEvent(AIAssistantEvents.NewChatClicked, {
+			...analyticsCtx,
+			// useAIAssistantAnalyticsContext() runs above this component's
+			// VariantContext.Provider, so the hook reports the default 'page'
+			// mode. Override here: this handler only runs when the drawer
+			// itself is mounted, which is unambiguously the sidepane surface.
+			mode: 'sidepane',
+			source: 'header',
+		});
 		startNewConversation();
 		setShowHistory(false);
-	}, [startNewConversation]);
+	}, [startNewConversation, analyticsCtx]);
 
 	// When user picks a conversation from the list, close the sidebar
 	const handleHistorySelect = useCallback(() => {

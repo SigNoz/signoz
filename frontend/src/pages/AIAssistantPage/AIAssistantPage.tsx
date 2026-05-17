@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
+import {
+	AIAssistantEvents,
+	consumeExpandFromInApp,
+} from 'container/AIAssistant/events';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { Sparkles } from '@signozhq/icons';
@@ -17,7 +22,24 @@ interface RouteParams {
 
 export default function AIAssistantPage(): JSX.Element {
 	const history = useHistory();
+	const { pathname } = useLocation();
 	const { conversationId } = useParams<RouteParams>();
+
+	// Fire once per page mount — the full-screen route is a deeplink entry
+	// point. Skip when the user expanded an already-open drawer/modal: that
+	// already emitted its own Sidepane opened with the correct entry-point
+	// source (icon / shortcut), and we don't want to double-count.
+	useEffect(() => {
+		if (consumeExpandFromInApp()) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'deeplink',
+			currentPage: pathname,
+		});
+		// Only on mount; route param changes inside the same page aren't a re-open.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
@@ -71,9 +93,14 @@ export default function AIAssistantPage(): JSX.Element {
 	);
 
 	const handleNewConversation = useCallback(() => {
+		void logEvent(AIAssistantEvents.NewChatClicked, {
+			page: pathname,
+			mode: 'full_screen',
+			source: 'history_list',
+		});
 		const newId = startNewConversation();
 		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history]);
+	}, [startNewConversation, history, pathname]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so

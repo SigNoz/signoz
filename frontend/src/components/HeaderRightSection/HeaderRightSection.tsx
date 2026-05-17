@@ -5,6 +5,7 @@ import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { AIAssistantEvents } from 'container/AIAssistant/events';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -48,6 +49,14 @@ function HeaderRightSection({
 		setOpenFeedbackModal(true);
 		setOpenShareURLModal(false);
 		setOpenAnnouncementsModal(false);
+	}, [location.pathname]);
+
+	const handleOpenAIAssistant = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'icon',
+			currentPage: location.pathname,
+		});
+		openAIAssistant();
 	}, [location.pathname]);
 
 	const handleOpenShareURLModal = useCallback((): void => {
@@ -101,7 +110,7 @@ function HeaderRightSection({
 						<Button
 							variant="solid"
 							color="secondary"
-							onClick={openAIAssistant}
+							onClick={handleOpenAIAssistant}
 							aria-label={
 								showHeaderPendingBadge
 									? pendingUserInputCount === 1

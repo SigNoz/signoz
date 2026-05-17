@@ -9,6 +9,7 @@ import {
 	SelectItem,
 	SelectTrigger,
 } from '@signozhq/ui/select';
+import logEvent from 'api/common/logEvent';
 import { ClarificationFieldTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type {
 	ClarificationEventDTO,
@@ -16,6 +17,8 @@ import type {
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
+import { AIAssistantEvents } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
 import styles from './ClarificationForm.module.scss';
@@ -44,6 +47,8 @@ export default function ClarificationForm({
 	const isStreaming = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
+	const { threadId, page, mode } =
+		useAIAssistantAnalyticsContext(conversationId);
 
 	const fields = clarification.fields ?? [];
 	const initialAnswers = Object.fromEntries(
@@ -60,6 +65,18 @@ export default function ClarificationForm({
 
 	const handleSubmit = async (): Promise<void> => {
 		setSubmitted(true);
+		// Approximate queryLength as the JSON encoding of the form answers — the
+		// clarification API doesn't render a single user-visible string, but the
+		// JSON size is a reasonable stand-in for "how much did the user provide".
+		const queryLength = JSON.stringify(answers).length;
+		void logEvent(AIAssistantEvents.MessageSent, {
+			threadId,
+			page,
+			mode,
+			queryLength,
+			hasContext: false,
+			respondingToClarification: true,
+		});
 		await submitClarification(
 			conversationId,
 			clarification.clarificationId,
@@ -69,6 +86,10 @@ export default function ClarificationForm({
 
 	const handleCancel = (): void => {
 		setCancelled(true);
+		void logEvent(AIAssistantEvents.CancelClicked, {
+			threadId,
+			secondsSinceStart: null,
+		});
 		cancelStream(conversationId);
 	};
 

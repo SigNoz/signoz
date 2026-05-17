@@ -41,12 +41,54 @@ import {
 	Undo,
 } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
 import styles from './ActionsSection.module.scss';
 
 interface ActionsSectionProps {
 	actions: MessageActionDTO[];
+	/** ID of the assistant message these actions belong to — used in analytics. */
+	messageId: string;
+}
+
+/** Maps an open_resource action's resourceType to its product module name. */
+function targetModuleForResource(resourceType: string): string | null {
+	switch (resourceType) {
+		case 'dashboard':
+			return 'dashboards';
+		case 'alert':
+			return 'alerts';
+		case 'service':
+			return 'apm';
+		case 'saved_view':
+			return 'savedViews';
+		case 'logs_explorer':
+			return 'logs';
+		case 'traces_explorer':
+			return 'traces';
+		case 'metrics_explorer':
+			return 'metrics';
+		default:
+			return null;
+	}
+}
+
+/** Maps an apply_filter signal to its product module name. */
+function targetModuleForSignal(signal: ApplyFilterSignalDTO): string | null {
+	switch (signal) {
+		case ApplyFilterSignalDTO.logs:
+			return 'logs';
+		case ApplyFilterSignalDTO.traces:
+			return 'traces';
+		case ApplyFilterSignalDTO.metrics:
+			return 'metrics';
+		default:
+			return null;
+	}
 }
 
 type ChipState = 'idle' | 'loading' | 'success' | 'error';
@@ -353,10 +395,12 @@ function rollbackCall(
  */
 export default function ActionsSection({
 	actions,
+	messageId,
 }: ActionsSectionProps): JSX.Element | null {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
 
 	// Per-chip click state, keyed by chip key (see `key` below). Persists
@@ -430,12 +474,25 @@ export default function ActionsSection({
 		switch (action.kind) {
 			case MessageActionKindDTO.open_docs: {
 				if (action.url) {
+					void logEvent(AIAssistantEvents.DocOpened, {
+						threadId,
+						messageId,
+						docPath: action.url,
+					});
 					openInNewTab(action.url);
 				}
 				break;
 			}
 			case MessageActionKindDTO.follow_up: {
 				if (action.label) {
+					void logEvent(AIAssistantEvents.MessageSent, {
+						threadId,
+						page,
+						mode,
+						queryLength: action.label.length,
+						hasContext: false,
+						respondingToClarification: false,
+					});
 					void sendMessage(action.label);
 				}
 				break;
@@ -444,6 +501,12 @@ export default function ActionsSection({
 				if (action.resourceType && action.resourceId) {
 					const path = resourceRoute(action.resourceType, action.resourceId);
 					if (path) {
+						void logEvent(AIAssistantEvents.ResourceOpened, {
+							threadId,
+							messageId,
+							targetModule: targetModuleForResource(action.resourceType),
+							resourceId: action.resourceId,
+						});
 						history.push(path);
 					}
 				}
@@ -456,6 +519,13 @@ export default function ActionsSection({
 				break;
 			}
 			case MessageActionKindDTO.apply_filter: {
+				if (action.signal) {
+					void logEvent(AIAssistantEvents.ApplyFilterClicked, {
+						threadId,
+						messageId,
+						targetModule: targetModuleForSignal(action.signal),
+					});
+				}
 				applyFilter(action, {
 					history,
 					pathname,

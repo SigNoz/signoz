@@ -1,7 +1,10 @@
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
+import logEvent from 'api/common/logEvent';
 import { Check, X } from '@signozhq/icons';
 
+import { AIAssistantEvents } from '../../../events';
+import { useAIAssistantAnalyticsContext } from '../../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';
 import { useMessageContext } from '../../MessageContext';
 
@@ -37,6 +40,7 @@ export default function ConfirmBlock({
 	const answeredBlocks = useAIAssistantStore((s) => s.answeredBlocks);
 	const markBlockAnswered = useAIAssistantStore((s) => s.markBlockAnswered);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 
 	// Durable answered state — survives re-renders/remounts
 	const answeredChoice = messageId ? answeredBlocks[messageId] : undefined;
@@ -47,6 +51,14 @@ export default function ConfirmBlock({
 		if (messageId) {
 			markBlockAnswered(messageId, choice);
 		}
+		void logEvent(AIAssistantEvents.MessageSent, {
+			threadId,
+			page,
+			mode,
+			queryLength: responseText.length,
+			hasContext: false,
+			respondingToClarification: false,
+		});
 		sendMessage(responseText);
 	};
 
