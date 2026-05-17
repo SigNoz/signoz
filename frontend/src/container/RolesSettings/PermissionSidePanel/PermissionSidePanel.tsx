@@ -25,10 +25,13 @@ import { PermissionScope } from './PermissionSidePanel.types';
 
 import './PermissionSidePanel.styles.scss';
 
+const RELATIONS_ALL_ONLY = new Set(['list', 'create']);
+
 interface ResourceRowProps {
 	resource: ResourceDefinition;
 	config: ResourceConfig;
 	isExpanded: boolean;
+	relation: string;
 	onToggleExpand: (id: string) => void;
 	onScopeChange: (id: string, scope: ScopeType) => void;
 	onSelectedIdsChange: (id: string, ids: string[]) => void;
@@ -38,10 +41,12 @@ function ResourceRow({
 	resource,
 	config,
 	isExpanded,
+	relation,
 	onToggleExpand,
 	onScopeChange,
 	onSelectedIdsChange,
 }: ResourceRowProps): JSX.Element {
+	const showOnlySelected = !RELATIONS_ALL_ONLY.has(relation);
 	return (
 		<div className="psp-resource">
 			<div
@@ -78,36 +83,40 @@ function ResourceRow({
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
+						{showOnlySelected && (
+							<div className="psp-resource__radio-item">
+								<RadioGroupItem
+									value={PermissionScope.ONLY_SELECTED}
+									id={`${resource.id}-only-selected`}
+								/>
+								<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
+									Only selected
+								</RadioGroupLabel>
+							</div>
+						)}
+
 						<div className="psp-resource__radio-item">
 							<RadioGroupItem
-								value={PermissionScope.ONLY_SELECTED}
-								id={`${resource.id}-only-selected`}
+								value={PermissionScope.NONE}
+								id={`${resource.id}-none`}
 							/>
-							<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
-								Only selected
-							</RadioGroupLabel>
+							<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
 						</div>
 					</RadioGroup>
 
-					{config.scope === PermissionScope.ONLY_SELECTED && (
+					{config.scope === PermissionScope.ONLY_SELECTED && showOnlySelected && (
 						<div className="psp-resource__select-wrapper">
-							{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
 							<Select
 								mode="tags"
+								open={false}
+								allowClear
+								suffixIcon={null}
 								value={config.selectedIds}
 								onChange={(vals: string[]): void =>
 									onSelectedIdsChange(resource.id, vals)
 								}
-								options={resource.options ?? []}
-								placeholder="Select resources..."
+								placeholder="Type and press Enter to add..."
 								className="psp-resource__select"
-								popupClassName="psp-resource__select-popup"
-								showSearch
-								filterOption={(input, option): boolean =>
-									String(option?.label ?? '')
-										.toLowerCase()
-										.includes(input.toLowerCase())
-								}
 							/>
 						</div>
 					)}
@@ -121,10 +130,12 @@ function PermissionSidePanel({
 	open,
 	onClose,
 	permissionLabel,
+	relation,
 	resources,
 	initialConfig,
 	isLoading = false,
 	isSaving = false,
+	canEdit = true,
 	onSave,
 }: PermissionSidePanelProps): JSX.Element | null {
 	const [config, setConfig] = useState<PermissionConfig>(() =>
@@ -213,13 +224,13 @@ function PermissionSidePanel({
 			<div className="permission-side-panel">
 				<div className="permission-side-panel__header">
 					<Button
-						variant="ghost"
+						variant="link"
+						color="secondary"
 						size="icon"
-						className="permission-side-panel__close"
 						onClick={onClose}
 						aria-label="Close panel"
 					>
-						<X size={16} />
+						<X size={14} />
 					</Button>
 					<span className="permission-side-panel__header-divider" />
 					<span className="permission-side-panel__title">
@@ -238,6 +249,7 @@ function PermissionSidePanel({
 									resource={resource}
 									config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
 									isExpanded={expandedIds.has(resource.id)}
+									relation={relation}
 									onToggleExpand={handleToggleExpand}
 									onScopeChange={handleScopeChange}
 									onSelectedIdsChange={handleSelectedIdsChange}
@@ -274,7 +286,7 @@ function PermissionSidePanel({
 							size="sm"
 							onClick={handleSave}
 							loading={isSaving}
-							disabled={isLoading || unsavedCount === 0}
+							disabled={isLoading || unsavedCount === 0 || !canEdit}
 						>
 							Save Changes
 						</Button>

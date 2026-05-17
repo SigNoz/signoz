@@ -29,18 +29,6 @@
 		border-bottom: 1px solid var(--l1-border);
 	}
 
-	&__close {
-		width: 16px;
-		height: 16px;
-		padding: 0;
-		color: var(--foreground);
-		flex-shrink: 0;
-
-		&:hover {
-			color: var(--l1-foreground);
-		}
-	}
-
 	&__header-divider {
 		display: block;
 		width: 1px;
@@ -167,7 +155,6 @@
 		line-height: 20px;
 		letter-spacing: -0.07px;
 		color: var(--l1-foreground);
-		text-transform: capitalize;
 	}
 
 	&__body {
