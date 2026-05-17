@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
 import { Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
@@ -26,7 +26,9 @@ import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
 
@@ -52,6 +54,7 @@ function RoleDetailsPage(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const authzResources: AuthzResources = permissionsType.data;
 
@@ -162,7 +165,12 @@ function RoleDetailsPage(): JSX.Element {
 		return <PermissionDeniedFullPage permissionName="role:read" />;
 	}
 
-	if (isLoading || isTransitioning || (!!nameFromQuery && isReadAuthZLoading)) {
+	if (
+		isLoading ||
+		isTransitioning ||
+		(!!nameFromQuery && isReadAuthZLoading) ||
+		isFetchingActiveLicense
+	) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -172,6 +180,10 @@ function RoleDetailsPage(): JSX.Element {
 				/>
 			</div>
 		);
+	}
+
+	if (activeLicense?.status !== LicenseStatus.VALID) {
+		return <Redirect to={ROUTES.ROLES_SETTINGS} />;
 	}
 
 	if (isError) {
