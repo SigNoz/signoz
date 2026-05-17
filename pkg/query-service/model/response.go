@@ -297,14 +297,13 @@ type FlamegraphSpan struct {
 	TimeUnixNano uint64            `json:"timestamp"`
 	DurationNano uint64            `json:"durationNano"`
 	SpanID       string            `json:"spanId"`
-	TraceID      string            `json:"traceId"`
 	HasError     bool              `json:"hasError"`
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
 	Level        int64             `json:"level"`
+	ParentSpanID string            `json:"parentSpanId"`
 	Events       []Event           `json:"event"`
-	References   []OtelSpanRef     `json:"references,omitempty"`
-	Children     []*FlamegraphSpan `json:"children"`
+	Children     []*FlamegraphSpan `json:"-"`
 	Attributes   map[string]any    `json:"attributes,omitempty"`
 	Resource     map[string]string `json:"resource,omitempty"`
 }

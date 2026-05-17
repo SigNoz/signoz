@@ -6,7 +6,6 @@ export const MOCK_SPAN: FlamegraphSpan = {
 	durationNano: 50_000_000, // 50ms
 	spanId: 'span-1',
 	parentSpanId: '',
-	traceId: 'trace-1',
 	hasError: false,
 	serviceName: 'test-service',
 	name: 'test-span',

@@ -11,7 +11,6 @@ function makeSpan(
 ): FlamegraphSpan {
 	return {
 		parentSpanId: '',
-		traceId: 'trace-1',
 		hasError: false,
 		serviceName: 'svc',
 		name: 'op',

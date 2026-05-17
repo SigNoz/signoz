@@ -1155,9 +1155,22 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
-		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
-		if len(req.SelectFields) > 0 {
-			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
+		needsAttrMaps := false
+		needsResourceMap := false
+		for _, f := range req.SelectFields {
+			if f.FieldContext == telemetrytypes.FieldContextAttribute {
+				needsAttrMaps = true
+			}
+			if f.FieldContext == telemetrytypes.FieldContextResource {
+				needsResourceMap = true
+			}
+		}
+		selectCols := "DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, resource_string_service$$name, name, events"
+		if needsAttrMaps {
+			selectCols += ", attributes_string, attributes_number, attributes_bool"
+		}
+		if needsResourceMap {
+			selectCols += ", resources_string"
 		}
 		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
 
@@ -1170,32 +1183,23 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		}
 
 		for _, item := range searchScanResponses {
-			ref := []model.OtelSpanRef{}
-			err := json.Unmarshal([]byte(item.References), &ref)
-			if err != nil {
-				r.logger.Error("Error unmarshalling references", errorsV2.Attr(err))
-				return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
-			}
-
-			events := make([]model.Event, 0)
+			events := make([]model.Event, 0, len(item.Events))
 			for _, event := range item.Events {
 				var eventMap model.Event
-				err = json.Unmarshal([]byte(event), &eventMap)
-				if err != nil {
-					r.logger.Error("Error unmarshalling events", errorsV2.Attr(err))
-					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
+				if unmarshalErr := json.Unmarshal([]byte(event), &eventMap); unmarshalErr != nil {
+					r.logger.Error("Error unmarshalling events", errorsV2.Attr(unmarshalErr))
+					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", unmarshalErr.Error())
 				}
 				events = append(events, eventMap)
 			}
 
 			jsonItem := model.FlamegraphSpan{
 				SpanID:       item.SpanID,
-				TraceID:      item.TraceID,
 				ServiceName:  item.ServiceName,
 				Name:         item.Name,
 				DurationNano: item.DurationNano,
 				HasError:     item.HasError,
-				References:   ref,
+				ParentSpanID: item.ParentSpanId,
 				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
 			}
@@ -1219,41 +1223,34 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
 		}
+		searchScanResponses = nil
 
-		// traverse through the map and append each node to the children array of the parent node
-		// and add missing spans
+		// build parent-child tree using parent_span_id; insert placeholders for missing parents
 		for _, spanNode := range spanIdToSpanNodeMap {
-			hasParentSpanNode := false
-			for _, reference := range spanNode.References {
-				if reference.RefType == "CHILD_OF" && reference.SpanId != "" {
-					hasParentSpanNode = true
-					if parentNode, exists := spanIdToSpanNodeMap[reference.SpanId]; exists {
-						parentNode.Children = append(parentNode.Children, spanNode)
-					} else {
-						// insert the missing spans
-						missingSpan := model.FlamegraphSpan{
-							SpanID:       reference.SpanId,
-							TraceID:      spanNode.TraceID,
-							ServiceName:  "",
-							Name:         "Missing Span",
-							TimeUnixNano: spanNode.TimeUnixNano,
-							DurationNano: spanNode.DurationNano,
-							HasError:     false,
-							Events:       make([]model.Event, 0),
-							Children:     make([]*model.FlamegraphSpan, 0),
-						}
-						missingSpan.Children = append(missingSpan.Children, spanNode)
-						spanIdToSpanNodeMap[missingSpan.SpanID] = &missingSpan
-						traceRoots = append(traceRoots, &missingSpan)
-					}
-				}
-			}
-			if !hasParentSpanNode && !tracedetail.ContainsFlamegraphSpan(traceRoots, spanNode) {
+			if spanNode.ParentSpanID == "" {
 				traceRoots = append(traceRoots, spanNode)
+			} else if parentNode, exists := spanIdToSpanNodeMap[spanNode.ParentSpanID]; exists {
+				parentNode.Children = append(parentNode.Children, spanNode)
+			} else {
+				if _, alreadyCreated := spanIdToSpanNodeMap[spanNode.ParentSpanID]; !alreadyCreated {
+					missingSpan := &model.FlamegraphSpan{
+						SpanID:       spanNode.ParentSpanID,
+						Name:         "Missing Span",
+						TimeUnixNano: spanNode.TimeUnixNano,
+						DurationNano: spanNode.DurationNano,
+						Events:       make([]model.Event, 0),
+						Children:     make([]*model.FlamegraphSpan, 0),
+					}
+					spanIdToSpanNodeMap[missingSpan.SpanID] = missingSpan
+					traceRoots = append(traceRoots, missingSpan)
+				}
+				spanIdToSpanNodeMap[spanNode.ParentSpanID].Children = append(
+					spanIdToSpanNodeMap[spanNode.ParentSpanID].Children, spanNode)
 			}
 		}
 
 		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
+		spanIdToSpanNodeMap = nil
 
 		// TODO: set the trace data (model.GetFlamegraphSpansForTraceCache) in cache here
 		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648

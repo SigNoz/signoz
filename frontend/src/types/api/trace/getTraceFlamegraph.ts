@@ -23,7 +23,6 @@ export interface FlamegraphSpan {
 	durationNano: number;
 	spanId: string;
 	parentSpanId: string;
-	traceId: string;
 	hasError: boolean;
 	serviceName: string;
 	name: string;
