@@ -1140,6 +1140,8 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	// map[traceID][level]span
 	var selectedSpans = [][]*model.FlamegraphSpan{}
 	var traceRoots []*model.FlamegraphSpan
+	// time bounds for Pass 1 and Pass 2 (set on cache miss, zero on cache hit)
+	var tsBucketStart, tsBucketEnd int64
 
 	// get the trace tree from cache!
 	cachedTraceData, err := r.GetFlamegraphSpansForTraceCache(ctx, orgID, traceID)
@@ -1155,44 +1157,42 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
-		needsAttrMaps := false
-		needsResourceMap := false
-		for _, f := range req.SelectFields {
-			if f.FieldContext == telemetrytypes.FieldContextAttribute {
-				needsAttrMaps = true
+		// Inline summary query to get time bounds shared by Pass 1 and Pass 2.
+		var traceSummary model.TraceSummary
+		summaryQuery := fmt.Sprintf(
+			"SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id",
+			r.TraceDB, r.traceSummaryTable)
+		if summaryErr := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(
+			&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans,
+		); summaryErr != nil {
+			if summaryErr == sql.ErrNoRows {
+				return trace, nil
 			}
-			if f.FieldContext == telemetrytypes.FieldContextResource {
-				needsResourceMap = true
-			}
+			r.logger.Error("Error in processing flamegraph trace summary sql query", errorsV2.Attr(summaryErr))
+			return nil, model.ExecutionError(fmt.Errorf("getFlamegraphSpansForTrace: error querying trace summary: %w", summaryErr))
 		}
-		selectCols := "DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, resource_string_service$$name, name, events"
-		if needsAttrMaps {
-			selectCols += ", attributes_string, attributes_number, attributes_bool"
-		}
-		if needsResourceMap {
-			selectCols += ", resources_string"
-		}
-		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
+		tsBucketStart = traceSummary.Start.Unix() - 1800
+		tsBucketEnd = traceSummary.End.Unix()
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
-		if err != nil {
-			return nil, err
+		// Pass 1: skeleton query — no events, no attribute maps.
+		// Keeps tree-building memory lean; events are fetched in Pass 2 only for
+		// the windowed spans that are actually returned in the response.
+		skeletonQuery := fmt.Sprintf(
+			"SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, parent_span_id, has_error, resource_string_service$$name, name FROM %s.%s WHERE trace_id=$1 AND ts_bucket_start>=$2 AND ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC",
+			r.TraceDB, r.traceTableName)
+
+		var skeletonSpans []model.SpanItemV2
+		if skeletonErr := r.db.Select(ctx, &skeletonSpans, skeletonQuery, traceID,
+			strconv.FormatInt(tsBucketStart, 10), strconv.FormatInt(tsBucketEnd, 10),
+		); skeletonErr != nil {
+			r.logger.Error("Error in processing flamegraph skeleton sql query", errorsV2.Attr(skeletonErr))
+			return nil, model.ExecutionError(fmt.Errorf("getFlamegraphSpansForTrace: error querying skeleton spans: %w", skeletonErr))
 		}
-		if len(searchScanResponses) == 0 {
+		if len(skeletonSpans) == 0 {
 			return trace, nil
 		}
 
-		for _, item := range searchScanResponses {
-			events := make([]model.Event, 0, len(item.Events))
-			for _, event := range item.Events {
-				var eventMap model.Event
-				if unmarshalErr := json.Unmarshal([]byte(event), &eventMap); unmarshalErr != nil {
-					r.logger.Error("Error unmarshalling events", errorsV2.Attr(unmarshalErr))
-					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", unmarshalErr.Error())
-				}
-				events = append(events, eventMap)
-			}
-
+		for _, item := range skeletonSpans {
 			jsonItem := model.FlamegraphSpan{
 				SpanID:       item.SpanID,
 				ServiceName:  item.ServiceName,
@@ -1200,12 +1200,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				DurationNano: item.DurationNano,
 				HasError:     item.HasError,
 				ParentSpanID: item.ParentSpanId,
-				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
-			}
-
-			if len(req.SelectFields) > 0 {
-				jsonItem.SetRequestedFields(item, req.SelectFields)
 			}
 
 			// metadata calculation
@@ -1214,7 +1209,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				startTime = startTimeUnixNano
 			}
 			if endTime == 0 || (startTimeUnixNano+jsonItem.DurationNano) > endTime {
-				endTime = (startTimeUnixNano + jsonItem.DurationNano)
+				endTime = startTimeUnixNano + jsonItem.DurationNano
 			}
 			if durationNano == 0 || jsonItem.DurationNano > durationNano {
 				durationNano = jsonItem.DurationNano
@@ -1223,7 +1218,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			jsonItem.TimeUnixNano = uint64(item.TimeUnixNano.UnixNano() / 1000000)
 			spanIdToSpanNodeMap[jsonItem.SpanID] = &jsonItem
 		}
-		searchScanResponses = nil
+		skeletonSpans = nil
 
 		// build parent-child tree using parent_span_id; insert placeholders for missing parents
 		for _, spanNode := range spanIdToSpanNodeMap {
@@ -1272,6 +1267,74 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
 	r.logger.Debug("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID, "totalSpans", totalSpanCount, "limit", clientLimit)
+
+	// Pass 2: hydrate events and requested attribute fields only for the selected window spans.
+	// tsBucketStart is non-zero only when we performed a DB fetch (cache miss path).
+	if err != nil && tsBucketStart != 0 {
+		needsAttrMaps := false
+		needsResourceMap := false
+		for _, f := range req.SelectFields {
+			if f.FieldContext == telemetrytypes.FieldContextAttribute {
+				needsAttrMaps = true
+			}
+			if f.FieldContext == telemetrytypes.FieldContextResource {
+				needsResourceMap = true
+			}
+		}
+
+		selectedSpanIDs := make([]string, 0)
+		selectedSpanMap := make(map[string]*model.FlamegraphSpan)
+		for _, level := range selectedSpansForRequest {
+			for _, span := range level {
+				selectedSpanIDs = append(selectedSpanIDs, span.SpanID)
+				selectedSpanMap[span.SpanID] = span
+			}
+		}
+
+		if len(selectedSpanIDs) > 0 {
+			hydrateCols := "span_id, events"
+			if needsAttrMaps {
+				hydrateCols += ", attributes_string, attributes_number, attributes_bool"
+			}
+			if needsResourceMap {
+				hydrateCols += ", resources_string"
+			}
+			hydrateQuery := fmt.Sprintf(
+				"SELECT %s FROM %s.%s WHERE trace_id=@traceID AND ts_bucket_start>=@tsStart AND ts_bucket_start<=@tsEnd AND span_id IN @spanIDs",
+				hydrateCols, r.TraceDB, r.traceTableName)
+
+			var hydrateRows []model.SpanItemV2
+			if hydrateErr := r.db.Select(ctx, &hydrateRows, hydrateQuery,
+				clickhouse.Named("traceID", traceID),
+				clickhouse.Named("tsStart", tsBucketStart),
+				clickhouse.Named("tsEnd", tsBucketEnd),
+				clickhouse.Named("spanIDs", selectedSpanIDs),
+			); hydrateErr != nil {
+				r.logger.Error("Error in processing flamegraph hydration sql query", errorsV2.Attr(hydrateErr))
+				return nil, model.ExecutionError(fmt.Errorf("getFlamegraphSpansForTrace: error querying events: %w", hydrateErr))
+			}
+
+			for _, item := range hydrateRows {
+				span, ok := selectedSpanMap[item.SpanID]
+				if !ok {
+					continue
+				}
+				events := make([]model.Event, 0, len(item.Events))
+				for _, event := range item.Events {
+					var eventMap model.Event
+					if unmarshalErr := json.Unmarshal([]byte(event), &eventMap); unmarshalErr != nil {
+						r.logger.Error("Error unmarshalling events", errorsV2.Attr(unmarshalErr))
+						return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", unmarshalErr.Error())
+					}
+					events = append(events, eventMap)
+				}
+				span.Events = events
+				if len(req.SelectFields) > 0 {
+					span.SetRequestedFields(item, req.SelectFields)
+				}
+			}
+		}
+	}
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
