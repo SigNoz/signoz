@@ -6,7 +6,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
+import { invalidLicense, mockUseAuthZGrantAll } from 'tests/authz-test-utils';
 
 import RolesSettings from '../RolesSettings';
 
@@ -174,6 +174,26 @@ describe('RolesSettings', () => {
 				expect(screen.getByText(role.description)).toBeInTheDocument();
 			}
 		}
+	});
+
+	it('hides the create button and disables row clicks when license is not valid', async () => {
+		render(<RolesSettings />, undefined, {
+			appContextOverrides: { activeLicense: invalidLicense },
+		});
+
+		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
+
+		// Create button must be absent
+		expect(
+			screen.queryByRole('button', { name: /custom role/i }),
+		).not.toBeInTheDocument();
+
+		// Rows must not carry the clickable class or button role
+		const rows = document.querySelectorAll('.roles-table-row');
+		rows.forEach((row) => {
+			expect(row).not.toHaveClass('roles-table-row--clickable');
+			expect(row.getAttribute('role')).not.toBe('button');
+		});
 	});
 
 	it('handles invalid dates gracefully by showing fallback', async () => {

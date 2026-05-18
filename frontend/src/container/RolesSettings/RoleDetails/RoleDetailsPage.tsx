@@ -161,16 +161,7 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (!hasReadPermission && readPerms !== null) {
-		return <PermissionDeniedFullPage permissionName="role:read" />;
-	}
-
-	if (
-		isLoading ||
-		isTransitioning ||
-		(!!nameFromQuery && isReadAuthZLoading) ||
-		isFetchingActiveLicense
-	) {
+	if (isFetchingActiveLicense) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -184,6 +175,22 @@ function RoleDetailsPage(): JSX.Element {
 
 	if (activeLicense?.status !== LicenseStatus.VALID) {
 		return <Redirect to={ROUTES.ROLES_SETTINGS} />;
+	}
+
+	if (!hasReadPermission && readPerms !== null) {
+		return <PermissionDeniedFullPage permissionName="role:read" />;
+	}
+
+	if (isLoading || isTransitioning || (!!nameFromQuery && isReadAuthZLoading)) {
+		return (
+			<div className="role-details-page">
+				<Skeleton
+					active
+					paragraph={{ rows: 8 }}
+					className="role-details-skeleton"
+				/>
+			</div>
+		);
 	}
 
 	if (isError) {
