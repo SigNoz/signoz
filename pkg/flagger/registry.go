@@ -10,6 +10,7 @@ var (
 	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
 	FeatureUseMeterReporter  = featuretypes.MustNewName("use_meter_reporter")
 	FeatureUseJSONBody       = featuretypes.MustNewName("use_json_body")
+	FeatureDashboardV2       = featuretypes.MustNewName("dashboard_v2")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -67,6 +68,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether body JSON querying is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureDashboardV2,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether dashboard v2 is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
