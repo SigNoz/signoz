@@ -374,6 +374,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Shield size={16} />,
 				isEnabled: false,
 				itemKey: 'roles',
+				isBeta: true,
 			},
 			{
 				key: ROUTES.MEMBERS_SETTINGS,

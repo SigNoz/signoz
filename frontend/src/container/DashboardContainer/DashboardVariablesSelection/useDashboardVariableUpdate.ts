@@ -1,5 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from '@signozhq/ui/sonner';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -48,6 +50,7 @@ export const useDashboardVariableUpdate =
 		);
 		const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 		const updateMutation = useUpdateDashboard();
+		const { t } = useTranslation('dashboard');
 
 		const onValueUpdate = useCallback(
 			(
@@ -177,6 +180,14 @@ export const useDashboardVariableUpdate =
 				// Get current dashboard variables
 				const currentVariables = dashboardData.data.variables || {};
 
+				const nameExists = Object.values(currentVariables).some(
+					(v) => v.name === name,
+				);
+				if (nameExists) {
+					toast.error(t('variable_name_already_exists', { name, ns: 'dashboard' }));
+					return;
+				}
+
 				// Create tableRowData like Dashboard Settings does
 				const tableRowData = [];
 				const variableOrderArr = [];
@@ -202,21 +213,20 @@ export const useDashboardVariableUpdate =
 				// Create new variable
 				const nextOrder =
 					variableOrderArr.length > 0 ? Math.max(...variableOrderArr) + 1 : 0;
-				const newVariable: any = {
+				const newVariable: IDashboardVariable = {
 					id: uuidv4(),
 					name,
-					type: 'DYNAMIC' as const,
+					type: 'DYNAMIC',
 					description,
 					order: nextOrder,
 					selectedValue: value,
 					allSelected: false,
 					haveCustomValuesSelected: false,
-					sort: 'ASC' as const,
+					sort: 'ASC',
 					multiSelect: true,
 					showALLOption: true,
 					dynamicVariablesAttribute: name,
 					dynamicVariablesSource: source,
-					dynamicVariablesWidgetIds: [],
 					queryValue: '',
 				};
 

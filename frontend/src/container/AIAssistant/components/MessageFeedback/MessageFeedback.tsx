@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
@@ -126,7 +126,7 @@ export default function MessageFeedback({
 		<>
 			<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
 				<div className={styles.actions}>
-					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
+					<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
 						<Button
 							className={styles.btn}
 							size="icon"
@@ -136,9 +136,9 @@ export default function MessageFeedback({
 						>
 							{copied ? <Check size={12} /> : <Copy size={12} />}
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
-					<Tooltip title="Good response">
+					<TooltipSimple title="Good response">
 						<Button
 							className={cx(styles.btn, { [styles.votedUp]: vote === 'positive' })}
 							size="icon"
@@ -148,9 +148,9 @@ export default function MessageFeedback({
 						>
 							<ThumbsUp size={12} />
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
-					<Tooltip title="Bad response">
+					<TooltipSimple title="Bad response">
 						<Button
 							className={cx(styles.btn, {
 								[styles.votedDown]: vote === 'negative',
@@ -162,10 +162,10 @@ export default function MessageFeedback({
 						>
 							<ThumbsDown size={12} />
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
 					{onRegenerate && (
-						<Tooltip title="Regenerate">
+						<TooltipSimple title="Regenerate">
 							<Button
 								className={styles.btn}
 								size="icon"
@@ -175,7 +175,7 @@ export default function MessageFeedback({
 							>
 								<RefreshCw size={12} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 					)}
 				</div>
 
