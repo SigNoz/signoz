@@ -9413,6 +9413,45 @@ export type GetDashboardV2200 = {
 	status: string;
 };
 
+export type UpdateDashboardV2PathParameters = {
+	id: string;
+};
+export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnlockDashboardV2PathParameters = {
+	id: string;
+};
+export type LockDashboardV2PathParameters = {
+	id: string;
+};
+export type CreatePublicDashboardV2PathParameters = {
+	id: string;
+};
+export type CreatePublicDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdatePublicDashboardV2PathParameters = {
+	id: string;
+};
+export type UpdatePublicDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array
