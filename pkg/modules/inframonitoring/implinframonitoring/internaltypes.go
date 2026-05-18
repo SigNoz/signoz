@@ -14,3 +14,18 @@ type groupHostStatusCounts struct {
 	Active   int
 	Inactive int
 }
+
+// podPhaseCounts holds per-group pod counts bucketed by latest phase in window.
+type podPhaseCounts struct {
+	Pending   int
+	Running   int
+	Succeeded int
+	Failed    int
+	Unknown   int
+}
+
+// nodeConditionCounts holds per-group node counts bucketed by latest condition_ready in window.
+type nodeConditionCounts struct {
+	Ready    int
+	NotReady int
+}

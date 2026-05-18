@@ -17,7 +17,7 @@ const multiSelectVariable: Partial<IDashboardVariable> = {
 
 describe('normalizeUrlValueForVariable', () => {
 	describe('Single select variable', () => {
-		test('should keep single string value as is', () => {
+		it('should keep single string value as is', () => {
 			const result = normalizeUrlValueForVariable(
 				'production',
 				singleSelectVariable as IDashboardVariable,
@@ -25,7 +25,7 @@ describe('normalizeUrlValueForVariable', () => {
 			expect(result).toBe('production');
 		});
 
-		test('should keep single number value as is', () => {
+		it('should keep single number value as is', () => {
 			const result = normalizeUrlValueForVariable(
 				123,
 				singleSelectVariable as IDashboardVariable,
@@ -33,7 +33,7 @@ describe('normalizeUrlValueForVariable', () => {
 			expect(result).toBe(123);
 		});
 
-		test('should take first element from array', () => {
+		it('should take first element from array', () => {
 			const result = normalizeUrlValueForVariable(
 				['production', 'staging'],
 				singleSelectVariable as IDashboardVariable,
@@ -41,7 +41,7 @@ describe('normalizeUrlValueForVariable', () => {
 			expect(result).toBe('production');
 		});
 
-		test('should return null for empty array', () => {
+		it('should return null for empty array', () => {
 			const result = normalizeUrlValueForVariable(
 				[],
 				singleSelectVariable as IDashboardVariable,
@@ -49,7 +49,7 @@ describe('normalizeUrlValueForVariable', () => {
 			expect(result).toBeNull();
 		});
 
-		test('should handle null/undefined values', () => {
+		it('should handle null/undefined values', () => {
 			expect(
 				normalizeUrlValueForVariable(
 					null,
@@ -66,39 +66,39 @@ describe('normalizeUrlValueForVariable', () => {
 	});
 
 	describe('Multi select variable', () => {
-		test('should convert string to array', () => {
+		it('should convert string to array', () => {
 			const result = normalizeUrlValueForVariable(
 				'production',
 				multiSelectVariable as IDashboardVariable,
 			);
-			expect(result).toEqual(['production']);
+			expect(result).toStrictEqual(['production']);
 		});
 
-		test('should convert number to array', () => {
+		it('should convert number to array', () => {
 			const result = normalizeUrlValueForVariable(
 				123,
 				multiSelectVariable as IDashboardVariable,
 			);
-			expect(result).toEqual([123]);
+			expect(result).toStrictEqual([123]);
 		});
 
-		test('should keep array as is', () => {
+		it('should keep array as is', () => {
 			const result = normalizeUrlValueForVariable(
 				['production', 'staging'],
 				multiSelectVariable as IDashboardVariable,
 			);
-			expect(result).toEqual(['production', 'staging']);
+			expect(result).toStrictEqual(['production', 'staging']);
 		});
 
-		test('should keep empty array as is', () => {
+		it('should keep empty array as is', () => {
 			const result = normalizeUrlValueForVariable(
 				[],
 				multiSelectVariable as IDashboardVariable,
 			);
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
-		test('should handle null/undefined values', () => {
+		it('should handle null/undefined values', () => {
 			expect(
 				normalizeUrlValueForVariable(
 					null,
@@ -115,7 +115,7 @@ describe('normalizeUrlValueForVariable', () => {
 	});
 
 	describe('Real world scenarios', () => {
-		test('URL has array ["test", "prod"] for single select variable -> should take "test"', () => {
+		it('URL has array ["test", "prod"] for single select variable -> should take "test"', () => {
 			const result = normalizeUrlValueForVariable(
 				['test', 'prod'],
 				singleSelectVariable as IDashboardVariable,
@@ -123,15 +123,15 @@ describe('normalizeUrlValueForVariable', () => {
 			expect(result).toBe('test');
 		});
 
-		test('URL has string "test" for multi select variable -> should convert to ["test"]', () => {
+		it('URL has string "test" for multi select variable -> should convert to ["test"]', () => {
 			const result = normalizeUrlValueForVariable(
 				'test',
 				multiSelectVariable as IDashboardVariable,
 			);
-			expect(result).toEqual(['test']);
+			expect(result).toStrictEqual(['test']);
 		});
 
-		test('Handles mixed types in array for single select', () => {
+		it('Handles mixed types in array for single select', () => {
 			const result = normalizeUrlValueForVariable(
 				['test', 123, true],
 				singleSelectVariable as IDashboardVariable,

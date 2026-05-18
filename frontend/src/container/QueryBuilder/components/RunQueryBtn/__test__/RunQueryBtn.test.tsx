@@ -18,7 +18,7 @@ describe('RunQueryBtn', () => {
 		);
 	});
 
-	test('renders run state and triggers on click', async () => {
+	it('renders run state and triggers on click', async () => {
 		const user = userEvent.setup();
 		const onRun = jest.fn();
 		const onCancel = jest.fn();
@@ -35,7 +35,7 @@ describe('RunQueryBtn', () => {
 		expect(onRun).toHaveBeenCalledTimes(1);
 	});
 
-	test('shows cancel state and calls handleCancelQuery', async () => {
+	it('shows cancel state and calls handleCancelQuery', async () => {
 		const user = userEvent.setup();
 		const onRun = jest.fn();
 		const onCancel = jest.fn();
@@ -51,51 +51,47 @@ describe('RunQueryBtn', () => {
 		expect(onCancel).toHaveBeenCalledTimes(1);
 	});
 
-	test('disabled when disabled prop is true', () => {
+	it('disabled when disabled prop is true', () => {
 		render(<RunQueryBtn disabled />);
 		expect(screen.getByRole('button', { name: /run query/i })).toBeDisabled();
 	});
 
-	test('disabled when no props provided', () => {
+	it('disabled when no props provided', () => {
 		render(<RunQueryBtn />);
 		expect(
 			screen.getByRole('button', { name: /run query/i }),
 		).toBeInTheDocument();
 	});
 
-	test('shows Command + CornerDownLeft on mac', () => {
-		const { container } = render(
+	it('shows Command + CornerDownLeft on mac', () => {
+		render(
 			<RunQueryBtn
 				onStageRunQuery={jest.fn()}
 				handleCancelQuery={jest.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
-		expect(container.querySelector('.lucide-command')).toBeInTheDocument();
-		expect(
-			container.querySelector('.lucide-corner-down-left'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-modifier-mac')).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-enter')).toBeInTheDocument();
 	});
 
-	test('shows ChevronUp + CornerDownLeft on non-mac', () => {
+	it('shows ChevronUp + CornerDownLeft on non-mac', () => {
 		(getUserOperatingSystem as jest.Mock).mockReturnValue(
 			UserOperatingSystem.WINDOWS,
 		);
-		const { container } = render(
+		render(
 			<RunQueryBtn
 				onStageRunQuery={jest.fn()}
 				handleCancelQuery={jest.fn()}
 				isLoadingQueries={false}
 			/>,
 		);
-		expect(container.querySelector('.lucide-chevron-up')).toBeInTheDocument();
-		expect(container.querySelector('.lucide-command')).not.toBeInTheDocument();
-		expect(
-			container.querySelector('.lucide-corner-down-left'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-modifier-non-mac')).toBeInTheDocument();
+		expect(screen.queryByTestId('cmd-hint-modifier-mac')).not.toBeInTheDocument();
+		expect(screen.getByTestId('cmd-hint-enter')).toBeInTheDocument();
 	});
 
-	test('renders custom label when provided', () => {
+	it('renders custom label when provided', () => {
 		render(
 			<RunQueryBtn
 				onStageRunQuery={jest.fn()}

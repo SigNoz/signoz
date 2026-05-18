@@ -2,6 +2,7 @@ import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import uPlot, { AlignedData, Series } from 'uplot';
 
+import { SyncTooltipFilterMode } from '../../plugins/TooltipPlugin/types';
 import { TooltipContentItem } from '../types';
 
 export const FALLBACK_SERIES_COLOR = '#000000';
@@ -62,6 +63,8 @@ export function buildTooltipContent({
 	yAxisUnit,
 	decimalPrecision,
 	isStackedBarChart,
+	syncedSeriesIndexes,
+	syncFilterMode,
 }: {
 	data: AlignedData;
 	series: Series[];
@@ -71,18 +74,42 @@ export function buildTooltipContent({
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
 	isStackedBarChart?: boolean;
+	syncedSeriesIndexes?: number[] | null;
+	syncFilterMode?: SyncTooltipFilterMode;
 }): TooltipContentItem[] {
 	const items: TooltipContentItem[] = [];
+	const matchedIndexes =
+		syncedSeriesIndexes != null ? new Set(syncedSeriesIndexes) : null;
+	const filterMode = syncFilterMode ?? SyncTooltipFilterMode.Filtered;
+	// In Filtered mode the matched indexes act as a whitelist; in All mode every
+	// series renders and matched indexes only drive row highlighting.
+	const allowedIndexes =
+		filterMode === SyncTooltipFilterMode.All ? null : matchedIndexes;
 
 	for (let seriesIndex = 1; seriesIndex < series.length; seriesIndex += 1) {
 		const seriesItem = series[seriesIndex];
 		if (!seriesItem?.show) {
 			continue;
 		}
+		if (allowedIndexes != null && !allowedIndexes.has(seriesIndex)) {
+			continue;
+		}
 
 		const dataIndex = dataIndexes[seriesIndex];
-		// Skip series with no data at the current cursor position
+		const isSync = allowedIndexes != null;
+		const isHighlighted = matchedIndexes?.has(seriesIndex) ?? false;
+
 		if (dataIndex === null) {
+			if (isSync) {
+				items.push({
+					label: String(seriesItem.label ?? ''),
+					value: 0,
+					tooltipValue: 'No Data',
+					color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+					isActive: false,
+					isHighlighted,
+				});
+			}
 			continue;
 		}
 
@@ -101,6 +128,16 @@ export function buildTooltipContent({
 				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
 				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
 				isActive: seriesIndex === activeSeriesIndex,
+				isHighlighted,
+			});
+		} else if (isSync) {
+			items.push({
+				label: String(seriesItem.label ?? ''),
+				value: 0,
+				tooltipValue: 'No Data',
+				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+				isActive: false,
+				isHighlighted,
 			});
 		}
 	}

@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { IntegrationType } from 'container/Integrations/types';
-import { Blocks, LifeBuoy } from 'lucide-react';
+import { Blocks, LifeBuoy } from '@signozhq/icons';
 
 import './Header.styles.scss';
 
-function Header({ title }: { title: IntegrationType }): JSX.Element {
+function Header({ type }: { type: IntegrationType }): JSX.Element {
 	return (
 		<div className="cloud-header">
 			<div className="cloud-header__navigation">
@@ -25,27 +25,30 @@ function Header({ title }: { title: IntegrationType }): JSX.Element {
 							),
 						},
 						{
-							title: <div className="cloud-header__breadcrumb-title">{title}</div>,
+							title: <div className="cloud-header__breadcrumb-title">{type}</div>,
 						},
 					]}
 				/>
 			</div>
-			<div className="cloud-header__actions">
-				<Button
-					variant="solid"
-					size="sm"
-					color="secondary"
-					onClick={(): void => {
-						window.open(
-							'https://signoz.io/blog/native-aws-integrations-with-autodiscovery/',
-							'_blank',
-						);
-					}}
-					prefix={<LifeBuoy size={12} />}
-				>
-					Get Help
-				</Button>
-			</div>
+
+			{type === IntegrationType.AWS_SERVICES && (
+				<div className="cloud-header__actions">
+					<Button
+						variant="solid"
+						size="sm"
+						color="secondary"
+						onClick={(): void => {
+							window.open(
+								'https://signoz.io/blog/native-aws-integrations-with-autodiscovery/',
+								'_blank',
+							);
+						}}
+						prefix={<LifeBuoy size={12} />}
+					>
+						Get Help
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }

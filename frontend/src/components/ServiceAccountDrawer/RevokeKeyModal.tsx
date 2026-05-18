@@ -1,6 +1,13 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
-import { Button, DialogWrapper, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	buildAPIKeyDeletePermission,
+	buildSADetachPermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -17,39 +24,44 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-export interface RevokeKeyContentProps {
+export interface RevokeKeyFooterProps {
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
+	accountId?: string;
+	keyId?: string;
 }
 
-export function RevokeKeyContent({
+export function RevokeKeyFooter({
 	isRevoking,
 	onCancel,
 	onConfirm,
-}: RevokeKeyContentProps): JSX.Element {
+	accountId,
+	keyId,
+}: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<p className="delete-dialog__body">
-				Revoking this key will permanently invalidate it. Any systems using this key
-				will lose access immediately.
-			</p>
-			<div className="delete-dialog__footer">
-				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
-					<X size={12} />
-					Cancel
-				</Button>
+			<Button variant="solid" color="secondary" onClick={onCancel}>
+				<X size={12} />
+				Cancel
+			</Button>
+			<AuthZTooltip
+				checks={[
+					buildAPIKeyDeletePermission(keyId ?? ''),
+					buildSADetachPermission(accountId ?? ''),
+				]}
+				enabled={!!accountId && !!keyId}
+			>
 				<Button
 					variant="solid"
 					color="destructive"
-					size="sm"
 					loading={isRevoking}
 					onClick={onConfirm}
 				>
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
-			</div>
+			</AuthZTooltip>
 		</>
 	);
 }
@@ -112,15 +124,21 @@ function RevokeKeyModal(): JSX.Element {
 			}}
 			title={`Revoke ${keyName ?? 'key'}?`}
 			width="narrow"
-			className="alert-dialog delete-dialog"
+			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
+			footer={
+				<RevokeKeyFooter
+					isRevoking={isRevoking}
+					onCancel={handleCancel}
+					onConfirm={handleConfirm}
+					accountId={accountId ?? undefined}
+					keyId={revokeKeyId || undefined}
+				/>
+			}
 		>
-			<RevokeKeyContent
-				isRevoking={isRevoking}
-				onCancel={handleCancel}
-				onConfirm={handleConfirm}
-			/>
+			Revoking this key will permanently invalidate it. Any systems using this key
+			will lose access immediately.
 		</DialogWrapper>
 	);
 }

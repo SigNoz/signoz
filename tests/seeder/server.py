@@ -1,5 +1,12 @@
-"""HTTP seeder — wraps fixtures.{traces,logs,metrics} so Playwright specs
-can POST per-test telemetry (tagged `seeder=true`) and DELETE to clear."""
+"""HTTP seeder — single entrypoint for e2e/integration telemetry.
+
+POST /telemetry/{metrics,logs,traces} insert into ClickHouse via
+fixtures.{metrics,logs,traces}. DELETE truncates the signal tables.
+
+Parallel-safe: every seeded row is tagged `seeder=true`. Tests share
+the seeded baseline; per-test mutations live in their own dashboards.
+Only test_teardown should call DELETE — workers must finish first.
+"""
 
 import os
 from collections.abc import AsyncIterator
@@ -10,11 +17,7 @@ import clickhouse_connect
 from fastapi import FastAPI, HTTPException, Response, status
 
 from fixtures.logger import setup_logger
-from fixtures.logs import (
-    Logs,
-    insert_logs_to_clickhouse,
-    truncate_logs_tables,
-)
+from fixtures.logs import Logs, insert_logs_to_clickhouse, truncate_logs_tables
 from fixtures.metrics import (
     Metrics,
     insert_metrics_to_clickhouse,
@@ -64,12 +67,19 @@ def _tag(item: dict[str, Any]) -> dict[str, Any]:
     return {**item, "resources": resources}
 
 
-# Metrics payload carries label dicts at the top level, not a `resources`
-# key — tagging goes on the `resource_attrs` wrapper that Metrics.from_dict
-# unpacks. Same effect, different key.
 def _tag_metrics(item: dict[str, Any]) -> dict[str, Any]:
-    resource_attrs = {**(item.get("resource_attrs") or {}), **SEEDER_MARKER}
-    return {**item, "resource_attrs": resource_attrs}
+    # Accept OTLP-style `resource_attributes` / `attributes` or legacy
+    # `resource_attrs` / `labels` interchangeably.
+    resource_attrs = {
+        **(item.get("resource_attrs") or {}),
+        **(item.get("resource_attributes") or {}),
+        **SEEDER_MARKER,
+    }
+    labels = {**(item.get("labels") or {}), **(item.get("attributes") or {})}
+    out = {**item, "resource_attrs": resource_attrs, "labels": labels}
+    out.pop("resource_attributes", None)
+    out.pop("attributes", None)
+    return out
 
 
 @app.post("/telemetry/traces", status_code=status.HTTP_201_CREATED)
@@ -145,3 +155,17 @@ def delete_metrics() -> Response:
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/seed/golden", status_code=status.HTTP_200_OK)
+def seed_golden() -> dict[str, int]:
+    """Re-seed the golden dataset with timestamps rebased to `now`.
+    Called by Playwright globalSetup before every test session so chart
+    assertions land within default panel time windows."""
+    from fixtures import seed_golden_dataset  # noqa: PLC0415 — local import keeps cold-start fast
+
+    try:
+        return seed_golden_dataset.seed("http://localhost:8080")
+    except Exception as e:
+        logger.exception("golden seed failed")
+        raise HTTPException(500, str(e)) from e

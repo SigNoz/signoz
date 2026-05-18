@@ -2,11 +2,13 @@ package tracedetailtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const (
@@ -21,9 +23,27 @@ var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found
 
 // PostableWaterfall is the request body for the v3 waterfall API.
 type PostableWaterfall struct {
-	SelectedSpanID   string   `json:"selectedSpanId"`
-	UncollapsedSpans []string `json:"uncollapsedSpans"`
-	Limit            uint     `json:"limit"`
+	SelectedSpanID   string            `json:"selectedSpanId"`
+	UncollapsedSpans []string          `json:"uncollapsedSpans"`
+	Limit            uint              `json:"limit"`
+	Aggregations     []SpanAggregation `json:"aggregations"`
+}
+
+func (p *PostableWaterfall) Validate() error {
+	if len(p.Aggregations) > maxAggregationItems {
+		return ErrTooManyAggregationItems
+	}
+	for _, a := range p.Aggregations {
+		if !a.Aggregation.isValid() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
+		}
+		fc := a.Field.FieldContext
+		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
+				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
+		}
+	}
+	return nil
 }
 
 // Event represents a span event.
@@ -51,7 +71,7 @@ type WaterfallSpan struct {
 	ParentSpanID string            `json:"parent_span_id"`
 	Resource     map[string]string `json:"resource"`
 	SpanID       string            `json:"span_id"`
-	TimeUnixNano uint64            `json:"-"`
+	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
 
@@ -118,7 +138,7 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 		SpanID:       spanID,
 		TraceID:      traceID,
 		Name:         "Missing Span",
-		TimeUnixNano: timeUnixNano,
+		TimeUnix:     timeUnixNano,
 		DurationNano: durationNano,
 		Events:       make([]Event, 0),
 		Children:     make([]*WaterfallSpan, 0),
@@ -130,10 +150,10 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 // SortChildren recursively sorts children of each span by TimeUnixNano then Name.
 func (ws *WaterfallSpan) SortChildren() {
 	sort.Slice(ws.Children, func(i, j int) bool {
-		if ws.Children[i].TimeUnixNano == ws.Children[j].TimeUnixNano {
+		if ws.Children[i].TimeUnix == ws.Children[j].TimeUnix {
 			return ws.Children[i].Name < ws.Children[j].Name
 		}
-		return ws.Children[i].TimeUnixNano < ws.Children[j].TimeUnixNano
+		return ws.Children[i].TimeUnix < ws.Children[j].TimeUnix
 	})
 	for _, child := range ws.Children {
 		child.SortChildren()
@@ -160,7 +180,23 @@ func (ws *WaterfallSpan) GetSubtreeNodeCount() uint64 {
 	return count
 }
 
-// getPreOrderedSpans returns spans in pre-order, uncollapsedSpanIDs must be pre-computed.
+// FieldValue returns the string representation of field's value on this span for grouping.
+// The bool reports whether the field was present with a non-empty value.
+func (ws *WaterfallSpan) FieldValue(field telemetrytypes.TelemetryFieldKey) (string, bool) {
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		v, ok := ws.Resource[field.Name]
+		return v, ok
+	case telemetrytypes.FieldContextAttribute:
+		v, ok := ws.Attributes[field.Name]
+		if !ok {
+			return "", false
+		}
+		return fmt.Sprintf("%v", v), true
+	}
+	return "", false
+}
+
 func (ws *WaterfallSpan) getPreOrderedSpans(uncollapsedSpanIDs map[string]struct{}, selectAll bool, level uint64) []*WaterfallSpan {
 	result := []*WaterfallSpan{ws.GetWithoutChildren(level)}
 	_, isUncollapsed := uncollapsedSpanIDs[ws.SpanID]
@@ -256,7 +292,7 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
-		TimeUnixNano:       uint64(item.StartTime.UnixNano()),
+		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
 	}
 }

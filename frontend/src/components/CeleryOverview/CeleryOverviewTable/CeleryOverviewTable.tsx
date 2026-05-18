@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
+import { Loader, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
+	Flex,
 	Input,
 	InputRef,
 	Progress,
@@ -14,8 +15,8 @@ import {
 	TableColumnsType,
 	TableColumnType,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {
@@ -107,9 +108,11 @@ const getColumnSearchProps = (
 					type="primary"
 					size="small"
 					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
-					icon={<SearchOutlined />}
 				>
-					Search
+					<Flex align="center" gap={4}>
+						<Search size="md" />
+						Search
+					</Flex>
 				</Button>
 				<Button
 					onClick={(): void => clearFilters && handleReset(clearFilters, confirm)}
@@ -131,8 +134,9 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<SearchOutlined
+		<Search
 			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
+			size="md"
 		/>
 	),
 	onFilter: (value, record): boolean =>
@@ -516,7 +520,9 @@ export default function CeleryOverviewTable({
 				bordered={false}
 				loading={{
 					spinning: isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					indicator: (
+						<Spin indicator={<Loader size={14} className="animate-spin" />} />
+					),
 				}}
 				locale={{
 					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,

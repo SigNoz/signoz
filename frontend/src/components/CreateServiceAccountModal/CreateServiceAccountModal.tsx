@@ -1,13 +1,12 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
-import {
-	Button,
-	DialogFooter,
-	DialogWrapper,
-	Input,
-	toast,
-} from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { SACreatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,
@@ -135,17 +134,19 @@ function CreateServiceAccountModal(): JSX.Element {
 					Cancel
 				</Button>
 
-				<Button
-					type="submit"
-					// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
-					form="create-sa-form"
-					variant="solid"
-					color="primary"
-					loading={isSubmitting}
-					disabled={!isValid}
-				>
-					Create Service Account
-				</Button>
+				<AuthZTooltip checks={[SACreatePermission]}>
+					<Button
+						type="submit"
+						// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
+						form="create-sa-form"
+						variant="solid"
+						color="primary"
+						loading={isSubmitting}
+						disabled={!isValid}
+					>
+						Create Service Account
+					</Button>
+				</AuthZTooltip>
 			</DialogFooter>
 		</DialogWrapper>
 	);

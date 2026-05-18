@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Button, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -7,6 +8,7 @@ import {
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
 import {
+	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesRoleMappingDTO,
@@ -57,9 +59,9 @@ interface CreateOrEditProps {
 function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { isCreate, record, onClose } = props;
 	const [form] = Form.useForm<FormValues>();
-	const [authnProvider, setAuthnProvider] = useState<string>(
-		record?.ssoType || '',
-	);
+	const [authnProvider, setAuthnProvider] = useState<
+		AuthtypesAuthNProviderDTO | ''
+	>(record?.config?.ssoType || '');
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -135,6 +137,10 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		try {
 			await form.validateFields();
 		} catch {
+			return;
+		}
+
+		if (authnProvider === '') {
 			return;
 		}
 

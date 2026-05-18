@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Callout } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';

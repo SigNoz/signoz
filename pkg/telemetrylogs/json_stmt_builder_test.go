@@ -8,6 +8,7 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -32,10 +33,7 @@ func (t TestExpected) GetQuery() string {
 }
 
 func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -115,9 +113,6 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
    not a body_promoted.* column. These tests assumed the old coalesce(body_promoted.x, body_v2.x) path.
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, "user.age", "user.name")
 
 	cases := []struct {
@@ -176,11 +171,7 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -340,10 +331,6 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
    (direct sub-column access), not a body_promoted.* column.
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
 	statementBuilder := buildJSONTestStatementBuilder(t, "education", "tags")
 	cases := []struct {
 		name        string
@@ -507,11 +494,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -816,11 +799,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
-	statementBuilder := buildJSONTestStatementBuilder(t, true)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, true)
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -939,10 +918,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_SelectField(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -1030,10 +1006,7 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_OrderBy(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-	statementBuilder := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -1109,6 +1082,69 @@ func TestJSONStmtBuilder_OrderBy(t *testing.T) {
 	}
 }
 
+func TestResourceAggrAndGroupBy_WithJSONEnabled(t *testing.T) {
+	statementBuilder, metadataStore := buildJSONTestStatementBuilder(t, false)
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keysMap := buildCompleteFieldKeyMap(releaseTime)
+	for _, keys := range keysMap {
+		for _, key := range keys {
+			metadataStore.SetKey(key)
+		}
+	}
+
+	cases := []struct {
+		name                string
+		requestType         qbtypes.RequestType
+		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected            qbtypes.Statement
+		expectedErrContains string
+	}{
+		{
+			name:        "resource_aggregation_and_group_by_with_json_enabled",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "region",
+						},
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "user.name exists",
+				},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "count_distinct(service.name)",
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query:    "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`region`::String IS NOT NULL, resource.`region`::String, NULL)) AS `region`, countDistinct(multiIf(resource.`service.name`::String IS NOT NULL, resource.`service.name`::String, NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE ((dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL) OR mapContains(attributes_string, 'user.name') = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `region`",
+				Args:     []any{true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Warnings: []string{"Key `user.name` is ambiguous, found 2 different combinations of field context / data type: [name=user.name,context=body,datatype=string name=user.name,context=attribute,datatype=string]."},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			if c.expectedErrContains != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErrContains)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
 func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
@@ -1127,9 +1163,12 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 					return entry.Path == path && entry.Type == jsonType
 				})
 				if idx >= 0 {
-					key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
-						Type:             jsonType,
-						ColumnExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
+					key.Indexes = append(key.Indexes, telemetrytypes.TelemetryFieldKeySkipIndex{
+						Name:            path,
+						FieldContext:    telemetrytypes.FieldContextBody,
+						FieldDataType:   fdt,
+						BaseColumn:      LogsV2BodyV2Column,
+						IndexExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
 					})
 				}
 			}
@@ -1147,12 +1186,15 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
+	t.Helper()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
+	fl := flaggertest.WithUseJSONBody(t, true)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1162,18 +1204,8 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
-	return statementBuilder
-}
-
-func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
-	enable := func() {
-		querybuilder.BodyJSONQueryEnabled = true
-	}
-	disable := func() {
-		querybuilder.BodyJSONQueryEnabled = false
-	}
-
-	return enable, disable
+	return statementBuilder, mockMetadataStore
 }

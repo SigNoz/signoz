@@ -29,9 +29,9 @@ describe('useColumnStore', () => {
 			});
 
 			const state = useColumnStore.getState().tables[TEST_KEY];
-			expect(state.hiddenColumnIds).toEqual(['b']);
-			expect(state.columnOrder).toEqual([]);
-			expect(state.columnSizing).toEqual({});
+			expect(state.hiddenColumnIds).toStrictEqual(['b']);
+			expect(state.columnOrder).toStrictEqual([]);
+			expect(state.columnSizing).toStrictEqual({});
 		});
 
 		it('does not reinitialize if already exists', () => {
@@ -124,7 +124,9 @@ describe('useColumnStore', () => {
 					.getState()
 					.setColumnSizing(TEST_KEY, { col1: 200, col2: 300 });
 			});
-			expect(useColumnStore.getState().tables[TEST_KEY].columnSizing).toEqual({
+			expect(
+				useColumnStore.getState().tables[TEST_KEY].columnSizing,
+			).toStrictEqual({
 				col1: 200,
 				col2: 300,
 			});
@@ -144,11 +146,9 @@ describe('useColumnStore', () => {
 					.getState()
 					.setColumnOrder(TEST_KEY, ['col2', 'col1', 'col3']);
 			});
-			expect(useColumnStore.getState().tables[TEST_KEY].columnOrder).toEqual([
-				'col2',
-				'col1',
-				'col3',
-			]);
+			expect(useColumnStore.getState().tables[TEST_KEY].columnOrder).toStrictEqual(
+				['col2', 'col1', 'col3'],
+			);
 		});
 	});
 
@@ -172,9 +172,9 @@ describe('useColumnStore', () => {
 			});
 
 			const state = useColumnStore.getState().tables[TEST_KEY];
-			expect(state.hiddenColumnIds).toEqual(['a']);
-			expect(state.columnOrder).toEqual([]);
-			expect(state.columnSizing).toEqual({});
+			expect(state.hiddenColumnIds).toStrictEqual(['a']);
+			expect(state.columnOrder).toStrictEqual([]);
+			expect(state.columnSizing).toStrictEqual({});
 		});
 	});
 
@@ -195,7 +195,7 @@ describe('useColumnStore', () => {
 			});
 
 			const state = useColumnStore.getState().tables[TEST_KEY];
-			expect(state.hiddenColumnIds).toEqual(['col1', 'col3']);
+			expect(state.hiddenColumnIds).toStrictEqual(['col1', 'col3']);
 			expect(state.hiddenColumnIds).not.toContain('col2');
 		});
 
@@ -216,7 +216,7 @@ describe('useColumnStore', () => {
 			});
 
 			const stateAfter = useColumnStore.getState().tables[TEST_KEY];
-			expect(stateAfter.hiddenColumnIds).toEqual(hiddenBefore);
+			expect(stateAfter.hiddenColumnIds).toStrictEqual(hiddenBefore);
 		});
 
 		it('does nothing for unknown storage key', () => {
@@ -242,7 +242,7 @@ describe('useColumnStore', () => {
 			});
 
 			const { result } = renderHook(() => useHiddenColumnIds(TEST_KEY));
-			expect(result.current).toEqual(['a']);
+			expect(result.current).toStrictEqual(['a']);
 		});
 
 		it('useHiddenColumnIds returns a stable snapshot for persisted state', () => {
@@ -270,7 +270,7 @@ describe('useColumnStore', () => {
 			});
 
 			const { result } = renderHook(() => useColumnSizing(TEST_KEY));
-			expect(result.current).toEqual({ col1: 150 });
+			expect(result.current).toStrictEqual({ col1: 150 });
 		});
 
 		it('useColumnOrder returns order', () => {
@@ -280,7 +280,7 @@ describe('useColumnStore', () => {
 			});
 
 			const { result } = renderHook(() => useColumnOrder(TEST_KEY));
-			expect(result.current).toEqual(['c', 'b', 'a']);
+			expect(result.current).toStrictEqual(['c', 'b', 'a']);
 		});
 
 		it('returns empty defaults for unknown storageKey', () => {
@@ -288,9 +288,9 @@ describe('useColumnStore', () => {
 			const { result: sizing } = renderHook(() => useColumnSizing('unknown'));
 			const { result: order } = renderHook(() => useColumnOrder('unknown'));
 
-			expect(hidden.current).toEqual([]);
-			expect(sizing.current).toEqual({});
-			expect(order.current).toEqual([]);
+			expect(hidden.current).toStrictEqual([]);
+			expect(sizing.current).toStrictEqual({});
+			expect(order.current).toStrictEqual([]);
 		});
 	});
 });

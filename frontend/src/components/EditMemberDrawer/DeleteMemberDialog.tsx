@@ -1,5 +1,6 @@
 import { Trash2, X } from '@signozhq/icons';
-import { Button, DialogWrapper } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 
 interface DeleteMemberDialogProps {
@@ -46,6 +47,7 @@ function DeleteMemberDialog({
 				color="destructive"
 				disabled={isDeleting}
 				onClick={onConfirm}
+				loading={isDeleting}
 			>
 				<Trash2 size={12} />
 				{isDeleting ? 'Processing...' : title}
@@ -63,7 +65,6 @@ function DeleteMemberDialog({
 			}}
 			title={title}
 			width="narrow"
-			className="alert-dialog delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={false}
 			footer={footer}

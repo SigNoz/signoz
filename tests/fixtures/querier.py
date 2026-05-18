@@ -69,7 +69,7 @@ class BuilderQuery:
 class TraceOperatorQuery:
     name: str
     expression: str
-    return_spans_from: str
+    return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
 
@@ -77,8 +77,9 @@ class TraceOperatorQuery:
         spec: dict[str, Any] = {
             "name": self.name,
             "expression": self.expression,
-            "returnSpansFrom": self.return_spans_from,
         }
+        if self.return_spans_from is not None:
+            spec["returnSpansFrom"] = self.return_spans_from
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:
@@ -449,6 +450,35 @@ def build_scalar_query(
     return {"type": "builder_query", "spec": spec}
 
 
+def build_raw_query(
+    name: str,
+    signal: str,
+    *,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+) -> dict:
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "disabled": disabled,
+    }
+
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    return {"type": "builder_query", "spec": spec}
+
+
 def build_group_by_field(
     name: str,
     field_data_type: str = "string",
@@ -498,6 +528,14 @@ def get_scalar_columns(response_json: dict) -> list[dict]:
     if not results:
         return []
     return results[0].get("columns", [])
+
+
+def get_rows(response: requests.Response) -> list[dict[str, Any]]:
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    # The server returns rows:null (not []) when there are 0 matching logs.
+    return results[0].get("rows") or []
 
 
 def get_column_data_from_response(response_json: dict, column_name: str) -> list[Any]:

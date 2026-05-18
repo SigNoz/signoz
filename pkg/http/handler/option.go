@@ -2,14 +2,15 @@ package handler
 
 import (
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 // Option configures optional behaviour on a handler created by New.
 type Option func(*handler)
 
 type AuditDef struct {
-	ResourceKind    string                    // AuthZ Typeable.Kind() value, e.g. "dashboard", "user".
-	Action          audittypes.Action         // create, update, delete, login, etc.
+	ResourceKind    coretypes.Kind            //  Typeable.Kind() value, e.g. "dashboard", "user".
+	Action          coretypes.Verb            // create, update, delete, etc.
 	Category        audittypes.ActionCategory // access_control, configuration_change, etc.
 	ResourceIDParam string                    // Gorilla mux path param name for the resource ID.
 }

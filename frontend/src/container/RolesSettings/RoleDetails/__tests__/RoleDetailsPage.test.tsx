@@ -1,29 +1,32 @@
-// Ungate feature flag for all tests in this file
-jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
-
+import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,
 	managedRoleResponse,
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import {
+	mockUseAuthZDenyAll,
+	mockUseAuthZGrantAll,
+} from 'tests/authz-test-utils';
 import RoleDetailsPage from '../RoleDetailsPage';
+
+jest.mock('hooks/useAuthZ/useAuthZ');
+const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
 
 const rolesApiBase = 'http://localhost/api/v1/roles';
-const authzResourcesUrl = 'http://localhost/api/v1/authz/resources';
-
-const authzResourcesResponse = {
-	status: 'success',
-	data: {
-		relations: { create: ['dashboard'], read: ['dashboard'] },
-		resources: [{ name: 'dashboard', type: 'dashboard' }],
-	},
-};
 
 const emptyObjectsResponse = { status: 'success', data: [] };
 
@@ -31,7 +34,7 @@ const allScopeObjectsResponse = {
 	status: 'success',
 	data: [
 		{
-			resource: { name: 'dashboard', type: 'dashboard' },
+			resource: { kind: 'role', type: 'role' },
 			selectors: ['*'],
 		},
 	],
@@ -45,19 +48,19 @@ function setupDefaultHandlers(roleId = CUSTOM_ROLE_ID): void {
 		rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(roleResponse)),
 		),
-		rest.get(authzResourcesUrl, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(authzResourcesResponse)),
-		),
 	);
 }
+
+beforeEach(() => {
+	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+});
 
 afterEach(() => {
 	jest.clearAllMocks();
 	server.resetHandlers();
 });
 
-// Todo: to fixed properly - failing with - due to timeout > 5000ms
-describe.skip('RoleDetailsPage', () => {
+describe('RoleDetailsPage', () => {
 	it('renders custom role header, tabs, description, permissions, and action buttons', async () => {
 		setupDefaultHandlers();
 
@@ -65,22 +68,17 @@ describe.skip('RoleDetailsPage', () => {
 			initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 		});
 
-		expect(await screen.findByText('Role — billing-manager')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Role — billing-manager'),
+		).resolves.toBeInTheDocument();
 
-		// Tab navigation
-		expect(screen.getByText('Overview')).toBeInTheDocument();
-		expect(screen.getByText('Members')).toBeInTheDocument();
-
-		// Role description (OverviewTab)
 		expect(
 			screen.getByText('Custom role for managing billing and invoices.'),
 		).toBeInTheDocument();
 
-		// Permission items derived from mocked authz relations
 		expect(screen.getByText('Create')).toBeInTheDocument();
 		expect(screen.getByText('Read')).toBeInTheDocument();
 
-		// Action buttons present for custom role
 		expect(
 			screen.getByRole('button', { name: /edit role details/i }),
 		).toBeInTheDocument();
@@ -96,7 +94,9 @@ describe.skip('RoleDetailsPage', () => {
 			initialRoute: `/settings/roles/${MANAGED_ROLE_ID}`,
 		});
 
-		expect(await screen.findByText(/Role — signoz-admin/)).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Role — signoz-admin/),
+		).resolves.toBeInTheDocument();
 
 		expect(
 			screen.getByText(
@@ -104,14 +104,13 @@ describe.skip('RoleDetailsPage', () => {
 			),
 		).toBeInTheDocument();
 
-		// Action buttons absent for managed role
 		expect(screen.queryByText('Edit Role Details')).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole('button', { name: /delete role/i }),
 		).not.toBeInTheDocument();
 	});
 
-	it('edit flow: modal opens pre-filled and calls PATCH on save and verify', async () => {
+	it('edit flow: modal opens pre-filled and calls PATCH on save', async () => {
 		const patchSpy = jest.fn();
 		let description = customRoleResponse.data.description;
 		server.use(
@@ -146,21 +145,16 @@ describe.skip('RoleDetailsPage', () => {
 
 		await screen.findByText('Role — billing-manager');
 
-		// Open the edit modal
 		await user.click(screen.getByRole('button', { name: /edit role details/i }));
-		expect(
-			await screen.findByText('Edit Role Details', {
-				selector: '.ant-modal-title',
-			}),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText('Edit Role Details', { selector: '.ant-modal-title' }),
+		).resolves.toBeInTheDocument();
 
-		// Name field is disabled in edit mode (role rename is not allowed)
 		const nameInput = screen.getByPlaceholderText(
 			'Enter role name e.g. : Service Owner',
 		);
 		expect(nameInput).toBeDisabled();
 
-		// Update description and save
 		const descField = screen.getByPlaceholderText(
 			'A helpful description of the role',
 		);
@@ -176,13 +170,13 @@ describe.skip('RoleDetailsPage', () => {
 
 		await waitFor(() =>
 			expect(
-				screen.queryByText('Edit Role Details', {
-					selector: '.ant-modal-title',
-				}),
+				screen.queryByText('Edit Role Details', { selector: '.ant-modal-title' }),
 			).not.toBeInTheDocument(),
 		);
 
-		expect(await screen.findByText('Updated description')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Updated description'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('delete flow: modal shows role name, DELETE called on confirm', async () => {
@@ -206,9 +200,9 @@ describe.skip('RoleDetailsPage', () => {
 
 		await user.click(screen.getByRole('button', { name: /delete role/i }));
 
-		expect(
-			await screen.findByText(/Are you sure you want to delete the role/),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Are you sure you want to delete the role/),
+		).resolves.toBeInTheDocument();
 
 		const dialog = await screen.findByRole('dialog');
 		await user.click(
@@ -224,59 +218,85 @@ describe.skip('RoleDetailsPage', () => {
 		);
 	});
 
+	it('shows PermissionDeniedFullPage when read permission is denied via query param', async () => {
+		mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
+
+		render(<RoleDetailsPage />, undefined, {
+			initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}?name=billing-manager`,
+		});
+
+		await expect(
+			screen.findByText(/you don't have permission to view this page/i),
+		).resolves.toBeInTheDocument();
+	});
+
 	describe('permission side panel', () => {
-		async function openCreatePanel(
-			user: ReturnType<typeof userEvent.setup>,
-		): Promise<void> {
+		beforeEach(() => {
+			// Both hooks mocked so data renders synchronously — no React Query scheduler or MSW round-trip.
+			jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+				data: customRoleResponse,
+				isLoading: false,
+				isFetching: false,
+				isError: false,
+				error: null,
+			} as any);
+			jest
+				.spyOn(roleApi, 'useGetObjects')
+				.mockReturnValue({ data: emptyObjectsResponse, isLoading: false } as any);
+		});
+
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		async function openCreatePanel(): Promise<HTMLElement> {
 			await screen.findByText('Role — billing-manager');
-			await user.click(screen.getByText('Create'));
+			fireEvent.click(screen.getByText('Create'));
 			await screen.findByText('Edit Create Permissions');
-			await screen.findByRole('button', { name: /dashboard/i });
+			const panel = document.querySelector(
+				'.permission-side-panel',
+			) as HTMLElement;
+			await within(panel).findByRole('button', { name: 'role' });
+			return panel;
+		}
+
+		async function openReadPanel(): Promise<HTMLElement> {
+			await screen.findByText('Role — billing-manager');
+			fireEvent.click(screen.getByText('Read'));
+			await screen.findByText('Edit Read Permissions');
+			const panel = document.querySelector(
+				'.permission-side-panel',
+			) as HTMLElement;
+			await within(panel).findByRole('button', { name: 'role' });
+			return panel;
 		}
 
 		it('Save Changes is disabled until a resource scope is changed', async () => {
-			setupDefaultHandlers();
-			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
-			);
-
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
-
-			// No change yet — config matches initial, unsavedCount = 0
-			expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
-
-			// Expand Dashboard and flip to All — now Save is enabled
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
-			await user.click(screen.getByText('All'));
+			const panel = await openCreatePanel();
 
 			expect(
-				screen.getByRole('button', { name: /save changes/i }),
-			).not.toBeDisabled();
+				within(panel).getByRole('button', { name: /save changes/i }),
+			).toBeDisabled();
 
-			// check for what shown now - unsavedCount = 1
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('All'));
+
+			expect(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			).not.toBeDisabled();
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 		});
 
 		it('set scope to All → patchObjects additions: ["*"], deletions: null', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -284,23 +304,23 @@ describe.skip('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
-			await user.click(screen.getByText('All'));
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('All'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
+							resource: { kind: 'role', type: 'role' },
 							selectors: ['*'],
 						},
 					],
@@ -312,14 +332,9 @@ describe.skip('RoleDetailsPage', () => {
 		it('set scope to Only selected with IDs → patchObjects additions contain those IDs', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -327,29 +342,30 @@ describe.skip('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openReadPanel();
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			// Default is NONE, so switch to Only selected first to reveal the combobox
+			fireEvent.click(screen.getByText('Only selected'));
 
-			const combobox = screen.getByRole('combobox');
-			await user.click(combobox);
-			await user.type(combobox, 'dash-1');
-			await user.keyboard('{Enter}');
+			const combobox = within(panel).getByRole('combobox');
+			fireEvent.change(combobox, { target: { value: 'role-001' } });
+			fireEvent.keyDown(combobox, { key: 'Enter', keyCode: 13 });
 
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
-							selectors: ['dash-1'],
+							resource: { kind: 'role', type: 'role' },
+							selectors: ['role-001'],
 						},
 					],
 					deletions: null,
@@ -357,18 +373,16 @@ describe.skip('RoleDetailsPage', () => {
 			);
 		});
 
-		it('existing All scope changed to Only selected (empty) → patchObjects deletions: ["*"], additions: null', async () => {
+		it('set scope to None on create panel (existing All) → patchObjects deletions: ["*"], additions: null', async () => {
 			const patchSpy = jest.fn();
 
-			setupDefaultHandlers();
+			jest.spyOn(roleApi, 'useGetObjects').mockReturnValue({
+				data: allScopeObjectsResponse,
+				isLoading: false,
+			} as any);
 			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
-					(_req, res, ctx) =>
-						res(ctx.status(200), ctx.json(allScopeObjectsResponse)),
-				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -376,26 +390,66 @@ describe.skip('RoleDetailsPage', () => {
 				),
 			);
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('None'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
 
-			await user.click(screen.getByText('Only selected'));
-			await user.click(screen.getByRole('button', { name: /save changes/i }));
-
-			// Should delete the '*' selector and add nothing
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: null,
 					deletions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
+							resource: { kind: 'role', type: 'role' },
+							selectors: ['*'],
+						},
+					],
+				}),
+			);
+		});
+
+		it('existing All scope changed to Only selected (empty) → patchObjects deletions: ["*"], additions: null', async () => {
+			const patchSpy = jest.fn();
+
+			jest.spyOn(roleApi, 'useGetObjects').mockReturnValue({
+				data: allScopeObjectsResponse,
+				isLoading: false,
+			} as any);
+			server.use(
+				rest.patch(
+					`${rolesApiBase}/:id/relations/:relation/objects`,
+					async (req, res, ctx) => {
+						patchSpy(await req.json());
+						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
+					},
+				),
+			);
+
+			render(<RoleDetailsPage />, undefined, {
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+			});
+
+			const panel = await openReadPanel();
+
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('Only selected'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
+
+			await waitFor(() =>
+				expect(patchSpy).toHaveBeenCalledWith({
+					additions: null,
+					deletions: [
+						{
+							resource: { kind: 'role', type: 'role' },
 							selectors: ['*'],
 						},
 					],
@@ -404,36 +458,25 @@ describe.skip('RoleDetailsPage', () => {
 		});
 
 		it('unsaved changes counter shown on scope change, Discard resets it', async () => {
-			setupDefaultHandlers();
-			server.use(
-				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
-					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
-				),
-			);
-
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<RoleDetailsPage />, undefined, {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			await openCreatePanel(user);
+			const panel = await openCreatePanel();
 
-			// No unsaved changes indicator yet
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
 
-			// Change dashboard scope to "All"
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
-			await user.click(screen.getByText('All'));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('All'));
 
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 
-			// Discard reverts to initial config — counter disappears, Save re-disabled
-			await user.click(screen.getByRole('button', { name: /discard/i }));
+			fireEvent.click(within(panel).getByRole('button', { name: /discard/i }));
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+			expect(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			).toBeDisabled();
 		});
 	});
 });

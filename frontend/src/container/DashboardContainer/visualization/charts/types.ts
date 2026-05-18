@@ -1,11 +1,17 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
-import { LegendConfig, TooltipRenderArgs } from 'lib/uPlotV2/components/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendConfig,
+	TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
 	DashboardCursorSync,
+	SyncTooltipFilterMode,
 	TooltipClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 interface BaseChartProps {
 	width: number;
@@ -20,6 +26,7 @@ interface BaseChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
 }
@@ -29,6 +36,7 @@ interface UPlotBasedChartProps {
 	legendConfig: LegendConfig;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
+	syncFilterMode?: SyncTooltipFilterMode;
 	plotRef?: (plot: uPlot | null) => void;
 	onDestroy?: (plot: uPlot) => void;
 	children?: React.ReactNode;
@@ -38,6 +46,7 @@ interface UPlotBasedChartProps {
 interface UPlotChartDataProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 }
 
 export interface TimeSeriesChartProps

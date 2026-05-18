@@ -188,7 +188,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/check your email/i),
+			).resolves.toBeInTheDocument();
 			expect(
 				screen.getByText(/we've sent a password reset link/i),
 			).toBeInTheDocument();
@@ -208,7 +210,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(await screen.findByTestId('back-to-login')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('back-to-login'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('redirects to login when clicking back to login on success screen', async () => {
@@ -225,7 +229,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(await screen.findByTestId('back-to-login')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('back-to-login'),
+			).resolves.toBeInTheDocument();
 
 			const backToLoginButton = screen.getByTestId('back-to-login');
 			await user.click(backToLoginButton);
@@ -250,7 +256,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/user not found/i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('displays error message when API returns server error', async () => {
@@ -263,9 +271,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(
-				await screen.findByText(/internal server error occurred/i),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/internal server error occurred/i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('clears error message on new submission attempt', async () => {
@@ -295,7 +303,9 @@ describe('ForgotPassword Component', () => {
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			await user.click(submitButton);
 
-			expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/user not found/i),
+			).resolves.toBeInTheDocument();
 
 			// Click submit again
 			await user.click(submitButton);
@@ -303,7 +313,9 @@ describe('ForgotPassword Component', () => {
 			await waitFor(() => {
 				expect(screen.queryByText(/user not found/i)).not.toBeInTheDocument();
 			});
-			expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/check your email/i),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -336,7 +348,9 @@ describe('ForgotPassword Component', () => {
 			await user.click(submitButton);
 
 			// Button should show loading state
-			expect(await screen.findByText(/sending\.\.\./i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/sending\.\.\./i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('disables submit button during loading', async () => {

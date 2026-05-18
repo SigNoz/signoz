@@ -3,8 +3,9 @@ import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { toast } from '@signozhq/ui';
-import { Button, Tooltip, Typography } from 'antd';
+import { toast } from '@signozhq/ui/sonner';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
@@ -22,7 +23,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { AlertTriangle } from 'lucide-react';
+import { TriangleAlert } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
@@ -236,7 +237,7 @@ function TimeSeries({
 									disabled={isUpdatingMetricMetadata}
 									onClick={handleSaveUnit}
 								>
-									<Typography.Paragraph>Yes</Typography.Paragraph>
+									<Typography.Text>Yes</Typography.Text>
 								</Button>
 							</div>
 						)}
@@ -296,7 +297,7 @@ function TimeSeries({
 											</Typography.Text>
 										}
 									>
-										<AlertTriangle
+										<TriangleAlert
 											size={16}
 											color={Color.BG_AMBER_400}
 											role="img"

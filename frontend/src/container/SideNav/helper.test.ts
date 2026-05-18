@@ -9,7 +9,7 @@ describe('getQueryString', () => {
 
 		const result = getQueryString(availableParams, params);
 
-		expect(result).toEqual(['param1=value1', 'param2=value2', '']);
+		expect(result).toStrictEqual(['param1=value1', 'param2=value2', '']);
 	});
 
 	it('returns an array of empty strings if no matching parameters are found', () => {
@@ -18,7 +18,7 @@ describe('getQueryString', () => {
 
 		const result = getQueryString(availableParams, params);
 
-		expect(result).toEqual(['', '', '']);
+		expect(result).toStrictEqual(['', '', '']);
 	});
 
 	it('returns an empty array if the available parameters list is empty', () => {
@@ -29,6 +29,6 @@ describe('getQueryString', () => {
 
 		const result = getQueryString(availableParams, params);
 
-		expect(result).toEqual([]);
+		expect(result).toStrictEqual([]);
 	});
 });

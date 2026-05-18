@@ -115,8 +115,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 
 			const updatedQuery = updateBarStepInterval(
 				requestData.query,
-				requestData.start ? requestData.start * 1e3 : parseInt(start, 10) * 1e3,
-				requestData.end ? requestData.end * 1e3 : parseInt(end, 10) * 1e3,
+				requestData.start
+					? requestData.start * 1e3
+					: Number.parseInt(start, 10) * 1e3,
+				requestData.end ? requestData.end * 1e3 : Number.parseInt(end, 10) * 1e3,
 			);
 
 			return {

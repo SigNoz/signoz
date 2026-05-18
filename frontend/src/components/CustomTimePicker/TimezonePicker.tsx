@@ -11,7 +11,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { Check, Search } from 'lucide-react';
+import { Check, Search } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import { Timezone, TIMEZONE_DATA } from './timezoneUtils';

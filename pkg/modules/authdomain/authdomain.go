@@ -39,6 +39,7 @@ type Module interface {
 
 type Handler interface {
 	List(http.ResponseWriter, *http.Request)
+	Get(http.ResponseWriter, *http.Request)
 	Create(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
 	Delete(http.ResponseWriter, *http.Request)

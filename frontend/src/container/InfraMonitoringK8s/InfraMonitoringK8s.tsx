@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
-import { Collapse, Tooltip, Typography } from 'antd';
+import { Collapse, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
@@ -11,6 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import {
 	ArrowUpDown,
+	ArrowUpToLine,
 	Bolt,
 	Boxes,
 	Computer,
@@ -20,7 +21,7 @@ import {
 	Group,
 	HardDrive,
 	Workflow,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -43,7 +44,7 @@ import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 } from './hooks';
@@ -60,7 +61,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 
@@ -335,9 +336,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								<Typography.Text>Filters</Typography.Text>
 
 								<Tooltip title="Collapse Filters">
-									<VerticalAlignTopOutlined
-										rotate={270}
+									<ArrowUpToLine
+										style={{ transform: 'rotate(270deg)' }}
 										onClick={handleFilterVisibilityChange}
+										size="md"
 									/>
 								</Tooltip>
 							</div>

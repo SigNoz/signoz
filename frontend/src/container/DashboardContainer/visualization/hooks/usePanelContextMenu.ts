@@ -104,7 +104,12 @@ export const usePanelContextMenu = ({
 			}
 
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, label: data.label, timeRange });
+				onClick(data.coord, {
+					...data.record,
+					label: data.label,
+					seriesColor: data.seriesColor,
+					timeRange,
+				});
 			}
 		},
 		[onClick, queryResponse],
