@@ -125,11 +125,31 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
 	});
 
-	it('should render type selection when no alertType in URL', () => {
+	it('should render type selection when no alertType in URL and no compositeQuery', () => {
 		mockGetUrlQuery.mockReturnValue(null);
+		useCompositeQueryParamSpy.mockReturnValue(null);
 		render(<CreateAlertRule />);
 		expect(screen.queryByText(FORM_ALERT_RULES_TEXT)).not.toBeInTheDocument();
 		expect(screen.queryByText(CREATE_ALERT_V2_TEXT)).not.toBeInTheDocument();
+	});
+
+	it('should skip type selection and render alert form when compositeQuery is present', () => {
+		mockGetUrlQuery.mockReturnValue(null);
+		useCompositeQueryParamSpy.mockReturnValue({
+			...initialQueriesMap.metrics,
+			builder: {
+				...initialQueriesMap.metrics.builder,
+				queryData: [
+					{
+						...initialQueriesMap.metrics.builder.queryData[0],
+						dataSource: DataSource.METRICS,
+					},
+				],
+			},
+		});
+		render(<CreateAlertRule />);
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
+		expect(screen.getByText(AlertTypes.METRICS_BASED_ALERT)).toBeInTheDocument();
 	});
 
 	it('should render classic flow when ruleType is anomaly_rule even if showClassicCreateAlertsPage is not true', () => {
@@ -186,6 +206,7 @@ describe('CreateAlertRule', () => {
 	describe('handleSelectType navigation', () => {
 		beforeEach(() => {
 			mockGetUrlQuery.mockReturnValue(null);
+			useCompositeQueryParamSpy.mockReturnValue(null);
 		});
 
 		it('should navigate with threshold alert params for metrics alert', () => {
@@ -276,7 +297,7 @@ describe('CreateAlertRule', () => {
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});
 
-		it('should preserve showClassicCreateAlertsPage flag when navigating', () => {
+		it('should navigate even when showClassicCreateAlertsPage flag is present', () => {
 			mockGetUrlQuery.mockImplementation((key: string) => {
 				if (key === QueryParams.showClassicCreateAlertsPage) {
 					return 'true';
@@ -288,8 +309,12 @@ describe('CreateAlertRule', () => {
 			fireEvent.click(screen.getByText('metric_based_alert'));
 
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
-				QueryParams.showClassicCreateAlertsPage,
-				'true',
+				QueryParams.ruleType,
+				'threshold_rule',
+			);
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.alertType,
+				AlertTypes.METRICS_BASED_ALERT,
 			);
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});

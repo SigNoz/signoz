@@ -36,7 +36,8 @@ function CreateRules(): JSX.Element {
 	const showClassicCreateAlertsPageFlag =
 		queryParams.get(QueryParams.showClassicCreateAlertsPage) === 'true';
 
-	const isTypeSelectionMode = !alertTypeFromURL && !ruleTypeFromURL;
+	const isTypeSelectionMode =
+		!alertTypeFromURL && !ruleTypeFromURL && !compositeQuery;
 
 	useEffect(() => {
 		if (isTypeSelectionMode) {
