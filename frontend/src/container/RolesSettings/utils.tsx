@@ -12,6 +12,7 @@ import type {
 	PermissionConfig,
 	ResourceConfig,
 	ResourceDefinition,
+	ScopeType,
 } from './PermissionSidePanel/PermissionSidePanel.types';
 import { PermissionScope } from './PermissionSidePanel/PermissionSidePanel.types';
 import {
@@ -70,8 +71,10 @@ export function deriveResourcesForRelation(
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
-			id: r.kind,
-			label: capitalize(r.kind).replaceAll('_', ' '),
+			id: `${r.type}:${r.kind}`,
+			kind: r.kind,
+			type: r.type,
+			label: r.kind,
 			options: [],
 		}));
 }
@@ -82,10 +85,12 @@ export function objectsToPermissionConfig(
 ): PermissionConfig {
 	const config: PermissionConfig = {};
 	for (const res of resources) {
-		const obj = objects.find((o) => o.resource.kind === res.id);
+		const obj = objects.find(
+			(o) => o.resource.kind === res.kind && o.resource.type === res.type,
+		);
 		if (!obj) {
 			config[res.id] = {
-				scope: PermissionScope.ONLY_SELECTED,
+				scope: PermissionScope.NONE,
 				selectedIds: [],
 			};
 		} else {
@@ -97,6 +102,16 @@ export function objectsToPermissionConfig(
 		}
 	}
 	return config;
+}
+
+function selectorsForScope(scope: ScopeType, selectedIds: string[]): string[] {
+	if (scope === PermissionScope.ALL) {
+		return ['*'];
+	}
+	if (scope === PermissionScope.ONLY_SELECTED) {
+		return selectedIds;
+	}
+	return []; // NONE
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -118,7 +133,9 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const found = authzRes.resources.find((r) => r.kind === res.id);
+		const found = authzRes.resources.find(
+			(r) => r.kind === res.kind && r.type === res.type,
+		);
 		if (!found) {
 			continue;
 		}
@@ -127,8 +144,8 @@ export function buildPatchPayload({
 			type: found.type,
 		};
 
-		const initialScope = initial?.scope ?? PermissionScope.ONLY_SELECTED;
-		const currentScope = current?.scope ?? PermissionScope.ONLY_SELECTED;
+		const initialScope = initial?.scope ?? PermissionScope.NONE;
+		const currentScope = current?.scope ?? PermissionScope.NONE;
 
 		if (initialScope === currentScope) {
 			// Same scope — only diff individual selectors when both are ONLY_SELECTED
@@ -144,16 +161,20 @@ export function buildPatchPayload({
 					additions.push({ resource: resourceDef, selectors: added });
 				}
 			}
-			// Both ALL → no change, skip
+			// Both ALL or both NONE → no change, skip
 		} else {
-			// Scope changed (ALL ↔ ONLY_SELECTED) — replace old with new
-			const initialSelectors =
-				initialScope === PermissionScope.ALL ? ['*'] : (initial?.selectedIds ?? []);
+			// Scope changed — replace old selectors with new ones
+			const initialSelectors = selectorsForScope(
+				initialScope,
+				initial?.selectedIds ?? [],
+			);
 			if (initialSelectors.length > 0) {
 				deletions.push({ resource: resourceDef, selectors: initialSelectors });
 			}
-			const currentSelectors =
-				currentScope === PermissionScope.ALL ? ['*'] : (current?.selectedIds ?? []);
+			const currentSelectors = selectorsForScope(
+				currentScope,
+				current?.selectedIds ?? [],
+			);
 			if (currentSelectors.length > 0) {
 				additions.push({ resource: resourceDef, selectors: currentSelectors });
 			}
@@ -191,7 +212,7 @@ export function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
 }
 
 export const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
-	scope: PermissionScope.ONLY_SELECTED,
+	scope: PermissionScope.NONE,
 	selectedIds: [],
 };
 
