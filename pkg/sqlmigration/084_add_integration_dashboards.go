@@ -35,6 +35,7 @@ func (m *addIntegrationDashboards) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
+	// dashboard_id is knowingly kept loosing coupled with dashboard's id and is not a foreign key to dashboard's id.
 	sqls := m.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "integration_dashboards",
 		Columns: []*sqlschema.Column{
