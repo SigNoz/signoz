@@ -2,6 +2,10 @@ import { createStore, StoreApi } from 'zustand';
 
 export type QuerySearchV2Store = {
 	/**
+	 * Initial expression (set by provider, used to combine with user expression)
+	 */
+	initialExpression: string;
+	/**
 	 * User-typed expression (local state, updates on typing)
 	 */
 	inputExpression: string;
@@ -9,32 +13,21 @@ export type QuerySearchV2Store = {
 	 * Committed expression (synced to URL, updates on submit)
 	 */
 	committedExpression: string;
+	setInitialExpression: (expression: string) => void;
 	setInputExpression: (expression: string) => void;
 	commitExpression: (expression: string) => void;
 	resetExpression: () => void;
 	initializeFromUrl: (urlExpression: string) => void;
 };
 
-export interface QuerySearchProps {
-	initialExpression: string | undefined;
-	onChange: (expression: string) => void;
-	onRun: (expression: string) => void;
-}
-
-export interface QuerySearchV2ContextValue {
-	/**
-	 * Combined expression: "initialExpression AND (userExpression)"
-	 */
-	expression: string;
-	userExpression: string;
-	initialExpression: string;
-	querySearchProps: QuerySearchProps;
-}
-
 export function createExpressionStore(): StoreApi<QuerySearchV2Store> {
 	return createStore<QuerySearchV2Store>((set) => ({
+		initialExpression: '',
 		inputExpression: '',
 		committedExpression: '',
+		setInitialExpression: (expression: string): void => {
+			set({ initialExpression: expression });
+		},
 		setInputExpression: (expression: string): void => {
 			set({ inputExpression: expression });
 		},

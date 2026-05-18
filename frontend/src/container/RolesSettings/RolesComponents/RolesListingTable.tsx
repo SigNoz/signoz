@@ -4,15 +4,16 @@ import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
-
-import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from '../config';
 
 import '../RolesSettings.styles.scss';
 
@@ -29,7 +30,14 @@ interface RolesListingTableProps {
 function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
-	const { data, isLoading, isError, error } = useListRoles();
+	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
+		RoleListPermission,
+	]);
+	const hasListPermission = listPerms?.[RoleListPermission]?.isGranted ?? false;
+
+	const { data, isLoading, isError, error } = useListRoles({
+		query: { enabled: hasListPermission },
+	});
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
@@ -151,7 +159,11 @@ function RolesListingTable({
 		</>
 	);
 
-	if (isLoading) {
+	if (!hasListPermission && listPerms !== null) {
+		return <PermissionDeniedFullPage permissionName="role:list" />;
+	}
+
+	if (isAuthZLoading || isLoading) {
 		return (
 			<div className="roles-listing-table">
 				<Skeleton active paragraph={{ rows: 5 }} />
@@ -182,31 +194,26 @@ function RolesListingTable({
 		);
 	}
 
-	const navigateToRole = (roleId: string): void => {
-		history.push(ROUTES.ROLE_DETAILS.replace(':roleId', roleId));
+	const navigateToRole = (roleId: string, roleName?: string): void => {
+		const search = roleName ? `?name=${encodeURIComponent(roleName)}` : '';
+		history.push(`${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}${search}`);
 	};
 
 	// todo: use table from periscope when its available for consumption
 	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className={`roles-table-row ${
-				IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 'roles-table-row--clickable' : ''
-			}`}
+			className="roles-table-row roles-table-row--clickable"
 			role="button"
-			tabIndex={IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 0 : -1}
+			tabIndex={0}
 			onClick={(): void => {
-				if (IS_ROLE_DETAILS_AND_CRUD_ENABLED && role.id) {
-					navigateToRole(role.id);
+				if (role.id) {
+					navigateToRole(role.id, role.name);
 				}
 			}}
 			onKeyDown={(e): void => {
-				if (
-					IS_ROLE_DETAILS_AND_CRUD_ENABLED &&
-					(e.key === 'Enter' || e.key === ' ') &&
-					role.id
-				) {
-					navigateToRole(role.id);
+				if ((e.key === 'Enter' || e.key === ' ') && role.id) {
+					navigateToRole(role.id, role.name);
 				}
 			}}
 		>

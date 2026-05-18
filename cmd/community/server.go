@@ -40,7 +40,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -87,10 +86,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
 		signoz.NewWebProviderFactories(config.Global),
-		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
-			return signoz.NewSQLSchemaProviderFactories(sqlstore)
-		},
-		signoz.NewSQLStoreProviderFactories(),
+		sqlschemaProviderFactories,
+		sqlstoreProviderFactories(),
 		signoz.NewTelemetryStoreProviderFactories(),
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			return signoz.NewAuthNs(ctx, providerSettings, store, licensing)

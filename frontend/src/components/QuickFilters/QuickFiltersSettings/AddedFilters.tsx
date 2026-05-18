@@ -16,7 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { GripVertical } from 'lucide-react';
+import { GripVertical } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 function SortableFilter({

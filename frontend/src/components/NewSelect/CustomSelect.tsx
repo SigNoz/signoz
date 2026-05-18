@@ -6,16 +6,22 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import { CloseOutlined, DownOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+	ArrowDown,
+	ArrowUp,
+	ChevronDown,
+	Info,
+	Loader,
+	RefreshCw,
+	X,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Loader } from '@signozhq/icons';
 import { Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -255,7 +261,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const clearIcon = useCallback(
 		() => (
-			<CloseOutlined
+			<X
+				size="md"
 				onClick={(e): void => {
 					e.stopPropagation();
 					if (onChange) {
@@ -577,7 +584,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader className="animate-spin" />
+								<Loader size="md" className="animate-spin" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -585,7 +592,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<Loader className="animate-spin" />
+								<Loader size="md" className="animate-spin" />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}
@@ -599,8 +606,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							</div>
 							{onRetry && showRetryButton && (
 								<div className="navigation-icons">
-									<ReloadOutlined
-										twoToneColor={Color.BG_CHERRY_400}
+									<RefreshCw
+										data-testid="retry-button"
+										size="md"
+										color={Color.BG_CHERRY_400}
 										onClick={(e): void => {
 											e.stopPropagation();
 											onRetry();
@@ -726,7 +735,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			popupMatchSelectWidth={popupMatchSelectWidth}
 			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+			suffixIcon={<ChevronDown style={{ cursor: 'default' }} size="md" />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-select-dropdown-container', popupClassName)}

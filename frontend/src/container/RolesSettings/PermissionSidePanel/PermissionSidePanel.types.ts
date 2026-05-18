@@ -5,6 +5,8 @@ export interface ResourceOption {
 
 export interface ResourceDefinition {
 	id: string;
+	kind: string;
+	type: string;
 	label: string;
 	options?: ResourceOption[];
 }
@@ -12,6 +14,7 @@ export interface ResourceDefinition {
 export enum PermissionScope {
 	ALL = 'all',
 	ONLY_SELECTED = 'only_selected',
+	NONE = 'none',
 }
 
 export type ScopeType = PermissionScope;
@@ -27,9 +30,11 @@ export interface PermissionSidePanelProps {
 	open: boolean;
 	onClose: () => void;
 	permissionLabel: string;
+	relation: string;
 	resources: ResourceDefinition[];
 	initialConfig?: PermissionConfig;
 	isLoading?: boolean;
 	isSaving?: boolean;
+	canEdit?: boolean;
 	onSave: (config: PermissionConfig) => void;
 }

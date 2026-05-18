@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -39,8 +41,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -82,6 +87,9 @@ type Modules struct {
 	CloudIntegration cloudintegration.Module
 	RuleStateHistory rulestatehistory.Module
 	TraceDetail      tracedetail.Module
+	SpanMapper       spanmapper.Module
+	LLMPricingRule   llmpricingrule.Module
+	Tag              tag.Module
 }
 
 func NewModules(
@@ -107,6 +115,7 @@ func NewModules(
 	cloudIntegrationModule cloudintegration.Module,
 	retentionGetter retention.Getter,
 	fl flagger.Flagger,
+	tagModule tag.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -137,5 +146,8 @@ func NewModules(
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
+		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
+		Tag:              tagModule,
 	}
 }

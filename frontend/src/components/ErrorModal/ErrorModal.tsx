@@ -1,7 +1,7 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Modal, Tag } from 'antd';
-import { CircleAlert, X } from 'lucide-react';
+import { CircleAlert, X } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';

@@ -7,8 +7,9 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sNodeData, K8sNodesListPayload } from './api';
-import { Workflow } from 'lucide-react';
+import { Workflow } from '@signozhq/icons';
 
 export function getK8sNodeRowKey(node: K8sNodeData): string {
 	return node.nodeUID || node.meta.k8s_node_uid || node.meta.k8s_node_name;
@@ -91,7 +92,11 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpu}>
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.NODES}
+					attribute="CPU metric"
+				>
 					<TanStackTable.Text>{cpu}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -106,7 +111,11 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpuAllocatable = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpuAllocatable}>
+				<ValidateColumnValueWrapper
+					value={cpuAllocatable}
+					entity={InfraMonitoringEntity.NODES}
+					attribute="CPU allocatable metric"
+				>
 					<TanStackTable.Text>{cpuAllocatable}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -121,7 +130,11 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memory}>
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.NODES}
+					attribute="memory metric"
+				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -136,7 +149,11 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memoryAllocatable = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memoryAllocatable}>
+				<ValidateColumnValueWrapper
+					value={memoryAllocatable}
+					entity={InfraMonitoringEntity.NODES}
+					attribute="memory allocatable metric"
+				>
 					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
