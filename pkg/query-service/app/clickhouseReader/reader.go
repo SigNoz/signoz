@@ -1160,6 +1160,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
 		}
 		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
+		fmt.Printf("============== selectCols: %s, flamegraphQuery: %s", selectCols, flamegraphQuery)
 
 		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
 		if err != nil {
