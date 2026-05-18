@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Loader, Plus, Search } from '@signozhq/icons';
-import { Button, Input, Spin } from 'antd';
+import { Input, Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SignozModal from 'components/SignozModal/SignozModal';
@@ -22,6 +22,7 @@ import { Span } from 'types/api/trace/getTraceV2';
 import { FunnelData } from 'types/api/traceFunnels';
 
 import './AddSpanToFunnelModal.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 enum ModalView {
 	LIST = 'list',
@@ -202,9 +203,9 @@ function AddSpanToFunnelModal({
 	const renderDetailsView = ({ span }: { span: Span }): JSX.Element => (
 		<div className="add-span-to-funnel-modal add-span-to-funnel-modal--details">
 			<Button
-				type="text"
 				className="add-span-to-funnel-modal__back-button"
 				onClick={handleBack}
+				variant="ghost"
 			>
 				<ArrowLeft size={14} />
 				All funnels
@@ -251,21 +252,21 @@ function AddSpanToFunnelModal({
 				activeView === ModalView.DETAILS
 					? [
 							<Button
-								type="default"
 								key="discard"
 								onClick={handleDiscard}
 								className="add-span-to-funnel-modal__discard-button"
 								disabled={!isUnsavedChanges}
+								variant="outlined"
+								color="secondary"
 							>
 								Discard
 							</Button>,
 							<Button
 								key="save"
-								type="primary"
 								className="add-span-to-funnel-modal__save-button"
 								onClick={handleSaveFunnel}
 								disabled={!isUnsavedChanges}
-								icon={<Check size={14} color="var(--bg-vanilla-100)" />}
+								prefix={<Check size={14} color="var(--bg-vanilla-100)" />}
 							>
 								Save Funnel
 							</Button>,
@@ -273,10 +274,11 @@ function AddSpanToFunnelModal({
 					: [
 							<Button
 								key="create"
-								type="default"
 								className="add-span-to-funnel-modal__create-button"
 								onClick={handleCreateNewClick}
-								icon={<Plus size={14} />}
+								variant="outlined"
+								color="secondary"
+								prefix={<Plus size={14} />}
 							>
 								Create new funnel
 							</Button>,

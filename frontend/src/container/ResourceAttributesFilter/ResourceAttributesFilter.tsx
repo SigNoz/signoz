@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SolidXCircle } from '@signozhq/icons';
-import { Button, Select, Spin } from 'antd';
+import { Select, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
 } from 'hooks/useResourceAttribute';
@@ -20,6 +20,7 @@ import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
 import './ResourceAttributesFilter.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function ResourceAttributesFilter({
 	suffixIcon,
@@ -149,8 +150,9 @@ function ResourceAttributesFilter({
 					{queries.length || staging.length || selectedQuery.length ? (
 						<Button
 							onClick={handleClearAll}
-							icon={<SolidXCircle size="lg" />}
-							type="text"
+							variant="ghost"
+							size="icon"
+							prefix={<SolidXCircle size="lg" />}
 						/>
 					) : null}
 				</SearchContainer>

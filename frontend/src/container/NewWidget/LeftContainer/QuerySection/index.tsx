@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -124,7 +125,7 @@ function QuerySection({
 		return supportedQueryTypes.map((queryType) => ({
 			key: queryType,
 			label: (
-				<Button className="nav-btns">
+				<Button className="nav-btns" variant="outlined" color="secondary">
 					{queryTypeComponents[queryType].icon}
 					<Typography>{queryTypeComponents[queryType].label}</Typography>
 				</Button>

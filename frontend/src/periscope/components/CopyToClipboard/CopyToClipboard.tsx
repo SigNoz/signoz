@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { CircleCheck, Link2 } from '@signozhq/icons';
 
 import './CopyToClipboard.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 	const [state, copyToClipboard] = useCopyToClipboard();
@@ -25,9 +25,9 @@ function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 	if (success) {
 		return (
 			<Button
-				type="text"
-				icon={<CircleCheck size={16} color={Color.BG_FOREST_400} />}
 				className="copy-to-clipboard copy-to-clipboard--success"
+				variant="ghost"
+				prefix={<CircleCheck size={16} color={Color.BG_FOREST_400} />}
 			>
 				Copied
 			</Button>
@@ -36,15 +36,15 @@ function CopyToClipboard({ textToCopy }: { textToCopy: string }): JSX.Element {
 
 	return (
 		<Button
-			type="text"
-			icon={
+			onClick={(): void => copyToClipboard(textToCopy)}
+			className="copy-to-clipboard"
+			variant="ghost"
+			prefix={
 				<Link2
 					size={16}
 					color={isDarkMode ? Color.BG_VANILLA_400 : Color.TEXT_INK_400}
 				/>
 			}
-			onClick={(): void => copyToClipboard(textToCopy)}
-			className="copy-to-clipboard"
 		>
 			Copy link
 		</Button>

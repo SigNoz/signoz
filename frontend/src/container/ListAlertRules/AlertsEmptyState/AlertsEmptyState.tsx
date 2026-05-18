@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
-import { Button, Divider, Flex } from 'antd';
+import { Divider, Flex } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -81,7 +82,6 @@ export function AlertsEmptyState(): JSX.Element {
 								onClick={onClickNewAlertHandler}
 								disabled={!addNewAlert}
 								loading={loading}
-								type="primary"
 								data-testid="add-alert"
 							>
 								<Flex align="center" justify="center" gap={4}>

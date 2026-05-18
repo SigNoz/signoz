@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from 'antd';
 import classNames from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
@@ -26,6 +25,7 @@ import ChartPreview from './ChartPreview';
 import { buildAlertDefForChartPreview } from './utils';
 
 import './styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function QuerySection(): JSX.Element {
 	const {
@@ -149,6 +149,8 @@ function QuerySection(): JSX.Element {
 							onClick={(): void => {
 								setAlertType(tab.value as AlertTypes);
 							}}
+							variant="outlined"
+							color="secondary"
 						>
 							{tab.icon}
 							{tab.label}

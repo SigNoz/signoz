@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
+import { Popover, Spin, Tooltip, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
@@ -40,6 +40,7 @@ import {
 import useAsyncJSONProcessing from './useAsyncJSONProcessing';
 
 import './TableViewActions.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface ITableViewActionsProps {
 	fieldData: Record<string, string>;
@@ -369,14 +370,7 @@ export default function TableViewActions(
 						<span className="action-btn">
 							<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterInLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
+									className="filter-btn"
 									onClick={onClickHandler(
 										OPERATORS['='],
 										fieldFilterKey,
@@ -384,18 +378,21 @@ export default function TableViewActions(
 										dataType,
 										fieldType,
 									)}
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={
+										isfilterInLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
 								/>
 							</Tooltip>
 							<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterOutLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
+									className="filter-btn"
 									onClick={onClickHandler(
 										OPERATORS['!='],
 										fieldFilterKey,
@@ -403,6 +400,16 @@ export default function TableViewActions(
 										dataType,
 										fieldType,
 									)}
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={
+										isfilterOutLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
 								/>
 							</Tooltip>
 							{!isOldLogsExplorerOrLiveLogsPage && (
@@ -414,17 +421,17 @@ export default function TableViewActions(
 										<div data-log-detail-ignore="true">
 											<Button
 												className="more-filter-actions"
-												type="text"
-												icon={<GroupByIcon />}
 												onClick={handleGroupByAttribute}
+												variant="ghost"
+												prefix={<GroupByIcon />}
 											>
 												Group By Attribute
 											</Button>
 											<Button
 												className="more-filter-actions"
-												type="text"
-												icon={<RefreshCw size={14} />}
 												onClick={handleReplaceFilter}
+												variant="ghost"
+												prefix={<RefreshCw size={14} />}
 											>
 												Replace filters with this value
 											</Button>
@@ -435,8 +442,11 @@ export default function TableViewActions(
 									placement="bottomLeft"
 								>
 									<Button
-										icon={<Ellipsis size={14} />}
-										className="filter-btn periscope-btn"
+										className="filter-btn"
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										prefix={<Ellipsis size={14} />}
 									/>
 								</Popover>
 							)}
@@ -456,14 +466,7 @@ export default function TableViewActions(
 					<span className="action-btn">
 						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
-								className="filter-btn periscope-btn"
-								icon={
-									isfilterInLoading ? (
-										<Spin size="small" />
-									) : (
-										<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-									)
-								}
+								className="filter-btn"
 								onClick={onClickHandler(
 									OPERATORS['='],
 									fieldFilterKey,
@@ -471,18 +474,21 @@ export default function TableViewActions(
 									dataType,
 									fieldType,
 								)}
+								variant="outlined"
+								color="secondary"
+								size="icon"
+								prefix={
+									isfilterInLoading ? (
+										<Spin size="small" />
+									) : (
+										<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+									)
+								}
 							/>
 						</Tooltip>
 						<Tooltip title="Filter out value" mouseLeaveDelay={0}>
 							<Button
-								className="filter-btn periscope-btn"
-								icon={
-									isfilterOutLoading ? (
-										<Spin size="small" />
-									) : (
-										<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-									)
-								}
+								className="filter-btn"
 								onClick={onClickHandler(
 									OPERATORS['!='],
 									fieldFilterKey,
@@ -490,6 +496,16 @@ export default function TableViewActions(
 									dataType,
 									fieldType,
 								)}
+								variant="outlined"
+								color="secondary"
+								size="icon"
+								prefix={
+									isfilterOutLoading ? (
+										<Spin size="small" />
+									) : (
+										<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+									)
+								}
 							/>
 						</Tooltip>
 						{!isOldLogsExplorerOrLiveLogsPage && (
@@ -501,17 +517,17 @@ export default function TableViewActions(
 									<div data-log-detail-ignore="true">
 										<Button
 											className="more-filter-actions"
-											type="text"
-											icon={<GroupByIcon />}
 											onClick={handleGroupByAttribute}
+											variant="ghost"
+											prefix={<GroupByIcon />}
 										>
 											Group By Attribute
 										</Button>
 										<Button
 											className="more-filter-actions"
-											type="text"
-											icon={<RefreshCw size={14} />}
 											onClick={handleReplaceFilter}
+											variant="ghost"
+											prefix={<RefreshCw size={14} />}
 										>
 											Replace filters with this value
 										</Button>
@@ -522,8 +538,11 @@ export default function TableViewActions(
 								placement="bottomLeft"
 							>
 								<Button
-									icon={<Ellipsis size={14} />}
-									className="filter-btn periscope-btn"
+									className="filter-btn"
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<Ellipsis size={14} />}
 								/>
 							</Popover>
 						)}

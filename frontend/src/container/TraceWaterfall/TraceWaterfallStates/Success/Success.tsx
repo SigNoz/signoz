@@ -9,7 +9,8 @@ import {
 } from 'react';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
@@ -145,6 +146,8 @@ function SpanOverview({
 										handleCollapseUncollapse(span.spanId, !isSpanCollapsed);
 									}}
 									className="collapse-uncollapse-button"
+									variant="outlined"
+									color="secondary"
 								>
 									{isSpanCollapsed ? (
 										<ChevronRight size={14} />
@@ -156,7 +159,11 @@ function SpanOverview({
 									</Typography.Text>
 								</Button>
 							) : (
-								<Button className="collapse-uncollapse-button">
+								<Button
+									className="collapse-uncollapse-button"
+									variant="outlined"
+									color="secondary"
+								>
 									<Leaf size={14} />
 								</Button>
 							)}
@@ -180,8 +187,6 @@ function SpanOverview({
 									}
 								>
 									<Button
-										type="text"
-										size="small"
 										className="add-funnel-button__button"
 										onClick={(e): void => {
 											e.preventDefault();
@@ -189,7 +194,9 @@ function SpanOverview({
 											handleAddSpanToFunnel(span);
 										}}
 										disabled={!hasEditPermission}
-										icon={
+										size="sm"
+										variant="ghost"
+										prefix={
 											<img
 												className="add-funnel-button__icon"
 												src={funnelAddUrl}
@@ -544,15 +551,15 @@ function Success(props: ISuccessProps): JSX.Element {
 						</Typography.Text>
 					</section>
 					<Button
-						icon={<ArrowUpRight size={14} />}
 						className="right-info"
-						type="text"
 						onClick={(): WindowProxy | null =>
 							window.open(
 								'https://signoz.io/docs/userguide/traces/#missing-spans',
 								'_blank',
 							)
 						}
+						variant="ghost"
+						prefix={<ArrowUpRight size={14} />}
 					>
 						Learn More
 					</Button>

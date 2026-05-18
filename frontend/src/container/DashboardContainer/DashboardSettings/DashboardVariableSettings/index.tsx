@@ -11,7 +11,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, RowProps, Space, Table, Flex } from 'antd';
+import { Flex, Modal, Row, RowProps, Space, Table } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
@@ -331,29 +332,29 @@ function VariablesSettings({
 					<Space className="actions-btns">
 						{variable.type === 'DYNAMIC' && (
 							<Button
-								type="text"
 								onClick={(): void => onApplyToAllHandler(variable)}
 								className="apply-to-all-button"
 								loading={updateMutation.isLoading}
+								variant="ghost"
 							>
 								<Typography.Text>Apply to all</Typography.Text>
 							</Button>
 						)}
 						<Button
-							type="text"
 							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
 							className="edit-variable-button"
+							variant="ghost"
 						>
 							<PenLine size={14} />
 						</Button>
 						<Button
-							type="text"
 							onClick={(): void => {
 								if (variable) {
 									onVariableDeleteHandler(variable);
 								}
 							}}
 							className="delete-variable-button"
+							variant="ghost"
 						>
 							<Trash2 size={14} />
 						</Button>
@@ -434,7 +435,6 @@ function VariablesSettings({
 					>
 						<Button
 							data-testid="add-new-variable"
-							type="primary"
 							onClick={(): void =>
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}

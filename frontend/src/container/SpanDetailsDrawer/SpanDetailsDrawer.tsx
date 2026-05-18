@@ -1,3 +1,4 @@
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	Dispatch,
@@ -10,7 +11,6 @@ import {
 } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import {
-	Button,
 	Checkbox,
 	Input,
 	Modal,
@@ -59,6 +59,7 @@ import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
 import { hasInfraMetadata } from './utils';
 
 import './SpanDetailsDrawer.styles.scss';
+import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
@@ -233,9 +234,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			{
 				label: (
 					<Button
-						type="text"
-						icon={<Bookmark size={14} />}
 						className="attributes-tab-btn"
+						variant="ghost"
+						prefix={<Bookmark size="md" />}
 					>
 						<span className="tab-label">Attributes</span>
 						<span className="count-badge">
@@ -254,7 +255,11 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 			{
 				label: (
-					<Button type="text" icon={<Anvil size={14} />} className="events-tab-btn">
+					<Button
+						className="events-tab-btn"
+						variant="ghost"
+						prefix={<Anvil size="md" />}
+					>
 						<span className="tab-label">Events</span>
 						<span className="count-badge">{span.event?.length || 0}</span>
 					</Button>
@@ -271,9 +276,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			{
 				label: (
 					<Button
-						type="text"
-						icon={<Link2 size={14} />}
 						className="linked-spans-tab-btn"
+						variant="ghost"
+						prefix={<Link2 size="md" />}
 					>
 						<span className="tab-label">Links</span>
 						<span className="count-badge">
@@ -940,16 +945,18 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								related signals
 							</Typography.Text>
 							<div className="related-signals-section">
-								<Button.Group className="related-signals-button-group">
+								<ButtonGroup className="related-signals-button-group">
 									{relatedSignalsOptions.map((option) => (
 										<Button
 											key={option.value}
 											onClick={(): void => handleRelatedSignalsClick(option.value)}
+											variant="outlined"
+											color="secondary"
 										>
 											{option.label}
 										</Button>
 									))}
-								</Button.Group>
+								</ButtonGroup>
 							</div>
 						</div>
 					</section>

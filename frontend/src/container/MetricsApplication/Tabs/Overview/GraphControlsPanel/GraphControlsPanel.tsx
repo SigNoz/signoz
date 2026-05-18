@@ -1,7 +1,7 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
-import { DraftingCompass, ScrollText, Binoculars } from '@signozhq/icons';
+import { Binoculars, DraftingCompass, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 import './GraphControlsPanel.styles.scss';
 
@@ -21,32 +21,32 @@ function GraphControlsPanel({
 	return (
 		<div id={id} className="graph-controls-panel">
 			<Button
-				type="link"
-				icon={<DraftingCompass size={14} />}
-				size="small"
 				onClick={onViewTracesClick}
 				style={{ color: Color.BG_VANILLA_100 }}
+				size="sm"
+				variant="link"
+				prefix={<DraftingCompass size={14} />}
 			>
 				View traces
 			</Button>
 			{onViewLogsClick && (
 				<Button
-					type="link"
-					icon={<ScrollText size={14} />}
-					size="small"
 					onClick={onViewLogsClick}
 					style={{ color: Color.BG_VANILLA_100 }}
+					size="sm"
+					variant="link"
+					prefix={<ScrollText size={14} />}
 				>
 					View logs
 				</Button>
 			)}
 			{onViewAPIMonitoringClick && (
 				<Button
-					type="link"
-					icon={<Binoculars size={14} />}
-					size="small"
 					onClick={onViewAPIMonitoringClick}
 					style={{ color: Color.BG_VANILLA_100 }}
+					size="sm"
+					variant="link"
+					prefix={<Binoculars size={14} />}
 				>
 					View External APIs
 				</Button>

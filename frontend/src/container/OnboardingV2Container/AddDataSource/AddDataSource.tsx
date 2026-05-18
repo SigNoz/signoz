@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
-	Button,
+	Button as AntdButton,
 	Flex,
 	Input,
 	Layout,
@@ -10,6 +10,7 @@ import {
 	Space,
 	Steps,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -550,10 +551,11 @@ function OnboardingAddDataSource(): JSX.Element {
 
 						{!dataSourceRequestSubmitted && (
 							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn secondary"
-								icon={<Goal size={16} />}
+								className="request-data-source-btn"
 								onClick={handleRequestDataSource}
+								variant="outlined"
+								color="secondary"
+								prefix={<Goal size={16} />}
 							>
 								Request Data Source
 							</Button>
@@ -561,9 +563,10 @@ function OnboardingAddDataSource(): JSX.Element {
 
 						{dataSourceRequestSubmitted && (
 							<Button
-								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<Check size={16} />}
+								variant="outlined"
+								color="secondary"
+								prefix={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -596,10 +599,11 @@ function OnboardingAddDataSource(): JSX.Element {
 
 						{!dataSourceRequestSubmitted && (
 							<Button
-								type="default"
-								className="periscope-btn request-data-source-btn secondary"
-								icon={<Goal size={16} />}
+								className="request-data-source-btn"
 								onClick={handleRaiseRequest}
+								variant="outlined"
+								color="secondary"
+								prefix={<Goal size={16} />}
 							>
 								Raise request
 							</Button>
@@ -607,9 +611,10 @@ function OnboardingAddDataSource(): JSX.Element {
 
 						{dataSourceRequestSubmitted && (
 							<Button
-								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<Check size={16} />}
+								variant="outlined"
+								color="secondary"
+								prefix={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -650,10 +655,11 @@ function OnboardingAddDataSource(): JSX.Element {
 
 						<div className="header-right-section">
 							<Button
-								type="default"
-								className="periscope-btn invite-teammate-btn outlined"
+								className="invite-teammate-btn outlined"
 								onClick={handleShowInviteTeamMembersModal}
-								icon={<UserPlus size={16} />}
+								variant="outlined"
+								color="secondary"
+								prefix={<UserPlus size={16} />}
 							>
 								Invite a teammate
 							</Button>
@@ -740,8 +746,9 @@ function OnboardingAddDataSource(): JSX.Element {
 																			? 'selected'
 																			: ''
 																	}`}
-																	type="primary"
 																	onClick={(): void => handleSelectDataSource(dataSource)}
+																	variant="outlined"
+																	color="secondary"
 																>
 																	<img
 																		src={dataSource.imgUrl}
@@ -875,7 +882,6 @@ function OnboardingAddDataSource(): JSX.Element {
 																		className={`onboarding-data-source-button ${
 																			selectedFramework?.label === option.label ? 'selected' : ''
 																		}`}
-																		type="primary"
 																		onClick={(): void => {
 																			if (
 																				selectedDataSource?.question?.entityID === 'environment'
@@ -885,6 +891,8 @@ function OnboardingAddDataSource(): JSX.Element {
 																				handleSelectFramework(option);
 																			}
 																		}}
+																		variant="outlined"
+																		color="secondary"
 																	>
 																		{option.imgUrl && (
 																			<img
@@ -945,10 +953,11 @@ function OnboardingAddDataSource(): JSX.Element {
 																		className={`onboarding-data-source-button ${
 																			selectedEnvironment?.label === option.label ? 'selected' : ''
 																		}`}
-																		type="primary"
 																		onClick={(): void =>
 																			handleSelectEnvironment(option, option.link)
 																		}
+																		variant="outlined"
+																		color="secondary"
 																	>
 																		<img
 																			src={option.imgUrl || signozBrandLogoUrl}
@@ -965,7 +974,7 @@ function OnboardingAddDataSource(): JSX.Element {
 											)}
 										{!hasMoreQuestions && showConfigureProduct && (
 											<div className="questionaire-footer" ref={configureProdRef}>
-												<Button
+												<AntdButton
 													type="primary"
 													disabled={!selectedDataSource}
 													shape="round"
@@ -992,7 +1001,7 @@ function OnboardingAddDataSource(): JSX.Element {
 													}}
 												>
 													Next: Configure your product
-												</Button>
+												</AntdButton>
 											</div>
 										)}
 									</div>
@@ -1034,7 +1043,7 @@ function OnboardingAddDataSource(): JSX.Element {
 								</div>
 
 								<div className="onboarding-footer">
-									<Button
+									<AntdButton
 										type="default"
 										shape="round"
 										onClick={(): void => {
@@ -1052,8 +1061,8 @@ function OnboardingAddDataSource(): JSX.Element {
 										}}
 									>
 										Back
-									</Button>
-									<Button
+									</AntdButton>
+									<AntdButton
 										type="primary"
 										shape="round"
 										onClick={(e): void => {
@@ -1072,7 +1081,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										}}
 									>
 										Continue
-									</Button>
+									</AntdButton>
 								</div>
 							</div>
 						)}
@@ -1113,21 +1122,20 @@ function OnboardingAddDataSource(): JSX.Element {
 					width="640px"
 					footer={[
 						<Button
-							type="default"
-							className="periscope-btn outlined"
+							className="outlined"
 							key="back"
 							onClick={(): void => setShowRequestDataSourceModal(false)}
-							icon={<X size={16} />}
+							variant="outlined"
+							color="secondary"
+							prefix={<X size={16} />}
 						>
 							Cancel
 						</Button>,
 						<Button
 							key="submit"
-							type="primary"
-							className="periscope-btn primary"
 							disabled={dataSourceRequest.length <= 0}
 							onClick={handleSubmitDataSourceRequest}
-							icon={<Check size={16} />}
+							prefix={<Check size={16} />}
 						>
 							Submit request
 						</Button>,

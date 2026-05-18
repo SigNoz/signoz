@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Checkbox, Input, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -660,14 +661,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 													{String(value)}
 												</Typography.Text>
 											)}
-											<Button type="text" className="only-btn">
+											<Button className="only-btn" variant="ghost">
 												{isSomeFilterPresentForCurrentAttribute
 													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
 														? 'All'
 														: 'Only'
 													: 'Only'}
 											</Button>
-											<Button type="text" className="toggle-btn">
+											<Button className="toggle-btn" variant="ghost">
 												Toggle
 											</Button>
 										</div>

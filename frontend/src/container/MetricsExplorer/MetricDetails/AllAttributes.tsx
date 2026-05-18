@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Button, Collapse, Input, Menu, Popover, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Collapse, Input, Menu, Popover, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
@@ -223,7 +224,7 @@ function AllAttributes({
 									}
 								}}
 							>
-								<Button type="text">
+								<Button variant="ghost">
 									<Typography.Text>{field.label}</Typography.Text>
 								</Button>
 							</Popover>

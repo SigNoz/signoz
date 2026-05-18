@@ -3,9 +3,10 @@ import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
+import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from 'antd';
 import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
@@ -232,10 +233,9 @@ function TimeSeries({
 									Set the selected unit as the metric unit?
 								</Typography.Text>
 								<Button
-									type="primary"
-									size="small"
 									disabled={isUpdatingMetricMetadata}
 									onClick={handleSaveUnit}
+									size="sm"
 								>
 									<Typography.Text>Yes</Typography.Text>
 								</Button>

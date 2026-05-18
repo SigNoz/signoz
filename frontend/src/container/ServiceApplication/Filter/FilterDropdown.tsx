@@ -1,8 +1,9 @@
-import { Button, Card, Input, Space } from 'antd';
+import { Card, Input, Space } from 'antd';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
+import { Search } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 import { SEARCH_PLACEHOLDER } from '../Columns/ColumnContants';
-import { Search } from '@signozhq/icons';
 
 export const filterDropdown = ({
 	setSelectedKeys,
@@ -27,12 +28,7 @@ export const filterDropdown = ({
 					allowClear
 					onPressEnter={handleSearch}
 				/>
-				<Button
-					type="primary"
-					onClick={handleSearch}
-					icon={<Search size="md" />}
-					size="small"
-				>
+				<Button onClick={handleSearch} prefix={<Search size="md" />}>
 					Search
 				</Button>
 			</Space>

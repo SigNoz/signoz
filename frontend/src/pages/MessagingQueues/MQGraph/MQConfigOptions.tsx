@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Spin, Tooltip } from 'antd';
+import { Select, Spin, Tooltip } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
@@ -16,6 +16,7 @@ import { useAppContext } from '../../../providers/App/App';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
 
 import './MQConfigOptions.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 type ConfigOptionType = 'group' | 'topic' | 'partition';
 
@@ -221,7 +222,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 			</div>
 			<Tooltip title="Share This" arrow={false}>
 				<Button
-					className="periscope-btn copy-url-btn"
+					className="copy-url-btn"
 					onClick={(): void => {
 						handleCopyToClipboard(window.location.href);
 						setIsURLCopied(true);
@@ -229,7 +230,10 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 							setIsURLCopied(false);
 						}, 1000);
 					}}
-					icon={
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					prefix={
 						isURLCopied ? (
 							<Check size={14} color={Color.BG_FOREST_500} />
 						) : (

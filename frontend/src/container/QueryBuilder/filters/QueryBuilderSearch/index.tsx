@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Select, Spin, Tag, Tooltip } from 'antd';
+import { Select, Spin, Tag, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import {
@@ -458,13 +459,13 @@ function QueryBuilderSearch({
 								)}
 								{!key && !isFetching && !showAllFilters && options.length > 3 && (
 									<Button
-										type="text"
 										className="show-all-filter-props"
 										onClick={(): void => {
 											setShowAllFilters(true);
 											// when clicking on the button the search bar looses the focus
 											selectRef?.current?.focus();
 										}}
+										variant="ghost"
 									>
 										<div className="content">
 											<section className="left-section">

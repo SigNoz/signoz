@@ -17,13 +17,13 @@
 		gap: 12px;
 	}
 
-	.ant-btn {
+	button {
 		display: flex;
 		align-items: center;
 		gap: 8px;
 	}
 
-	.ant-btn-default {
+	button {
 		background-color: var(--l1-background);
 		border: 1px solid var(--l1-border);
 		color: var(--l2-foreground);

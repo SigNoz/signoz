@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check } from '@signozhq/icons';
 import {
-	Button,
 	DatePicker,
 	Flex,
 	Form,
@@ -12,6 +11,7 @@ import {
 	SelectProps,
 	Spin,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -612,8 +612,7 @@ export function PlannedDowntimeForm(
 					<ModalButtonWrapper>
 						<Button
 							key="submit"
-							type="primary"
-							htmlType="submit"
+							type="submit"
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 							className="downtime-schedule-btn"

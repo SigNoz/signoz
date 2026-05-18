@@ -62,7 +62,7 @@
 				.action-btn {
 					display: flex;
 
-					.ant-btn {
+					button {
 						background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 					}
 				}

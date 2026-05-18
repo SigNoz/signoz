@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleX } from '@signozhq/icons';
-import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
+import { Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
 
 import { tagInputStyle } from '../PipelineListsView/config';
 import { TagInputWrapper } from './styles';
+import { Button } from '@signozhq/ui/button';
 
 function TagInput({
 	setTagsListData,
@@ -139,7 +140,12 @@ function TagInput({
 			/>
 
 			{isButtonVisible ? (
-				<Button onClick={handleClearAll} icon={<CircleX />} type="text" />
+				<Button
+					onClick={handleClearAll}
+					variant="ghost"
+					size="icon"
+					prefix={<CircleX />}
+				/>
 			) : null}
 		</TagInputWrapper>
 	);

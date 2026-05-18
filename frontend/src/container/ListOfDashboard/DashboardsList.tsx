@@ -13,7 +13,6 @@ import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
-	Button,
 	Dropdown,
 	Flex,
 	Input,
@@ -26,6 +25,7 @@ import {
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -439,42 +439,42 @@ function DashboardsList(): JSX.Element {
 										<div className="dashboard-action-content">
 											<section className="section-1">
 												<Button
-													type="text"
 													className="action-btn"
-													icon={<Expand size={12} />}
 													onClick={onClickHandler}
+													variant="ghost"
+													prefix={<Expand size={12} />}
 												>
 													View
 												</Button>
 												<Button
-													type="text"
 													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
 														openInNewTab(getLink());
 													}}
+													variant="ghost"
+													prefix={<SquareArrowOutUpRight size={12} />}
 												>
 													Open in New Tab
 												</Button>
 												<Button
-													type="text"
 													className="action-btn"
-													icon={<Link2 size={12} />}
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
 														setCopy(getAbsoluteUrl(getLink()));
 													}}
+													variant="ghost"
+													prefix={<Link2 size={12} />}
 												>
 													Copy Link
 												</Button>
 												<Button
-													type="text"
 													className="action-btn"
-													icon={<FileJson size={12} />}
 													onClick={handleJsonExport}
+													variant="ghost"
+													prefix={<FileJson size={12} />}
 												>
 													Export JSON
 												</Button>
@@ -684,16 +684,16 @@ function DashboardsList(): JSX.Element {
 						<section className="action-btns">
 							<Button
 								className="retry-btn"
-								type="text"
-								icon={<RotateCw size={16} />}
 								onClick={(): Promise<any> => refetchDashboardList()}
+								variant="ghost"
+								prefix={<RotateCw size={16} />}
 							>
 								Retry
 							</Button>
 							<Button
-								type="text"
 								className="learn-more"
 								onClick={(): void => handleContactSupport(isCloudUserVal)}
+								variant="ghost"
 							>
 								Contact Support
 							</Button>
@@ -721,18 +721,17 @@ function DashboardsList(): JSX.Element {
 									trigger={['click']}
 								>
 									<Button
-										type="text"
 										className="new-dashboard"
-										icon={<Plus size={14} />}
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
+										variant="ghost"
+										prefix={<Plus size={14} />}
 									>
 										New Dashboard
 									</Button>
 								</Dropdown>
 								<Button
-									type="text"
 									className="learn-more"
 									data-testid="learn-more"
 									onClick={(): void => {
@@ -741,6 +740,7 @@ function DashboardsList(): JSX.Element {
 											'_blank',
 										);
 									}}
+									variant="ghost"
 								>
 									Learn more
 								</Button>
@@ -766,13 +766,14 @@ function DashboardsList(): JSX.Element {
 									trigger={['click']}
 								>
 									<Button
-										type="primary"
-										className="periscope-btn primary btn"
-										icon={<Plus size={14} />}
+										className="btn"
 										data-testid="new-dashboard-cta"
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
+										prefix={<Plus size={14} />}
+										variant="solid"
+										color="primary"
 									>
 										New dashboard
 									</Button>
@@ -803,10 +804,10 @@ function DashboardsList(): JSX.Element {
 															Sort By
 														</Typography.Text>
 														<Button
-															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('createdAt')}
 															data-testid="sort-by-last-created"
+															variant="ghost"
 														>
 															Last created
 															{dashboardsListQueryParams.columnKey === 'createdAt' && (
@@ -814,10 +815,10 @@ function DashboardsList(): JSX.Element {
 															)}
 														</Button>
 														<Button
-															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('updatedAt')}
 															data-testid="sort-by-last-updated"
+															variant="ghost"
 														>
 															Last updated
 															{dashboardsListQueryParams.columnKey === 'updatedAt' && (
@@ -838,14 +839,14 @@ function DashboardsList(): JSX.Element {
 											content={
 												<div className="configure-content">
 													<Button
-														type="text"
-														icon={<HdmiPort size={14} />}
 														className="configure-btn"
 														onClick={(e): void => {
 															e.preventDefault();
 															e.stopPropagation();
 															setIsConfigureMetadata(true);
 														}}
+														variant="ghost"
+														prefix={<HdmiPort size={14} />}
 													>
 														Configure metadata
 													</Button>
@@ -896,13 +897,13 @@ function DashboardsList(): JSX.Element {
 					title="Configure Metadata"
 					footer={
 						<Button
-							type="text"
-							icon={<Check size={14} />}
 							className="save-changes"
 							onClick={(): void => {
 								setIsConfigureMetadata(false);
 								setDynamicColumnsLocalStorage(visibleColumns);
 							}}
+							variant="ghost"
+							prefix={<Check size={14} />}
 						>
 							Save Changes
 						</Button>

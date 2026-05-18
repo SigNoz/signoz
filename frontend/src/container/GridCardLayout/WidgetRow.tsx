@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout } from 'react-grid-layout';
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { Ellipsis, PenLine, Plus, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -12,6 +12,7 @@ import {
 } from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+import { Button } from '@signozhq/ui/button';
 
 interface WidgetRowHeaderProps {
 	rowWidgetProperties: {
@@ -67,14 +68,14 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 					<section className="section-1">
 						<Button
 							className="rename-btn"
-							type="text"
 							disabled={!editWidget}
-							icon={<PenLine size={14} />}
 							onClick={(): void => {
 								setIsSettingsModalOpen(true);
 								setCurrentSelectRowId(id);
 								setIsRowSettingsOpen(false);
 							}}
+							variant="ghost"
+							prefix={<PenLine size={14} />}
 						>
 							Rename
 						</Button>
@@ -82,9 +83,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 					<section className="section-1">
 						<Button
 							className="new-panel-btn"
-							type="text"
 							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
-							icon={<Plus size={14} />}
 							onClick={(): void => {
 								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
 								if (!dashboardData?.id) {
@@ -94,6 +93,8 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 								setSelectedRowWidgetId(dashboardData.id, id);
 								setIsPanelTypeSelectionModalOpen(true);
 							}}
+							variant="ghost"
+							prefix={<Plus size={14} />}
 						>
 							New Panel
 						</Button>
@@ -102,14 +103,14 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 						<section className="section-2">
 							<Button
 								className="remove-section"
-								type="text"
-								icon={<X size={14} />}
 								disabled={!deleteWidget}
 								onClick={(): void => {
 									setIsDeleteModalOpen(true);
 									setCurrentSelectRowId(id);
 									setIsRowSettingsOpen(false);
 								}}
+								variant="ghost"
+								prefix={<X size={14} />}
 							>
 								Remove Section
 							</Button>

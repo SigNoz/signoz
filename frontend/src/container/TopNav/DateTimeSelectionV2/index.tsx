@@ -4,7 +4,6 @@ import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
 import { RefreshCw, Undo } from '@signozhq/icons';
-import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
@@ -56,6 +55,7 @@ import {
 } from './types';
 
 import './DateTimeSelectionV2.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function DateTimeSelection({
 	showAutoRefresh,
@@ -673,11 +673,12 @@ function DateTimeSelection({
 			{showResetButton && selectedTime !== defaultRelativeTime && (
 				<FormItem>
 					<Button
-						type="default"
 						className="reset-button"
 						onClick={handleReset}
 						title={`Reset to ${defaultRelativeTime}`}
-						icon={<Undo size={14} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<Undo size={14} />}
 					>
 						Reset
 					</Button>
@@ -742,9 +743,12 @@ function DateTimeSelection({
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
 								<Button
-									icon={<RefreshCw size={16} />}
 									loading={!!isRefreshingQueries}
 									onClick={onRefreshHandler}
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<RefreshCw size={16} />}
 								/>
 							</FormItem>
 

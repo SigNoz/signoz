@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
-import { Button, Input, InputNumber, Select, Space } from 'antd';
+import { Input, InputNumber, Select, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
@@ -228,16 +229,18 @@ function Threshold({
 				{!isEditMode && (
 					<div className="edit-action-btns">
 						<Button
-							type="text"
-							icon={<Pencil size={14} />}
 							className="edit-btn"
 							onClick={editHandler}
+							variant="ghost"
+							size="icon"
+							prefix={<Pencil size={14} />}
 						/>
 						<Button
-							type="text"
-							icon={<Trash2 size={14} />}
 							className="delete-btn"
 							onClick={deleteHandler}
+							variant="ghost"
+							size="icon"
+							prefix={<Trash2 size={14} />}
 						/>
 					</div>
 				)}
@@ -389,15 +392,19 @@ function Threshold({
 					<div className="threshold-action-button">
 						<Button
 							className="discard-btn"
-							icon={<X size={14} />}
 							onClick={discardHandler}
+							variant="outlined"
+							color="secondary"
+							prefix={<X size={14} />}
 						>
 							Discard
 						</Button>
 						<Button
 							className="save-changes"
-							icon={<Check size={14} />}
 							onClick={saveHandler}
+							variant="outlined"
+							color="secondary"
+							prefix={<Check size={14} />}
 						>
 							Save Changes
 						</Button>

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button, Card, Modal } from 'antd';
+import { Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { FeatureKeys } from 'constants/features';
@@ -215,9 +216,10 @@ export default function Support(): JSX.Element {
 
 								<div className="support-channel-action">
 									<Button
-										className="periscope-btn secondary support-channel-btn"
-										type="default"
+										className="support-channel-btn"
 										onClick={(): void => handleChannelClick(channel)}
+										variant="outlined"
+										color="secondary"
 									>
 										<Text truncate={1}>{channel.btnText} </Text>
 										{channel.isExternal && <ArrowUpRight size={14} />}
@@ -242,19 +244,21 @@ export default function Support(): JSX.Element {
 						key="cancel"
 						onClick={(): void => setIsAddCreditCardModalOpen(false)}
 						className="cancel-btn"
-						icon={<X size={16} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
 						loading={isLoadingBilling}
 						disabled={isLoadingBilling}
 						onClick={handleAddCreditCard}
-						className="add-credit-card-btn periscope-btn primary"
+						className="add-credit-card-btn"
+						prefix={<CreditCard size={16} />}
+						variant="solid"
+						color="primary"
 					>
 						Add Credit Card
 					</Button>,

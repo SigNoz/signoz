@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Popover, Tooltip } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -7,6 +7,7 @@ import { FunnelStepData } from 'types/api/traceFunnels';
 
 import AddFunnelStepDetailsModal from './AddFunnelStepDetailsModal';
 import DeleteFunnelStep from './DeleteFunnelStep';
+import { Button } from '@signozhq/ui/button';
 
 export interface FunnelStepPopoverProps {
 	isPopoverOpen: boolean;
@@ -41,14 +42,14 @@ function FunnelStepActions({
 	return (
 		<div className="funnel-item__actions">
 			<Button
-				type="text"
 				className="funnel-item__action-btn"
-				icon={<PencilLine size={14} />}
 				disabled={!hasEditPermission}
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsAddDetailsModalOpen(true);
 				}}
+				variant="ghost"
+				prefix={<PencilLine size={14} />}
 			>
 				Add details
 			</Button>
@@ -63,9 +64,7 @@ function FunnelStepActions({
 				}
 			>
 				<Button
-					type="text"
 					className="funnel-item__action-btn funnel-item__action-btn--delete"
-					icon={<Trash2 size={14} />}
 					disabled={stepsCount <= 2 || !hasEditPermission}
 					onClick={(): void => {
 						if (stepsCount > 2) {
@@ -73,6 +72,8 @@ function FunnelStepActions({
 							setIsDeleteModalOpen(true);
 						}
 					}}
+					variant="ghost"
+					prefix={<Trash2 size={14} />}
 				>
 					Delete
 				</Button>
@@ -103,10 +104,11 @@ function FunnelStepPopover({
 		return (
 			<Tooltip title="You need editor or admin access to add details to step">
 				<Button
-					type="text"
 					className="funnel-item__action-btn"
-					icon={<Ellipsis size={14} />}
 					disabled
+					variant="ghost"
+					size="icon"
+					prefix={<Ellipsis size={14} />}
 				/>
 			</Tooltip>
 		);

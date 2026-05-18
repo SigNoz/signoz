@@ -1,4 +1,5 @@
-import { Button, Tabs, TabsProps } from 'antd';
+import { Tabs, TabsProps } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { CableCar, Group } from '@signozhq/icons';
@@ -27,9 +28,9 @@ function IntegrationDetailContent(
 			key: 'overview',
 			label: (
 				<Button
-					type="text"
 					className="integration-tab-btns"
-					icon={<CableCar size={14} />}
+					variant="ghost"
+					prefix={<CableCar size={14} />}
 				>
 					<Typography.Text className="typography">Overview</Typography.Text>
 				</Button>
@@ -46,9 +47,9 @@ function IntegrationDetailContent(
 			key: 'configuration',
 			label: (
 				<Button
-					type="text"
 					className="integration-tab-btns"
-					icon={<ConfigureIcon />}
+					variant="ghost"
+					prefix={<ConfigureIcon />}
 				>
 					<Typography.Text className="typography">Configure</Typography.Text>
 				</Button>
@@ -64,9 +65,9 @@ function IntegrationDetailContent(
 			key: 'dataCollected',
 			label: (
 				<Button
-					type="text"
 					className="integration-tab-btns"
-					icon={<Group size={14} />}
+					variant="ghost"
+					prefix={<Group size={14} />}
 				>
 					<Typography.Text className="typography">Data Collected</Typography.Text>
 				</Button>

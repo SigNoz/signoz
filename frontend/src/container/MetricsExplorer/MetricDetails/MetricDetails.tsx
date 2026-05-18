@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Divider, Drawer } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -144,9 +145,11 @@ function MetricDetails({
 					<div className="metric-details-header-buttons">
 						<Button
 							onClick={goToMetricsExplorerwithSelectedMetric}
-							icon={<Compass size={16} />}
 							disabled={isActionButtonDisabled}
 							data-testid="open-in-explorer-button"
+							variant="outlined"
+							color="secondary"
+							prefix={<Compass size={16} />}
 						>
 							Open in Explorer
 						</Button>
@@ -156,13 +159,16 @@ function MetricDetails({
 								className="inspect-metrics-button"
 								aria-label="Inspect Metric"
 								disabled={isActionButtonDisabled}
-								icon={<Crosshair size={18} />}
 								onClick={(): void => {
 									if (metricName) {
 										openInspectModal(metricName);
 									}
 								}}
 								data-testid="inspect-metric-button"
+								variant="outlined"
+								color="secondary"
+								size="icon"
+								prefix={<Crosshair size={18} />}
 							/>
 						)}
 					</div>

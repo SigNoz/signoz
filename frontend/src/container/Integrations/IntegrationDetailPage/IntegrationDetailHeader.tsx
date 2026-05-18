@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal, Skeleton, Tooltip } from 'antd';
+import { Modal, Skeleton, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
@@ -147,7 +148,6 @@ function IntegrationDetailHeader(
 						'configure-btn',
 						!isConnectionStateNotInstalled && 'test-connection',
 					)}
-					icon={<ArrowLeftRight size={14} />}
 					disabled={isInstallLoading || isLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
@@ -165,6 +165,9 @@ function IntegrationDetailHeader(
 						}
 						showModal();
 					}}
+					variant="outlined"
+					color="secondary"
+					prefix={<ArrowLeftRight size={14} />}
 				>
 					{isConnectionStateNotInstalled ? `Connect ${title}` : `Test Connection`}
 				</Button>
@@ -191,10 +194,6 @@ function IntegrationDetailHeader(
 						)}
 					>
 						<Button
-							type="text"
-							icon={
-								isConnectionStateNotInstalled ? <ConfigureIcon /> : <Check size={14} />
-							}
 							onClick={(): void => {
 								if (isConnectionStateNotInstalled) {
 									setActiveDetailTab('configuration');
@@ -202,6 +201,10 @@ function IntegrationDetailHeader(
 								handleOk();
 							}}
 							className="understandBtn"
+							variant="ghost"
+							prefix={
+								isConnectionStateNotInstalled ? <ConfigureIcon /> : <Check size={14} />
+							}
 						>
 							{isConnectionStatePending
 								? isConnectionStateNotInstalled
@@ -211,10 +214,6 @@ function IntegrationDetailHeader(
 						</Button>
 						{isConnectionStatePending && (
 							<Button
-								type="primary"
-								icon={
-									isConnectionStateNotInstalled ? <Check size={14} /> : <ConfigureIcon />
-								}
 								onClick={(): void => {
 									if (isConnectionStateNotInstalled) {
 										mutate({ integration_id: id, config: {} });
@@ -225,6 +224,9 @@ function IntegrationDetailHeader(
 									handleOk();
 								}}
 								className="configureBtn"
+								prefix={
+									isConnectionStateNotInstalled ? <Check size={14} /> : <ConfigureIcon />
+								}
 							>
 								{isConnectionStateNotInstalled
 									? 'I have already configured'

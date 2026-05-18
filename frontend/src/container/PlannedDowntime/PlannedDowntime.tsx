@@ -2,7 +2,8 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Tooltip } from 'antd';
+import { Flex, Form, Input, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useDeleteDowntimeScheduleByID,
@@ -146,7 +147,6 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							type="primary"
 							onClick={(): void => {
 								setInitialValues({ ...defautlInitialValues, editMode: false });
 								setIsOpen(true);

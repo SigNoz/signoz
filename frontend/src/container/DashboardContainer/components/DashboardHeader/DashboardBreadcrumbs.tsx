@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react';
-import { Button } from 'antd';
 import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import ROUTES from 'constants/routes';
 import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDashboardsListQueryParams';
@@ -11,6 +10,7 @@ import { DashboardData } from 'types/api/dashboard/getAll';
 import { Base64Icons } from '../../DashboardSettings/General/utils';
 
 import './DashboardBreadcrumbs.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function DashboardBreadcrumbs(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -46,14 +46,14 @@ function DashboardBreadcrumbs(): JSX.Element {
 	return (
 		<div className="dashboard-breadcrumbs">
 			<Button
-				type="text"
-				icon={<LayoutGrid size={14} />}
 				className="dashboard-btn"
 				onClick={goToListPage}
+				variant="ghost"
+				prefix={<LayoutGrid size={14} />}
 			>
 				Dashboard /
 			</Button>
-			<Button type="text" className="id-btn dashboard-name-btn">
+			<Button className="id-btn dashboard-name-btn" variant="ghost">
 				<img src={image} alt="dashboard-icon" className="dashboard-icon-image" />
 				{title}
 			</Button>

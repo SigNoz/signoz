@@ -1,4 +1,5 @@
-import { Button, Row } from 'antd';
+import { Row } from 'antd';
+import { Button } from '@signozhq/ui/button';
 
 interface SearchFieldsActionBarProps {
 	applyUpdate: VoidFunction;
@@ -12,15 +13,14 @@ export function SearchFieldsActionBar({
 	return (
 		<Row style={{ justifyContent: 'flex-end', paddingRight: '2.4rem' }}>
 			<Button
-				type="default"
 				onClick={clearFilters}
 				style={{ marginRight: '1rem' }}
+				variant="outlined"
+				color="secondary"
 			>
 				Clear Filter
 			</Button>
-			<Button type="primary" onClick={applyUpdate}>
-				Apply
-			</Button>
+			<Button onClick={applyUpdate}>Apply</Button>
 		</Row>
 	);
 }

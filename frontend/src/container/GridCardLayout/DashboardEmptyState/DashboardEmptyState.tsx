@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
@@ -107,11 +107,11 @@ export default function DashboardEmptyState(): JSX.Element {
 						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the
 						whole dashboard page instead of confined to this Empty State */}
 						<Button
-							type="text"
 							className="configure-button"
-							icon={<ConfigureIcon />}
 							data-testid="show-drawer"
 							onClick={onConfigureClick}
+							variant="ghost"
+							prefix={<ConfigureIcon />}
 						>
 							Configure
 						</Button>
@@ -143,9 +143,8 @@ export default function DashboardEmptyState(): JSX.Element {
 							<Button
 								className="add-panel-btn"
 								onClick={onEmptyWidgetHandler}
-								icon={<Plus size="md" />}
-								type="primary"
 								data-testid="add-panel"
+								prefix={<Plus size="md" />}
 							>
 								New Panel
 							</Button>

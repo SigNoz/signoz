@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Blocks, Check, LoaderCircle } from '@signozhq/icons';
-import { Button, Card, Form, Input, Select, Space } from 'antd';
+import { Card, Form, Input, Select, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -247,8 +248,10 @@ export default function DataSource(): JSX.Element {
 							</Typography.Text>
 							<Button
 								onClick={(e): void => goToIntegrationsPage(e)}
-								icon={<Blocks size={14} />}
 								className="navigate-integrations-page-btn"
+								variant="outlined"
+								color="secondary"
+								prefix={<Blocks size={14} />}
 							>
 								Go to integrations
 							</Button>
@@ -269,19 +272,18 @@ export default function DataSource(): JSX.Element {
 									</Form.Item>
 									<Button
 										className="periscope-btn primary"
-										icon={
-											isSubmittingRequestForDataSource ? (
-												<LoaderCircle size="md" className="animate-spin" />
-											) : (
-												<Check size={12} />
-											)
-										}
-										type="primary"
 										onClick={handleRequestDataSourceSubmit}
 										disabled={
 											isSubmittingRequestForDataSource ||
 											!requestedDataSourceName ||
 											requestedDataSourceName?.trim().length === 0
+										}
+										prefix={
+											isSubmittingRequestForDataSource ? (
+												<LoaderCircle size="md" className="animate-spin" />
+											) : (
+												<Check size={12} />
+											)
 										}
 									>
 										Submit

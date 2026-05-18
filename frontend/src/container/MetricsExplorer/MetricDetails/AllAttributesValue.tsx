@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Input, Menu, Popover, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { Check, Copy, Search, SquareArrowOutUpRight } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
+import { Input, Menu, Popover, Tooltip } from 'antd';
 
 import MetricDetailsErrorState from './MetricDetailsErrorState';
 import { AllAttributesEmptyTextProps, AllAttributesValueProps } from './types';
@@ -125,24 +126,24 @@ export function AllAttributesValue({
 								<div className="all-values-item-actions">
 									<Tooltip title={isCopied ? 'Copied!' : 'Copy value'}>
 										<Button
-											type="text"
-											size="small"
 											className={isCopied ? 'copy-success' : ''}
-											icon={isCopied ? <Check size={12} /> : <Copy size={12} />}
 											onClick={(): void => {
 												handleCopyWithFeedback(attribute);
 											}}
+											size="sm"
+											variant="ghost"
+											prefix={isCopied ? <Check size={12} /> : <Copy size={12} />}
 										/>
 									</Tooltip>
 									<Tooltip title="Open in Metric Explorer">
 										<Button
-											type="text"
-											size="small"
-											icon={<SquareArrowOutUpRight size={12} />}
 											onClick={(): void => {
 												goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
 												setAllValuesOpen(false);
 											}}
+											size="sm"
+											variant="ghost"
+											prefix={<SquareArrowOutUpRight size={12} />}
 										/>
 									</Tooltip>
 								</div>
@@ -177,7 +178,7 @@ export function AllAttributesValue({
 								}
 							}}
 						>
-							<Button type="text">
+							<Button variant="ghost">
 								<Typography.Text>{attribute}</Typography.Text>
 							</Button>
 						</Popover>
@@ -203,7 +204,7 @@ export function AllAttributesValue({
 					}}
 					overlayClassName="metric-details-popover all-values-popover-overlay"
 				>
-					<Button type="text" className="all-values-button">
+					<Button className="all-values-button" variant="ghost">
 						All values ({filterValue.length})
 					</Button>
 				</Popover>

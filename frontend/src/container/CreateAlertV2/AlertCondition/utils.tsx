@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps, Switch } from 'antd';
+import { Flex, SelectProps, Switch } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
@@ -388,10 +389,10 @@ export function NotificationChannelsNotFoundContent({
 						Create one
 						<Button
 							style={{ padding: '0 4px' }}
-							type="link"
 							onClick={(): void => {
 								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
+							variant="link"
 						>
 							here.
 						</Button>
@@ -400,7 +401,7 @@ export function NotificationChannelsNotFoundContent({
 					<Typography.Text>Please ask your admin to create one.</Typography.Text>
 				)}
 			</Flex>
-			<Button type="text" onClick={refreshChannels}>
+			<Button onClick={refreshChannels} variant="ghost">
 				Refresh
 			</Button>
 		</Flex>
@@ -429,10 +430,10 @@ export function RoutingPolicyBanner({
 					}}
 				/>
 				<Button
-					type="link"
 					className="view-routing-policies-button"
 					data-testid="view-routing-policies-button"
 					onClick={(): void => safeNavigate(ROUTING_POLICIES_ROUTE)}
+					variant="link"
 				>
 					View Routing Policies
 					<ArrowRight size={14} />

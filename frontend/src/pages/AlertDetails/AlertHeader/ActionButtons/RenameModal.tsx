@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button, Input, InputRef, Modal } from 'antd';
+import { Input, InputRef, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { Check, X } from '@signozhq/icons';
 
 import './RenameModal.styles.scss';
@@ -60,19 +61,18 @@ function RenameModal({
 			footer={
 				<div className="alert-rename">
 					<Button
-						type="primary"
-						icon={<Check size={14} />}
 						className="rename-btn"
 						onClick={onNameChangeHandler}
 						disabled={isLoading}
+						prefix={<Check size={14} />}
 					>
 						Rename Alert
 					</Button>
 					<Button
-						type="text"
-						icon={<X size={14} />}
 						className="cancel-btn"
 						onClick={handleClose}
+						variant="ghost"
+						prefix={<X size={14} />}
 					>
 						Cancel
 					</Button>

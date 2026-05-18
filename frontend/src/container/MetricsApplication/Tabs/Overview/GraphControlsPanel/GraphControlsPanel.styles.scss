@@ -7,7 +7,7 @@
 	border-radius: 5px;
 	background: var(--l2-background);
 
-	.ant-btn-link {
+	button {
 		padding: 0;
 		margin: 0;
 		text-decoration: none;
@@ -19,7 +19,7 @@
 		border: none;
 	}
 
-	.ant-btn-link:hover {
+	button:hover {
 		color: var(--l1-foreground);
 	}
 }

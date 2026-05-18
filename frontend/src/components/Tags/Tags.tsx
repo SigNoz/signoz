@@ -1,9 +1,10 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
-import { Button, Flex, Tag } from 'antd';
+import { Flex, Tag } from 'antd';
 import Input from 'components/Input';
 
 import './Tags.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
@@ -71,19 +72,19 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 					<div className="confirm-cancel-actions">
 						<Button
-							type="primary"
-							className="periscope-btn"
-							size="small"
-							icon={<Check size={14} />}
 							onClick={handleInputConfirm}
+							size="sm"
+							prefix={<Check size={14} />}
+							variant="outlined"
+							color="secondary"
 						/>
 
 						<Button
-							type="primary"
-							className="periscope-btn"
-							size="small"
-							icon={<X size={14} />}
 							onClick={hideInput}
+							size="sm"
+							prefix={<X size={14} />}
+							variant="outlined"
+							color="secondary"
 						/>
 					</div>
 				</div>
@@ -91,15 +92,14 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 			{!inputVisible && (
 				<Button
-					type="primary"
-					size="small"
 					style={{
 						fontSize: '11px',
 					}}
 					onClick={showInput}
+					size="sm"
+					prefix={<Plus size={14} />}
 				>
 					<Flex justify="center" align="center" gap={4}>
-						<Plus size="md" />
 						New Tag
 					</Flex>
 				</Button>

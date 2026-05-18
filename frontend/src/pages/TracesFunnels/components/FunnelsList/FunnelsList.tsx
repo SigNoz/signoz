@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { generatePath, Link } from 'react-router-dom';
-import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
@@ -10,6 +9,7 @@ import { FunnelData } from 'types/api/traceFunnels';
 import FunnelItemPopover from './FunnelItemPopover';
 
 import './FunnelsList.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface FunnelListItemProps {
 	funnel: FunnelData;
@@ -38,9 +38,10 @@ export function FunnelListItem({
 
 				{isSpanDetailsPage ? (
 					<Button
-						type="default"
 						className="funnel-item__open-button"
-						icon={<DecimalsArrowRight size={12} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<DecimalsArrowRight size={12} />}
 					>
 						Open funnel
 					</Button>

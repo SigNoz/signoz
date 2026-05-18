@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio } from 'antd';
+import { Divider, Drawer, Radio } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -24,6 +25,7 @@ import EndPointDetails from './EndPointDetails';
 import TopErrors from './TopErrors';
 
 import './DomainDetails.styles.scss';
+import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 const TimeRangeOffset = 1000000000;
 
@@ -176,7 +178,7 @@ function DomainDetails({
 							modalInitialStartTime={modalTimeRange.startTime * 1000}
 							modalInitialEndTime={modalTimeRange.endTime * 1000}
 						/>
-						<Button.Group className="domain-details-drawer-header-ctas">
+						<ButtonGroup className="domain-details-drawer-header-ctas">
 							<Button
 								className="domain-navigate-cta"
 								onClick={(): void => {
@@ -185,9 +187,12 @@ function DomainDetails({
 									setEndPointsGroupBy([]);
 									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
 								}}
-								icon={<ArrowUp size={16} />}
 								disabled={selectedDomainIndex === 0}
 								title="Previous domain"
+								variant="outlined"
+								color="secondary"
+								size="icon"
+								prefix={<ArrowUp size={16} />}
 							/>
 							<Button
 								className="domain-navigate-cta"
@@ -197,11 +202,14 @@ function DomainDetails({
 									setEndPointsGroupBy([]);
 									setSelectedView(VIEW_TYPES.ALL_ENDPOINTS);
 								}}
-								icon={<ArrowDown size={16} />}
 								disabled={selectedDomainIndex === domainListLength - 1}
 								title="Next domain"
+								variant="outlined"
+								color="secondary"
+								size="icon"
+								prefix={<ArrowDown size={16} />}
 							/>
-						</Button.Group>
+						</ButtonGroup>
 					</div>
 				</div>
 			}

@@ -14,7 +14,7 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag, Tooltip } from 'antd';
+import { Card, Collapse, Popover, Tag, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -49,6 +49,7 @@ import { queryExamples } from './constants';
 import { combineInitialAndUserExpression } from './utils';
 
 import './QuerySearch.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 const { Panel } = Collapse;
 
@@ -1484,15 +1485,16 @@ function QuerySearch({
 						>
 							{validation.isValid ? (
 								<Button
-									type="text"
-									icon={<CircleCheck size="md" />}
+									variant="ghost"
+									size="icon"
 									className="periscope-btn ghost"
+									prefix={<CircleCheck size={14} />}
 								/>
 							) : (
 								<Button
-									type="text"
-									icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
-									className="periscope-btn ghost"
+									variant="ghost"
+									size="icon"
+									prefix={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
 								/>
 							)}
 						</Popover>

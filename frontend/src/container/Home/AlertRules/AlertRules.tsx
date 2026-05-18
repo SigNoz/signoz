@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -17,6 +17,7 @@ import { USER_ROLES } from 'types/roles';
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
 import { getItemIcon } from '../constants';
+import { Button } from '@signozhq/ui/button';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -89,19 +90,18 @@ export default function AlertRules({
 					<div className="empty-actions-container">
 						<Link to={ROUTES.ALERTS_NEW}>
 							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
 								onClick={(): void => {
 									logEvent('Homepage: Create alert rule clicked', {});
 								}}
+								variant="outlined"
+								color="secondary"
+								prefix={<Plus size={16} />}
 							>
 								Create Alert Rule
 							</Button>
 						</Link>
 
 						<Button
-							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
 								logEvent('Homepage: Learn more clicked', {
@@ -114,6 +114,7 @@ export default function AlertRules({
 									'noreferrer noopener',
 								);
 							}}
+							variant="link"
 						>
 							Learn more <ArrowUpRight size={12} />
 						</Button>
@@ -227,11 +228,11 @@ export default function AlertRules({
 					<div className="alert-rules-footer home-data-card-footer">
 						<Link to={ROUTES.LIST_ALL_ALERT}>
 							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
+								className="learn-more-link"
 								onClick={(): void => {
 									logEvent('Homepage: All alert rules clicked', {});
 								}}
+								variant="link"
 							>
 								All Alert Rules <ArrowRight size={12} />
 							</Button>

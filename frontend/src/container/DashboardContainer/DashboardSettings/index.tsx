@@ -1,4 +1,4 @@
-import { Button, Tabs, Tooltip } from 'antd';
+import { Tabs, Tooltip } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Braces, Globe, Table } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -10,6 +10,7 @@ import GeneralDashboardSettings from './General';
 import PublicDashboardSetting from './PublicDashboard';
 
 import './DashboardSettingsContent.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function DashboardSettings({
 	variablesSettingsTabHandle,
@@ -32,11 +33,11 @@ function DashboardSettings({
 				placement="right"
 			>
 				<Button
-					type="text"
-					icon={<Globe size={14} />}
 					className={`public-dashboard-btn ${
 						user?.role !== USER_ROLES.ADMIN ? 'disabled-btn' : ''
 					}`}
+					variant="ghost"
+					prefix={<Globe size={14} />}
 				>
 					Publish
 				</Button>
@@ -50,7 +51,11 @@ function DashboardSettings({
 	const items = [
 		{
 			label: (
-				<Button type="text" icon={<Table size={14} />} className="overview-btn">
+				<Button
+					className="overview-btn"
+					variant="ghost"
+					prefix={<Table size={14} />}
+				>
 					Overview
 				</Button>
 			),
@@ -59,7 +64,11 @@ function DashboardSettings({
 		},
 		{
 			label: (
-				<Button type="text" icon={<Braces size={14} />} className="variables-btn">
+				<Button
+					className="variables-btn"
+					variant="ghost"
+					prefix={<Braces size={14} />}
+				>
 					Variables
 				</Button>
 			),

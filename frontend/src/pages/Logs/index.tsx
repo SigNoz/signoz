@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { Col, Divider, Popover, Row, Select, Space } from 'antd';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
@@ -31,6 +31,7 @@ import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
 
 import './logs.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function OldLogsExplorer(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -121,7 +122,9 @@ function OldLogsExplorer(): JSX.Element {
 										placement="right"
 										content={renderPopoverContent}
 									>
-										<Button>Format</Button>
+										<Button variant="outlined" color="secondary">
+											Format
+										</Button>
 									</Popover>
 								)}
 

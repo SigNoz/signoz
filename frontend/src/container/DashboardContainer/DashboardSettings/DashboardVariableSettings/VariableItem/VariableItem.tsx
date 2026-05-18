@@ -5,7 +5,8 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag } from 'antd';
+import { Collapse, Input, Select, Switch, Tag } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
@@ -441,10 +442,10 @@ function VariableItem({
 			<div className="variable-item-container">
 				<div className="all-variables">
 					<Button
-						type="text"
 						className="all-variables-btn"
-						icon={<ArrowLeft size={14} />}
 						onClick={onCancel}
+						variant="ghost"
+						prefix={<ArrowLeft size={14} />}
 					>
 						All variables
 					</Button>
@@ -525,8 +526,6 @@ function VariableItem({
 
 						<div className="variable-type-btn-group">
 							<Button
-								type="text"
-								icon={<Pyramid size={14} />}
 								className={cx(
 									'variable-type-btn',
 									queryType === 'DYNAMIC' ? 'selected' : '',
@@ -539,6 +538,8 @@ function VariableItem({
 										setHasUserManuallyChangedName(false);
 									}
 								}}
+								variant="ghost"
+								prefix={<Pyramid size={14} />}
 							>
 								Dynamic
 								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
@@ -546,8 +547,6 @@ function VariableItem({
 								</Tag>
 							</Button>
 							<Button
-								type="text"
-								icon={<ClipboardType size={14} />}
 								className={cx(
 									'variable-type-btn',
 									queryType === 'TEXTBOX' ? 'selected' : '',
@@ -560,12 +559,12 @@ function VariableItem({
 										setHasUserManuallyChangedName(false);
 									}
 								}}
+								variant="ghost"
+								prefix={<ClipboardType size={14} />}
 							>
 								Textbox
 							</Button>
 							<Button
-								type="text"
-								icon={<LayoutList size={14} />}
 								className={cx(
 									'variable-type-btn',
 									queryType === 'CUSTOM' ? 'selected' : '',
@@ -578,12 +577,12 @@ function VariableItem({
 										setHasUserManuallyChangedName(false);
 									}
 								}}
+								variant="ghost"
+								prefix={<LayoutList size={14} />}
 							>
 								Custom
 							</Button>
 							<Button
-								type="text"
-								icon={<DatabaseZap size={14} />}
 								className={cx(
 									'variable-type-btn',
 									queryType === 'QUERY' ? 'selected' : '',
@@ -596,6 +595,8 @@ function VariableItem({
 										setHasUserManuallyChangedName(false);
 									}
 								}}
+								variant="ghost"
+								prefix={<DatabaseZap size={14} />}
 							>
 								Query
 								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
@@ -656,14 +657,13 @@ function VariableItem({
 									}}
 								/>
 								<Button
-									type="primary"
-									size="small"
 									onClick={handleTestRunQuery}
 									style={{
 										position: 'absolute',
 										bottom: 0,
 									}}
 									loading={previewLoading}
+									size="sm"
 								>
 									Test Run Query
 								</Button>
@@ -824,19 +824,19 @@ function VariableItem({
 			<div className="variable-item-footer">
 				<VariableItemRow>
 					<Button
-						type="default"
 						onClick={onCancel}
-						icon={<X size={14} />}
 						className="footer-btn-discard"
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={14} />}
 					>
 						Discard
 					</Button>
 					<Button
-						type="primary"
 						onClick={handleSave}
 						disabled={errorName || errorAttributeKey}
-						icon={<Check size={14} />}
 						className="footer-btn-save"
+						prefix={<Check size={14} />}
 					>
 						Save Variable
 					</Button>

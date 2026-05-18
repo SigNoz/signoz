@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
+import { Input, InputNumber, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
@@ -223,7 +224,7 @@ function OptionsMenu({
 					<Button
 						onClick={(): void => setIsFontSizeOptionsOpen(false)}
 						className="back-btn"
-						type="text"
+						variant="ghost"
 					>
 						<ChevronLeft size={14} className="icon" />
 						<Typography.Text className="text">Select font size</Typography.Text>
@@ -235,7 +236,7 @@ function OptionsMenu({
 								setFontSizeValue(FontSize.SMALL);
 							}}
 							className="option-btn"
-							type="text"
+							variant="ghost"
 						>
 							<Typography.Text className="text">{FontSize.SMALL}</Typography.Text>
 							{fontSizeValue === FontSize.SMALL && (
@@ -247,7 +248,7 @@ function OptionsMenu({
 								setFontSizeValue(FontSize.MEDIUM);
 							}}
 							className="option-btn"
-							type="text"
+							variant="ghost"
 						>
 							<Typography.Text className="text">{FontSize.MEDIUM}</Typography.Text>
 							{fontSizeValue === FontSize.MEDIUM && (
@@ -259,7 +260,7 @@ function OptionsMenu({
 								setFontSizeValue(FontSize.LARGE);
 							}}
 							className="option-btn"
-							type="text"
+							variant="ghost"
 						>
 							<Typography.Text className="text">{FontSize.LARGE}</Typography.Text>
 							{fontSizeValue === FontSize.LARGE && (
@@ -338,10 +339,10 @@ function OptionsMenu({
 						<div className="title">Font Size</div>
 						<Button
 							className="value"
-							type="text"
 							onClick={(): void => {
 								setIsFontSizeOptionsOpen(true);
 							}}
+							variant="ghost"
 						>
 							<Typography.Text className="font-value">{fontSizeValue}</Typography.Text>
 							<ChevronRight size={14} className="icon" />
@@ -472,9 +473,11 @@ function LogsFormatOptionsMenu({
 		>
 			<Tooltip title="Options">
 				<Button
-					className="periscope-btn ghost"
-					icon={<SlidersVertical size="md" />}
 					data-testid="periscope-btn-format-options"
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					prefix={<SlidersVertical size={14} />}
 				/>
 			</Tooltip>
 		</Popover>

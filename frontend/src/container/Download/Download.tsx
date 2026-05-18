@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
-import { Button, Dropdown, MenuProps, Flex } from 'antd';
+import { Dropdown, Flex, MenuProps } from 'antd';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
 
 import './Download.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -71,8 +72,8 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 			<Button
 				className="download-button"
 				loading={isLoading || isDownloading}
-				size="small"
-				type="link"
+				size="sm"
+				variant="link"
 			>
 				<Flex align="center" gap={4}>
 					<CloudDownload size="md" />

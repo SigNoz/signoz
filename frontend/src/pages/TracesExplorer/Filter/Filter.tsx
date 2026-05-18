@@ -11,8 +11,9 @@ import {
 	Filter as FilterIcon,
 	RefreshCw,
 } from '@signozhq/icons';
-import { Button, Flex, Tooltip } from 'antd';
+import { Flex, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -255,6 +256,8 @@ export function Filter(props: FilterProps): JSX.Element {
 							onClick={(): void => handleRun({ resetAll: true })}
 							className="sync-icon"
 							data-testid="reset-filters"
+							variant="outlined"
+							color="secondary"
 						>
 							<RefreshCw size="md" />
 						</Button>
@@ -265,6 +268,8 @@ export function Filter(props: FilterProps): JSX.Element {
 						onClick={(): void => setOpen(false)}
 						className="arrow-icon"
 						data-testid="toggle-filter-panel"
+						variant="outlined"
+						color="secondary"
 					>
 						<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
 					</Button>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
@@ -9,6 +9,7 @@ import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
 
 import './QuickFiltersSettings.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function QuickFiltersSettings({
 	signal,
@@ -86,17 +87,17 @@ function QuickFiltersSettings({
 			{hasUnsavedChanges && (
 				<div className="qf-footer">
 					<Button
-						type="default"
 						onClick={handleDiscardChanges}
-						icon={<X size={16} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Discard
 					</Button>
 					<Button
-						type="primary"
 						onClick={handleSaveChanges}
-						icon={<Check size={16} />}
 						loading={isUpdatingCustomFilters}
+						prefix={<Check size={16} />}
 					>
 						Save changes
 					</Button>

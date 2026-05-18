@@ -156,12 +156,12 @@ function HeaderRightSection({
 						variant="ghost"
 						size="icon"
 						aria-label="Announcements"
-						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,
 							});
 						}}
+						prefix={<Inbox size={14} />}
 					/>
 				</Popover>
 			)}

@@ -1,9 +1,9 @@
 import { useCallback, useEffect } from 'react';
-import { Button } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
 import { validateQuery } from 'utils/queryValidationUtils';
 import { CirclePause, CirclePlay } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 function LiveLogsPauseResume(): JSX.Element {
 	const {
@@ -75,11 +75,10 @@ function LiveLogsPauseResume(): JSX.Element {
 	return (
 		<div className="live-logs-pause-resume">
 			<Button
-				icon={isPlaying ? <CirclePause size="md" /> : <CirclePlay size="md" />}
-				danger={isPlaying}
 				onClick={onLiveButtonClick}
-				type="primary"
 				className={`periscope-btn ${isPlaying ? 'warning' : 'success'}`}
+				color="destructive"
+				prefix={isPlaying ? <CirclePause size="md" /> : <CirclePlay size="md" />}
 			>
 				{isPlaying ? 'Pause' : 'Resume'}
 			</Button>

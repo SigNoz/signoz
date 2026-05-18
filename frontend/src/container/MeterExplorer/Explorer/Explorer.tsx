@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -29,6 +29,7 @@ import TimeSeries from './TimeSeries';
 import { splitQueryIntoOneChartPerQuery } from './utils';
 
 import './Explorer.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function Explorer(): JSX.Element {
 	const {
@@ -161,9 +162,12 @@ function Explorer(): JSX.Element {
 								{!showQuickFilters && (
 									<Tooltip title="Show Quick Filters" placement="right" arrow={false}>
 										<Button
-											className="periscope-btn outline"
-											icon={<Filter size={16} />}
+											className="outline"
 											onClick={(): void => setShowQuickFilters(!showQuickFilters)}
+											variant="outlined"
+											color="secondary"
+											size="icon"
+											prefix={<Filter size={16} />}
 										/>
 									</Tooltip>
 								)}

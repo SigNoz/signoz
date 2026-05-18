@@ -13,7 +13,8 @@ import {
 } from '@signozhq/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Modal, Space, Upload, UploadProps } from 'antd';
+import { Flex, Modal, Space, Upload, UploadProps } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
@@ -182,12 +183,12 @@ function ImportJSON({
 								data={jsonData}
 							>
 								<Button
-									type="default"
-									className="periscope-btn"
-									icon={<MonitorDot size={14} />}
 									onClick={(): void => {
 										logEvent('Dashboard List: Upload JSON file clicked', {});
 									}}
+									variant="outlined"
+									color="secondary"
+									prefix={<MonitorDot size={14} />}
 								>
 									{' '}
 									{t('upload_json_file')}
@@ -199,9 +200,9 @@ function ImportJSON({
 								rel="noopener noreferrer"
 							>
 								<Button
-									type="default"
-									className="periscope-btn"
-									icon={<Github size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<Github size={14} />}
 								>
 									{t('view_template')}&nbsp;
 									<ExternalLink size={14} />
@@ -213,8 +214,8 @@ function ImportJSON({
 							// disabled={editorValue.length === 0}
 							onClick={onClickLoadJsonHandler}
 							loading={dashboardCreating}
-							className="periscope-btn primary"
-							type="primary"
+							variant="solid"
+							color="primary"
 						>
 							{t('import_and_next')} &nbsp; <MoveRight size={14} />
 						</Button>

@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 import { Loader, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
-	Button,
 	Flex,
 	Input,
 	InputRef,
@@ -17,6 +16,7 @@ import {
 	Tooltip,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {
@@ -105,9 +105,8 @@ const getColumnSearchProps = (
 			/>
 			<Space>
 				<Button
-					type="primary"
-					size="small"
 					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
+					size="sm"
 				>
 					<Flex align="center" gap={4}>
 						<Search size="md" />
@@ -116,17 +115,19 @@ const getColumnSearchProps = (
 				</Button>
 				<Button
 					onClick={(): void => clearFilters && handleReset(clearFilters, confirm)}
-					size="small"
 					style={{ width: 90 }}
+					size="sm"
+					variant="outlined"
+					color="secondary"
 				>
 					Reset
 				</Button>
 				<Button
-					type="link"
-					size="small"
 					onClick={(): void => {
 						close();
 					}}
+					size="sm"
+					variant="link"
 				>
 					close
 				</Button>

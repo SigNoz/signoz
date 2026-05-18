@@ -7,8 +7,9 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Button, Collapse, ColorPicker, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Collapse, ColorPicker, Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -149,10 +150,10 @@ function LegendColors({
 						<>
 							<div className="legend-colors-header">
 								<Button
-									size="small"
-									type="text"
 									onClick={resetAllColors}
 									disabled={Object.keys(customLegendColors).length === 0}
+									size="sm"
+									variant="ghost"
 								>
 									Reset All
 								</Button>

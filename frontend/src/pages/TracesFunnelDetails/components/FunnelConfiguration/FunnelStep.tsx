@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-	Button,
 	Divider,
 	Dropdown,
 	Form,
@@ -24,6 +23,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import FunnelStepPopover from './FunnelStepPopover';
 
 import './FunnelStep.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface FunnelStepProps {
 	stepData: FunnelStepData;
@@ -114,11 +114,12 @@ function FunnelStep({
 							}
 						>
 							<Button
-								type="text"
 								className="funnel-item__action-btn"
-								icon={<PencilLine size={14} />}
 								onClick={(): void => setIsAddDetailsModalOpen(true)}
 								disabled={!hasEditPermission}
+								variant="ghost"
+								size="icon"
+								prefix={<PencilLine size={14} />}
 							/>
 						</Tooltip>
 

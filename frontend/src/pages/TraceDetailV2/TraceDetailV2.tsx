@@ -5,7 +5,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/resizable';
-import { Button, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import cx from 'classnames';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
@@ -22,6 +22,7 @@ import { Span, TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import NoData from './NoData/NoData';
 
 import './TraceDetailV2.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function TraceDetailsV2(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV2URLProps>();
@@ -90,9 +91,9 @@ function TraceDetailsV2(): JSX.Element {
 		{
 			label: (
 				<Button
-					type="text"
-					icon={<FlamegraphImg />}
 					className="flamegraph-waterfall-toggle"
+					variant="ghost"
+					prefix={<FlamegraphImg />}
 				>
 					Flamegraph
 				</Button>

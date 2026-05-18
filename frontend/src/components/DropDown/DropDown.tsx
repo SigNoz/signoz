@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Dropdown, MenuProps } from 'antd';
 
 import './DropDown.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function DropDown({
 	element,
@@ -31,12 +32,12 @@ function DropDown({
 			open={isDdOpen}
 		>
 			<Button
-				type="link"
 				className={`dropdown-button`}
 				onClick={(e): void => {
 					e.preventDefault();
 					setDdOpen(true);
 				}}
+				variant="link"
 			>
 				<Ellipsis className="dropdown-icon" size={16} />
 			</Button>

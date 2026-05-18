@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -48,11 +48,11 @@ function Configure(props: ConfigurationProps): JSX.Element {
 				{configuration.map((config, index) => (
 					<Button
 						key={config.title}
-						type="text"
 						className={cx('configure-menu-item', {
 							active: selectedConfigStep === index,
 						})}
 						onClick={(): void => handleMenuClick(index, config)}
+						variant="ghost"
 					>
 						<Typography.Text className="configure-text">
 							{config.title}

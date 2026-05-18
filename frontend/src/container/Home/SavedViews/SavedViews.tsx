@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import ROUTES from 'constants/routes';
@@ -24,6 +24,8 @@ import {
 	DraftingCompass,
 	ScrollText,
 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -177,21 +179,20 @@ export default function SavedViews({
 					<div className="empty-actions-container">
 						<Link to={getStartedLink}>
 							<Button
-								type="default"
-								className="periscope-btn secondary"
 								onClick={(): void => {
 									logEvent('Homepage: Get Started clicked', {
 										source: 'Saved Views',
 										entity: selectedEntity,
 									});
 								}}
+								variant="outlined"
+								color="secondary"
 							>
 								Get Started &nbsp; <ArrowRight size={16} />
 							</Button>
 						</Link>
 
 						<Button
-							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
 								logEvent('Homepage: Learn more clicked', {
@@ -205,6 +206,7 @@ export default function SavedViews({
 									'noopener noreferrer',
 								);
 							}}
+							variant="link"
 						>
 							Learn more <ArrowUpRight size={12} />
 						</Button>
@@ -257,10 +259,9 @@ export default function SavedViews({
 						</div>
 
 						<Button
-							type="link"
-							size="small"
-							className="periscope-btn link"
 							onClick={(): void => handleRedirectQuery(view)}
+							size="sm"
+							variant="link"
 						>
 							<Compass size={16} />
 						</Button>
@@ -345,30 +346,33 @@ export default function SavedViews({
 					<div className="saved-views-header home-data-card-header">
 						Saved Views
 						<div className="saved-views-header-actions">
-							<Button.Group className="views-tabs">
+							<ButtonGroup className="views-tabs">
 								<Button
-									value="logs"
 									className={selectedEntity === 'logs' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('logs')}
+									variant="outlined"
+									color="secondary"
 								>
 									<ScrollText size={14} />
 									Logs
 								</Button>
 								<Button
-									value="traces"
 									className={selectedEntity === 'traces' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('traces')}
+									variant="outlined"
+									color="secondary"
 								>
 									<DraftingCompass size={14} /> Traces
 								</Button>
 								<Button
-									value="metrics"
 									className={selectedEntity === 'metrics' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('metrics')}
+									variant="outlined"
+									color="secondary"
 								>
 									<BarChart size={14} /> Metrics
 								</Button>
-							</Button.Group>
+							</ButtonGroup>
 						</div>
 					</div>
 				</Card.Header>
@@ -383,13 +387,13 @@ export default function SavedViews({
 					<div className="services-footer home-data-card-footer">
 						<Link to={footerLink}>
 							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
+								className="learn-more-link"
 								onClick={(): void => {
 									logEvent('Homepage: All saved views clicked', {
 										entity: selectedEntity,
 									});
 								}}
+								variant="link"
 							>
 								All Views <ArrowRight size={12} />
 							</Button>

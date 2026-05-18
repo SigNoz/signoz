@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Breadcrumb, Button, Divider } from 'antd';
+import { Breadcrumb, Divider } from 'antd';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
@@ -23,6 +23,7 @@ import AlertNotFound from './AlertNotFound';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 
 import './AlertDetails.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function BreadCrumbItem({
 	title,
@@ -45,7 +46,7 @@ function BreadCrumbItem({
 	};
 
 	return (
-		<Button type="text" className="breadcrumb-item" onClick={handleNavigate}>
+		<Button className="breadcrumb-item" onClick={handleNavigate} variant="ghost">
 			{title}
 		</Button>
 	);

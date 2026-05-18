@@ -1,7 +1,8 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { Loader } from '@signozhq/icons';
-import { Button, Popover, Spin } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Popover, Spin } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	IField,
@@ -45,10 +46,10 @@ function FieldItem({
 			return (
 				<Popover content={<Typography>{iconHoverText}</Typography>}>
 					<Button
-						size="small"
-						type="text"
-						icon={buttonIcon}
 						onClick={onClickHandler}
+						size="sm"
+						variant="ghost"
+						prefix={buttonIcon as JSX.Element}
 					/>
 				</Popover>
 			);

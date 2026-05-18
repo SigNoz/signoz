@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -9,6 +8,7 @@ import { withBasePath } from 'utils/basePath';
 import cloudUrl from '@/assets/Images/cloud.svg';
 
 import './ErrorBoundaryFallback.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {
@@ -37,19 +37,19 @@ function ErrorBoundaryFallback(): JSX.Element {
 
 				<div className="actions">
 					<Button
-						type="primary"
 						onClick={handleReload}
-						icon={<Home size={16} />}
-						className="periscope-btn primary"
+						prefix={<Home size={16} />}
+						variant="solid"
+						color="primary"
 					>
 						Go to Home
 					</Button>
 
 					<Button
-						className="periscope-btn secondary"
-						type="default"
 						onClick={handleSupport}
-						icon={<LifeBuoy size={16} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<LifeBuoy size={16} />}
 					>
 						Contact Support
 					</Button>

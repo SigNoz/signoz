@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Flex, Select } from 'antd';
+import { Flex, Select } from 'antd';
 import cx from 'classnames';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
 import {
@@ -14,6 +14,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
+import { Button } from '@signozhq/ui/button';
 
 interface FunctionProps {
 	query: IBuilderQuery;
@@ -107,11 +108,13 @@ export default function Function({
 			)}
 
 			<Button
-				className="periscope-btn query-function-delete-btn"
+				className="query-function-delete-btn"
 				disabled={disableRemoveFunction}
 				onClick={(): void => {
 					handleDeleteFunction(funcData, index);
 				}}
+				variant="outlined"
+				color="secondary"
 			>
 				<X size={12} />
 			</Button>

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
-import { Button, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -60,10 +61,9 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 					</Typography.Text>
 					<div className="error-btns">
 						<Button
-							type="primary"
 							className="retry-btn"
 							onClick={(): Promise<any> => refetch()}
-							icon={<RotateCw size={14} />}
+							prefix={<RotateCw size={14} />}
 						>
 							Retry
 						</Button>

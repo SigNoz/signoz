@@ -8,7 +8,8 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
@@ -620,18 +621,22 @@ export default function K8sBaseDetails<T>({
 							{selectedView === VIEW_TYPES.LOGS && (
 								<Tooltip title="Go to Logs Explorer" placement="left">
 									<Button
-										icon={<Compass size={18} />}
 										className="compass-button"
 										onClick={handleExplorePagesRedirect}
+										variant="outlined"
+										color="secondary"
+										prefix={<Compass size={18} />}
 									/>
 								</Tooltip>
 							)}
 							{selectedView === VIEW_TYPES.TRACES && (
 								<Tooltip title="Go to Traces Explorer" placement="left">
 									<Button
-										icon={<Compass size={18} />}
 										className="compass-button"
 										onClick={handleExplorePagesRedirect}
+										variant="outlined"
+										color="secondary"
+										prefix={<Compass size={18} />}
 									/>
 								</Tooltip>
 							)}

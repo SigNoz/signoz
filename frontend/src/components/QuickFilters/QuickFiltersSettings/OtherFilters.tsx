@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
@@ -12,6 +12,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 import { DataSource } from 'types/common/queryBuilder';
+import { Button } from '@signozhq/ui/button';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -146,9 +147,11 @@ function OtherFilters({
 			<div key={filter.key} className="qf-filter-item other-filters-item">
 				<div className="qf-filter-key">{filter.key}</div>
 				<Button
-					className="add-filter-btn periscope-btn"
-					size="small"
+					className="add-filter-btn"
 					onClick={(): void => handleAddFilter(filter as FilterType)}
+					size="sm"
+					variant="outlined"
+					color="secondary"
 				>
 					Add
 				</Button>

@@ -29,7 +29,7 @@
 			top: -14px;
 			display: none;
 
-			.ant-btn {
+			button {
 				display: flex;
 				width: 24px;
 				height: 24px;
@@ -41,7 +41,7 @@
 				background: var(--l2-background);
 			}
 
-			.ant-btn + .ant-btn {
+			button + button {
 				border-left: 1px solid var(--l2-border);
 			}
 
@@ -222,7 +222,7 @@
 				line-height: 16px; /* 133.333% */
 				background: var(--l1-background);
 
-				.ant-btn {
+				button {
 					box-shadow: none;
 					height: auto;
 				}

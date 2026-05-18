@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Divider, Space } from 'antd';
+import { Divider, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import getNextPrevId from 'api/errors/getNextPrevId';
@@ -172,6 +173,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 									nextPrevData?.payload?.prevTimestamp || '',
 								)
 							}
+							variant="outlined"
+							color="secondary"
 						>
 							{t('older')}
 						</Button>
@@ -184,6 +187,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 									nextPrevData?.payload?.nextTimestamp || '',
 								)
 							}
+							variant="outlined"
+							color="secondary"
 						>
 							{t('newer')}
 						</Button>
@@ -193,7 +198,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<DashedContainer>
 				<Typography>{t('see_trace_graph')}</Typography>
-				<Button onClick={onClickTraceHandler} type="primary">
+				<Button onClick={onClickTraceHandler}>
 					{t('see_error_in_trace_graph')}
 				</Button>
 			</DashedContainer>

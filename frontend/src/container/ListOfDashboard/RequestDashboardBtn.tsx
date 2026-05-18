@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LoaderCircle, Check } from '@signozhq/icons';
-import { Button, Input, Space } from 'antd';
+import { Input, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
@@ -76,20 +77,21 @@ export function RequestDashboardBtn(): JSX.Element {
 					/>
 					<Button
 						className="periscope-btn primary"
-						icon={
-							isSubmittingRequestForDashboard ? (
-								<LoaderCircle className="animate-spin" size={12} />
-							) : (
-								<Check size={12} />
-							)
-						}
-						type="primary"
 						onClick={handleRequestDashboardSubmit}
 						disabled={
 							isSubmittingRequestForDashboard ||
 							!requestedDashboardName ||
 							requestedDashboardName?.trim().length === 0
 						}
+						prefix={
+							isSubmittingRequestForDashboard ? (
+								<LoaderCircle className="animate-spin" size={12} />
+							) : (
+								<Check size={12} />
+							)
+						}
+						variant="solid"
+						color="primary"
 					>
 						Submit
 					</Button>

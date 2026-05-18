@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Button } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import map from 'lodash-es/map';
 import { AppState } from 'store/reducers';
@@ -8,6 +7,7 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import FieldKey from './FieldKey';
+import { Button } from '@signozhq/ui/button';
 
 interface SuggestedItemProps {
 	name: string;
@@ -24,9 +24,9 @@ function SuggestedItem({
 	};
 	return (
 		<Button
-			type="text"
 			style={{ display: 'block', padding: '0.2rem' }}
 			onClick={addSuggestedField}
+			variant="ghost"
 		>
 			<FieldKey name={name} type={type} />
 		</Button>

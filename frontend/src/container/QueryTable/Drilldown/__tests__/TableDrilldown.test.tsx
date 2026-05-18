@@ -3,7 +3,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -20,6 +19,7 @@ import {
 	MOCK_QUERY_RANGE_REQUEST,
 	MOCK_QUERY_WITH_FILTER,
 } from './mockTableData';
+import { Button } from '@signozhq/ui/button';
 
 // Mock the necessary hooks and dependencies
 const mockSafeNavigate = jest.fn();
@@ -101,13 +101,9 @@ function MockTableDrilldown(): JSX.Element {
 
 	return (
 		<div style={{ padding: '20px' }}>
-			<Button type="primary" onClick={(): void => handleClick('aggregate')}>
-				Aggregate
-			</Button>
+			<Button onClick={(): void => handleClick('aggregate')}>Aggregate</Button>
 
-			<Button type="primary" onClick={(): void => handleClick('filter')}>
-				Filter
-			</Button>
+			<Button onClick={(): void => handleClick('filter')}>Filter</Button>
 
 			<ContextMenu
 				coordinates={coordinates}

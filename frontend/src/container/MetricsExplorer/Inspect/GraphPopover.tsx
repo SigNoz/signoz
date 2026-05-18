@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { Button, Card } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
+import { Card } from 'antd';
 
 import { GraphPopoverProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
@@ -59,7 +60,7 @@ function GraphPopover({
 					<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
 				</div>
 				<div className="inspect-graph-popover-button-row">
-					<Button size="small" type="primary" onClick={openInExpandedView}>
+					<Button onClick={openInExpandedView} size="sm">
 						<Typography.Text>View details</Typography.Text>
 						<ArrowRight size={10} />
 					</Button>

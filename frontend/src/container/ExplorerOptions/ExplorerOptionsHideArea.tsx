@@ -1,12 +1,13 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tooltip } from 'antd';
 import { Disc3, X } from '@signozhq/icons';
+import { Tooltip } from 'antd';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { setExplorerToolBarVisibility } from './utils';
 
 import './ExplorerOptionsHideArea.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface DroppableAreaProps {
 	viewName: string;
@@ -47,7 +48,10 @@ function ExplorerOptionsHideArea({
 									onClick={handleClearSelect}
 									className="action-btn"
 									style={{ background: Color.BG_CHERRY_500 }}
-									icon={<X size={14} color={Color.BG_INK_500} />}
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<X size={14} color={Color.BG_INK_500} />}
 								/>
 							</Tooltip>
 							{isEditDeleteSupported && isQueryUpdated && (
@@ -56,7 +60,10 @@ function ExplorerOptionsHideArea({
 										onClick={onUpdateQueryHandler}
 										className="action-btn"
 										style={{ background: Color.BG_ROBIN_500 }}
-										icon={<Disc3 size={14} color={Color.BG_INK_500} />}
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										prefix={<Disc3 size={14} color={Color.BG_INK_500} />}
 									/>
 								</Tooltip>
 							)}
@@ -67,6 +74,8 @@ function ExplorerOptionsHideArea({
 						className="explorer-show-btn"
 						onClick={handleShowExplorerOption}
 						data-testid="show-explorer-option"
+						variant="outlined"
+						color="secondary"
 					>
 						<div className="menu-bar" />
 					</Button>

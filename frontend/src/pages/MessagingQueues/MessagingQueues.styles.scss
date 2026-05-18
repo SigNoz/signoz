@@ -185,11 +185,11 @@
 				display: flex;
 				gap: 8px;
 
-				.ant-btn {
+				button {
 					min-width: 80px;
 				}
 
-				.ant-btn-default {
+				button {
 					background-color: var(--l1-border);
 					border: none;
 					box-shadow: none;

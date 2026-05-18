@@ -15,7 +15,7 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import cx from 'classnames';
 import {
 	TRACE_OPERATOR_OPERATORS,
@@ -34,6 +34,7 @@ import { getInvolvedQueriesInTraceOperator } from './utils/utils';
 
 import '../QuerySearch/QuerySearch.styles.scss';
 import { CircleCheck, TriangleAlert } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
@@ -465,15 +466,15 @@ function TraceOperatorEditor({
 						>
 							{validation.isValid ? (
 								<Button
-									type="text"
-									icon={<CircleCheck size="md" />}
-									className="periscope-btn ghost"
+									variant="ghost"
+									size="icon"
+									prefix={<CircleCheck size={14} />}
 								/>
 							) : (
 								<Button
-									type="text"
-									icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
-									className="periscope-btn ghost"
+									variant="ghost"
+									size="icon"
+									prefix={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
 								/>
 							)}
 						</Popover>

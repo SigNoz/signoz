@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Collapse } from 'antd';
+import { Collapse } from 'antd';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
@@ -21,6 +21,7 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import './Duration.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 export type FilterType = Record<
 	AllTraceFilterKeys,
@@ -299,9 +300,9 @@ function Duration({
 			/>
 			{activeKeys.includes('durationNano') && (
 				<Button
-					type="link"
 					onClick={onClearHandler}
 					data-testid="collapse-duration-clearBtn"
+					variant="link"
 				>
 					Clear All
 				</Button>

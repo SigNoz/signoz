@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { ArrowRight } from '@signozhq/icons';
@@ -11,6 +10,7 @@ import { TopContributorsCardProps } from './types';
 import ViewAllDrawer from './ViewAllDrawer';
 
 import './TopContributorsCard.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function TopContributorsCard({
 	topContributorsData,
@@ -52,7 +52,11 @@ function TopContributorsCard({
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
 					{topContributorsData.length > 3 && (
-						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
+						<Button
+							className="view-all"
+							onClick={toggleViewAllDrawer}
+							variant="ghost"
+						>
 							<div className="label">View all</div>
 							<div className="icon">
 								<ArrowRight

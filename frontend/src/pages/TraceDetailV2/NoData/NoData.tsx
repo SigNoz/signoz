@@ -1,5 +1,5 @@
-import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LifeBuoy, RefreshCw } from '@signozhq/icons';
@@ -46,15 +46,19 @@ function NoData(): JSX.Element {
 				<div className="action-btns">
 					<Button
 						className="action-btn"
-						icon={<RefreshCw size={14} />}
 						onClick={(): void => window.location.reload()}
+						variant="outlined"
+						color="secondary"
+						prefix={<RefreshCw size={14} />}
 					>
 						Refresh this page
 					</Button>
 					<Button
 						className="action-btn"
-						icon={<LifeBuoy size={14} />}
 						onClick={(): void => handleContactSupport(isCloudUserVal)}
+						variant="outlined"
+						color="secondary"
+						prefix={<LifeBuoy size={14} />}
 					>
 						Contact Support
 					</Button>

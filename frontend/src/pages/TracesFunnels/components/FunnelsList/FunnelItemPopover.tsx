@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Popover, Tooltip } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -7,6 +7,7 @@ import { FunnelData } from 'types/api/traceFunnels';
 
 import DeleteFunnel from '../DeleteFunnel/DeleteFunnel';
 import RenameFunnel from '../RenameFunnel/RenameFunnel';
+import { Button } from '@signozhq/ui/button';
 
 interface FunnelItemPopoverProps {
 	isPopoverOpen: boolean;
@@ -29,24 +30,24 @@ function FunnelItemActions({
 	return (
 		<div className="funnel-item__actions">
 			<Button
-				type="text"
 				className="funnel-item__action-btn"
-				icon={<PencilLine size={14} />}
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsRenameModalOpen(true);
 				}}
+				variant="ghost"
+				prefix={<PencilLine size={14} />}
 			>
 				Rename
 			</Button>
 			<Button
-				type="text"
 				className="funnel-item__action-btn funnel-item__action-btn--delete"
-				icon={<Trash2 size={14} />}
 				onClick={(): void => {
 					setIsPopoverOpen(false);
 					setIsDeleteModalOpen(true);
 				}}
+				variant="ghost"
+				prefix={<Trash2 size={14} />}
 			>
 				Delete
 			</Button>
@@ -77,10 +78,11 @@ function FunnelItemPopover({
 		return (
 			<Tooltip title="You need editor or admin access to edit funnels">
 				<Button
-					type="text"
 					className="funnel-item__action-btn"
-					icon={<Ellipsis size={14} />}
 					disabled
+					variant="ghost"
+					size="icon"
+					prefix={<Ellipsis size={14} />}
 				/>
 			</Tooltip>
 		);

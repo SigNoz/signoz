@@ -1,4 +1,3 @@
-import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Plus } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -6,6 +5,7 @@ import { useAppContext } from 'providers/App/App';
 import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';
 
 import './FunnelsEmptyState.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface FunnelsEmptyStateProps {
 	onCreateFunnel?: () => void;
@@ -36,10 +36,9 @@ function FunnelsEmptyState({
 				<div className="funnels-empty__actions">
 					{hasEditPermission && (
 						<Button
-							type="primary"
-							icon={<Plus size={16} />}
 							onClick={onCreateFunnel}
 							className="funnels-empty__new-btn"
+							prefix={<Plus size={16} />}
 						>
 							New funnel
 						</Button>

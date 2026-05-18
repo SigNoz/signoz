@@ -46,7 +46,7 @@
 		.refresh-btn {
 			border-right: 1px solid var(--l1-border);
 		}
-		.ant-btn {
+		button {
 			display: flex;
 			padding: 4px 8px;
 			align-items: center;
@@ -128,7 +128,7 @@
 		}
 
 		.data-time-live:hover {
-			&.ant-btn-text {
+			& {
 				background-color: color-mix(
 					in srgb,
 					var(--bg-robin-200) 4%,
@@ -164,7 +164,7 @@
 		}
 
 		.date-time-options-btn:hover {
-			&.ant-btn-text {
+			& {
 				background-color: color-mix(
 					in srgb,
 					var(--bg-robin-200) 4%,

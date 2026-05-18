@@ -1,10 +1,10 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import cx from 'classnames';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { ArrowDown, ArrowUp, Ban } from '@signozhq/icons';
 
 import './ShowButton.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface ShowButtonProps {
 	isLoading: boolean;
@@ -39,12 +39,14 @@ function ShowButton({
 			disabled={isLoading || isDisabled}
 			loading={isLoading}
 			onClick={onClick}
-			icon={getIcons()}
 			className={cx(
 				'show-more-button periscope-btn',
 				order === ORDERBY_FILTERS.ASC ? 'up' : 'down',
 				isDisabled && 'disabled',
 			)}
+			variant="outlined"
+			color="secondary"
+			prefix={getIcons()}
 		>
 			Load more
 		</Button>

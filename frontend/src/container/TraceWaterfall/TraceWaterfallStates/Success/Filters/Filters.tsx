@@ -6,7 +6,8 @@ import {
 	Loader,
 	SolidInfoCircle,
 } from '@signozhq/icons';
-import { Button, Spin, Tooltip } from 'antd';
+import { Spin, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -173,22 +174,24 @@ function Filters({
 						{currentSearchedIndex + 1} / {filteredSpanIds.length}
 					</Typography.Text>
 					<Button
-						icon={<ChevronUp size={14} />}
 						disabled={currentSearchedIndex === 0}
-						type="text"
 						onClick={(): void => {
 							handlePrevNext(currentSearchedIndex - 1);
 							setCurrentSearchedIndex((prev) => prev - 1);
 						}}
+						variant="ghost"
+						size="icon"
+						prefix={<ChevronUp size={14} />}
 					/>
 					<Button
-						icon={<ChevronDown size={14} />}
-						type="text"
 						disabled={currentSearchedIndex === filteredSpanIds.length - 1}
 						onClick={(): void => {
 							handlePrevNext(currentSearchedIndex + 1);
 							setCurrentSearchedIndex((prev) => prev + 1);
 						}}
+						variant="ghost"
+						size="icon"
+						prefix={<ChevronDown size={14} />}
 					/>
 				</div>
 			)}

@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Spin, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Spin, Tooltip } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 import { Info } from '@signozhq/icons';
 
@@ -52,11 +53,10 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 						Something went wrong while fetching metric highlights
 					</Typography.Text>
 					<Button
-						type="link"
-						size="large"
 						onClick={(): void => {
 							refetchMetricHighlights();
 						}}
+						variant="link"
 					>
 						Retry ?
 					</Button>

@@ -25,7 +25,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
+import { Dropdown, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -90,6 +90,7 @@ import {
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 import './SideNav.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -1052,6 +1053,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										}
 										onClickGetStarted(event);
 									}}
+									variant="outlined"
+									color="secondary"
 								>
 									<PackagePlus size={16} />
 									<div className="license tag nav-item-label"> New source </div>
@@ -1244,17 +1247,18 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							logEvent('Sidebar V2: Manage shortcuts dismissed', {});
 							hideReorderShortcutNavItemsModal();
 						}}
-						className="periscope-btn cancel-btn secondary-btn"
-						icon={<X size={16} />}
+						className="cancel-btn secondary-btn"
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						type="primary"
-						icon={<Check size={16} />}
 						onClick={handleReorderShortcutNavItems}
 						data-testid="save-changes-btn"
+						prefix={<Check size={16} />}
 					>
 						Save Changes
 					</Button>,

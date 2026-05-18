@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { Filter } from '@signozhq/icons';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import cx from 'classnames';
@@ -23,6 +23,7 @@ import { routes } from './config';
 import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -80,7 +81,12 @@ function AllErrors(): JSX.Element {
 							leftActions={
 								!showFilters ? (
 									<Tooltip title="Show Filters">
-										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
+										<Button
+											onClick={handleFilterVisibilityChange}
+											className="filter-btn"
+											variant="outlined"
+											color="secondary"
+										>
 											<Filter size="md" />
 										</Button>
 									</Tooltip>

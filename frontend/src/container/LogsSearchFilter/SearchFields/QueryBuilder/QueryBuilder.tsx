@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { SquareX, X } from '@signozhq/icons';
-import { Button, Input, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
 	ConditionalOperators,
@@ -161,10 +162,10 @@ function QueryField({
 			</div>
 
 			<Button
-				icon={<X size="md" />}
-				type="text"
-				size="small"
 				onClick={handleClear}
+				size="sm"
+				variant="ghost"
+				prefix={<X size="md" />}
 			/>
 		</QueryFieldContainer>
 	);

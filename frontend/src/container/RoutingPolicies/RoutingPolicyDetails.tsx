@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Divider, Flex, Form, Input, Modal, Select } from 'antd';
+import { Divider, Flex, Form, Input, Modal, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
@@ -67,10 +68,10 @@ function RoutingPolicyDetails({
 						Create one
 						<Button
 							style={{ padding: '0 4px' }}
-							type="link"
 							onClick={(): void => {
 								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
+							variant="link"
 						>
 							here.
 						</Button>
@@ -79,7 +80,7 @@ function RoutingPolicyDetails({
 					<Typography.Text>Please ask your admin to create one.</Typography.Text>
 				)}
 			</Flex>
-			<Button type="text" onClick={refreshChannels}>
+			<Button onClick={refreshChannels} variant="ghost">
 				Refresh
 			</Button>
 		</Flex>
@@ -188,18 +189,19 @@ function RoutingPolicyDetails({
 				</div>
 				<Flex className="create-policy-footer" justify="space-between">
 					<Button
-						icon={<X size={16} />}
 						onClick={closeModal}
 						disabled={isPolicyDetailsModalActionLoading}
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>
 					<Button
-						icon={saveButtonIcon}
-						type="primary"
-						htmlType="submit"
 						loading={isPolicyDetailsModalActionLoading}
 						disabled={isPolicyDetailsModalActionLoading}
+						type="submit"
+						prefix={saveButtonIcon}
 					>
 						Save Routing Policy
 					</Button>

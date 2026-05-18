@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Input, Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	updateMyPassword,
@@ -136,19 +137,19 @@ function UserInfo(): JSX.Element {
 
 			<div className="user-info-update-section">
 				<Button
-					type="default"
-					className="periscope-btn secondary"
-					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsUpdateNameModalOpen(true)}
+					variant="outlined"
+					color="secondary"
+					prefix={<FileTerminal size={16} />}
 				>
 					Update name
 				</Button>
 
 				<Button
-					type="default"
-					className="periscope-btn secondary"
-					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsResetPasswordModalOpen(true)}
+					variant="outlined"
+					color="secondary"
+					prefix={<FileTerminal size={16} />}
 				>
 					Reset password
 				</Button>
@@ -163,11 +164,10 @@ function UserInfo(): JSX.Element {
 				footer={[
 					<Button
 						key="submit"
-						type="primary"
-						icon={<Check size={16} />}
 						onClick={onSaveHandler}
 						disabled={isLoading}
 						data-testid="update-name-btn"
+						prefix={<Check size={16} />}
 					>
 						Update name
 					</Button>,
@@ -195,10 +195,12 @@ function UserInfo(): JSX.Element {
 						className={`periscope-btn ${
 							isResetPasswordDisabled ? 'secondary' : 'primary'
 						}`}
-						icon={<Check size={16} />}
 						onClick={onChangePasswordClickHandler}
 						disabled={isLoading || isResetPasswordDisabled}
 						data-testid="reset-password-btn"
+						variant="outlined"
+						color="secondary"
+						prefix={<Check size={16} />}
 					>
 						Reset password
 					</Button>,

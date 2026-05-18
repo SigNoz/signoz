@@ -20,7 +20,7 @@ import {
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
-	Button,
+	Button as AntdButton,
 	ColorPicker,
 	Divider,
 	Input,
@@ -29,6 +29,7 @@ import {
 	Select,
 	Tooltip,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -736,13 +737,13 @@ function ExplorerOptions({
 	const CreateAlertButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
-				<Button
+				<AntdButton
 					disabled={disabled}
 					shape="round"
 					icon={<ConciergeBell size={16} />}
 				>
 					Create an Alert
-				</Button>
+				</AntdButton>
 			);
 			return (
 				<Select
@@ -769,14 +770,14 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<Button
+			<AntdButton
 				disabled={disabled}
 				shape="round"
 				onClick={(): void => onCreateAlertsHandler(query)}
 				icon={<ConciergeBell size={16} />}
 			>
 				Create an Alert
-			</Button>
+			</AntdButton>
 		);
 	}, [
 		disabled,
@@ -789,7 +790,7 @@ function ExplorerOptions({
 	const AddToDashboardButton = useMemo(() => {
 		if (isOneChartPerQuery) {
 			const selectLabel = (
-				<Button
+				<AntdButton
 					type="primary"
 					disabled={disabled}
 					shape="round"
@@ -797,7 +798,7 @@ function ExplorerOptions({
 					icon={<Plus size={16} />}
 				>
 					Add to Dashboard
-				</Button>
+				</AntdButton>
 			);
 			return (
 				<Select
@@ -828,7 +829,7 @@ function ExplorerOptions({
 			);
 		}
 		return (
-			<Button
+			<AntdButton
 				type="primary"
 				disabled={disabled}
 				shape="round"
@@ -836,7 +837,7 @@ function ExplorerOptions({
 				icon={<Plus size={16} />}
 			>
 				Add to Dashboard
-			</Button>
+			</AntdButton>
 		);
 	}, [disabled, isOneChartPerQuery, onAddToDashboard, splitedQueries]);
 
@@ -864,7 +865,9 @@ function ExplorerOptions({
 						<Button
 							className="action-icon"
 							onClick={handleClearSelect}
-							icon={<X size={14} />}
+							variant="outlined"
+							color="secondary"
+							prefix={<X size={14} />}
 						/>
 					</Tooltip>
 					{
@@ -881,7 +884,9 @@ function ExplorerOptions({
 									className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
 									disabled={isViewUpdating}
 									onClick={onUpdateQueryHandler}
-									icon={<Disc3 size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<Disc3 size={14} />}
 								/>
 							</Tooltip>
 						</>
@@ -936,7 +941,7 @@ function ExplorerOptions({
 							})}
 						</Select>
 
-						<Button
+						<AntdButton
 							shape="round"
 							onClick={handleSaveViewModalToggle}
 							className={isEditDeleteSupported ? '' : 'hidden'}
@@ -944,7 +949,7 @@ function ExplorerOptions({
 							icon={<Disc3 size={16} />}
 						>
 							Save this view
-						</Button>
+						</AntdButton>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
@@ -975,7 +980,7 @@ function ExplorerOptions({
 						)}
 
 						<Tooltip title="Hide">
-							<Button
+							<AntdButton
 								disabled={disabled}
 								shape="circle"
 								onClick={hideToolbar}
@@ -1005,12 +1010,13 @@ function ExplorerOptions({
 				footer={[
 					<Button
 						key="submit"
-						type="primary"
-						icon={<Check size={16} />}
 						onClick={onSaveHandler}
 						disabled={isSaveViewLoading}
 						data-testid="save-view-btn"
 						className="save-button"
+						prefix={<Check size={16} />}
+						variant="outlined"
+						color="secondary"
 					>
 						Save this view
 					</Button>,

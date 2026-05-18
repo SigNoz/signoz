@@ -36,7 +36,7 @@
 					font-weight: var(--font-weight-normal);
 				}
 
-				.ant-btn {
+				button {
 					box-shadow: none;
 				}
 
@@ -74,7 +74,7 @@
 				gap: 8px;
 				align-items: center;
 
-				.ant-btn {
+				button {
 					border: 1px solid var(--l1-border);
 				}
 
@@ -189,7 +189,7 @@
 				}
 			}
 
-			.ant-btn {
+			button {
 				border: none;
 			}
 		}

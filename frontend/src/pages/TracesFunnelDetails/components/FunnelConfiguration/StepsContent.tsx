@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import { Button, Steps, Tooltip } from 'antd';
+import { Steps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Plus, Undo2 } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
@@ -10,6 +10,7 @@ import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
 
 import './StepsContent.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 const { Step } = Steps;
 
@@ -57,9 +58,7 @@ function StepsContent({
 											}
 										>
 											<Button
-												type="default"
 												className="funnel-step-wrapper__replace-button"
-												icon={<Undo2 size={12} />}
 												disabled={
 													(step.service_name === span.serviceName &&
 														step.span_name === span.name) ||
@@ -68,6 +67,9 @@ function StepsContent({
 												onClick={(): void =>
 													handleReplaceStep(index, span.serviceName, span.name)
 												}
+												variant="outlined"
+												color="secondary"
+												prefix={<Undo2 size={12} />}
 											>
 												Replace
 											</Button>
@@ -92,11 +94,12 @@ function StepsContent({
 							}
 						>
 							<Button
-								type="default"
 								className="steps-content__add-btn"
 								onClick={isTraceDetailsPage ? handleAddForNewStep : handleAddStep}
-								icon={<Plus size={14} />}
 								disabled={!hasEditPermission}
+								variant="outlined"
+								color="secondary"
+								prefix={<Plus size={14} />}
 							>
 								{isTraceDetailsPage ? 'Add for new Step' : 'Add Funnel Step'}
 							</Button>

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
-import { Button } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
@@ -12,6 +11,7 @@ import { useAppContext } from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
 
 import Delete from './Delete';
+import { Button } from '@signozhq/ui/button';
 
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -51,7 +51,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			width: 80,
 			render: (id: string): JSX.Element => (
 				<>
-					<Button onClick={(): void => onClickEditHandler(id)} type="link">
+					<Button onClick={(): void => onClickEditHandler(id)} variant="link">
 						{t('column_channel_edit')}
 					</Button>
 					<Delete id={id} notifications={notifications} />

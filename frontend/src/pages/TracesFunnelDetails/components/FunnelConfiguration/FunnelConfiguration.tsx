@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { Button, Divider, Tooltip } from 'antd';
+import { Divider, Tooltip } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
@@ -18,6 +18,7 @@ import StepsFooter from './StepsFooter';
 import StepsHeader from './StepsHeader';
 
 import './FunnelConfiguration.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface FunnelConfigurationProps {
 	funnel: FunnelData;
@@ -67,12 +68,13 @@ function FunnelConfiguration({
 							}
 						>
 							<Button
-								type="text"
 								className="funnel-item__action-btn funnel-configuration__rename-btn"
-								icon={<PencilLine size={14} />}
 								onClick={(): void => setIsDescriptionModalOpen(true)}
 								aria-label="Edit Funnel Description"
 								disabled={!hasEditPermission}
+								variant="ghost"
+								size="icon"
+								prefix={<PencilLine size={14} />}
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />

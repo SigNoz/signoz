@@ -4,7 +4,8 @@ import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
+import { Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import AddToQueryHOC, {
@@ -249,12 +250,14 @@ function TableView({
 							{traceId && (
 								<Tooltip title="Inspect in Trace" mouseLeaveDelay={0}>
 									<Button
-										className="periscope-btn"
-										onClick={(
-											event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-										): void => {
-											onTraceHandler(record, event);
+										onClick={(event): void => {
+											onTraceHandler(
+												record,
+												event as unknown as React.MouseEvent<HTMLDivElement, MouseEvent>,
+											);
 										}}
+										variant="outlined"
+										color="secondary"
 									>
 										<Link size={15} />
 									</Button>

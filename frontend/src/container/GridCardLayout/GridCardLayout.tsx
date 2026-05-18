@@ -6,7 +6,8 @@ import { useIsFetching } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Form, Input, Modal } from 'antd';
+import { Form, Input, Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -523,9 +524,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			{isDashboardLocked && (
 				<div className="footer">
 					<Button
-						type="text"
-						icon={<LockKeyhole size={14} />}
 						className="locked-text"
+						variant="ghost"
+						prefix={<LockKeyhole size={14} />}
 					>
 						Locked
 					</Button>
@@ -560,22 +561,21 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					<Form.Item>
 						<div className="action-btns">
 							<Button
-								type="primary"
-								htmlType="submit"
 								className="ok-btn"
-								icon={<Check size={14} />}
 								disabled={updateDashboardMutation.isLoading}
+								type="submit"
+								prefix={<Check size={14} />}
 							>
 								Apply Changes
 							</Button>
 							<Button
-								type="text"
 								className="cancel-btn"
-								icon={<X size={14} />}
 								onClick={(): void => {
 									setIsSettingsModalOpen(false);
 									setCurrentSelectRowId(null);
 								}}
+								variant="ghost"
+								prefix={<X size={14} />}
 							>
 								Cancel
 							</Button>

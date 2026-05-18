@@ -5,7 +5,8 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
-import { Button, FormInstance, Modal, SelectProps } from 'antd';
+import { FormInstance, Modal, SelectProps } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -863,9 +864,10 @@ function FormAlertRules({
 					</div>
 
 					<Button
-						className="periscope-btn"
 						onClick={(): void => handleRedirection(alertDef.alertType as AlertTypes)}
-						icon={<ExternalLink size={14} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<ExternalLink size={14} />}
 					>
 						Alert Setup Guide
 					</Button>

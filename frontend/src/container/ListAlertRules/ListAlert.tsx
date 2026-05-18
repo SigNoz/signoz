@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { Button, Flex, Input } from 'antd';
+import { Flex, Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Plus } from '@signozhq/icons';
 import type { ColumnsType } from 'antd/es/table/interface';
@@ -388,7 +389,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				/>
 				<Flex gap={12} align="center">
 					{addNewAlert && (
-						<Button type="primary" onClick={onClickNewAlertHandler}>
+						<Button onClick={onClickNewAlertHandler}>
 							<Flex align="center" gap={4}>
 								<Plus size="md" />
 								New Alert

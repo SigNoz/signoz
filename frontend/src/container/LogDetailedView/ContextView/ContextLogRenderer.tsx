@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Button, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -22,6 +22,7 @@ import { withBasePath } from 'utils/basePath';
 import { useContextLogData } from './useContextLogData';
 
 import './ContextLogRenderer.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function ContextLogRenderer({
 	isEdit,
@@ -125,12 +126,12 @@ function ContextLogRenderer({
 	const getItemContent = useCallback(
 		(_: number, logTorender: ILog): JSX.Element => (
 			<Button
-				type="text"
-				size="small"
 				className="context-log-renderer__item"
 				onClick={(): void => {
 					handleLogClick(logTorender.id);
 				}}
+				size="sm"
+				variant="ghost"
 			>
 				<RawLogView
 					isActiveLog={logTorender.id === log.id}

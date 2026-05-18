@@ -22,7 +22,7 @@
 			border-top: 1px dashed var(--l1-border);
 		}
 
-		.ant-btn {
+		button {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
@@ -156,7 +156,7 @@
 						color: var(--muted-foreground);
 					}
 
-					.ant-btn {
+					button {
 						width: fit-content;
 					}
 				}
@@ -171,7 +171,7 @@
 				padding: 16px;
 			}
 
-			.ant-btn {
+			button {
 				background-color: var(--l3-background);
 				border: 1px solid var(--l1-border);
 				color: var(--l2-foreground);

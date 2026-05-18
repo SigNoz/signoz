@@ -1,7 +1,8 @@
 import { SetStateAction } from 'react';
-import { Button, Modal } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { Trash2, X } from '@signozhq/icons';
+import { Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 
 import './PlannedDowntime.styles.scss';
 
@@ -38,16 +39,20 @@ export function PlannedDowntimeDeleteModal(
 					key="cancel"
 					onClick={hideDeleteScheduleModal}
 					className="cancel-btn"
-					icon={<X size={16} />}
+					variant="outlined"
+					color="secondary"
+					prefix={<X size={16} />}
 				>
 					Cancel
 				</Button>,
 				<Button
 					key="submit"
-					icon={<Trash2 size={16} />}
 					onClick={onDeleteHandler}
 					className="delete-btn"
 					disabled={isDeleteLoading}
+					variant="outlined"
+					color="secondary"
+					prefix={<Trash2 size={16} />}
 				>
 					Delete Schedule
 				</Button>,

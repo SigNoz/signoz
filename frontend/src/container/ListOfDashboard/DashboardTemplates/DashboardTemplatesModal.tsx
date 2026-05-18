@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ChangeEvent, useState } from 'react';
-import { Button, Input, Modal } from 'antd';
+import { Input, Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
@@ -208,10 +209,10 @@ export default function DashboardTemplatesModal({
 
 							<div className="create-dashboard-btn">
 								<Button
-									type="primary"
-									className="periscope-btn primary"
-									icon={<Plus size={14} />}
 									onClick={onCreateNewDashboard}
+									prefix={<Plus size={14} />}
+									variant="solid"
+									color="primary"
 								>
 									New dashboard
 								</Button>

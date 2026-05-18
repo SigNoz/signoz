@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tag } from 'antd';
+import { Tag } from 'antd';
 import { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from '@signozhq/icons';
 
 import './Tabs2.styles.scss';
+import { Button } from '@signozhq/ui/button';
+import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 interface Tab {
 	value: string;
 	label: string | JSX.Element;
 	disabled?: boolean;
-	icon?: string | JSX.Element;
+	icon?: JSX.Element;
 	isBeta?: boolean;
 }
 
@@ -44,24 +46,26 @@ function Tabs2({
 		<div className="tabs-wrapper">
 			{hasResetButton && selectedTab !== tabs[0].value && (
 				<Button
-					value="Reset"
 					className="tab reset-button"
 					onClick={(): void => handleTabClick(tabs[0].value)}
-					icon={<Undo size={14} color={Color.TEXT_VANILLA_400} />}
+					variant="outlined"
+					color="secondary"
+					prefix={<Undo size={14} color={Color.TEXT_VANILLA_400} />}
 				>
 					Reset
 				</Button>
 			)}
-			<Button.Group>
+			<ButtonGroup>
 				{tabs.map((tab) => (
 					<Button
 						key={tab.value}
-						value={tab.value}
 						className={`tab ${selectedTab === tab.value ? 'selected' : ''}`}
 						onClick={(): void => handleTabClick(tab.value)}
 						disabled={tab.disabled}
-						icon={tab.icon}
 						style={{ minWidth: buttonMinWidth }}
+						variant="outlined"
+						color="secondary"
+						prefix={tab.icon}
 					>
 						{tab.label}
 
@@ -72,7 +76,7 @@ function Tabs2({
 						)}
 					</Button>
 				))}
-			</Button.Group>
+			</ButtonGroup>
 		</div>
 	);
 }

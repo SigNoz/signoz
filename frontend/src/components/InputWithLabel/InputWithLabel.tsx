@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import { X } from '@signozhq/icons';
 
@@ -55,9 +56,12 @@ function InputWithLabel({
 			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			{onClose && (
 				<Button
-					className="periscope-btn ghost close-btn"
-					icon={closeIcon || <X size={16} />}
+					className="close-btn"
 					onClick={onClose}
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					prefix={(closeIcon as JSX.Element) || <X size={16} />}
 				/>
 			)}
 		</div>

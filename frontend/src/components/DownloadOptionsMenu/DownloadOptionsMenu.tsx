@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button, Popover, Radio, Tooltip } from 'antd';
+import { Popover, Radio, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
 import { Download, LoaderCircle } from '@signozhq/icons';
@@ -104,12 +105,11 @@ export default function DownloadOptionsMenu({
 				)}
 
 				<Button
-					type="primary"
-					icon={<Download size={16} />}
 					onClick={handleExport}
 					className="export-button"
 					disabled={isDownloading}
 					loading={isDownloading}
+					prefix={<Download size={16} />}
 				>
 					Export
 				</Button>
@@ -137,16 +137,18 @@ export default function DownloadOptionsMenu({
 		>
 			<Tooltip title="Download" placement="top">
 				<Button
-					className="periscope-btn ghost"
-					icon={
+					data-testid={`periscope-btn-download-${dataSource}`}
+					disabled={isDownloading}
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					prefix={
 						isDownloading ? (
 							<LoaderCircle size={14} className="animate-spin" />
 						) : (
 							<Download size={14} />
 						)
 					}
-					data-testid={`periscope-btn-download-${dataSource}`}
-					disabled={isDownloading}
 				/>
 			</Tooltip>
 		</Popover>

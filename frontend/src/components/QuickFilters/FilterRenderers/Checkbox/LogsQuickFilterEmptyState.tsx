@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
 import { ArrowUpRight } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	severity_text: 'severity-text',
@@ -39,9 +39,9 @@ function LogsQuickFilterEmptyState({
 				</div>
 			</div>
 			<Button
-				type="link"
 				className="go-to-docs__button"
 				onClick={handleLearnMoreClick}
+				variant="link"
 			>
 				<div className="go-to-docs__button-text">Learn more</div>
 				<ArrowUpRight size={14} color={Color.BG_ROBIN_400} />

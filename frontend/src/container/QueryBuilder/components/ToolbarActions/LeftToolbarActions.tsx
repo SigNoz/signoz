@@ -6,11 +6,12 @@ import {
 	Terminal,
 	Binoculars,
 } from '@signozhq/icons';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import './ToolbarActions.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface LeftToolbarActionsProps {
 	items: any;
@@ -35,7 +36,12 @@ export default function LeftToolbarActions({
 		<div className="left-toolbar">
 			{!showFilter && (
 				<Tooltip title="Show Filters">
-					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
+					<Button
+						onClick={handleFilterVisibilityChange}
+						className="filter-btn"
+						variant="outlined"
+						color="secondary"
+					>
 						<Filter size={12} />
 						<ArrowUpToLine size={12} style={{ transform: 'rotate(90deg)' }} />
 					</Button>
@@ -52,6 +58,8 @@ export default function LeftToolbarActions({
 								selectedView === list.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(list.key)}
+							variant="outlined"
+							color="secondary"
 						>
 							<SquareMousePointer size={14} data-testid="search-view" />
 							List View
@@ -69,6 +77,8 @@ export default function LeftToolbarActions({
 								selectedView === trace.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(trace.key)}
+							variant="outlined"
+							color="secondary"
 						>
 							<SquareMousePointer size={14} data-testid="trace-view" />
 							Trace View
@@ -86,6 +96,8 @@ export default function LeftToolbarActions({
 								selectedView === timeseries.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(timeseries.key)}
+							variant="outlined"
+							color="secondary"
 						>
 							<Atom size={14} data-testid="query-builder-view" />
 							Time Series
@@ -103,6 +115,8 @@ export default function LeftToolbarActions({
 								selectedView === clickhouse.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(clickhouse.key)}
+							variant="outlined"
+							color="secondary"
 						>
 							<Terminal size={14} data-testid="clickhouse-view" />
 							Clickhouse
@@ -120,6 +134,8 @@ export default function LeftToolbarActions({
 								selectedView === table.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(table.key)}
+							variant="outlined"
+							color="secondary"
 						>
 							<Binoculars size={14} data-testid="query-builder-view-v2" />
 							Table

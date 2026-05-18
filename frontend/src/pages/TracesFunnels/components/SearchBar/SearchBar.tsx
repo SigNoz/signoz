@@ -1,7 +1,8 @@
 import { ChangeEvent } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Popover, Tooltip } from 'antd';
+import { Input, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { ArrowDownWideNarrow, Check, Plus, Search } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
@@ -35,17 +36,17 @@ function SearchBar({
 							Sort By
 						</Typography.Text>
 						<Button
-							type="text"
 							className="sort-popover-content__button"
 							onClick={(): void => onSort('created_at')}
+							variant="ghost"
 						>
 							Last created
 							{sortOrder.columnKey === 'created_at' && <Check size={14} />}
 						</Button>
 						<Button
-							type="text"
 							className="sort-popover-content__button"
 							onClick={(): void => onSort('updated_at')}
+							variant="ghost"
 						>
 							Last updated
 							{sortOrder.columnKey === 'updated_at' && <Check size={14} />}
@@ -56,7 +57,7 @@ function SearchBar({
 				placement="bottomRight"
 				arrow={false}
 			>
-				<Button type="text" className="search__sort-btn">
+				<Button className="search__sort-btn" variant="ghost">
 					<ArrowDownWideNarrow size={12} data-testid="sort-by" />
 					<div className="search__sort-btn-text">Sort</div>
 				</Button>
@@ -82,11 +83,10 @@ function SearchBar({
 				}
 			>
 				<Button
-					type="primary"
-					icon={<Plus size={16} />}
 					className="search__new-btn"
 					onClick={onCreateFunnel}
 					disabled={!hasEditPermission}
+					prefix={<Plus size={16} />}
 				>
 					New funnel
 				</Button>

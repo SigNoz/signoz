@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import Modal from 'components/Modal';
 
@@ -9,7 +9,12 @@ function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 			isModalVisible
 			closable={false}
 			footer={[
-				<Button key="submit" type="primary" onClick={onContinueClick}>
+				<Button
+					key="submit"
+					onClick={onContinueClick}
+					variant="outlined"
+					color="secondary"
+				>
 					Continue without instrumentation
 				</Button>,
 			]}

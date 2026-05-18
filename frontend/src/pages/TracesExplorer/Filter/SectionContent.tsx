@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
+import { Card, Checkbox, Input, Tooltip } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -24,6 +24,7 @@ import {
 } from './filterUtils';
 
 import './Filter.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;
@@ -162,7 +163,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 							</Checkbox>
 						))}
 						{visibleItemsCount < results.length && (
-							<Button onClick={handleShowMore} type="link">
+							<Button onClick={handleShowMore} variant="link">
 								Show More
 							</Button>
 						)}

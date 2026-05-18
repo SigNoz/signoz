@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Check, ChevronDown } from '@signozhq/icons';
-import { Button, Checkbox, Popover } from 'antd';
+import { Checkbox, Popover } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
@@ -181,12 +182,12 @@ function AutoRefresh({
 						.filter((e) => e.label !== 'off')
 						.map((option) => (
 							<Button
-								type="text"
 								className="refresh-interval-btns"
 								key={option.label + option.value}
 								onClick={(): void => {
 									onChangeHandler(option.key);
 								}}
+								variant="ghost"
 							>
 								{option.label}
 								{option.key === selectedOption && <Check size={14} />}

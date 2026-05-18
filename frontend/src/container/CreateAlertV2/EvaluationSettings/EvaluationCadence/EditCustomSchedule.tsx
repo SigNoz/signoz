@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';
 import { Calendar1, Pencil, Trash } from '@signozhq/icons';
+import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
@@ -80,23 +81,24 @@ function EditCustomSchedule({
 		<div className="edit-custom-schedule">
 			{displayText}
 			<div className="button-row">
-				<Button.Group>
-					<Button type="default" onClick={handleEdit}>
+				<ButtonGroup>
+					<Button onClick={handleEdit} variant="outlined" color="secondary">
 						<Pencil size={12} />
 						<Typography.Text>Edit custom schedule</Typography.Text>
 					</Button>
-					<Button type="default" onClick={handlePreview}>
+					<Button onClick={handlePreview} variant="outlined" color="secondary">
 						<Calendar1 size={12} />
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
 					<Button
 						data-testid="discard-button"
-						type="default"
 						onClick={handleDiscard}
+						variant="outlined"
+						color="secondary"
 					>
 						<Trash size={12} />
 					</Button>
-				</Button.Group>
+				</ButtonGroup>
 			</div>
 		</div>
 	);

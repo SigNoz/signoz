@@ -156,7 +156,7 @@
 			.checklist-footer-container {
 				text-align: center;
 
-				.ant-btn.ant-btn-link {
+				button {
 					color: var(--l2-foreground) !important;
 					font-family: Inter;
 					font-size: 12px;
@@ -208,7 +208,7 @@
 		justify-content: space-between;
 		align-items: center;
 
-		.ant-btn.periscope-btn.secondary {
+		button.periscope-btn.secondary {
 			border-radius: 2px;
 			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
@@ -417,7 +417,7 @@
 
 			justify-content: flex-end;
 
-			.ant-btn {
+			button {
 				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
@@ -727,7 +727,7 @@
 		flex-direction: row;
 		gap: 12px;
 
-		.ant-btn.periscope-btn.secondary {
+		button.periscope-btn.secondary {
 			display: flex;
 			height: 32px;
 			padding: 8px 16px;

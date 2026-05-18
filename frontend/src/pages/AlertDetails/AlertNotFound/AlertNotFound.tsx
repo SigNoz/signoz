@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -78,15 +78,19 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 				<div className="action-btns">
 					<Button
 						className="action-btn"
-						icon={<List size={14} />}
 						onClick={checkAllRulesHandler}
+						variant="outlined"
+						color="secondary"
+						prefix={<List size={14} />}
 					>
 						Check all rules
 					</Button>
 					<Button
 						className="action-btn"
-						icon={<LifeBuoy size={14} />}
 						onClick={contactSupportHandler}
+						variant="outlined"
+						color="secondary"
+						prefix={<LifeBuoy size={14} />}
 					>
 						Contact Support
 					</Button>

@@ -64,7 +64,7 @@
 					align-items: center;
 					justify-content: space-between;
 
-					.ant-btn-group {
+					.periscope-btn-group {
 						.time-series-button-label,
 						.metric-name-button-label {
 							display: flex;
@@ -301,7 +301,7 @@
 					gap: 16px;
 					height: 100px;
 
-					.ant-btn {
+					button {
 						width: fit-content;
 					}
 				}
@@ -340,7 +340,7 @@
 			align-items: center;
 			justify-content: flex-end;
 
-			.ant-btn {
+			button {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;

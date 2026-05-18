@@ -14,7 +14,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from '@signozhq/icons';
 import {
@@ -27,6 +27,7 @@ import UpdateContextLinks from './UpdateContextLinks';
 import useContextLinkModal from './useContextLinkModal';
 
 import './styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function SortableContextLink({
 	contextLink,
@@ -62,20 +63,24 @@ function SortableContextLink({
 			</div>
 			<div className="context-link-actions">
 				<Button
-					className="edit-context-link-btn periscope-btn"
-					size="small"
-					icon={<Pencil size={12} />}
+					className="edit-context-link-btn"
 					onClick={(): void => {
 						onEdit(contextLink);
 					}}
+					size="sm"
+					variant="outlined"
+					color="secondary"
+					prefix={<Pencil size={12} />}
 				/>
 				<Button
-					className="delete-context-link-btn periscope-btn"
-					size="small"
-					icon={<Trash2 size={12} />}
+					className="delete-context-link-btn"
 					onClick={(): void => {
 						onDelete(contextLink);
 					}}
+					size="sm"
+					variant="outlined"
+					color="secondary"
+					prefix={<Trash2 size={12} />}
 				/>
 			</div>
 		</div>
@@ -131,12 +136,13 @@ function ContextLinks({
 		<div className="context-links-container">
 			<div className="context-links-list">
 				<Button
-					type="default"
 					className="add-context-link-button"
 					data-testid="add-context-link-cta"
-					icon={<Plus size={12} />}
 					style={{ width: '100%' }}
 					onClick={handleAddContextLink}
+					variant="outlined"
+					color="secondary"
+					prefix={<Plus size={12} />}
 				>
 					Add Context Link
 				</Button>

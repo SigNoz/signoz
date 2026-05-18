@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useGetMyOrganization,
@@ -110,8 +111,9 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 				<Button
 					loading={isLoading}
 					disabled={isDisabled}
-					type="primary"
-					htmlType="submit"
+					type="submit"
+					variant="outlined"
+					color="secondary"
 				>
 					Submit
 				</Button>

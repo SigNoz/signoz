@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Table, TableProps } from 'antd';
+import { Table, TableProps } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { RotateCw } from '@signozhq/icons';
 
@@ -53,7 +54,12 @@ function RoutingPolicyList({
 						<Typography.Text>
 							Something went wrong while fetching routing policies.
 						</Typography.Text>
-						<Button icon={<RotateCw size={14} />} onClick={refetchRoutingPolicies}>
+						<Button
+							onClick={refetchRoutingPolicies}
+							variant="outlined"
+							color="secondary"
+							prefix={<RotateCw size={14} />}
+						>
 							Retry
 						</Button>
 					</div>

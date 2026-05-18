@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
@@ -65,7 +66,7 @@ function LinkedSpans(props: LinkedSpansProps): JSX.Element {
 										{item.spanId}
 									</Typography.Link>
 								) : (
-									<Button type="link" className="item-value" disabled>
+									<Button className="item-value" disabled variant="link">
 										{item.spanId}
 									</Button>
 								)}

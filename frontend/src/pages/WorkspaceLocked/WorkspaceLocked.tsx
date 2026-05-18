@@ -5,7 +5,7 @@ import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
 import {
 	Alert,
-	Button,
+	Button as AntdButton,
 	Col,
 	Collapse,
 	Flex,
@@ -17,6 +17,7 @@ import {
 	Tabs,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -186,7 +187,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 							</Col>
 							{isAdmin && (
 								<Col span={24}>
-									<Button
+									<AntdButton
 										type="primary"
 										shape="round"
 										size="middle"
@@ -194,7 +195,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										onClick={handleUpdateCreditCard}
 									>
 										{t('continueToUpgrade')}
-									</Button>
+									</AntdButton>
 								</Col>
 							)}
 						</Row>
@@ -223,7 +224,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 					{isAdmin && (
 						<Col span={24}>
 							<Flex justify="center">
-								<Button
+								<AntdButton
 									type="primary"
 									shape="round"
 									size="middle"
@@ -231,7 +232,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									onClick={handleUpdateCreditCard}
 								>
 									{t('continueToUpgrade')}
-								</Button>
+								</AntdButton>
 							</Flex>
 						</Col>
 					)}
@@ -261,7 +262,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								onChange={handleCollapseChange}
 							/>
 							{isAdmin && (
-								<Button
+								<AntdButton
 									type="primary"
 									shape="round"
 									size="middle"
@@ -269,7 +270,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									onClick={handleUpdateCreditCard}
 								>
 									{t('continueToUpgrade')}
-								</Button>
+								</AntdButton>
 							)}
 						</Space>
 					</Col>
@@ -292,19 +293,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 								<Flex gap={8} justify="center" align="center">
 									<Button
 										className="workspace-locked__modal__header__actions__billing"
-										type="link"
-										size="small"
-										role="button"
 										onClick={(e): void => handleViewBilling(e)}
+										variant="link"
+										color="secondary"
 									>
 										View Billing
 									</Button>
 
-									<RefreshPaymentStatus btnShape="round" />
+									<RefreshPaymentStatus />
 								</Flex>
 							)}
 
-							<Button
+							<AntdButton
 								type="default"
 								shape="round"
 								size="middle"
@@ -314,7 +314,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 								onClick={handleContactUsClick}
 							>
 								Contact Us
-							</Button>
+							</AntdButton>
 						</span>
 					</div>
 				}
@@ -370,7 +370,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										gutter={[8, 8]}
 									>
 										<Col>
-											<Button
+											<AntdButton
 												type="primary"
 												shape="round"
 												size="middle"
@@ -378,10 +378,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 												onClick={handleUpdateCreditCard}
 											>
 												Continue my Journey
-											</Button>
+											</AntdButton>
 										</Col>
 										<Col>
-											<Button
+											<AntdButton
 												type="default"
 												shape="round"
 												size="middle"
@@ -389,7 +389,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 												onClick={handleExtendTrial}
 											>
 												{t('needMoreTime')}
-											</Button>
+											</AntdButton>
 										</Col>
 									</Row>
 								</Flex>

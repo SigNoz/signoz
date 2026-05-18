@@ -1,4 +1,5 @@
-import { Button, Popover, Tooltip } from 'antd';
+import { Popover, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Fullscreen } from '@signozhq/icons';
 
@@ -22,9 +23,11 @@ function AttributeWithExpandablePopover({
 			</pre>
 			<Button
 				onClick={(): void => onExpand(attributeKey, attributeValue)}
-				size="small"
 				className="attribute-with-expandable-popover__expand-button"
-				icon={<Fullscreen size={14} />}
+				size="sm"
+				variant="outlined"
+				color="secondary"
+				prefix={<Fullscreen size={14} />}
 			>
 				Expand
 			</Button>

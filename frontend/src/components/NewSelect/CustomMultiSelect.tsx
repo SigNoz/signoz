@@ -18,8 +18,9 @@ import {
 	RefreshCw,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select } from 'antd';
+import { Checkbox, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -767,11 +768,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button type="text" className="only-btn">
+								<Button className="only-btn" variant="ghost">
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
-							<Button type="text" className="toggle-btn">
+							<Button className="toggle-btn" variant="ghost">
 								Toggle
 							</Button>
 						</div>

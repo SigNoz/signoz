@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Skeleton, Tooltip } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
@@ -169,7 +170,11 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 													}
 													placement="topLeft"
 												>
-													<Button type="text" icon={<TriangleAlert size={14} />} />
+													<Button
+														variant="ghost"
+														size="icon"
+														prefix={<TriangleAlert size={14} />}
+													/>
 												</Tooltip>
 											)}
 										</div>

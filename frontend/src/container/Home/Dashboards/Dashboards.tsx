@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -15,6 +15,7 @@ import { openInNewTab } from 'utils/navigation';
 import dialsUrl from '@/assets/Icons/dials.svg';
 
 import { getItemIcon } from '../constants';
+import { Button } from '@signozhq/ui/button';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -70,19 +71,18 @@ export default function Dashboards({
 					<div className="empty-actions-container">
 						<Link to={ROUTES.ALL_DASHBOARD}>
 							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
 								onClick={(): void => {
 									logEvent('Homepage: Create dashboard clicked', {});
 								}}
+								variant="outlined"
+								color="secondary"
+								prefix={<Plus size={16} />}
 							>
 								New Dashboard
 							</Button>
 						</Link>
 
 						<Button
-							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
 								logEvent('Homepage: Learn more clicked', {
@@ -93,6 +93,7 @@ export default function Dashboards({
 									'_blank',
 								);
 							}}
+							variant="link"
 						>
 							Learn more <ArrowUpRight size={12} />
 						</Button>
@@ -198,11 +199,11 @@ export default function Dashboards({
 					<div className="dashboards-footer home-data-card-footer">
 						<Link to={ROUTES.ALL_DASHBOARD}>
 							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
+								className="learn-more-link"
 								onClick={(): void => {
 									logEvent('Homepage: All dashboards clicked', {});
 								}}
+								variant="link"
 							>
 								All Dashboards <ArrowRight size={12} />
 							</Button>

@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { Check } from '@signozhq/icons';
@@ -98,7 +98,7 @@ function EvaluationWindowPopover({
 					<Typography.Text>
 						{getRollingWindowDescription(evaluationWindow.timeframe)}
 					</Typography.Text>
-					<Button type="link">Read the docs</Button>
+					<Button variant="link">Read the docs</Button>
 				</div>
 			);
 		}
@@ -112,7 +112,7 @@ function EvaluationWindowPopover({
 					<Typography.Text>
 						{getCumulativeWindowDescription(evaluationWindow.timeframe)}
 					</Typography.Text>
-					<Button type="link">Read the docs</Button>
+					<Button variant="link">Read the docs</Button>
 				</div>
 			);
 		}

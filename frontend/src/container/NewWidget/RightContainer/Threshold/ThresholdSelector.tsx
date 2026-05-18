@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Button } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { Plus } from '@signozhq/icons';
@@ -11,6 +10,7 @@ import Threshold from './Threshold';
 import { ThresholdSelectorProps } from './types';
 
 import './ThresholdSelector.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function ThresholdSelector({
 	thresholds,
@@ -69,11 +69,12 @@ function ThresholdSelector({
 			<div className="threshold-selector-container">
 				<div className="threshold-select" onClick={addThresholdHandler}>
 					<Button
-						type="default"
-						icon={<Plus size={14} />}
 						style={{ width: '100%' }}
 						data-testid="add-threshold-cta"
 						onClick={addThresholdHandler}
+						variant="outlined"
+						color="secondary"
+						prefix={<Plus size={14} />}
 					>
 						Add Threshold
 					</Button>

@@ -5,7 +5,8 @@ import {
 	CircleArrowLeft,
 	UserPlus,
 } from '@signozhq/icons';
-import { Button, Space, Steps } from 'antd';
+import { Space, Steps } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -392,9 +393,10 @@ export default function ModuleStepsContainer({
 					<Space style={{ marginBottom: '24px' }}>
 						<Button
 							style={{ display: 'flex', alignItems: 'center' }}
-							type="default"
-							icon={<CircleArrowLeft size="md" />}
 							onClick={(e): void => onReselectModule(e)}
+							variant="outlined"
+							color="secondary"
+							prefix={<CircleArrowLeft size="md" />}
 						>
 							{selectedModule.title}
 						</Button>
@@ -416,8 +418,10 @@ export default function ModuleStepsContainer({
 						});
 						setIsInviteTeamMemberModalOpen(true);
 					}}
-					icon={<UserPlus size={16} />}
 					className="invite-user-btn"
+					variant="outlined"
+					color="secondary"
+					prefix={<UserPlus size={16} />}
 				>
 					Invite teammates
 				</Button>
@@ -460,14 +464,15 @@ export default function ModuleStepsContainer({
 					<Button
 						onClick={handlePrev}
 						disabled={current === 0}
-						icon={<ArrowLeft size="md" />}
+						variant="outlined"
+						color="secondary"
+						prefix={<ArrowLeft size="md" />}
 					>
 						Back
 					</Button>
 					<Button
 						onClick={(e): void => handleNext(e)}
-						type="primary"
-						icon={<ArrowRight size="md" />}
+						prefix={<ArrowRight size="md" />}
 					>
 						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>

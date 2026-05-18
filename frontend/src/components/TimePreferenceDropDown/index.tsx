@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
-import { Button, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
@@ -40,7 +41,7 @@ function TimePreference({
 			className="time-selection-target"
 			trigger={['click']}
 		>
-			<Button>
+			<Button variant="outlined" color="secondary">
 				<div className="button-selected-text">
 					<Globe size={14} />
 					<Typography.Text className="selected-value">

@@ -23,7 +23,7 @@ import CodeMirror, {
 	ViewPlugin,
 	ViewUpdate,
 } from '@uiw/react-codemirror';
-import { Button, Popover, Tooltip } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
@@ -36,6 +36,7 @@ import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
 import './QueryAggregation.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
@@ -720,9 +721,10 @@ function QueryAggregationSelect({
 						overlayClassName="query-aggregation-error-popover"
 					>
 						<Button
-							type="text"
-							icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
-							className="periscope-btn ghost query-aggregation-error-btn"
+							className="query-aggregation-error-btn"
+							variant="ghost"
+							size="icon"
+							prefix={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
 						/>
 					</Popover>
 				</div>

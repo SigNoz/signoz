@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Modal, Tooltip } from 'antd';
+import { Modal, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import cx from 'classnames';
@@ -170,7 +171,9 @@ function LaunchChatSupport({
 				<Button
 					className={cx('periscope-btn', 'facing-issue-button', className)}
 					onClick={handleFacingIssuesClick}
-					icon={<CircleHelp size={14} />}
+					variant="outlined"
+					color="secondary"
+					prefix={<CircleHelp size={14} />}
 				>
 					{buttonText || 'Facing issues?'}
 				</Button>
@@ -189,19 +192,19 @@ function LaunchChatSupport({
 						key="cancel"
 						onClick={(): void => setIsAddCreditCardModalOpen(false)}
 						className="cancel-btn"
-						icon={<X size={16} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
 						loading={isLoadingBilling}
 						disabled={isLoadingBilling}
 						onClick={handleAddCreditCard}
 						className="add-credit-card-btn"
+						prefix={<CreditCard size={16} />}
 					>
 						Add Credit Card
 					</Button>,

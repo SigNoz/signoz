@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -32,6 +31,7 @@ import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -177,13 +177,13 @@ function CustomTimePickerPopoverContent({
 			<div className="relative-date-time-section">
 				{options.map((option) => (
 					<Button
-						type="text"
 						className="time-btns"
 						key={option.label + option.value}
 						onClick={(): void => {
 							handleExitLiveLogs();
 							onSelectHandler(option.label, option.value);
 						}}
+						variant="ghost"
 					>
 						{option.label}
 					</Button>
@@ -249,15 +249,14 @@ function CustomTimePickerPopoverContent({
 					{isLogsExplorerPage && isLogsListView && (
 						<Button
 							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
-							type="text"
 							onClick={handleGoLive}
+							variant="ghost"
 						>
 							Live
 						</Button>
 					)}
 					{options.map((option) => (
 						<Button
-							type="text"
 							key={option.label + option.value}
 							onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
 								e.stopPropagation();
@@ -271,6 +270,7 @@ function CustomTimePickerPopoverContent({
 									? option.value === 'custom' && !isLiveLogsEnabled && 'active'
 									: selectedTime === option.value && !isLiveLogsEnabled && 'active',
 							)}
+							variant="ghost"
 						>
 							<span className="time-label">{option.label}</span>
 
@@ -370,11 +370,12 @@ function CustomTimePickerPopoverContent({
 
 					<div className="timezone-container__right">
 						<Button
-							type="text"
-							size="small"
-							className="periscope-btn text timezone-change-button"
+							className="timezone-change-button"
 							onClick={handleTimezoneHintClick}
-							icon={<PenLine size={10} />}
+							size="sm"
+							variant="ghost"
+							prefix={<PenLine size={10} />}
+							color="none"
 						>
 							Change Timezone
 						</Button>

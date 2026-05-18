@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleX } from '@signozhq/icons';
-import { Button, Input, message, Modal } from 'antd';
+import { Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import { Labels } from 'types/api/alerts/def';
@@ -11,6 +11,7 @@ import QueryChip from './QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
+import { Button } from '@signozhq/ui/button';
 
 type LabelStep = 'Idle' | 'LabelKey' | 'LabelValue';
 type LabelEvent = 'NEXT' | 'onBlur' | 'RESET';
@@ -182,8 +183,9 @@ function LabelSelect({
 				{queries.length > 0 || staging.length > 0 || currentVal ? (
 					<Button
 						onClick={handleClearAll}
-						icon={<CircleX size="md" />}
-						type="text"
+						variant="ghost"
+						size="icon"
+						prefix={<CircleX size="md" />}
 					/>
 				) : null}
 			</div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { cloneDeep, pullAt } from 'lodash-es';
@@ -183,9 +184,11 @@ export default function QueryFunctions({
 			)}
 		>
 			<Button
-				className="periscope-btn function-btn"
+				className="function-btn"
 				disabled={hasFunctions}
 				onClick={handleAddNewFunction}
+				variant="outlined"
+				color="secondary"
 			>
 				<FunctionIcon className="function-icon" fillColor="var(--l1-foreground)" />
 			</Button>
@@ -229,9 +232,11 @@ export default function QueryFunctions({
 				placement="right"
 			>
 				<Button
-					className="periscope-btn add-function-btn"
+					className="add-function-btn"
 					disabled={functions && functions.length >= maxFunctions}
 					onClick={handleAddNewFunction}
+					variant="outlined"
+					color="secondary"
 				>
 					<Plus size={14} color="var(--l1-foreground)" />
 				</Button>

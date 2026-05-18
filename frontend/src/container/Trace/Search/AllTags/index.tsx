@@ -2,7 +2,8 @@ import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { ChevronRight, Plus } from '@signozhq/icons';
-import { Button, Space, Flex } from 'antd';
+import { Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
@@ -106,11 +107,8 @@ function AllTags({
 			</CurrentTagsContainer>
 
 			<Space wrap direction="horizontal">
-				<Button type="primary" onClick={onTagAddHandler}>
-					<Flex gap={4} align="center">
-						<Plus size="md" />
-						Add Tags Filter
-					</Flex>
+				<Button onClick={onTagAddHandler} prefix={<Plus size="md" />}>
+					Add Tags Filter
 				</Button>
 
 				<Text truncate={1}>
@@ -120,12 +118,11 @@ function AllTags({
 
 			<ButtonContainer>
 				<Space align="start">
-					<Button onClick={onResetHandler}>Reset</Button>
-					<Button type="primary" onClick={onRunQueryHandler}>
-						<Flex gap={4} align="center">
-							<ChevronRight size="md" />
-							Run Query
-						</Flex>
+					<Button onClick={onResetHandler} variant="outlined" color="secondary">
+						Reset
+					</Button>
+					<Button onClick={onRunQueryHandler} prefix={<ChevronRight size="md" />}>
+						Run Query
 					</Button>
 				</Space>
 			</ButtonContainer>

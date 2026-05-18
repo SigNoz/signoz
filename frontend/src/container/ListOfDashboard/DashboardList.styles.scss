@@ -459,7 +459,7 @@
 			}
 
 			.learn-more:hover {
-				&.ant-btn-text {
+				& {
 					background-color: unset;
 				}
 			}
@@ -543,7 +543,7 @@
 			}
 
 			.learn-more:hover {
-				&.ant-btn-text {
+				& {
 					background-color: unset;
 				}
 			}
