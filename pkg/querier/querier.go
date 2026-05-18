@@ -80,132 +80,6 @@ func New(
 	}
 }
 
-// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present.
-func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
-	for _, fn := range spec.Functions {
-		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
-			switch v := fn.Args[0].Value.(type) {
-			case float64:
-				return int64(v)
-			case int64:
-				return v
-			case int:
-				return int64(v)
-			case string:
-				if shiftFloat, err := strconv.ParseFloat(v, 64); err == nil {
-					return int64(shiftFloat)
-				}
-			}
-		}
-	}
-	return 0
-}
-
-// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function.
-func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtypes.TimeRange, kind qbtypes.RequestType) qbtypes.TimeRange {
-	// Only apply time shift for time series and scalar queries
-	// Raw/list queries don't support timeshift
-	if kind != qbtypes.RequestTypeTimeSeries && kind != qbtypes.RequestTypeScalar {
-		return tr
-	}
-
-	// Use the ShiftBy field if it's already populated, otherwise extract it
-	shiftBy := spec.ShiftBy
-	if shiftBy == 0 {
-		shiftBy = extractShiftFromBuilderQuery(spec)
-	}
-
-	if shiftBy == 0 {
-		return tr
-	}
-
-	// ShiftBy is in seconds, convert to milliseconds and shift backward in time
-	shiftMS := shiftBy * 1000
-	return qbtypes.TimeRange{
-		From: tr.From - uint64(shiftMS),
-		To:   tr.To - uint64(shiftMS),
-	}
-}
-
-func (q *querier) constructTraceOperatorDependencyMap(queries []qbtypes.QueryEnvelope) (map[string]bool, error) {
-	dependencyQueries := make(map[string]bool)
-
-	for _, query := range queries {
-		if query.Type == qbtypes.QueryTypeTraceOperator {
-			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
-				// Parse expression to find dependencies
-				if err := spec.ParseExpression(); err != nil {
-					return nil, err
-				}
-
-				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
-				for _, dep := range deps {
-					dependencyQueries[dep] = true
-				}
-			}
-		}
-	}
-
-	return dependencyQueries, nil
-}
-
-func secondsStep(s uint64) qbtypes.Step {
-	return qbtypes.Step{Duration: time.Second * time.Duration(s)}
-}
-
-// clampStep sets the step to recommended when zero and clamps to min when below it.
-// When clamped and warn is true, a warning is appended for the user.
-func clampStep(qe *qbtypes.QueryEnvelope, recommended, min uint64, warnings *[]string) {
-	step := qe.GetStepInterval()
-	if step.Seconds() == 0 {
-		step = secondsStep(recommended)
-		qe.SetStepInterval(step)
-	}
-	if step.Seconds() < float64(min) {
-		newStep := secondsStep(min)
-		*warnings = append(*warnings, fmt.Sprintf(intervalWarn, qe.GetQueryName(), step.Seconds(), newStep.Seconds()))
-		qe.SetStepInterval(newStep)
-	}
-}
-
-// adjustStepInterval normalizes each query's step interval in place and returns
-// any clamp warnings emitted along the way.
-func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end uint64) []string {
-	// Compute the per-signal bounds once per call — they only depend on start/end.
-	traceLogRecommended := querybuilder.RecommendedStepInterval(start, end)
-	traceLogMin := querybuilder.MinAllowedStepInterval(start, end)
-	meterRecommended := querybuilder.RecommendedStepIntervalForMeter(start, end)
-	meterMin := querybuilder.MinAllowedStepIntervalForMeter(start, end)
-	metricRecommended := querybuilder.RecommendedStepIntervalForMetric(start, end)
-	metricMin := querybuilder.MinAllowedStepIntervalForMetric(start, end)
-
-	warnings := make([]string, 0)
-	for idx := range queries {
-		qe := &queries[idx]
-		switch qe.Type {
-		case qbtypes.QueryTypeBuilder:
-			switch qe.Spec.(type) {
-			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-				clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
-			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-				if qe.GetSource() == telemetrytypes.SourceMeter {
-					clampStep(qe, meterRecommended, meterMin, &warnings)
-				} else {
-					clampStep(qe, metricRecommended, metricMin, &warnings)
-				}
-			}
-		case qbtypes.QueryTypePromQL:
-			// PromQL only fills an unset step — no min clamp.
-			if qe.GetStepInterval().Seconds() == 0 {
-				qe.SetStepInterval(secondsStep(metricRecommended))
-			}
-		case qbtypes.QueryTypeTraceOperator:
-			clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
-		}
-	}
-	return warnings
-}
-
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 
 	tmplVars := req.Variables
@@ -370,6 +244,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.QueryEnvelope) {
 	for _, query := range queries {
+		// BUG: QueryType doesn't make sense as range_request can have multiple query types.
 		event.QueryType = query.Type.StringValue()
 
 		switch query.Type {
@@ -1123,4 +998,130 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	}
 
 	return result
+}
+
+func secondsStep(s uint64) qbtypes.Step {
+	return qbtypes.Step{Duration: time.Second * time.Duration(s)}
+}
+
+// clampStep sets the step to recommended when zero and clamps to min when below it.
+// When clamped and warn is true, a warning is appended for the user.
+func clampStep(qe *qbtypes.QueryEnvelope, recommended, min uint64, warnings *[]string) {
+	step := qe.GetStepInterval()
+	if step.Seconds() == 0 {
+		step = secondsStep(recommended)
+		qe.SetStepInterval(step)
+	}
+	if step.Seconds() < float64(min) {
+		newStep := secondsStep(min)
+		*warnings = append(*warnings, fmt.Sprintf(intervalWarn, qe.GetQueryName(), step.Seconds(), newStep.Seconds()))
+		qe.SetStepInterval(newStep)
+	}
+}
+
+// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present.
+func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
+	for _, fn := range spec.Functions {
+		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
+			switch v := fn.Args[0].Value.(type) {
+			case float64:
+				return int64(v)
+			case int64:
+				return v
+			case int:
+				return int64(v)
+			case string:
+				if shiftFloat, err := strconv.ParseFloat(v, 64); err == nil {
+					return int64(shiftFloat)
+				}
+			}
+		}
+	}
+	return 0
+}
+
+// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function.
+func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtypes.TimeRange, kind qbtypes.RequestType) qbtypes.TimeRange {
+	// Only apply time shift for time series and scalar queries
+	// Raw/list queries don't support timeshift
+	if kind != qbtypes.RequestTypeTimeSeries && kind != qbtypes.RequestTypeScalar {
+		return tr
+	}
+
+	// Use the ShiftBy field if it's already populated, otherwise extract it
+	shiftBy := spec.ShiftBy
+	if shiftBy == 0 {
+		shiftBy = extractShiftFromBuilderQuery(spec)
+	}
+
+	if shiftBy == 0 {
+		return tr
+	}
+
+	// ShiftBy is in seconds, convert to milliseconds and shift backward in time
+	shiftMS := shiftBy * 1000
+	return qbtypes.TimeRange{
+		From: tr.From - uint64(shiftMS),
+		To:   tr.To - uint64(shiftMS),
+	}
+}
+
+func (q *querier) constructTraceOperatorDependencyMap(queries []qbtypes.QueryEnvelope) (map[string]bool, error) {
+	dependencyQueries := make(map[string]bool)
+
+	for _, query := range queries {
+		if query.Type == qbtypes.QueryTypeTraceOperator {
+			if spec, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator); ok {
+				// Parse expression to find dependencies
+				if err := spec.ParseExpression(); err != nil {
+					return nil, err
+				}
+
+				deps := spec.CollectReferencedQueries(spec.ParsedExpression)
+				for _, dep := range deps {
+					dependencyQueries[dep] = true
+				}
+			}
+		}
+	}
+
+	return dependencyQueries, nil
+}
+
+// adjustStepInterval normalizes each query's step interval in place and returns
+// any clamp warnings emitted along the way.
+func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end uint64) []string {
+	// Compute the per-signal bounds once per call — they only depend on start/end.
+	traceLogRecommended := querybuilder.RecommendedStepInterval(start, end)
+	traceLogMin := querybuilder.MinAllowedStepInterval(start, end)
+	meterRecommended := querybuilder.RecommendedStepIntervalForMeter(start, end)
+	meterMin := querybuilder.MinAllowedStepIntervalForMeter(start, end)
+	metricRecommended := querybuilder.RecommendedStepIntervalForMetric(start, end)
+	metricMin := querybuilder.MinAllowedStepIntervalForMetric(start, end)
+
+	warnings := make([]string, 0)
+	for idx := range queries {
+		qe := &queries[idx]
+		switch qe.Type {
+		case qbtypes.QueryTypeBuilder:
+			switch qe.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
+			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				if qe.GetSource() == telemetrytypes.SourceMeter {
+					clampStep(qe, meterRecommended, meterMin, &warnings)
+				} else {
+					clampStep(qe, metricRecommended, metricMin, &warnings)
+				}
+			}
+		case qbtypes.QueryTypePromQL:
+			// PromQL only fills an unset step — no min clamp.
+			if qe.GetStepInterval().Seconds() == 0 {
+				qe.SetStepInterval(secondsStep(metricRecommended))
+			}
+		case qbtypes.QueryTypeTraceOperator:
+			clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
+		}
+	}
+	return warnings
 }
