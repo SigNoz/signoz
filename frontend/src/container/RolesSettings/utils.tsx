@@ -1,8 +1,9 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import type {
-	CoretypesResourceRefDTO,
 	CoretypesObjectGroupDTO,
+	CoretypesResourceRefDTO,
+	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { capitalize } from 'lodash-es';
@@ -21,7 +22,11 @@ import {
 } from './RoleDetails/constants';
 
 export type AuthzResources = {
-	resources: ReadonlyArray<CoretypesResourceRefDTO>;
+	resources: ReadonlyArray<{
+		kind: string;
+		type: string;
+		allowedVerbs: readonly string[];
+	}>;
 	relations: Readonly<Record<string, ReadonlyArray<string>>>;
 };
 
@@ -69,7 +74,9 @@ export function deriveResourcesForRelation(
 	}
 	const supportedTypes = authzResources.relations[relation] ?? [];
 	return authzResources.resources
-		.filter((r) => supportedTypes.includes(r.type))
+		.filter(
+			(r) => supportedTypes.includes(r.type) && r.allowedVerbs.includes(relation),
+		)
 		.map((r) => ({
 			id: `${r.type}:${r.kind}`,
 			kind: r.kind,
@@ -141,7 +148,7 @@ export function buildPatchPayload({
 		}
 		const resourceDef: CoretypesResourceRefDTO = {
 			kind: found.kind,
-			type: found.type,
+			type: found.type as CoretypesTypeDTO,
 		};
 
 		const initialScope = initial?.scope ?? PermissionScope.NONE;
