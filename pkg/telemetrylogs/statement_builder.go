@@ -317,7 +317,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, b.ftsFieldKeys)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, true)
 
 	if err != nil {
 		return nil, err
@@ -423,7 +423,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, nil)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, false)
 
 	if err != nil {
 		return nil, err
@@ -582,7 +582,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, nil)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, false)
 
 	if err != nil {
 		return nil, err
@@ -641,9 +641,6 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 }
 
 // buildFilterCondition builds SQL condition from filter expression.
-//
-// Note: FTS keys are not directly referred from the field but used as parameters
-// in order to make it available only in RAW query.
 func (b *logQueryStatementBuilder) addFilterCondition(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -651,7 +648,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-	ftsFieldKeys []*telemetrytypes.TelemetryFieldKey,
+	enableFTS bool,
 ) (*querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause *querybuilder.PreparedWhereClause
@@ -660,8 +657,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		// add filter expression
-		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+		opts := querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
@@ -673,9 +669,13 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
-			FTSFieldKeys:       ftsFieldKeys,
-		})
+		}
+		if enableFTS {
+			opts.FTSFieldKeys = b.ftsFieldKeys
+		}
 
+		// add filter expression
+		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, opts)
 		if err != nil {
 			return nil, err
 		}
