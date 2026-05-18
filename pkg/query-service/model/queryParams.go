@@ -346,6 +346,27 @@ type GetFlamegraphSpansForTraceParams struct {
 	SelectFields    []telemetrytypes.TelemetryFieldKey `json:"selectFields"`
 }
 
+func (r *GetFlamegraphSpansForTraceParams) GetSelectedFeildsSourceColumns() []string {
+	needsAttrMap, needsResourceMap := false, false
+	for _, f := range r.SelectFields {
+		switch f.FieldContext {
+		case telemetrytypes.FieldContextAttribute:
+			needsAttrMap = true
+		case telemetrytypes.FieldContextResource:
+			needsResourceMap = true
+		}
+	}
+
+	var cols []string
+	if needsAttrMap {
+		cols = append(cols, "attributes_string", "attributes_number", "attributes_bool")
+	}
+	if needsResourceMap {
+		cols = append(cols, "resources_string")
+	}
+	return cols
+}
+
 type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
