@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
-import { SyncOutlined } from '@ant-design/icons';
+import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -17,14 +17,13 @@ import dayjs, { Dayjs } from 'dayjs';
 import {
 	useGlobalTimeQueryInvalidate,
 	useIsGlobalTimeQueryRefreshing,
-} from 'hooks/globalTime';
+} from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
-import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
@@ -101,14 +100,14 @@ function DateTimeSelection({
 	if (modalInitialStartTime !== undefined) {
 		initialModalStartTime = modalInitialStartTime;
 	} else if (searchStartTime) {
-		initialModalStartTime = parseInt(searchStartTime, 10);
+		initialModalStartTime = Number.parseInt(searchStartTime, 10);
 	}
 
 	let initialModalEndTime = 0;
 	if (modalInitialEndTime !== undefined) {
 		initialModalEndTime = modalInitialEndTime;
 	} else if (searchEndTime) {
-		initialModalEndTime = parseInt(searchEndTime, 10);
+		initialModalEndTime = Number.parseInt(searchEndTime, 10);
 	}
 
 	const [modalStartTime, setModalStartTime] = useState<number>(
@@ -159,9 +158,11 @@ function DateTimeSelection({
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
 			const startDate = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
+				new Date(Number.parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
+			const endDate = dayjs(
+				new Date(Number.parseInt(getTimeString(searchEndTime), 10)),
+			);
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
@@ -741,7 +742,7 @@ function DateTimeSelection({
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
 								<Button
-									icon={<SyncOutlined />}
+									icon={<RefreshCw size={16} />}
 									loading={!!isRefreshingQueries}
 									onClick={onRefreshHandler}
 								/>

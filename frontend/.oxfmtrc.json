@@ -23,6 +23,11 @@
     "**/*.md",
     "**/*.json",
     "src/parser/**",
-    "src/TraceOperator/parser/**"
+    "src/TraceOperator/parser/**",
+    ".claude",
+    ".opencode",
+    "dist",
+    "playwright-report",
+    ".temp_cache"
   ]
 }

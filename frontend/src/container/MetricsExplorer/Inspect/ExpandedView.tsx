@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Card, Tooltip, Typography } from 'antd';
+import { Card, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
+import { CircleArrowDown, CircleArrowRight, Focus } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -205,9 +206,9 @@ function ExpandedView({
 											>
 												{title}
 												{selectedTimeSeries?.title === title ? (
-													<ArrowDownCircle color={Color.BG_FOREST_300} size={12} />
+													<CircleArrowDown color={Color.BG_FOREST_300} size={12} />
 												) : (
-													<ArrowRightCircle size={12} />
+													<CircleArrowRight size={12} />
 												)}
 											</div>
 										</Tooltip>

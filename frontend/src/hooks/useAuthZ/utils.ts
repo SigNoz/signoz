@@ -1,4 +1,8 @@
-import { AuthtypesTransactionDTO } from '../../api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesTransactionDTO,
+	CoretypesTypeDTO,
+	AuthtypesRelationDTO,
+} from '../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
 import {
 	AuthZObject,
@@ -33,36 +37,59 @@ export function parsePermission(permission: BrandedPermission): {
 	return { relation: relation as AuthZRelation, object };
 }
 
-const resourceNameToType = permissionsType.data.resources.reduce(
+const kindsByType = permissionsType.data.resources.reduce(
 	(acc, r) => {
-		acc[r.name] = r.type;
+		if (!acc[r.type]) {
+			acc[r.type] = new Set();
+		}
+		acc[r.type].add(r.kind);
 		return acc;
 	},
-	{} as Record<ResourceName, ResourceType>,
+	{} as Record<string, Set<string>>,
 );
+
+function resolveType(
+	relation: AuthZRelation,
+	kind: string,
+): ResourceType | undefined {
+	const candidates: readonly string[] =
+		permissionsType.data.relations[relation] ?? [];
+	for (const t of candidates) {
+		if (kindsByType[t]?.has(kind)) {
+			return t as ResourceType;
+		}
+	}
+	return undefined;
+}
+
+function splitObjectString(objectStr: string): {
+	resourceName: string;
+	selector: string;
+} {
+	const idx = objectStr.indexOf(ObjectSeparator);
+	if (idx === -1) {
+		return { resourceName: objectStr, selector: '' };
+	}
+	return {
+		resourceName: objectStr.slice(0, idx),
+		selector: objectStr.slice(idx + 1),
+	};
+}
 
 export function permissionToTransactionDto(
 	permission: BrandedPermission,
 ): AuthtypesTransactionDTO {
 	const { relation, object: objectStr } = parsePermission(permission);
-	const directType = resourceNameToType[objectStr as ResourceName];
-	if (directType === 'metaresources') {
-		return {
-			relation,
-			object: {
-				resource: { name: objectStr, type: directType },
-				selector: '*',
-			},
-		};
-	}
-	const [resourceName, selector] = objectStr.split(ObjectSeparator);
-	const type =
-		resourceNameToType[resourceName as ResourceName] ?? 'metaresource';
+	const { resourceName, selector } = splitObjectString(objectStr);
+	const type = resolveType(relation, resourceName) ?? 'metaresource';
 
 	return {
-		relation,
+		relation: relation as AuthtypesRelationDTO,
 		object: {
-			resource: { name: resourceName, type },
+			resource: {
+				kind: resourceName as ResourceName,
+				type: type as CoretypesTypeDTO,
+			},
 			selector: selector || '*',
 		},
 	};
@@ -75,11 +102,8 @@ export function gettableTransactionToPermission(
 		relation,
 		object: { resource, selector },
 	} = item;
-	const resourceName = String(resource.name);
+	const resourceName = String(resource.kind);
 	const selectorStr = typeof selector === 'string' ? selector : '*';
-	const objectStr =
-		resource.type === 'metaresources'
-			? resourceName
-			: `${resourceName}${ObjectSeparator}${selectorStr}`;
+	const objectStr = `${resourceName}${ObjectSeparator}${selectorStr}`;
 	return `${relation}${PermissionSeparator}${objectStr}` as BrandedPermission;
 }

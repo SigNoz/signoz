@@ -1,5 +1,5 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Callout } from '@signozhq/ui';
+import { Plus } from '@signozhq/icons';
+import { Callout } from '@signozhq/ui/callout';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 import DOCLINKS from 'utils/docLinks';
@@ -26,12 +26,12 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 							<a
 								href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
 								target="_blank"
-								rel="noreferrer"
+								rel="noopener"
 							>
 								Learn to write faster, optimized queries
 							</a>
 							{' · Using AI? '}
-							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noreferrer">
+							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
 								Install the SigNoz ClickHouse query agent skill
 							</a>
 						</span>
@@ -49,7 +49,7 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 			))}
 			<QueryButton
 				onClick={addQueryHandler}
-				icon={<PlusOutlined />}
+				icon={<Plus size="md" />}
 				style={{ margin: '0.4rem 1rem' }}
 			>
 				Query

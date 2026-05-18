@@ -138,7 +138,10 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 
 	it('reads initial page from URL params', () => {
 		const wrapper = createNuqsWrapper({ page: '3' });
-		const { result } = renderHook(() => useTableParams(true), { wrapper });
+		// Pass matching default to prevent reset on mount (page resets when orderBy changes)
+		const { result } = renderHook(() => useTableParams(true, { page: 3 }), {
+			wrapper,
+		});
 		expect(result.current.page).toBe(3);
 	});
 
@@ -247,5 +250,296 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 			result.current.setOrderBy(null);
 		});
 		expect(result.current.orderBy).toBeNull();
+	});
+});
+
+describe('useTableParams (selective URL mode — partial config object)', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	it('syncs only page to URL when only page is configured', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(() => useTableParams({ page: 'myPage' }), {
+			wrapper,
+		});
+
+		// Update page - should sync to URL
+		act(() => {
+			result.current.setPage(5);
+			jest.runAllTimers();
+		});
+		expect(result.current.page).toBe(5);
+		const lastPage = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('myPage'))
+			.filter(Boolean)
+			.pop();
+		expect(lastPage).toBe('5');
+
+		// Update limit - should stay local (not in URL)
+		act(() => {
+			result.current.setLimit(100);
+			jest.runAllTimers();
+		});
+		expect(result.current.limit).toBe(100);
+		const limitInUrl = onUrlUpdate.mock.calls.some(
+			(call) => call[0].searchParams.get('limit') !== null,
+		);
+		expect(limitInUrl).toBe(false);
+
+		// Update orderBy - should stay local (not in URL)
+		act(() => {
+			result.current.setOrderBy({ columnName: 'test', order: 'asc' });
+			jest.runAllTimers();
+		});
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'test',
+			order: 'asc',
+		});
+		const orderByInUrl = onUrlUpdate.mock.calls.some(
+			(call) => call[0].searchParams.get('order_by') !== null,
+		);
+		expect(orderByInUrl).toBe(false);
+	});
+
+	it('syncs only orderBy to URL when only orderBy is configured', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(() => useTableParams({ orderBy: 'mySort' }), {
+			wrapper,
+		});
+
+		// Update orderBy - should sync to URL
+		act(() => {
+			result.current.setOrderBy({ columnName: 'cpu', order: 'desc' });
+			jest.runAllTimers();
+		});
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'cpu',
+			order: 'desc',
+		});
+		const lastOrderBy = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('mySort'))
+			.filter(Boolean)
+			.pop();
+		expect(lastOrderBy).toBeDefined();
+		expect(JSON.parse(lastOrderBy!)).toStrictEqual({
+			columnName: 'cpu',
+			order: 'desc',
+		});
+
+		// Update page - should stay local
+		act(() => {
+			result.current.setPage(3);
+			jest.runAllTimers();
+		});
+		expect(result.current.page).toBe(3);
+		const pageInUrl = onUrlUpdate.mock.calls.some(
+			(call) => call[0].searchParams.get('page') !== null,
+		);
+		expect(pageInUrl).toBe(false);
+	});
+
+	it('syncs only limit to URL when only limit is configured', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(() => useTableParams({ limit: 'myLimit' }), {
+			wrapper,
+		});
+
+		// Update limit - should sync to URL
+		act(() => {
+			result.current.setLimit(25);
+			jest.runAllTimers();
+		});
+		expect(result.current.limit).toBe(25);
+		const lastLimit = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('myLimit'))
+			.filter(Boolean)
+			.pop();
+		expect(lastLimit).toBe('25');
+
+		// Update page - should stay local
+		act(() => {
+			result.current.setPage(2);
+			jest.runAllTimers();
+		});
+		expect(result.current.page).toBe(2);
+		const pageInUrl = onUrlUpdate.mock.calls.some(
+			(call) => call[0].searchParams.get('page') !== null,
+		);
+		expect(pageInUrl).toBe(false);
+	});
+
+	it('syncs only expanded to URL when only expanded is configured', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(
+			() => useTableParams({ expanded: 'myExpanded' }),
+			{ wrapper },
+		);
+
+		// Update expanded - should sync to URL
+		act(() => {
+			result.current.setExpanded({ 'row-1': true, 'row-2': true });
+			jest.runAllTimers();
+		});
+		expect(result.current.expanded).toStrictEqual({
+			'row-1': true,
+			'row-2': true,
+		});
+		const lastExpanded = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('myExpanded'))
+			.filter(Boolean)
+			.pop();
+		expect(lastExpanded).toBeDefined();
+		expect(JSON.parse(lastExpanded!)).toStrictEqual(
+			expect.arrayContaining(['row-1', 'row-2']),
+		);
+
+		// Update page - should stay local
+		act(() => {
+			result.current.setPage(4);
+			jest.runAllTimers();
+		});
+		expect(result.current.page).toBe(4);
+		const pageInUrl = onUrlUpdate.mock.calls.some(
+			(call) => call[0].searchParams.get('page') !== null,
+		);
+		expect(pageInUrl).toBe(false);
+	});
+
+	it('syncs page and orderBy to URL but keeps limit and expanded local', () => {
+		const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+		const wrapper = createNuqsWrapper({}, onUrlUpdate);
+		const { result } = renderHook(
+			() => useTableParams({ page: 'p', orderBy: 'sort' }),
+			{ wrapper },
+		);
+
+		// Update limit and expanded first (should stay local)
+		act(() => {
+			result.current.setLimit(75);
+			result.current.setExpanded({ 'row-5': true });
+			jest.runAllTimers();
+		});
+
+		expect(result.current.limit).toBe(75);
+		expect(result.current.expanded).toStrictEqual({ 'row-5': true });
+
+		// Update page (should sync to URL)
+		act(() => {
+			result.current.setPage(2);
+			jest.runAllTimers();
+		});
+
+		expect(result.current.page).toBe(2);
+		const lastPage = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('p'))
+			.filter(Boolean)
+			.pop();
+		expect(lastPage).toBe('2');
+
+		// Update orderBy (should sync to URL, and resets page to default)
+		act(() => {
+			result.current.setOrderBy({ columnName: 'name', order: 'asc' });
+			jest.runAllTimers();
+		});
+
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'name',
+			order: 'asc',
+		});
+		const lastOrderBy = onUrlUpdate.mock.calls
+			.map((call) => call[0].searchParams.get('sort'))
+			.filter(Boolean)
+			.pop();
+		expect(lastOrderBy).toBeDefined();
+
+		// limit should NOT be in URL
+		const limitInUrl = onUrlUpdate.mock.calls.some(
+			(call) =>
+				call[0].searchParams.get('limit') !== null ||
+				call[0].searchParams.get('myLimit') !== null,
+		);
+		expect(limitInUrl).toBe(false);
+
+		// expanded should NOT be in URL
+		const expandedInUrl = onUrlUpdate.mock.calls.some(
+			(call) =>
+				call[0].searchParams.get('expanded') !== null ||
+				call[0].searchParams.get('myExpanded') !== null,
+		);
+		expect(expandedInUrl).toBe(false);
+	});
+
+	it('reads initial values from URL for configured params only', () => {
+		const wrapper = createNuqsWrapper({
+			customPage: '7',
+			limit: '999', // This should be ignored since limit is not configured
+		});
+		const { result } = renderHook(
+			// Pass page default matching URL to prevent reset on mount
+			() => useTableParams({ page: 'customPage' }, { page: 7 }),
+			{ wrapper },
+		);
+
+		// Page should come from URL
+		expect(result.current.page).toBe(7);
+		// Limit should be default (not from URL since it's not configured)
+		expect(result.current.limit).toBe(50);
+	});
+
+	it('supports updater function for expanded state', () => {
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(() => useTableParams({ expanded: 'exp' }), {
+			wrapper,
+		});
+
+		// Set initial expanded state
+		act(() => {
+			result.current.setExpanded({ 'row-1': true });
+		});
+		expect(result.current.expanded).toStrictEqual({ 'row-1': true });
+
+		// Use updater function to add another row
+		act(() => {
+			result.current.setExpanded((prev) => ({
+				...(typeof prev === 'boolean' ? {} : prev),
+				'row-2': true,
+			}));
+		});
+		expect(result.current.expanded).toStrictEqual({
+			'row-1': true,
+			'row-2': true,
+		});
+	});
+
+	it('supports updater function for local expanded state', () => {
+		const wrapper = createNuqsWrapper();
+		const { result } = renderHook(() => useTableParams(), { wrapper });
+
+		// Set initial expanded state
+		act(() => {
+			result.current.setExpanded({ 'row-a': true });
+		});
+		expect(result.current.expanded).toStrictEqual({ 'row-a': true });
+
+		// Use updater function
+		act(() => {
+			result.current.setExpanded((prev) => ({
+				...(typeof prev === 'boolean' ? {} : prev),
+				'row-b': true,
+			}));
+		});
+		expect(result.current.expanded).toStrictEqual({
+			'row-a': true,
+			'row-b': true,
+		});
 	});
 });

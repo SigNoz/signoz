@@ -96,6 +96,122 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesPostableChannel:
+      oneOf:
+      - required:
+        - discord_configs
+      - required:
+        - email_configs
+      - required:
+        - incidentio_configs
+      - required:
+        - pagerduty_configs
+      - required:
+        - slack_configs
+      - required:
+        - webhook_configs
+      - required:
+        - opsgenie_configs
+      - required:
+        - wechat_configs
+      - required:
+        - pushover_configs
+      - required:
+        - victorops_configs
+      - required:
+        - sns_configs
+      - required:
+        - telegram_configs
+      - required:
+        - webex_configs
+      - required:
+        - msteams_configs
+      - required:
+        - msteamsv2_configs
+      - required:
+        - jira_configs
+      - required:
+        - rocketchat_configs
+      - required:
+        - mattermost_configs
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
+      required:
+      - name
+      type: object
     AlertmanagertypesPostableRoutePolicy:
       properties:
         channels:
@@ -133,6 +249,10 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      oneOf:
+      - $ref: '#/components/schemas/AuthtypesSamlConfig'
+      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
       properties:
         googleAuthConfig:
           $ref: '#/components/schemas/AuthtypesGoogleConfig'
@@ -145,8 +265,15 @@ components:
         ssoEnabled:
           type: boolean
         ssoType:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
+    AuthtypesAuthNProvider:
+      enum:
+      - google_auth
+      - saml
+      - email_password
+      - oidc
+      type: string
     AuthtypesAuthNProviderInfo:
       properties:
         relayStatePath:
@@ -169,7 +296,7 @@ components:
     AuthtypesCallbackAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         url:
           type: string
       type: object
@@ -177,61 +304,22 @@ components:
       properties:
         authNProviderInfo:
           $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
         createdAt:
           format: date-time
           type: string
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
         id:
           type: string
         name:
           type: string
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
         orgId:
-          type: string
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
           type: string
         updatedAt:
           format: date-time
           type: string
       required:
       - id
-      type: object
-    AuthtypesGettableObjects:
-      properties:
-        resource:
-          $ref: '#/components/schemas/AuthtypesResource'
-        selectors:
-          items:
-            type: string
-          type: array
-      required:
-      - resource
-      - selectors
-      type: object
-    AuthtypesGettableResources:
-      properties:
-        relations:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          nullable: true
-          type: object
-        resources:
-          items:
-            $ref: '#/components/schemas/AuthtypesResource'
-          type: array
-      required:
-      - resources
-      - relations
       type: object
     AuthtypesGettableToken:
       properties:
@@ -249,9 +337,9 @@ components:
         authorized:
           type: boolean
         object:
-          $ref: '#/components/schemas/AuthtypesObject'
+          $ref: '#/components/schemas/CoretypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
@@ -299,16 +387,6 @@ components:
         issuerAlias:
           type: string
       type: object
-    AuthtypesObject:
-      properties:
-        resource:
-          $ref: '#/components/schemas/AuthtypesResource'
-        selector:
-          type: string
-      required:
-      - resource
-      - selector
-      type: object
     AuthtypesOrgSessionContext:
       properties:
         authNSupport:
@@ -323,23 +401,7 @@ components:
     AuthtypesPasswordAuthNSupport:
       properties:
         provider:
-          type: string
-      type: object
-    AuthtypesPatchableObjects:
-      properties:
-        additions:
-          items:
-            $ref: '#/components/schemas/AuthtypesGettableObjects'
-          nullable: true
-          type: array
-        deletions:
-          items:
-            $ref: '#/components/schemas/AuthtypesGettableObjects'
-          nullable: true
-          type: array
-      required:
-      - additions
-      - deletions
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
     AuthtypesPatchableRole:
       properties:
@@ -378,16 +440,17 @@ components:
         refreshToken:
           type: string
       type: object
-    AuthtypesResource:
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-      required:
-      - name
-      - type
-      type: object
+    AuthtypesRelation:
+      enum:
+      - create
+      - read
+      - update
+      - delete
+      - list
+      - assignee
+      - attach
+      - detach
+      type: string
     AuthtypesRole:
       properties:
         createdAt:
@@ -451,14 +514,14 @@ components:
     AuthtypesTransaction:
       properties:
         object:
-          $ref: '#/components/schemas/AuthtypesObject'
+          $ref: '#/components/schemas/CoretypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
       type: object
-    AuthtypesUpdateableAuthDomain:
+    AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
@@ -2088,6 +2151,64 @@ components:
         to_user:
           type: string
       type: object
+    CoretypesObject:
+      properties:
+        resource:
+          $ref: '#/components/schemas/CoretypesResourceRef'
+        selector:
+          type: string
+      required:
+      - resource
+      - selector
+      type: object
+    CoretypesObjectGroup:
+      properties:
+        resource:
+          $ref: '#/components/schemas/CoretypesResourceRef'
+        selectors:
+          items:
+            type: string
+          type: array
+      required:
+      - resource
+      - selectors
+      type: object
+    CoretypesPatchableObjects:
+      properties:
+        additions:
+          items:
+            $ref: '#/components/schemas/CoretypesObjectGroup'
+          nullable: true
+          type: array
+        deletions:
+          items:
+            $ref: '#/components/schemas/CoretypesObjectGroup'
+          nullable: true
+          type: array
+      required:
+      - additions
+      - deletions
+      type: object
+    CoretypesResourceRef:
+      properties:
+        kind:
+          type: string
+        type:
+          $ref: '#/components/schemas/CoretypesType'
+      required:
+      - type
+      - kind
+      type: object
+    CoretypesType:
+      enum:
+      - user
+      - serviceaccount
+      - anonymous
+      - role
+      - organization
+      - metaresource
+      - telemetryresource
+      type: string
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -2363,6 +2484,9 @@ components:
       type: object
     GlobaltypesConfig:
       properties:
+        ai_assistant_url:
+          nullable: true
+          type: string
         external_url:
           type: string
         identN:
@@ -2376,6 +2500,7 @@ components:
       - external_url
       - ingestion_url
       - mcp_url
+      - ai_assistant_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
@@ -2395,6 +2520,205 @@ components:
       properties:
         enabled:
           type: boolean
+      type: object
+    InframonitoringtypesClusterRecord:
+      properties:
+        clusterCPU:
+          format: double
+          type: number
+        clusterCPUAllocatable:
+          format: double
+          type: number
+        clusterMemory:
+          format: double
+          type: number
+        clusterMemoryAllocatable:
+          format: double
+          type: number
+        clusterName:
+          type: string
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        nodeCountsByReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - clusterName
+      - clusterCPU
+      - clusterCPUAllocatable
+      - clusterMemory
+      - clusterMemoryAllocatable
+      - nodeCountsByReadiness
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesClusters:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesDaemonSetRecord:
+      properties:
+        currentNodes:
+          type: integer
+        daemonSetCPU:
+          format: double
+          type: number
+        daemonSetCPULimit:
+          format: double
+          type: number
+        daemonSetCPURequest:
+          format: double
+          type: number
+        daemonSetMemory:
+          format: double
+          type: number
+        daemonSetMemoryLimit:
+          format: double
+          type: number
+        daemonSetMemoryRequest:
+          format: double
+          type: number
+        daemonSetName:
+          type: string
+        desiredNodes:
+          type: integer
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - daemonSetName
+      - daemonSetCPU
+      - daemonSetCPURequest
+      - daemonSetCPULimit
+      - daemonSetMemory
+      - daemonSetMemoryRequest
+      - daemonSetMemoryLimit
+      - desiredNodes
+      - currentNodes
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesDaemonSets:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesDeploymentRecord:
+      properties:
+        availablePods:
+          type: integer
+        deploymentCPU:
+          format: double
+          type: number
+        deploymentCPULimit:
+          format: double
+          type: number
+        deploymentCPURequest:
+          format: double
+          type: number
+        deploymentMemory:
+          format: double
+          type: number
+        deploymentMemoryLimit:
+          format: double
+          type: number
+        deploymentMemoryRequest:
+          format: double
+          type: number
+        deploymentName:
+          type: string
+        desiredPods:
+          type: integer
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - deploymentName
+      - deploymentCPU
+      - deploymentCPURequest
+      - deploymentCPULimit
+      - deploymentMemory
+      - deploymentMemoryRequest
+      - deploymentMemoryLimit
+      - desiredPods
+      - availablePods
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesDeployments:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesDeploymentRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
       type: object
     InframonitoringtypesHostFilter:
       properties:
@@ -2424,7 +2748,8 @@ components:
           format: double
           type: number
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
         status:
@@ -2474,6 +2799,227 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesJobRecord:
+      properties:
+        activePods:
+          type: integer
+        desiredSuccessfulPods:
+          type: integer
+        failedPods:
+          type: integer
+        jobCPU:
+          format: double
+          type: number
+        jobCPULimit:
+          format: double
+          type: number
+        jobCPURequest:
+          format: double
+          type: number
+        jobMemory:
+          format: double
+          type: number
+        jobMemoryLimit:
+          format: double
+          type: number
+        jobMemoryRequest:
+          format: double
+          type: number
+        jobName:
+          type: string
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        successfulPods:
+          type: integer
+      required:
+      - jobName
+      - jobCPU
+      - jobCPURequest
+      - jobCPULimit
+      - jobMemory
+      - jobMemoryRequest
+      - jobMemoryLimit
+      - desiredSuccessfulPods
+      - activePods
+      - failedPods
+      - successfulPods
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesJobs:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesJobRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesNamespaceRecord:
+      properties:
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        namespaceCPU:
+          format: double
+          type: number
+        namespaceMemory:
+          format: double
+          type: number
+        namespaceName:
+          type: string
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - namespaceName
+      - namespaceCPU
+      - namespaceMemory
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesNamespaces:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNamespaceRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesNodeCondition:
+      enum:
+      - ready
+      - not_ready
+      - no_data
+      type: string
+    InframonitoringtypesNodeCountsByReadiness:
+      properties:
+        notReady:
+          type: integer
+        ready:
+          type: integer
+      required:
+      - ready
+      - notReady
+      type: object
+    InframonitoringtypesNodeRecord:
+      properties:
+        condition:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        nodeCPU:
+          format: double
+          type: number
+        nodeCPUAllocatable:
+          format: double
+          type: number
+        nodeCountsByReadiness:
+          $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
+        nodeMemory:
+          format: double
+          type: number
+        nodeMemoryAllocatable:
+          format: double
+          type: number
+        nodeName:
+          type: string
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+      required:
+      - nodeName
+      - condition
+      - nodeCountsByReadiness
+      - podCountsByPhase
+      - nodeCPU
+      - nodeCPUAllocatable
+      - nodeMemory
+      - nodeMemoryAllocatable
+      - meta
+      type: object
+    InframonitoringtypesNodes:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesPodCountsByPhase:
+      properties:
+        failed:
+          type: integer
+        pending:
+          type: integer
+        running:
+          type: integer
+        succeeded:
+          type: integer
+        unknown:
+          type: integer
+      required:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      type: object
     InframonitoringtypesPodPhase:
       enum:
       - pending
@@ -2481,18 +3027,15 @@ components:
       - succeeded
       - failed
       - unknown
-      - ""
+      - no_data
       type: string
     InframonitoringtypesPodRecord:
       properties:
-        failedPodCount:
-          type: integer
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
-        pendingPodCount:
-          type: integer
         podAge:
           format: int64
           type: integer
@@ -2505,6 +3048,8 @@ components:
         podCPURequest:
           format: double
           type: number
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
         podMemory:
           format: double
           type: number
@@ -2518,12 +3063,6 @@ components:
           $ref: '#/components/schemas/InframonitoringtypesPodPhase'
         podUID:
           type: string
-        runningPodCount:
-          type: integer
-        succeededPodCount:
-          type: integer
-        unknownPodCount:
-          type: integer
       required:
       - podUID
       - podCPU
@@ -2533,11 +3072,7 @@ components:
       - podMemoryRequest
       - podMemoryLimit
       - podPhase
-      - pendingPodCount
-      - runningPodCount
-      - succeededPodCount
-      - failedPodCount
-      - unknownPodCount
+      - podCountsByPhase
       - podAge
       - meta
       type: object
@@ -2565,6 +3100,84 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesPostableClusters:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableDaemonSets:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableDeployments:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
     InframonitoringtypesPostableHosts:
       properties:
         end:
@@ -2572,6 +3185,84 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableJobs:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableNamespaces:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableNodes:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -2617,6 +3308,58 @@ components:
       - end
       - limit
       type: object
+    InframonitoringtypesPostableStatefulSets:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostableVolumes:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
     InframonitoringtypesRequiredMetricsCheck:
       properties:
         missingMetrics:
@@ -2632,6 +3375,137 @@ components:
       - list
       - grouped_list
       type: string
+    InframonitoringtypesStatefulSetRecord:
+      properties:
+        currentPods:
+          type: integer
+        desiredPods:
+          type: integer
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        podCountsByPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodCountsByPhase'
+        statefulSetCPU:
+          format: double
+          type: number
+        statefulSetCPULimit:
+          format: double
+          type: number
+        statefulSetCPURequest:
+          format: double
+          type: number
+        statefulSetMemory:
+          format: double
+          type: number
+        statefulSetMemoryLimit:
+          format: double
+          type: number
+        statefulSetMemoryRequest:
+          format: double
+          type: number
+        statefulSetName:
+          type: string
+      required:
+      - statefulSetName
+      - statefulSetCPU
+      - statefulSetCPURequest
+      - statefulSetCPULimit
+      - statefulSetMemory
+      - statefulSetMemoryRequest
+      - statefulSetMemoryLimit
+      - desiredPods
+      - currentPods
+      - podCountsByPhase
+      - meta
+      type: object
+    InframonitoringtypesStatefulSets:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesStatefulSetRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesVolumeRecord:
+      properties:
+        meta:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        persistentVolumeClaimName:
+          type: string
+        volumeAvailable:
+          format: double
+          type: number
+        volumeCapacity:
+          format: double
+          type: number
+        volumeInodes:
+          format: double
+          type: number
+        volumeInodesFree:
+          format: double
+          type: number
+        volumeInodesUsed:
+          format: double
+          type: number
+        volumeUsage:
+          format: double
+          type: number
+      required:
+      - persistentVolumeClaimName
+      - volumeAvailable
+      - volumeCapacity
+      - volumeUsage
+      - volumeInodes
+      - volumeInodesFree
+      - volumeInodesUsed
+      - meta
+      type: object
+    InframonitoringtypesVolumes:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesVolumeRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
     LlmpricingruletypesGettablePricingRules:
       properties:
         items:
@@ -4227,18 +5101,19 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
-      type: object
-    RuletypesEvaluationEnvelope:
-      oneOf:
-      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
-      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
       required:
       - kind
       - spec
+      type: object
+    RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -4251,6 +5126,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -4558,15 +5436,12 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -4608,6 +5483,9 @@ components:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesThresholdKind:
       enum:
@@ -4785,19 +5663,17 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         name:
           type: string
       required:
       - name
-      - field_context
+      - fieldContext
       - config
       type: object
     SpantypesPostableSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
@@ -4806,7 +5682,6 @@ components:
           type: string
       required:
       - name
-      - category
       - condition
       type: object
     SpantypesSpanMapper:
@@ -4820,7 +5695,7 @@ components:
           type: string
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         group_id:
           type: string
@@ -4837,7 +5712,7 @@ components:
       - id
       - group_id
       - name
-      - field_context
+      - fieldContext
       - config
       - enabled
       type: object
@@ -4853,8 +5728,6 @@ components:
       type: object
     SpantypesSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
@@ -4879,13 +5752,11 @@ components:
       - id
       - orgId
       - name
-      - category
       - condition
       - enabled
       type: object
-    SpantypesSpanMapperGroupCategory:
-      type: object
     SpantypesSpanMapperGroupCondition:
+      nullable: true
       properties:
         attributes:
           items:
@@ -4929,7 +5800,7 @@ components:
         enabled:
           nullable: true
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
       type: object
     SpantypesUpdatableSpanMapperGroup:
@@ -5198,6 +6069,9 @@ components:
         status_message:
           type: string
         sub_tree_node_count:
+          minimum: 0
+          type: integer
+        time_unix:
           minimum: 0
           type: integer
         trace_id:
@@ -5580,35 +6454,6 @@ paths:
       summary: Check permissions
       tags:
       - authz
-  /api/v1/authz/resources:
-    get:
-      deprecated: false
-      description: Gets all the available resources
-      operationId: AuthzResources
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableResources'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get resources
-      tags:
-      - authz
   /api/v1/channels:
     get:
       deprecated: false
@@ -5665,7 +6510,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesPostableChannel'
       responses:
         "201":
           content:
@@ -6944,20 +7789,20 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -7042,6 +7887,63 @@ paths:
       summary: Delete auth domain
       tags:
       - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
     put:
       deprecated: false
       description: This endpoint updates an auth domain
@@ -7056,7 +7958,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
       responses:
         "204":
           description: No Content
@@ -8491,9 +9393,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:list
       - tokenizer:
-        - ADMIN
+        - role:list
       summary: List roles
       tags:
       - role
@@ -8565,9 +9467,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:create
       - tokenizer:
-        - ADMIN
+        - role:create
       summary: Create role
       tags:
       - role
@@ -8627,9 +9529,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:delete
       - tokenizer:
-        - ADMIN
+        - role:delete
       summary: Delete role
       tags:
       - role
@@ -8678,9 +9580,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get role
       tags:
       - role
@@ -8744,9 +9646,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch role
       tags:
       - role
@@ -8775,7 +9677,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesGettableObjects'
+                      $ref: '#/components/schemas/CoretypesObjectGroup'
                     type: array
                   status:
                     type: string
@@ -8822,9 +9724,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:read
       - tokenizer:
-        - ADMIN
+        - role:read
       summary: Get objects for a role by relation
       tags:
       - role
@@ -8848,7 +9750,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesPatchableObjects'
+              $ref: '#/components/schemas/CoretypesPatchableObjects'
       responses:
         "204":
           content:
@@ -8900,9 +9802,9 @@ paths:
           description: Not Implemented
       security:
       - api_key:
-        - ADMIN
+        - role:update
       - tokenizer:
-        - ADMIN
+        - role:update
       summary: Patch objects for a role by relation
       tags:
       - role
@@ -9223,9 +10125,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:list
       - tokenizer:
-        - ADMIN
+        - serviceaccount:list
       summary: List service accounts
       tags:
       - serviceaccount
@@ -9285,9 +10187,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:create
       - tokenizer:
-        - ADMIN
+        - serviceaccount:create
       summary: Create service account
       tags:
       - serviceaccount
@@ -9335,9 +10237,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:delete
       - tokenizer:
-        - ADMIN
+        - serviceaccount:delete
       summary: Deletes a service account
       tags:
       - serviceaccount
@@ -9392,9 +10294,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets a service account
       tags:
       - serviceaccount
@@ -9452,9 +10354,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account
       tags:
       - serviceaccount
@@ -9506,9 +10408,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:list
       - tokenizer:
-        - ADMIN
+        - factor-api-key:list
       summary: List service account keys
       tags:
       - serviceaccount
@@ -9574,9 +10476,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:create
+        - serviceaccount:attach
       - tokenizer:
-        - ADMIN
+        - factor-api-key:create
+        - serviceaccount:attach
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -9629,9 +10533,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:delete
+        - serviceaccount:detach
       - tokenizer:
-        - ADMIN
+        - factor-api-key:delete
+        - serviceaccount:detach
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -9694,9 +10600,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - factor-api-key:update
       - tokenizer:
-        - ADMIN
+        - factor-api-key:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -9755,9 +10661,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets service account roles
       tags:
       - serviceaccount
@@ -9817,9 +10723,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Create service account role
       tags:
       - serviceaccount
@@ -9866,9 +10774,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:detach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:detach
+        - role:detach
       summary: Delete service account role
       tags:
       - serviceaccount
@@ -9945,12 +10855,6 @@ paths:
         org.
       operationId: ListSpanMapperGroups
       parameters:
-      - explode: true
-        in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
-        style: deepObject
       - in: query
         name: enabled
         schema:
@@ -11396,6 +12300,229 @@ paths:
       summary: Health check
       tags:
       - health
+  /api/v2/infra_monitoring/clusters:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes clusters with key aggregated
+        metrics derived by summing per-node values within the group: CPU usage, CPU
+        allocatable, memory working set, memory allocatable. Each row also reports
+        per-group nodeCountsByReadiness ({ ready, notReady } from each node''s latest
+        k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending,
+        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
+        value). Each cluster includes metadata attributes (k8s.cluster.name). The
+        response type is ''list'' for the default k8s.cluster.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates nodes and pods
+        in the group. Supports filtering via a filter expression, custom groupBy,
+        ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
+        via offset/limit. Also reports missing required metrics and whether the requested
+        time range falls before the data retention boundary. Numeric metric fields
+        (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable)
+        return -1 as a sentinel when no data is available for that field.'
+      operationId: ListClusters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableClusters'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesClusters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Clusters for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/daemonsets:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes DaemonSets with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the daemonset, plus average CPU/memory request and limit utilization (daemonSetCPURequest,
+        daemonSetCPULimit, daemonSetMemoryRequest, daemonSetMemoryLimit). Each row
+        also reports the latest known node-level counters from kube-state-metrics:
+        desiredNodes (k8s.daemonset.desired_scheduled_nodes, the number of nodes the
+        daemonset wants to run on) and currentNodes (k8s.daemonset.current_scheduled_nodes,
+        the number of nodes the daemonset currently runs on) — note these are node
+        counts, not pod counts. It also reports per-group podCountsByPhase ({ pending,
+        running, succeeded, failed, unknown } from each pod''s latest k8s.pod.phase
+        value). Each daemonset includes metadata attributes (k8s.daemonset.name, k8s.namespace.name,
+        k8s.cluster.name). The response type is ''list'' for the default k8s.daemonset.name
+        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
+        row aggregates pods owned by daemonsets in the group. Supports filtering via
+        a filter expression, custom groupBy, ordering by cpu / cpu_request / cpu_limit
+        / memory / memory_request / memory_limit / desired_nodes / current_nodes,
+        and pagination via offset/limit. Also reports missing required metrics and
+        whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (daemonSetCPU, daemonSetCPURequest, daemonSetCPULimit,
+        daemonSetMemory, daemonSetMemoryRequest, daemonSetMemoryLimit, desiredNodes,
+        currentNodes) return -1 as a sentinel when no data is available for that field.'
+      operationId: ListDaemonSets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableDaemonSets'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesDaemonSets'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List DaemonSets for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/deployments:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes Deployments with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the deployment, plus average CPU/memory request and limit utilization (deploymentCPURequest,
+        deploymentCPULimit, deploymentMemoryRequest, deploymentMemoryLimit). Each
+        row also reports the latest known desiredPods (k8s.deployment.desired) and
+        availablePods (k8s.deployment.available) replica counts and per-group podCountsByPhase
+        ({ pending, running, succeeded, failed, unknown } from each pod''s latest
+        k8s.pod.phase value). Each deployment includes metadata attributes (k8s.deployment.name,
+        k8s.namespace.name, k8s.cluster.name). The response type is ''list'' for the
+        default k8s.deployment.name grouping or ''grouped_list'' for custom groupBy
+        keys; in both modes every row aggregates pods owned by deployments in the
+        group. Supports filtering via a filter expression, custom groupBy, ordering
+        by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
+        / desired_pods / available_pods, and pagination via offset/limit. Also reports
+        missing required metrics and whether the requested time range falls before
+        the data retention boundary. Numeric metric fields (deploymentCPU, deploymentCPURequest,
+        deploymentCPULimit, deploymentMemory, deploymentMemoryRequest, deploymentMemoryLimit,
+        desiredPods, availablePods) return -1 as a sentinel when no data is available
+        for that field.'
+      operationId: ListDeployments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableDeployments'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesDeployments'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Deployments for Infra Monitoring
+      tags:
+      - inframonitoring
   /api/v2/infra_monitoring/hosts:
     post:
       deprecated: false
@@ -11464,12 +12591,229 @@ paths:
       summary: List Hosts for Infra Monitoring
       tags:
       - inframonitoring
+  /api/v2/infra_monitoring/jobs:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes Jobs with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the job, plus average CPU/memory request and limit utilization (jobCPURequest,
+        jobCPULimit, jobMemoryRequest, jobMemoryLimit). Each row also reports the
+        latest known job-level counters from kube-state-metrics: desiredSuccessfulPods
+        (k8s.job.desired_successful_pods, the target completion count), activePods
+        (k8s.job.active_pods), failedPods (k8s.job.failed_pods, cumulative across
+        the lifetime of the job), and successfulPods (k8s.job.successful_pods, cumulative).
+        It also reports per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } from each pod''s latest k8s.pod.phase value); note podCountsByPhase.failed
+        (current pod-phase) is distinct from failedPods (cumulative job kube-state-metric).
+        Each job includes metadata attributes (k8s.job.name, k8s.namespace.name, k8s.cluster.name).
+        The response type is ''list'' for the default k8s.job.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods owned by
+        jobs in the group. Supports filtering via a filter expression, custom groupBy,
+        ordering by cpu / cpu_request / cpu_limit / memory / memory_request / memory_limit
+        / desired_successful_pods / active_pods / failed_pods / successful_pods, and
+        pagination via offset/limit. Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (jobCPU, jobCPURequest, jobCPULimit, jobMemory, jobMemoryRequest,
+        jobMemoryLimit, desiredSuccessfulPods, activePods, failedPods, successfulPods)
+        return -1 as a sentinel when no data is available for that field.'
+      operationId: ListJobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableJobs'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesJobs'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Jobs for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/namespaces:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes namespaces with key aggregated
+        pod metrics: CPU usage and memory working set (summed across pods in the group),
+        plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown
+        } from each pod''s latest k8s.pod.phase value in the window). Each namespace
+        includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response
+        type is ''list'' for the default k8s.namespace.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods in the group.
+        Supports filtering via a filter expression, custom groupBy, ordering by cpu
+        / memory, and pagination via offset/limit. Also reports missing required metrics
+        and whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel
+        when no data is available for that field.'
+      operationId: ListNamespaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableNamespaces'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesNamespaces'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Namespaces for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/nodes:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes nodes with key metrics:
+        CPU usage, CPU allocatable, memory working set, memory allocatable, per-group
+        nodeCountsByReadiness ({ ready, notReady } from each node''s latest k8s.node.condition_ready
+        in the window) and per-group podCountsByPhase ({ pending, running, succeeded,
+        failed, unknown } for pods scheduled on the listed nodes). Each node includes
+        metadata attributes (k8s.node.uid, k8s.cluster.name). The response type is
+        ''list'' for the default k8s.node.name grouping (each row is one node with
+        its current condition string: ready / not_ready / no_data) or ''grouped_list''
+        for custom groupBy keys (each row aggregates nodes in the group; condition
+        stays no_data). Supports filtering via a filter expression, custom groupBy,
+        ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination
+        via offset/limit. Also reports missing required metrics and whether the requested
+        time range falls before the data retention boundary. Numeric metric fields
+        (nodeCPU, nodeCPUAllocatable, nodeMemory, nodeMemoryAllocatable) return -1
+        as a sentinel when no data is available for that field.'
+      operationId: ListNodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableNodes'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesNodes'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Nodes for Infra Monitoring
+      tags:
+      - inframonitoring
   /api/v2/infra_monitoring/pods:
     post:
       deprecated: false
       description: 'Returns a paginated list of Kubernetes pods with key metrics:
         CPU usage, CPU request/limit utilization, memory working set, memory request/limit
-        utilization, current pod phase (pending/running/succeeded/failed/unknown),
+        utilization, current pod phase (pending/running/succeeded/failed/unknown/no_data),
         and pod age (ms since start time). Each pod includes metadata attributes (namespace,
         node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
         cluster). Supports filtering via a filter expression, custom groupBy to aggregate
@@ -11477,13 +12821,13 @@ paths:
         cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
         The response type is ''list'' for the default k8s.pod.uid grouping (each row
         is one pod with its current phase) or ''grouped_list'' for custom groupBy
-        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
-        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
-        from each pod''s latest phase in the window). Also reports missing required
-        metrics and whether the requested time range falls before the data retention
-        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
-        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
-        data is available for that field.'
+        keys (each row aggregates pods in the group with per-phase counts under podCountsByPhase:
+        { pending, running, succeeded, failed, unknown } derived from each pod''s
+        latest phase in the window). Also reports missing required metrics and whether
+        the requested time range falls before the data retention boundary. Numeric
+        metric fields (podCPU, podCPURequest, podCPULimit, podMemory, podMemoryRequest,
+        podMemoryLimit, podAge) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListPods
       requestBody:
         content:
@@ -11535,6 +12879,152 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Pods for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/pvcs:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes persistent volume claims
+        (PVCs) with key volume metrics: available bytes, capacity bytes, usage (capacity
+        - available), inodes, free inodes, and used inodes. Each row also includes
+        metadata attributes (k8s.persistentvolumeclaim.name, k8s.pod.uid, k8s.pod.name,
+        k8s.namespace.name, k8s.node.name, k8s.statefulset.name, k8s.cluster.name).
+        Supports filtering via a filter expression, custom groupBy to aggregate volumes
+        by any attribute, ordering by any of the six metrics (available, capacity,
+        usage, inodes, inodes_free, inodes_used), and pagination via offset/limit.
+        The response type is ''list'' for the default k8s.persistentvolumeclaim.name
+        grouping or ''grouped_list'' for custom groupBy keys; in both modes every
+        row aggregates volumes in the group. Also reports missing required metrics
+        and whether the requested time range falls before the data retention boundary.
+        Numeric metric fields (volumeAvailable, volumeCapacity, volumeUsage, volumeInodes,
+        volumeInodesFree, volumeInodesUsed) return -1 as a sentinel when no data is
+        available for that field.'
+      operationId: ListVolumes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableVolumes'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesVolumes'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Volumes for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/statefulsets:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes StatefulSets with key aggregated
+        pod metrics: CPU usage and memory working set summed across pods owned by
+        the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest,
+        statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
+        row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
+        and currentPods (k8s.statefulset.current_pods) replica counts and per-group
+        podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
+        pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
+        (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
+        type is ''list'' for the default k8s.statefulset.name grouping or ''grouped_list''
+        for custom groupBy keys; in both modes every row aggregates pods owned by
+        statefulsets in the group. Supports filtering via a filter expression, custom
+        groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
+        / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
+        Also reports missing required metrics and whether the requested time range
+        falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
+        statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
+        statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel
+        when no data is available for that field.'
+      operationId: ListStatefulSets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostableStatefulSets'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesStatefulSets'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List StatefulSets for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/livez:

@@ -19,9 +19,9 @@ import {
 	k8sDeploymentInitialLogTracesFilter,
 } from './constants';
 import {
-	k8sDeploymentsColumns,
+	getK8sDeploymentItemKey,
+	getK8sDeploymentRowKey,
 	k8sDeploymentsColumnsConfig,
-	k8sDeploymentsRenderRowData,
 } from './table.config';
 
 function K8sDeploymentsList({
@@ -91,10 +91,10 @@ function K8sDeploymentsList({
 			<K8sBaseList<K8sDeploymentsData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.DEPLOYMENTS}
-				tableColumnsDefinitions={k8sDeploymentsColumns}
 				tableColumns={k8sDeploymentsColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sDeploymentsRenderRowData}
+				getRowKey={getK8sDeploymentRowKey}
+				getItemKey={getK8sDeploymentItemKey}
 				eventCategory={InfraMonitoringEvents.Deployment}
 			/>
 

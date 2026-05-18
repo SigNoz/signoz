@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveAllVarMatchers(t *testing.T) {
 	logger := slog.Default()
-	q := &promqlQuery{logger: logger}
+	q := &promqlQuery{logger: logger, parser: prometheus.NewParser()}
 
 	tests := []struct {
 		name      string
@@ -251,10 +252,10 @@ func TestEnhancePromQLError(t *testing.T) {
 
 	t.Run("quoted metric outside braces patterns", func(t *testing.T) {
 		tests := []struct {
-			name               string
-			query              string
-			wantHint           bool
-			wantMetricInHint   string
+			name             string
+			query            string
+			wantHint         bool
+			wantMetricInHint string
 		}{
 			{
 				name:             "quoted metric name followed by selector",

@@ -18,6 +18,7 @@ export default function HistogramTooltip(
 				yAxisUnit: props.yAxisUnit ?? '',
 				decimalPrecision: props.decimalPrecision,
 				syncedSeriesIndexes: props.syncedSeriesIndexes,
+				syncFilterMode: props.syncFilterMode,
 			}),
 		[
 			props.uPlotInstance,
@@ -26,6 +27,7 @@ export default function HistogramTooltip(
 			props.yAxisUnit,
 			props.decimalPrecision,
 			props.syncedSeriesIndexes,
+			props.syncFilterMode,
 		],
 	);
 

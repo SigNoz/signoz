@@ -2,17 +2,19 @@ import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'tests/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -28,6 +30,10 @@ jest.mock('@signozhq/ui', () => ({
 				{footer}
 			</div>
 		) : null,
+}));
+
+jest.mock('@signozhq/ui/dialog', () => ({
+	...jest.requireActual('@signozhq/ui/dialog'),
 	DialogWrapper: ({
 		children,
 		open,
@@ -81,6 +87,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		server.use(
+			setupAuthzAdmin(),
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI })),
 			),
@@ -92,6 +99,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
 			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -119,8 +129,6 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('filter dropdown to "Active" hides DISABLED accounts', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<NuqsTestingAdapter>
 				<ServiceAccountsSettings />
@@ -129,18 +137,16 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await screen.findByText('CI Bot');
 
-		await user.click(screen.getByRole('button', { name: /All accounts/i }));
+		fireEvent.click(screen.getByRole('button', { name: /All accounts/i }));
 
 		const activeOption = await screen.findByText(/Active ⎯/i);
-		await user.click(activeOption);
+		fireEvent.click(activeOption);
 
 		await screen.findByText('CI Bot');
 		expect(screen.queryByText('Legacy Bot')).not.toBeInTheDocument();
 	});
 
 	it('search by name filters accounts in real-time', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<NuqsTestingAdapter>
 				<ServiceAccountsSettings />
@@ -149,10 +155,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await screen.findByText('CI Bot');
 
-		await user.type(
-			screen.getByPlaceholderText(/Search by name or email/i),
-			'legacy',
-		);
+		fireEvent.change(screen.getByPlaceholderText(/Search by name or email/i), {
+			target: { value: 'legacy' },
+		});
 
 		await screen.findByText('Legacy Bot');
 		expect(screen.queryByText('CI Bot')).not.toBeInTheDocument();
@@ -160,15 +165,13 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('clicking a row opens the drawer with account details visible', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<NuqsTestingAdapter hasMemory>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
 
-		await user.click(
+		fireEvent.click(
 			await screen.findByRole('button', {
 				name: /View service account CI Bot/i,
 			}),
@@ -180,17 +183,18 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('saving changes in the drawer refetches the list', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const listRefetchSpy = jest.fn();
+		const putSpy = jest.fn();
 
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {
 				listRefetchSpy();
 				return res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI }));
 			}),
-			rest.put(SA_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
+			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
+				putSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
 		);
 
 		render(
@@ -202,25 +206,30 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await screen.findByText('CI Bot');
 		listRefetchSpy.mockClear();
 
-		await user.click(
+		fireEvent.click(
 			await screen.findByRole('button', { name: /View service account CI Bot/i }),
 		);
 
 		const nameInput = await screen.findByDisplayValue('CI Bot');
-		await user.clear(nameInput);
-		await user.type(nameInput, 'CI Bot Updated');
-
-		await user.click(screen.getByRole('button', { name: /Save Changes/i }));
+		fireEvent.change(nameInput, { target: { value: 'CI Bot Updated' } });
 
 		await screen.findByDisplayValue('CI Bot Updated');
+
+		fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+		// Wait for the PUT to complete with the right payload — confirms save fired
+		await waitFor(() =>
+			expect(putSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ name: 'CI Bot Updated' }),
+			),
+		);
+
 		await waitFor(() => {
 			expect(listRefetchSpy).toHaveBeenCalled();
 		});
 	});
 
 	it('"New Service Account" button opens the Create Service Account modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(
 			<NuqsTestingAdapter hasMemory>
 				<ServiceAccountsSettings />
@@ -229,9 +238,14 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await screen.findByText('CI Bot');
 
-		await user.click(
-			screen.getByRole('button', { name: /New Service Account/i }),
+		// Wait for authz check to resolve before clicking
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', { name: /New Service Account/i }),
+			).not.toBeDisabled(),
 		);
+
+		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));
 
 		await screen.findByRole('dialog', { name: /New Service Account/i });
 		expect(screen.getByPlaceholderText('Enter a name')).toBeInTheDocument();

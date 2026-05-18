@@ -63,15 +63,15 @@ type StorablePlannedMaintenance struct {
 }
 
 type PlannedMaintenance struct {
-	ID          valuer.UUID `json:"id" required:"true"`
-	Name        string      `json:"name" required:"true"`
-	Description string      `json:"description"`
-	Schedule    *Schedule   `json:"schedule" required:"true"`
-	RuleIDs     []string    `json:"alertIds"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	CreatedBy   string      `json:"createdBy"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	UpdatedBy   string      `json:"updatedBy"`
+	ID          valuer.UUID       `json:"id" required:"true"`
+	Name        string            `json:"name" required:"true"`
+	Description string            `json:"description"`
+	Schedule    *Schedule         `json:"schedule" required:"true"`
+	RuleIDs     []string          `json:"alertIds"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	CreatedBy   string            `json:"createdBy"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+	UpdatedBy   string            `json:"updatedBy"`
 	Status      MaintenanceStatus `json:"status" required:"true"`
 	Kind        MaintenanceKind   `json:"kind" required:"true"`
 }

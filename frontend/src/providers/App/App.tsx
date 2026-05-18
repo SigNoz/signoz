@@ -12,6 +12,7 @@ import {
 import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { useGetHosts } from 'api/generated/services/zeus';
 import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -43,6 +44,7 @@ import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse } from 'types/api/user/getUser';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { toISOString } from 'utils/app';
+import { setSigNozInstanceUrl } from 'utils/signozInstanceUrl';
 
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
@@ -204,6 +206,28 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [activeLicenseData, isFetchingActiveLicense]);
 
+	const isCloudUser = activeLicense?.platform === LicensePlatform.CLOUD;
+
+	const {
+		data: hostsResponse,
+		isFetching: isFetchingHosts,
+		error: hostsFetchError,
+	} = useGetHosts({
+		query: { enabled: isLoggedIn && isCloudUser },
+	});
+
+	const hostsData = useMemo(() => hostsResponse ?? null, [hostsResponse]);
+
+	useEffect(() => {
+		const hosts = hostsData?.data?.hosts ?? [];
+		if (hosts.length === 0) {
+			return;
+		}
+		const activeHost =
+			hosts.find((h) => !h.is_default) ?? hosts.find((h) => h.is_default);
+		setSigNozInstanceUrl(activeHost?.url);
+	}, [hostsData]);
+
 	// fetcher for feature flags
 	const { isFetching: isFetchingFeatureFlags, error: featureFlagsFetchError } =
 		useGetFeatureFlag((allFlags: FeatureFlags[]) => {
@@ -359,14 +383,17 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlags,
 			trialInfo,
 			orgPreferences,
+			hostsData,
 			isLoggedIn,
 			org,
 			isFetchingUser,
 			isFetchingActiveLicense,
+			isFetchingHosts,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
 			userFetchError,
 			activeLicenseFetchError,
+			hostsFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
 			activeLicense,
@@ -391,10 +418,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlags,
 			featureFlagsFetchError,
 			isFetchingActiveLicense,
+			isFetchingHosts,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
 			isFetchingUser,
 			isLoggedIn,
+			hostsData,
+			hostsFetchError,
 			org,
 			orgPreferences,
 			activeLicenseRefetch,

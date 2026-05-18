@@ -107,7 +107,7 @@ describe('BillingContainer', () => {
 			).resolves.toBeInTheDocument();
 
 			await expect(
-				screen.findByText('Cancel Subscription', { selector: 'span' }),
+				screen.findByText('Cancel your subscription', { selector: 'span' }),
 			).resolves.toBeInTheDocument();
 		});
 
@@ -150,7 +150,7 @@ describe('BillingContainer', () => {
 			expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 
 			await expect(
-				screen.findByText('Cancel Subscription', { selector: 'span' }),
+				screen.findByText('Cancel your subscription', { selector: 'span' }),
 			).resolves.toBeInTheDocument();
 		});
 	});
@@ -162,7 +162,7 @@ describe('BillingContainer', () => {
 		it('should render when license is ACTIVATED and platform is CLOUD', async () => {
 			render(<BillingContainer />);
 			await expect(
-				screen.findByText('Cancel Subscription', { selector: 'span' }),
+				screen.findByText('Cancel your subscription', { selector: 'span' }),
 			).resolves.toBeInTheDocument();
 		});
 
@@ -186,7 +186,7 @@ describe('BillingContainer', () => {
 			);
 			await screen.findByText('billing');
 			expect(
-				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+				screen.queryByText('Cancel your subscription', { selector: 'span' }),
 			).not.toBeInTheDocument();
 		});
 
@@ -225,7 +225,7 @@ describe('BillingContainer', () => {
 			render(<BillingContainer />, {}, { appContextOverrides: overrides });
 			await screen.findByText('billing');
 			expect(
-				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+				screen.queryByText('Cancel your subscription', { selector: 'span' }),
 			).not.toBeInTheDocument();
 		});
 	});

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
@@ -17,12 +16,11 @@ import (
 )
 
 type handler struct {
-	module           spanmapper.Module
-	providerSettings factory.ProviderSettings
+	module spanmapper.Module
 }
 
-func NewHandler(module spanmapper.Module, providerSettings factory.ProviderSettings) spanmapper.Handler {
-	return &handler{module: module, providerSettings: providerSettings}
+func NewHandler(module spanmapper.Module) spanmapper.Handler {
+	return &handler{module: module}
 }
 
 // ListGroups handles GET /api/v1/span_mapper_groups.
@@ -72,10 +70,9 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group := spantypes.NewSpanMapperGroupFromPostable(req)
+	group := spantypes.NewSpanMapperGroup(orgID, claims.Email, req)
 
-	err = h.module.CreateGroup(ctx, orgID, claims.Email, group)
-	if err != nil {
+	if err := h.module.CreateGroup(ctx, orgID, group); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -107,8 +104,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.UpdateGroup(ctx, orgID, id, claims.Email, spantypes.NewSpanMapperGroupFromUpdatable(req))
-	if err != nil {
+	if err := h.module.UpdateGroup(ctx, orgID, id, req.Name, req.Condition, req.Enabled, claims.Email); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -195,10 +191,9 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-	mapper := spantypes.NewSpanMapperFromPostable(req)
+	mapper := spantypes.NewSpanMapper(groupID, claims.Email, req)
 
-	err = h.module.CreateMapper(ctx, orgID, groupID, claims.Email, mapper)
-	if err != nil {
+	if err := h.module.CreateMapper(ctx, orgID, groupID, mapper); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -237,8 +232,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spantypes.NewSpanMapperFromUpdatable(req))
-	if err != nil {
+	if err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, req.FieldContext, req.Config, req.Enabled, claims.Email); err != nil {
 		render.Error(rw, err)
 		return
 	}

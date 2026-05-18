@@ -14,7 +14,7 @@ import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/uti
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
-import { ArrowUpDown, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
