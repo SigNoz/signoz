@@ -11,6 +11,13 @@ import type {
 } from 'hooks/useAuthZ/types';
 import { rest } from 'msw';
 import type { RestHandler } from 'msw';
+import {
+	LicenseEvent,
+	LicensePlatform,
+	type LicenseResModel,
+	LicenseState,
+	LicenseStatus,
+} from 'types/api/licensesV3/getActive';
 
 export const AUTHZ_CHECK_URL = `${ENVIRONMENT.baseURL || ''}/api/v1/authz/check`;
 
@@ -96,6 +103,40 @@ export function setupAuthzAllow(
 		);
 	});
 }
+
+export function buildLicense(
+	overrides?: Partial<LicenseResModel>,
+): LicenseResModel {
+	return {
+		key: 'test-key',
+		status: LicenseStatus.VALID,
+		state: LicenseState.ACTIVATED,
+		platform: LicensePlatform.CLOUD,
+		event_queue: {
+			created_at: '0',
+			event: LicenseEvent.NO_EVENT,
+			scheduled_at: '0',
+			status: '',
+			updated_at: '0',
+		},
+		plan: {
+			created_at: '0',
+			description: '',
+			is_active: true,
+			name: '',
+			updated_at: '0',
+		},
+		plan_id: '0',
+		free_until: '0',
+		updated_at: '0',
+		valid_from: 0,
+		valid_until: 0,
+		created_at: '0',
+		...overrides,
+	};
+}
+
+export const invalidLicense = buildLicense({ status: LicenseStatus.INVALID });
 
 export function mockUseAuthZGrantAll(
 	permissions: BrandedPermission[],

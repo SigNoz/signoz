@@ -11,7 +11,9 @@ import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions'
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
+import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -30,6 +32,9 @@ interface RolesListingTableProps {
 function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
+	const { activeLicense } = useAppContext();
+	const isValidLicense = activeLicense?.status === LicenseStatus.VALID;
+
 	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
 		RoleListPermission,
 	]);
@@ -203,19 +208,27 @@ function RolesListingTable({
 	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className="roles-table-row roles-table-row--clickable"
-			role="button"
-			tabIndex={0}
-			onClick={(): void => {
-				if (role.id) {
-					navigateToRole(role.id, role.name);
-				}
-			}}
-			onKeyDown={(e): void => {
-				if ((e.key === 'Enter' || e.key === ' ') && role.id) {
-					navigateToRole(role.id, role.name);
-				}
-			}}
+			className={`roles-table-row${isValidLicense ? ' roles-table-row--clickable' : ''}`}
+			role={isValidLicense ? 'button' : undefined}
+			tabIndex={isValidLicense ? 0 : undefined}
+			onClick={
+				isValidLicense
+					? (): void => {
+							if (role.id) {
+								navigateToRole(role.id, role.name);
+							}
+						}
+					: undefined
+			}
+			onKeyDown={
+				isValidLicense
+					? (e): void => {
+							if ((e.key === 'Enter' || e.key === ' ') && role.id) {
+								navigateToRole(role.id, role.name);
+							}
+						}
+					: undefined
+			}
 		>
 			<div className="roles-table-cell roles-table-cell--name">
 				{role.name ?? '—'}

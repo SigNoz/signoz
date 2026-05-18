@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
 import { Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
@@ -26,7 +26,9 @@ import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
 
@@ -52,8 +54,9 @@ function RoleDetailsPage(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
+	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
-	const authzResources = permissionsType.data as unknown as AuthzResources;
+	const authzResources: AuthzResources = permissionsType.data;
 
 	// Extract roleId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
@@ -157,6 +160,22 @@ function RoleDetailsPage(): JSX.Element {
 			onError: (err) => handleApiError(err, showErrorModal),
 		},
 	});
+
+	if (isFetchingActiveLicense) {
+		return (
+			<div className="role-details-page">
+				<Skeleton
+					active
+					paragraph={{ rows: 8 }}
+					className="role-details-skeleton"
+				/>
+			</div>
+		);
+	}
+
+	if (activeLicense?.status !== LicenseStatus.VALID) {
+		return <Redirect to={ROUTES.ROLES_SETTINGS} />;
+	}
 
 	if (!hasReadPermission && readPerms !== null) {
 		return <PermissionDeniedFullPage permissionName="role:read" />;
