@@ -47,7 +47,7 @@ function seededShuffle<T>(array: T[], seed: string): T[] {
 		const j = num % (i + 1);
 		[result[i], result[j]] = [result[j], result[i]];
 	}
-	
+
 	return result;
 }
 
