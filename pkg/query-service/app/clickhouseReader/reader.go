@@ -1156,7 +1156,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
 		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
-		selectFieldCols := req.GetSelectedFeildsSourceColumns()
+		selectFieldCols := req.GetSelectedFieldsSourceColumns()
 		if len(selectFieldCols) > 0 {
 			selectCols = fmt.Sprintf("%s, %s", selectCols, strings.Join(selectFieldCols, ", "))
 		}
