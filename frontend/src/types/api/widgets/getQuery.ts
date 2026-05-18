@@ -65,6 +65,7 @@ export interface QueryDataV3 {
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[] | null;
+	nextCursor?: string;
 	quantity?: number;
 	unitPrice?: number;
 	unit?: string;

@@ -34,3 +34,7 @@ func (resourceUser *resourceUser) Object(orgID valuer.UUID, selector string) str
 func (resourceUser *resourceUser) Scope(verb Verb) string {
 	return resourceUser.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceUser) AllowedVerbs() []Verb {
+	return TypeUser.AllowedVerbs()
+}

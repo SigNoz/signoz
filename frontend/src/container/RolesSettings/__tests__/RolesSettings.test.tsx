@@ -5,13 +5,19 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { fireEvent, render, screen } from 'tests/test-utils';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'tests/authz-test-utils';
 
 import RolesSettings from '../RolesSettings';
+
+jest.mock('hooks/useAuthZ/useAuthZ');
+const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const rolesApiURL = 'http://localhost/api/v1/roles';
 
 describe('RolesSettings', () => {
 	beforeEach(() => {
+		mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 		server.use(
 			rest.get(rolesApiURL, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),

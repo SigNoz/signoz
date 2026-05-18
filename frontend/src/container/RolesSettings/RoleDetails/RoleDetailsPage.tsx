@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Table2, Trash2, Users } from '@signozhq/icons';
+import { Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import {
 	getGetObjectsQueryKey,
@@ -13,7 +12,15 @@ import {
 	useGetRole,
 	usePatchObjects,
 } from 'api/generated/services/role';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import permissionsType from 'hooks/useAuthZ/permissions.type';
+import {
+	buildRoleDeletePermission,
+	buildRoleReadPermission,
+	buildRoleUpdatePermission,
+} from 'hooks/useAuthZ/permissions/role.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 
 import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -23,7 +30,6 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
 
-import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from '../config';
 import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
@@ -34,35 +40,33 @@ import {
 	deriveResourcesForRelation,
 	objectsToPermissionConfig,
 } from '../utils';
-import MembersTab from './components/MembersTab';
 import OverviewTab from './components/OverviewTab';
 import { ROLE_ID_REGEX } from './constants';
 
 import './RoleDetailsPage.styles.scss';
 
-type TabKey = 'overview' | 'members';
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RoleDetailsPage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const history = useHistory();
-
-	useEffect(() => {
-		if (!IS_ROLE_DETAILS_AND_CRUD_ENABLED) {
-			history.push(ROUTES.ROLES_SETTINGS);
-		}
-	}, [history]);
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
 	const authzResources = permissionsType.data as unknown as AuthzResources;
 
-	// Extract channelId from URL pathname since useParams doesn't work in nested routing
+	// Extract roleId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
 
-	const [activeTab, setActiveTab] = useState<TabKey>('overview');
+	// Role name passed as query param by the listing page — used to check read permission
+	// before the role details API resolves. Absent when navigating directly (e.g. deep link),
+	// in which case we skip the FGA check and fall back to the BE guard.
+	const nameFromQuery = useMemo(
+		() => new URLSearchParams(search).get('name') ?? '',
+		[search],
+	);
+
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activePermission, setActivePermission] = useState<string | null>(null);
@@ -74,6 +78,27 @@ function RoleDetailsPage(): JSX.Element {
 	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
 	const isManaged = role?.type === RoleType.MANAGED;
+
+	const roleName = role?.name ?? '';
+
+	// Read check — fires immediately using the name query param so we can gate the page
+	// before the role details API resolves. Skipped when name is absent.
+	const { permissions: readPerms, isLoading: isReadAuthZLoading } = useAuthZ(
+		nameFromQuery ? [buildRoleReadPermission(nameFromQuery)] : [],
+		{ enabled: !!nameFromQuery },
+	);
+	const hasReadPermission = nameFromQuery
+		? (readPerms?.[buildRoleReadPermission(nameFromQuery)]?.isGranted ?? true)
+		: true;
+
+	// Update check uses role name once loaded
+	const { permissions: updatePerms, isLoading: isAuthZLoading } = useAuthZ(
+		roleName && !isManaged ? [buildRoleUpdatePermission(roleName)] : [],
+		{ enabled: !!roleName && !isManaged },
+	);
+	const hasUpdatePermission = isAuthZLoading
+		? false
+		: (updatePerms?.[buildRoleUpdatePermission(roleName)]?.isGranted ?? false);
 
 	const permissionTypes = useMemo(
 		() => derivePermissionTypes(authzResources?.relations ?? null),
@@ -90,7 +115,11 @@ function RoleDetailsPage(): JSX.Element {
 
 	const { data: objectsData, isLoading: isLoadingObjects } = useGetObjects(
 		{ id: roleId, relation: activePermission ?? '' },
-		{ query: { enabled: !!activePermission && !!roleId && !isManaged } },
+		{
+			query: {
+				enabled: !!activePermission && !!roleId && !isManaged,
+			},
+		},
 	);
 
 	const initialConfig = useMemo(() => {
@@ -110,7 +139,6 @@ function RoleDetailsPage(): JSX.Element {
 				getGetObjectsQueryKey({ id: roleId, relation: activePermission }),
 			);
 		}
-		setActivePermission(null);
 	};
 
 	const { mutate: patchObjects, isLoading: isSaving } = usePatchObjects({
@@ -130,7 +158,11 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (!IS_ROLE_DETAILS_AND_CRUD_ENABLED || isLoading || isTransitioning) {
+	if (!hasReadPermission && readPerms !== null) {
+		return <PermissionDeniedFullPage permissionName="role:read" />;
+	}
+
+	if (isLoading || isTransitioning || (!!nameFromQuery && isReadAuthZLoading)) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -186,73 +218,49 @@ function RoleDetailsPage(): JSX.Element {
 		<div className="role-details-page">
 			<div className="role-details-header">
 				<h2 className="role-details-title">Role — {role.name}</h2>
-			</div>
-
-			<div className="role-details-nav">
-				<ToggleGroup
-					type="single"
-					value={activeTab}
-					onChange={(val): void => {
-						if (val) {
-							setActiveTab(val as TabKey);
-						}
-					}}
-					className="role-details-tabs"
-				>
-					<ToggleGroupItem value="overview" className="role-details-tab">
-						<Table2 size={14} />
-						Overview
-					</ToggleGroupItem>
-					<ToggleGroupItem value="members" className="role-details-tab">
-						<Users size={14} />
-						Members
-						<span className="role-details-tab-count">0</span>
-					</ToggleGroupItem>
-				</ToggleGroup>
-
 				{!isManaged && (
 					<div className="role-details-actions">
-						<Button
-							variant="ghost"
-							color="destructive"
-							className="role-details-delete-action-btn"
-							onClick={(): void => setIsDeleteModalOpen(true)}
-							aria-label="Delete role"
-						>
-							<Trash2 size={14} />
-						</Button>
-						<Button
-							variant="solid"
-							color="secondary"
-							size="sm"
-							onClick={(): void => setIsEditModalOpen(true)}
-						>
-							Edit Role Details
-						</Button>
+						<AuthZTooltip checks={[buildRoleDeletePermission(role.name)]}>
+							<Button
+								variant="link"
+								color="destructive"
+								onClick={(): void => setIsDeleteModalOpen(true)}
+								aria-label="Delete role"
+							>
+								<Trash2 size={12} />
+							</Button>
+						</AuthZTooltip>
+						<AuthZTooltip checks={[buildRoleUpdatePermission(role.name)]}>
+							<Button
+								variant="solid"
+								color="secondary"
+								onClick={(): void => setIsEditModalOpen(true)}
+							>
+								Edit Role Details
+							</Button>
+						</AuthZTooltip>
 					</div>
 				)}
 			</div>
 
-			{activeTab === 'overview' && (
-				<OverviewTab
-					role={role || null}
-					isManaged={isManaged}
-					permissionTypes={permissionTypes}
-					onPermissionClick={(key): void => setActivePermission(key)}
-				/>
-			)}
-			{activeTab === 'members' && <MembersTab />}
-
+			<OverviewTab
+				role={role || null}
+				isManaged={isManaged}
+				permissionTypes={permissionTypes}
+				onPermissionClick={(key): void => setActivePermission(key)}
+			/>
 			{!isManaged && (
 				<>
 					<PermissionSidePanel
 						open={activePermission !== null}
 						onClose={(): void => setActivePermission(null)}
 						permissionLabel={activePermission ? capitalize(activePermission) : ''}
+						relation={activePermission ?? ''}
 						resources={resourcesForActivePermission}
 						initialConfig={initialConfig}
 						isLoading={isLoadingObjects}
 						isSaving={isSaving}
+						canEdit={hasUpdatePermission}
 						onSave={handleSave}
 					/>
 

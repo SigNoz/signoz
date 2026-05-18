@@ -1,4 +1,6 @@
 .eventContentContainer {
+	padding: var(--spacing-6);
+
 	:global(.ant-table) {
 		background: var(--l1-background);
 
@@ -14,18 +16,11 @@
 		}
 
 		:global(.ant-table-cell) {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l2-border) !important;
 		}
 
 		:global(.attribute-name .ant-btn:hover) {
 			background-color: transparent !important;
-		}
-
-		:global(.attribute-pin) {
-			cursor: pointer;
-			padding: 0;
-			vertical-align: middle;
-			text-align: center;
 		}
 
 		:global(.attribute-pin .log-attribute-pin) {
