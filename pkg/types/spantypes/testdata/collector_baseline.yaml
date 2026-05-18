@@ -1,0 +1,17 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+processors:
+  signozspanmapper:
+    groups: []
+  batch: {}
+exporters:
+  otlp:
+    endpoint: localhost:4317
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [signozspanmapper, batch]
+      exporters: [otlp]
