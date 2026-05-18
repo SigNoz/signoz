@@ -4,32 +4,38 @@ import { isModifierKeyPressed } from 'utils/app';
 
 import styles from './BreadcrumbItem.module.scss';
 
-export interface BreadcrumbItemConfig {
-	title: string | null;
-	route?: string;
-	isLast?: boolean;
-}
+export type BreadcrumbItemConfig =
+	| {
+			title: string | null;
+			route?: string;
+	  }
+	| {
+			title: string | null;
+			isLast?: true;
+	  };
 
 function BreadcrumbItem({
 	title,
-	isLast,
-	route,
+	...props
 }: BreadcrumbItemConfig): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
-	const handleNavigate = (e: React.MouseEvent): void => {
-		if (!route) {
-			return;
-		}
-		safeNavigate(route, { newTab: isModifierKeyPressed(e) });
-	};
-
-	if (isLast) {
+	if ('isLast' in props) {
 		return <div className={styles.itemLast}>{title}</div>;
 	}
 
 	return (
-		<Button type="text" className={styles.item} onClick={handleNavigate}>
+		<Button
+			type="text"
+			className={styles.item}
+			onClick={(e: React.MouseEvent): void => {
+				if (!('route' in props) || !props.route) {
+					return;
+				}
+
+				safeNavigate(props.route, { newTab: isModifierKeyPressed(e) });
+			}}
+		>
 			{title}
 		</Button>
 	);

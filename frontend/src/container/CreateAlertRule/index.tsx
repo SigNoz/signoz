@@ -89,13 +89,6 @@ function CreateRules(): JSX.Element {
 				queryParams.set(QueryParams.alertType, type);
 			}
 
-			const showClassicFlag = queryParams.get(
-				QueryParams.showClassicCreateAlertsPage,
-			);
-			if (showClassicFlag === 'true') {
-				queryParams.set(QueryParams.showClassicCreateAlertsPage, 'true');
-			}
-
 			safeNavigate(`${ROUTES.ALERTS_NEW}?${queryParams.toString()}`, { newTab });
 		},
 		[queryParams, safeNavigate],

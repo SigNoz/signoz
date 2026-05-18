@@ -3,8 +3,6 @@ import { Breadcrumb, Divider } from 'antd';
 import styles from './AlertBreadcrumb.module.scss';
 import BreadcrumbItem, { BreadcrumbItemConfig } from './BreadcrumbItem';
 
-export type { BreadcrumbItemConfig };
-
 export interface AlertBreadcrumbProps {
 	items: BreadcrumbItemConfig[];
 	className?: string;
