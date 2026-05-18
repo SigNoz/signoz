@@ -13,7 +13,9 @@ var (
 	ErrCodeMappingGroupAlreadyExists = errors.MustNewCode("span_attribute_mapping_group_already_exists")
 )
 
-// A group runs when any of the listed attribute/resource key patterns match.
+// SpanMapperGroupCondition gates whether a group's rules run for a given span.
+// A group runs when any attribute or resource key on the span CONTAINS one of
+// the listed substrings (plain substring match — no glob syntax).
 type SpanMapperGroupCondition struct {
 	Attributes []string `json:"attributes" required:"true" nullable:"true"`
 	Resource   []string `json:"resource" required:"true" nullable:"true"`

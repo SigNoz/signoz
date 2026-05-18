@@ -8,9 +8,9 @@ processors:
       - id: llm
         exists_any:
           attributes:
-            - "*model*"
+            - model
           resource:
-            - "service.name*"
+            - service.name
         attributes:
           - target: gen_ai.request.model
             context: resource
@@ -34,7 +34,7 @@ processors:
       - id: agent
         exists_any:
           attributes:
-            - "agent.*"
+            - agent.
         attributes:
           - target: gen_ai.agent.name
             context: attribute
@@ -51,7 +51,7 @@ processors:
       - id: tool
         exists_any:
           attributes:
-            - "agent.*"
+            - agent.
         attributes:
           - target: gen_ai.tool.name
             context: attribute

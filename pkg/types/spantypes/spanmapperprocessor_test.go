@@ -29,7 +29,7 @@ func TestGenerateCollectorConfigWithSpanMapperProcessor(t *testing.T) {
 			name: "with_groups",
 			groups: []*SpanMapperGroupWithMappers{
 				{
-					Group: newGroup("llm", []string{"*model*"}, []string{"service.name*"}),
+					Group: newGroup("llm", []string{"model"}, []string{"service.name"}),
 					Mappers: []*SpanMapper{
 						newMapper("gen_ai.request.model", FieldContextResource,
 							attrSrc("gen_ai.llm.model", SpanMapperOperationCopy, 3),
@@ -47,7 +47,7 @@ func TestGenerateCollectorConfigWithSpanMapperProcessor(t *testing.T) {
 					},
 				},
 				{
-					Group: newGroup("agent", []string{"agent.*"}, nil),
+					Group: newGroup("agent", []string{"agent."}, nil),
 					Mappers: []*SpanMapper{
 						newMapper("gen_ai.agent.name", FieldContextSpanAttribute,
 							attrSrc("agent.name", SpanMapperOperationCopy, 2),
@@ -60,7 +60,7 @@ func TestGenerateCollectorConfigWithSpanMapperProcessor(t *testing.T) {
 					},
 				},
 				{
-					Group: newGroup("tool", []string{"agent.*"}, nil),
+					Group: newGroup("tool", []string{"agent."}, nil),
 					Mappers: []*SpanMapper{
 						newMapper("gen_ai.tool.name", FieldContextSpanAttribute,
 							attrSrc("ai.tool.name", SpanMapperOperationCopy, 2),
