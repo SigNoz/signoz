@@ -218,6 +218,13 @@ export function getAppContextMock(
 				usage_limit: -1,
 				route: '',
 			},
+			{
+				name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
+				active: true,
+				usage: 0,
+				usage_limit: -1,
+				route: '',
+			},
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
