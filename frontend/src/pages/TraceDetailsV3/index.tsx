@@ -74,17 +74,21 @@ function TraceDetailsV3(): JSX.Element {
 		onClose: handleSpanDetailsClose,
 	});
 
+	const allSpansRef = useRef<SpanV3[]>([]);
+
+	// Refetch only when the URL target isn't already loaded. Keeps row clicks
+	// and other in-window URL navigation from triggering a backend window slide.
 	useEffect(() => {
 		const spanId = urlQuery.get('spanId') || '';
-		// Only update interestedSpanId when a new span is selected,
-		// not when it's cleared (panel close) — avoids unnecessary API refetch
 		if (!spanId) {
 			return;
 		}
-		setInterestedSpanId({
-			spanId,
-			isUncollapsed: true,
-		});
+		const idx = allSpansRef.current.findIndex((s) => s.span_id === spanId);
+		if (idx !== -1) {
+			setSelectedSpan(allSpansRef.current[idx]);
+			return;
+		}
+		setInterestedSpanId({ spanId, isUncollapsed: true });
 	}, [urlQuery]);
 
 	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
@@ -144,6 +148,10 @@ function TraceDetailsV3(): JSX.Element {
 			aggregations: waterfallAggregationsRequest,
 		};
 	}
+
+	useEffect(() => {
+		allSpansRef.current = allSpans;
+	}, [allSpans]);
 
 	// Frontend mode: expand all parents by default when full data arrives
 	useEffect(() => {

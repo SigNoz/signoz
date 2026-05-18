@@ -11,6 +11,15 @@ import {
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
+jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+	__esModule: true,
+	default: ({
+		children,
+	}: {
+		children: React.ReactElement;
+	}): React.ReactElement => children,
+}));
+
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
@@ -113,7 +122,9 @@ describe('CreateServiceAccountModal', () => {
 					getErrorMessage: expect.any(Function),
 				}),
 			);
-			const passedError = showErrorModal.mock.calls[0][0] as any;
+			const passedError = showErrorModal.mock.calls[0][0] as {
+				getErrorMessage: () => string;
+			};
 			expect(passedError.getErrorMessage()).toBe('Internal Server Error');
 		});
 
@@ -132,6 +143,9 @@ describe('CreateServiceAccountModal', () => {
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
 		await waitForElementToBeRemoved(dialog);
+		expect(
+			screen.queryByRole('dialog', { name: /New Service Account/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {
@@ -142,6 +156,8 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Bot');
 		await user.clear(nameInput);
 
-		await screen.findByText('Name is required');
+		await expect(
+			screen.findByText('Name is required'),
+		).resolves.toBeInTheDocument();
 	});
 });

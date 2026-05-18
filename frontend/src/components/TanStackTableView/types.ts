@@ -115,6 +115,12 @@ export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
 	defaultLimit?: number;
+	/**
+	 * @default true
+	 */
+	showPageSize?: boolean;
+	onPageChange?: (page: number) => void;
+	onLimitChange?: (limit: number) => void;
 	showTotalCount?: boolean;
 	totalCountLabel?: string;
 };
@@ -142,6 +148,8 @@ export type TanStackTableProps<TData> = {
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig;
 	pagination?: PaginationProps;
 	paginationClassname?: string;
+	/** Callback when sort changes. */
+	onSort?: (sort: SortState | null) => void;
 	onEndReached?: (index: number) => void;
 	/** Function to get the unique key for a row (before duplicate handling).
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */

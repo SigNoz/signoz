@@ -25,7 +25,7 @@ type TransactionWithAuthorization struct {
 }
 
 func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, error) {
-	if err := coretypes.ErrIfVerbNotValidForType(relation.Verb, object.Resource.Type); err != nil {
+	if err := coretypes.ErrIfVerbNotValidForResource(relation.Verb, object.Resource); err != nil {
 		return nil, err
 	}
 

@@ -3,7 +3,6 @@
  * * The file has been auto-generated using Orval for SigNoz
  * * regenerate with 'pnpm generate:api'
  * SigNoz
- * OpenAPI spec version: 0.0.1
  */
 import { useMutation, useQuery } from 'react-query';
 import type {
