@@ -67,6 +67,7 @@ export const useAutoComplete = (
 		query,
 		setSearchKey,
 		whereClauseConfig,
+		isInfraMonitoring,
 	);
 
 	const handleSelect = useCallback(
@@ -142,6 +143,7 @@ export const useAutoComplete = (
 		result,
 		isFetching,
 		whereClauseConfig,
+		isInfraMonitoring,
 	);
 
 	return {

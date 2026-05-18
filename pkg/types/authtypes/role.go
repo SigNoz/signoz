@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -26,7 +27,8 @@ var (
 )
 
 var (
-	roleNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+	roleNameRegex     = regexp.MustCompile("^[a-z-]{1,50}$")
+	managedRolePrefix = "signoz"
 )
 
 var (
@@ -140,7 +142,11 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := roleNameRegex.MatchString(shadowRole.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", roleNameRegex.String())
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
+	}
+
+	if strings.HasPrefix(shadowRole.Name, managedRolePrefix) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
 	}
 
 	role.Name = shadowRole.Name
