@@ -9,12 +9,11 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import uPlot from 'uplot';
 
-import { AlertChartPanelType, buildAlertChartConfig } from './utils';
-
-const CHART_ID_PREFIX = 'alert_legend_widget';
-
-const buildChartId = (alertId?: string): string =>
-	alertId ? `${CHART_ID_PREFIX}_${alertId}` : CHART_ID_PREFIX;
+import {
+	AlertChartPanelType,
+	buildAlertChartConfig,
+	buildChartId,
+} from './utils';
 
 // Panel types that render through the UPlotConfigBuilder pipeline.
 // To support a new modern-chart panel type, add an entry here and extend

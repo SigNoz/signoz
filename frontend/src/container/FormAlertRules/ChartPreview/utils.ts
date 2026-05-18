@@ -38,6 +38,8 @@ import {
 	timeUnitsConfig,
 } from './config';
 
+const CHART_ID_PREFIX = 'alert_legend_widget';
+
 export function covertIntoDataFormats({
 	value,
 	sourceUnit,
@@ -264,3 +266,6 @@ export const buildAlertChartConfig = ({
 
 	return builder;
 };
+
+export const buildChartId = (id?: string): string =>
+	id ? `${CHART_ID_PREFIX}_${id}` : CHART_ID_PREFIX;
