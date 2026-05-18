@@ -790,13 +790,31 @@ def test_traces_list_with_corrupt_data(
                 assert data[key] == value
 
 
+def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:
+    """Empty-selectFields case: events/links arrive parsed into structured objects.
+    Every row's events/links should match the fixture's stored parsed shape
+    (the fixture's `.events`/`.links` mirror the API response shape directly).
+    """
+    for row, trace in zip(rows, traces, strict=True):
+        assert row["data"]["events"] == trace.events
+        assert row["data"]["links"] == trace.links
+        # Jaeger-era `refType` is dropped at the consume layer.
+        for link in row["data"]["links"]:
+            assert "refType" not in link
+
+
+def _verify_events_links_skip(rows: list[dict], traces: list[Traces]) -> None:
+    """Projected-selectFields case: nothing to verify beyond the key set."""
+
+
 @pytest.mark.parametrize(
-    "select_fields,status_code,expected_keys",
+    "select_fields,status_code,expected_keys,verify_values",
     [
         pytest.param(
             [],
             HTTPStatus.OK,
             ALL_SELECT_FIELDS,
+            _verify_events_links_full,
         ),
         pytest.param(
             [
@@ -804,6 +822,7 @@ def test_traces_list_with_corrupt_data(
             ],
             HTTPStatus.OK,
             ["timestamp", "trace_id", "span_id", "service.name"],
+            _verify_events_links_skip,
         ),
     ],
 )
@@ -815,6 +834,7 @@ def test_traces_list_with_select_fields(
     select_fields: list[dict],
     status_code: HTTPStatus,
     expected_keys: list[str],
+    verify_values: Callable[[list[dict], list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -917,39 +937,10 @@ def test_traces_list_with_select_fields(
 
     rows = response.json()["data"]["data"]["results"][0]["rows"]
     assert len(rows) == 2
-    root_row, child_row = rows[0]["data"], rows[1]["data"]
+    for row in rows:
+        assert set(row["data"].keys()) == set(expected_keys)
 
-    assert set(root_row.keys()) == set(expected_keys)
-    assert set(child_row.keys()) == set(expected_keys)
-
-    # Value-shape checks only apply when the response carries events/links.
-    if not select_fields:
-        # Root span: empty parsed arrays, not the raw DB string `"[]"` or
-        # list-of-JSON-strings.
-        assert root_row["events"] == []
-        assert root_row["links"] == []
-
-        # Child span: events parsed into structured form; links stripped of
-        # the Jaeger-era `refType` field at the consume layer.
-        assert child_row["events"] == [
-            {
-                "name": "request_received",
-                "timeUnixNano": int(event_one.time_unix_nano),
-                "attributes": {"http.method": "GET", "http.route": "/api/chat"},
-            },
-            {
-                "name": "cache_lookup",
-                "timeUnixNano": int(event_two.time_unix_nano),
-                "attributes": {"cache.hit": "true", "cache.key": "user:123:prompt"},
-            },
-        ]
-        assert child_row["links"] == [
-            # Fixture auto-inserts the CHILD_OF link first.
-            {"traceId": parent_trace_id, "spanId": parent_span_id},
-            {"traceId": linked_trace_id, "spanId": linked_span_id},
-        ]
-        for link in child_row["links"]:
-            assert "refType" not in link
+    verify_values(rows, traces)
 
 
 @pytest.mark.parametrize(
