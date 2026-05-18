@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -26,7 +26,8 @@ function BreadcrumbItem({
 
 	return (
 		<Button
-			type="text"
+			variant="ghost"
+			color="secondary"
 			className={styles.item}
 			onClick={(e: React.MouseEvent): void => {
 				if (!('route' in props) || !props.route) {

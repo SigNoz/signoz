@@ -1,12 +1,9 @@
 .item {
-	color: var(--l2-foreground);
-	font-size: 14px;
-	line-height: 20px;
-	letter-spacing: 0.25px;
-	padding: 0;
+	--button-padding: 0;
+	--button-font-size: var(--periscope-font-size-base);
 }
 
 .itemLast {
 	color: var(--muted-foreground);
-	font-family: 'Geist Mono';
+	font-size: var(--periscope-font-size-base);
 }
