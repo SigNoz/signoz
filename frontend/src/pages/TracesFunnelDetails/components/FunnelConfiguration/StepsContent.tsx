@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
 import { Button, Steps, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { PlusIcon, Undo2 } from 'lucide-react';
+import { Plus, Undo2 } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -95,7 +95,7 @@ function StepsContent({
 								type="default"
 								className="steps-content__add-btn"
 								onClick={isTraceDetailsPage ? handleAddForNewStep : handleAddStep}
-								icon={<PlusIcon size={14} />}
+								icon={<Plus size={14} />}
 								disabled={!hasEditPermission}
 							>
 								{isTraceDetailsPage ? 'Add for new Step' : 'Add Funnel Step'}

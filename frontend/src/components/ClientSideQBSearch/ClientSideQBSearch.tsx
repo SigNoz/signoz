@@ -37,7 +37,7 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -554,10 +554,9 @@ function ClientSideQBSearch(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
+							$disabled={isDisabled}
 							onClick={(): void => {
 								if (!isDisabled) {
 									tagEditHandler(value);

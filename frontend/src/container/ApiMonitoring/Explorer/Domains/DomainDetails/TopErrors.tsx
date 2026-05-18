@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Spin, Switch, Table, Tooltip, Typography } from 'antd';
+import { Spin, Switch, Table, Tooltip } from 'antd';
+import { Info, Loader } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
 import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -17,7 +18,6 @@ import {
 	getTopErrorsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { Info } from 'lucide-react';
 import { SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -201,7 +201,9 @@ function TopErrors({
 					columns={topErrorsColumnsConfig}
 					loading={{
 						spinning: isLoading || isRefetching,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						indicator: (
+							<Spin indicator={<Loader size={14} className="animate-spin" />} />
+						),
 					}}
 					dataSource={isLoading || isRefetching ? [] : formattedTopErrorsData}
 					locale={{

@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
-import { Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -17,7 +18,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
-import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
@@ -36,17 +36,18 @@ import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
-	BarChart2,
 	Braces,
 	ChevronDown,
 	ChevronUp,
 	Compass,
 	Copy,
 	Filter,
+	Histogram,
 	Table,
 	TextSelect,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
+import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -227,7 +228,7 @@ function LogDetailInner({
 			}
 
 			return log?.body || '';
-		} catch (error) {
+		} catch {
 			return log?.body || '';
 		}
 	}, [isBodyJsonQueryEnabled, log?.body]);
@@ -498,7 +499,7 @@ function LogDetailInner({
 							value={VIEW_TYPES.INFRAMETRICS}
 						>
 							<div className="view-title">
-								<BarChart2 size={14} />
+								<Histogram size="md" />
 								Metrics
 							</div>
 						</Radio.Button>
@@ -516,7 +517,7 @@ function LogDetailInner({
 									variant="link"
 									color="secondary"
 									size="sm"
-									prefix={<Filter size={12} />}
+									prefix={<Filter size="lg" />}
 									onClick={handleFilterVisible}
 								/>
 							</Tooltip>
@@ -562,7 +563,9 @@ function LogDetailInner({
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
+				{selectedView === VIEW_TYPES.JSON && (
+					<JsonView data={LogJsonData} height="68vh" />
+				)}
 
 				{selectedView === VIEW_TYPES.CONTEXT && (
 					<ContextView
@@ -587,7 +590,7 @@ function LogDetailInner({
 					<div className="log-detail-drawer__footer-hint">
 						<div className="log-detail-drawer__footer-hint-content">
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								Use
@@ -596,7 +599,7 @@ function LogDetailInner({
 							<span>/</span>
 							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								to view previous/next log

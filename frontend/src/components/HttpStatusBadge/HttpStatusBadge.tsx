@@ -1,4 +1,4 @@
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 
 type BadgeColor =
 	| 'vanilla'
@@ -44,7 +44,11 @@ function HttpStatusBadge({
 
 	const color = getStatusCodeColor(numericStatusCode);
 
-	return <Badge color={color}>{statusCode}</Badge>;
+	return (
+		<Badge color={color} variant="outline">
+			{statusCode}
+		</Badge>
+	);
 }
 
 export default HttpStatusBadge;

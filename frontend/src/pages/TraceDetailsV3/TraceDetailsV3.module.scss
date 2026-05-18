@@ -1,0 +1,127 @@
+.root {
+	height: calc(100vh);
+	display: flex;
+	flex-direction: column;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow: hidden;
+}
+
+// Shared Ant Collapse chrome reset for both the flamegraph and waterfall
+// collapse panels.
+.flameCollapse,
+.waterfallCollapse {
+	border: none;
+	border-radius: 0;
+	background: transparent;
+
+	:global(.ant-collapse-item) {
+		border: none;
+	}
+
+	:global(.ant-collapse-header) {
+		border-top: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l2-border);
+	}
+
+	:global(.ant-collapse-content) {
+		background: transparent;
+		border-top: none;
+		// Disable collapse animation — virtualizer and canvas flicker during
+		// height transitions.
+		transition: none !important;
+	}
+}
+
+.collapseLabel {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+}
+
+.collapseTitle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.collapseCount {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--l2-foreground);
+}
+
+.collapseCountItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.hasErrors {
+	color: var(--destructive);
+}
+
+.flameCollapse {
+	flex-shrink: 0;
+
+	:global(.ant-collapse-content-box) {
+		padding: 0 !important;
+	}
+}
+
+.waterfallCollapse {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	:global(.ant-collapse-item) {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	:global(.ant-collapse-content.ant-collapse-content-active) {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	:global(.ant-collapse-content-box) {
+		padding: 0 !important;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	&.isDocked {
+		flex: none;
+
+		:global(.ant-collapse-item) {
+			flex: none;
+			display: block;
+		}
+
+		:global(.ant-collapse-content-box) {
+			flex: none;
+			display: block;
+		}
+	}
+}
+
+.dockedSpanDetails {
+	flex: 1;
+	overflow: auto;
+	min-height: 0;
+}

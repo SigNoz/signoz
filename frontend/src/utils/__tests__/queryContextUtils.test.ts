@@ -34,7 +34,7 @@ describe('extractQueryPairs', () => {
 					valueEnd: undefined,
 					valueStart: undefined,
 				},
-				isComplete: false,
+				isComplete: true,
 			},
 			{
 				key: 'name',
@@ -204,7 +204,7 @@ describe('extractQueryPairs', () => {
 				key: 'active',
 				operator: 'EXISTS',
 				value: undefined,
-				isComplete: false,
+				isComplete: true,
 			}),
 		]);
 	});
@@ -388,7 +388,7 @@ describe('extractQueryPairs', () => {
 		expect(result[0].operator).toBe('exists');
 		expect(result[0].value).toBeUndefined();
 		expect(result[0].valuesPosition).toStrictEqual([]);
-		expect(result[0].isComplete).toBe(false);
+		expect(result[0].isComplete).toBe(true);
 		expect(result[1].key).toBe('service.name');
 		expect(result[1].operator).toBe('contains');
 		expect(result[1].value).toBe('"test"');

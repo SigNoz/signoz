@@ -10,18 +10,15 @@ import {
 } from 'react';
 import type { TableComponents } from 'react-virtuoso';
 import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import {
-	ComboboxSimple,
-	ComboboxSimpleItem,
-	TooltipProvider,
-} from '@signozhq/ui';
-import { Pagination } from '@signozhq/ui';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
+import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
 import {
 	ColumnDef,
@@ -42,6 +39,7 @@ import {
 } from './TanStackTableStateContext';
 import {
 	FlatItem,
+	SortState,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
@@ -91,6 +89,7 @@ function TanStackTableInner<TData>(
 		enableQueryParams,
 		pagination,
 		paginationClassname,
+		onSort,
 		onEndReached,
 		getRowKey,
 		getItemKey,
@@ -133,13 +132,21 @@ function TanStackTableInner<TData>(
 		setPage,
 		setLimit,
 		orderBy,
-		setOrderBy,
+		setOrderBy: internalSetOrderBy,
 		expanded,
 		setExpanded,
 	} = useTableParams(enableQueryParams, {
 		page: pagination?.defaultPage,
 		limit: pagination?.defaultLimit,
 	});
+
+	const setOrderBy = useCallback(
+		(sort: SortState | null) => {
+			internalSetOrderBy(sort);
+			onSort?.(sort);
+		},
+		[internalSetOrderBy, onSort],
+	);
 
 	const isGrouped = (groupBy?.length ?? 0) > 0;
 
@@ -583,28 +590,47 @@ function TanStackTableInner<TData>(
 							className={viewStyles.tanstackLoadingOverlay}
 							data-testid="tanstack-infinite-loader"
 						>
-							<Spin indicator={<LoadingOutlined spin />} tip="Loading more..." />
+							<Spin
+								indicator={<Loader className="animate-spin" />}
+								tip="Loading more..."
+							/>
 						</div>
 					)}
 					{showPagination && pagination && (
 						<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
 							{prefixPaginationContent}
+							{pagination.showTotalCount && effectiveTotalCount > 0 && (
+								<span
+									className={viewStyles.paginationTotalCount}
+									data-testid="pagination-total-count"
+								>
+									Showing {(page - 1) * limit + 1} -{' '}
+									{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
+									{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
+								</span>
+							)}
 							<Pagination
 								current={page}
 								pageSize={limit}
 								total={effectiveTotalCount}
 								onPageChange={(p): void => {
 									setPage(p);
+									pagination.onPageChange?.(p);
 								}}
 							/>
-							<div className={viewStyles.paginationPageSize}>
-								<ComboboxSimple
-									value={limit?.toString()}
-									defaultValue="10"
-									onChange={(value): void => setLimit(+value)}
-									items={paginationPageSizeItems}
-								/>
-							</div>
+							{pagination.showPageSize !== false && (
+								<div className={viewStyles.paginationPageSize}>
+									<ComboboxSimple
+										value={limit?.toString()}
+										defaultValue="10"
+										onChange={(value): void => {
+											setLimit(+value);
+											pagination.onLimitChange?.(+value);
+										}}
+										items={paginationPageSizeItems}
+									/>
+								</div>
+							)}
 							{suffixPaginationContent}
 						</div>
 					)}

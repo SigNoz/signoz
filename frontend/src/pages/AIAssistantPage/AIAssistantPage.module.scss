@@ -1,0 +1,47 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--l1-background);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px;
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+	background: var(--l1-background);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.body {
+	flex: 1;
+	display: flex;
+	flex-direction: row;
+	overflow: hidden;
+	width: 100%;
+}
+
+.chat {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}

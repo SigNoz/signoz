@@ -1,8 +1,9 @@
 import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
-import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
-import { Button, Space, Typography } from 'antd';
+import { ChevronRight, Plus } from '@signozhq/icons';
+import { Button, Space, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -22,8 +23,6 @@ import {
 import Tags from './Tag';
 
 const { Text } = Typography;
-
-const { Paragraph } = Typography;
 
 function AllTags({
 	updateTagIsError,
@@ -77,14 +76,14 @@ function AllTags({
 	if (traces.isTagModalError) {
 		return (
 			<ErrorContainer>
-				<Paragraph style={{ color: 'var(--warning-background)' }}>
+				<Text style={{ color: 'var(--warning-background)' }}>
 					Unrecognized query format. Please reset your query by clicking `X` in the
 					search bar above.
-				</Paragraph>
+				</Text>
 
-				<Paragraph style={{ color: 'var(--warning-background)' }}>
+				<Text style={{ color: 'var(--warning-background)' }}>
 					Please click on the search bar to get a drop down to select relevant tags
-				</Paragraph>
+				</Text>
 			</ErrorContainer>
 		);
 	}
@@ -107,11 +106,14 @@ function AllTags({
 			</CurrentTagsContainer>
 
 			<Space wrap direction="horizontal">
-				<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
-					Add Tags Filter
+				<Button type="primary" onClick={onTagAddHandler}>
+					<Flex gap={4} align="center">
+						<Plus size="md" />
+						Add Tags Filter
+					</Flex>
 				</Button>
 
-				<Text ellipsis>
+				<Text truncate={1}>
 					Results will include spans with ALL the specified tags ( Rows are `ANDed` )
 				</Text>
 			</Space>
@@ -119,12 +121,11 @@ function AllTags({
 			<ButtonContainer>
 				<Space align="start">
 					<Button onClick={onResetHandler}>Reset</Button>
-					<Button
-						type="primary"
-						onClick={onRunQueryHandler}
-						icon={<CaretRightFilled />}
-					>
-						Run Query
+					<Button type="primary" onClick={onRunQueryHandler}>
+						<Flex gap={4} align="center">
+							<ChevronRight size="md" />
+							Run Query
+						</Flex>
 					</Button>
 				</Space>
 			</ButtonContainer>

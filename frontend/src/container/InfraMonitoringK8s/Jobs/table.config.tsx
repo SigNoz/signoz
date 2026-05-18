@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sJobsData } from './api';
-import { Bolt } from 'lucide-react';
+import { Bolt } from '@signozhq/icons';
 
 export function getK8sJobRowKey(job: K8sJobsData): string {
 	return job.jobName || job.meta.k8s_job_name || '';
@@ -89,7 +89,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const successfulPods = value as number;
 			return (
-				<ValidateColumnValueWrapper value={successfulPods}>
+				<ValidateColumnValueWrapper
+					value={successfulPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="successful pod"
+				>
 					<TanStackTable.Text>{successfulPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -104,7 +108,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const failedPods = value as number;
 			return (
-				<ValidateColumnValueWrapper value={failedPods}>
+				<ValidateColumnValueWrapper
+					value={failedPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="failed pod"
+				>
 					<TanStackTable.Text>{failedPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -119,7 +127,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const desiredSuccessfulPods = value as number;
 			return (
-				<ValidateColumnValueWrapper value={desiredSuccessfulPods}>
+				<ValidateColumnValueWrapper
+					value={desiredSuccessfulPods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="desired successful pod"
+				>
 					<TanStackTable.Text>{desiredSuccessfulPods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -134,7 +146,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const activePods = value as number;
 			return (
-				<ValidateColumnValueWrapper value={activePods}>
+				<ValidateColumnValueWrapper
+					value={activePods}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="active pod"
+				>
 					<TanStackTable.Text>{activePods}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -187,7 +203,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpu}>
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="CPU metric"
+				>
 					<TanStackTable.Text>{cpu}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -240,7 +260,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memory}>
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.JOBS}
+					attribute="memory metric"
+				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);

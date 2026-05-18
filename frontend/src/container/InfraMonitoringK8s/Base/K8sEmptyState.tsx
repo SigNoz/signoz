@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { AlertTriangle, LifeBuoy } from 'lucide-react';
+import { LifeBuoy, TriangleAlert } from '@signozhq/icons';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
@@ -47,7 +47,7 @@ export function K8sEmptyState({
 		return (
 			<div className={styles.container}>
 				<div className={styles.content}>
-					<AlertTriangle size={32} className={styles.errorIcon} />
+					<TriangleAlert size={32} className={styles.errorIcon} />
 					<span className={styles.message}>
 						{error || 'An error occurred while fetching data.'}
 					</span>

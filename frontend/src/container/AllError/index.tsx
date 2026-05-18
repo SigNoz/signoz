@@ -1,19 +1,12 @@
+import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Space,
-	TableProps,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
+import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { ColumnsType } from 'antd/lib/table';
@@ -199,7 +192,7 @@ function AllErrors(): JSX.Element {
 		</Typography>
 	);
 
-	const filterIcon = useCallback(() => <SearchOutlined />, []);
+	const filterIcon = useCallback(() => <Search size="md" />, []);
 
 	const handleSearch = useCallback(
 		(
@@ -275,10 +268,12 @@ function AllErrors(): JSX.Element {
 					<Button
 						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						icon={<SearchOutlined />}
 						size="small"
 					>
-						Search
+						<Flex align="center" justify="center" gap={4}>
+							<Search size="md" />
+							Search
+						</Flex>
 					</Button>
 				</Space>
 			</Card>
@@ -360,13 +355,7 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Paragraph
-						ellipsis={{
-							rows: 2,
-						}}
-					>
-						{value}
-					</Typography.Paragraph>
+					<Typography.Text truncate={2}>{value}</Typography.Text>
 				</Tooltip>
 			),
 		},

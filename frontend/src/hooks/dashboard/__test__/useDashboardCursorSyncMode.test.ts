@@ -118,7 +118,7 @@ describe('useDashboardCursorSyncMode', () => {
 	describe.each([[PanelMode.DASHBOARD_EDIT], [PanelMode.STANDALONE_VIEW]])(
 		'in %s mode (cursor sync disabled)',
 		(panelMode) => {
-			it('returns the Crosshair default and ignores any stored value', () => {
+			it('returns None and ignores any stored value', () => {
 				useDashboardPreferencesStore.setState({
 					preferences: { 'dash-1': { cursorSyncMode: DashboardCursorSync.Tooltip } },
 				});
@@ -127,7 +127,7 @@ describe('useDashboardCursorSyncMode', () => {
 					useDashboardCursorSyncMode('dash-1', panelMode),
 				);
 
-				expect(result.current[0]).toBe(DashboardCursorSync.Crosshair);
+				expect(result.current[0]).toBe(DashboardCursorSync.None);
 			});
 
 			it('treats the setter as a no-op and does not write to the store', () => {
@@ -136,14 +136,14 @@ describe('useDashboardCursorSyncMode', () => {
 				);
 
 				act(() => {
-					result.current[1](DashboardCursorSync.None);
+					result.current[1](DashboardCursorSync.Tooltip);
 				});
 
 				expect(useDashboardPreferencesStore.getState().preferences).toStrictEqual(
 					{},
 				);
 				expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
-				expect(result.current[0]).toBe(DashboardCursorSync.Crosshair);
+				expect(result.current[0]).toBe(DashboardCursorSync.None);
 			});
 		},
 	);

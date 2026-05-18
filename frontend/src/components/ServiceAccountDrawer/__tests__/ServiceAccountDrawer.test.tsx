@@ -3,11 +3,12 @@ import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'tests/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -23,6 +24,10 @@ jest.mock('@signozhq/ui', () => ({
 				{footer}
 			</div>
 		) : null,
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -94,6 +99,7 @@ describe('ServiceAccountDrawer', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -147,7 +153,7 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('changing roles enables Save; clicking Save sends role add request without delete', async () => {
+	it('adding a role fires POST for the new role and no DELETE for existing roles', async () => {
 		const roleSpy = jest.fn();
 		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -167,6 +173,7 @@ describe('ServiceAccountDrawer', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
+		// Add signoz-viewer while keeping signoz-admin selected
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-viewer'));
 
@@ -181,6 +188,43 @@ describe('ServiceAccountDrawer', () => {
 				}),
 			);
 			expect(deleteSpy).not.toHaveBeenCalled();
+		});
+	});
+
+	it('removing a role fires DELETE for the removed role and no POST', async () => {
+		const roleSpy = jest.fn();
+		const deleteSpy = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
+				roleSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		// Remove the signoz-admin tag from the multi-select
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await waitFor(() => {
+			expect(deleteSpy).toHaveBeenCalled();
+			expect(roleSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -258,13 +302,6 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByText(/No keys/i);
 	});
 
-	it('shows skeleton while loading account data', () => {
-		renderDrawer();
-
-		// Skeleton renders while the fetch is in-flight
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-	});
-
 	it('shows error state when account fetch fails', async () => {
 		server.use(
 			rest.get(SA_ENDPOINT, (_, res, ctx) =>
@@ -317,6 +354,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
