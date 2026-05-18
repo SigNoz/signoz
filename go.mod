@@ -23,6 +23,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/go-viper/mapstructure/v2 v2.5.0
+	github.com/goccy/go-yaml v1.19.2
 	github.com/gojek/heimdall/v7 v7.0.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -131,7 +132,6 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.25.5 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/huandu/go-clone v1.7.3 // indirect
