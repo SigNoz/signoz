@@ -204,26 +204,19 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 		// Downstream query builder should handle multiple matching keys with their own metadata
 		// and not rely on this function to do so.
 		materialized := true
-		indexes := []telemetrytypes.JSONDataTypeIndex{}
+		indexes := []telemetrytypes.TelemetryFieldKeySkipIndex{}
 		fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
 		dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
-		jsonTypesSeen := map[string]*telemetrytypes.JSONDataType{}
 		for _, matchingKey := range matchingKeys {
 			materialized = materialized && matchingKey.Materialized
 			fieldContextsSeen[matchingKey.FieldContext] = true
 			dataTypesSeen[matchingKey.FieldDataType] = true
-			if matchingKey.JSONDataType != nil {
-				jsonTypesSeen[matchingKey.JSONDataType.StringValue()] = matchingKey.JSONDataType
-			}
 			indexes = append(indexes, matchingKey.Indexes...)
 		}
 		for _, matchingKey := range contextPrefixedMatchingKeys {
 			materialized = materialized && matchingKey.Materialized
 			fieldContextsSeen[matchingKey.FieldContext] = true
 			dataTypesSeen[matchingKey.FieldDataType] = true
-			if matchingKey.JSONDataType != nil {
-				jsonTypesSeen[matchingKey.JSONDataType.StringValue()] = matchingKey.JSONDataType
-			}
 			indexes = append(indexes, matchingKey.Indexes...)
 		}
 		key.Materialized = materialized
@@ -245,15 +238,6 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			for dt := range dataTypesSeen {
 				actions = append(actions, fmt.Sprintf("Adjusting key %s to have data type %s", key, dt.StringValue()))
 				key.FieldDataType = dt
-				break
-			}
-		}
-
-		if len(jsonTypesSeen) == 1 && key.JSONDataType == nil {
-			// all matching keys have same JSON data type, use it
-			for _, jt := range jsonTypesSeen {
-				actions = append(actions, fmt.Sprintf("Adjusting key %s to have JSON data type %s", key, jt.StringValue()))
-				key.JSONDataType = jt
 				break
 			}
 		}

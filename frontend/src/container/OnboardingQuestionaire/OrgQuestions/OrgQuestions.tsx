@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Input } from '@signozhq/input';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import {
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
-} from '@signozhq/radio-group';
-import { Typography } from 'antd';
+} from '@signozhq/ui/radio-group';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import '../OnboardingQuestionaire.styles.scss';
 
@@ -133,9 +133,9 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 				<Typography.Title level={4} className="onboarding-header-title">
 					Welcome to SigNoz Cloud
 				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
+				<Typography.Text className="onboarding-header-subtitle">
 					Let&apos;s get you started
-				</Typography.Paragraph>
+				</Typography.Text>
 			</div>
 
 			<div className="questions-form-container">
@@ -146,7 +146,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 						</label>
 						<RadioGroup
 							value={observabilityTool || ''}
-							onValueChange={handleObservabilityToolChange}
+							onChange={handleObservabilityToolChange}
 							className="observability-tools-radio-container"
 						>
 							{Object.entries(observabilityTools).map(([tool, label]) => {
@@ -189,7 +189,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 							</div>
 							<RadioGroup
 								value={migrationTimeline || ''}
-								onValueChange={setMigrationTimeline}
+								onChange={setMigrationTimeline}
 								className="migration-timeline-radio-container"
 							>
 								{Object.entries(migrationTimelineOptions).map(([key, label]) => (
@@ -208,7 +208,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 						<div className="question">Do you already use OpenTelemetry?</div>
 						<RadioGroup
 							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : ''}
-							onValueChange={handleOtelChange}
+							onChange={handleOtelChange}
 							className="opentelemetry-radio-container"
 						>
 							<div className="radio-item opentelemetry-radio-item">
@@ -229,7 +229,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 					className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 					onClick={handleNext}
 					disabled={isNextDisabled}
-					suffixIcon={<ArrowRight size={12} />}
+					suffix={<ArrowRight size={12} />}
 				>
 					Next
 				</Button>

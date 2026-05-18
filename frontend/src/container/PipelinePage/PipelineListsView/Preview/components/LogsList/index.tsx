@@ -1,4 +1,4 @@
-import { ExpandAltOutlined } from '@ant-design/icons';
+import { Expand } from '@signozhq/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -9,12 +9,8 @@ import { ILog } from 'types/api/logs/log';
 import './styles.scss';
 
 function LogsList({ logs }: LogsListProps): JSX.Element {
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-	} = useActiveLog();
+	const { activeLog, onSetActiveLog, onClearActiveLog, onAddToQuery } =
+		useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
 
@@ -38,7 +34,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 						tabIndex={0}
 						onKeyUp={makeLogDetailsHandler(log)}
 					>
-						<ExpandAltOutlined />
+						<Expand size="md" />
 					</div>
 				</div>
 			))}

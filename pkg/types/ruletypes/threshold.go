@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type ThresholdKind struct {
@@ -21,9 +22,53 @@ var (
 	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for ThresholdKind.
+func (ThresholdKind) Enum() []any {
+	return []any{
+		BasicThresholdKind,
+	}
+}
+
 type RuleThresholdData struct {
-	Kind ThresholdKind `json:"kind"`
-	Spec any           `json:"spec"`
+	Kind ThresholdKind `json:"kind" required:"true"`
+	Spec any           `json:"spec" required:"true"`
+}
+
+// thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
+type thresholdBasic struct {
+	Kind ThresholdKind       `json:"kind" description:"The kind of threshold." required:"true"`
+	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)." required:"true"`
+}
+
+var (
+	_ jsonschema.OneOfExposer = RuleThresholdData{}
+	_ jsonschema.Preparer     = RuleThresholdData{}
+)
+
+// JSONSchemaOneOf returns the oneOf variants for the RuleThresholdData discriminated union.
+// Each variant represents a different threshold kind with its corresponding spec schema.
+func (RuleThresholdData) JSONSchemaOneOf() []any {
+	return []any{
+		thresholdBasic{},
+	}
+}
+
+// PrepareJSONSchema marks the schema with x-signoz-discriminator;
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3
+// discriminator after reflection.
+func (RuleThresholdData) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			"basic": "#/components/schemas/RuletypesThresholdBasic",
+		},
+	}
+
+	return nil
 }
 
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
@@ -88,12 +133,12 @@ type RuleThreshold interface {
 }
 
 type BasicRuleThreshold struct {
-	Name            string          `json:"name"`
-	TargetValue     *float64        `json:"target"`
+	Name            string          `json:"name" required:"true"`
+	TargetValue     *float64        `json:"target" required:"true"`
 	TargetUnit      string          `json:"targetUnit"`
 	RecoveryTarget  *float64        `json:"recoveryTarget"`
-	MatchType       MatchType       `json:"matchType"`
-	CompareOperator CompareOperator `json:"op"`
+	MatchType       MatchType       `json:"matchType" required:"true"`
+	CompareOperator CompareOperator `json:"op" required:"true"`
 	Channels        []string        `json:"channels"`
 }
 

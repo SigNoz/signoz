@@ -1,34 +1,13 @@
 import { ReactElement } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { AllTheProviders } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { BrandedPermission } from './types';
 import { useAuthZ } from './useAuthZ';
 import { buildPermission } from './utils';
-
-const BASE_URL = ENVIRONMENT.baseURL || '';
-const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 const wrapper = ({ children }: { children: ReactElement }): ReactElement => (
 	<AllTheProviders>{children}</AllTheProviders>
@@ -36,8 +15,8 @@ const wrapper = ({ children }: { children: ReactElement }): ReactElement => (
 
 describe('useAuthZ', () => {
 	it('should fetch and return permissions successfully', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
 
 		const expectedResponse = {
 			[permission1]: {
@@ -70,11 +49,11 @@ describe('useAuthZ', () => {
 		});
 
 		expect(result.current.error).toBeNull();
-		expect(result.current.permissions).toEqual(expectedResponse);
+		expect(result.current.permissions).toStrictEqual(expectedResponse);
 	});
 
 	it('should handle API errors', async () => {
-		const permission = buildPermission('read', 'dashboard:*');
+		const permission = buildPermission('read', 'role:*');
 
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => {
@@ -95,9 +74,9 @@ describe('useAuthZ', () => {
 	});
 
 	it('should refetch when permissions array changes', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
-		const permission3 = buildPermission('delete', 'dashboard:456');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+		const permission3 = buildPermission('delete', 'role:456');
 
 		let requestCount = 0;
 
@@ -134,7 +113,7 @@ describe('useAuthZ', () => {
 		});
 
 		expect(requestCount).toBe(1);
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: {
 				isGranted: true,
 			},
@@ -147,7 +126,7 @@ describe('useAuthZ', () => {
 		});
 
 		expect(requestCount).toBe(2);
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: {
 				isGranted: true,
 			},
@@ -161,8 +140,8 @@ describe('useAuthZ', () => {
 	});
 
 	it('should not refetch when permissions array order changes but content is the same', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
 
 		let requestCount = 0;
 
@@ -213,12 +192,12 @@ describe('useAuthZ', () => {
 
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.error).toBeNull();
-		expect(result.current.permissions).toEqual({});
+		expect(result.current.permissions).toStrictEqual({});
 	});
 
 	it('should send correct payload format to API', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
 
 		let receivedPayload: any = null;
 
@@ -244,23 +223,23 @@ describe('useAuthZ', () => {
 		expect(receivedPayload[0]).toMatchObject({
 			relation: 'read',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'role', type: 'role' },
 				selector: '*',
 			},
 		});
 		expect(receivedPayload[1]).toMatchObject({
 			relation: 'update',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'role', type: 'role' },
 				selector: '123',
 			},
 		});
 	});
 
 	it('should batch multiple hooks into single flight request', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
-		const permission3 = buildPermission('delete', 'dashboard:456');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+		const permission3 = buildPermission('delete', 'role:456');
 
 		let requestCount = 0;
 		const receivedPayloads: any[] = [];
@@ -304,34 +283,34 @@ describe('useAuthZ', () => {
 		expect(receivedPayloads[0][0]).toMatchObject({
 			relation: 'read',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'role', type: 'role' },
 				selector: '*',
 			},
 		});
 		expect(receivedPayloads[0][1]).toMatchObject({
 			relation: 'update',
-			object: { resource: { name: 'dashboard' }, selector: '123' },
+			object: { resource: { kind: 'role' }, selector: '123' },
 		});
 		expect(receivedPayloads[0][2]).toMatchObject({
 			relation: 'delete',
-			object: { resource: { name: 'dashboard' }, selector: '456' },
+			object: { resource: { kind: 'role' }, selector: '456' },
 		});
 
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
-		expect(result2.current.permissions).toEqual({
+		expect(result2.current.permissions).toStrictEqual({
 			[permission2]: { isGranted: false },
 		});
-		expect(result3.current.permissions).toEqual({
+		expect(result3.current.permissions).toStrictEqual({
 			[permission3]: { isGranted: true },
 		});
 	});
 
 	it('should create separate batches for calls after single flight window', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
-		const permission3 = buildPermission('delete', 'dashboard:456');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+		const permission3 = buildPermission('delete', 'role:456');
 
 		let requestCount = 0;
 		const receivedPayloads: any[] = [];
@@ -386,18 +365,18 @@ describe('useAuthZ', () => {
 		expect(receivedPayloads[1]).toHaveLength(2);
 		expect(receivedPayloads[1][0]).toMatchObject({
 			relation: 'update',
-			object: { resource: { name: 'dashboard' }, selector: '123' },
+			object: { resource: { kind: 'role' }, selector: '123' },
 		});
 		expect(receivedPayloads[1][1]).toMatchObject({
 			relation: 'delete',
-			object: { resource: { name: 'dashboard' }, selector: '456' },
+			object: { resource: { kind: 'role' }, selector: '456' },
 		});
 	});
 
 	it('should map permissions correctly when API returns response out of order', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
-		const permission3 = buildPermission('delete', 'dashboard:456');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
+		const permission3 = buildPermission('delete', 'role:456');
 
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
@@ -427,7 +406,7 @@ describe('useAuthZ', () => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 			[permission2]: { isGranted: false },
 			[permission3]: { isGranted: true },
@@ -435,8 +414,8 @@ describe('useAuthZ', () => {
 	});
 
 	it('should not leak state between separate batches', async () => {
-		const permission1 = buildPermission('read', 'dashboard:*');
-		const permission2 = buildPermission('update', 'dashboard:123');
+		const permission1 = buildPermission('read', 'role:*');
+		const permission2 = buildPermission('update', 'role:123');
 
 		let requestCount = 0;
 
@@ -466,7 +445,7 @@ describe('useAuthZ', () => {
 		);
 
 		expect(requestCount).toBe(1);
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
 
@@ -484,10 +463,10 @@ describe('useAuthZ', () => {
 		);
 
 		expect(requestCount).toBe(2);
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
-		expect(result2.current.permissions).toEqual({
+		expect(result2.current.permissions).toStrictEqual({
 			[permission2]: { isGranted: false },
 		});
 		expect(result1.current.permissions).not.toHaveProperty(permission2);

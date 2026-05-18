@@ -99,45 +99,11 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	// 2. Decode the spec based on the Type.
 	switch shadow.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
-		var header struct {
-			Signal telemetrytypes.Signal `json:"signal"`
+		spec, err := UnmarshalBuilderQueryBySignal(shadow.Spec)
+		if err != nil {
+			return err
 		}
-		if err := json.Unmarshal(shadow.Spec, &header); err != nil {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"cannot detect builder signal: %v",
-				err,
-			)
-		}
-
-		switch header.Signal {
-		case telemetrytypes.SignalTraces:
-			var spec QueryBuilderQuery[TraceAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
-			}
-			q.Spec = spec
-		case telemetrytypes.SignalLogs:
-			var spec QueryBuilderQuery[LogAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
-			}
-			q.Spec = spec
-		case telemetrytypes.SignalMetrics:
-			var spec QueryBuilderQuery[MetricAggregation]
-			if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
-				return wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
-			}
-			q.Spec = spec
-		default:
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"unknown builder signal %q",
-				header.Signal,
-			).WithAdditional(
-				"Valid signals are: traces, logs, metrics",
-			)
-		}
+		q.Spec = spec
 
 	case QueryTypeFormula:
 		var spec QueryBuilderFormula
@@ -189,6 +155,49 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// UnmarshalBuilderQueryBySignal peeks at the "signal" field in the JSON data and
+// unmarshals into the correct generic QueryBuilderQuery type. Returns the typed spec.
+func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
+	var header struct {
+		Signal telemetrytypes.Signal `json:"signal"`
+	}
+	if err := json.Unmarshal(data, &header); err != nil {
+		return nil, errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"cannot detect builder signal: %v",
+			err,
+		)
+	}
+
+	switch header.Signal {
+	case telemetrytypes.SignalTraces:
+		var spec QueryBuilderQuery[TraceAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid trace builder query spec: %v", err)
+		}
+		return spec, nil
+	case telemetrytypes.SignalLogs:
+		var spec QueryBuilderQuery[LogAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid log builder query spec: %v", err)
+		}
+		return spec, nil
+	case telemetrytypes.SignalMetrics:
+		var spec QueryBuilderQuery[MetricAggregation]
+		if err := json.Unmarshal(data, &spec); err != nil {
+			return nil, wrapUnmarshalError(err, "invalid metric builder query spec: %v", err)
+		}
+		return spec, nil
+	default:
+		return nil, errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid signal %q; allowed values: %v",
+			header.Signal.StringValue(),
+			telemetrytypes.Signal{}.Enum(),
+		)
+	}
 }
 
 type CompositeQuery struct {

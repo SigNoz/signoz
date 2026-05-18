@@ -96,7 +96,7 @@ describe('logsUpdaterConfig', () => {
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.selectColumns).toEqual(newColumns);
+		expect(storedData.selectColumns).toStrictEqual(newColumns);
 		expect(storedData.maxLines).toBe(1); // Should preserve other fields
 
 		// Should not update saved view preferences
@@ -174,7 +174,7 @@ describe('logsUpdaterConfig', () => {
 		expect(storedData.format).toBe('json');
 		expect(storedData.fontSize).toBe('large');
 		expect(storedData.version).toBe(1);
-		expect(storedData.selectColumns).toEqual([
+		expect(storedData.selectColumns).toStrictEqual([
 			{
 				key: 'column',
 				type: 'tag',

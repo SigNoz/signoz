@@ -2,12 +2,8 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { green } from '@ant-design/colors';
-import {
-	MoreOutlined,
-	PauseOutlined,
-	PlayCircleOutlined,
-} from '@ant-design/icons';
-import { Button, Popover, Select, Space } from 'antd';
+import { Pause, Play, EllipsisVertical } from '@signozhq/icons';
+import { Button, Flex, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -76,9 +72,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		batchedEventsRef.current = [];
 	}, [dispatch]);
 
-	const pushLiveLogThrottled = useMemo(() => throttle(pushLiveLog, 1000), [
-		pushLiveLog,
-	]);
+	const pushLiveLogThrottled = useMemo(
+		() => throttle(pushLiveLog, 1000),
+		[pushLiveLog],
+	);
 
 	const batchLiveLog = useCallback(
 		(e: { data: string }): void => {
@@ -102,7 +99,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 				...(liveTailSourceRef.current && firstLogsId
 					? {
 							idGt: firstLogsId,
-					  }
+						}
 					: {}),
 			});
 
@@ -190,9 +187,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		[dispatch, liveTail, liveTailStartRange],
 	);
 
-	const isDisabled = useMemo(() => selectedAutoRefreshInterval?.length > 0, [
-		selectedAutoRefreshInterval,
-	]);
+	const isDisabled = useMemo(
+		() => selectedAutoRefreshInterval?.length > 0,
+		[selectedAutoRefreshInterval],
+	);
 
 	const onLiveTailStop = (): void => {
 		handleLiveTail('STOPPED');
@@ -219,8 +217,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 						title="Pause live tail"
 						style={{ background: green[6] }}
 					>
-						<span>Pause</span>
-						<PauseOutlined />
+						<Flex align="center" gap={4}>
+							<span>Pause</span>
+							<Pause size="md" />
+						</Flex>
 					</Button>
 				) : (
 					<Button
@@ -229,7 +229,9 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 						title="Start live tail"
 						disabled={isDisabled}
 					>
-						Go Live <PlayCircleOutlined />
+						<Flex align="center" gap={4}>
+							Go Live <Play size="md" />
+						</Flex>
 					</Button>
 				)}
 
@@ -246,7 +248,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 					trigger="click"
 					content={OptionsPopOverContent}
 				>
-					<MoreOutlined style={{ fontSize: 24 }} />
+					<EllipsisVertical size="lg" />
 				</Popover>
 			</Space>
 		</TimePickerCard>

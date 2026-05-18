@@ -1,0 +1,18 @@
+.tooltipPluginContainer {
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 1070;
+	white-space: pre;
+	border-radius: 4px;
+	position: fixed;
+	overflow: auto;
+	transform: translate(-1000px, -1000px); // hide the tooltip initially
+	opacity: 0;
+	pointer-events: none;
+}
+
+.visible {
+	opacity: 1;
+	pointer-events: all;
+}

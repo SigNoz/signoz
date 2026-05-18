@@ -1,0 +1,30 @@
+.select-all {
+	margin-top: 16px;
+	margin-bottom: 16px;
+}
+
+.regions-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+	gap: 8px;
+}
+
+.region-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.region-group label {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.region-selector-footer {
+	margin-top: 36px;
+
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

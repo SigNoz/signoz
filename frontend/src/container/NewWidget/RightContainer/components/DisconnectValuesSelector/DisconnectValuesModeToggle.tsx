@@ -1,5 +1,5 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
-import { Typography } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
 interface DisconnectValuesModeToggleProps {
@@ -16,7 +16,7 @@ export default function DisconnectValuesModeToggle({
 			type="single"
 			value={value}
 			size="lg"
-			onValueChange={(newValue): void => {
+			onChange={(newValue): void => {
 				if (newValue) {
 					onChange(newValue as DisconnectedValuesMode);
 				}

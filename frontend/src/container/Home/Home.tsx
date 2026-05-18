@@ -2,16 +2,23 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
-import { PersistedAnnouncementBanner } from '@signozhq/ui';
-import { Button, Popover } from 'antd';
+import {
+	ClipboardList,
+	Compass,
+	Dot,
+	House,
+	Plus,
+	Wrench,
+} from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -35,11 +42,9 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import crackerUrl from '@/assets/Icons/cracker.svg';
 import dashboardUrl from '@/assets/Icons/dashboard.svg';
-import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
 import wrenchUrl from '@/assets/Icons/wrench.svg';
 import allInOneUrl from '@/assets/Images/allInOne.svg';
 import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
-import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
 import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -70,9 +75,8 @@ export default function Home(): JSX.Element {
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -138,9 +142,8 @@ export default function Home(): JSX.Element {
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -273,23 +276,6 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			{user?.role === USER_ROLES.ADMIN && (
-				<PersistedAnnouncementBanner
-					type="info"
-					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					action={{
-						label: 'Go to Service Accounts',
-						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-					}}
-				>
-					<>
-						<strong>API keys</strong> have been deprecated in favour of{' '}
-						<strong>Service accounts</strong>. The existing API Keys have been
-						migrated to service accounts.
-					</>
-				</PersistedAnnouncementBanner>
-			)}
-
 			<div className="sticky-header">
 				<Header
 					leftComponent={
@@ -299,6 +285,11 @@ export default function Home(): JSX.Element {
 					}
 					rightComponent={
 						<div className="home-header-right">
+							<HeaderRightSection
+								enableAnnouncements={false}
+								enableFeedback={false}
+								enableShare={false}
+							/>
 							{isWelcomeChecklistSkipped && (
 								<Popover
 									placement="bottomRight"
@@ -317,18 +308,11 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
-										type="default"
-										size="small"
-										className="periscope-btn secondary welcome-checklist-btn"
+										variant="solid"
+										color="secondary"
+										prefix={<ClipboardList size={14} />}
 									>
-										<img
-											src={spinnerHalfBlueUrl}
-											alt="spinner-half-blue"
-											width={16}
-											height={16}
-											className="welcome-checklist-icon"
-										/>
-										&nbsp; Welcome checklist
+										Welcome checklist
 									</Button>
 								</Popover>
 							)}
@@ -347,10 +331,6 @@ export default function Home(): JSX.Element {
 						}
 						isLoading={isLogsLoading || isTracesLoading}
 					/>
-
-					<div className="divider">
-						<img src={dottedDividerUrl} alt="divider" />
-					</div>
 
 					<div className="active-ingestions-container">
 						{isLogsIngestionActive && (
@@ -511,9 +491,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
@@ -527,9 +508,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
@@ -543,9 +525,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
@@ -581,9 +564,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
@@ -625,9 +609,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
@@ -706,7 +691,8 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
-											type="link"
+											variant="link"
+											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
 										>

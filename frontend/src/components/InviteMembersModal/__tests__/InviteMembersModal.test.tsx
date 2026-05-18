@@ -14,7 +14,8 @@ const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
 
 jest.mock('api/v1/invite/create');
 jest.mock('api/v1/invite/bulk/create');
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -89,11 +90,11 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText(
+			await expect(
+				screen.findByText(
 					'Please enter valid emails and select roles for team members',
 				),
-			).toBeInTheDocument();
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows email-only message when email is invalid but role is selected', async () => {
@@ -111,9 +112,9 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText('Please enter valid emails for team members'),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText('Please enter valid emails for team members'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows role-only message when email is valid but role is missing', async () => {
@@ -129,9 +130,9 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText('Please select roles for team members'),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText('Please select roles for team members'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 

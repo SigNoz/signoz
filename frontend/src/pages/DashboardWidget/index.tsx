@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { generatePath, useParams } from 'react-router-dom';
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getDashboard from 'api/v1/dashboards/id/get';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -62,13 +63,12 @@ function DashboardWidgetInternal({
 	widgetId: string;
 	graphType: PANEL_TYPES;
 }): JSX.Element | null {
-	const [selectedDashboard, setSelectedDashboard] = useState<
-		Dashboard | undefined
-	>(undefined);
-
-	const { transformDashboardVariables } = useTransformDashboardVariables(
-		dashboardId,
+	const [dashboardData, setDashboardData] = useState<Dashboard | undefined>(
+		undefined,
 	);
+
+	const { transformDashboardVariables } =
+		useTransformDashboardVariables(dashboardId);
 
 	const {
 		isFetching: isFetchingDashboardResponse,
@@ -83,7 +83,7 @@ function DashboardWidgetInternal({
 		cacheTime: DASHBOARD_CACHE_TIME,
 		onSuccess: (response) => {
 			const updatedDashboardData = transformDashboardVariables(response.data);
-			setSelectedDashboard(updatedDashboardData);
+			setDashboardData(updatedDashboardData);
 			setDashboardVariablesStore({
 				dashboardId,
 				variables: updatedDashboardData.data.variables,
@@ -108,7 +108,7 @@ function DashboardWidgetInternal({
 			dashboardId={dashboardId}
 			selectedGraph={graphType}
 			enableDrillDown={isDrilldownEnabled()}
-			selectedDashboard={selectedDashboard}
+			dashboardData={dashboardData}
 		/>
 	);
 }

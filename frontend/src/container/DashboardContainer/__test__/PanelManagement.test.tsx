@@ -58,7 +58,7 @@ const mockDashboard = {
 // Mock dependencies
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
-		selectedDashboard: mockDashboard,
+		dashboardData: mockDashboard,
 	}),
 }));
 
@@ -154,7 +154,7 @@ describe('Panel Management Tests', () => {
 			// Temporarily mock the dashboard
 			jest.doMock('providers/Dashboard/store/useDashboardStore', () => ({
 				useDashboardStore: (): any => ({
-					selectedDashboard: modifiedDashboard,
+					dashboardData: modifiedDashboard,
 				}),
 			}));
 
@@ -424,7 +424,7 @@ describe('Panel Management Tests', () => {
 			);
 
 			// Should return dashboard unchanged
-			expect(updatedDashboard).toEqual(dashboard);
+			expect(updatedDashboard).toStrictEqual(dashboard);
 		});
 
 		it('should handle undefined dashboard gracefully', () => {

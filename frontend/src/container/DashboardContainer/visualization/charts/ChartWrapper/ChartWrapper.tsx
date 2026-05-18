@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
@@ -14,7 +14,7 @@ import uPlot from 'uplot';
 import { ChartProps } from '../types';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 200;
+const TOOLTIP_MIN_WIDTH = 300;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },
@@ -25,11 +25,16 @@ export default function ChartWrapper({
 	showTooltip = true,
 	showLegend = true,
 	canPinTooltip = false,
+	pinKey,
+	onClick,
 	syncMode,
 	syncKey,
+	syncFilterMode,
 	onDestroy = noop,
 	children,
 	layoutChildren,
+	yAxisUnit,
+	groupByPerQuery,
 	customTooltip,
 	pinnedTooltipElement,
 	'data-testid': testId,
@@ -60,6 +65,15 @@ export default function ChartWrapper({
 			return null;
 		},
 		[customTooltip],
+	);
+
+	const syncMetadata = useMemo(
+		() => ({
+			yAxisUnit,
+			groupByPerQuery,
+			filterMode: syncFilterMode,
+		}),
+		[yAxisUnit, groupByPerQuery, syncFilterMode],
 	);
 
 	return (
@@ -93,12 +107,15 @@ export default function ChartWrapper({
 							<TooltipPlugin
 								config={config}
 								canPinTooltip={canPinTooltip}
+								pinKey={pinKey}
+								onClick={onClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,
 									averageLegendWidth + TOOLTIP_WIDTH_PADDING,
 								)}
 								syncKey={syncKey}
+								syncMetadata={syncMetadata}
 								render={renderTooltipCallback}
 								pinnedTooltipElement={pinnedTooltipElement}
 							/>

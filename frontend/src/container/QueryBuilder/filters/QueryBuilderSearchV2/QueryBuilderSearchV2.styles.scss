@@ -1,7 +1,7 @@
 .query-builder-search {
 	.content {
 		.suggested-filters {
-			color: var(--bg-slate-50);
+			color: var(--muted-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -38,7 +38,7 @@
 
 	.content {
 		.suggested-filters {
-			color: var(--bg-slate-50);
+			color: var(--muted-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -56,7 +56,7 @@
 			padding: 12px 0px 8px 14px;
 
 			.operator-for-text {
-				color: var(--bg-slate-200);
+				color: var(--l3-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -74,8 +74,8 @@
 				justify-content: center;
 				gap: 4px;
 				border-radius: 50px;
-				background: rgba(255, 255, 255, 0.1);
-				color: var(--bg-vanilla-400);
+				background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -91,7 +91,7 @@
 			gap: 6px;
 			padding: 12px 0px 8px 14px;
 			.value-for-text {
-				color: var(--bg-slate-200);
+				color: var(--l3-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -109,8 +109,8 @@
 				justify-content: center;
 				gap: 4px;
 				border-radius: 50px;
-				background: rgba(255, 255, 255, 0.1);
-				color: var(--bg-vanilla-400);
+				background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -123,7 +123,7 @@
 			cursor: default;
 			.heading {
 				padding: 12px 14px 8px 14px;
-				color: var(--bg-slate-50);
+				color: var(--muted-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -147,8 +147,8 @@
 					align-items: center;
 					gap: 10px;
 					border-radius: 2px;
-					background: var(--bg-ink-200);
-					color: var(--bg-vanilla-400);
+					background: var(--l3-background);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -159,7 +159,7 @@
 				}
 
 				.example-query:hover {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -169,8 +169,8 @@
 		display: flex;
 		align-items: center;
 		border-radius: 0px 0px 4px 4px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		padding: 11px 16px;
 		cursor: default;
 
@@ -179,15 +179,15 @@
 			height: 16px;
 			flex-shrink: 0;
 			border-radius: 2.286px;
-			border-top: 1.143px solid var(--bg-ink-200);
-			border-right: 1.143px solid var(--bg-ink-200);
-			border-bottom: 2.286px solid var(--bg-ink-200);
-			border-left: 1.143px solid var(--bg-ink-200);
-			background: var(--Ink-400, #121317);
+			border-top: 1.143px solid var(--l3-background);
+			border-right: 1.143px solid var(--l3-background);
+			border-bottom: 2.286px solid var(--l3-background);
+			border-left: 1.143px solid var(--l3-background);
+			background: var(--l2-background);
 		}
 
 		.keyboard-text {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-style: normal;
@@ -201,7 +201,7 @@
 			align-items: center;
 			padding-right: 12px;
 			gap: 4px;
-			border-right: 1px solid #1d212d;
+			border-right: 1px solid var(--l1-border);
 		}
 
 		.update-query {
@@ -212,7 +212,7 @@
 		}
 		.show-all-filter-items {
 			padding-left: 12px;
-			border-left: 1px solid #1d212d;
+			border-left: 1px solid var(--l1-border);
 			display: flex;
 			align-items: center;
 			margin-left: 12px;
@@ -229,13 +229,13 @@
 			display: flex;
 			align-items: center;
 			border-radius: 2px 0px 0px 2px;
-			border: 1px solid var(--bg-slate-300);
-			background: var(--bg-slate-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			padding: 0px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px !important;
 				font-style: normal;
@@ -257,156 +257,43 @@
 			}
 
 			&.resource {
-				border: 1px solid #4bcff920;
+				border: 1px solid color-mix(in srgb, var(--bg-aqua-400) 13%, transparent);
 
 				.ant-typography {
 					color: var(--bg-aqua-400);
-					background: #4bcff910;
+					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 					font-size: 14px;
 				}
 
 				.ant-tag-close-icon {
-					background: #4bcff910;
+					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 				}
 			}
 			&.tag {
-				border: 1px solid rgba(189, 153, 121, 0.2);
+				border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 20%, transparent);
 
 				.ant-typography {
 					color: var(--bg-sienna-400);
-					background: rgba(189, 153, 121, 0.1);
+					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 					font-size: 14px;
 				}
 
 				.ant-tag-close-icon {
-					background: rgba(189, 153, 121, 0.1);
+					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 				}
 			}
 
 			&.scope {
-				border: 1px solid rgba(113, 144, 249, 0.2);
+				border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 
 				.ant-typography {
 					color: var(--bg-robin-400);
-					background: rgba(113, 144, 249, 0.1);
+					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 					font-size: 14px;
 				}
 
 				.ant-tag-close-icon {
-					background: rgba(113, 144, 249, 0.1);
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.query-builder-search-v2 {
-		.ant-select-selector {
-			border-color: var(--bg-vanilla-300) !important;
-			background-color: var(--bg-vanilla-100) !important;
-			color: var(--bg-ink-200);
-		}
-
-		.content {
-			.operator-for {
-				.operator-for-text {
-					color: var(--bg-ink-200);
-				}
-
-				.operator-for-value {
-					background: rgba(255, 255, 255, 0.1);
-					color: var(--bg-ink-200);
-				}
-			}
-
-			.value-for {
-				.value-for-text {
-					color: var(--bg-ink-200);
-				}
-
-				.value-for-value {
-					background: rgba(255, 255, 255, 0.1);
-					color: var(--bg-ink-400);
-				}
-			}
-			.example-queries {
-				cursor: default;
-				.heading {
-					color: var(--bg-slate-50);
-				}
-
-				.query-container {
-					.example-query {
-						background: var(--bg-vanilla-200);
-						color: var(--bg-ink-400);
-					}
-
-					.example-query:hover {
-						color: var(--bg-ink-100);
-					}
-				}
-			}
-		}
-
-		.keyboard-shortcuts {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-200);
-
-			.icons {
-				border-top: 1.143px solid var(--bg-ink-200);
-				border-right: 1.143px solid var(--bg-ink-200);
-				border-bottom: 2.286px solid var(--bg-ink-200);
-				border-left: 1.143px solid var(--bg-ink-200);
-				background: var(--bg-vanilla-300);
-			}
-
-			.keyboard-text {
-				color: var(--bg-ink-400);
-			}
-
-			.navigate {
-				border-right: 1px solid #1d212d;
-			}
-
-			.show-all-filter-items {
-				border-left: 1px solid #1d212d;
-			}
-		}
-
-		.qb-search-bar-tokenised-tags {
-			.ant-tag {
-				background: var(--bg-vanilla-300);
-				border: 1px solid var(--bg-slate-100);
-				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-
-				.ant-typography {
-					color: var(--bg-ink-100);
-				}
-
-				&.resource {
-					border: 1px solid #4bcff920;
-
-					.ant-typography {
-						color: var(--bg-aqua-400);
-						background: #4bcff910;
-					}
-
-					.ant-tag-close-icon {
-						background: #4bcff910;
-					}
-				}
-				&.tag {
-					border: 1px solid rgba(189, 153, 121, 0.2);
-
-					.ant-typography {
-						color: var(--bg-sienna-400);
-						background: rgba(189, 153, 121, 0.1);
-					}
-
-					.ant-tag-close-icon {
-						background: rgba(189, 153, 121, 0.1);
-					}
+					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 				}
 			}
 		}

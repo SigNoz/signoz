@@ -10,10 +10,10 @@ import (
 )
 
 type WrappedIndex struct {
-	JSONDataType telemetrytypes.JSONDataType `json:"-"`
-	ColumnType   string                      `json:"column_type"`
-	Type         string                      `json:"type"`
-	Granularity  int                         `json:"granularity"`
+	JSONDataType  telemetrytypes.JSONDataType  `json:"-"`
+	FieldDataType telemetrytypes.FieldDataType `json:"fieldDataType"`
+	Type          string                       `json:"type"`
+	Granularity   int                          `json:"granularity"`
 }
 
 type PromotePath struct {
@@ -60,12 +60,12 @@ func (i *PromotePath) ValidateAndSetDefaults() error {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
 		}
 
-		jsonDataType, ok := telemetrytypes.MappingStringToJSONDataType[index.ColumnType]
+		jsonDataType, ok := telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType]
 		if !ok {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid column type: %s", index.ColumnType)
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid column type: %s", index.FieldDataType)
 		}
 		if !jsonDataType.IndexSupported {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index is not supported for column type: %s", index.ColumnType)
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index is not supported for column type: %s", index.FieldDataType)
 		}
 
 		i.Indexes[idx].JSONDataType = jsonDataType

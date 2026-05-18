@@ -60,7 +60,7 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			// V5 Aggregation format: aggregations array (not aggregateAttribute)
 			expect(queryA.aggregations).toBeDefined();
 			expect(Array.isArray(queryA.aggregations)).toBe(true);
-			expect(queryA.aggregations?.[0]).toEqual({
+			expect(queryA.aggregations?.[0]).toStrictEqual({
 				expression: 'count()',
 			});
 			expect(queryA).not.toHaveProperty('aggregateAttribute');

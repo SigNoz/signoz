@@ -1,9 +1,11 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +17,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetMetricAlerts200,
 	GetMetricAlertsPathParameters,
@@ -45,6 +44,9 @@ import type {
 	UpdateMetricMetadataPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
 /**
  * This endpoint returns a list of distinct metric names within the specified time range
  * @summary List metric names
@@ -67,7 +69,7 @@ export const getListMetricsQueryKey = (params?: ListMetricsParams) => {
 
 export const getListMetricsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listMetrics>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListMetricsParams,
 	options?: {
@@ -104,7 +106,7 @@ export type ListMetricsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListMetrics<
 	TData = Awaited<ReturnType<typeof listMetrics>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListMetricsParams,
 	options?: {
@@ -121,9 +123,7 @@ export function useListMetrics<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -165,7 +165,7 @@ export const getGetMetricAlertsQueryKey = ({
 
 export const getGetMetricAlertsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricAlertsPathParameters,
 	options?: {
@@ -208,7 +208,7 @@ export type GetMetricAlertsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricAlerts<
 	TData = Awaited<ReturnType<typeof getMetricAlerts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricAlertsPathParameters,
 	options?: {
@@ -225,9 +225,7 @@ export function useGetMetricAlerts<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -275,7 +273,7 @@ export const getGetMetricAttributesQueryKey = (
 
 export const getGetMetricAttributesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricAttributes>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricAttributesPathParameters,
 	params?: GetMetricAttributesParams,
@@ -320,7 +318,7 @@ export type GetMetricAttributesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricAttributes<
 	TData = Awaited<ReturnType<typeof getMetricAttributes>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricAttributesPathParameters,
 	params?: GetMetricAttributesParams,
@@ -342,9 +340,7 @@ export function useGetMetricAttributes<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -387,7 +383,7 @@ export const getGetMetricDashboardsQueryKey = ({
 
 export const getGetMetricDashboardsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricDashboardsPathParameters,
 	options?: {
@@ -430,7 +426,7 @@ export type GetMetricDashboardsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricDashboards<
 	TData = Awaited<ReturnType<typeof getMetricDashboards>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricDashboardsPathParameters,
 	options?: {
@@ -450,9 +446,7 @@ export function useGetMetricDashboards<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -494,7 +488,7 @@ export const getGetMetricHighlightsQueryKey = ({
 
 export const getGetMetricHighlightsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricHighlightsPathParameters,
 	options?: {
@@ -537,7 +531,7 @@ export type GetMetricHighlightsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricHighlights<
 	TData = Awaited<ReturnType<typeof getMetricHighlights>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricHighlightsPathParameters,
 	options?: {
@@ -557,9 +551,7 @@ export function useGetMetricHighlights<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -601,7 +593,7 @@ export const getGetMetricMetadataQueryKey = ({
 
 export const getGetMetricMetadataQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricMetadataPathParameters,
 	options?: {
@@ -644,7 +636,7 @@ export type GetMetricMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMetricMetadata<
 	TData = Awaited<ReturnType<typeof getMetricMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ metricName }: GetMetricMetadataPathParameters,
 	options?: {
@@ -661,9 +653,7 @@ export function useGetMetricMetadata<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -688,7 +678,7 @@ export const invalidateGetMetricMetadata = async (
  */
 export const updateMetricMetadata = (
 	{ metricName }: UpdateMetricMetadataPathParameters,
-	metricsexplorertypesUpdateMetricMetadataRequestDTO: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
+	metricsexplorertypesUpdateMetricMetadataRequestDTO?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
@@ -702,14 +692,14 @@ export const updateMetricMetadata = (
 
 export const getUpdateMetricMetadataMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		},
 		TContext
 	>;
@@ -718,15 +708,15 @@ export const getUpdateMetricMetadataMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['updateMetricMetadata'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -735,7 +725,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -749,22 +739,25 @@ export const getUpdateMetricMetadataMutationOptions = <
 export type UpdateMetricMetadataMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMetricMetadata>>
 >;
-export type UpdateMetricMetadataMutationBody = BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
-export type UpdateMetricMetadataMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMetricMetadataMutationBody =
+	| BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>
+	| undefined;
+export type UpdateMetricMetadataMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update metric metadata
  */
 export const useUpdateMetricMetadata = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		TError,
 		{
 			pathParams: UpdateMetricMetadataPathParameters;
-			data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+			data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 		},
 		TContext
 	>;
@@ -773,20 +766,18 @@ export const useUpdateMetricMetadata = <
 	TError,
 	{
 		pathParams: UpdateMetricMetadataPathParameters;
-		data: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+		data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateMetricMetadataMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateMetricMetadataMutationOptions(options));
 };
 /**
  * Returns raw time series data points for a metric within a time range (max 30 minutes). Each series includes labels and timestamp/value pairs.
  * @summary Inspect raw metric data points
  */
 export const inspectMetrics = (
-	metricsexplorertypesInspectMetricsRequestDTO: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>,
+	metricsexplorertypesInspectMetricsRequestDTO?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<InspectMetrics200>({
@@ -800,32 +791,32 @@ export const inspectMetrics = (
 
 export const getInspectMetricsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['inspectMetrics'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof inspectMetrics>>,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -838,7 +829,9 @@ export const getInspectMetricsMutationOptions = <
 export type InspectMetricsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof inspectMetrics>>
 >;
-export type InspectMetricsMutationBody = BodyType<MetricsexplorertypesInspectMetricsRequestDTO>;
+export type InspectMetricsMutationBody =
+	| BodyType<MetricsexplorertypesInspectMetricsRequestDTO>
+	| undefined;
 export type InspectMetricsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -846,23 +839,21 @@ export type InspectMetricsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useInspectMetrics = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getInspectMetricsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getInspectMetricsMutationOptions(options));
 };
 /**
  * Lightweight endpoint that checks if any non-SigNoz metrics have been ingested, used for onboarding status detection
@@ -882,7 +873,7 @@ export const getGetMetricsOnboardingStatusQueryKey = () => {
 
 export const getGetMetricsOnboardingStatusQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
@@ -909,7 +900,8 @@ export const getGetMetricsOnboardingStatusQueryOptions = <
 export type GetMetricsOnboardingStatusQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsOnboardingStatus>>
 >;
-export type GetMetricsOnboardingStatusQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricsOnboardingStatusQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Check if non-SigNoz metrics have been received
@@ -917,7 +909,7 @@ export type GetMetricsOnboardingStatusQueryError = ErrorType<RenderErrorResponse
 
 export function useGetMetricsOnboardingStatus<
 	TData = Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
@@ -931,9 +923,7 @@ export function useGetMetricsOnboardingStatus<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -956,7 +946,7 @@ export const invalidateGetMetricsOnboardingStatus = async (
  * @summary Get metrics statistics
  */
 export const getMetricsStats = (
-	metricsexplorertypesStatsRequestDTO: BodyType<MetricsexplorertypesStatsRequestDTO>,
+	metricsexplorertypesStatsRequestDTO?: BodyType<MetricsexplorertypesStatsRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricsStats200>({
@@ -970,32 +960,32 @@ export const getMetricsStats = (
 
 export const getGetMetricsStatsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['getMetricsStats'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsStats>>,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1008,7 +998,9 @@ export const getGetMetricsStatsMutationOptions = <
 export type GetMetricsStatsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsStats>>
 >;
-export type GetMetricsStatsMutationBody = BodyType<MetricsexplorertypesStatsRequestDTO>;
+export type GetMetricsStatsMutationBody =
+	| BodyType<MetricsexplorertypesStatsRequestDTO>
+	| undefined;
 export type GetMetricsStatsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1016,30 +1008,28 @@ export type GetMetricsStatsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useGetMetricsStats = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getGetMetricsStatsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getGetMetricsStatsMutationOptions(options));
 };
 /**
  * This endpoint returns a treemap visualization showing the proportional distribution of metrics by sample count or time series count
  * @summary Get metrics treemap
  */
 export const getMetricsTreemap = (
-	metricsexplorertypesTreemapRequestDTO: BodyType<MetricsexplorertypesTreemapRequestDTO>,
+	metricsexplorertypesTreemapRequestDTO?: BodyType<MetricsexplorertypesTreemapRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetMetricsTreemap200>({
@@ -1053,32 +1043,32 @@ export const getMetricsTreemap = (
 
 export const getGetMetricsTreemapMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['getMetricsTreemap'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> }
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1091,7 +1081,9 @@ export const getGetMetricsTreemapMutationOptions = <
 export type GetMetricsTreemapMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getMetricsTreemap>>
 >;
-export type GetMetricsTreemapMutationBody = BodyType<MetricsexplorertypesTreemapRequestDTO>;
+export type GetMetricsTreemapMutationBody =
+	| BodyType<MetricsexplorertypesTreemapRequestDTO>
+	| undefined;
 export type GetMetricsTreemapMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1099,21 +1091,19 @@ export type GetMetricsTreemapMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useGetMetricsTreemap = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getGetMetricsTreemapMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getGetMetricsTreemapMutationOptions(options));
 };

@@ -1,4 +1,10 @@
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import {
@@ -31,27 +37,25 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('returns to provider selection when back button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(<CreateEdit isCreate onClose={mockOnClose} />);
 
 			const configureButtons = await screen.findAllByRole('button', {
 				name: /configure/i,
 			});
-			await user.click(configureButtons[0]);
+			// Use fireEvent to skip userEvent's pointer simulation and the Antd
+			// Tooltip mouseEnterDelay timers it triggers on the Configure button.
+			fireEvent.click(configureButtons[0]);
 
-			await waitFor(() => {
-				expect(screen.getByText(/edit google authentication/i)).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByText(/edit google authentication/i),
+			).resolves.toBeInTheDocument();
 
 			const backButton = screen.getByRole('button', { name: /back/i });
-			await user.click(backButton);
+			fireEvent.click(backButton);
 
-			await waitFor(() => {
-				expect(
-					screen.getByText(/configure authentication method/i),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByText(/configure authentication method/i),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -122,7 +126,7 @@ describe('CreateEdit Modal', () => {
 			const configureButtons = await screen.findAllByRole('button', {
 				name: /configure/i,
 			});
-			await user.click(configureButtons[0]);
+			fireEvent.click(configureButtons[0]);
 
 			const saveButton = await screen.findByRole('button', {
 				name: /save changes/i,
@@ -334,9 +338,7 @@ describe('CreateEdit Modal', () => {
 	});
 
 	describe('Modal Actions', () => {
-		it('calls onClose when cancel button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+		it('calls onClose when cancel button is clicked', () => {
 			render(
 				<CreateEdit
 					isCreate={false}
@@ -346,7 +348,7 @@ describe('CreateEdit Modal', () => {
 			);
 
 			const cancelButton = screen.getByRole('button', { name: /cancel/i });
-			await user.click(cancelButton);
+			fireEvent.click(cancelButton);
 
 			expect(mockOnClose).toHaveBeenCalled();
 		});

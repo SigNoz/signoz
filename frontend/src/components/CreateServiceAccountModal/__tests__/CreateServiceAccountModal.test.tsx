@@ -1,11 +1,27 @@
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui/sonner';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	waitForElementToBeRemoved,
+} from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+	__esModule: true,
+	default: ({
+		children,
+	}: {
+		children: React.ReactElement;
+	}): React.ReactElement => children,
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -68,7 +84,6 @@ describe('CreateServiceAccountModal', () => {
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				'Service account created successfully',
-				expect.anything(),
 			);
 		});
 
@@ -107,7 +122,9 @@ describe('CreateServiceAccountModal', () => {
 					getErrorMessage: expect.any(Function),
 				}),
 			);
-			const passedError = showErrorModal.mock.calls[0][0] as any;
+			const passedError = showErrorModal.mock.calls[0][0] as {
+				getErrorMessage: () => string;
+			};
 			expect(passedError.getErrorMessage()).toBe('Internal Server Error');
 		});
 
@@ -120,9 +137,12 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await screen.findByRole('dialog', { name: /New Service Account/i });
+		const dialog = await screen.findByRole('dialog', {
+			name: /New Service Account/i,
+		});
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
+		await waitForElementToBeRemoved(dialog);
 		expect(
 			screen.queryByRole('dialog', { name: /New Service Account/i }),
 		).not.toBeInTheDocument();
@@ -136,6 +156,8 @@ describe('CreateServiceAccountModal', () => {
 		await user.type(nameInput, 'Bot');
 		await user.clear(nameInput);
 
-		await screen.findByText('Name is required');
+		await expect(
+			screen.findByText('Name is required'),
+		).resolves.toBeInTheDocument();
 	});
 });

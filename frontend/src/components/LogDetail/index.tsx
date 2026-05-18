@@ -3,19 +3,21 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
-import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
@@ -34,17 +36,19 @@ import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
 	ArrowUp,
-	BarChart2,
 	Braces,
 	ChevronDown,
 	ChevronUp,
 	Compass,
 	Copy,
 	Filter,
+	Histogram,
 	Table,
 	TextSelect,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
+import { JsonView } from 'periscope/components/JsonView';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -78,6 +82,10 @@ function LogDetailInner({
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
 	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
+	const { featureFlags } = useAppContext();
+	const isBodyJsonQueryEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
+			?.active || false;
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -207,11 +215,29 @@ function LogDetailInner({
 		}
 	};
 
+	const logBody = useMemo(() => {
+		if (!isBodyJsonQueryEnabled) {
+			return log?.body || '';
+		}
+
+		try {
+			const json = JSON.parse(log?.body || '');
+
+			if (typeof json?.message === 'string' && json.message !== '') {
+				return json.message;
+			}
+
+			return log?.body || '';
+		} catch {
+			return log?.body || '';
+		}
+	}, [isBodyJsonQueryEnabled, log?.body]);
+
 	const htmlBody = useMemo(
 		() => ({
-			__html: getSanitizedLogBody(log?.body || '', { shouldEscapeHtml: true }),
+			__html: getSanitizedLogBody(logBody || '', { shouldEscapeHtml: true }),
 		}),
-		[log?.body],
+		[logBody],
 	);
 
 	const handleJSONCopy = (): void => {
@@ -260,7 +286,7 @@ function LogDetailInner({
 											...query.filter,
 											expression: value,
 										},
-								  }
+									}
 								: query,
 						),
 					},
@@ -363,7 +389,9 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									icon={<ChevronUp size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<ChevronUp size={14} />}
 									className="log-arrow-btn log-arrow-btn-up"
 									disabled={isPrevDisabled}
 									onClick={(): void => handleNavigateLog({ direction: 'previous' })}
@@ -375,7 +403,9 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									icon={<ChevronDown size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<ChevronDown size={14} />}
 									className="log-arrow-btn log-arrow-btn-down"
 									disabled={isNextDisabled}
 									onClick={(): void => handleNavigateLog({ direction: 'next' })}
@@ -385,8 +415,10 @@ function LogDetailInner({
 						{showOpenInExplorerBtn && (
 							<div>
 								<Button
+									variant="outlined"
+									color="secondary"
+									prefix={<Compass size={16} />}
 									className="open-in-explorer-btn"
-									icon={<Compass size={16} />}
 									onClick={handleOpenInExplorer}
 								>
 									Open in Explorer
@@ -411,7 +443,7 @@ function LogDetailInner({
 				<div className="log-detail-drawer__log">
 					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
 					<Tooltip
-						title={removeEscapeCharacters(log?.body)}
+						title={removeEscapeCharacters(logBody)}
 						placement="left"
 						mouseLeaveDelay={0}
 					>
@@ -467,7 +499,7 @@ function LogDetailInner({
 							value={VIEW_TYPES.INFRAMETRICS}
 						>
 							<div className="view-title">
-								<BarChart2 size={14} />
+								<Histogram size="md" />
 								Metrics
 							</div>
 						</Radio.Button>
@@ -482,8 +514,10 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									className="action-btn"
-									icon={<Filter size={16} />}
+									variant="link"
+									color="secondary"
+									size="sm"
+									prefix={<Filter size="lg" />}
 									onClick={handleFilterVisible}
 								/>
 							</Tooltip>
@@ -498,8 +532,10 @@ function LogDetailInner({
 							mouseLeaveDelay={0}
 						>
 							<Button
-								className="action-btn"
-								icon={<Copy size={16} />}
+								variant="link"
+								color="secondary"
+								size="sm"
+								prefix={<Copy size={12} />}
 								onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
 							/>
 						</Tooltip>
@@ -527,7 +563,9 @@ function LogDetailInner({
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
+				{selectedView === VIEW_TYPES.JSON && (
+					<JsonView data={LogJsonData} height="68vh" />
+				)}
 
 				{selectedView === VIEW_TYPES.CONTEXT && (
 					<ContextView
@@ -552,7 +590,7 @@ function LogDetailInner({
 					<div className="log-detail-drawer__footer-hint">
 						<div className="log-detail-drawer__footer-hint-content">
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								Use
@@ -561,7 +599,7 @@ function LogDetailInner({
 							<span>/</span>
 							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								to view previous/next log

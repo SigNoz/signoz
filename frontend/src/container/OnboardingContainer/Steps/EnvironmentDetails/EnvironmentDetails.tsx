@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, Space, Typography } from 'antd';
+import { Check, Server, LoaderCircle } from '@signozhq/icons';
+import { Button, Card, Form, Input, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, Server } from 'lucide-react';
 
 interface SupportedEnvironmentsProps {
 	name: string;
@@ -184,7 +184,7 @@ export default function EnvironmentDetails(): JSX.Element {
 							className="periscope-btn primary"
 							icon={
 								isSubmittingRequestForEnvironment ? (
-									<LoadingOutlined />
+									<LoaderCircle size="md" className="animate-spin" />
 								) : (
 									<Check size={12} />
 								)
@@ -205,7 +205,7 @@ export default function EnvironmentDetails(): JSX.Element {
 
 			{errorDetails && (
 				<div className="error-container">
-					<Typography.Text type="danger"> {errorDetails} </Typography.Text>
+					<Typography.Text color="danger"> {errorDetails} </Typography.Text>
 				</div>
 			)}
 		</Form>

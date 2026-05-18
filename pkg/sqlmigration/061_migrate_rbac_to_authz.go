@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/oklog/ulid/v2"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -125,7 +125,7 @@ func (migration *migrateRbacToAuthz) Up(ctx context.Context, db *bun.DB) error {
 
 		tuples = append(tuples, tuple{
 			OrgID:    orgID,
-			ID:       authtypes.AnonymousUser.StringValue(),
+			ID:       coretypes.AnonymousUser.StringValue(),
 			Type:     "anonymous",
 			RoleName: "signoz-anonymous",
 		})

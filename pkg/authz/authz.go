@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -14,19 +15,23 @@ type AuthZ interface {
 	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
 
 	// CheckWithTupleCreationWithoutClaims checks permissions for anonymous users.
-	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
 
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
 	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
+
+	// CheckTransactions checks whether the given subject is authorized for the given transactions.
+	// Returns results in the same order as the input transactions.
+	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error)
 
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
+	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
 
 	// Creates the role.
 	Create(context.Context, valuer.UUID, *authtypes.Role) error
@@ -35,16 +40,13 @@ type AuthZ interface {
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
 	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
-
-	// Gets all the typeable resources registered from role registry.
-	GetResources(context.Context) []*authtypes.Resource
+	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
 
 	// Patches the role.
 	Patch(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -78,13 +80,13 @@ type AuthZ interface {
 
 	// Bootstrap managed roles transactions and user assignments
 	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error
+
+	// ReadTuples reads tuples from the authorization server matching the given tuple key filter.
+	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
 }
 
-type RegisterTypeable interface {
-	MustGetTypeables() []authtypes.Typeable
-
-	MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction
-}
+// OnBeforeRoleDelete is a callback invoked before a role is deleted.
+type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
 
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
@@ -92,8 +94,6 @@ type Handler interface {
 	Get(http.ResponseWriter, *http.Request)
 
 	GetObjects(http.ResponseWriter, *http.Request)
-
-	GetResources(http.ResponseWriter, *http.Request)
 
 	List(http.ResponseWriter, *http.Request)
 

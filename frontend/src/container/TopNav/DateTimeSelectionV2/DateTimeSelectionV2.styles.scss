@@ -6,9 +6,9 @@
 		display: flex;
 		align-items: center;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		box-shadow: none !important;
-		background: var(--bg-ink-300);
+		background: var(--l3-background);
 		display: flex;
 		min-width: 192px;
 		height: 34px;
@@ -39,12 +39,12 @@
 		display: flex;
 		flex-direction: row;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		margin-left: 8px;
 
 		.refresh-btn {
-			border-right: 1px solid var(--bg-slate-400);
+			border-right: 1px solid var(--l1-border);
 		}
 		.ant-btn {
 			display: flex;
@@ -54,7 +54,7 @@
 			border: none;
 
 			&.active-tab {
-				background-color: var(--bg-slate-400);
+				background-color: var(--l1-border);
 			}
 		}
 	}
@@ -70,8 +70,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background: var(--bg-ink-300);
-		border: 1px solid var(--bg-slate-400);
+		background: var(--l3-background);
+		border: 1px solid var(--l1-border);
 		margin-right: 16px;
 	}
 }
@@ -80,14 +80,14 @@
 .header-section-popover-root {
 	.ant-popover-inner {
 		border-radius: 4px !important;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
 		padding: 0px !important;
 		border-radius: 4px;
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		) !important;
 		backdrop-filter: blur(20px);
 	}
@@ -103,29 +103,37 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--l1-border);
 
 		.data-time-live {
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--l1-border);
 			text-align: start;
 			padding: 13.5px 14px;
 			height: 44px;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		.active {
-			background-color: rgba(171, 189, 255, 0.04) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-200) 4%,
+				transparent
+			) !important;
 		}
 
 		.data-time-live:hover {
 			&.ant-btn-text {
-				background-color: rgba(171, 189, 255, 0.04) !important;
+				background-color: color-mix(
+					in srgb,
+					var(--bg-robin-200) 4%,
+					transparent
+				) !important;
 			}
 		}
 
@@ -133,7 +141,7 @@
 			text-align: start;
 			padding: 8px 13px;
 			height: 37px;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
@@ -148,8 +156,8 @@
 
 			.time-value {
 				font-size: 11px;
-				color: var(--bg-vanilla-400);
-				background-color: var(--bg-ink-200);
+				color: var(--l2-foreground);
+				background-color: var(--l3-background);
 				padding: 4px 6px;
 				border-radius: 3px;
 			}
@@ -157,7 +165,11 @@
 
 		.date-time-options-btn:hover {
 			&.ant-btn-text {
-				background-color: rgba(171, 189, 255, 0.04) !important;
+				background-color: color-mix(
+					in srgb,
+					var(--bg-robin-200) 4%,
+					transparent
+				) !important;
 			}
 		}
 	}
@@ -166,7 +178,7 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--l1-border);
 
 		.back-btn {
 			display: flex;
@@ -176,7 +188,7 @@
 			cursor: pointer;
 
 			&:hover {
-				background-color: rgba(171, 189, 255, 0.04);
+				background-color: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 			}
 		}
 
@@ -196,7 +208,7 @@
 
 				.date-time-custom-option-from-title,
 				.date-time-custom-option-to-title {
-					color: var(--bg-slate-50);
+					color: var(--muted-foreground);
 					font-variant-numeric: slashed-zero;
 					font-family: Inter;
 					font-size: 12px;
@@ -209,7 +221,7 @@
 
 				.date-time-custom-option-from-value,
 				.date-time-custom-option-to-value {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-variant-numeric: slashed-zero;
 					font-family: Inter;
 					font-size: 13px;
@@ -220,16 +232,16 @@
 				}
 
 				&.active {
-					background: rgba(171, 189, 255, 0.04);
+					background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 
 					.date-time-custom-option-from-title,
 					.date-time-custom-option-to-title {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 					}
 
 					.date-time-custom-option-from-value,
 					.date-time-custom-option-to-value {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 					}
 				}
 			}
@@ -270,7 +282,7 @@
 				cursor: default;
 				font-size: 12px;
 				gap: 8px;
-				background-color: rgba(255, 219, 218, 0.1);
+				background-color: color-mix(in srgb, var(--bg-cherry-100) 10%, transparent);
 				border-radius: 3px;
 
 				.input-error-message-title {
@@ -303,14 +315,14 @@
 				gap: 8px;
 				padding: 6px 24px;
 				width: 100%;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 500;
 				line-height: normal;
 				letter-spacing: 0.14px;
 				line-height: 19px;
-				border-bottom: 1px solid var(--bg-slate-400);
+				border-bottom: 1px solid var(--l1-border);
 			}
 
 			.calendar-container-body {
@@ -332,8 +344,8 @@
 				.periscope-calendar-day {
 					button {
 						&:hover {
-							background-color: var(--bg-robin-500) !important;
-							color: var(--bg-vanilla-100) !important;
+							background-color: var(--primary-background) !important;
+							color: var(--l1-foreground) !important;
 						}
 					}
 				}
@@ -366,8 +378,8 @@
 				gap: 8px;
 
 				.recently-used-range-item {
-					color: var(--bg-vanilla-400);
-					background-color: var(--bg-ink-200);
+					color: var(--l2-foreground);
+					background-color: var(--l3-background);
 					font-size: 12px;
 					line-height: 16px;
 					letter-spacing: 0.04em;
@@ -377,8 +389,8 @@
 					cursor: pointer;
 
 					&:hover {
-						background-color: var(--bg-ink-100);
-						color: var(--bg-vanilla-100);
+						background-color: var(--l3-background);
+						color: var(--l1-foreground);
 					}
 				}
 			}
@@ -386,7 +398,7 @@
 
 		.time-heading {
 			text-align: left;
-			color: var(--bg-vanilla-300);
+			color: var(--l2-foreground);
 			font-size: 11px;
 			font-style: normal;
 			font-weight: 500;
@@ -396,164 +408,14 @@
 		}
 
 		.time-btns {
-			color: var(--bg-vanilla-400);
-			background-color: #23262e;
+			color: var(--l2-foreground);
+			background-color: var(--l3-background);
 			font-size: 12px;
 			line-height: 16px;
 			letter-spacing: 0.04em;
 			text-align: left;
 			border-radius: 2px;
 			padding: 4px 8px;
-		}
-	}
-}
-
-.lightMode {
-	.date-time-input-element {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
-	}
-
-	.refresh-actions {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
-
-		.refresh-btn {
-			border-right: 1px solid var(--bg-vanilla-300);
-		}
-	}
-
-	.date-time-root,
-	.header-section-popover-root {
-		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-100) !important;
-		}
-	}
-
-	.date-time-popover {
-		.date-time-options {
-			border-right: 1px solid var(--bg-vanilla-400);
-
-			.data-time-live {
-				border-bottom: 1px solid var(--bg-vanilla-400);
-				color: var(--bg-slate-400);
-				border-bottom: 1px solid var(--bg-vanilla-400);
-			}
-
-			.date-time-options-btn {
-				color: var(--bg-slate-400);
-
-				.time-value {
-					background-color: var(--bg-vanilla-300);
-					color: var(--bg-slate-400);
-				}
-			}
-
-			.active {
-				background-color: var(--bg-vanilla-300) !important;
-			}
-
-			.data-time-live:hover {
-				&.ant-btn-text {
-					background-color: var(--bg-vanilla-300) !important;
-				}
-			}
-
-			.date-time-options-btn:hover {
-				&.ant-btn-text {
-					background-color: var(--bg-vanilla-300) !important;
-				}
-			}
-		}
-
-		.date-time-custom-options-container {
-			display: flex;
-			width: 224px;
-			flex-direction: column;
-			border-right: 1px solid var(--bg-vanilla-400);
-
-			.back-btn {
-				display: flex;
-				align-items: center;
-				gap: 16px;
-				padding: 8px;
-				cursor: pointer;
-
-				&:hover {
-					background-color: var(--bg-vanilla-300);
-				}
-			}
-
-			.date-time-custom-options {
-				.date-time-custom-option-from,
-				.date-time-custom-option-to {
-					.date-time-custom-option-from-title,
-					.date-time-custom-option-to-title {
-						color: var(--bg-slate-50);
-					}
-
-					.date-time-custom-option-from-value,
-					.date-time-custom-option-to-value {
-						color: var(--bg-slate-400);
-					}
-
-					&.active {
-						background: var(--bg-vanilla-300);
-
-						.date-time-custom-option-from-title,
-						.date-time-custom-option-to-title {
-							color: var(--bg-slate-400);
-						}
-
-						.date-time-custom-option-from-value,
-						.date-time-custom-option-to-value {
-							color: var(--bg-slate-400);
-						}
-					}
-				}
-			}
-		}
-
-		.relative-date-time {
-			.time-heading {
-				color: var(--bg-vanilla-400);
-			}
-
-			.time-btns {
-				background-color: var(--bg-vanilla-300);
-				color: var(--bg-slate-400);
-			}
-
-			.recently-used-container {
-				.recently-used-range {
-					.recently-used-range-item {
-						color: var(--bg-slate-400);
-						background-color: var(--bg-vanilla-300);
-
-						&:hover {
-							background-color: var(--bg-vanilla-300);
-							color: var(--bg-slate-400);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.reset-button {
-		background: var(--bg-vanilla-100);
-		border-color: var(--bg-vanilla-300);
-	}
-
-	.calendar-container {
-		.periscope-calendar-day {
-			button {
-				&:hover {
-					background-color: var(--bg-robin-500) !important;
-					color: var(--bg-ink-500) !important;
-				}
-			}
 		}
 	}
 }

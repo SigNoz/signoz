@@ -65,6 +65,13 @@ export const TraceDetail = Loadable(
 		),
 );
 
+export const TraceDetailV3 = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+		),
+);
+
 export const UsageExplorerPage = Loadable(
 	() => import(/* webpackChunkName: "UsageExplorerPage" */ 'modules/Usage'),
 );
@@ -244,10 +251,16 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
 );
 
-export const InstalledIntegrations = Loadable(
+export const Integrations = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+export const IntegrationsDetailsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsDetailsPage" */ 'pages/IntegrationsDetailsPage'
 		),
 );
 
@@ -310,4 +323,11 @@ export const AlertTypeSelectionPage = Loadable(
 export const MeterExplorerPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
+);
+
+export const AIAssistantPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
 );

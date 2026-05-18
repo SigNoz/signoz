@@ -71,6 +71,15 @@ var (
 	PanelTypeGraph = PanelType{valuer.NewString("graph")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for PanelType.
+func (PanelType) Enum() []any {
+	return []any{
+		PanelTypeValue,
+		PanelTypeTable,
+		PanelTypeGraph,
+	}
+}
+
 // Note: this is used to represent the state of the alert query
 // i.e the active tab which should be used to represent the selection
 
@@ -84,23 +93,32 @@ var (
 	QueryTypePromQL        = QueryType{valuer.NewString("promql")}
 )
 
-type AlertCompositeQuery struct {
-	Queries []qbtypes.QueryEnvelope `json:"queries"`
+// Enum implements jsonschema.Enum; returns the acceptable values for QueryType.
+func (QueryType) Enum() []any {
+	return []any{
+		QueryTypeBuilder,
+		QueryTypeClickHouseSQL,
+		QueryTypePromQL,
+	}
+}
 
-	PanelType PanelType `json:"panelType"`
-	QueryType QueryType `json:"queryType"`
+type AlertCompositeQuery struct {
+	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true"`
+
+	PanelType PanelType `json:"panelType" required:"true"`
+	QueryType QueryType `json:"queryType" required:"true"`
 	// Unit for the time series data shown in the graph
 	// This is used to format the value and threshold
 	Unit string `json:"unit,omitempty"`
 }
 
 type RuleCondition struct {
-	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery"`
-	CompareOperator   CompareOperator      `json:"op"`
+	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
+	CompareOperator   CompareOperator      `json:"op,omitzero"`
 	Target            *float64             `json:"target,omitempty"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	MatchType         MatchType            `json:"matchType"`
+	MatchType         MatchType            `json:"matchType,omitzero"`
 	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
 	Seasonality       Seasonality          `json:"seasonality,omitzero"`

@@ -39,7 +39,7 @@ class ResizeObserverMock {
 	disconnect(): void {}
 }
 
-global.ResizeObserver = (ResizeObserverMock as unknown) as typeof ResizeObserver;
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -119,7 +119,7 @@ export function getAppContextMock(
 				status: '',
 				updated_at: '0',
 			},
-			state: LicenseState.ACTIVE,
+			state: LicenseState.ACTIVATED,
 			status: LicenseStatus.VALID,
 			platform: LicensePlatform.CLOUD,
 			created_at: '0',
@@ -221,6 +221,9 @@ export function getAppContextMock(
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
+		hostsData: null,
+		isFetchingHosts: false,
+		hostsFetchError: null,
 		orgPreferences: [
 			{
 				name: ORG_PREFERENCES.ORG_ONBOARDING,
@@ -282,14 +285,14 @@ export function AllTheProviders({
 		<QueryBuilderProvider>{children}</QueryBuilderProvider>
 	);
 
+	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
+
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
 			<NuqsAdapter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={mockStored(roleValue)}>
-						<AppContext.Provider
-							value={getAppContextMock(roleValue, appContextOverridesValue)}
-						>
+						<AppContext.Provider value={appContextValue}>
 							<ResourceProvider>
 								<ErrorModalProvider>
 									<TimezoneProvider>

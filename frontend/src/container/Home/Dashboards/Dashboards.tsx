@@ -5,11 +5,12 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import dialsUrl from '@/assets/Icons/dials.svg';
 
@@ -114,7 +115,7 @@ export default function Dashboards({
 							dashboardName: dashboard.data.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(), '_blank');
+							openInNewTab(getLink());
 						} else {
 							safeNavigate(getLink());
 						}
@@ -129,7 +130,7 @@ export default function Dashboards({
 							onClick={onClickHandler}
 							onKeyDown={(e): void => {
 								if (e.key === 'Enter') {
-									onClickHandler((e as unknown) as React.MouseEvent<HTMLElement>);
+									onClickHandler(e as unknown as React.MouseEvent<HTMLElement>);
 								}
 							}}
 						>

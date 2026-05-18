@@ -1,20 +1,14 @@
 import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Collapse,
-	Divider,
-	Input,
-	Switch,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Collapse, Divider, Input, Switch, Tag } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search } from '@signozhq/icons';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
@@ -47,9 +41,8 @@ function Overview({
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
-		true,
-	);
+	const [isAttributesExpanded, setIsAttributesExpanded] =
+		useState<boolean>(true);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const isDarkMode = useIsDarkMode();
@@ -57,15 +50,14 @@ function Overview({
 	const options: EditorProps['options'] = {
 		automaticLayout: true,
 		readOnly: true,
-		height: '40vh',
 		wordWrap: isWrapWord ? 'on' : 'off',
 		minimap: {
 			enabled: false,
 		},
-		fontWeight: 400,
+		fontWeight: '400',
 		fontFamily: 'Geist Mono',
 		fontSize: 13,
-		lineHeight: '18px',
+		lineHeight: 18,
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
 		scrollbar: {
@@ -178,13 +170,17 @@ function Overview({
 
 								{isAttributesExpanded && (
 									<Button
+										variant="link"
+										color="none"
 										className="action-btn"
-										icon={<Search size={12} />}
+										prefix={<Search size={12} />}
 										onClick={(e): void => {
 											e.stopPropagation();
 											handleSearchVisible();
 										}}
-									/>
+									>
+										Search
+									</Button>
 								)}
 							</div>
 						),

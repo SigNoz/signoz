@@ -1,7 +1,7 @@
-import { Badge } from '@signozhq/badge';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import { Check, Copy } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
 
 export interface KeyCreatedPhaseProps {
@@ -24,9 +24,8 @@ function KeyCreatedPhase({
 				<div className="add-key-modal__key-display">
 					<span className="add-key-modal__key-text">{createdKey.key}</span>
 					<Button
-						variant="outlined"
+						variant="link"
 						color="secondary"
-						size="sm"
 						onClick={onCopy}
 						className="add-key-modal__copy-btn"
 					>
@@ -40,11 +39,13 @@ function KeyCreatedPhase({
 				<Badge color="vanilla">{expiryLabel}</Badge>
 			</div>
 
-			<Callout
-				type="info"
-				showIcon
-				message="Store the key securely. This is the only time it will be displayed."
-			/>
+			<div className="add-key-modal__callout-wrapper">
+				<Callout
+					type="info"
+					showIcon
+					title="Store the key securely. This is the only time it will be displayed."
+				/>
+			</div>
 		</div>
 	);
 }

@@ -8,20 +8,10 @@
 .color-selector-button {
 	border: none;
 	width: 100%;
+	background-color: var(--l1-background);
 
 	.ant-btn {
 		box-shadow: none;
 		background-color: unset;
-	}
-}
-
-.lightMode {
-	.color-selector-button {
-		background-color: var(--bg-vanilla-300);
-
-		.ant-btn {
-			box-shadow: none;
-			background-color: unset;
-		}
 	}
 }

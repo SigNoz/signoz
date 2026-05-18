@@ -2,6 +2,8 @@ package global
 
 import (
 	"net/url"
+	"path"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
@@ -13,8 +15,10 @@ var (
 )
 
 type Config struct {
-	ExternalURL  *url.URL `mapstructure:"external_url"`
-	IngestionURL *url.URL `mapstructure:"ingestion_url"`
+	ExternalURL    *url.URL `mapstructure:"external_url"`
+	IngestionURL   *url.URL `mapstructure:"ingestion_url"`
+	MCPURL         *url.URL `mapstructure:"mcp_url"`
+	AIAssistantURL *url.URL `mapstructure:"ai_assistant_url"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -37,5 +41,34 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if c.ExternalURL != nil {
+		if c.ExternalURL.Path != "" && c.ExternalURL.Path != "/" {
+			if !strings.HasPrefix(c.ExternalURL.Path, "/") {
+				return errors.NewInvalidInputf(ErrCodeInvalidGlobalConfig, "global::external_url path must start with '/', got %q", c.ExternalURL.Path)
+			}
+		}
+	}
+
 	return nil
+}
+
+func (c Config) ExternalPath() string {
+	if c.ExternalURL == nil || c.ExternalURL.Path == "" || c.ExternalURL.Path == "/" {
+		return ""
+	}
+
+	p := path.Clean("/" + c.ExternalURL.Path)
+	if p == "/" {
+		return ""
+	}
+
+	return p
+}
+
+func (c Config) ExternalPathTrailing() string {
+	if p := c.ExternalPath(); p != "" {
+		return p + "/"
+	}
+
+	return "/"
 }

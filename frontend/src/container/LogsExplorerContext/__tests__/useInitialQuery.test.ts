@@ -81,9 +81,9 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 		jest.clearAllMocks();
 
 		// Setup useQueryBuilder mock - only mock what we need
-		mockedUseQueryBuilder.mockReturnValue(({
+		mockedUseQueryBuilder.mockReturnValue({
 			updateAllQueriesOperators: mockUpdateAllQueriesOperators,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		// Setup the mock to return base query
 		mockUpdateAllQueriesOperators.mockReturnValue(mockBaseQuery);
@@ -350,7 +350,7 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 			const serviceItems = calledWith.items.filter(
 				(item: TagFilterItem) => item.key?.key === 'service.name',
 			);
-			expect(serviceItems.length).toBe(1);
+			expect(serviceItems).toHaveLength(1);
 
 			// Verify no priority items (k8s, cloud, host, container) are included
 			const priorityItems = calledWith.items.filter(

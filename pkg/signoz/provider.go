@@ -3,8 +3,6 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/auditor"
-	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -12,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
@@ -28,6 +28,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
 	"github.com/SigNoz/signoz/pkg/identn/impersonationidentn"
 	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/meterreporter/noopmeterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -44,9 +46,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
@@ -88,9 +87,9 @@ func NewCacheProviderFactories() factory.NamedMap[factory.ProviderFactory[cache.
 	)
 }
 
-func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
+func NewWebProviderFactories(globalConfig global.Config) factory.NamedMap[factory.ProviderFactory[web.Web, web.Config]] {
 	return factory.MustNewNamedMap(
-		routerweb.NewFactory(),
+		routerweb.NewFactory(globalConfig),
 		noopweb.NewFactory(),
 	)
 }
@@ -197,6 +196,13 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
+		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
+		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
 	)
 }
 
@@ -226,12 +232,6 @@ func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteS
 func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
 		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
-	)
-}
-
-func NewRulerProviderFactories(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
-	return factory.MustNewNamedMap(
-		signozruler.NewFactory(sqlstore, queryParser),
 	)
 }
 
@@ -278,6 +278,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
 			handlers.AuthzHandler,
@@ -288,7 +289,11 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
 			handlers.RuleStateHistory,
+			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			handlers.LLMPricingRuleHandler,
+			handlers.TraceDetail,
+			handlers.RulerHandler,
 		),
 	)
 }
@@ -318,6 +323,12 @@ func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[fac
 func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 	return factory.MustNewNamedMap(
 		noopauditor.NewFactory(),
+	)
+}
+
+func NewMeterReporterProviderFactories() factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
+	return factory.MustNewNamedMap(
+		noopmeterreporter.NewFactory(),
 	)
 }
 

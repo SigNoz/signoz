@@ -37,7 +37,7 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -388,7 +388,7 @@ function ClientSideQBSearch(
 						({
 							label: key.key,
 							value: key,
-						} as Option),
+						}) as Option,
 				) || [],
 			);
 		}
@@ -462,7 +462,7 @@ function ClientSideQBSearch(
 							({
 								label: checkCommaInValue(String(val)),
 								value: val,
-							} as Option),
+							}) as Option,
 					),
 				);
 			} else {
@@ -490,7 +490,7 @@ function ClientSideQBSearch(
 				Array.isArray(tag.value) &&
 				tag.value[tag.value.length - 1] === ''
 					? tag.value?.slice(0, -1)
-					: tag.value ?? '';
+					: (tag.value ?? '');
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,
@@ -554,10 +554,9 @@ function ClientSideQBSearch(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
+							$disabled={isDisabled}
 							onClick={(): void => {
 								if (!isDisabled) {
 									tagEditHandler(value);

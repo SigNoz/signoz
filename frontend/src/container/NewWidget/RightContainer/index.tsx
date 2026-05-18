@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
@@ -155,10 +155,10 @@ function RightContainer({
 		[],
 	);
 
-	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
-		allowSoftMinMax,
-		allowLogScale,
-	]);
+	const isAxisSectionVisible = useMemo(
+		() => allowSoftMinMax || allowLogScale,
+		[allowSoftMinMax, allowLogScale],
+	);
 
 	const isFormattingSectionVisible = useMemo(
 		() => allowYAxisUnit || allowDecimalPrecision || allowPanelColumnPreference,
@@ -177,7 +177,7 @@ function RightContainer({
 			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
 			 */
 
-			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			// oxlint-disable-next-line no-constant-binary-expression
 			false &&
 			(allowFillMode ||
 				allowLineStyle ||

@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
+import { BellOff, CircleCheck, CircleOff, Flame } from '@signozhq/icons';
 
 import './AlertState.styles.scss';
 
@@ -17,7 +17,7 @@ export default function AlertState({
 	let label;
 	const isDarkMode = useIsDarkMode();
 	switch (state) {
-		case 'no-data':
+		case 'nodata':
 			icon = (
 				<CircleOff
 					size={18}

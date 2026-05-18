@@ -1,9 +1,14 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Button } from '@signozhq/button';
-import { Input } from '@signozhq/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import {
+	APIKeyCreatePermission,
+	buildSAAttachPermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';
@@ -18,6 +23,7 @@ export interface KeyFormPhaseProps {
 	isValid: boolean;
 	onSubmit: () => void;
 	onClose: () => void;
+	accountId?: string;
 }
 
 function KeyFormPhase({
@@ -28,6 +34,7 @@ function KeyFormPhase({
 	isValid,
 	onSubmit,
 	onClose,
+	accountId,
 }: KeyFormPhaseProps): JSX.Element {
 	return (
 		<>
@@ -56,11 +63,12 @@ function KeyFormPhase({
 							<ToggleGroup
 								type="single"
 								value={field.value}
-								onValueChange={(val): void => {
+								onChange={(val): void => {
 									if (val) {
 										field.onChange(val);
 									}
 								}}
+								size="sm"
 								className="add-key-modal__expiry-toggle"
 							>
 								<ToggleGroupItem
@@ -107,20 +115,28 @@ function KeyFormPhase({
 
 			<div className="add-key-modal__footer">
 				<div className="add-key-modal__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
+					<Button variant="solid" color="secondary" onClick={onClose}>
 						Cancel
 					</Button>
-					<Button
-						type="submit"
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						size="sm"
-						loading={isSubmitting}
-						disabled={!isValid}
+					<AuthZTooltip
+						checks={[
+							APIKeyCreatePermission,
+							buildSAAttachPermission(accountId ?? ''),
+						]}
+						enabled={!!accountId}
 					>
-						Create Key
-					</Button>
+						<Button
+							type="submit"
+							// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
+							form={FORM_ID}
+							variant="solid"
+							color="primary"
+							loading={isSubmitting}
+							disabled={!isValid}
+						>
+							Create Key
+						</Button>
+					</AuthZTooltip>
 				</div>
 			</div>
 		</>

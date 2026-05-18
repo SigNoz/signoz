@@ -13,8 +13,8 @@
 	gap: 16px;
 
 	border-radius: 6px;
-	border: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-500);
+	border: 1px solid var(--l1-border);
+	background: var(--l1-background);
 
 	.mq-overview-title {
 		display: flex;
@@ -22,7 +22,7 @@
 		align-items: center;
 		width: 100%;
 
-		color: var(--bg-vanilla-200);
+		color: var(--l2-foreground);
 
 		font-family: Inter;
 		font-size: 18px;
@@ -36,12 +36,12 @@
 		cursor: pointer;
 
 		.ant-radio-button-wrapper {
-			border-color: var(--bg-slate-400);
-			color: var(--bg-vanilla-400);
+			border-color: var(--l1-border);
+			color: var(--l2-foreground);
 		}
 		.ant-radio-button-wrapper-checked {
-			background: var(--bg-slate-400);
-			color: var(--bg-vanilla-100);
+			background: var(--l1-border);
+			color: var(--l1-foreground);
 		}
 		.ant-radio-button-wrapper::before {
 			width: 0px;
@@ -55,7 +55,7 @@
 
 		.ant-table-content {
 			border-radius: 6px;
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
 			box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
 		}
 
@@ -68,8 +68,8 @@
 
 		.ant-table-thead {
 			.ant-table-cell {
-				background-color: var(--bg-ink-500);
-				border-bottom: 1px solid var(--bg-slate-500);
+				background-color: var(--l1-background);
+				border-bottom: 1px solid var(--l1-border);
 			}
 		}
 	}
@@ -87,15 +87,15 @@
 
 			.traceid-text {
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-slate-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 				padding: 2px;
 				cursor: pointer;
 			}
 
 			.remaing-count {
 				cursor: pointer;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -111,70 +111,6 @@
 	&.mq-table {
 		.ant-pagination {
 			justify-content: flex-start;
-		}
-	}
-}
-
-.lightMode {
-	.mq-overview-container {
-		background: var(--bg-vanilla-200);
-		border: 1px solid var(--bg-vanilla-300);
-
-		.mq-overview-title {
-			color: var(--bg-ink-400);
-		}
-
-		.mq-details-options {
-			.ant-radio-button-wrapper {
-				border-color: var(--bg-vanilla-300);
-				color: var(--bg-slate-200);
-			}
-			.ant-radio-button-wrapper-checked {
-				color: var(--bg-slate-200);
-				background: var(--bg-vanilla-300);
-			}
-			.ant-radio-button-wrapper-disabled {
-				background: var(--bg-vanilla-100);
-				color: var(--bg-vanilla-400);
-			}
-		}
-	}
-
-	.droprate-view {
-		.mq-table {
-			.ant-table-content {
-				border: 1px solid var(--bg-vanilla-300);
-			}
-
-			.ant-table-tbody {
-				.ant-table-cell {
-					background-color: var(--bg-vanilla-100);
-				}
-			}
-
-			.ant-table-thead {
-				.ant-table-cell {
-					background-color: var(--bg-vanilla-100);
-					border-bottom: 1px solid var(--bg-vanilla-300);
-				}
-			}
-		}
-
-		.no-data-style {
-			border: 1px solid var(--bg-vanilla-300);
-		}
-	}
-
-	.trace-id-list {
-		.traceid-style {
-			.traceid-text {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-			}
-
-			.remaing-count {
-				color: var(--bg-ink-400);
-			}
 		}
 	}
 }

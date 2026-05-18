@@ -17,7 +17,7 @@ import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [
@@ -50,8 +50,8 @@ const havingOperators = [
 		value: 'IN',
 	},
 	{
-		label: 'NOT_IN',
-		value: 'NOT_IN',
+		label: 'NOT IN',
+		value: 'NOT IN',
 	},
 ];
 
@@ -129,7 +129,7 @@ function HavingFilter({
 				const operator = havingOperators[j];
 				newOptions.push({
 					label: `${opt.func}(${opt.arg}) ${operator.label}`,
-					value: `${opt.func}(${opt.arg}) ${operator.label} `,
+					value: `${opt.func}(${opt.arg}) ${operator.value} `,
 					apply: (
 						view: EditorView,
 						completion: { label: string; value: string },

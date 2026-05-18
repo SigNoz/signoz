@@ -32,10 +32,11 @@ function TopOperationMetrics(): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { queries } = useResourceAttribute();
 

@@ -14,7 +14,7 @@ jest.mock('dayjs', () => {
 		return originalDayjs(MOCK_DATE_STRING);
 	});
 	Object.keys(originalDayjs).forEach((key) => {
-		((mockDayjs as unknown) as Record<string, unknown>)[key] = originalDayjs[key];
+		(mockDayjs as unknown as Record<string, unknown>)[key] = originalDayjs[key];
 	});
 	return mockDayjs;
 });
@@ -242,7 +242,7 @@ describe('utils', () => {
 			);
 
 			expect(rrulestr).toHaveBeenCalledWith(FREQ_DAILY);
-			expect(result).toEqual([
+			expect(result).toStrictEqual([
 				new Date(MOCK_DATE_STRING),
 				new Date('2024-01-16T10:30:00Z'),
 				new Date('2024-01-17T10:30:00Z'),
@@ -300,7 +300,7 @@ describe('utils', () => {
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 10:30:00',
 				'01-02-2024 10:30:00',
 				'15-02-2024 10:30:00',
@@ -319,7 +319,7 @@ describe('utils', () => {
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 12:30:00',
 				'19-01-2024 12:30:00',
 				'22-01-2024 12:30:00',
@@ -339,7 +339,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today included (15-01-2024 00:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 10:30:00',
 				'19-01-2024 10:30:00',
 				'22-01-2024 10:30:00',
@@ -359,7 +359,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today excluded (15-01-2024 00:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'19-01-2024 00:00:00',
 				'22-01-2024 00:00:00',
 				'26-01-2024 00:00:00',
@@ -379,7 +379,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today excluded (15-01-2024 00:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'19-01-2024 00:30:00',
 				'22-01-2024 00:30:00',
 				'26-01-2024 00:30:00',
@@ -398,7 +398,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today included (15-01-2024 10:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 10:30:00',
 				'15-02-2024 10:30:00',
 				'15-03-2024 10:30:00',
@@ -417,7 +417,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today excluded (15-01-2024 10:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-02-2024 00:00:00',
 				'15-03-2024 00:00:00',
 				'15-04-2024 00:00:00',
@@ -436,7 +436,7 @@ describe('utils', () => {
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
 			// today excluded (15-01-2024 10:30:00)
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-02-2024 00:30:00',
 				'15-03-2024 00:30:00',
 				'15-04-2024 00:30:00',
@@ -455,7 +455,7 @@ describe('utils', () => {
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'29-01-2024 10:30:00',
 				'29-02-2024 10:30:00',
 				'29-03-2024 10:30:00',
@@ -474,7 +474,7 @@ describe('utils', () => {
 
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'31-01-2024 10:30:00',
 				'31-03-2024 10:30:00',
 				'31-05-2024 10:30:00',
@@ -511,7 +511,7 @@ describe('utils', () => {
 				5,
 			);
 
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'29-01-2023 10:30:00',
 				'29-03-2023 10:30:00',
 				'29-04-2023 10:30:00',
@@ -529,7 +529,7 @@ describe('utils', () => {
 			);
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 10:40:00',
 				'16-01-2024 10:40:00',
 				'17-01-2024 10:40:00',
@@ -547,7 +547,7 @@ describe('utils', () => {
 			);
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'16-01-2024 00:00:00',
 				'17-01-2024 00:00:00',
 				'18-01-2024 00:00:00',
@@ -565,7 +565,7 @@ describe('utils', () => {
 			);
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'16-01-2024 00:30:00',
 				'17-01-2024 00:30:00',
 				'18-01-2024 00:30:00',
@@ -583,7 +583,7 @@ describe('utils', () => {
 			);
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'15-01-2024 10:30:00',
 				'16-01-2024 10:30:00',
 				'17-01-2024 10:30:00',
@@ -621,7 +621,7 @@ describe('utils', () => {
 			);
 			expect(result).toBeDefined();
 			expect(Array.isArray(result)).toBe(true);
-			expect(result?.map((res) => formatDate(res))).toEqual([
+			expect(result?.map((res) => formatDate(res))).toStrictEqual([
 				'31-01-2024 10:30:00',
 				'01-02-2024 10:30:00',
 				'02-02-2024 10:30:00',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Popover } from 'antd';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
@@ -11,10 +11,8 @@ import './styles.scss';
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
 
-	const [
-		isEvaluationWindowPopoverOpen,
-		setIsEvaluationWindowPopoverOpen,
-	] = useState(false);
+	const [isEvaluationWindowPopoverOpen, setIsEvaluationWindowPopoverOpen] =
+		useState(false);
 
 	const popoverContent = (
 		<Popover

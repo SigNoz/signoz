@@ -9,7 +9,8 @@ import {
 	mockErrorResponse,
 } from './mocks';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

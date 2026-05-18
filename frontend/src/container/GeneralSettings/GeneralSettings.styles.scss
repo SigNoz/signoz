@@ -29,7 +29,7 @@
 }
 
 .retention-controls-container {
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 	border-radius: 4px;
 	overflow: hidden;
 }
@@ -41,7 +41,7 @@
 	padding: 0 var(--padding-4);
 	height: 50px;
 	background: var(--l2-background);
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 }
 
 .retention-controls-header-label {
@@ -100,7 +100,7 @@
 		align-items: center;
 		gap: var(--spacing-2);
 		border-radius: 2px 0 0 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: transparent;
 		text-align: left;
 		-moz-appearance: textfield;
@@ -130,7 +130,7 @@
 			padding: 6px 6px 6px 8px;
 			align-items: center;
 			gap: var(--spacing-2);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 			width: 80px;
 			border-left: none;

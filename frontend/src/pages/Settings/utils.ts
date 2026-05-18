@@ -10,6 +10,7 @@ import {
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	mcpServerSettings,
 	membersSettings,
 	multiIngestionSettings,
 	mySettings,
@@ -61,13 +62,16 @@ export const getRoutes = (
 
 	settings.push(...alertChannels(t));
 
+	// Visible to all authenticated users
+	settings.push(
+		...serviceAccountsSettings(t),
+		...rolesSettings(t),
+		...roleDetails(t),
+	);
+
+	// Admin-only: members management
 	if (isAdmin) {
-		settings.push(
-			...membersSettings(t),
-			...serviceAccountsSettings(t),
-			...rolesSettings(t),
-			...roleDetails(t),
-		);
+		settings.push(...membersSettings(t));
 	}
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
@@ -79,6 +83,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...mcpServerSettings(t),
 	);
 
 	return settings;

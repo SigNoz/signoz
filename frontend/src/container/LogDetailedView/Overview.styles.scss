@@ -1,8 +1,8 @@
 .overview-container {
 	.tag {
 		border-radius: 20px;
-		border: 1px solid rgba(173, 127, 88, 0.2);
-		background: rgba(173, 127, 88, 0.1);
+		border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+		background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 		padding: var(--padding-1) var(--padding-2);
 		font-family: 'Inter';
 		font-size: var(--font-size-xs);
@@ -26,8 +26,8 @@
 		}
 
 		.log-switch-btn {
-			border: 1px solid var(--bg-slate-500);
-			background-color: var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
+			background-color: var(--l2-background);
 			width: 40px;
 			height: 100%;
 			display: flex;
@@ -41,16 +41,17 @@
 	}
 
 	.ant-collapse {
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 	}
 
 	.collapse-content {
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 
 		.ant-collapse-header {
 			align-items: center;
 			border-radius: 2px;
-			background: rgba(171, 189, 255, 0.04);
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
 
 			padding: 8px;
 
@@ -62,7 +63,7 @@
 					display: flex;
 
 					.ant-btn {
-						background: rgba(113, 144, 249, 0.08);
+						background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 					}
 				}
 			}
@@ -70,8 +71,8 @@
 
 		.ant-collapse-content {
 			padding: 0;
-			background: var(--bg-ink-400);
-			border-top: 1px solid var(--bg-slate-500);
+			background: var(--l2-background);
+			border-top: 1px solid var(--l1-border);
 
 			.ant-collapse-content-box {
 				padding: var(--padding-2) 0 0 0;
@@ -85,7 +86,7 @@
 
 	.ant-tag-borderless {
 		border-radius: 2px;
-		background: rgba(113, 144, 249, 0.08);
+		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 	}
 
 	.attribute-collapse {
@@ -107,7 +108,7 @@
 
 		.action-btn {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -115,29 +116,6 @@
 			background: none;
 			border: none;
 			box-shadow: none;
-		}
-	}
-}
-
-.lightMode {
-	.overview-container {
-		.ant-collapse {
-			border: 1px solid var(--bg-vanilla-200);
-		}
-
-		.collapse-content {
-			border-bottom: 1px solid var(--bg-vanilla-200);
-			.ant-collapse-content {
-				background: var(--bg-vanilla-100);
-				border-top: 1px solid var(--bg-vanilla-200);
-			}
-		}
-
-		.log-switch {
-			.log-switch-btn {
-				background: var(--bg-vanilla-200);
-				border: 1px solid var(--bg-vanilla-400);
-			}
 		}
 	}
 }

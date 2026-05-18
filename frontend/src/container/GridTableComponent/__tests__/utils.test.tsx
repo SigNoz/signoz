@@ -44,7 +44,7 @@ describe('Table Panel utils', () => {
 		expect(getQueryLegend(query, 'A')).toBe('p99');
 
 		// should return undefined when legend not present
-		expect(getQueryLegend(query, 'B')).toBe(undefined);
+		expect(getQueryLegend(query, 'B')).toBeUndefined();
 	});
 
 	it('sorter function for table sorting', () => {

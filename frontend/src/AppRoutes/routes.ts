@@ -2,6 +2,7 @@ import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 
 import {
+	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
 	AlertTypeSelectionPage,
@@ -18,7 +19,8 @@ import {
 	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
-	InstalledIntegrations,
+	Integrations,
+	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -47,6 +49,7 @@ import {
 	StatusPage,
 	SupportPage,
 	TraceDetail,
+	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -137,12 +140,22 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
+	// V3 trace details is gated until release: /trace serves V2 (public),
+	// /trace-old serves V3 (URL-only access). Flip the two `component`
+	// values back to release V3.
 	{
 		path: ROUTES.TRACE_DETAIL,
 		exact: true,
 		component: TraceDetail,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
+	},
+	{
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+		component: TraceDetailV3,
+		isPrivate: true,
+		key: 'TRACE_DETAIL_OLD',
 	},
 	{
 		path: ROUTES.SETTINGS,
@@ -390,9 +403,16 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
+		path: ROUTES.INTEGRATIONS_DETAIL,
+		exact: true,
+		component: IntegrationsDetailsPage,
+		isPrivate: true,
+		key: 'INTEGRATIONS_DETAIL',
+	},
+	{
 		path: ROUTES.INTEGRATIONS,
 		exact: true,
-		component: InstalledIntegrations,
+		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},
@@ -486,6 +506,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.AI_ASSISTANT,
+		exact: true,
+		component: AIAssistantPage,
+		key: 'AI_ASSISTANT',
 		isPrivate: true,
 	},
 ];

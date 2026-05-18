@@ -11,7 +11,8 @@ jest.mock('react-use', () => ({
 
 const mockToastSuccess = jest.fn();
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -52,9 +53,6 @@ describe('LicenseKeyRow', () => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('test-key');
 			expect(mockToastSuccess).toHaveBeenCalledWith(
 				'License key copied to clipboard.',
-				{
-					richColors: true,
-				},
 			);
 		});
 	});

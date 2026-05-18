@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
-	Divider,
+	Flex,
 	Form,
 	FormInstance,
 	Input,
@@ -11,14 +11,21 @@ import {
 	Select,
 	SelectProps,
 	Spin,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	DowntimeSchedules,
-	Recurrence,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
-import { DowntimeScheduleUpdatePayload } from 'api/plannedDowntime/updateDowntimeSchedule';
+	createDowntimeSchedule,
+	updateDowntimeScheduleByID,
+} from 'api/generated/services/downtimeschedules';
+import type {
+	RuletypesPlannedMaintenanceDTO,
+	RuletypesPostablePlannedMaintenanceDTO,
+	RuletypesRecurrenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {
 	ModalButtonWrapper,
@@ -29,15 +36,14 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';
 
-import { SOMETHING_WENT_WRONG } from '../../constants/api';
-import { showErrorNotification } from '../../utils/error';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
-	createEditDowntimeSchedule,
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
@@ -62,9 +68,9 @@ interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
 	endTime: dayjs.Dayjs | string;
-	recurrence?: Recurrence | null;
+	recurrence?: RuletypesRecurrenceDTO | null;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect?: Recurrence;
+	recurrenceSelect?: RuletypesRecurrenceDTO;
 	timezone?: string;
 }
 
@@ -72,7 +78,7 @@ const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<
-		DowntimeSchedules & {
+		RuletypesPlannedMaintenanceDTO & {
 			editMode: boolean;
 		}
 	>;
@@ -111,9 +117,9 @@ export function PlannedDowntimeForm(
 			?.unit || 'm',
 	);
 
-	const [formData, setFormData] = useState<PlannedDowntimeFormData>(
-		initialValues?.schedule as PlannedDowntimeFormData,
-	);
+	const [formData, setFormData] = useState<Partial<PlannedDowntimeFormData>>({
+		timezone: initialValues.schedule?.timezone,
+	});
 
 	const [recurrenceType, setRecurrenceType] = useState<string | null>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
@@ -125,6 +131,7 @@ export function PlannedDowntimeForm(
 		: undefined;
 
 	const { notifications } = useNotifications();
+	const { showErrorModal } = useErrorModal();
 
 	const datePickerFooter = (mode: any): any =>
 		mode === 'time' ? (
@@ -134,57 +141,54 @@ export function PlannedDowntimeForm(
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
-			const createEditProps: DowntimeScheduleUpdatePayload = {
-				data: {
-					alertIds: values.alertRules
-						.map((alert) => alert.value)
-						.filter((alert) => alert !== undefined) as string[],
-					name: values.name,
-					schedule: {
-						startTime: handleTimeConversion(
+			const data: RuletypesPostablePlannedMaintenanceDTO = {
+				alertIds: values.alertRules
+					.map((alert) => alert.value)
+					.filter((alert) => alert !== undefined) as string[],
+				name: values.name,
+				schedule: {
+					startTime: new Date(
+						handleTimeConversion(
 							values.startTime,
 							timezoneInitialValue,
 							values.timezone,
 							shouldKeepLocalTime,
 						),
-						timezone: values.timezone,
-						endTime: values.endTime
-							? handleTimeConversion(
+					),
+					timezone: values.timezone as string,
+					endTime: values.endTime
+						? new Date(
+								handleTimeConversion(
 									values.endTime,
 									timezoneInitialValue,
 									values.timezone,
 									shouldKeepLocalTime,
-							  )
-							: undefined,
-						recurrence: values.recurrence as Recurrence,
-					},
+								),
+							)
+						: undefined,
+					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
-				id: isEditMode ? initialValues.id : undefined,
 			};
 
 			setSaveLoading(true);
 			try {
-				const response = await createEditDowntimeSchedule({ ...createEditProps });
-				if (response.message === 'success') {
-					setIsOpen(false);
-					notifications.success({
-						message: 'Success',
-						description: isEditMode
-							? 'Schedule updated successfully'
-							: 'Schedule created successfully',
-					});
-					refetchAllSchedules();
+				if (isEditMode && initialValues.id) {
+					await updateDowntimeScheduleByID({ id: initialValues.id }, data);
 				} else {
-					notifications.error({
-						message: 'Error',
-						description:
-							typeof response.error === 'string'
-								? response.error
-								: response.error?.message || SOMETHING_WENT_WRONG,
-					});
+					await createDowntimeSchedule(data);
 				}
+				setIsOpen(false);
+				notifications.success({
+					message: 'Success',
+					description: isEditMode
+						? 'Schedule updated successfully'
+						: 'Schedule created successfully',
+				});
+				refetchAllSchedules();
 			} catch (e: unknown) {
-				showErrorNotification(notifications, e as Error);
+				showErrorModal(
+					convertToApiError(e as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
 			}
 			setSaveLoading(false);
 		},
@@ -195,10 +199,11 @@ export function PlannedDowntimeForm(
 			refetchAllSchedules,
 			setIsOpen,
 			timezoneInitialValue,
+			showErrorModal,
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		const recurrenceData: Recurrence | undefined =
+		const recurrenceData =
 			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
@@ -211,7 +216,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
-							  )
+								)
 							: undefined,
 						startTime: handleTimeConversion(
 							values.startTime,
@@ -223,9 +228,12 @@ export function PlannedDowntimeForm(
 							? undefined
 							: values.recurrence?.repeatOn,
 						repeatType: values.recurrence?.repeatType,
-				  };
+					};
 
-		const payloadValues = { ...values, recurrence: recurrenceData };
+		const payloadValues = {
+			...values,
+			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
+		};
 		await saveHanlder(payloadValues);
 	};
 
@@ -236,11 +244,9 @@ export function PlannedDowntimeForm(
 	];
 
 	const handleOk = async (): Promise<void> => {
-		try {
-			await form.validateFields();
-		} catch (error) {
-			console.error(error);
-		}
+		await form.validateFields().catch(() => {
+			// antd renders inline field-level errors; nothing more to do here.
+		});
 	};
 
 	const handleCancel = (): void => {
@@ -281,18 +287,19 @@ export function PlannedDowntimeForm(
 				: '',
 			recurrence: {
 				...initialValues.schedule?.recurrence,
-				repeatType: !isScheduleRecurring(initialValues?.schedule)
+				repeatType: (!isScheduleRecurring(initialValues?.schedule)
 					? recurrenceOptions.doesNotRepeat.value
-					: (initialValues.schedule?.recurrence?.repeatType as string),
-				duration: getDurationInfo(
-					initialValues.schedule?.recurrence?.duration as string,
-				)?.value,
-			},
+					: initialValues.schedule?.recurrence
+							?.repeatType) as RuletypesRecurrenceDTO['repeatType'],
+				duration: String(
+					getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
+						?.value ?? '',
+				),
+			} as RuletypesRecurrenceDTO,
 			timezone: initialValues.schedule?.timezone as string,
 		};
 		return formData;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [initialValues]);
+	}, [initialValues, alertOptions]);
 
 	useEffect(() => {
 		setSelectedTags(formatedInitialValues.alertRules);
@@ -325,7 +332,12 @@ export function PlannedDowntimeForm(
 	const startTimeText = useMemo((): string => {
 		let startTime = formData?.startTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			startTime = formData?.recurrence?.startTime || formData?.startTime || '';
+			startTime =
+				(formData?.recurrence?.startTime
+					? dayjs(formData.recurrence.startTime).toISOString()
+					: '') ||
+				formData?.startTime ||
+				'';
 		}
 
 		if (!startTime) {
@@ -381,7 +393,10 @@ export function PlannedDowntimeForm(
 	const endTimeText = useMemo((): string => {
 		let endTime = formData?.endTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			endTime = formData?.recurrence?.endTime || '';
+			endTime =
+				(formData?.recurrence?.endTime
+					? dayjs(formData.recurrence.endTime).toISOString()
+					: '') || '';
 
 			if (!isEditMode && !endTime) {
 				endTime = formData?.endTime || '';
@@ -427,11 +442,9 @@ export function PlannedDowntimeForm(
 			centered
 			open={isOpen}
 			className="createDowntimeModal"
-			width={384}
 			onCancel={handleCancel}
 			footer={null}
 		>
-			<Divider plain />
 			<Form<PlannedDowntimeFormData>
 				name={initialValues.editMode ? 'edit-form' : 'create-form'}
 				form={form}
@@ -601,11 +614,14 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<CheckOutlined />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
+							className="downtime-schedule-btn"
 						>
-							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							<Flex align="center" gap={4}>
+								<Check size={16} />
+								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							</Flex>
 						</Button>
 					</ModalButtonWrapper>
 				</Form.Item>

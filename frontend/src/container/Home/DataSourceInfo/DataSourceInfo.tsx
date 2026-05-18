@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Link2 } from 'lucide-react';
+import { Link2 } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { openInNewTab } from 'utils/navigation';
 
 import containerPlusUrl from '@/assets/Icons/container-plus.svg';
 import helloWaveUrl from '@/assets/Icons/hello-wave.svg';
@@ -41,9 +42,10 @@ function DataSourceInfo({
 		[hostsData],
 	);
 
-	const url = useMemo(() => activeHost?.url?.split('://')[1] ?? '', [
-		activeHost,
-	]);
+	const url = useMemo(
+		() => activeHost?.url?.split('://')[1] ?? '',
+		[activeHost],
+	);
 
 	const handleConnect = (): void => {
 		logEvent('Homepage: Connect dataSource clicked', {});
@@ -51,7 +53,7 @@ function DataSourceInfo({
 		if (activeLicense && activeLicense.platform === LicensePlatform.CLOUD) {
 			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
-			window?.open(DOCS_LINKS.ADD_DATA_SOURCE, '_blank', 'noopener noreferrer');
+			openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 		}
 	};
 
@@ -81,15 +83,9 @@ function DataSourceInfo({
 								color="primary"
 								size="sm"
 								className="periscope-btn primary"
-								prefixIcon={<img src={containerPlusUrl} alt="plus" />}
+								prefix={<img src={containerPlusUrl} alt="plus" />}
 								onClick={handleConnect}
-								role="button"
-								tabIndex={0}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter') {
-										handleConnect();
-									}
-								}}
+								// TODO - Support tabindex, keyboard events - @H4ad
 							>
 								Connect Data Source
 							</Button>

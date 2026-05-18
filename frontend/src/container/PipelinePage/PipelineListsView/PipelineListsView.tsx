@@ -8,8 +8,9 @@ import React, {
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Card, Form, Modal, Table, Typography } from 'antd';
+import { CircleAlert, Plus } from '@signozhq/icons';
+import { Card, Form, Modal, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
@@ -51,6 +52,8 @@ import {
 	getElementFromArray,
 	getRecordIndex,
 	getTableColumn,
+	mapTagFilterToCanonicalOperators,
+	mapTagFilterToDeprecatedOperators,
 	getUpdatedRow,
 } from './utils';
 
@@ -104,10 +107,16 @@ function PipelineListsView({
 	const { notifications } = useNotifications();
 	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
+		cloneDeep(pipelineData?.pipelines || []).map((p) => ({
+			...p,
+			filter: mapTagFilterToCanonicalOperators(p.filter),
+		})),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
+		cloneDeep(pipelineData?.pipelines || []).map((p) => ({
+			...p,
+			filter: mapTagFilterToCanonicalOperators(p.filter),
+		})),
 	);
 
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
@@ -133,15 +142,11 @@ function PipelineListsView({
 		[expandedPipelineId, currPipelineData],
 	);
 
-	const [
-		selectedProcessorData,
-		setSelectedProcessorData,
-	] = useState<ProcessorData>();
+	const [selectedProcessorData, setSelectedProcessorData] =
+		useState<ProcessorData>();
 
-	const [
-		selectedPipelineData,
-		setSelectedPipelineData,
-	] = useState<PipelineData>();
+	const [selectedPipelineData, setSelectedPipelineData] =
+		useState<PipelineData>();
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
@@ -167,7 +172,7 @@ function PipelineListsView({
 		}: AlertMessage) => {
 			modal.confirm({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
-				icon: <ExclamationCircleOutlined />,
+				icon: <CircleAlert size="xl" className="modal-icon-container" />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
 				cancelText: <span>{t('cancel')}</span>,
@@ -183,7 +188,10 @@ function PipelineListsView({
 		(record: PipelineData) => (): void => {
 			setActionType(ActionType.EditPipeline);
 			setSelectedPipelineData(record);
-			pipelineForm.setFieldsValue(record);
+			pipelineForm.setFieldsValue({
+				...record,
+				filter: mapTagFilterToCanonicalOperators(record.filter),
+			});
 		},
 		[setActionType, pipelineForm],
 	);
@@ -400,7 +408,7 @@ function PipelineListsView({
 				<FooterButton
 					type="link"
 					onClick={addNewPipelineHandler}
-					icon={<PlusOutlined />}
+					icon={<Plus size="lg" />}
 				>
 					{t('add_new_pipeline')}
 				</FooterButton>
@@ -442,6 +450,7 @@ function PipelineListsView({
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = { ...item };
 			delete pipelineData?.id;
+			pipelineData.filter = mapTagFilterToDeprecatedOperators(pipelineData.filter);
 			return pipelineData;
 		});
 		try {
@@ -453,8 +462,12 @@ function PipelineListsView({
 			setShowSaveButton(undefined);
 
 			const pipelinesInDB = response.data?.pipelines || [];
-			setCurrPipelineData(pipelinesInDB);
-			setPrevPipelineData(pipelinesInDB);
+			const canonicalPipelinesInDB = pipelinesInDB.map((p) => ({
+				...p,
+				filter: mapTagFilterToCanonicalOperators(p.filter),
+			}));
+			setCurrPipelineData(canonicalPipelinesInDB);
+			setPrevPipelineData(canonicalPipelinesInDB);
 
 			// Log modified JSON flattening configurations
 			const modifiedConfigs = getModifiedJsonFlatteningConfigs();
@@ -519,7 +532,7 @@ function PipelineListsView({
 		({
 			index,
 			moveRow: movePipelineRow,
-		} as React.HTMLAttributes<unknown>);
+		}) as React.HTMLAttributes<unknown>;
 
 	const expandableConfig: ExpandableConfig<PipelineData> = {
 		expandedRowKeys,

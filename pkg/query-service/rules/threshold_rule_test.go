@@ -826,10 +826,10 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
-		querier := prepareQuerierForTraces(telemetryStore, keysMap)
+		querier := prepareQuerierForTraces(t, telemetryStore, keysMap)
 
 		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = c.matchType
@@ -946,7 +946,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
-		querier := prepareQuerierForLogs(telemetryStore, keysMap)
+		querier := prepareQuerierForLogs(t, telemetryStore, keysMap)
 
 		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = c.matchType

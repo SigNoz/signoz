@@ -1,13 +1,13 @@
 .json-view-container {
 	border-radius: 3px;
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 	padding-top: 16px;
 
 	.json-view-footer {
 		height: 36px;
 		display: flex;
 		align-items: center;
-		border-top: 1px solid var(--bg-slate-500);
+		border-top: 1px solid var(--l1-border);
 	}
 
 	.log-switch {
@@ -23,24 +23,13 @@
 		}
 
 		.log-switch-btn {
-			border: 1px solid var(--bg-slate-500);
-			background-color: var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
+			background-color: var(--l2-background);
 			width: 40px;
 			height: 100%;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-		}
-	}
-}
-
-.lightMode {
-	.json-view-container {
-		.log-switch {
-			.log-switch-btn {
-				background: var(--bg-vanilla-200);
-				border: 1px solid var(--bg-vanilla-400);
-			}
 		}
 	}
 }

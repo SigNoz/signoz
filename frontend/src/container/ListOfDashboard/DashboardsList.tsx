@@ -25,9 +25,11 @@ import {
 	Table,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
@@ -40,6 +42,9 @@ import {
 	sanitizeDashboardData,
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// see more: https://github.com/lucide-icons/lucide/issues/94
+import { handleContactSupport } from 'container/Integrations/utils';
 import dayjs from 'dayjs';
 import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -68,10 +73,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
-} from 'lucide-react';
-// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
-// see more: https://github.com/lucide-icons/lucide/issues/94
-import { handleContactSupport } from 'pages/Integrations/utils';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -83,6 +85,8 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
@@ -112,10 +116,8 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
-	const {
-		dashboardsListQueryParams,
-		updateDashboardsListQueryParams,
-	} = useDashboardsListQueryParams();
+	const { dashboardsListQueryParams, updateDashboardsListQueryParams } =
+		useDashboardsListQueryParams();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
@@ -127,25 +129,20 @@ function DashboardsList(): JSX.Element {
 		user.role,
 	);
 
-	const [
-		showNewDashboardTemplatesModal,
-		setShowNewDashboardTemplatesModal,
-	] = useState(false);
+	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
+		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
-	const [
-		isImportJSONModalVisible,
-		setIsImportJSONModalVisible,
-	] = useState<boolean>(false);
+	const [isImportJSONModalVisible, setIsImportJSONModalVisible] =
+		useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
-		false,
-	);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] =
+		useState<boolean>(false);
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
-		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		const dashboardDynamicColumnsString = getLocalStorageKey('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
 			createdAt: true,
 			createdBy: true,
@@ -159,7 +156,7 @@ function DashboardsList(): JSX.Element {
 				);
 
 				if (isEmpty(tempDashboardDynamicColumns)) {
-					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+					setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 				} else {
 					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
 				}
@@ -167,7 +164,7 @@ function DashboardsList(): JSX.Element {
 				console.error(error);
 			}
 		} else {
-			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 		}
 
 		return dashboardDynamicColumns;
@@ -181,7 +178,7 @@ function DashboardsList(): JSX.Element {
 		visibleColumns: DashboardDynamicColumns,
 	): void {
 		try {
-			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(visibleColumns));
 		} catch (error) {
 			console.error(error);
 		}
@@ -438,7 +435,6 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
 										<div className="dashboard-action-content">
 											<section className="section-1">
@@ -457,7 +453,7 @@ function DashboardsList(): JSX.Element {
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
-														window.open(getLink(), '_blank');
+														openInNewTab(getLink());
 													}}
 												>
 													Open in New Tab
@@ -469,7 +465,7 @@ function DashboardsList(): JSX.Element {
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
-														setCopy(`${window.location.origin}${getLink()}`);
+														setCopy(getAbsoluteUrl(getLink()));
 													}}
 												>
 													Copy Link
@@ -496,6 +492,7 @@ function DashboardsList(): JSX.Element {
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger="click"
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"

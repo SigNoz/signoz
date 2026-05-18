@@ -9,15 +9,15 @@
 		.query-section-query-actions {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
 			margin-bottom: -1px;
 
 			.prom-ql-icon {
-				height: 14px;
-				width: 14px;
+				height: 13px;
+				width: 13px;
 			}
 
 			.explorer-view-option {
@@ -29,24 +29,24 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--bg-slate-400);
-				border-bottom: 0.5px solid var(--bg-slate-400);
+				border-left: 0.5px solid var(--l1-border);
+				border-bottom: 0.5px solid var(--l1-border);
 				width: 120px;
 				height: 36px;
 
 				gap: 8px;
 
 				&.active-tab {
-					background-color: var(--bg-ink-500);
+					background-color: var(--l1-background);
 					border-bottom: none;
 
 					&:hover {
-						background-color: var(--bg-ink-500) !important;
+						background-color: var(--l1-background) !important;
 					}
 				}
 
 				&:disabled {
-					background-color: var(--bg-ink-300);
+					background-color: var(--l2-background);
 					opacity: 0.6;
 				}
 
@@ -57,7 +57,7 @@
 				&:hover {
 					background-color: transparent !important;
 					border-left: 1px solid transparent !important;
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -75,15 +75,15 @@
 
 		.ant-select {
 			.ant-select-selector {
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 
 				&:hover {
-					border-color: var(--bg-vanilla-300);
+					border-color: var(--l1-border);
 				}
 
 				&:focus {
-					border-color: var(--bg-vanilla-300);
+					border-color: var(--l1-border);
 				}
 			}
 		}
@@ -93,9 +93,9 @@
 		margin-right: 4px;
 		.alert-chart-container {
 			.ant-card {
-				border: 1px solid var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
 				.ant-card-body {
-					background-color: var(--bg-ink-500);
+					background-color: var(--l1-background);
 
 					.chart-preview-headline {
 						display: flex;
@@ -115,82 +115,7 @@
 
 	.alert-query-section-container {
 		margin: 0;
-		background-color: var(--bg-ink-500);
-		border: 1px solid var(--bg-slate-400);
-	}
-}
-
-.lightMode {
-	.query-section {
-		.query-section-tabs {
-			.query-section-query-actions {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-
-				.explorer-view-option {
-					border-left: 0.5px solid var(--bg-vanilla-300);
-					border-bottom: 0.5px solid var(--bg-vanilla-300);
-
-					&.active-tab {
-						background-color: var(--bg-vanilla-300);
-
-						&:hover {
-							background-color: var(--bg-vanilla-100) !important;
-						}
-					}
-
-					&:disabled {
-						background-color: var(--bg-vanilla-300);
-					}
-
-					&:hover {
-						color: var(--bg-ink-400);
-					}
-				}
-			}
-		}
-
-		.y-axis-unit-selector-component {
-			.ant-select {
-				.ant-select-selector {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
-
-					&:hover {
-						border-color: var(--bg-ink-300);
-					}
-
-					&:focus {
-						border-color: var(--bg-ink-300);
-						box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-					}
-				}
-			}
-		}
-
-		.chart-preview-container {
-			.alert-chart-container {
-				.ant-card {
-					border: 1px solid var(--bg-vanilla-300);
-					.ant-card-body {
-						background-color: var(--bg-vanilla-100);
-					}
-
-					.ant-card-body {
-						.chart-preview-header {
-							.plot-tag {
-								background-color: var(--bg-vanilla-300);
-								color: var(--bg-slate-100);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		.alert-query-section-container {
-			background-color: var(--bg-vanilla-100);
-			border: 1px solid var(--bg-vanilla-300);
-		}
+		background-color: var(--l1-background);
+		border: 1px solid var(--l1-border);
 	}
 }

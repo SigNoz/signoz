@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addUserRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/invite", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateInvite), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/invite", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateInvite), handler.OpenAPIDef{
 		ID:                  "CreateInvite",
 		Tags:                []string{"users"},
 		Summary:             "Create invite",
@@ -27,7 +27,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/invite/bulk", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateBulkInvite), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/invite/bulk", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateBulkInvite), handler.OpenAPIDef{
 		ID:                 "CreateBulkInvite",
 		Tags:               []string{"users"},
 		Summary:            "Create bulk invite",
@@ -43,7 +43,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
 		ID:                  "ListUsersDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "List users",
@@ -60,7 +60,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
 		ID:                  "ListUsers",
 		Tags:                []string{"users"},
 		Summary:             "List users v2",
@@ -77,7 +77,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
 		ID:                  "GetMyUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get my user",
@@ -94,7 +94,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
 		ID:                  "GetMyUser",
 		Tags:                []string{"users"},
 		Summary:             "Get my user v2",
@@ -111,7 +111,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.UpdateMyUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.UpdateMyUser), handler.OpenAPIDef{
 		ID:                  "UpdateMyUserV2",
 		Tags:                []string{"users"},
 		Summary:             "Update my user v2",
@@ -128,7 +128,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.GetUserDeprecated), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.SelfAccess(provider.userHandler.GetUserDeprecated), handler.OpenAPIDef{
 		ID:                  "GetUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get user",
@@ -145,7 +145,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
 		ID:                  "GetUser",
 		Tags:                []string{"users"},
 		Summary:             "Get user by user id",
@@ -162,7 +162,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.UpdateUserDeprecated), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.SelfAccess(provider.userHandler.UpdateUserDeprecated), handler.OpenAPIDef{
 		ID:                  "UpdateUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Update user",
@@ -179,7 +179,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
 		ID:                  "UpdateUser",
 		Tags:                []string{"users"},
 		Summary:             "Update user v2",
@@ -196,7 +196,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.DeleteUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUser), handler.OpenAPIDef{
 		ID:                  "DeleteUser",
 		Tags:                []string{"users"},
 		Summary:             "Delete user",
@@ -213,8 +213,8 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
-		ID:                  "GetResetPasswordToken",
+	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetResetPasswordTokenDeprecated), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordTokenDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get reset password token",
 		Description:         "This endpoint returns the reset password token by id",
@@ -224,13 +224,47 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          true,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Get reset password token for a user",
+		Description:         "This endpoint returns the existing reset password token for a user.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/resetPassword", handler.New(provider.authZ.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "CreateResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Create or regenerate reset password token for a user",
+		Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/resetPassword", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
 		ID:                  "ResetPassword",
 		Tags:                []string{"users"},
 		Summary:             "Reset password",
@@ -247,11 +281,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/changePassword/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
-		ID:                  "ChangePassword",
+	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
+		ID:                  "UpdateMyPassword",
 		Tags:                []string{"users"},
-		Summary:             "Change password",
-		Description:         "This endpoint changes the password by id",
+		Summary:             "Updates my password",
+		Description:         "This endpoint updates the password of the user I belong to",
 		Request:             new(types.ChangePasswordRequest),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -260,11 +294,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.authZ.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
 		ID:                  "ForgotPassword",
 		Tags:                []string{"users"},
 		Summary:             "Forgot password",
@@ -281,7 +315,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetRolesByUserID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetRolesByUserID), handler.OpenAPIDef{
 		ID:                  "GetRolesByUserID",
 		Tags:                []string{"users"},
 		Summary:             "Get user roles",
@@ -298,7 +332,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.userHandler.SetRoleByUserID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.SetRoleByUserID), handler.OpenAPIDef{
 		ID:                  "SetRoleByUserID",
 		Tags:                []string{"users"},
 		Summary:             "Set user roles",
@@ -315,7 +349,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles/{roleId}", handler.New(provider.authZ.AdminAccess(provider.userHandler.RemoveUserRoleByRoleID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/roles/{roleId}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.RemoveUserRoleByRoleID), handler.OpenAPIDef{
 		ID:                  "RemoveUserRoleByUserIDAndRoleID",
 		Tags:                []string{"users"},
 		Summary:             "Remove a role from user",
@@ -332,7 +366,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/roles/{id}/users", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUsersByRoleID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/roles/{id}/users", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUsersByRoleID), handler.OpenAPIDef{
 		ID:                  "GetUsersByRoleID",
 		Tags:                []string{"users"},
 		Summary:             "Get users by role id",

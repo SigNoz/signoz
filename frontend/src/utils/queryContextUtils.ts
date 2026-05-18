@@ -703,13 +703,13 @@ export function getQueryContextAtCursor(
 				keyToken: isInKeyBoundary
 					? keyToken
 					: isInOperatorBoundary || finalIsInValue
-					? keyToken
-					: undefined,
+						? keyToken
+						: undefined,
 				operatorToken: isInOperatorBoundary
 					? operatorToken
 					: finalIsInValue
-					? operatorToken
-					: undefined,
+						? operatorToken
+						: undefined,
 				valueToken: finalIsInValue ? valueToken : undefined,
 				queryPairs: queryPairs,
 				currentPair: currentPair,
@@ -983,13 +983,13 @@ export function getQueryContextAtCursor(
 				keyToken: tokenContext.isInKey
 					? exactToken.text
 					: tokenContext.isInOperator || tokenContext.isInValue
-					? keyFromPair
-					: undefined,
+						? keyFromPair
+						: undefined,
 				operatorToken: tokenContext.isInOperator
 					? exactToken.text
 					: tokenContext.isInValue
-					? operatorFromPair
-					: undefined,
+						? operatorFromPair
+						: undefined,
 				valueToken: tokenContext.isInValue ? exactToken.text : undefined,
 				queryPairs: queryPairs,
 				currentPair: currentPair,
@@ -1208,7 +1208,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						isComplete: !!(
 							currentPair.key &&
 							currentPair.operator &&
-							currentPair.value
+							(currentPair.value || isNonValueOperator(currentPair.operator))
 						),
 					} as IQueryPair);
 				}
@@ -1369,7 +1369,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					isComplete: !!(
 						currentPair.key &&
 						currentPair.operator &&
-						currentPair.value
+						(currentPair.value || isNonValueOperator(currentPair.operator))
 					),
 				} as IQueryPair);
 
@@ -1414,7 +1414,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				isComplete: !!(
 					currentPair.key &&
 					currentPair.operator &&
-					currentPair.value
+					(currentPair.value || isNonValueOperator(currentPair.operator))
 				),
 			} as IQueryPair);
 		}

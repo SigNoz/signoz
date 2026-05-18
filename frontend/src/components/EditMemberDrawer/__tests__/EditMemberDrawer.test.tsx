@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	getResetPasswordToken,
+	useCreateResetPasswordToken,
 	useDeleteUser,
+	useGetResetPasswordToken,
+	useGetRolesByUserID,
 	useGetUser,
+	useRemoveUserRoleByUserIDAndRoleID,
 	useSetRoleByUserID,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -19,29 +22,61 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
-	DrawerWrapper: ({
-		content,
-		open,
-	}: {
-		content?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+jest.mock('api/generated/services/users', () => ({
+	useDeleteUser: jest.fn(),
+	useGetUser: jest.fn(),
+	useGetRolesByUserID: jest.fn(),
+	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
+	useUpdateUser: jest.fn(),
+	useUpdateMyUserV2: jest.fn(),
+	useSetRoleByUserID: jest.fn(),
+	useGetResetPasswordToken: jest.fn(),
+	useCreateResetPasswordToken: jest.fn(),
+	getGetRolesByUserIDQueryKey: ({ id }: { id: string }): string[] => [
+		`/api/v2/users/${id}/roles`,
+	],
 }));
 
-jest.mock('@signozhq/dialog', () => ({
+jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
+	convertToApiError: jest.fn(),
+}));
+
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
+	DrawerWrapper: ({
+		children,
+		footer,
+		open,
+	}: {
+		children?: ReactNode;
+		footer?: ReactNode;
+		open: boolean;
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
+}));
+
+jest.mock('@signozhq/ui/dialog', () => ({
+	...jest.requireActual('@signozhq/ui/dialog'),
 	DialogWrapper: ({
 		children,
+		footer,
 		open,
 		title,
 	}: {
 		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
 		title?: string;
 	}): JSX.Element | null =>
 		open ? (
 			<div role="dialog" aria-label={title}>
 				{children}
+				{footer}
 			</div>
 		) : null,
 	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
@@ -49,20 +84,8 @@ jest.mock('@signozhq/dialog', () => ({
 	),
 }));
 
-jest.mock('api/generated/services/users', () => ({
-	useDeleteUser: jest.fn(),
-	useGetUser: jest.fn(),
-	useUpdateUser: jest.fn(),
-	useUpdateMyUserV2: jest.fn(),
-	useSetRoleByUserID: jest.fn(),
-	getResetPasswordToken: jest.fn(),
-}));
-
-jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
-	convertToApiError: jest.fn(),
-}));
-
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -82,7 +105,8 @@ jest.mock('react-use', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockDeleteMutate = jest.fn();
-const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
+const mockRemoveMutateAsync = jest.fn();
+const mockCreateTokenMutateAsync = jest.fn();
 
 const showErrorModal = jest.fn();
 jest.mock('providers/ErrorModalProvider', () => ({
@@ -157,6 +181,8 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockCopyState.value = undefined;
+		mockCopyState.error = undefined;
 		showErrorModal.mockClear();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -167,6 +193,14 @@ describe('EditMemberDrawer', () => {
 			data: mockFetchedUser,
 			isLoading: false,
 			refetch: jest.fn(),
+		});
+		(useGetRolesByUserID as jest.Mock).mockReturnValue({
+			data: { data: [managedRoles[0]] },
+			isLoading: false,
+		});
+		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+			mutateAsync: mockRemoveMutateAsync.mockResolvedValue({}),
+			isLoading: false,
 		});
 		(useUpdateUser as jest.Mock).mockReturnValue({
 			mutateAsync: jest.fn().mockResolvedValue({}),
@@ -182,6 +216,31 @@ describe('EditMemberDrawer', () => {
 		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
 			mutate: mockDeleteMutate,
+			isLoading: false,
+		});
+		// Token query: valid token for invited members
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					token: 'invite-tok-valid',
+					id: 'token-1',
+					expiresAt: new Date(Date.now() + 86400000).toISOString(),
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+		// Create token mutation
+		mockCreateTokenMutateAsync.mockResolvedValue({
+			status: 'success',
+			data: {
+				token: 'reset-tok-abc',
+				id: 'user-1',
+				expiresAt: new Date(Date.now() + 86400000).toISOString(),
+			},
+		});
+		(useCreateResetPasswordToken as jest.Mock).mockReturnValue({
+			mutateAsync: mockCreateTokenMutateAsync,
 			isLoading: false,
 		});
 	});
@@ -253,7 +312,7 @@ describe('EditMemberDrawer', () => {
 		expect(onClose).not.toHaveBeenCalled();
 	});
 
-	it('selecting a different role calls setRole with the new role name', async () => {
+	it('adding a new role calls setRole without removing existing ones', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockSet = jest.fn().mockResolvedValue({});
@@ -265,7 +324,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Open the roles dropdown and select signoz-editor
+		// signoz-admin is already selected; add signoz-editor on top
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
@@ -278,34 +337,31 @@ describe('EditMemberDrawer', () => {
 				pathParams: { id: 'user-1' },
 				data: { name: 'signoz-editor' },
 			});
+			expect(mockRemoveMutateAsync).not.toHaveBeenCalled();
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
-	it('does not call removeRole when the role is changed', async () => {
+	it('deselecting a role calls removeRole with the role id', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockSet = jest.fn().mockResolvedValue({});
-
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
-			mutateAsync: mockSet,
-			isLoading: false,
-		});
 
 		renderDrawer({ onComplete });
 
-		// Switch from signoz-admin to signoz-viewer using single-select
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		// signoz-admin appears as a selected tag — click its remove button to deselect
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockSet).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1' },
-				data: { name: 'signoz-viewer' },
+			expect(mockRemoveMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
 			});
 			expect(onComplete).toHaveBeenCalled();
 		});
@@ -326,9 +382,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /delete member/i }));
 
-		expect(
-			await screen.findByText(/are you sure you want to delete/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/are you sure you want to delete/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /delete member/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
@@ -357,6 +413,40 @@ describe('EditMemberDrawer', () => {
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
 	});
 
+	it('shows "Regenerate Invite Link" when token is expired', () => {
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					token: 'old-tok',
+					id: 'token-1',
+					expiresAt: new Date(Date.now() - 86400000).toISOString(), // expired yesterday
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+
+		renderDrawer({ member: invitedMember });
+
+		expect(
+			screen.getByRole('button', { name: /regenerate invite link/i }),
+		).toBeInTheDocument();
+	});
+
+	it('shows "Generate Invite Link" when no token exists', () => {
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			isError: true,
+		});
+
+		renderDrawer({ member: invitedMember });
+
+		expect(
+			screen.getByRole('button', { name: /generate invite link/i }),
+		).toBeInTheDocument();
+	});
+
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -372,9 +462,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
 
-		expect(
-			await screen.findByText(/Are you sure you want to revoke the invite/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Are you sure you want to revoke the invite/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /revoke invite/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
@@ -609,7 +699,7 @@ describe('EditMemberDrawer', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('does not call getResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
+		it('does not call createResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDrawer();
 
@@ -617,20 +707,16 @@ describe('EditMemberDrawer', () => {
 				screen.getByRole('button', { name: /generate password reset link/i }),
 			);
 
-			expect(mockGetResetPasswordToken).not.toHaveBeenCalled();
+			expect(mockCreateTokenMutateAsync).not.toHaveBeenCalled();
 		});
 	});
 
 	describe('Generate Password Reset Link', () => {
 		beforeEach(() => {
 			mockCopyToClipboard.mockClear();
-			mockGetResetPasswordToken.mockResolvedValue({
-				status: 'success',
-				data: { token: 'reset-tok-abc', id: 'user-1' },
-			});
 		});
 
-		it('calls getResetPasswordToken and opens the reset link dialog with the generated link', async () => {
+		it('calls POST and opens the reset link dialog with the generated link and expiry', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			renderDrawer();
@@ -642,11 +728,12 @@ describe('EditMemberDrawer', () => {
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,
 			});
-			expect(mockGetResetPasswordToken).toHaveBeenCalledWith({
-				id: 'user-1',
+			expect(mockCreateTokenMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
 			});
 			expect(dialog).toBeInTheDocument();
 			expect(dialog).toHaveTextContent('reset-tok-abc');
+			expect(dialog).toHaveTextContent(/this link expires on/i);
 		});
 
 		it('copies the link to clipboard and shows "Copied!" on the button', async () => {
@@ -667,16 +754,16 @@ describe('EditMemberDrawer', () => {
 			await user.click(screen.getByRole('button', { name: /^copy$/i }));
 
 			await waitFor(() => {
+				expect(mockCopyToClipboard).toHaveBeenCalledWith(
+					expect.stringContaining('reset-tok-abc'),
+				);
+				expect(
+					screen.getByRole('button', { name: /copied!/i }),
+				).toBeInTheDocument();
 				expect(mockToast.success).toHaveBeenCalledWith(
 					'Reset link copied to clipboard',
-					expect.anything(),
 				);
 			});
-
-			expect(mockCopyToClipboard).toHaveBeenCalledWith(
-				expect.stringContaining('reset-tok-abc'),
-			);
-			expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument();
 		});
 	});
 });

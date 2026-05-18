@@ -15,6 +15,7 @@ const config: Config.InitialOptions = {
 			'<rootDir>/__mocks__/fileMock.ts',
 		'^@/(.*)$': '<rootDir>/src/$1',
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.module\\.mjs$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
 		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
@@ -23,11 +24,11 @@ const config: Config.InitialOptions = {
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
-		'^@signozhq/icons$':
-			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
+		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',
+		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
-		'^@signozhq/(?!ui$)([^/]+)$':
+		'^@signozhq/(?!ui(?:/|$))([^/]+)$':
 			'<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
@@ -44,7 +45,12 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|@signozhq/table|@signozhq/calendar|@signozhq/input|@signozhq/popover|@signozhq/button|@signozhq/sonner|@signozhq/*|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs)/)',
+		// @chenglou/pretext is ESM-only; @signozhq/ui pulls it in via text-ellipsis.
+		// Pattern 1: allow .pnpm virtual store through (handled by pattern 2), plus root-level ESM packages.
+		'node_modules/(?!(\\.pnpm|lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@chenglou/pretext|@signozhq/design-tokens|@signozhq|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs|uuid)/)',
+		// Pattern 2: pnpm virtual store — ignore everything except ESM-only packages.
+		// pnpm encodes scoped packages as @scope+name@version, so match on scope prefix.
+		'node_modules/\\.pnpm/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@chenglou|@signozhq|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs|uuid)[^/]*/node_modules)',
 	],
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

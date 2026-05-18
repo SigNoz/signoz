@@ -1,33 +1,12 @@
 import { ReactElement } from 'react';
-import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { ENVIRONMENT } from 'constants/env';
 import { BrandedPermission } from 'hooks/useAuthZ/types';
 import { buildPermission } from 'hooks/useAuthZ/utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { GuardAuthZ } from './GuardAuthZ';
-
-const BASE_URL = ENVIRONMENT.baseURL || '';
-const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 describe('GuardAuthZ', () => {
 	const TestChild = (): ReactElement => <div>Protected Content</div>;
@@ -55,7 +34,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -79,7 +58,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="read"
-				object="dashboard:*"
+				object="role:*"
 				fallbackOnLoading={<LoadingFallback />}
 			>
 				<TestChild />
@@ -102,7 +81,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -121,11 +100,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		render(
-			<GuardAuthZ
-				relation="read"
-				object="dashboard:*"
-				fallbackOnError={ErrorFallback}
-			>
+			<GuardAuthZ relation="read" object="role:*" fallbackOnError={ErrorFallback}>
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -155,7 +130,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="read"
-				object="dashboard:*"
+				object="role:*"
 				fallbackOnError={errorFallbackWithCapture}
 			>
 				<TestChild />
@@ -178,7 +153,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -201,7 +176,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="update"
-				object="dashboard:123"
+				object="role:123"
 				fallbackOnNoPermissions={NoPermissionFallback}
 			>
 				<TestChild />
@@ -224,7 +199,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="update" object="dashboard:123">
+			<GuardAuthZ relation="update" object="role:123">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -244,7 +219,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -257,7 +232,7 @@ describe('GuardAuthZ', () => {
 	});
 
 	it('should pass requiredPermissionName to fallbackOnNoPermissions', async () => {
-		const permission = buildPermission('update', 'dashboard:123');
+		const permission = buildPermission('update', 'role:123');
 
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
@@ -269,7 +244,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="update"
-				object="dashboard:123"
+				object="role:123"
 				fallbackOnNoPermissions={NoPermissionFallbackWithSuggestions}
 			>
 				<TestChild />
@@ -299,7 +274,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { rerender } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -309,7 +284,7 @@ describe('GuardAuthZ', () => {
 		});
 
 		rerender(
-			<GuardAuthZ relation="delete" object="dashboard:456">
+			<GuardAuthZ relation="delete" object="role:456">
 				<TestChild />
 			</GuardAuthZ>,
 		);

@@ -8,23 +8,34 @@
 		padding: 16px;
 
 		.roles-settings-header-title {
-			color: var(--text-base-white);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-style: normal;
 			font-size: 18px;
 			font-weight: 500;
 			line-height: 28px;
 			letter-spacing: -0.09px;
+			margin: 0;
 		}
 
 		.roles-settings-header-description {
 			color: var(--foreground);
 			font-family: Inter;
 			font-style: normal;
-			font-size: 14px;
-			font-weight: 400;
+			font-size: var(--paragraph-base-400-font-size);
+			font-weight: var(--paragraph-base-400-font-weight);
 			line-height: 20px;
 			letter-spacing: -0.07px;
+			margin: 0;
+		}
+
+		.roles-settings-header-learn-more {
+			color: var(--primary);
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
 		}
 	}
 
@@ -47,35 +58,6 @@
 			align-items: center;
 			gap: 6px;
 			border-radius: 2px;
-		}
-	}
-
-	// todo: https://github.com/SigNoz/components/issues/116
-	.roles-search-wrapper {
-		flex: 1;
-
-		input {
-			width: 100%;
-			background: var(--l3-background);
-			border: 1px solid var(--l3-border);
-			border-radius: 2px;
-			padding: 6px 6px 6px 8px;
-			font-family: Inter;
-			font-size: 14px;
-			font-weight: 400;
-			line-height: 18px;
-			letter-spacing: -0.07px;
-			color: var(--l1-foreground);
-			outline: none;
-			height: 32px;
-
-			&::placeholder {
-				color: var(--l3-foreground);
-			}
-
-			&:focus {
-				border-color: var(--input);
-			}
 		}
 	}
 }
@@ -141,7 +123,7 @@
 	gap: 8px;
 	height: 32px;
 	padding: 0 16px;
-	background: rgba(171, 189, 255, 0.04);
+	background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 	border-top: 1px solid var(--secondary);
 	border-bottom: 1px solid var(--secondary);
 	font-family: Inter;
@@ -171,7 +153,7 @@
 	display: flex;
 	align-items: center;
 	padding: 8px 16px;
-	background: rgba(171, 189, 255, 0.02);
+	background: color-mix(in srgb, var(--bg-robin-200) 2%, transparent);
 	border-bottom: 1px solid var(--secondary);
 	gap: 24px;
 
@@ -179,7 +161,7 @@
 		cursor: pointer;
 
 		&:hover {
-			background: rgba(171, 189, 255, 0.05);
+			background: color-mix(in srgb, var(--bg-robin-200) 5%, transparent);
 		}
 	}
 }
@@ -248,30 +230,6 @@
 	}
 }
 
-.lightMode {
-	.roles-settings {
-		.roles-settings-header {
-			.roles-settings-header-title {
-				color: var(--text-base-black);
-			}
-		}
-	}
-
-	.roles-table-section-header {
-		background: rgba(0, 0, 0, 0.03);
-	}
-
-	.roles-table-row {
-		background: rgba(0, 0, 0, 0.01);
-	}
-
-	.create-role-modal {
-		.ant-modal-title {
-			color: var(--text-base-black);
-		}
-	}
-}
-
 .create-role-modal {
 	.ant-modal-content {
 		padding: 0;
@@ -303,7 +261,7 @@
 	}
 
 	.ant-modal-title {
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 13px;
 		font-weight: 400;
@@ -336,16 +294,23 @@
 			}
 		}
 
-		// todo: https://github.com/SigNoz/components/issues/116
-		input,
+		input {
+			&::placeholder {
+				opacity: 0.4;
+			}
+		}
+
 		textarea {
 			width: 100%;
-			background: var(--l3-background);
-			border: 1px solid var(--l3-border);
+			box-sizing: border-box;
+			min-height: 100px;
+			resize: vertical;
+			background: var(--input-background, transparent);
+			border: 1px solid var(--border);
 			border-radius: 2px;
 			padding: 6px 8px;
 			font-family: Inter;
-			font-size: 14px;
+			font-size: var(--font-size-xs);
 			font-weight: 400;
 			line-height: 18px;
 			letter-spacing: -0.07px;
@@ -354,7 +319,7 @@
 			box-shadow: none;
 
 			&::placeholder {
-				color: var(--l3-foreground);
+				color: var(--muted-foreground);
 				opacity: 0.4;
 			}
 
@@ -363,25 +328,6 @@
 				border-color: var(--input);
 				box-shadow: none;
 			}
-		}
-
-		input {
-			height: 32px;
-		}
-
-		input:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-
-			&:hover {
-				border-color: var(--l3-border);
-				box-shadow: none;
-			}
-		}
-
-		textarea {
-			min-height: 100px;
-			resize: vertical;
 		}
 	}
 

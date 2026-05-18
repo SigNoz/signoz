@@ -16,7 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Pencil, Plus, Trash2 } from '@signozhq/icons';
 import {
 	ContextLinkProps,
 	ContextLinksData,
@@ -37,13 +37,8 @@ function SortableContextLink({
 	onDelete: (contextLink: ContextLinkProps) => void;
 	onEdit: (contextLink: ContextLinkProps) => void;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: contextLink.id });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: contextLink.id });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),

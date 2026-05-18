@@ -2,6 +2,7 @@ import { initReactI18next } from 'react-i18next';
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
+import { getBasePath } from 'utils/basePath';
 
 import cacheBursting from '../../i18n-translations-hash.json';
 
@@ -20,11 +21,12 @@ i18n
 			escapeValue: false, // not needed for react as it escapes by default
 		},
 		backend: {
-			loadPath: (language, namespace) => {
-				const ns = namespace[0];
-				const pathkey = `/${language}/${ns}`;
+			loadPath: (languages: string[], namespaces: string[]): string => {
+				const language = languages[0];
+				const namespace = namespaces[0];
+				const pathkey = `/${language}/${namespace}`;
 				const hash = cacheBursting[pathkey as keyof typeof cacheBursting] || '';
-				return `/locales/${language}/${namespace}.json?h=${hash}`;
+				return `${getBasePath()}locales/${language}/${namespace}.json?h=${hash}`;
 			},
 		},
 		react: {

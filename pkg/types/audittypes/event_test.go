@@ -6,8 +6,13 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/stretchr/testify/assert"
 	oteltrace "go.opentelemetry.io/otel/trace"
+)
+
+var (
+	testDashboardKind = coretypes.MustNewKind("dashboard")
 )
 
 func TestNewAuditEventFromHTTPRequest(t *testing.T) {
@@ -20,11 +25,11 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		path            string
 		route           string
 		statusCode      int
-		action          Action
+		action          coretypes.Verb
 		category        ActionCategory
 		claims          authtypes.Claims
 		resourceID      string
-		resourceKind    string
+		resourceKind    coretypes.Kind
 		errorType       string
 		errorCode       string
 		expectedOutcome Outcome
@@ -36,11 +41,11 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards",
 			route:           "/api/v1/dashboards",
 			statusCode:      http.StatusOK,
-			action:          ActionCreate,
+			action:          coretypes.VerbCreate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
-			resourceKind:    "dashboard",
+			resourceKind:    testDashboardKind,
 			expectedOutcome: OutcomeSuccess,
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678-efgh-9012)",
 		},
@@ -50,11 +55,11 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards/019b-5678-efgh-9012",
 			route:           "/api/v1/dashboards/{id}",
 			statusCode:      http.StatusForbidden,
-			action:          ActionUpdate,
+			action:          coretypes.VerbUpdate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
-			resourceKind:    "dashboard",
+			resourceKind:    testDashboardKind,
 			errorType:       "forbidden",
 			errorCode:       "authz_forbidden",
 			expectedOutcome: OutcomeFailure,
@@ -98,9 +103,9 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 	}
 }
 
-func newTestEvent(resourceKind, resourceID string, action Action) AuditEvent {
+func newTestEvent(resourceKind coretypes.Kind, resourceID string, action coretypes.Verb) AuditEvent {
 	return AuditEvent{
-		Body:      resourceKind + "." + action.PastTense(),
+		Body:      resourceKind.String() + "." + action.PastTense(),
 		EventName: NewEventName(resourceKind, action),
 		AuditAttributes: AuditAttributes{
 			Action:         action,
@@ -131,7 +136,7 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SingleEvent",
 			events: []AuditEvent{
-				newTestEvent("dashboard", "d-001", ActionCreate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -141,9 +146,9 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameResource_MultipleEvents",
 			events: []AuditEvent{
-				newTestEvent("dashboard", "d-001", ActionCreate),
-				newTestEvent("dashboard", "d-001", ActionUpdate),
-				newTestEvent("dashboard", "d-001", ActionDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -153,8 +158,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "DifferentResources_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent("dashboard", "d-001", ActionUpdate),
-				newTestEvent("user", "u-001", ActionDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},
@@ -164,8 +169,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameKind_DifferentIDs_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent("dashboard", "d-001", ActionUpdate),
-				newTestEvent("dashboard", "d-002", ActionDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-002", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "dashboard"},
@@ -175,11 +180,11 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "InterleavedResources_GroupedCorrectly",
 			events: []AuditEvent{
-				newTestEvent("dashboard", "d-001", ActionCreate),
-				newTestEvent("user", "u-001", ActionUpdate),
-				newTestEvent("dashboard", "d-001", ActionUpdate),
-				newTestEvent("user", "u-001", ActionDelete),
-				newTestEvent("dashboard", "d-001", ActionDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},

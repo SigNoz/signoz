@@ -1,10 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { useTimezone } from 'providers/Timezone';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
 import uPlot from 'uplot';
 
 import Histogram from '../../charts/Histogram/Histogram';
@@ -15,6 +16,7 @@ import {
 } from './utils';
 
 import '../Panel.styles.scss';
+import TooltipFooter from '../components/TooltipFooter';
 
 function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -29,7 +31,6 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
-	const { timezone } = useTimezone();
 
 	const config = useMemo(() => {
 		return prepareHistogramPanelConfig({
@@ -78,6 +79,20 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		widget.mergeAllActiveQueries,
 	]);
 
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => {
+			return (
+				<TooltipFooter
+					id={widget.id}
+					isPinned={isPinned}
+					dismiss={dismiss}
+					canDrilldown={false}
+				/>
+			);
+		},
+		[],
+	);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
@@ -92,15 +107,15 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 					onDestroy={(): void => {
 						uPlotRef.current = null;
 					}}
-					isQueriesMerged={widget.mergeAllActiveQueries}
+					canPinTooltip
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
-					syncMode={DashboardCursorSync.Crosshair}
-					timezone={timezone}
+					isQueriesMerged={widget.mergeAllActiveQueries}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
+					renderTooltipFooter={renderTooltipFooter}
 				/>
 			)}
 		</div>

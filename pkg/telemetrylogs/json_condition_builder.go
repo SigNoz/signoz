@@ -172,30 +172,15 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 	if strings.Contains(fieldPath, telemetrytypes.ArraySepSuffix) {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "can not build index condition for array field %s", fieldPath)
 	}
-
-	elemType := node.TerminalConfig.ElemType
-	dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
-	indexedExpr := assumeNotNull(dynamicExpr)
-
-	// switch the operator and value for exists and not exists
-	switch operator {
-	case qbtypes.FilterOperatorExists:
-		operator = qbtypes.FilterOperatorNotEqual
-		value = getEmptyValue(elemType)
-	case qbtypes.FilterOperatorNotExists:
-		operator = qbtypes.FilterOperatorEqual
-		value = getEmptyValue(elemType)
-	default:
-		// do nothing
+	if !node.IsTerminal {
+		return "", errors.NewInternalf(errors.CodeInvalidInput, "can not build index condition for non-terminal node %s", fieldPath)
 	}
 
+	indexedExpr := schemamigrator.JSONSubColumnIndexExpr(node.Parent.Name, node.Name, node.TerminalConfig.ElemType.StringValue())
+	// TODO(Piyush): indexedExpr should not be formatted here instead value should be formatted
+	// else ClickHouse may not utilize index
 	indexedExpr, formattedValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)
-	cond, err := c.applyOperator(sb, indexedExpr, operator, formattedValue)
-	if err != nil {
-		return "", err
-	}
-
-	return cond, nil
+	return c.applyOperator(sb, indexedExpr, operator, formattedValue)
 }
 
 // buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
@@ -204,32 +189,31 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 	fieldPath := node.FieldPath()
 	conditions := []string{}
 
-	// utilize indexes for the condition if available
+	// Utilize indexes when available, except for EXISTS/NOT EXISTS checks.
+	// Indexed columns always store a default empty value for absent fields (e.g. "" for strings,
+	// 0 for numbers), so using the index for existence checks would incorrectly exclude rows where
+	// the field genuinely holds the empty/zero value.
 	//
-	// Note: Indexing code doesn't get executed for Array Nested fields because they can not be indexed
-	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
-		return index.Type == node.TerminalConfig.ElemType
+	// Note: indexing is also skipped for Array Nested fields because they cannot be indexed.
+	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.TelemetryFieldKeySkipIndex) bool {
+		return telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType] == node.TerminalConfig.ElemType
 	})
-	if node.TerminalConfig.ElemType.IndexSupported && indexed {
+	isExistsCheck := operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists
+	if node.TerminalConfig.ElemType.IndexSupported && indexed && !isExistsCheck {
 		indexCond, err := c.terminalIndexedCondition(node, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
-		// if qb has a definitive value, we can skip adding a condition to
-		// check the existence of the path in the json column
+		// With a concrete non-zero value the index condition is self-contained.
 		if value != nil && value != getEmptyValue(node.TerminalConfig.ElemType) {
 			return indexCond, nil
 		}
-
+		// The value is nil or the type's zero/empty value. Because indexed columns always store
+		// that zero value for absent fields, the index alone cannot distinguish "field is absent"
+		// from "field exists with zero value". Append a path-existence check (IS NOT NULL) as a
+		// second condition and AND them together.
 		conditions = append(conditions, indexCond)
-
-		// Switch operator to EXISTS except when operator is NOT EXISTS since
-		// indexed paths on assumedNotNull, indexes will always have a default
-		// value so we flip the operator to Exists and filter the rows that
-		// actually have the value
-		if operator != qbtypes.FilterOperatorNotExists {
-			operator = qbtypes.FilterOperatorExists
-		}
+		operator = qbtypes.FilterOperatorExists
 	}
 
 	var formattedValue = value
@@ -239,20 +223,15 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 
 	fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.TerminalConfig.ElemType.StringValue())
 
-	// if operator is negative and has a value comparison i.e. excluding EXISTS and NOT EXISTS, we need to assume that the field exists everywhere
+	// For non-nested paths with a negative comparison operator (e.g. !=, NOT LIKE, NOT IN),
+	// wrap in assumeNotNull so ClickHouse treats absent paths as the zero value rather than NULL,
+	// which would otherwise cause them to be silently dropped from results.
+	// NOT EXISTS is excluded: we want a true NULL check there, not a zero-value stand-in.
 	//
-	// Note: here applyNotCondition will return true only if; top level path is being queried and operator is a negative operator
-	// Otherwise this code will be triggered by buildAccessNodeBranches; Where operator would've been already inverted if needed.
-	if node.IsNonNestedPath() {
-		yes, _ := applyNotCondition(operator)
-		if yes {
-			switch operator {
-			case qbtypes.FilterOperatorNotExists:
-				// skip
-			default:
-				fieldExpr = assumeNotNull(fieldExpr)
-			}
-		}
+	// Note: for nested array paths, buildAccessNodeBranches already inverts the operator before
+	// reaching here, so IsNonNestedPath() guards against double-applying the wrapping.
+	if node.IsNonNestedPath() && operator.IsNegativeOperator() && operator != qbtypes.FilterOperatorNotExists {
+		fieldExpr = assumeNotNull(fieldExpr)
 	}
 
 	fieldExpr, formattedValue = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, fieldExpr, operator)

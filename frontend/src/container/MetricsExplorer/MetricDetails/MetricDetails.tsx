@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Typography } from 'antd';
+import { Button, Divider, Drawer } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass, Crosshair, X } from 'lucide-react';
+import { Compass, Crosshair, X } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -57,13 +58,8 @@ function MetricDetails({
 		if (!metricMetadataResponse) {
 			return null;
 		}
-		const {
-			type,
-			description,
-			unit,
-			temporality,
-			isMonotonic,
-		} = metricMetadataResponse.data;
+		const { type, description, unit, temporality, isMonotonic } =
+			metricMetadataResponse.data;
 
 		return {
 			type,
@@ -74,9 +70,10 @@ function MetricDetails({
 		};
 	}, [metricMetadataResponse]);
 
-	const showInspectFeature = useMemo(() => isInspectEnabled(metadata?.type), [
-		metadata?.type,
-	]);
+	const showInspectFeature = useMemo(
+		() => isInspectEnabled(metadata?.type),
+		[metadata?.type],
+	);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {

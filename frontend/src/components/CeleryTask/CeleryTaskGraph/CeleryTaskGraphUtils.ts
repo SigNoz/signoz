@@ -469,8 +469,7 @@ export const celeryActiveTasksWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						id:
-							'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
+						id: 'flower_worker_number_of_currently_executing_tasks--float64--Gauge--true',
 						key: 'flower_worker_number_of_currently_executing_tasks',
 						type: 'Gauge',
 					},

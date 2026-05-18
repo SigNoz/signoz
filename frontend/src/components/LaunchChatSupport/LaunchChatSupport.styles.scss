@@ -8,18 +8,6 @@
 	}
 }
 
-.lightMode {
-	.facing-issue-button {
-		color: var(--bg-vanilla-500);
-		border-color: var(--bg-vanilla-300);
-
-		> .ant-btn:hover {
-			color: var(--bg-vanilla-500) !important;
-			border-color: var(--bg-vanilla-300) !important;
-		}
-	}
-}
-
 .tooltip-overlay {
 	text-wrap: nowrap;
 	.ant-tooltip-inner {

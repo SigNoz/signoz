@@ -1,9 +1,11 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,19 +17,21 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AuthtypesPostableAuthDomainDTO,
-	AuthtypesUpdateableAuthDomainDTO,
-	CreateAuthDomain200,
+	AuthtypesUpdatableAuthDomainDTO,
+	CreateAuthDomain201,
 	DeleteAuthDomainPathParameters,
+	GetAuthDomain200,
+	GetAuthDomainPathParameters,
 	ListAuthDomains200,
 	RenderErrorResponseDTO,
 	UpdateAuthDomainPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all auth domains
@@ -47,7 +51,7 @@ export const getListAuthDomainsQueryKey = () => {
 
 export const getListAuthDomainsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -81,7 +85,7 @@ export type ListAuthDomainsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListAuthDomains<
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -95,9 +99,7 @@ export function useListAuthDomains<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -120,10 +122,10 @@ export const invalidateListAuthDomains = async (
  * @summary Create auth domain
  */
 export const createAuthDomain = (
-	authtypesPostableAuthDomainDTO: BodyType<AuthtypesPostableAuthDomainDTO>,
+	authtypesPostableAuthDomainDTO?: BodyType<AuthtypesPostableAuthDomainDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAuthDomain200>({
+	return GeneratedAPIInstance<CreateAuthDomain201>({
 		url: `/api/v1/domains`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -134,32 +136,32 @@ export const createAuthDomain = (
 
 export const getCreateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 	TContext
 > => {
 	const mutationKey = ['createAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAuthDomain>>,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> }
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -172,7 +174,9 @@ export const getCreateAuthDomainMutationOptions = <
 export type CreateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAuthDomain>>
 >;
-export type CreateAuthDomainMutationBody = BodyType<AuthtypesPostableAuthDomainDTO>;
+export type CreateAuthDomainMutationBody =
+	| BodyType<AuthtypesPostableAuthDomainDTO>
+	| undefined;
 export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -180,38 +184,40 @@ export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableAuthDomainDTO> },
+	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateAuthDomainMutationOptions(options));
 };
 /**
  * This endpoint deletes an auth domain
  * @summary Delete auth domain
  */
-export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) => {
+export const deleteAuthDomain = (
+	{ id }: DeleteAuthDomainPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
 export const getDeleteAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
@@ -228,8 +234,8 @@ export const getDeleteAuthDomainMutationOptions = <
 	const mutationKey = ['deleteAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -257,7 +263,7 @@ export type DeleteAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
@@ -271,36 +277,137 @@ export const useDeleteAuthDomain = <
 	{ pathParams: DeleteAuthDomainPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteAuthDomainMutationOptions(options));
 };
+/**
+ * This endpoint returns an auth domain by ID
+ * @summary Get auth domain by ID
+ */
+export const getAuthDomain = (
+	{ id }: GetAuthDomainPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetAuthDomain200>({
+		url: `/api/v1/domains/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetAuthDomainQueryKey = ({
+	id,
+}: GetAuthDomainPathParameters) => {
+	return [`/api/v1/domains/${id}`] as const;
+};
+
+export const getGetAuthDomainQueryOptions = <
+	TData = Awaited<ReturnType<typeof getAuthDomain>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetAuthDomainPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAuthDomain>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetAuthDomainQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthDomain>>> = ({
+		signal,
+	}) => getAuthDomain({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getAuthDomain>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetAuthDomainQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getAuthDomain>>
+>;
+export type GetAuthDomainQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get auth domain by ID
+ */
+
+export function useGetAuthDomain<
+	TData = Awaited<ReturnType<typeof getAuthDomain>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetAuthDomainPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAuthDomain>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetAuthDomainQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get auth domain by ID
+ */
+export const invalidateGetAuthDomain = async (
+	queryClient: QueryClient,
+	{ id }: GetAuthDomainPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetAuthDomainQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint updates an auth domain
  * @summary Update auth domain
  */
 export const updateAuthDomain = (
 	{ id }: UpdateAuthDomainPathParameters,
-	authtypesUpdateableAuthDomainDTO: BodyType<AuthtypesUpdateableAuthDomainDTO>,
+	authtypesUpdatableAuthDomainDTO?: BodyType<AuthtypesUpdatableAuthDomainDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: authtypesUpdateableAuthDomainDTO,
+		data: authtypesUpdatableAuthDomainDTO,
+		signal,
 	});
 };
 
 export const getUpdateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -309,15 +416,15 @@ export const getUpdateAuthDomainMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['updateAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -326,7 +433,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -340,7 +447,9 @@ export const getUpdateAuthDomainMutationOptions = <
 export type UpdateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAuthDomain>>
 >;
-export type UpdateAuthDomainMutationBody = BodyType<AuthtypesUpdateableAuthDomainDTO>;
+export type UpdateAuthDomainMutationBody =
+	| BodyType<AuthtypesUpdatableAuthDomainDTO>
+	| undefined;
 export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -348,14 +457,14 @@ export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -364,11 +473,9 @@ export const useUpdateAuthDomain = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateAuthDomainMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateAuthDomainMutationOptions(options));
 };

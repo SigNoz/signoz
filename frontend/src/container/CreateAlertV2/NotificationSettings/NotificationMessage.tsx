@@ -1,13 +1,12 @@
-import { Input, Tooltip, Typography } from 'antd';
-import { Info } from 'lucide-react';
+import { Input, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 
 function NotificationMessage(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 
 	// const templateVariables = [
 	// 	{ variable: '{{alertname}}', description: 'Name of the alert rule' },

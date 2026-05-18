@@ -4,10 +4,10 @@
 }
 
 .show-case-dark {
-	background-color: #141414;
+	background-color: var(--l1-background);
 }
 
 .show-case-light {
-	background-color: rgb(255, 255, 255);
-	border: 1px solid #141414;
+	background-color: var(--card);
+	border: 1px solid var(--l1-border);
 }

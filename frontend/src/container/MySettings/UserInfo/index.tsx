@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Modal, Typography } from 'antd';
+import { Button, Input, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { useUpdateMyUserV2 } from 'api/generated/services/users';
-import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
+import {
+	updateMyPassword,
+	useUpdateMyUserV2,
+} from 'api/generated/services/users';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
+import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 
@@ -27,13 +30,10 @@ function UserInfo(): JSX.Element {
 		user?.displayName || '',
 	);
 
-	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] = useState<boolean>(
-		false,
-	);
-	const [
-		isResetPasswordModalOpen,
-		setIsResetPasswordModalOpen,
-	] = useState<boolean>(false);
+	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] =
+		useState<boolean>(false);
+	const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+		useState<boolean>(false);
 
 	const defaultPlaceHolder = '*************';
 
@@ -53,10 +53,9 @@ function UserInfo(): JSX.Element {
 		try {
 			setIsLoading(true);
 
-			await changeMyPassword({
+			await updateMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
-				userId: user.id,
 			});
 			notifications.success({
 				message: t('success', {
@@ -126,11 +125,11 @@ function UserInfo(): JSX.Element {
 
 				<div className="user-info-subsection">
 					<div className="user-email">
-						<MailIcon size={16} /> {user.email}
+						<Mail size={16} /> {user.email}
 					</div>
 
 					<div className="user-role">
-						<UserIcon size={16} /> {user.role.toLowerCase()}
+						<User size={16} /> {user.role.toLowerCase()}
 					</div>
 				</div>
 			</div>

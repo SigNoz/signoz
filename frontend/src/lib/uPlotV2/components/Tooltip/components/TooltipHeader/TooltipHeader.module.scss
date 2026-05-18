@@ -1,0 +1,30 @@
+.headerContainer {
+	display: flex;
+	flex-direction: column;
+}
+
+.headerRow {
+	padding: var(--spacing-8) var(--spacing-8) 0 var(--spacing-8);
+	font-size: var(--font-size-sm);
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-2);
+}
+
+.pinnedItem {
+	padding: var(--spacing-4);
+}
+
+.status {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--callout-primary-title);
+	flex-shrink: 0;
+}

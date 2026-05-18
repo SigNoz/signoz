@@ -45,13 +45,10 @@ describe('SpanLineActionButtons', () => {
 
 		render(<SpanLineActionButtons span={mockSpan} />);
 
-		// Check if the button is rendered
+		// Check if the button is rendered with an icon
 		const copyButton = screen.getByRole('button');
 		expect(copyButton).toBeInTheDocument();
-
-		// Check if the link icon is rendered
-		const linkIcon = screen.getByRole('img', { hidden: true });
-		expect(linkIcon).toHaveClass('anticon anticon-link');
+		expect(copyButton.querySelector('svg')).toBeInTheDocument();
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {

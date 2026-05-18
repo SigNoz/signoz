@@ -1,9 +1,11 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
+ * OpenAPI spec version: 0.0.1
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,14 +14,14 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import type { ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetGlobalConfig200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns global config
@@ -39,7 +41,7 @@ export const getGetGlobalConfigQueryKey = () => {
 
 export const getGetGlobalConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -73,7 +75,7 @@ export type GetGlobalConfigQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetGlobalConfig<
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -87,9 +89,7 @@ export function useGetGlobalConfig<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

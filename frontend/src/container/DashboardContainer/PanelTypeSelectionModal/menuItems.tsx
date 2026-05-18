@@ -1,23 +1,23 @@
 import { Color } from '@signozhq/design-tokens';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import {
-	BarChart3,
-	LineChart,
+	BarChart,
+	ChartLine,
+	ChartPie,
 	List,
-	PieChart,
-	SigmaSquare,
+	SquareSigma,
 	Table,
-} from 'lucide-react';
+} from '@signozhq/icons';
 
 export const PanelTypesWithData: ItemsProps[] = [
 	{
 		name: PANEL_TYPES.TIME_SERIES,
-		icon: <LineChart size={16} color={Color.BG_ROBIN_400} />,
+		icon: <ChartLine size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.TIME_SERIES,
 	},
 	{
 		name: PANEL_TYPES.VALUE,
-		icon: <SigmaSquare size={16} color={Color.BG_ROBIN_400} />,
+		icon: <SquareSigma size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.VALUE,
 	},
 	{
@@ -32,17 +32,17 @@ export const PanelTypesWithData: ItemsProps[] = [
 	},
 	{
 		name: PANEL_TYPES.BAR,
-		icon: <BarChart3 size={16} color={Color.BG_ROBIN_400} />,
+		icon: <BarChart size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.BAR,
 	},
 	{
 		name: PANEL_TYPES.PIE,
-		icon: <PieChart size={16} color={Color.BG_ROBIN_400} />,
+		icon: <ChartPie size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.PIE,
 	},
 	{
 		name: PANEL_TYPES.HISTOGRAM,
-		icon: <BarChart3 size={16} color={Color.BG_ROBIN_400} />,
+		icon: <BarChart size={16} color={Color.BG_ROBIN_400} />,
 		display: PanelDisplay.HISTOGRAM,
 	},
 ];

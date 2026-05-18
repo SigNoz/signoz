@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -36,6 +37,7 @@ func NewAuditQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	flagger flagger.Flagger,
 ) *auditQueryStatementBuilder {
 	auditSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryaudit")
 
@@ -48,6 +50,7 @@ func NewAuditQueryStatementBuilder(
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,
+		flagger,
 	)
 
 	return &auditQueryStatementBuilder{
@@ -319,7 +322,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
 		if err != nil {
 			return nil, err
 		}
@@ -456,7 +459,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
 		if err != nil {
 			return nil, err
 		}
@@ -604,6 +607,10 @@ func (b *auditQueryStatementBuilder) maybeAttachResourceFilter(
 	stmt, err := b.resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
 	if err != nil {
 		return "", nil, err
+	}
+
+	if stmt == nil {
+		return "", nil, nil
 	}
 
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")

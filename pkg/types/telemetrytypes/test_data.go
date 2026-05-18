@@ -4,69 +4,69 @@ package telemetrytypes
 // Test JSON Type Set Data Setup
 // ============================================================================
 
-// TestJSONTypeSet returns a map of path->types for testing.
+// TestJSONTypeSet returns a map of path->field data types for testing.
 // This represents the type information available in the test JSON structure.
-func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
-	types := map[string][]JSONDataType{
+func TestJSONTypeSet() (map[string][]FieldDataType, MetadataStore) {
+	types := map[string][]FieldDataType{
 
 		// ── user (primitives) ─────────────────────────────────────────────
-		"user.name":        {String},
-		"user.permissions": {ArrayString},
-		"user.age":         {Int64, String}, // Int64/String ambiguity
-		"user.height":      {Float64},
-		"user.active":      {Bool}, // Bool — not IndexSupported
+		"user.name":        {FieldDataTypeString},
+		"user.permissions": {FieldDataTypeArrayString},
+		"user.age":         {FieldDataTypeInt64, FieldDataTypeString}, // Int64/String ambiguity
+		"user.height":      {FieldDataTypeFloat64},
+		"user.active":      {FieldDataTypeBool}, // Bool — not IndexSupported
 
 		// Deeper non-array nesting (a.b.c — no array hops)
-		"user.address.zip": {Int64},
+		"user.address.zip": {FieldDataTypeInt64},
 
 		// ── education[] ───────────────────────────────────────────────────
 		// Pattern: x[].y
-		"education":              {ArrayJSON},
-		"education[].name":       {String},
-		"education[].type":       {String, Int64},
-		"education[].year":       {Int64},
-		"education[].scores":     {ArrayInt64},
-		"education[].parameters": {ArrayFloat64, ArrayDynamic},
+		"education":              {FieldDataTypeArrayJSON},
+		"education[].name":       {FieldDataTypeString},
+		"education[].type":       {FieldDataTypeString, FieldDataTypeInt64},
+		"education[].year":       {FieldDataTypeInt64},
+		"education[].scores":     {FieldDataTypeArrayInt64},
+		"education[].parameters": {FieldDataTypeArrayFloat64, FieldDataTypeArrayDynamic},
 
 		// Pattern: x[].y[]
-		"education[].awards": {ArrayDynamic, ArrayJSON},
+		"education[].awards": {FieldDataTypeArrayDynamic, FieldDataTypeArrayJSON},
 
 		// Pattern: x[].y[].z
-		"education[].awards[].name":     {String},
-		"education[].awards[].type":     {String},
-		"education[].awards[].semester": {Int64},
+		"education[].awards[].name":     {FieldDataTypeString},
+		"education[].awards[].type":     {FieldDataTypeString},
+		"education[].awards[].semester": {FieldDataTypeInt64},
 
 		// Pattern: x[].y[].z[]
-		"education[].awards[].participated": {ArrayDynamic, ArrayJSON},
+		"education[].awards[].participated": {FieldDataTypeArrayDynamic, FieldDataTypeArrayJSON},
 
 		// Pattern: x[].y[].z[].w
-		"education[].awards[].participated[].members": {ArrayString},
+		"education[].awards[].participated[].members": {FieldDataTypeArrayString},
 
 		// Pattern: x[].y[].z[].w[]
-		"education[].awards[].participated[].team": {ArrayJSON},
+		"education[].awards[].participated[].team": {FieldDataTypeArrayJSON},
 
 		// Pattern: x[].y[].z[].w[].v
-		"education[].awards[].participated[].team[].branch": {String},
+		"education[].awards[].participated[].team[].branch": {FieldDataTypeString},
 
 		// ── interests[] ───────────────────────────────────────────────────
-		"interests":                                                                 {ArrayJSON},
-		"interests[].entities":                                                      {ArrayJSON},
-		"interests[].entities[].reviews":                                            {ArrayJSON},
-		"interests[].entities[].reviews[].entries":                                  {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata":                       {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions":           {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":    {String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings": {ArrayInt64, ArrayString},
-		"http-events":                     {ArrayJSON},
-		"http-events[].request-info.host": {String},
-		"ids":                             {ArrayDynamic},
+		"interests":                                                                 {FieldDataTypeArrayJSON},
+		"interests[].entities":                                                      {FieldDataTypeArrayJSON},
+		"interests[].entities[].product_codes":                                      {FieldDataTypeArrayDynamic},
+		"interests[].entities[].reviews":                                            {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries":                                  {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata":                       {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata[].positions":           {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":    {FieldDataTypeString},
+		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings": {FieldDataTypeArrayInt64, FieldDataTypeArrayString},
+		"http-events":                     {FieldDataTypeArrayJSON},
+		"http-events[].request-info.host": {FieldDataTypeString},
 
 		// ── top-level primitives ──────────────────────────────────────────
-		"message":     {String},
-		"http-status": {Int64, String}, // hyphen in root key, ambiguous
+		"message":     {FieldDataTypeString},
+		"http-status": {FieldDataTypeInt64, FieldDataTypeString}, // hyphen in root key, ambiguous
 
 		// ── top-level nested objects (no array hops) ───────────────────────
-		"response.time-taken": {Float64}, // hyphen inside nested key
+		"response.time-taken": {FieldDataTypeFloat64}, // hyphen inside nested key
 	}
 
 	return types, nil

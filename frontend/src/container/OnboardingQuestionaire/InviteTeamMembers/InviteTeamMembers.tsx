@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
-import { Input } from '@signozhq/input';
-import { Select, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Input } from '@signozhq/ui/input';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
@@ -13,11 +14,12 @@ import {
 	ArrowRight,
 	ChevronDown,
 	CircleAlert,
-	Loader2,
+	LoaderCircle,
 	Plus,
 	Trash2,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
@@ -60,7 +62,7 @@ function InviteTeamMembers({
 		email: '',
 		role: '',
 		name: '',
-		frontendBaseUrl: window.location.origin,
+		frontendBaseUrl: getBaseUrl(),
 		id: '',
 	};
 
@@ -204,9 +206,10 @@ function InviteTeamMembers({
 	);
 
 	const createEmailChangeHandler = useCallback(
-		(member: TeamMember) => (e: React.ChangeEvent<HTMLInputElement>): void => {
-			handleEmailChange(e, member);
-		},
+		(member: TeamMember) =>
+			(e: React.ChangeEvent<HTMLInputElement>): void => {
+				handleEmailChange(e, member);
+			},
 		[handleEmailChange],
 	);
 
@@ -335,7 +338,7 @@ function InviteTeamMembers({
 									variant="dashed"
 									color="secondary"
 									className="add-another-member-button"
-									prefixIcon={<Plus size={12} />}
+									prefix={<Plus size={12} />}
 									onClick={handleAddTeamMember}
 								>
 									Add another
@@ -352,8 +355,9 @@ function InviteTeamMembers({
 						showIcon
 						icon={<CircleAlert size={12} />}
 						className="invite-team-members-error-callout"
-						description={getValidationErrorMessage()}
-					/>
+					>
+						{getValidationErrorMessage()}
+					</Callout>
 				)}
 
 				{inviteError && !hasInvalidEmails && !hasInvalidRoles && (
@@ -369,9 +373,9 @@ function InviteTeamMembers({
 						}`}
 						onClick={handleNext}
 						disabled={isInviteButtonDisabled}
-						suffixIcon={
+						suffix={
 							isButtonDisabled ? (
-								<Loader2 className="animate-spin" size={12} />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
 							)
