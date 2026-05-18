@@ -159,6 +159,8 @@ function GridTableComponent({
 				if (threshold && idx !== -1) {
 					return (
 						<div
+							data-testid="threshold-styled-cell"
+							data-threshold-format={threshold.thresholdFormat}
 							style={
 								threshold.thresholdFormat === 'Background'
 									? { backgroundColor: threshold.thresholdColor }

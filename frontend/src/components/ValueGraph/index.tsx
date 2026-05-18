@@ -93,6 +93,7 @@ function ValueGraph({
 		<div
 			ref={containerRef}
 			className="value-graph-container"
+			data-testid="value-graph-container"
 			style={{
 				backgroundColor:
 					threshold.thresholdFormat === 'Background'

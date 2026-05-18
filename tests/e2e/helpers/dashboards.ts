@@ -323,3 +323,106 @@ export async function configureAndSavePanel(
 	// Save navigates back to /dashboard/<id> (no /new suffix).
 	await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
 }
+
+// ─── Widget editor (re-open existing panel) ────────────────────────────────
+
+/**
+ * Display labels surfaced in the `panel-change-select` Ant Select inside the
+ * widget editor. The mapping to URL `graphType` values comes from the
+ * `PANEL_TYPES` enum: TIME_SERIES='graph', VALUE='value', and so on.
+ */
+export type PanelDisplayLabel =
+	| 'Time Series'
+	| 'Number'
+	| 'Table'
+	| 'List'
+	| 'Bar'
+	| 'Pie'
+	| 'Histogram';
+
+const PANEL_DISPLAY_TO_GRAPH_TYPE: Record<PanelDisplayLabel, string> = {
+	'Time Series': 'graph',
+	Number: 'value',
+	Table: 'table',
+	List: 'list',
+	Bar: 'bar',
+	Pie: 'pie',
+	Histogram: 'histogram',
+};
+
+/**
+ * Open the widget editor for an existing panel by driving the panel header
+ * options menu (the three-dot Ant `Dropdown` next to the title).
+ *
+ * The widget-header-options button is `visibility: hidden` until the panel is
+ * hovered (see `GridCardLayout.styles.scss`) — except on TABLE panels, where
+ * `globalSearchAvailable` keeps it permanently visible. Hovering the title
+ * testid first works for both states.
+ */
+export async function openWidgetEditor(
+	page: Page,
+	panelTitle: string,
+): Promise<void> {
+	await page.getByTestId(panelTitle).first().hover();
+	await page.getByTestId('widget-header-options').first().click();
+	await page
+		.getByRole('menuitem', { name: /^edit$/i })
+		.first()
+		.click();
+	await page.waitForURL(/widgetId=/);
+	await page.getByTestId('new-widget-save').waitFor({ state: 'visible' });
+}
+
+/**
+ * Click "Save Changes" in the widget editor, confirm via the OK button on the
+ * resulting modal, await the dashboard PUT response, and wait for navigation
+ * back to `/dashboard/<id>`. Throws if the PUT response is not 2xx.
+ *
+ * The confirmation modal title varies between "Save Widget" and "Unsaved
+ * Changes" depending on whether the query was modified — don't assert title,
+ * just OK the topmost dialog.
+ */
+export async function saveWidgetEdit(page: Page): Promise<void> {
+	const putResponse = page.waitForResponse(
+		(r) =>
+			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
+	);
+	await page.getByTestId('new-widget-save').click();
+	const confirmModal = page.getByRole('dialog').last();
+	await confirmModal.waitFor({ state: 'visible' });
+	await confirmModal.getByRole('button', { name: /^OK$/i }).click();
+	const res = await putResponse;
+	if (!res.ok()) {
+		throw new Error(
+			`PUT /api/v1/dashboards failed ${res.status()}: ${await res.text()}`,
+		);
+	}
+	await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
+}
+
+/**
+ * Switch the editor's panel display type via the Ant `Select` exposed as
+ * `data-testid="panel-change-select"`. The select options carry the display
+ * label as visible text (matches `PanelDisplay` enum values). After the
+ * change, this helper waits for the URL `graphType` param to reflect the new
+ * panel type and for the Save Changes button to re-render — the editor
+ * re-routes mid-flow via `redirectWithQueryBuilderData`.
+ *
+ * Note: the "List" option is filtered out of the dropdown when the current
+ * query contains a metrics data source (see VisualizationSettingsSection).
+ */
+export async function changePanelType(
+	page: Page,
+	displayLabel: PanelDisplayLabel,
+): Promise<void> {
+	const expectedGraphType = PANEL_DISPLAY_TO_GRAPH_TYPE[displayLabel];
+	await page.getByTestId('panel-change-select').click();
+	// Each option renders a .select-option containing the display text — match
+	// against the typography element to avoid matching the trigger itself.
+	await page
+		.locator('.ant-select-item-option .display', { hasText: displayLabel })
+		.first()
+		.click();
+	await page.waitForURL(new RegExp(`graphType=${expectedGraphType}`));
+	await page.getByTestId('new-widget-save').waitFor({ state: 'visible' });
+}
