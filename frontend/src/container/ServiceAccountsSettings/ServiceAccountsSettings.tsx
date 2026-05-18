@@ -264,8 +264,8 @@ function ServiceAccountsSettings(): JSX.Element {
 							/>
 						</div>
 
-						<NoAuthGuard>
-							<AuthZTooltip checks={[SACreatePermission]}>
+						<AuthZTooltip checks={[SACreatePermission]}>
+							<NoAuthGuard>
 								<Button
 									variant="solid"
 									color="primary"
@@ -276,8 +276,8 @@ function ServiceAccountsSettings(): JSX.Element {
 									<Plus size={12} />
 									New Service Account
 								</Button>
-							</AuthZTooltip>
-						</NoAuthGuard>
+							</NoAuthGuard>
+						</AuthZTooltip>
 					</div>
 
 					{isError ? (

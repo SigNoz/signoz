@@ -1,11 +1,4 @@
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
 import { MenuProps } from 'antd';
-import { DEFAULT_MESSAGE } from 'components/NoAuthGuard';
 import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
@@ -546,33 +539,25 @@ export const getUserSettingsDropdownMenuItems = ({
 			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
 			dataTestId: 'keyboard-shortcuts-nav-item',
 		},
-		{ type: 'divider' as const },
-		{
-			key: 'logout',
-			disabled: isNoAuthMode,
-			label: isNoAuthMode ? (
-				<TooltipProvider>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
+		...(isNoAuthMode
+			? []
+			: [
+					{ type: 'divider' as const },
+					{
+						key: 'logout',
+						label: (
 							<span className="user-settings-dropdown-logout-section">Sign out</span>
-						</TooltipTrigger>
-						<TooltipContent style={{ zIndex: 1100 }}>
-							{DEFAULT_MESSAGE}
-						</TooltipContent>
-					</TooltipRoot>
-				</TooltipProvider>
-			) : (
-				<span className="user-settings-dropdown-logout-section">Sign out</span>
-			),
-			icon: (
-				<LogOut
-					size={14}
-					className="user-settings-dropdown-logout-section"
-					color={Style.DANGER_BACKGROUND}
-				/>
-			),
-			dataTestId: 'logout-nav-item',
-		},
+						),
+						icon: (
+							<LogOut
+								size={14}
+								className="user-settings-dropdown-logout-section"
+								color={Style.DANGER_BACKGROUND}
+							/>
+						),
+						dataTestId: 'logout-nav-item',
+					},
+				]),
 	].filter(Boolean);
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */

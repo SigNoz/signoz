@@ -42,8 +42,8 @@ function RolesSettings(): JSX.Element {
 						onChange={(e): void => setSearchQuery(e.target.value)}
 					/>
 					{isRolesEnabled && (
-						<NoAuthGuard>
-							<AuthZTooltip checks={[RoleCreatePermission]}>
+						<AuthZTooltip checks={[RoleCreatePermission]}>
+							<NoAuthGuard>
 								<Button
 									variant="solid"
 									color="primary"
@@ -53,8 +53,8 @@ function RolesSettings(): JSX.Element {
 									<Plus size={14} />
 									Custom role
 								</Button>
-							</AuthZTooltip>
-						</NoAuthGuard>
+							</NoAuthGuard>
+						</AuthZTooltip>
 					)}
 				</div>
 				<RolesListingTable searchQuery={searchQuery} />
