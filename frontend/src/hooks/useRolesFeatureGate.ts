@@ -20,6 +20,8 @@ export const useRolesFeatureGate = (): {
 
 	return {
 		isRolesEnabled: isValidLicense && isFineGrainedAuthzEnabled,
-		isLoading: isFetchingActiveLicense || isFetchingFeatureFlags,
+		isLoading:
+			(isFetchingActiveLicense && !activeLicense) ||
+			(isFetchingFeatureFlags && !featureFlags),
 	};
 };
