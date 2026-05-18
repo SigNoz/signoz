@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { SearchOutlined } from '@ant-design/icons';
+import { Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
 import {
 	Button,
 	Flex,
@@ -19,7 +19,6 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
-import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -564,7 +563,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<CheckIcon size={16} />}
+								icon={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -610,7 +609,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn request-data-source-btn success"
-								icon={<CheckIcon size={16} />}
+								icon={<Check size={16} />}
 							>
 								Request raised
 							</Button>
@@ -723,7 +722,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														placeholder="Search"
 														maxLength={20}
 														onChange={handleSearch}
-														addonAfter={<SearchOutlined />}
+														addonAfter={<Search size="md" />}
 													/>
 												</div>
 
@@ -1128,7 +1127,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							className="periscope-btn primary"
 							disabled={dataSourceRequest.length <= 0}
 							onClick={handleSubmitDataSourceRequest}
-							icon={<CheckIcon size={16} />}
+							icon={<Check size={16} />}
 						>
 							Submit request
 						</Button>,

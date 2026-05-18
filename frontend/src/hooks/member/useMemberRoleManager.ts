@@ -1,7 +1,18 @@
 import { useCallback, useMemo } from 'react';
+import { useQueryClient } from 'react-query';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import { useGetUser, useSetRoleByUserID } from 'api/generated/services/users';
+import {
+	getGetRolesByUserIDQueryKey,
+	useGetRolesByUserID,
+	useRemoveUserRoleByUserIDAndRoleID,
+	useSetRoleByUserID,
+} from 'api/generated/services/users';
 import { retryOn429 } from 'utils/errorUtils';
+
+const enum PromiseStatus {
+	Fulfilled = 'fulfilled',
+	Rejected = 'rejected',
+}
 
 export interface MemberRoleUpdateFailure {
 	roleName: string;
@@ -10,7 +21,7 @@ export interface MemberRoleUpdateFailure {
 }
 
 interface UseMemberRoleManagerResult {
-	fetchedRoleIds: string[];
+	currentRoles: AuthtypesRoleDTO[];
 	isLoading: boolean;
 	applyDiff: (
 		localRoleIds: string[],
@@ -22,66 +33,96 @@ export function useMemberRoleManager(
 	userId: string,
 	enabled: boolean,
 ): UseMemberRoleManagerResult {
-	const { data: fetchedUser, isLoading } = useGetUser(
+	const queryClient = useQueryClient();
+
+	const { data, isLoading } = useGetRolesByUserID(
 		{ id: userId },
 		{ query: { enabled: !!userId && enabled } },
 	);
 
-	const currentUserRoles = useMemo(
-		() => fetchedUser?.data?.userRoles ?? [],
-		[fetchedUser],
-	);
-
-	const fetchedRoleIds = useMemo(
-		() =>
-			currentUserRoles
-				.map((ur) => ur.role?.id ?? ur.roleId)
-				.filter((id): id is string => Boolean(id)),
-		[currentUserRoles],
+	const currentRoles = useMemo<AuthtypesRoleDTO[]>(
+		() => data?.data ?? [],
+		[data?.data],
 	);
 
 	const { mutateAsync: setRole } = useSetRoleByUserID({
 		mutation: { retry: retryOn429 },
 	});
+	const { mutateAsync: removeRole } = useRemoveUserRoleByUserIDAndRoleID({
+		mutation: { retry: retryOn429 },
+	});
+
+	const invalidateRoles = useCallback(
+		() =>
+			queryClient.invalidateQueries(getGetRolesByUserIDQueryKey({ id: userId })),
+		[userId, queryClient],
+	);
 
 	const applyDiff = useCallback(
 		async (
 			localRoleIds: string[],
 			availableRoles: AuthtypesRoleDTO[],
 		): Promise<MemberRoleUpdateFailure[]> => {
-			const currentRoleIdSet = new Set(fetchedRoleIds);
-			const desiredRoleIdSet = new Set(localRoleIds.filter(Boolean));
-
-			const toAdd = availableRoles.filter(
-				(r) => r.id && desiredRoleIdSet.has(r.id) && !currentRoleIdSet.has(r.id),
+			const currentRoleIds = new Set(
+				currentRoles.map((r) => r.id).filter(Boolean),
+			);
+			const desiredRoleIds = new Set(
+				localRoleIds.filter((id) => id != null && id !== ''),
 			);
 
-			/// TODO: re-enable deletes once BE for this is streamlined
-			const allOps = [
-				...toAdd.map((role) => ({
-					roleName: role.name ?? 'unknown',
+			const addedRoles = availableRoles.filter(
+				(r) => r.id && desiredRoleIds.has(r.id) && !currentRoleIds.has(r.id),
+			);
+			const removedRoles = currentRoles.filter(
+				(r) => r.id && !desiredRoleIds.has(r.id),
+			);
+
+			const allOperations = [
+				...addedRoles.map((role) => ({
+					role,
 					run: (): ReturnType<typeof setRole> =>
 						setRole({
 							pathParams: { id: userId },
 							data: { name: role.name ?? '' },
 						}),
 				})),
+				...removedRoles.map((role) => ({
+					role,
+					run: (): ReturnType<typeof removeRole> =>
+						removeRole({ pathParams: { id: userId, roleId: role.id ?? '' } }),
+				})),
 			];
 
-			const results = await Promise.allSettled(allOps.map((op) => op.run()));
+			const results = await Promise.allSettled(
+				allOperations.map((op) => op.run()),
+			);
+
+			const successCount = results.filter(
+				(r) => r.status === PromiseStatus.Fulfilled,
+			).length;
+			if (successCount > 0) {
+				await invalidateRoles();
+			}
 
 			const failures: MemberRoleUpdateFailure[] = [];
-			results.forEach((result, i) => {
-				if (result.status === 'rejected') {
-					const { roleName, run } = allOps[i];
-					failures.push({ roleName, error: result.reason, onRetry: run });
+			results.forEach((result, index) => {
+				if (result.status === PromiseStatus.Rejected) {
+					const { role, run } = allOperations[index];
+					failures.push({
+						roleName: role.name ?? 'unknown',
+						error: result.reason,
+						onRetry: async (): Promise<void> => {
+							await run();
+							await invalidateRoles();
+						},
+					});
 				}
 			});
 
 			return failures;
 		},
-		[userId, fetchedRoleIds, setRole],
+		[userId, currentRoles, setRole, removeRole, invalidateRoles],
 	);
 
-	return { fetchedRoleIds, isLoading, applyDiff };
+	return { currentRoles, isLoading, applyDiff };
 }

@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 

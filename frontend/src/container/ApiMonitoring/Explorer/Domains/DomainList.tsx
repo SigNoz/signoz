@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Loader } from '@signozhq/icons';
+import { Loader, MoveUpRight } from '@signozhq/icons';
 import { Spin, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import emptyStateUrl from 'assets/Icons/emptyState.svg';
@@ -19,7 +19,6 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
-import { MoveUpRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';

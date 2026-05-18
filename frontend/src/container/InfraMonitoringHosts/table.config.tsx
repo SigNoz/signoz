@@ -1,5 +1,4 @@
 import React from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
@@ -16,7 +15,7 @@ import EntityGroupHeader from 'container/InfraMonitoringK8s/Base/EntityGroupHead
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { Container } from 'lucide-react';
+import { Container, Info } from '@signozhq/icons';
 
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
@@ -83,7 +82,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={styles.statusHeader}>
 				Status
 				<Tooltip title="Sent system metrics in last 10 mins">
-					<InfoCircleOutlined />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),
@@ -119,6 +118,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 					<ValidateColumnValueWrapper
 						value={cpu}
 						entity={InfraMonitoringEntity.HOSTS}
+						attribute="CPU metric"
 					>
 						<EntityProgressBar value={cpu} type="cpu" />
 					</ValidateColumnValueWrapper>
@@ -132,7 +132,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
 				Memory Usage
 				<Tooltip title="Excluding cache memory">
-					<InfoCircleOutlined />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),
@@ -146,6 +146,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 					<ValidateColumnValueWrapper
 						value={memory}
 						entity={InfraMonitoringEntity.HOSTS}
+						attribute="memory metric"
 					>
 						<EntityProgressBar value={memory} type="memory" />
 					</ValidateColumnValueWrapper>
@@ -163,8 +164,15 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const wait = value as number;
+
 			return (
-				<TanStackTable.Text>{`${Number((wait * 100).toFixed(1))}%`}</TanStackTable.Text>
+				<ValidateColumnValueWrapper
+					value={wait}
+					entity={InfraMonitoringEntity.HOSTS}
+					attribute="IOWait metric"
+				>
+					<TanStackTable.Text>{`${Number((wait * 100).toFixed(1))}%`}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
 			);
 		},
 	},
@@ -176,8 +184,18 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		accessorFn: (row): number => row.load15,
 		width: { min: 100, default: 100 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value as number}</TanStackTable.Text>
-		),
+		cell: ({ value }): React.ReactNode => {
+			const load15 = value as number;
+
+			return (
+				<ValidateColumnValueWrapper
+					value={load15}
+					entity={InfraMonitoringEntity.HOSTS}
+					attribute="load average metric"
+				>
+					<TanStackTable.Text>{load15}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];

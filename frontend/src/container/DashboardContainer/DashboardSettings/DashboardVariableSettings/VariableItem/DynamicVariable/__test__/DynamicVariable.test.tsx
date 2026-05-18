@@ -373,7 +373,7 @@ describe('DynamicVariable Component', () => {
 		fireEvent.mouseDown(attributeSelectElement);
 
 		// Find and click reload icon (retry button)
-		const reloadIcon = screen.getByLabelText('reload');
+		const reloadIcon = screen.getByTestId('retry-button');
 		fireEvent.click(reloadIcon);
 
 		// Should trigger refetch

@@ -19,6 +19,12 @@ type Resource interface {
 
 	// Scope of the resource.
 	Scope(verb Verb) string
+
+	// AllowedVerbs returns the verbs that are valid for this resource.
+	// By default, this delegates to the type's allowed verbs, but specific
+	// resources can restrict the set further (e.g., some metaresource kinds
+	// may not support attach/detach).
+	AllowedVerbs() []Verb
 }
 
 type ResourceRef struct {

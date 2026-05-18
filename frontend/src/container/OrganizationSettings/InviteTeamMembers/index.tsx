@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Plus, Trash2 } from '@signozhq/icons';
 import { Button, Form, FormInstance, Input, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
@@ -51,7 +51,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 									</Form.Item>
 									<Button
 										type="text"
-										icon={<DeleteOutlined />}
+										icon={<Trash2 size="md" />}
 										onClick={(): void => remove(name)}
 										danger
 										data-testid={`delete-member-${name}`}
@@ -60,7 +60,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 								</Space>
 							))}
 							<Form.Item>
-								<Button onClick={add} icon={<PlusOutlined />} type="default">
+								<Button onClick={add} icon={<Plus size="md" />} type="default">
 									{t('add_another_team_member')}
 								</Button>
 							</Form.Item>
