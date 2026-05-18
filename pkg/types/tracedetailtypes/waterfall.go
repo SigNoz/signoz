@@ -238,9 +238,10 @@ func (c *WaterfallCache) Clone() cachetypes.Cacheable {
 	}
 }
 
-// Size approximates the retained bytes. Each span dominates; use a per-span
-// constant rather than reflecting field-by-field.
-func (c *WaterfallCache) Size() int64 {
+// Cost approximates the retained bytes for use as the ristretto cache cost.
+// Each span dominates; use a per-span constant rather than reflecting
+// field-by-field.
+func (c *WaterfallCache) Cost() int64 {
 	const perSpanBytes = 256
 	return int64(c.TotalSpans) * perSpanBytes
 }

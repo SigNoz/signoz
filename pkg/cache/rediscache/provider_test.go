@@ -29,7 +29,7 @@ func (cacheable *CacheableA) Clone() cachetypes.Cacheable {
 	}
 }
 
-func (cacheable *CacheableA) Size() int64 {
+func (cacheable *CacheableA) Cost() int64 {
 	return int64(len(cacheable.Key)) + 16
 }
 

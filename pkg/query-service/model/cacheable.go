@@ -41,7 +41,7 @@ func (c *GetWaterfallSpansForTraceWithMetadataCache) Clone() cachetypes.Cacheabl
 	}
 }
 
-func (c *GetWaterfallSpansForTraceWithMetadataCache) Size() int64 {
+func (c *GetWaterfallSpansForTraceWithMetadataCache) Cost() int64 {
 	const perSpanBytes = 256
 	return int64(c.TotalSpans) * perSpanBytes
 }
@@ -71,7 +71,7 @@ func (c *GetFlamegraphSpansForTraceCache) Clone() cachetypes.Cacheable {
 	}
 }
 
-func (c *GetFlamegraphSpansForTraceCache) Size() int64 {
+func (c *GetFlamegraphSpansForTraceCache) Cost() int64 {
 	const perSpanBytes = 128
 	var spans int64
 	for _, row := range c.SelectedSpans {
