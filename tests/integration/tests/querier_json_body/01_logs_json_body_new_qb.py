@@ -11,6 +11,7 @@ from fixtures.logs import Logs
 from fixtures.querier import (
     build_logs_aggregation,
     build_order_by,
+    build_raw_query,
     build_scalar_query,
     get_column_data_from_response,
     get_rows,
@@ -27,28 +28,33 @@ def _run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[
     start_ms = case.get("startMs", int((now - timedelta(seconds=10)).timestamp() * 1000))
     end_ms = case.get("endMs", int(now.timestamp() * 1000))
 
-    aggregation = case.get("aggregation")
-    if aggregation and not isinstance(aggregation, list):
-        aggregations = [build_logs_aggregation(aggregation)]
-    elif aggregation:
-        aggregations = aggregation
+    if case["requestType"] == "raw":
+        query = build_raw_query(
+            name=case["name"],
+            signal="logs",
+            filter_expression=case.get("expression"),
+            order=case.get("order") or [build_order_by("timestamp", "desc")],
+            limit=case.get("limit", 100),
+            step_interval=case.get("stepInterval") or 60,
+        )
     else:
-        aggregations = []
-
-    order = case.get("order")
-    if order is None and case["requestType"] == "raw":
-        order = [build_order_by("timestamp", "desc")]
-
-    query = build_scalar_query(
-        name=case["name"],
-        signal="logs",
-        aggregations=aggregations,
-        group_by=case.get("groupBy"),
-        order=order,
-        limit=case.get("limit", 100),
-        filter_expression=case.get("expression"),
-        step_interval=case.get("stepInterval") or 60,
-    )
+        aggregation = case.get("aggregation")
+        if aggregation and not isinstance(aggregation, list):
+            aggregations = [build_logs_aggregation(aggregation)]
+        elif aggregation:
+            aggregations = aggregation
+        else:
+            aggregations = []
+        query = build_scalar_query(
+            name=case["name"],
+            signal="logs",
+            aggregations=aggregations,
+            group_by=case.get("groupBy"),
+            order=case.get("order"),
+            limit=case.get("limit", 100),
+            filter_expression=case.get("expression"),
+            step_interval=case.get("stepInterval") or 60,
+        )
 
     response = make_query_request(
         signoz=signoz,
@@ -636,10 +642,9 @@ def test_select_order_by(
     end_ms = int(now.timestamp() * 1000)
 
     def _run(case: dict[str, Any]) -> None:
-        query = build_scalar_query(
+        query = build_raw_query(
             name=case["name"],
             signal="logs",
-            aggregations=[build_logs_aggregation("count()")],
             order=case["order"],
             limit=100,
             step_interval=60,
