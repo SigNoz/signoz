@@ -10,6 +10,10 @@ type Query interface {
 	// Fingerprint must return a deterministic key that uniquely identifies
 	//   (query-text, params, step, etc..) but *not* the time range.
 	Fingerprint() string
+	// Cacheable reports whether this query should be routed through the
+	// bucket cache. Independent of Fingerprint so the fingerprint
+	// remains a pure identity, not a cacheability decision.
+	IsCacheable() bool
 	// Window returns [from, to) in epoch‑ms so cache can slice/merge.
 	Window() (startMS, endMS uint64)
 	// Execute runs the query; implementors must be side‑effect‑free.
@@ -22,6 +26,7 @@ type Result struct {
 	Stats          ExecStats
 	Warnings       []string
 	WarningsDocURL string
+	IsNotCacheable bool
 }
 
 type ExecStats struct {

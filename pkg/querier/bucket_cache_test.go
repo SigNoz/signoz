@@ -47,6 +47,10 @@ func (m *mockQuery) Fingerprint() string {
 	return m.fingerprint
 }
 
+func (m *mockQuery) IsCacheable() bool {
+	return m.fingerprint != ""
+}
+
 func (m *mockQuery) Window() (uint64, uint64) {
 	return m.startMs, m.endMs
 }

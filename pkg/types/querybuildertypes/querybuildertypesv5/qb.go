@@ -39,6 +39,7 @@ type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.
 	Rewrite(ctx context.Context, startNs, endNs uint64, expr string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
 	RewriteMulti(ctx context.Context, startNs, endNs uint64, exprs []string, rateInterval uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, [][]any, error)
+	RewriteWithState(ctx context.Context, startNs, endNs uint64, expr string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, []any, error)
 }
 
 type Statement struct {
@@ -51,7 +52,7 @@ type Statement struct {
 // StatementBuilder builds the query.
 type StatementBuilder[T any] interface {
 	// Build builds the query.
-	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem) (*Statement, error)
+	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderQuery[T], variables map[string]VariableItem, opts StatementBuilderOptions) (*Statement, error)
 }
 
 type TraceOperatorStatementBuilder interface {

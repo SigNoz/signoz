@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -29,6 +31,8 @@ type builderQuery[T any] struct {
 	fromMS uint64
 	toMS   uint64
 	kind   qbtypes.RequestType
+
+	opts qbtypes.BuilderQueryOptions
 }
 
 var _ qbtypes.Query = (*builderQuery[any])(nil)
@@ -41,6 +45,7 @@ func newBuilderQuery[T any](
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	opts qbtypes.BuilderQueryOptions,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
 		logger:         logger,
@@ -51,20 +56,47 @@ func newBuilderQuery[T any](
 		fromMS:         tr.From,
 		toMS:           tr.To,
 		kind:           kind,
+		opts:           opts,
 	}
 }
 
-func (q *builderQuery[T]) Fingerprint() string {
-
-	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
-		// No caching for non-timeseries queries
-		return ""
+// Cacheable reports whether this query should be routed through the
+// bucket cache. For traces/logs it gates on request-type and aggregate
+// cacheability; metrics are always cacheable.
+func (q *builderQuery[T]) IsCacheable() bool {
+	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
+		switch q.kind {
+		case qbtypes.RequestTypeTimeSeries:
+			return true
+		case qbtypes.RequestTypeScalar:
+			if !q.opts.UseScalarState {
+				return false
+			}
+			// HAVING'd scalar queries skip the cache: per-chunk
+			// HAVING drops groups whose merged aggregate would pass,
+			// and we don't (yet) re-apply HAVING post-merge in Go.
+			if q.spec.Having != nil && q.spec.Having.Expression != "" {
+				return false
+			}
+			return allAggsCacheable(q.spec.Aggregations)
+		default:
+			return false
+		}
 	}
+	return true
+}
 
+func (q *builderQuery[T]) Fingerprint() string {
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
 	parts := []string{"builder"}
+
+	// Request kind partitions the cache: scalar requests store
+	// *ScalarStateData blobs while time-series store *TimeSeriesData.
+	// Sharing a key would cross-feed the wrong shape into the
+	// materializer (e.g. scalar-state cache served to a time-series
+	// request → response collapsed to a single ScalarData row).
+	parts = append(parts, fmt.Sprintf("kind=%s", q.kind.StringValue()))
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))
@@ -150,6 +182,31 @@ func (q *builderQuery[T]) Fingerprint() string {
 	return strings.Join(parts, "&")
 }
 
+// allAggsCacheable reports whether every aggregation expression resolves
+// to an AggrFunc that has a registered state form. Used by Fingerprint()
+// to gate scalar caching admission.
+func allAggsCacheable[T any](aggs []T) bool {
+	if len(aggs) == 0 {
+		return false
+	}
+	for _, a := range aggs {
+		var expr string
+		switch v := any(a).(type) {
+		case qbtypes.TraceAggregation:
+			expr = v.Expression
+		case qbtypes.LogAggregation:
+			expr = v.Expression
+		default:
+			return false
+		}
+		af, ok := querybuilder.ExtractOuterAggName(expr)
+		if !ok || !af.Cacheable {
+			return false
+		}
+	}
+	return true
+}
+
 func fingerprintGroupByKey(gb qbtypes.GroupByKey) string {
 	return fingerprintFieldKey(gb.TelemetryFieldKey)
 }
@@ -199,7 +256,17 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 		return q.executeWindowList(ctx)
 	}
 
-	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+	// State-mode SQL is only emitted when the bucket cache will
+	// consume it — i.e. the query opted in via UseScalarState AND
+	// every aggregate has a registered StateName. For everything
+	// else (UseScalarState off, or aggregates like p99/countDistinct
+	// that have no state form), fall back to plain aggregates so
+	// RewriteWithState doesn't fail with ErrAggregateNotStateCacheable.
+	stmtOpts := qbtypes.NewStatementBuilderOptions()
+	if !(q.opts.UseScalarState && q.IsCacheable()) {
+		stmtOpts = stmtOpts.WithSkipScalarState()
+	}
+	stmt, err := q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables, stmtOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -260,9 +327,44 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
-	if err != nil {
-		return nil, err
+	var payload any
+	// Match the SQL-emit gate in Execute: state SQL is only emitted
+	// when UseScalarState && IsCacheable (and signal is traces/logs).
+	// Metrics' IsCacheable is true unconditionally, so we can't gate
+	// on IsCacheable alone — the metrics builders don't emit state
+	// columns and reading them as bytes would fail.
+	if q.kind == qbtypes.RequestTypeScalar && q.opts.UseScalarState && q.IsCacheable() {
+		// State-mode SQL emits __result_<idx> AggregateFunction blob
+		// columns; scan them as raw bytes and populate the QB
+		// aggregate names so the materializer can find the matching
+		// scalarstate.Aggregate at merge time.
+		ssd, perr := readAsScalarState(rows, q.spec.Name)
+		if perr != nil {
+			return nil, perr
+		}
+		ssd.AggNames = aggNamesFromSpec(q.spec.Aggregations)
+		ssd.RateMask = rateMaskFromSpec(q.spec.Aggregations)
+		ssd.Order = q.spec.Order
+		ssd.Limit = q.spec.Limit
+		if len(ssd.Rows) > 0 {
+			r0 := ssd.Rows[0]
+			aggName := ""
+			if r0.AggIdx < len(ssd.AggNames) {
+				aggName = ssd.AggNames[r0.AggIdx]
+			}
+			q.logger.InfoContext(ctx, "scalar state sample",
+				slog.String("agg", aggName),
+				slog.Int("aggIdx", r0.AggIdx),
+				slog.Int("len", len(r0.State)),
+				slog.String("hex", hex.EncodeToString(r0.State)),
+			)
+		}
+		payload = ssd
+	} else {
+		payload, err = consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &qbtypes.Result{
@@ -274,6 +376,52 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
 	}, nil
+}
+
+// aggNamesFromSpec extracts the underlying ClickHouse aggregate name
+// (e.g. "avg", "count", "sum") per aggregation expression in spec order.
+// We use AggrFunc.FuncName rather than the QB-facing Name because rate-style
+// aggregates (rate_avg, rate_sum, …) share the on-wire state of their
+// non-rate counterpart — rate_avg's state is avgState, rate's is countState
+// — and the scalarstate registry is keyed by the underlying CH aggregate.
+// The rate division is applied separately, post-merge, via RateMask.
+// Returns "" for any aggregation the parser cannot resolve — the
+// materializer rejects "" entries with a clear error.
+func aggNamesFromSpec[T any](aggs []T) []string {
+	out := make([]string, len(aggs))
+	for i, a := range aggs {
+		var expr string
+		switch v := any(a).(type) {
+		case qbtypes.TraceAggregation:
+			expr = v.Expression
+		case qbtypes.LogAggregation:
+			expr = v.Expression
+		}
+		if af, ok := querybuilder.ExtractOuterAggName(expr); ok {
+			out[i] = strings.ToLower(af.FuncName)
+		}
+	}
+	return out
+}
+
+// rateMaskFromSpec returns a bool per aggregation: true when the outer
+// aggregate is rate-style (Rate flag set on AggrFunc). Drives the
+// post-merge `Final / windowSeconds` step in materializeScalarData.
+func rateMaskFromSpec[T any](aggs []T) []bool {
+	out := make([]bool, len(aggs))
+	for i, a := range aggs {
+		var expr string
+		switch v := any(a).(type) {
+		case qbtypes.TraceAggregation:
+			expr = v.Expression
+		case qbtypes.LogAggregation:
+			expr = v.Expression
+		}
+		if af, ok := querybuilder.ExtractOuterAggName(expr); ok {
+			out[i] = af.Rate
+		}
+	}
+	return out
 }
 
 func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
@@ -365,7 +513,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		q.spec.Offset = 0
 		q.spec.Limit = need
 
-		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
+		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables, qbtypes.NewStatementBuilderOptions())
 		if err != nil {
 			return nil, err
 		}

@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/assert"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -115,6 +115,7 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 				qbtypes.RequestTypeRaw,
 				tt.query,
 				nil,
+				qbtypes.NewStatementBuilderOptions(),
 			)
 
 			require.NoError(t, err)

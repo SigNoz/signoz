@@ -1,11 +1,19 @@
 package querybuilder
 
 import (
+	"strings"
+
+	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
 	AggreFuncMap = map[valuer.String]AggrFunc{}
+
+	// ErrAggregateNotStateCacheable signals the outer aggregate has no
+	// registered ClickHouse "-State" form.
+	ErrAggregateNotStateCacheable = errors.NewInternalf(errors.CodeInternal, "aggregate is not state-cacheable")
 )
 
 type AggrFunc struct {
@@ -18,12 +26,40 @@ type AggrFunc struct {
 	Rate           bool
 	MinArgs        int
 	MaxArgs        int
+	// StateName is the ClickHouse "-State" combinator name 
+	// (e.g. "avg" -> "avgState").
+	StateName string
+	// Cacheable enables/disables scalar-state caching for this
+	// aggregate. It can be turned off without losing the state-form mapping.
+	Cacheable bool
+}
+
+// ExtractOuterAggName returns the AggrFunc for the outermost aggregate
+// in expr (e.g. "avg" for "avg(duration_nano)").
+func ExtractOuterAggName(expr string) (AggrFunc, bool) {
+	wrapped := "SELECT " + expr
+	stmts, err := chparser.NewParser(wrapped).ParseStmts()
+	if err != nil || len(stmts) == 0 {
+		return AggrFunc{}, false
+	}
+	sel, ok := stmts[0].(*chparser.SelectQuery)
+	if !ok || len(sel.SelectItems) == 0 {
+		return AggrFunc{}, false
+	}
+	fn, ok := sel.SelectItems[0].Expr.(*chparser.FunctionExpr)
+	if !ok {
+		return AggrFunc{}, false
+	}
+	a, ok := AggreFuncMap[valuer.NewString(strings.ToLower(fn.Name.Name))]
+	return a, ok
 }
 
 var (
 	AggrFuncCount = AggrFunc{
 		Name:        valuer.NewString("count"),
 		FuncName:    "count",
+		StateName:   "countState",
+		Cacheable:   true,
 		RequireArgs: false, MinArgs: 0, MaxArgs: 1,
 	}
 	AggrFuncCountIf = AggrFunc{
@@ -47,6 +83,8 @@ var (
 	AggrFuncSum = AggrFunc{
 		Name:        valuer.NewString("sum"),
 		FuncName:    "sum",
+		StateName:   "sumState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncSumIf = AggrFunc{
@@ -58,6 +96,8 @@ var (
 	AggrFuncAvg = AggrFunc{
 		Name:        valuer.NewString("avg"),
 		FuncName:    "avg",
+		StateName:   "avgState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncAvgIf = AggrFunc{
@@ -69,6 +109,8 @@ var (
 	AggrFuncMin = AggrFunc{
 		Name:        valuer.NewString("min"),
 		FuncName:    "min",
+		StateName:   "minState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncMinIf = AggrFunc{
@@ -80,6 +122,8 @@ var (
 	AggrFuncMax = AggrFunc{
 		Name:        valuer.NewString("max"),
 		FuncName:    "max",
+		StateName:   "maxState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncMaxIf = AggrFunc{
@@ -201,6 +245,8 @@ var (
 	AggrFuncRate = AggrFunc{
 		Name:        valuer.NewString("rate"),
 		FuncName:    "count",
+		StateName:   "countState",
+		Cacheable:   true,
 		RequireArgs: true, Rate: true, MinArgs: 0, MaxArgs: 1,
 	}
 	AggrFuncRateIf = AggrFunc{
@@ -212,21 +258,29 @@ var (
 	AggrFuncRateSum = AggrFunc{
 		Name:        valuer.NewString("rate_sum"),
 		FuncName:    "sum",
+		StateName:   "sumState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncRateAvg = AggrFunc{
 		Name:        valuer.NewString("rate_avg"),
 		FuncName:    "avg",
+		StateName:   "avgState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncRateMin = AggrFunc{
 		Name:        valuer.NewString("rate_min"),
 		FuncName:    "min",
+		StateName:   "minState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
 	AggrFuncRateMax = AggrFunc{
 		Name:        valuer.NewString("rate_max"),
 		FuncName:    "max",
+		StateName:   "maxState",
+		Cacheable:   true,
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
 )

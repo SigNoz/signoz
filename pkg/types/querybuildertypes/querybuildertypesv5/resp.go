@@ -321,6 +321,20 @@ func sanitizeValue(v any) any {
 		return sanitizeValue(rv.Elem().Interface())
 	case reflect.Struct:
 		return v
+	case reflect.Float32, reflect.Float64:
+		// Catches named float types (e.g. `type Duration float64`) that
+		// the type-assertion fast-paths above don't match. Without
+		// this, a NaN of a named type leaks through and crashes
+		// json.Marshal at the top level.
+		f := rv.Float()
+		if math.IsNaN(f) {
+			return "NaN"
+		} else if math.IsInf(f, 1) {
+			return "Inf"
+		} else if math.IsInf(f, -1) {
+			return "-Inf"
+		}
+		return roundToNonZeroDecimals(f, 3)
 	default:
 		return v
 	}

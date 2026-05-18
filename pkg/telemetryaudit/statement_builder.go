@@ -72,6 +72,7 @@ func (b *auditQueryStatementBuilder) Build(
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	variables map[string]qbtypes.VariableItem,
+	opts qbtypes.StatementBuilderOptions,
 ) (*qbtypes.Statement, error) {
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
@@ -93,7 +94,7 @@ func (b *auditQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeTimeSeries:
 		stmt, err = b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		stmt, err = b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+		stmt, err = b.buildScalarQuery(ctx, q, query, start, end, keys, variables, opts)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -355,7 +356,11 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, true, variables)
+		// Limit CTE selects top-N groups by aggregate value, so it
+		// needs plain aggregates that ORDER BY can sort. State-mode
+		// SQL emits hex(*State()) blobs that have no numeric
+		// ordering — skip the state path here.
+		cteStmt, err := b.buildScalarQuery(ctx, cteSB, query, start, end, keys, variables, qbtypes.NewStatementBuilderOptions().WithSkipResourceCTE().WithSkipScalarState())
 		if err != nil {
 			return nil, err
 		}
@@ -439,8 +444,8 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	skipResourceCTE bool,
 	variables map[string]qbtypes.VariableItem,
+	opts qbtypes.StatementBuilderOptions,
 ) (*qbtypes.Statement, error) {
 	var (
 		cteFragments []string
@@ -449,13 +454,12 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
 		return nil, err
-	} else if frag != "" && !skipResourceCTE {
+	} else if frag != "" && !opts.SkipResourceCTE {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
 
 	allAggChArgs := []any{}
-
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
@@ -463,7 +467,6 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		if err != nil {
 			return nil, err
 		}
-
 		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
@@ -471,15 +474,29 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	rateInterval := (end - start) / querybuilder.NsToSeconds
 
-	if len(query.Aggregations) > 0 {
-		for idx := range query.Aggregations {
-			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, start, end, aggExpr.Expression, rateInterval, keys)
-			if err != nil {
-				return nil, err
-			}
-			allAggChArgs = append(allAggChArgs, chArgs...)
+	for idx := range query.Aggregations {
+		aggExpr := query.Aggregations[idx]
+		var (
+			rewritten string
+			chArgs    []any
+			err       error
+		)
+		if opts.SkipScalarState {
+			rewritten, chArgs, err = b.aggExprRewriter.Rewrite(ctx, start, end, aggExpr.Expression, rateInterval, keys)
+		} else {
+			rewritten, chArgs, err = b.aggExprRewriter.RewriteWithState(ctx, start, end, aggExpr.Expression, keys)
+		}
+		if err != nil {
+			return nil, err
+		}
+		allAggChArgs = append(allAggChArgs, chArgs...)
+		// clickhouse-go can't decode AggregateFunction(...) columns; wrap
+		// state-mode aggregates in hex(...) so they come back as String.
+		// readAsScalarState hex-decodes back to the raw state bytes.
+		if opts.SkipScalarState {
 			sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, idx))
+		} else {
+			sb.SelectMore(fmt.Sprintf("hex(%s) AS __result_%d", rewritten, idx))
 		}
 	}
 
@@ -492,7 +509,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
-	if query.Having != nil && query.Having.Expression != "" {
+	if query.Having != nil && query.Having.Expression != "" && !opts.SkipHaving {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
 		rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
 		if err != nil {
@@ -501,25 +518,24 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		sb.Having(rewrittenExpr)
 	}
 
-	for _, orderBy := range query.Order {
-		idx, ok := aggOrderBy(orderBy, query)
-		if ok {
-			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
-		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+	if opts.SkipScalarState {
+		for _, orderBy := range query.Order {
+			idx, ok := aggOrderBy(orderBy, query)
+			if ok {
+				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+			} else {
+				sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			}
+		}
+		if len(query.Order) == 0 {
+			sb.OrderBy("__result_0 DESC")
+		}
+		if query.Limit > 0 {
+			sb.Limit(query.Limit)
 		}
 	}
 
-	if len(query.Order) == 0 {
-		sb.OrderBy("__result_0 DESC")
-	}
-
-	if query.Limit > 0 {
-		sb.Limit(query.Limit)
-	}
-
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
-
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
@@ -604,7 +620,7 @@ func (b *auditQueryStatementBuilder) maybeAttachResourceFilter(
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
-	stmt, err := b.resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	stmt, err := b.resourceFilterStmtBuilder.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables, qbtypes.NewStatementBuilderOptions())
 	if err != nil {
 		return "", nil, err
 	}

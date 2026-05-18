@@ -367,7 +367,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
+			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -561,7 +561,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil)
+			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -629,7 +629,7 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, c.variables)
+			stmt, err := builder.Build(context.Background(), c.start, c.end, qbtypes.RequestTypeTimeSeries, c.query, c.variables, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)

@@ -15,6 +15,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// cacheKeyVersion is prefixed onto every bucket-cache key. Bump when
+// anything that affects the cached payload changes — Fingerprint inputs,
+// ScalarStateData layout, AggregateFunction state encoding, AggNames
+// semantics, etc. Old entries under the previous prefix are orphaned
+// and age out via TTL.
+const cacheKeyVersion = "v5.3"
+
 // bucketCache implements the BucketCache interface.
 type bucketCache struct {
 	cache        cache.Cache
@@ -192,10 +199,10 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 }
 
 // generateCacheKey creates a unique cache key based on query fingerprint.
+// Format: <cacheKeyVersion>:query:<fingerprint>. See cacheKeyVersion for
+// when to bump.
 func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
-	fingerprint := q.Fingerprint()
-
-	return fmt.Sprintf("v5:query:%s", fingerprint)
+	return fmt.Sprintf("%s:query:%s", cacheKeyVersion, q.Fingerprint())
 }
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
@@ -445,7 +452,8 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	switch resultType {
 	case qbtypes.RequestTypeTimeSeries:
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-		// Raw and Scalar types are not cached, so no merge needed
+	case qbtypes.RequestTypeScalar:
+		mergedValue = bc.mergeScalarStateValues(ctx, buckets)
 	}
 
 	return &qbtypes.Result{
@@ -557,6 +565,24 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	return result
 }
 
+// mergeScalarStateValues unmarshals each cached bucket payload into a
+// ScalarStateData and concatenates the per-(chunk × group × agg) state
+// rows. Metadata adoption is delegated to ScalarStateData.Adopt so this
+// and mergeScalarStateRows can't drift. The aggregate registry merge
+// runs later, on read, in merge_scalar.go (TRD: scalar caching, Option 2).
+func (bc *bucketCache) mergeScalarStateValues(ctx context.Context, buckets []*qbtypes.CachedBucket) *qbtypes.ScalarStateData {
+	out := &qbtypes.ScalarStateData{}
+	for _, bucket := range buckets {
+		var ssd qbtypes.ScalarStateData
+		if err := json.Unmarshal(bucket.Value, &ssd); err != nil {
+			bc.logger.ErrorContext(ctx, "failed to unmarshal scalar state data", errors.Attr(err))
+			continue
+		}
+		out.Adopt(&ssd)
+	}
+	return out
+}
+
 // isEmptyResult checks if a result is truly empty (no data exists) vs filtered empty (data was filtered out).
 func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFiltered bool) {
 	if result.Value == nil {
@@ -599,8 +625,16 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 			return !hasValues, !hasValues && totalSeries > 0
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
-		// Raw and scalar data are not cached
+	case qbtypes.RequestTypeScalar:
+		if ssd, ok := result.Value.(*qbtypes.ScalarStateData); ok {
+			return len(ssd.Rows) == 0, false
+		}
+		// Anything else under RequestTypeScalar (e.g., a *ScalarData
+		// being routed in fallback) is not cacheable.
+		return true, false
+
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace:
+		// Raw and trace data are not cached
 		return true, false
 	}
 
@@ -743,26 +777,22 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 			trimmedResult.Value = trimmedData
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
-		// Don't cache raw or scalar data
+	case qbtypes.RequestTypeScalar:
+		// Scalar caching: state blobs have no per-bucket time
+		// dimension to trim. The chunk-range itself is what gates
+		// cacheability; pass the value through unchanged.
+		if _, ok := result.Value.(*qbtypes.ScalarStateData); ok {
+			trimmedResult.Value = result.Value
+			return trimmedResult
+		}
+		return nil
+
+	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace:
+		// Don't cache raw or trace data
 		return nil
 	}
 
 	return trimmedResult
-}
-
-func min(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // filterResultToTimeRange filters the result to only include values within the requested time range.

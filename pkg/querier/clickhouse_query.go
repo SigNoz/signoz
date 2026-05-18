@@ -59,6 +59,8 @@ func (q *chSQLQuery) Fingerprint() string {
 	return ""
 }
 
+func (q *chSQLQuery) IsCacheable() bool { return false }
+
 func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 
 // TODO(srikanthccv): cleanup the templating logic.

@@ -176,6 +176,44 @@ func (q *QueryBuilderQuery[T]) Normalize() {
 
 }
 
+type BuilderQueryOptions struct {
+	UseScalarState bool
+}
+
+func (o BuilderQueryOptions) WithUseScalarState() BuilderQueryOptions {
+	o.UseScalarState = true
+	return o
+}
+
+func NewBuilderQueryOptions() BuilderQueryOptions {
+	return BuilderQueryOptions{}
+}
+
+type StatementBuilderOptions struct {
+	SkipResourceCTE bool
+	SkipHaving      bool
+	SkipScalarState bool
+}
+
+func NewStatementBuilderOptions() StatementBuilderOptions {
+	return StatementBuilderOptions{}
+}
+
+func (o StatementBuilderOptions) WithSkipResourceCTE() StatementBuilderOptions {
+	o.SkipResourceCTE = true
+	return o
+}
+
+func (o StatementBuilderOptions) WithSkipHaving() StatementBuilderOptions {
+	o.SkipHaving = true
+	return o
+}
+
+func (o StatementBuilderOptions) WithSkipScalarState() StatementBuilderOptions {
+	o.SkipScalarState = true
+	return o
+}
+
 // Fast‑path (no fingerprint grouping)
 // canShortCircuitDelta returns true if we can use the optimized query
 // for the given query

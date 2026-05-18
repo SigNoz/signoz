@@ -48,6 +48,43 @@ func NewAggExprRewriter(
 	}
 }
 
+// rewrite parses expr, runs the visitor over the outermost SelectItem,
+// and returns the (mutated) item along with accumulated chArgs and the
+// isRate flag. The returned item still references the in-place AST so
+// callers can further mutate before serializing.
+func (r *aggExprRewriter) rewrite(
+	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
+	expr string,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (*chparser.SelectItem, []any, bool, error) {
+	wrapped := fmt.Sprintf("SELECT %s", expr)
+	stmts, err := chparser.NewParser(wrapped).ParseStmts()
+	if err != nil {
+		return nil, nil, false, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse aggregation expression %q", expr)
+	}
+	if len(stmts) == 0 {
+		return nil, nil, false, errors.NewInternalf(errors.CodeInternal, "no statements found for %q", expr)
+	}
+	sel, ok := stmts[0].(*chparser.SelectQuery)
+	if !ok {
+		return nil, nil, false, errors.NewInternalf(errors.CodeInternal, "expected SelectQuery, got %T", stmts[0])
+	}
+	if len(sel.SelectItems) == 0 {
+		return nil, nil, false, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
+	}
+
+	visitor := newExprVisitor(
+		ctx, startNs, endNs, r.logger, keys,
+		r.fullTextColumn, r.fieldMapper, r.conditionBuilder, r.jsonKeyToKey, r.flagger,
+	)
+	if err := sel.SelectItems[0].Accept(visitor); err != nil {
+		return nil, nil, false, err
+	}
+	return sel.SelectItems[0], visitor.chArgs, visitor.isRate, nil
+}
+
 // Rewrite parses the given aggregation expression, maps the column, and condition to
 // valid data source column and condition expression, and returns the rewritten expression
 // and the args if the parametric aggregation function is used.
@@ -59,49 +96,58 @@ func (r *aggExprRewriter) Rewrite(
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
-
-	wrapped := fmt.Sprintf("SELECT %s", expr)
-	p := chparser.NewParser(wrapped)
-	stmts, err := p.ParseStmts()
-
+	item, chArgs, isRate, err := r.rewrite(ctx, startNs, endNs, expr, keys)
 	if err != nil {
-		return "", nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse aggregation expression %q", expr)
-	}
-
-	if len(stmts) == 0 {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "no statements found for %q", expr)
-	}
-
-	sel, ok := stmts[0].(*chparser.SelectQuery)
-	if !ok {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "expected SelectQuery, got %T", stmts[0])
-	}
-
-	if len(sel.SelectItems) == 0 {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
-	}
-
-	visitor := newExprVisitor(
-		ctx,
-		startNs,
-		endNs,
-		r.logger,
-		keys,
-		r.fullTextColumn,
-		r.fieldMapper,
-		r.conditionBuilder,
-		r.jsonKeyToKey,
-		r.flagger,
-	)
-	// Rewrite the first select item (our expression)
-	if err := sel.SelectItems[0].Accept(visitor); err != nil {
 		return "", nil, err
 	}
-
-	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", sel.SelectItems[0].String(), rateInterval), visitor.chArgs, nil
+	if isRate {
+		return fmt.Sprintf("%s/%d", item.String(), rateInterval), chArgs, nil
 	}
-	return sel.SelectItems[0].String(), visitor.chArgs, nil
+	return item.String(), chArgs, nil
+}
+
+// RewriteWithState rewrites the aggregation expression and swaps the
+// outermost aggregate to its ClickHouse "-State" combinator. Returns
+// ErrAggregateNotStateCacheable if the outer aggregate has no StateName.
+//
+// For numeric state aggregates (sum/avg/min/max and their rate variants)
+// the argument is wrapped with toFloat64(...) so the on-wire state always
+// uses a Float64 numerator/value, regardless of the input column type.
+// Without the cast, an integer input column (e.g. UInt64 duration_nano)
+// would yield AggregateFunction(avg, UInt64) whose serialize() writes a
+// UInt64 numerator — same byte count as Float64 but different bits, and
+// the Go-side decoder in pkg/scalarstate hardcodes Float64.
+func (r *aggExprRewriter) RewriteWithState(
+	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
+	expr string,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (string, []any, error) {
+	item, chArgs, _, err := r.rewrite(ctx, startNs, endNs, expr, keys)
+	if err != nil {
+		return "", nil, err
+	}
+	outer, ok := item.Expr.(*chparser.FunctionExpr)
+	if !ok {
+		return "", nil, ErrAggregateNotStateCacheable
+	}
+	aggFunc, ok := AggreFuncMap[valuer.NewString(strings.ToLower(outer.Name.Name))]
+	if !ok || aggFunc.StateName == "" {
+		return "", nil, ErrAggregateNotStateCacheable
+	}
+	outer.Name.Name = aggFunc.StateName
+
+	if aggFunc.Numeric && outer.Params != nil && outer.Params.Items != nil {
+		for i, arg := range outer.Params.Items.Items {
+			wrapped, perr := parseFragment(fmt.Sprintf("toFloat64(%s)", arg.String()))
+			if perr != nil {
+				return "", nil, perr
+			}
+			outer.Params.Items.Items[i] = wrapped
+		}
+	}
+	return item.String(), chArgs, nil
 }
 
 // RewriteMulti rewrites a slice of expressions.

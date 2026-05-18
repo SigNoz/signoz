@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"reflect"
@@ -329,6 +330,104 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		Columns:   cd,
 		Data:      data,
 	}, nil
+}
+
+// readAsScalarState scans rows produced by a per-chunk scalar-state SQL.
+// Group-by columns are scanned as their natural Go type; aggregation
+// columns named __result_<idx> hold hex-encoded AggregateFunction blobs
+// (the SQL emitter wraps the state in hex(...) because clickhouse-go
+// cannot decode AggregateFunction columns directly). We scan the hex
+// string and decode it back to raw state bytes for pkg/scalarstate.
+func readAsScalarState(rows driver.Rows, queryName string) (*qbtypes.ScalarStateData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+
+	type colKind int
+	const (
+		colGroup colKind = iota
+		colState
+	)
+	kinds := make([]colKind, len(colNames))
+	stateAggIdx := make([]int, len(colNames))
+
+	groupCols := make([]*qbtypes.ColumnDescriptor, 0, len(colNames))
+	aggCols := make([]*qbtypes.ColumnDescriptor, 0, len(colNames))
+	groupColIdx := make([]int, 0, len(colNames))
+
+	for i, name := range colNames {
+		if m := aggRe.FindStringSubmatch(name); m != nil {
+			kinds[i] = colState
+			id, _ := strconv.Atoi(m[1])
+			stateAggIdx[i] = id
+			aggCols = append(aggCols, &qbtypes.ColumnDescriptor{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
+				QueryName:         queryName,
+				AggregationIndex:  int64(id),
+				Type:              qbtypes.ColumnTypeAggregation,
+			})
+			continue
+		}
+		kinds[i] = colGroup
+		groupCols = append(groupCols, &qbtypes.ColumnDescriptor{
+			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
+			QueryName:         queryName,
+			Type:              qbtypes.ColumnTypeGroup,
+		})
+		groupColIdx = append(groupColIdx, i)
+	}
+
+	scan := make([]any, len(colTypes))
+	for i := range scan {
+		if kinds[i] == colState {
+			var s string
+			scan[i] = &s
+		} else {
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+		}
+	}
+
+	out := &qbtypes.ScalarStateData{
+		QueryName: queryName,
+		GroupCols: groupCols,
+		AggCols:   aggCols,
+		// AggNames is populated by the caller (which knows the QB
+		// aggregate name from the spec) — readAsScalarState only sees
+		// the SQL column aliases.
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		groupKey := make([]any, 0, len(groupColIdx))
+		for _, ci := range groupColIdx {
+			groupKey = append(groupKey, derefValue(scan[ci]))
+		}
+
+		for i, k := range kinds {
+			if k != colState {
+				continue
+			}
+			sp, ok := scan[i].(*string)
+			if !ok || sp == nil {
+				continue
+			}
+			b, err := hex.DecodeString(*sp)
+			if err != nil {
+				return nil, fmt.Errorf("scalar state: hex-decode __result_%d: %w", stateAggIdx[i], err)
+			}
+			out.Rows = append(out.Rows, qbtypes.ScalarStateRow{
+				GroupKey: groupKey,
+				AggIdx:   stateAggIdx[i],
+				State:    b,
+			})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func derefValue(v any) any {

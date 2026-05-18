@@ -28,6 +28,8 @@ func (q *traceOperatorQuery) Fingerprint() string {
 	return ""
 }
 
+func (q *traceOperatorQuery) IsCacheable() bool { return false }
+
 func (q *traceOperatorQuery) Window() (uint64, uint64) {
 	return q.fromMS, q.toMS
 }

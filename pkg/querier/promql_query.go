@@ -136,6 +136,8 @@ func (q *promqlQuery) Fingerprint() string {
 	return strings.Join(parts, "&")
 }
 
+func (q *promqlQuery) IsCacheable() bool { return true }
+
 func (q *promqlQuery) Window() (uint64, uint64) {
 	return q.tr.From, q.tr.To
 }

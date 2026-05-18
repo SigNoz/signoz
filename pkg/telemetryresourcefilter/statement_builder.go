@@ -97,6 +97,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[T],
 	variables map[string]qbtypes.VariableItem,
+	_ qbtypes.StatementBuilderOptions,
 ) (*qbtypes.Statement, error) {
 	q := sqlbuilder.NewSelectBuilder()
 	q.Select("fingerprint")

@@ -217,7 +217,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, c.startTs, c.endTs, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, c.startTs, c.endTs, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -340,7 +340,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -482,7 +482,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -558,7 +558,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErrContains != "" {
 				require.Error(t, err)
@@ -653,7 +653,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
@@ -1019,7 +1019,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				fl,
 			)
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
@@ -1118,7 +1118,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				fl,
 			)
 
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil, qbtypes.NewStatementBuilderOptions())
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())

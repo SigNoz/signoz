@@ -7,6 +7,7 @@ import (
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -27,7 +28,7 @@ func (m *queryMatcherAny) Match(string, string) error { return nil }
 // and returns a fixed query string so the mock ClickHouse can match it.
 type mockMetricStmtBuilder struct{}
 
-func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+func (m *mockMetricStmtBuilder) Build(_ context.Context, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], _ map[string]qbtypes.VariableItem, _ qbtypes.StatementBuilderOptions) (*qbtypes.Statement, error) {
 	return &qbtypes.Statement{
 		Query: "SELECT ts, value FROM signoz_metrics",
 		Args:  nil,
@@ -52,6 +53,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
+		flaggertest.New(t),
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -116,6 +118,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                      // meterStmtBuilder
 		nil,                      // traceOperatorStmtBuilder
 		nil,                      // bucketCache
+		flaggertest.New(t),
 	)
 
 	req := &qbtypes.QueryRangeRequest{

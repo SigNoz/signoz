@@ -144,6 +144,7 @@ func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, qu
 		qbtypes.RequestTypeRaw,
 		query,
 		nil,
+		qbtypes.NewStatementBuilderOptions(),
 	)
 }
 

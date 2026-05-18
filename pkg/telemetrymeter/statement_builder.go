@@ -50,6 +50,7 @@ func (b *meterQueryStatementBuilder) Build(
 	_ qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
+	_ qbtypes.StatementBuilderOptions,
 ) (*qbtypes.Statement, error) {
 	keySelectors := telemetrymetrics.GetKeySelectors(query)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
