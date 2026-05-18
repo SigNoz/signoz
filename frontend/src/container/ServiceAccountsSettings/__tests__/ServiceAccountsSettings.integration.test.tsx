@@ -3,12 +3,14 @@ import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'tests/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 jest.mock('@signozhq/ui/drawer', () => ({
@@ -85,6 +87,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		server.use(
+			setupAuthzAdmin(),
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI })),
 			),
@@ -96,6 +99,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
 			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -178,15 +184,17 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 	it('saving changes in the drawer refetches the list', async () => {
 		const listRefetchSpy = jest.fn();
+		const putSpy = jest.fn();
 
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {
 				listRefetchSpy();
 				return res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI }));
 			}),
-			rest.put(SA_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-			),
+			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
+				putSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
 		);
 
 		render(
@@ -205,9 +213,17 @@ describe('ServiceAccountsSettings (integration)', () => {
 		const nameInput = await screen.findByDisplayValue('CI Bot');
 		fireEvent.change(nameInput, { target: { value: 'CI Bot Updated' } });
 
+		await screen.findByDisplayValue('CI Bot Updated');
+
 		fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
 
-		await screen.findByDisplayValue('CI Bot Updated');
+		// Wait for the PUT to complete with the right payload — confirms save fired
+		await waitFor(() =>
+			expect(putSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ name: 'CI Bot Updated' }),
+			),
+		);
+
 		await waitFor(() => {
 			expect(listRefetchSpy).toHaveBeenCalled();
 		});
@@ -221,6 +237,13 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 
 		await screen.findByText('CI Bot');
+
+		// Wait for authz check to resolve before clicking
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', { name: /New Service Account/i }),
+			).not.toBeDisabled(),
+		);
 
 		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));
 

@@ -80,6 +80,7 @@ interface BaseProps {
 	isError?: boolean;
 	error?: APIError;
 	onRefetch?: () => void;
+	disabled?: boolean;
 }
 
 interface SingleProps extends BaseProps {
@@ -123,6 +124,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		isError = internalError,
 		error = convertToApiError(internalErrorObj),
 		onRefetch = externalRoles === undefined ? internalRefetch : undefined,
+		disabled,
 	} = props;
 
 	const notFoundContent = isError ? (
@@ -151,6 +153,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 					</Checkbox>
 				)}
 				getPopupContainer={getPopupContainer}
+				disabled={disabled}
 			/>
 		);
 	}
@@ -168,6 +171,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 			notFoundContent={notFoundContent}
 			options={options}
 			getPopupContainer={getPopupContainer}
+			disabled={disabled}
 		/>
 	);
 }

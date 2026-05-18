@@ -1,32 +1,15 @@
 import { ReactElement } from 'react';
 import type { RouteComponentProps } from 'react-router-dom';
-import {
+import type {
 	AuthtypesGettableTransactionDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { createGuardedRoute } from './createGuardedRoute';
-
-const BASE_URL = ENVIRONMENT.baseURL || '';
-const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 describe('createGuardedRoute', () => {
 	const TestComponent = ({ testProp }: { testProp: string }): ReactElement => (
