@@ -625,6 +625,7 @@ function TanStackTableInner<TData>(
 										defaultValue="10"
 										onChange={(value): void => {
 											setLimit(+value);
+											setPage(1);
 											pagination.onLimitChange?.(+value);
 										}}
 										items={paginationPageSizeItems}

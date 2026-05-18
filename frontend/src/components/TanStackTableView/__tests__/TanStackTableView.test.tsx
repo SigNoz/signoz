@@ -401,6 +401,58 @@ describe('TanStackTableView Integration', () => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
 			});
 		});
+
+		it('resets page to 1 when limit changes', async () => {
+			const user = userEvent.setup();
+			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				onUrlUpdate,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			// Navigate to page 2
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
+
+			await waitFor(() => {
+				const lastPage = onUrlUpdate.mock.calls
+					.map((call) => call[0].searchParams.get('page'))
+					.filter(Boolean)
+					.pop();
+				expect(lastPage).toBe('2');
+			});
+
+			// Change page size
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			// Verify page reset to 1 (nuqs removes default values from URL)
+			await waitFor(() => {
+				const lastCall = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+				const lastPage = lastCall[0].searchParams.get('page');
+				expect(lastPage === '1' || lastPage === null).toBe(true);
+				expect(lastCall[0].searchParams.get('limit')).toBe('20');
+			});
+		});
 	});
 
 	describe('sorting', () => {
