@@ -694,6 +694,134 @@ def test_traces_list_with_corrupt_data(
 
 
 @pytest.mark.parametrize(
+    "payload,status_code,results",
+    [
+        # Case 1: builder CTE filters use deprecated intrinsic field durationNano
+        pytest.param(
+            [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": 'durationNano = "3s"'},
+                    },
+                },
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "B",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": 'durationNano = "5s"'},
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A => B",
+                        "limit": 1,
+                    },
+                },
+            ],
+            HTTPStatus.OK,
+            lambda x: {
+                "duration_nano": x[0].duration_nano,
+                "name": x[0].name,
+                "parent_span_id": x[0].parent_span_id,
+                "span_id": x[0].span_id,
+                "timestamp": format_timestamp(x[0].timestamp),
+                "trace_id": x[0].trace_id,
+            },  # type: Callable[[List[Traces]], Dict[str, Any]]
+        ),
+        # Case 2: builder CTE filter uses deprecated calculated field responseStatusCode
+        pytest.param(
+            [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": 'responseStatusCode = "200"'},
+                    },
+                },
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "B",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": 'durationNano = "5s"'},
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A => B",
+                        "limit": 1,
+                    },
+                },
+            ],
+            HTTPStatus.OK,
+            lambda x: {
+                "duration_nano": x[0].duration_nano,
+                "name": x[0].name,
+                "parent_span_id": x[0].parent_span_id,
+                "span_id": x[0].span_id,
+                "timestamp": format_timestamp(x[0].timestamp),
+                "trace_id": x[0].trace_id,
+            },  # type: Callable[[List[Traces]], Dict[str, Any]]
+        ),
+    ],
+)
+def test_traces_operator_cte_with_adjusted_keys(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    payload: list[dict[str, Any]],
+    status_code: HTTPStatus,
+    results: Callable[[list[Traces]], dict[str, Any]],
+) -> None:
+    """
+    Trace operators compile each referenced disabled builder query into a CTE.
+    Those CTE filters must adjust deprecated trace keys before preparing the
+    where clause, otherwise these payloads fail with "key not found".
+    """
+    traces = generate_traces_with_corrupt_metadata()
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=payload,
+    )
+
+    assert response.status_code == status_code, response.text
+
+    if response.status_code == HTTPStatus.OK:
+        operator_result = find_named_result(response.json()["data"]["data"]["results"], "C")
+        assert operator_result is not None
+        rows = operator_result["rows"]
+        if not results(traces):
+            assert rows is None
+        else:
+            assert rows is not None
+            data = rows[0]["data"]
+            for key, value in results(traces).items():
+                assert data[key] == value
+
+
+@pytest.mark.parametrize(
     "order_by,aggregation_alias,expected_status",
     [
         # Case 1a: count by count()

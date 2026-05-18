@@ -124,7 +124,7 @@ func (b *traceQueryStatementBuilder) Build(
 		-------------------------------- End of tech debt ----------------------------
 	*/
 
-	query = b.adjustKeys(ctx, keys, query, requestType)
+	adjustTraceKeys(ctx, b.logger, keys, &query, requestType)
 
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
@@ -193,24 +193,25 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	return keySelectors
 }
 
-func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation] {
-
-	// add deprecated fields only during statement building
-	// why?
-	// 1. to not fail filter expression that use deprecated cols
-	// 2. this could have been moved to metadata fetching itself, however, that
-	// would mean, they also show up in suggestions we we don't want to do
-	// 3. reason for not doing a simple append is to keep intrinsic/calculated field first so that it gets
-	// priority in multi_if sql expression
+// mergeDeprecatedTraceKeys prepends deprecated intrinsic/calculated trace field
+// definitions to the keys map so that filter expressions referencing deprecated
+// columns continue to resolve. Prepending keeps the intrinsic/calculated entry
+// first so it wins in the multi_if SQL expression.
+func mergeDeprecatedTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey) {
 	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
 		keys[fieldKeyName] = append([]*telemetrytypes.TelemetryFieldKey{&fieldKey}, keys[fieldKeyName]...)
 	}
 	for fieldKeyName, fieldKey := range CalculatedFieldsDeprecated {
 		keys[fieldKeyName] = append([]*telemetrytypes.TelemetryFieldKey{&fieldKey}, keys[fieldKeyName]...)
 	}
+}
+
+func adjustTraceKeys(ctx context.Context, logger *slog.Logger, keys map[string][]*telemetrytypes.TelemetryFieldKey, query *qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) {
+
+	mergeDeprecatedTraceKeys(keys)
 
 	// Adjust keys for alias expressions in aggregations
-	actions := querybuilder.AdjustKeysForAliasExpressions(&query, requestType)
+	actions := querybuilder.AdjustKeysForAliasExpressions(query, requestType)
 
 	/*
 		Check if user is using multiple contexts or data types for same field name
@@ -228,7 +229,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		and make it just http.status_code and remove the duplicate entry.
 	*/
 
-	actions = append(actions, querybuilder.AdjustDuplicateKeys(&query)...)
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(query)...)
 
 	/*
 		Now adjust each key to have correct context and data type
@@ -236,24 +237,24 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 		Reason for doing this is to not create an unexpected behavior for users
 	*/
 	for idx := range query.SelectFields {
-		actions = append(actions, b.adjustKey(&query.SelectFields[idx], keys)...)
+		actions = append(actions, adjustTraceKey(&query.SelectFields[idx], keys)...)
 	}
 	for idx := range query.GroupBy {
-		actions = append(actions, b.adjustKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
+		actions = append(actions, adjustTraceKey(&query.GroupBy[idx].TelemetryFieldKey, keys)...)
 	}
 	for idx := range query.Order {
-		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
+		actions = append(actions, adjustTraceKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+		logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
-
-	return query
 }
 
-func (b *traceQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
+// adjustTraceKey resolves a single TelemetryFieldKey against the keys map,
+// preferring intrinsic/calculated field definitions when the name matches one.
+func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
 	// for recording actions taken
 	actions := []string{}
