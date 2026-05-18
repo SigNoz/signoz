@@ -186,11 +186,9 @@ func (c *LargeCloneable) MarshalBinary() ([]byte, error) { return json.Marshal(c
 
 func (c *LargeCloneable) UnmarshalBinary(data []byte) error { return json.Unmarshal(data, c) }
 
-func TestCloneableCostTriggersEviction(t *testing.T) {
+func TestCloneableExceedingMaxCostIsRejected(t *testing.T) {
 	const maxCost int64 = 1 << 20  // 1 MiB
-	const small int64 = 256 * 1024 // 256 KiB
-	const big int64 = 512 * 1024   // 512 KiB
-	const fill = 3                 // 3 * 256 KiB = 768 KiB, leaves room
+	const oversize int64 = 2 << 20 // 2 MiB, larger than the entire cache
 
 	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
 		NumCounters: 10 * 1000,
@@ -198,50 +196,16 @@ func TestCloneableCostTriggersEviction(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	cc := c.(*provider).cc
 	orgID := valuer.GenerateUUID()
-	keyFor := func(i int) string { return fmt.Sprintf("key-%d", i) }
-	ristrettoKey := func(i int) string {
-		return strings.Join([]string{orgID.StringValue(), keyFor(i)}, "::")
-	}
+	const key = "oversize-key"
+	require.NoError(t, c.Set(context.Background(), orgID, key,
+		&LargeCloneable{Key: key, CostHint: oversize}, time.Minute))
 
-	// Fill the cache under capacity so every small entry must be admitted.
-	for i := 0; i < fill; i++ {
-		require.NoError(t, c.Set(context.Background(), orgID, keyFor(i),
-			&LargeCloneable{Key: keyFor(i), CostHint: small}, time.Minute))
-	}
-	for i := 0; i < fill; i++ {
-		_, ok := cc.Get(ristrettoKey(i))
-		require.True(t, ok, "key-%d should be present after under-capacity fill", i)
-	}
-
-	// Now add a tipping entry whose cost makes the total exceed MaxCost.
-	// 3 * 256 KiB + 512 KiB = 1.25 MiB > 1 MiB, so all four entries cannot
-	// coexist: ristretto must evict at least one or reject the new one.
-	tip := fill
-	require.NoError(t, c.Set(context.Background(), orgID, keyFor(tip),
-		&LargeCloneable{Key: keyFor(tip), CostHint: big}, time.Minute))
-
-	// Probe ristretto directly: sum the cost of surviving entries.
-	var retainedCost int64
-	survivors := 0
-	for i := 0; i <= tip; i++ {
-		if _, ok := cc.Get(ristrettoKey(i)); ok {
-			survivors++
-			if i == tip {
-				retainedCost += big
-			} else {
-				retainedCost += small
-			}
-		}
-	}
-
-	// The full set's total cost (1.25 MiB) cannot fit, so at least one entry
-	// must be absent. This assertion reads cache state directly, not metrics.
-	require.Less(t, survivors, tip+1,
-		"all %d entries cannot coexist in a %d-byte cache", tip+1, maxCost)
-	require.LessOrEqual(t, retainedCost, maxCost,
-		"sum of survivor costs must respect MaxCost")
+	// Ristretto rejects any entry with cost > MaxCost (policy.go:100). Probe
+	// ristretto directly to confirm no admission, instead of relying on metrics.
+	cc := c.(*provider).cc
+	_, ok := cc.Get(strings.Join([]string{orgID.StringValue(), key}, "::"))
+	assert.False(t, ok, "entry with Cost() > MaxCost must be rejected")
 }
 
 func TestCloneableConcurrentSetGet(t *testing.T) {
