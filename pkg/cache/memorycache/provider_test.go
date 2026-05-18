@@ -198,7 +198,7 @@ func TestCloneableExceedingMaxCostIsRejected(t *testing.T) {
 
 	orgID := valuer.GenerateUUID()
 	const key = "oversize-key"
-	require.NoError(t, c.Set(context.Background(), orgID, key,
+	assert.NoError(t, c.Set(context.Background(), orgID, key,
 		&LargeCloneable{Key: key, CostHint: oversize}, time.Minute))
 
 	// Ristretto rejects any entry with cost > MaxCost (policy.go:100). Probe
