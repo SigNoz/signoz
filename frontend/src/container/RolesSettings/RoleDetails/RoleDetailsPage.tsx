@@ -21,6 +21,7 @@ import {
 	buildRoleUpdatePermission,
 } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 
 import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -28,7 +29,6 @@ import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
 
@@ -54,7 +54,8 @@ function RoleDetailsPage(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
-	const { activeLicense, isFetchingActiveLicense } = useAppContext();
+	const { isFetchingActiveLicense } = useAppContext();
+	const { isRolesEnabled } = useRolesFeatureGate();
 
 	const authzResources: AuthzResources = permissionsType.data;
 
@@ -173,7 +174,7 @@ function RoleDetailsPage(): JSX.Element {
 		);
 	}
 
-	if (activeLicense?.status !== LicenseStatus.VALID) {
+	if (!isRolesEnabled) {
 		return <Redirect to={ROUTES.ROLES_SETTINGS} />;
 	}
 

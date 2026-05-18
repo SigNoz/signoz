@@ -4,8 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import { RoleCreatePermission } from 'hooks/useAuthZ/permissions/role.permissions';
-import { useAppContext } from 'providers/App/App';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
+import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';
@@ -15,8 +14,7 @@ import './RolesSettings.styles.scss';
 function RolesSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const { activeLicense } = useAppContext();
-	const isValidLicense = activeLicense?.status === LicenseStatus.VALID;
+	const { isRolesEnabled } = useRolesFeatureGate();
 
 	return (
 		<div className="roles-settings" data-testid="roles-settings">
@@ -42,7 +40,7 @@ function RolesSettings(): JSX.Element {
 						value={searchQuery}
 						onChange={(e): void => setSearchQuery(e.target.value)}
 					/>
-					{isValidLicense && (
+					{isRolesEnabled && (
 						<AuthZTooltip checks={[RoleCreatePermission]}>
 							<Button
 								variant="solid"
