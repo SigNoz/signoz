@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -274,10 +273,6 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
-			if key.Name == querybuilder.FTSInternalKey {
-				return fmt.Sprintf("LOWER(toString(%s))", columnName), nil
-			}
-
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))

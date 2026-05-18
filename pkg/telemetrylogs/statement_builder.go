@@ -29,6 +29,7 @@ type logQueryStatementBuilder struct {
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
+	ftsFieldKeys   []*telemetrytypes.TelemetryFieldKey
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -67,6 +68,7 @@ func NewLogQueryStatementBuilder(
 		fl:                        fl,
 		fullTextColumn:            fullTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
+		ftsFieldKeys:              DefaultFTSFieldKeys,
 	}
 }
 
@@ -667,7 +669,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
-			FTSFieldKeys:       DefaultFTSFieldKeys,
+			FTSFieldKeys:       b.ftsFieldKeys,
 		})
 
 		if err != nil {

@@ -5,9 +5,9 @@ const (
 	SkipConditionLiteral  = "__skip__"
 	ErrorConditionLiteral = "__skip_because_of_error__"
 
-	// BodyFullTextSearchDefaultWarning is emitted when a full-text search or "body" searches are hit
+	// FullTextSearchDefaultWarning is emitted when a full-text search or "body" searches are hit
 	// with New JSON Body enhancements.
-	BodyFullTextSearchDefaultWarning = "Full text searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
+	FullTextSearchDefaultWarning = "Full text searches across all fields and will be slow and expensive. Consider using specific field to search a specific field inside body."
 
 	// FTSInternalKey is the sentinel Name on TelemetryFieldKey instances that represent
 	// wildcard map searches (all attribute/resource keys+values). The unconventional value
