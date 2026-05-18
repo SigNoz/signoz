@@ -30,7 +30,12 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
-import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
+import {
+	GraphTitle,
+	MENU_ITEMS,
+	SERVICE_CHART_ID,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
+} from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -206,6 +211,7 @@ function DBCall(): JSX.Element {
 							}}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
+							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</Card>
@@ -244,6 +250,7 @@ function DBCall(): JSX.Element {
 							}}
 							onDragSelect={onDragSelect}
 							version={ENTITY_VERSION_V4}
+							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					</GraphContainer>
 				</Card>

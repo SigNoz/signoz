@@ -8,6 +8,7 @@ import Graph from 'container/GridCardLayout/GridCard';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -138,6 +139,7 @@ function ServiceOverview({
 							onClickHandler={handleGraphClick('Service')}
 							isQueryEnabled={isQueryEnabled}
 							version={ENTITY_VERSION_V4}
+							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 						/>
 					)}
 				</GraphContainer>

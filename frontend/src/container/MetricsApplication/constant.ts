@@ -25,6 +25,8 @@ export const OPERATION_LEGENDS = ['Operations'];
 
 export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
 
+export const SERVICE_DETAIL_DRILLDOWN_ENABLED = true;
+
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',

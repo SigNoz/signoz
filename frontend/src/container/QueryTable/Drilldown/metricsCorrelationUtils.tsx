@@ -1,5 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import {
+	formatValueForExpression,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
@@ -8,7 +11,7 @@ import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
 
 type KeyValueMapping = {
 	attribute: string;
-	newAttribute: string;
+	newAttribute: string | null;
 	valueMappings: Record<string, string>;
 };
 
@@ -40,8 +43,33 @@ export const METRIC_TO_LOGS_TRACES_MAPPINGS: KeyValueMapping[] = [
 	},
 ];
 
+export const DRILLDOWN_TO_LOGS_MAPPINGS: KeyValueMapping[] = [
+	{
+		attribute: 'serviceName',
+		newAttribute: 'service.name',
+		valueMappings: {},
+	},
+	{
+		attribute: 'name',
+		newAttribute: null,
+		valueMappings: {},
+	},
+];
+
+export const DRILLDOWN_TO_TRACES_MAPPINGS: KeyValueMapping[] = [
+	{
+		attribute: 'serviceName',
+		newAttribute: 'service.name',
+		valueMappings: {},
+	},
+];
+
 // Logic for rewriting key/values in an expression using provided mappings.
-function modifyKeyVal(pair: IQueryPair, mapping: KeyValueMapping): string {
+// Callers must pre-filter mappings to ensure newAttribute is non-null.
+function modifyKeyVal(
+	pair: IQueryPair,
+	mapping: KeyValueMapping & { newAttribute: string },
+): string {
 	const newKey = mapping.newAttribute;
 	const op = pair.operator;
 
@@ -107,8 +135,18 @@ export function replaceKeysAndValuesInExpression(
 		return expression;
 	}
 
-	const attributeToMapping = new Map<string, KeyValueMapping>(
-		mappingList.map((m) => [m.attribute.trim().toLowerCase(), m]),
+	// Only rewrite mappings (newAttribute non-null) are processed here.
+	// Drops are handled separately by applyMappingsToExpression via removeKeysFromExpression.
+	const attributeToMapping = new Map<
+		string,
+		KeyValueMapping & { newAttribute: string }
+	>(
+		mappingList
+			.filter(
+				(m): m is KeyValueMapping & { newAttribute: string } =>
+					m.newAttribute !== null,
+			)
+			.map((m) => [m.attribute.trim().toLowerCase(), m]),
 	);
 
 	const pairs: IQueryPair[] = extractQueryPairs(expression);
@@ -178,4 +216,27 @@ export function replaceKeysAndValuesInExpression(
 	resultParts.push(expression.slice(startIdx));
 
 	return resultParts.join('');
+}
+
+// Apply a list of mappings to a filter expression. Rewrites are applied first
+// (newAttribute is a string), then drops (newAttribute is null) via the
+// ANTLR-parser-based removeKeysFromExpression which handles AND/OR/NOT/paren
+// elision correctly.
+export function applyMappingsToExpression(
+	expression: string,
+	mappings: KeyValueMapping[],
+): string {
+	if (!expression || !mappings || mappings.length === 0) {
+		return expression;
+	}
+
+	const dropKeys = mappings
+		.filter((m) => m.newAttribute === null)
+		.map((m) => m.attribute);
+
+	let result = replaceKeysAndValuesInExpression(expression, mappings);
+	if (dropKeys.length > 0) {
+		result = removeKeysFromExpression(result, dropKeys);
+	}
+	return result;
 }
