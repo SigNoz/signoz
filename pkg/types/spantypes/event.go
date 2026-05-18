@@ -25,7 +25,7 @@ type dbEvent struct {
 }
 
 // ParseEvents column (Array(String) of JSON-encoded events) into a slice of Event values.
-// Malformed entries are skipped
+// Malformed entries are skipped.
 func ParseEvents(raw any) []Event {
 	strs, ok := raw.([]string)
 	if !ok {
