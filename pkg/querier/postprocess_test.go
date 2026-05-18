@@ -142,9 +142,6 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 		scalar, ok := got.Value.(*qbtypes.ScalarData)
 		require.True(t, ok)
 
-		// Without the fix, rows came out in alphabetical label order (a, b, c)
-		// regardless of direction. After the fix we expect descending values:
-		// a=101, b=11, c=2.
 		require.Len(t, scalar.Data, 2)
 		require.Equal(t, "c", scalar.Data[0][0])
 		require.InDelta(t, 1.0, scalar.Data[0][1].(float64), 1e-9)
