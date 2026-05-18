@@ -236,8 +236,9 @@ class Traces(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
-    events: list[str]
-    links: str
+    # Accepting parsed events and links, but will be stored as list[str], str in db
+    events: list[dict[str, Any]]
+    links: list[dict[str, Any]]
     response_status_code: str
     external_http_url: str
     http_url: str
@@ -423,10 +424,17 @@ class Traces(ABC):
                     )
                 )
 
-        # Process events and derive error events
+        # Process events and derive error events. self.events holds the parsed
+        # response shape; np_arr() encodes back to the DB format on insert.
         self.events = []
         for event in events:
-            self.events.append(json.dumps([event.name, event.time_unix_nano, event.attribute_map]))
+            self.events.append(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributes": dict(event.attribute_map),
+                }
+            )
 
             # Create error events for exception events (following Go exporter logic)
             if event.name == "exception":
@@ -448,7 +456,26 @@ class Traces(ABC):
                 ),
             )
 
-        self.links = json.dumps([link.__dict__() for link in links_copy], separators=(",", ":"))
+        # self.links holds the parsed response shape (trace_id/span_id only;
+        # ref_type is dropped to match the API). np_arr() re-encodes for DB insert.
+        self.links = [{"traceId": link.trace_id, "spanId": link.span_id} for link in links_copy]
+        self._links_db = json.dumps(
+            [link.__dict__() for link in links_copy],
+            separators=(",", ":"),
+        )
+        # DB shape per event: {"name", "timeUnixNano", "attributeMap"}. Must match
+        # what the consume-layer parser in pkg/types/spantypes expects.
+        self._events_db = [
+            json.dumps(
+                {
+                    "name": event.name,
+                    "timeUnixNano": int(event.time_unix_nano),
+                    "attributeMap": dict(event.attribute_map),
+                },
+                separators=(",", ":"),
+            )
+            for event in events
+        ]
 
         # Initialize resource
         self.resource = []
@@ -563,8 +590,8 @@ class Traces(ABC):
                 self.attributes_number,
                 self.attributes_bool,
                 self.resources_string,
-                self.events,
-                self.links,
+                self._events_db,
+                self._links_db,
                 self.response_status_code,
                 self.external_http_url,
                 self.http_url,

@@ -17,7 +17,15 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import (
+    TraceIdGenerator,
+    Traces,
+    TracesEvent,
+    TracesKind,
+    TracesLink,
+    TracesRefType,
+    TracesStatusCode,
+)
 
 # All keys returned by the trace list endpoint when selectFields is empty:
 # every intrinsic and calculated column, plus the merged `attributes` and
@@ -810,13 +818,73 @@ def test_traces_list_with_select_fields(
 ) -> None:
     """
     Setup:
-    Insert 4 traces with different attributes.
+    Insert a root span with no events/links and a child span carrying two
+    events and one user-supplied link.
 
     Tests:
-    1. Empty select fields should return all the fields.
-    2. Non empty select field should return the select field along with timestamp, trace_id and span_id.
+    1. Empty select fields should return all the fields, and the `events` /
+       `links` columns should arrive parsed into structured objects (events
+       carry `attributes`, links carry only `traceId`/`spanId` — refType is
+       dropped at the consume layer).
+    2. Non-empty select field should return the select field along with
+       timestamp, trace_id and span_id.
     """
-    traces = generate_traces_with_corrupt_metadata()  # using this as the data doesn't matter
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    parent_trace_id = TraceIdGenerator.trace_id()
+    parent_span_id = TraceIdGenerator.span_id()
+    child_span_id = TraceIdGenerator.span_id()
+    linked_trace_id = TraceIdGenerator.trace_id()
+    linked_span_id = TraceIdGenerator.span_id()
+
+    event_one = TracesEvent(
+        name="request_received",
+        timestamp=now - timedelta(seconds=3, microseconds=500_000),
+        attribute_map={"http.method": "GET", "http.route": "/api/chat"},
+    )
+    event_two = TracesEvent(
+        name="cache_lookup",
+        timestamp=now - timedelta(seconds=3, microseconds=400_000),
+        attribute_map={"cache.hit": "true", "cache.key": "user:123:prompt"},
+    )
+    user_link = TracesLink(
+        trace_id=linked_trace_id,
+        span_id=linked_span_id,
+        ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM,
+    )
+
+    traces = [
+        # Root span: no events, no links. Verifies the empty-case parsed shape.
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=3),
+            trace_id=parent_trace_id,
+            span_id=parent_span_id,
+            parent_span_id="",
+            name="root span",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "events-links-service"},
+            attributes={"http.request.method": "GET"},
+        ),
+        # Child span: two events + one user-supplied link. The fixture
+        # auto-inserts a CHILD_OF link for the parent, so the parsed response
+        # contains two links total — the auto-inserted one first.
+        Traces(
+            timestamp=now - timedelta(seconds=3),
+            duration=timedelta(seconds=1),
+            trace_id=parent_trace_id,
+            span_id=child_span_id,
+            parent_span_id=parent_span_id,
+            name="child span",
+            kind=TracesKind.SPAN_KIND_INTERNAL,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "events-links-service"},
+            attributes={"http.request.method": "GET"},
+            events=[event_one, event_two],
+            links=[user_link],
+        ),
+    ]
 
     insert_traces(traces)
 
@@ -827,9 +895,10 @@ def test_traces_list_with_select_fields(
         "spec": {
             "name": "A",
             "signal": "traces",
+            "filter": {"expression": "resource.service.name = 'events-links-service'"},
             "selectFields": select_fields,
-            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-            "limit": 1,
+            "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
+            "limit": 10,
         },
     }
 
@@ -843,10 +912,44 @@ def test_traces_list_with_select_fields(
     )
     assert response.status_code == status_code
 
-    if response.status_code == HTTPStatus.OK:
-        data = response.json()
-        assert len(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == len(expected_keys)
-        assert set(data["data"]["data"]["results"][0]["rows"][0]["data"].keys()) == set(expected_keys)
+    if response.status_code != HTTPStatus.OK:
+        return
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 2
+    root_row, child_row = rows[0]["data"], rows[1]["data"]
+
+    assert set(root_row.keys()) == set(expected_keys)
+    assert set(child_row.keys()) == set(expected_keys)
+
+    # Value-shape checks only apply when the response carries events/links.
+    if not select_fields:
+        # Root span: empty parsed arrays, not the raw DB string `"[]"` or
+        # list-of-JSON-strings.
+        assert root_row["events"] == []
+        assert root_row["links"] == []
+
+        # Child span: events parsed into structured form; links stripped of
+        # the Jaeger-era `refType` field at the consume layer.
+        assert child_row["events"] == [
+            {
+                "name": "request_received",
+                "timeUnixNano": int(event_one.time_unix_nano),
+                "attributes": {"http.method": "GET", "http.route": "/api/chat"},
+            },
+            {
+                "name": "cache_lookup",
+                "timeUnixNano": int(event_two.time_unix_nano),
+                "attributes": {"cache.hit": "true", "cache.key": "user:123:prompt"},
+            },
+        ]
+        assert child_row["links"] == [
+            # Fixture auto-inserts the CHILD_OF link first.
+            {"traceId": parent_trace_id, "spanId": parent_span_id},
+            {"traceId": linked_trace_id, "spanId": linked_span_id},
+        ]
+        for link in child_row["links"]:
+            assert "refType" not in link
 
 
 @pytest.mark.parametrize(
