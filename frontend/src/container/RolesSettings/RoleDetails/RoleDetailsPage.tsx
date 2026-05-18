@@ -27,7 +27,6 @@ import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
-import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
@@ -54,8 +53,8 @@ function RoleDetailsPage(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
-	const { isFetchingActiveLicense } = useAppContext();
-	const { isRolesEnabled } = useRolesFeatureGate();
+	const { isRolesEnabled, isLoading: isRolesGateLoading } =
+		useRolesFeatureGate();
 
 	const authzResources: AuthzResources = permissionsType.data;
 
@@ -162,7 +161,7 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (isFetchingActiveLicense) {
+	if (isRolesGateLoading) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
