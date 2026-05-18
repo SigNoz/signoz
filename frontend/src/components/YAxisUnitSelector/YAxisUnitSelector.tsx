@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { WarningFilled } from '@ant-design/icons';
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { Select, Tooltip } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
 import classNames from 'classnames';
@@ -85,7 +85,7 @@ function YAxisUnitSelector({
 				suffixIcon={
 					incompatibleUnitMessage ? (
 						<Tooltip title={incompatibleUnitMessage}>
-							<WarningFilled />
+							<SolidAlertTriangle role="img" aria-label="warning" size="md" />
 						</Tooltip>
 					) : undefined
 				}

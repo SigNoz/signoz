@@ -12,7 +12,12 @@ function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 				size={size}
 				tip={tip}
 				indicator={
-					<Loader className="animate-spin" role="img" aria-label="loading" />
+					<Loader
+						className="animate-spin"
+						role="img"
+						aria-label="loading"
+						size="md"
+					/>
 				}
 			/>
 		</SpinerStyle>

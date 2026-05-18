@@ -27,14 +27,13 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 		minimap: {
 			enabled: false,
 		},
-		fontWeight: 400,
+		fontWeight: '400',
 		// fontFamily: 'SF Mono',
 		fontFamily: 'Geist Mono',
 		fontSize: 13,
-		lineHeight: '18px',
+		lineHeight: 18,
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
-		decorationsOverviewRuler: false,
 		scrollbar: {
 			vertical: 'hidden',
 			horizontal: 'hidden',

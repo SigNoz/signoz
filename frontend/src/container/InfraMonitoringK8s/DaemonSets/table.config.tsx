@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sDaemonSetsData } from './api';
-import { Group } from 'lucide-react';
+import { Group } from '@signozhq/icons';
 
 export function getK8sDaemonSetRowKey(daemonSet: K8sDaemonSetsData): string {
 	return (
@@ -93,7 +93,11 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const availableNodes = value as number;
 			return (
-				<ValidateColumnValueWrapper value={availableNodes}>
+				<ValidateColumnValueWrapper
+					value={availableNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="available node"
+				>
 					<TanStackTable.Text>{availableNodes}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -108,7 +112,11 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const desiredNodes = value as number;
 			return (
-				<ValidateColumnValueWrapper value={desiredNodes}>
+				<ValidateColumnValueWrapper
+					value={desiredNodes}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="desired node"
+				>
 					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -162,7 +170,11 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpu}>
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="CPU metric"
+				>
 					<TanStackTable.Text>{cpu}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -216,7 +228,11 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memory}>
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="memory metric"
+				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);

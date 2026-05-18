@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Spin, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
-import { InfoIcon } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { HighlightsProps } from './types';
@@ -47,7 +47,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 					className="metric-highlights-error-state"
 					data-testid="metric-highlights-error-state"
 				>
-					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
+					<Info size={16} color={Color.BG_CHERRY_500} />
 					<Typography.Text>
 						Something went wrong while fetching metric highlights
 					</Typography.Text>

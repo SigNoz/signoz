@@ -1,11 +1,16 @@
 export type {
-	QuerySearchProps,
-	QuerySearchV2ContextValue,
 	QuerySearchV2ProviderProps,
+	QuerySearchV2Store,
 } from './QueryV2/QuerySearch/Provider';
 export {
 	QuerySearchV2Provider,
-	useQuerySearchV2Context,
+	useExpression,
+	useInitialExpression,
+	useInputExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnChange,
+	useQuerySearchOnRun,
+	useUserExpression,
 } from './QueryV2/QuerySearch/Provider';
 export { QueryBuilderV2 } from './QueryBuilderV2';
 export {

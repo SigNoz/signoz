@@ -6,7 +6,7 @@ import logEvent from 'api/common/logEvent';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useNotifications } from 'hooks/useNotifications';
-import { X } from 'lucide-react';
+import { X } from '@signozhq/icons';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
 import { ConnectionStates } from './TestConnection';

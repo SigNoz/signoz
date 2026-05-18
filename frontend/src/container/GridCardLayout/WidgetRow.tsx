@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Button, Popover } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
+import { Ellipsis, PenLine, Plus, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
@@ -118,7 +118,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 				</div>
 			}
 		>
-			<EllipsisIcon
+			<Ellipsis
 				size={14}
 				className="settings-icon"
 				onClick={(): void => setIsRowSettingsOpen(!isRowSettingsOpen)}

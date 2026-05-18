@@ -6,7 +6,7 @@ import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import QueryStatus from './QueryStatus';

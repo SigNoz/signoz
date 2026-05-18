@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
-import { Plus } from 'lucide-react';
+import { Plus } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';

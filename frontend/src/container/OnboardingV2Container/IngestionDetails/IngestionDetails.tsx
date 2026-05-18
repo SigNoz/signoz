@@ -9,7 +9,7 @@ import { DOCS_BASE_URL } from 'constants/app';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from '@signozhq/icons';
 import { withBasePath } from 'utils/basePath';
 
 import './IngestionDetails.styles.scss';

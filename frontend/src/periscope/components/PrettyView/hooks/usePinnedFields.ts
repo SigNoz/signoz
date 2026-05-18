@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 
@@ -42,16 +42,57 @@ export interface UsePinnedFieldsReturn {
 	displayKeyToForwardPath: Record<string, (string | number)[]>;
 }
 
+export interface UsePinnedFieldsOptions {
+	/**
+	 * Initial / controlled list of serialized key paths.
+	 * When provided, overrides the default localStorage read.
+	 */
+	value?: string[];
+	/**
+	 * Called whenever the pin set changes. When provided, the caller is
+	 * responsible for persistence (e.g. backend user preference).
+	 */
+	onChange?: (next: string[]) => void;
+}
+
+/**
+ * Persistence behavior:
+ * - Controlled (`options.value`/`options.onChange` provided) → caller drives
+ *   state and persistence. localStorage is not touched, regardless of
+ *   `drawerKey`.
+ * - Uncontrolled with `drawerKey` → reads/writes `pinnedFields:${drawerKey}`
+ *   in localStorage.
+ * - Uncontrolled without `drawerKey` → in-memory only (no persistence).
+ */
 function usePinnedFields(
 	data: AnyRecord,
-	drawerKey: string,
+	drawerKey?: string,
+	options?: UsePinnedFieldsOptions,
 ): UsePinnedFieldsReturn {
-	const storageKey = `${STORAGE_PREFIX}:${drawerKey}`;
+	const controlledValue = options?.value;
+	const onChange = options?.onChange;
+	const isControlled = controlledValue !== undefined || onChange !== undefined;
+	const storageKey =
+		!isControlled && drawerKey ? `${STORAGE_PREFIX}:${drawerKey}` : null;
 
-	// Stored as serialized keyPath arrays (JSON strings)
 	const [pinnedSerializedKeys, setPinnedSerializedKeys] = useState<Set<string>>(
-		() => new Set(loadFromStorage(storageKey)),
+		() => {
+			if (controlledValue) {
+				return new Set(controlledValue);
+			}
+			if (storageKey) {
+				return new Set(loadFromStorage(storageKey));
+			}
+			return new Set();
+		},
 	);
+
+	// Sync state with the controlled value when it changes externally.
+	useEffect(() => {
+		if (controlledValue) {
+			setPinnedSerializedKeys(new Set(controlledValue));
+		}
+	}, [controlledValue]);
 
 	const togglePin = useCallback(
 		(forwardPath: (string | number)[]): void => {
@@ -63,11 +104,17 @@ function usePinnedFields(
 				} else {
 					next.add(serialized);
 				}
-				saveToStorage(storageKey, Array.from(next));
+				const arr = Array.from(next);
+				if (storageKey) {
+					saveToStorage(storageKey, arr);
+				}
+				if (onChange) {
+					onChange(arr);
+				}
 				return next;
 			});
 		},
-		[storageKey],
+		[storageKey, onChange],
 	);
 
 	const isPinned = useCallback(

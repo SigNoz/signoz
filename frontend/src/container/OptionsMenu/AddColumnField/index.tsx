@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import { Input, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -41,14 +41,17 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 					notFoundContent={config.isFetching ? <Spin size="small" /> : null}
 				/>
 				<SearchIconWrapper $isDarkMode={isDarkMode}>
-					<SearchOutlined />
+					<Search size="md" />
 				</SearchIconWrapper>
 			</Input.Group>
 
 			{config.value?.map(({ name }) => (
 				<AddColumnItem direction="horizontal" key={name}>
 					<Typography>{name}</Typography>
-					<DeleteOutlinedIcon onClick={(): void => config.onRemove(name)} />
+					<DeleteOutlinedIcon
+						size="md"
+						onClick={(): void => config.onRemove(name)}
+					/>
 				</AddColumnItem>
 			))}
 		</AddColumnWrapper>

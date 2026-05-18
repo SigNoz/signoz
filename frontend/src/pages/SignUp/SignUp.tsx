@@ -11,7 +11,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';

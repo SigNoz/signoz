@@ -5,7 +5,9 @@ import {
 	useCreateResetPasswordToken,
 	useDeleteUser,
 	useGetResetPasswordToken,
+	useGetRolesByUserID,
 	useGetUser,
+	useRemoveUserRoleByUserIDAndRoleID,
 	useSetRoleByUserID,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -23,11 +25,16 @@ import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
 	useGetUser: jest.fn(),
+	useGetRolesByUserID: jest.fn(),
+	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
 	useUpdateUser: jest.fn(),
 	useUpdateMyUserV2: jest.fn(),
 	useSetRoleByUserID: jest.fn(),
 	useGetResetPasswordToken: jest.fn(),
 	useCreateResetPasswordToken: jest.fn(),
+	getGetRolesByUserIDQueryKey: ({ id }: { id: string }): string[] => [
+		`/api/v2/users/${id}/roles`,
+	],
 }));
 
 jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
@@ -98,6 +105,7 @@ jest.mock('react-use', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockDeleteMutate = jest.fn();
+const mockRemoveMutateAsync = jest.fn();
 const mockCreateTokenMutateAsync = jest.fn();
 
 const showErrorModal = jest.fn();
@@ -185,6 +193,14 @@ describe('EditMemberDrawer', () => {
 			data: mockFetchedUser,
 			isLoading: false,
 			refetch: jest.fn(),
+		});
+		(useGetRolesByUserID as jest.Mock).mockReturnValue({
+			data: { data: [managedRoles[0]] },
+			isLoading: false,
+		});
+		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+			mutateAsync: mockRemoveMutateAsync.mockResolvedValue({}),
+			isLoading: false,
 		});
 		(useUpdateUser as jest.Mock).mockReturnValue({
 			mutateAsync: jest.fn().mockResolvedValue({}),
@@ -296,7 +312,7 @@ describe('EditMemberDrawer', () => {
 		expect(onClose).not.toHaveBeenCalled();
 	});
 
-	it('selecting a different role calls setRole with the new role name', async () => {
+	it('adding a new role calls setRole without removing existing ones', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockSet = jest.fn().mockResolvedValue({});
@@ -308,7 +324,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Open the roles dropdown and select signoz-editor
+		// signoz-admin is already selected; add signoz-editor on top
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
@@ -321,34 +337,31 @@ describe('EditMemberDrawer', () => {
 				pathParams: { id: 'user-1' },
 				data: { name: 'signoz-editor' },
 			});
+			expect(mockRemoveMutateAsync).not.toHaveBeenCalled();
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
-	it('does not call removeRole when the role is changed', async () => {
+	it('deselecting a role calls removeRole with the role id', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockSet = jest.fn().mockResolvedValue({});
-
-		(useSetRoleByUserID as jest.Mock).mockReturnValue({
-			mutateAsync: mockSet,
-			isLoading: false,
-		});
 
 		renderDrawer({ onComplete });
 
-		// Switch from signoz-admin to signoz-viewer using single-select
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		// signoz-admin appears as a selected tag — click its remove button to deselect
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockSet).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1' },
-				data: { name: 'signoz-viewer' },
+			expect(mockRemoveMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
 			});
 			expect(onComplete).toHaveBeenCalled();
 		});
