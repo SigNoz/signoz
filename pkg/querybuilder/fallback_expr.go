@@ -122,6 +122,11 @@ func CollisionHandledFinalExpr(
 		stmts[idx] = sqlbuilder.Escape(stmts[idx])
 	}
 
+	// don't use multiIf if there is only one statement
+	if len(stmts) == 1 {
+		return stmts[0], allArgs, nil
+	}
+
 	multiIfStmt := fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", "))
 
 	return multiIfStmt, allArgs, nil
