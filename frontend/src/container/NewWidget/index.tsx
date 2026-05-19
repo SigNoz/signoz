@@ -1,18 +1,17 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { Check, SolidAlertTriangle, X } from '@signozhq/icons';
+import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/ui/resizable';
-import { Flex, Modal, Space } from 'antd';
+import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
@@ -69,7 +68,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType, getGraphTypeForFormat } from 'utils/getGraphType';
 
 import LeftContainer from './LeftContainer';
-import QueryTypeTag from './LeftContainer/QueryTypeTag';
 import RightContainer from './RightContainer';
 import { ThresholdProps } from './RightContainer/Threshold/types';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
@@ -82,6 +80,7 @@ import {
 	placeWidgetAtBottom,
 	placeWidgetBetweenRows,
 } from './utils';
+import DiscardChangesModal from './WidgetModals/DiscardChangesModal';
 
 import './NewWidget.styles.scss';
 
@@ -98,8 +97,6 @@ function NewWidget({
 
 	const { dashboardVariables } = useDashboardVariables();
 
-	const { t } = useTranslation(['dashboard']);
-
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const {
@@ -109,11 +106,6 @@ function NewWidget({
 		supersetQuery,
 		setSupersetQuery,
 	} = useQueryBuilder();
-
-	const isQueryModified = useMemo(
-		() => getIsQueryModified(currentQuery, stagedQuery),
-		[currentQuery, stagedQuery],
-	);
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -138,6 +130,23 @@ function NewWidget({
 	const { widgets = [] } = dashboardData?.data || {};
 
 	const query = useUrlQuery();
+
+	// For existing widgets, compare currentQuery against the saved widget query
+	// (stable across Stage-and-Run cycles). For new panels with no saved baseline,
+	// fall back to stagedQuery so initial edits still trigger the warning.
+	const savedWidgetQuery = useMemo(() => {
+		const widgetId = query.get('widgetId');
+		const match = widgets?.find((w) => w.id === widgetId);
+		if (!match || match.panelTypes === PANEL_GROUP_TYPES.ROW) {
+			return null;
+		}
+		return (match as Widgets).query ?? null;
+	}, [widgets, query]);
+
+	const isQueryModified = useMemo(
+		() => getIsQueryModified(currentQuery, savedWidgetQuery ?? stagedQuery),
+		[currentQuery, savedWidgetQuery, stagedQuery],
+	);
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 
@@ -228,7 +237,6 @@ function NewWidget({
 		Record<string, string>
 	>(selectedWidget?.customLegendColors || {});
 
-	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
 	const [bucketWidth, setBucketWidth] = useState<number>(
@@ -340,7 +348,6 @@ function NewWidget({
 	]);
 
 	const closeModal = (): void => {
-		setSaveModal(false);
 		setDiscardModal(false);
 	};
 
@@ -593,7 +600,7 @@ function NewWidget({
 			},
 		};
 
-		updateDashboardMutation.mutateAsync(dashboard, {
+		return updateDashboardMutation.mutateAsync(dashboard, {
 			onSuccess: () => {
 				setToScrollWidgetId(selectedWidget?.id || '');
 				navigateToDashboardPage();
@@ -688,9 +695,9 @@ function NewWidget({
 				})),
 			}),
 		});
-		setSaveModal(true);
+		onClickSaveHandler();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isNewPanel]);
+	}, [onClickSaveHandler]);
 
 	const isNewTraceLogsAvailable =
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
@@ -951,57 +958,14 @@ function NewWidget({
 					</ResizablePanel>
 				</ResizablePanelGroup>
 			</PanelContainer>
-			<Modal
-				title={
-					isQueryModified ? (
-						<Space>
-							<SolidAlertTriangle size={16} color="#fdd600" />
-							Unsaved Changes
-						</Space>
-					) : (
-						'Save Widget'
-					)
-				}
-				focusTriggerAfterClose
-				forceRender
-				destroyOnClose
-				closable
-				onCancel={closeModal}
-				onOk={onClickSaveHandler}
-				confirmLoading={updateDashboardMutation.isLoading}
-				centered
-				open={saveModal}
-				width={600}
-			>
-				{!isQueryModified ? (
-					<Typography>
-						{t('your_graph_build_with')}{' '}
-						<QueryTypeTag queryType={currentQuery.queryType} />{' '}
-						{t('dashboard_ok_confirm')}
-					</Typography>
-				) : (
-					<Typography>{t('dashboard_unsave_changes')} </Typography>
-				)}
-			</Modal>
-			<Modal
-				title={
-					<Space>
-						<SolidAlertTriangle size={16} color="#fdd600" />
-						Unsaved Changes
-					</Space>
-				}
-				focusTriggerAfterClose
-				forceRender
-				destroyOnClose
-				closable
-				onCancel={closeModal}
-				onOk={discardChanges}
-				centered
+			<DiscardChangesModal
 				open={discardModal}
-				width={600}
-			>
-				<Typography>{t('dashboard_unsave_changes')}</Typography>
-			</Modal>
+				isNewPanel={isNewPanel}
+				panelTitle={title}
+				dashboardTitle={dashboardData?.data?.title}
+				onDiscard={discardChanges}
+				onClose={closeModal}
+			/>
 		</Container>
 	);
 }
