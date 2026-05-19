@@ -8,6 +8,20 @@ Covers:
    Guards against the ClickHouse NOT_FOUND_COLUMN_IN_BLOCK regression where
    ordering by a column absent from an outer SELECT caused a query failure.
 3. Expression operators (=>, ->, &&, ||, A NOT B) with and without returnSpansFrom.
+
+returnSpansFrom semantics
+--------------------------
+returnSpansFrom="" (default)
+    The final rows come from the expression's root CTE.  Only spans that
+    directly satisfy the structural predicate are returned.
+
+returnSpansFrom="A"
+    The expression is still evaluated in full (the structural relationship
+    must hold), but the final rows are drawn from the A sub-query CTE,
+    filtered to traces that appeared in the expression result.  Concretely:
+    the query returns every A span whose trace_id belongs to a trace that
+    matched the expression.  This gives the full set of A spans in matching
+    traces rather than only the A spans that directly satisfied the predicate.
 """
 
 from collections.abc import Callable
@@ -243,9 +257,10 @@ def test_trace_operator_query_order_by(
 # Operators tested: => -> && || (A NOT B)
 # For each operator two cases:
 #   "default"  — returnSpansFrom="" → result comes from the expression's root CTE
-#   "return_A" — returnSpansFrom="A" → result comes from the A sub-query CTE
+#   "return_A" — returnSpansFrom="A" → expression still evaluates; result is all
+#                A spans whose trace_id appeared in the expression result
 #
-# Root-CTE semantics:
+# Root-CTE semantics (also the result for the "default" cases):
 #   =>        A spans that have a DIRECT child matching B
 #   ->        A spans that are ancestors of any B span
 #   &&        A spans from traces that also contain a B span
@@ -282,7 +297,9 @@ _EXPR_CASES: list[_ExprCase] = [
         return_spans_from="",
         expected_names={"dcd-root"},  # only the root that HAS a direct child
     ),
-    # "return_A": returns ALL A spans, bypassing the expression filter
+    # "return_A": expression must hold; returns A spans from matching traces only.
+    # Trace 1 matches (dca-root directly parents dca-leaf). Trace 2 has no B child
+    # so it never enters the expression result → dca-root-only is excluded.
     _ExprCase(
         id="direct_child_return_A",
         traces=[
@@ -296,7 +313,7 @@ _EXPR_CASES: list[_ExprCase] = [
         filter_b="operation.type = 'dca-leaf'",
         expression="A => B",
         return_spans_from="A",
-        expected_names={"dca-root", "dca-root-only"},
+        expected_names={"dca-root"},  # only from trace 1 where A => B holds
     ),
     # ── A -> B (indirect descendant) ─────────────────────────────────────────
     _ExprCase(
@@ -315,6 +332,8 @@ _EXPR_CASES: list[_ExprCase] = [
         return_spans_from="",
         expected_names={"idd-gp"},
     ),
+    # Trace 1 matches (ida-gp is indirect ancestor of ida-gc). Trace 2 has no B
+    # descendant → ida-gp-only is excluded.
     _ExprCase(
         id="indirect_descendant_return_A",
         traces=[
@@ -329,7 +348,7 @@ _EXPR_CASES: list[_ExprCase] = [
         filter_b="operation.type = 'ida-gc'",
         expression="A -> B",
         return_spans_from="A",
-        expected_names={"ida-gp", "ida-gp-only"},
+        expected_names={"ida-gp"},  # only from trace 1 where A -> B holds
     ),
     # ── A && B ────────────────────────────────────────────────────────────────
     _ExprCase(
@@ -347,6 +366,7 @@ _EXPR_CASES: list[_ExprCase] = [
         return_spans_from="",
         expected_names={"and-root"},  # A from traces that also contain B
     ),
+    # Trace 1 matches (contains both A and B). Trace 2 has no B span → excluded.
     _ExprCase(
         id="and_return_A",
         traces=[
@@ -360,7 +380,7 @@ _EXPR_CASES: list[_ExprCase] = [
         filter_b="operation.type = 'ana-leaf'",
         expression="A && B",
         return_spans_from="A",
-        expected_names={"ana-root", "ana-root-only"},
+        expected_names={"ana-root"},  # only from trace 1 where A && B holds
     ),
     # ── A || B ────────────────────────────────────────────────────────────────
     _ExprCase(
@@ -405,6 +425,8 @@ _EXPR_CASES: list[_ExprCase] = [
         return_spans_from="",
         expected_names={"nbd-root-no-child"},  # A from traces that have no B
     ),
+    # Trace 2 matches A NOT B (has A, no B). Trace 1 has B so it is excluded by
+    # the expression → nba-root-with-child is not in any matching trace.
     _ExprCase(
         id="not_binary_return_A",
         traces=[
@@ -418,7 +440,7 @@ _EXPR_CASES: list[_ExprCase] = [
         filter_b="operation.type = 'nba-child'",
         expression="A NOT B",
         return_spans_from="A",
-        expected_names={"nba-root-with-child", "nba-root-no-child"},  # ALL A spans
+        expected_names={"nba-root-no-child"},  # only from trace 2 where A NOT B holds
     ),
 ]
 
@@ -437,8 +459,9 @@ def test_trace_operator_expressions(
     For each operator (=>, ->, &&, ||, A NOT B) two cases verify:
     - default (returnSpansFrom=""): result comes from the expression's root CTE,
       so only spans satisfying the full structural predicate are returned.
-    - return_A (returnSpansFrom="A"): result comes from the raw A sub-query CTE,
-      bypassing the structural filter, returning ALL spans matching filter A.
+    - return_A (returnSpansFrom="A"): the expression is still evaluated; the
+      result is A spans whose trace_id appeared in the expression result, i.e.
+      every A span from traces where the structural relationship holds.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
