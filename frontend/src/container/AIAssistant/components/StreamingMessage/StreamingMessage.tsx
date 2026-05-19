@@ -10,11 +10,10 @@ import type {
 
 import { useVariant } from '../../VariantContext';
 import { StreamingEventItem } from '../../types';
+import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import ApprovalCard from '../ApprovalCard';
 import { RichCodeBlock } from '../blocks';
 import ClarificationForm from '../ClarificationForm';
-import ThinkingStep from '../ThinkingStep';
-import ToolCallStep from '../ToolCallStep';
 
 import messageStyles from '../MessageBubble/MessageBubble.module.scss';
 import styles from './StreamingMessage.module.scss';
@@ -32,6 +31,41 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 
 const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
+
+type RenderGroup =
+	| { kind: 'text'; content: string }
+	| { kind: 'activity'; items: ActivityItem[]; isTrailing: boolean };
+
+/**
+ * Partition the streaming event timeline into render groups: runs of
+ * consecutive thinking/tool events fold into a single activity group, text
+ * events stay standalone. The last group is flagged as trailing so the
+ * caller can drive a "live" indicator on it.
+ */
+function groupStreamingEvents(events: StreamingEventItem[]): RenderGroup[] {
+	const groups: RenderGroup[] = [];
+	for (const event of events) {
+		if (event.kind === 'text') {
+			groups.push({ kind: 'text', content: event.content });
+			continue;
+		}
+		const item: ActivityItem =
+			event.kind === 'thinking'
+				? { kind: 'thinking', content: event.content }
+				: { kind: 'tool', toolCall: event.toolCall };
+		const last = groups[groups.length - 1];
+		if (last?.kind === 'activity') {
+			last.items.push(item);
+		} else {
+			groups.push({ kind: 'activity', items: [item], isTrailing: false });
+		}
+	}
+	const last = groups[groups.length - 1];
+	if (last?.kind === 'activity') {
+		last.isTrailing = true;
+	}
+	return groups;
+}
 
 /** Human-readable labels for execution status codes shown before any events arrive. */
 const STATUS_LABEL: Record<string, string> = {
@@ -89,23 +123,29 @@ export default function StreamingMessage({
 				{isEmpty && !statusLabel && <TypingDots />}
 
 				{/* eslint-disable react/no-array-index-key */}
-				{/* Events rendered in arrival order: text, thinking, and tool calls interleaved */}
-				{events.map((event, i) => {
-					if (event.kind === 'tool') {
-						return <ToolCallStep key={i} toolCall={event.toolCall} />;
-					}
-					if (event.kind === 'thinking') {
-						return <ThinkingStep key={i} content={event.content} />;
+				{/* Runs of consecutive thinking + tool events collapse into a
+				    single ActivityGroup; text events render inline between
+				    them. The trailing group is "live" while streaming is
+				    active and not blocked on the user. */}
+				{groupStreamingEvents(events).map((group, i) => {
+					if (group.kind === 'text') {
+						return (
+							<ReactMarkdown
+								key={i}
+								className={messageStyles.markdown}
+								remarkPlugins={MD_PLUGINS}
+								components={MD_COMPONENTS}
+							>
+								{group.content}
+							</ReactMarkdown>
+						);
 					}
 					return (
-						<ReactMarkdown
+						<ActivityGroup
 							key={i}
-							className={messageStyles.markdown}
-							remarkPlugins={MD_PLUGINS}
-							components={MD_COMPONENTS}
-						>
-							{event.content}
-						</ReactMarkdown>
+							items={group.items}
+							isLive={group.isTrailing && !isWaitingOnUser}
+						/>
 					);
 				})}
 				{/* eslint-enable react/no-array-index-key */}

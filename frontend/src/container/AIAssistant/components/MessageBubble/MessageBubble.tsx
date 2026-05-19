@@ -9,11 +9,10 @@ import '../blocks';
 import { useVariant } from '../../VariantContext';
 import { Message, MessageBlock } from '../../types';
 import ActionsSection from '../ActionsSection';
+import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
-import ThinkingStep from '../ThinkingStep';
-import ToolCallStep from '../ToolCallStep';
 import UserMessageActions from '../UserMessageActions';
 
 import styles from './MessageBubble.module.scss';
@@ -40,38 +39,60 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
-/** Renders a single MessageBlock by type. */
-function renderBlock(block: MessageBlock, index: number): JSX.Element {
-	switch (block.type) {
-		case 'thinking':
-			return <ThinkingStep key={index} content={block.content} />;
-		case 'tool_call':
-			// Blocks in a persisted message are always complete — done is always true.
-			return (
-				<ToolCallStep
-					key={index}
-					toolCall={{
-						toolName: block.toolName,
-						input: block.toolInput,
-						result: block.result,
-						done: true,
-						displayText: block.displayText,
-					}}
-				/>
-			);
-		case 'text':
-		default:
-			return (
-				<ReactMarkdown
-					key={index}
-					className={styles.markdown}
-					remarkPlugins={MD_PLUGINS}
-					components={MD_COMPONENTS}
-				>
-					{block.content}
-				</ReactMarkdown>
-			);
+type RenderGroup =
+	| { kind: 'text'; content: string }
+	| { kind: 'activity'; items: ActivityItem[] };
+
+/**
+ * Partition message blocks into render groups so consecutive thinking and
+ * tool_call blocks collapse into a single ActivityGroup row. Text blocks
+ * stand alone, mirroring the streaming view.
+ */
+function groupBlocks(blocks: MessageBlock[]): RenderGroup[] {
+	const groups: RenderGroup[] = [];
+	for (const block of blocks) {
+		if (block.type === 'text') {
+			groups.push({ kind: 'text', content: block.content });
+			continue;
+		}
+		const item: ActivityItem =
+			block.type === 'thinking'
+				? { kind: 'thinking', content: block.content }
+				: {
+						kind: 'tool',
+						// Persisted blocks are always complete.
+						toolCall: {
+							toolName: block.toolName,
+							input: block.toolInput,
+							result: block.result,
+							done: true,
+							displayText: block.displayText,
+						},
+					};
+		const last = groups[groups.length - 1];
+		if (last?.kind === 'activity') {
+			last.items.push(item);
+		} else {
+			groups.push({ kind: 'activity', items: [item] });
+		}
 	}
+	return groups;
+}
+
+function renderGroup(group: RenderGroup, index: number): JSX.Element {
+	if (group.kind === 'text') {
+		return (
+			<ReactMarkdown
+				key={index}
+				className={styles.markdown}
+				remarkPlugins={MD_PLUGINS}
+				components={MD_COMPONENTS}
+			>
+				{group.content}
+			</ReactMarkdown>
+		);
+	}
+	return <ActivityGroup key={index} items={group.items} />;
 }
 
 interface MessageBubbleProps {
@@ -129,7 +150,7 @@ export default function MessageBubble({
 						) : hasBlocks ? (
 							<MessageContext.Provider value={{ messageId: message.id }}>
 								{/* eslint-disable-next-line react/no-array-index-key */}
-								{message.blocks!.map((block, i) => renderBlock(block, i))}
+								{groupBlocks(message.blocks!).map((g, i) => renderGroup(g, i))}
 							</MessageContext.Provider>
 						) : (
 							<MessageContext.Provider value={{ messageId: message.id }}>
