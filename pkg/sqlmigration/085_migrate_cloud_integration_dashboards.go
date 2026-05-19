@@ -17,14 +17,19 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-//go:embed 080_cloud_integration_dashboards
-var ciDashboardFiles embed.FS
+//go:embed 085_cloud_integration_dashboards
+var cloudIntegrationDashboardFiles embed.FS
+
+var (
+	CloudProviderAWS   = valuer.NewString("aws")
+	CloudProviderAzure = valuer.NewString("azure")
+)
 
 type migrateCloudIntegrationDashboards struct {
 	sqlstore sqlstore.SQLStore
 }
 
-type ciMigrAccountRow struct {
+type cloudIntegrationAccountRow struct {
 	bun.BaseModel `bun:"table:cloud_integration"`
 
 	ID       string `bun:"id"`
@@ -32,7 +37,7 @@ type ciMigrAccountRow struct {
 	Provider string `bun:"provider"`
 }
 
-type ciMigrServiceRow struct {
+type cloudIntegrationServiceRow struct {
 	bun.BaseModel `bun:"table:cloud_integration_service"`
 
 	Type               string `bun:"type"`
@@ -40,20 +45,20 @@ type ciMigrServiceRow struct {
 	CloudIntegrationID string `bun:"cloud_integration_id"`
 }
 
-type ciMigrServiceConfig struct {
-	AWS   *ciMigrProviderConfig `json:"aws"`
-	Azure *ciMigrProviderConfig `json:"azure"`
+type cloudIntegrationServiceConfig struct {
+	AWS   *cloudIntegrationProviderConfig `json:"aws"`
+	Azure *cloudIntegrationProviderConfig `json:"azure"`
 }
 
-type ciMigrProviderConfig struct {
-	Metrics *ciMigrMetricsConfig `json:"metrics"`
+type cloudIntegrationProviderConfig struct {
+	Metrics *cloudIntegrationMetricsConfig `json:"metrics"`
 }
 
-type ciMigrMetricsConfig struct {
+type cloudIntegrationMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-type ciMigrDashboardRow struct {
+type cloudIntegrationDashboardRow struct {
 	bun.BaseModel `bun:"table:dashboard"`
 
 	ID        string    `bun:"id,pk,type:text"`
@@ -67,7 +72,18 @@ type ciMigrDashboardRow struct {
 	Source    string    `bun:"source,type:text"`
 }
 
-type ciMigrIntegrationDashboardRow struct {
+type cloudIntegrationAccountMeta struct {
+	orgID    string
+	provider string
+}
+
+type cloudIntegrationOrgService struct {
+	orgID     string
+	provider  string
+	serviceID string
+}
+
+type integrationDashboardRow struct {
 	bun.BaseModel `bun:"table:integration_dashboards"`
 
 	ID          string    `bun:"id,pk,type:text"`
@@ -93,7 +109,7 @@ func (m *migrateCloudIntegrationDashboards) Register(migrations *migrate.Migrati
 }
 
 func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) error {
-	dashboardDefs, err := loadCIDashboardDefs()
+	dashboardDefs, err := m.loadDashboardDefs()
 	if err != nil {
 		return err
 	}
@@ -104,32 +120,27 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var accounts []*ciMigrAccountRow
-	if err := tx.NewSelect().Model(&accounts).Where("removed_at IS NULL").Scan(ctx); err != nil {
+	var accounts []*cloudIntegrationAccountRow
+	if err := tx.NewSelect().
+		Model(&accounts).
+		Where("removed_at IS NULL").
+		Where("account_id IS NOT NULL").
+		Scan(ctx); err != nil {
 		return err
 	}
 
-	type accountMeta struct {
-		orgID    string
-		provider string
-	}
-	accountMap := make(map[string]accountMeta, len(accounts))
+	accountMap := make(map[string]cloudIntegrationAccountMeta, len(accounts))
 	for _, a := range accounts {
-		accountMap[a.ID] = accountMeta{orgID: a.OrgID, provider: a.Provider}
+		accountMap[a.ID] = cloudIntegrationAccountMeta{orgID: a.OrgID, provider: a.Provider}
 	}
 
-	var services []*ciMigrServiceRow
+	var services []*cloudIntegrationServiceRow
 	if err := tx.NewSelect().Model(&services).Scan(ctx); err != nil {
 		return err
 	}
 
-	type orgService struct {
-		orgID     string
-		provider  string
-		serviceID string
-	}
 	seen := make(map[string]struct{})
-	var toProvision []orgService
+	var toProvision []cloudIntegrationOrgService
 
 	for _, svc := range services {
 		meta, ok := accountMap[svc.CloudIntegrationID]
@@ -137,12 +148,12 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 			continue
 		}
 
-		var cfg ciMigrServiceConfig
+		var cfg cloudIntegrationServiceConfig
 		if err := json.Unmarshal([]byte(svc.Config), &cfg); err != nil {
 			continue
 		}
 
-		if !ciMigrIsMetricsEnabled(&cfg, meta.provider) {
+		if !m.isMetricsEnabled(&cfg, meta.provider) {
 			continue
 		}
 
@@ -151,7 +162,7 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 			continue
 		}
 		seen[key] = struct{}{}
-		toProvision = append(toProvision, orgService{
+		toProvision = append(toProvision, cloudIntegrationOrgService{
 			orgID:     meta.orgID,
 			provider:  meta.provider,
 			serviceID: svc.Type,
@@ -160,18 +171,18 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 
 	now := time.Now()
 
-	for _, os := range toProvision {
-		serviceDashes, ok := dashboardDefs[os.provider][os.serviceID]
+	for _, service := range toProvision {
+		serviceDashboards, ok := dashboardDefs[service.provider][service.serviceID]
 		if !ok {
 			continue
 		}
 
-		for dashName, dashJSON := range serviceDashes {
-			slug := fmt.Sprintf("%s-%s-%s", os.provider, os.serviceID, dashName)
+		for dashName, dashboardJSON := range serviceDashboards {
+			slug := fmt.Sprintf("%s-%s-%s", service.provider, service.serviceID, dashName)
 
 			count, err := tx.NewSelect().
-				TableExpr("integration_dashboards").
-				Where("org_id = ?", os.orgID).
+				TableExpr("integration_dashboard").
+				Where("org_id = ?", service.orgID).
 				Where("provider = ?", "cloud_integrations").
 				Where("slug = ?", slug).
 				Count(ctx)
@@ -184,26 +195,26 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 
 			dashID := valuer.GenerateUUID().StringValue()
 
-			dashRow := &ciMigrDashboardRow{
+			dashRow := &cloudIntegrationDashboardRow{
 				ID:        dashID,
 				CreatedAt: now,
 				UpdatedAt: now,
 				CreatedBy: "",
 				UpdatedBy: "",
-				Data:      string(dashJSON),
+				Data:      string(dashboardJSON),
 				Locked:    true,
-				OrgID:     os.orgID,
+				OrgID:     service.orgID,
 				Source:    "integration",
 			}
 			if _, err := tx.NewInsert().Model(dashRow).Exec(ctx); err != nil {
 				return err
 			}
 
-			intRow := &ciMigrIntegrationDashboardRow{
+			intRow := &integrationDashboardRow{
 				ID:          valuer.GenerateUUID().StringValue(),
-				OrgID:       os.orgID,
+				OrgID:       service.orgID,
 				DashboardID: dashID,
-				Provider:    "cloud_integrations",
+				Provider:    "cloud_integration",
 				Slug:        slug,
 				CreatedAt:   now,
 				UpdatedAt:   now,
@@ -221,10 +232,10 @@ func (m *migrateCloudIntegrationDashboards) Down(context.Context, *bun.DB) error
 	return nil
 }
 
-func loadCIDashboardDefs() (map[string]map[string]map[string]json.RawMessage, error) {
+func (m *migrateCloudIntegrationDashboards) loadDashboardDefs() (map[string]map[string]map[string]json.RawMessage, error) {
 	result := make(map[string]map[string]map[string]json.RawMessage)
 
-	err := fs.WalkDir(ciDashboardFiles, "080_cloud_integration_dashboards", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(cloudIntegrationDashboardFiles, "085_cloud_integration_dashboards", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -232,8 +243,8 @@ func loadCIDashboardDefs() (map[string]map[string]map[string]json.RawMessage, er
 			return nil
 		}
 
-		// path: 080_cloud_integration_dashboards/{provider}/{service}/{file}.json
-		rel := strings.TrimPrefix(path, "080_cloud_integration_dashboards/")
+		// path: 085_cloud_integration_dashboards/{provider}/{service}/{file}.json
+		rel := strings.TrimPrefix(path, "085_cloud_integration_dashboards/")
 		parts := strings.SplitN(rel, "/", 3)
 		if len(parts) != 3 {
 			return nil
@@ -242,7 +253,7 @@ func loadCIDashboardDefs() (map[string]map[string]map[string]json.RawMessage, er
 		serviceID := parts[1]
 		dashName := strings.TrimSuffix(parts[2], ".json")
 
-		data, err := ciDashboardFiles.ReadFile(path)
+		data, err := cloudIntegrationDashboardFiles.ReadFile(path)
 		if err != nil {
 			return err
 		}
@@ -260,11 +271,11 @@ func loadCIDashboardDefs() (map[string]map[string]map[string]json.RawMessage, er
 	return result, err
 }
 
-func ciMigrIsMetricsEnabled(cfg *ciMigrServiceConfig, provider string) bool {
+func (m *migrateCloudIntegrationDashboards) isMetricsEnabled(cfg *cloudIntegrationServiceConfig, provider string) bool {
 	switch provider {
-	case "aws":
+	case CloudProviderAWS.String():
 		return cfg.AWS != nil && cfg.AWS.Metrics != nil && cfg.AWS.Metrics.Enabled
-	case "azure":
+	case CloudProviderAzure.String():
 		return cfg.Azure != nil && cfg.Azure.Metrics != nil && cfg.Azure.Metrics.Enabled
 	}
 	return false
