@@ -11,7 +11,7 @@ import {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { isEqual } from 'lodash-es';
-import { Check, ExternalLink, Info, X } from '@signozhq/icons';
+import { Check, ExternalLink, SolidInfoCircle, X } from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
 import styles from './GeneralSettings.module.scss';
@@ -201,7 +201,7 @@ function GeneralDashboardSettings(): JSX.Element {
 						placement="top"
 						mouseEnterDelay={0.5}
 					>
-						<Info size={14} className={styles.crossPanelSyncInfoIcon} />
+						<SolidInfoCircle size="md" className={styles.crossPanelSyncInfoIcon} />
 					</Tooltip>
 				</div>
 				<div className={styles.crossPanelSyncRow}>
