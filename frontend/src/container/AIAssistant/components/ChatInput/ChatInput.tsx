@@ -234,6 +234,13 @@ export default function ChatInput({
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
 	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+	// Refs to each category tab so we can move DOM focus to the newly-active
+	// tab on ArrowUp/ArrowDown. Without this the roving-tabindex pattern
+	// stalls: focus stays on the original button (whose closure has the old
+	// category), so subsequent arrow keys never advance past the second tab.
+	const categoryTabRefs = useRef(
+		new Map<ContextCategory, HTMLButtonElement | null>(),
+	);
 	const queryClient = useQueryClient();
 
 	// When the picker was opened by typing `@` in the textarea, this holds the
@@ -912,6 +919,9 @@ export default function ChatInput({
 										return (
 											<button
 												key={category}
+												ref={(el): void => {
+													categoryTabRefs.current.set(category, el);
+												}}
 												type="button"
 												role="tab"
 												// Roving tabindex: only the active tab participates in
@@ -937,6 +947,11 @@ export default function ChatInput({
 														const next = CONTEXT_CATEGORIES[nextIdx];
 														setActiveContextCategory(next);
 														setPickerSearchQuery('');
+														// Move DOM focus to the new tab so the next arrow
+														// keypress fires from its closure, not the prior
+														// tab's. Without this, the roving-tabindex pattern
+														// stalls and arrows can't reach the third tab.
+														categoryTabRefs.current.get(next)?.focus();
 													}
 												}}
 											>
