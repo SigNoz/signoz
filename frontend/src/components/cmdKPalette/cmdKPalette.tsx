@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -9,7 +10,11 @@ import {
 	CommandShortcut,
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
+import { AIAssistantEvents } from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
+import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
 
@@ -37,6 +42,8 @@ export function CmdKPalette({
 	const { open, setOpen } = useCmdK();
 
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();
+	const location = useLocation();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	// toggle palette with ⌘/Ctrl+K
 	function handleGlobalCmdK(
@@ -78,9 +85,20 @@ export function CmdKPalette({
 		history.push(key);
 	}
 
+	const handleOpenAIAssistant = (): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'cmdk',
+			currentPage: normalizePage(location.pathname),
+		});
+		openAIAssistant();
+	};
+
 	const actions = createShortcutActions({
 		navigate: onClickHandler,
 		handleThemeChange,
+		aiAssistant: isAIAssistantEnabled
+			? { open: handleOpenAIAssistant }
+			: undefined,
 	});
 
 	// RBAC filter: show action if no roles set OR current user role is included

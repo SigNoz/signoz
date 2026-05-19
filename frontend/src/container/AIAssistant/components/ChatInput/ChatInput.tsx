@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
 import { Badge } from '@signozhq/ui/badge';
@@ -142,6 +148,10 @@ function autoContextCategory(ctx: MessageContext): string {
 
 const MAX_INPUT_LENGTH = 20000;
 const WARNING_THRESHOLD = 15000;
+// Cap for the auto-growing composer. Past this, the textarea stops growing
+// and starts scrolling internally so the message list above doesn't get
+// squeezed in tighter container variants (e.g. the floating panel).
+const TEXTAREA_MAX_HEIGHT_PX = 200;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 /** sessionStorage key for the "voice input failed this tab" flag. */
 const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
@@ -307,6 +317,19 @@ export default function ChatInput({
 	useEffect(() => {
 		textareaRef.current?.focus();
 	}, []);
+
+	// Auto-grow the textarea so long prompts aren't trapped in a 2-line
+	// scrolling porthole. Reset to `auto` first to let the field shrink back
+	// down when the user deletes content, then snap to scrollHeight capped at
+	// TEXTAREA_MAX_HEIGHT_PX (overflow-y: auto in CSS handles the rest).
+	useLayoutEffect(() => {
+		const el = textareaRef.current;
+		if (!el) {
+			return;
+		}
+		el.style.height = 'auto';
+		el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT_PX)}px`;
+	}, [text]);
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
@@ -830,7 +853,7 @@ export default function ChatInput({
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
 					maxLength={MAX_INPUT_LENGTH}
-					rows={2}
+					rows={3}
 				/>
 			</div>
 			{showTextWarning && (

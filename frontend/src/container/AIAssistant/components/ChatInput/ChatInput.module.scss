@@ -8,11 +8,15 @@
 	border-radius: var(--radius-2);
 	padding: 8px;
 	border: 1px solid var(--l1-border);
-	transition: border-color 0.15s;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
 	position: relative;
 
 	&:focus-within {
-		border-color: var(--l1-border);
+		border-color: var(--accent-primary);
+		box-shadow: 0 0 0 1px
+			color-mix(in srgb, var(--accent-primary), transparent 70%);
 	}
 }
 
