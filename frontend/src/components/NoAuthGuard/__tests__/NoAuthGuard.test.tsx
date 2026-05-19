@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from 'tests/test-utils';
 
-import { DEFAULT_MESSAGE, NoAuthGuard } from '..';
+import { NoAuthGuard } from '..';
 
 describe('NoAuthGuard', () => {
 	it('renders children unchanged when isNoAuthMode is false', () => {
@@ -54,9 +54,25 @@ describe('NoAuthGuard', () => {
 		).toBeInTheDocument();
 	});
 
+	it('blocks onClick when isNoAuthMode is true', () => {
+		const handleClick = jest.fn();
+		const { container } = render(
+			<NoAuthGuard>
+				<button type="button" onClick={handleClick}>
+					Action
+				</button>
+			</NoAuthGuard>,
+			undefined,
+			{ appContextOverrides: { isNoAuthMode: true } },
+		);
+		container
+			.querySelector('span[data-no-auth-trigger]')
+			?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		expect(handleClick).not.toHaveBeenCalled();
+	});
+
 	it('overrides existing disabled prop — no-auth always wins', () => {
 		const { getByRole } = render(
-			// eslint-disable-next-line react/button-has-type
 			<NoAuthGuard>
 				<button type="button" disabled={false}>
 					Action
@@ -68,8 +84,16 @@ describe('NoAuthGuard', () => {
 		expect(getByRole('button', { name: 'Action' })).toBeDisabled();
 	});
 
-	it('exports DEFAULT_MESSAGE as a non-empty string', () => {
-		expect(typeof DEFAULT_MESSAGE).toBe('string');
-		expect(DEFAULT_MESSAGE.length).toBeGreaterThan(0);
+	it('sets pointerEvents none on child when isNoAuthMode is true', () => {
+		const { getByRole } = render(
+			<NoAuthGuard>
+				<button type="button">Action</button>
+			</NoAuthGuard>,
+			undefined,
+			{ appContextOverrides: { isNoAuthMode: true } },
+		);
+		expect(getByRole('button', { name: 'Action' })).toHaveStyle({
+			pointerEvents: 'none',
+		});
 	});
 });

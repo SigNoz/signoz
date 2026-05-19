@@ -399,6 +399,38 @@ describe('AppProvider no-auth preflight', () => {
 		expect(getIsNoAuthMode()).toBe(false);
 	});
 
+	it('clears stale auth tokens from localStorage when impersonation is enabled', async () => {
+		setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, 'stale-access-token');
+		setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, 'stale-refresh-token');
+		setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, 'old@example.com');
+		setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_NAME, 'Old Name');
+
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: true } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(localStorage.getItem(LOCALSTORAGE.AUTH_TOKEN)).toBeNull();
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(localStorage.getItem(LOCALSTORAGE.REFRESH_AUTH_TOKEN)).toBeNull();
+		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_EMAIL)).toBeNull();
+		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_NAME)).toBeNull();
+	});
+
 	it('transitions isPreflightLoading from true to false once preflight resolves', async () => {
 		server.use(
 			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>

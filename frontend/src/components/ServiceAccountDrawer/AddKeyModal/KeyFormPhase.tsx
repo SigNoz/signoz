@@ -5,6 +5,7 @@ import { Input } from '@signozhq/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
@@ -125,17 +126,19 @@ function KeyFormPhase({
 						]}
 						enabled={!!accountId}
 					>
-						<Button
-							type="submit"
-							// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
-							form={FORM_ID}
-							variant="solid"
-							color="primary"
-							loading={isSubmitting}
-							disabled={!isValid}
-						>
-							Create Key
-						</Button>
+						<NoAuthGuard>
+							<Button
+								type="submit"
+								// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
+								form={FORM_ID}
+								variant="solid"
+								color="primary"
+								loading={isSubmitting}
+								disabled={!isValid}
+							>
+								Create Key
+							</Button>
+						</NoAuthGuard>
 					</AuthZTooltip>
 				</div>
 			</div>

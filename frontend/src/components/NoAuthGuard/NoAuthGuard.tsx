@@ -26,7 +26,10 @@ export function NoAuthGuard({
 		return disabled ? React.cloneElement(children, { disabled: true }) : children;
 	}
 
-	const disabledChild = React.cloneElement(children, { disabled: true });
+	const disabledChild = React.cloneElement(children, {
+		disabled: true,
+		style: { ...(children.props.style ?? {}), pointerEvents: 'none' },
+	});
 
 	return (
 		<TooltipProvider>

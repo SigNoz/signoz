@@ -136,14 +136,16 @@ function UserInfo(): JSX.Element {
 			</div>
 
 			<div className="user-info-update-section">
-				<Button
-					type="default"
-					className="periscope-btn secondary"
-					icon={<FileTerminal size={16} />}
-					onClick={(): void => setIsUpdateNameModalOpen(true)}
-				>
-					Update name
-				</Button>
+				<NoAuthGuard>
+					<Button
+						type="default"
+						className="periscope-btn secondary"
+						icon={<FileTerminal size={16} />}
+						onClick={(): void => setIsUpdateNameModalOpen(true)}
+					>
+						Update name
+					</Button>
+				</NoAuthGuard>
 
 				<NoAuthGuard>
 					<Button
@@ -164,16 +166,17 @@ function UserInfo(): JSX.Element {
 				closable
 				onCancel={hideUpdateNameModal}
 				footer={[
-					<Button
-						key="submit"
-						type="primary"
-						icon={<Check size={16} />}
-						onClick={onSaveHandler}
-						disabled={isLoading}
-						data-testid="update-name-btn"
-					>
-						Update name
-					</Button>,
+					<NoAuthGuard key="submit">
+						<Button
+							type="primary"
+							icon={<Check size={16} />}
+							onClick={onSaveHandler}
+							disabled={isLoading}
+							data-testid="update-name-btn"
+						>
+							Update name
+						</Button>
+					</NoAuthGuard>,
 				]}
 			>
 				<Typography.Text>Name</Typography.Text>
