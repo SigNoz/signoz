@@ -376,7 +376,7 @@ func New(
 		return nil, err
 	}
 
-	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore)
+	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore, providerSettings)
 
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(

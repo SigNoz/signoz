@@ -20,9 +20,9 @@ import {
 	updateDowntimeScheduleByID,
 } from 'api/generated/services/downtimeschedules';
 import type {
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesPostablePlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesPostablePlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -68,9 +68,9 @@ interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
 	endTime: dayjs.Dayjs | string;
-	recurrence?: RuletypesRecurrenceDTO | null;
+	recurrence?: AlertmanagertypesRecurrenceDTO | null;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect?: RuletypesRecurrenceDTO;
+	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
 }
 
@@ -78,7 +78,7 @@ const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<
-		RuletypesPlannedMaintenanceDTO & {
+		AlertmanagertypesPlannedMaintenanceDTO & {
 			editMode: boolean;
 		}
 	>;
@@ -141,7 +141,7 @@ export function PlannedDowntimeForm(
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
-			const data: RuletypesPostablePlannedMaintenanceDTO = {
+			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
 				alertIds: values.alertRules
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
@@ -166,7 +166,7 @@ export function PlannedDowntimeForm(
 								),
 							)
 						: undefined,
-					recurrence: values.recurrence as RuletypesRecurrenceDTO,
+					recurrence: values.recurrence as AlertmanagertypesRecurrenceDTO,
 				},
 			};
 
@@ -232,7 +232,7 @@ export function PlannedDowntimeForm(
 
 		const payloadValues = {
 			...values,
-			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
+			recurrence: recurrenceData as AlertmanagertypesRecurrenceDTO | undefined,
 		};
 		await saveHanlder(payloadValues);
 	};
@@ -290,12 +290,12 @@ export function PlannedDowntimeForm(
 				repeatType: (!isScheduleRecurring(initialValues?.schedule)
 					? recurrenceOptions.doesNotRepeat.value
 					: initialValues.schedule?.recurrence
-							?.repeatType) as RuletypesRecurrenceDTO['repeatType'],
+							?.repeatType) as AlertmanagertypesRecurrenceDTO['repeatType'],
 				duration: String(
 					getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
 						?.value ?? '',
 				),
-			} as RuletypesRecurrenceDTO,
+			} as AlertmanagertypesRecurrenceDTO,
 			timezone: initialValues.schedule?.timezone as string,
 		};
 		return formData;

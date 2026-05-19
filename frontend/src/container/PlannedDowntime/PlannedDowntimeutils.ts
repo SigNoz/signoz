@@ -5,8 +5,8 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -60,7 +60,7 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	recurrence?: RuletypesRecurrenceDTO | null,
+	recurrence?: AlertmanagertypesRecurrenceDTO | null,
 ): string => {
 	if (!recurrence) {
 		return 'No';
@@ -81,7 +81,7 @@ export const recurrenceInfo = (
 };
 
 export const defautlInitialValues: Partial<
-	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
+	AlertmanagertypesPlannedMaintenanceDTO & { editMode: boolean }
 > = {
 	name: '',
 	description: '',
@@ -228,7 +228,7 @@ export const getEndTime = ({
 	kind,
 	schedule,
 }: Partial<
-	RuletypesPlannedMaintenanceDTO & {
+	AlertmanagertypesPlannedMaintenanceDTO & {
 		editMode: boolean;
 	}
 >): string | dayjs.Dayjs => {
@@ -242,7 +242,7 @@ export const getEndTime = ({
 };
 
 export const isScheduleRecurring = (
-	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,
+	schedule?: AlertmanagertypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
 
 function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {

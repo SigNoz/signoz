@@ -7,8 +7,8 @@ import type { DefaultOptionType } from 'antd/es/select';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
@@ -137,7 +137,7 @@ export function CollapseListContent({
 	created_by_name?: string;
 	created_by_email?: string;
 	timeframe: [string | undefined | null, string | undefined | null];
-	repeats?: RuletypesRecurrenceDTO | null;
+	repeats?: AlertmanagertypesRecurrenceDTO | null;
 	updated_at?: string;
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
@@ -212,7 +212,7 @@ export function CollapseListContent({
 export function CustomCollapseList(
 	props: DowntimeSchedulesTableData & {
 		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
+			React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
 		>;
 		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 		handleDeleteDowntime: (id: string, name: string) => void;
@@ -247,7 +247,7 @@ export function CustomCollapseList(
 	const endTime = getEndTime({
 		kind,
 		schedule,
-	} as Partial<RuletypesPlannedMaintenanceDTO>);
+	} as Partial<AlertmanagertypesPlannedMaintenanceDTO>);
 
 	return (
 		<>
@@ -284,7 +284,7 @@ export function CustomCollapseList(
 							typeof endTime === 'string' ? endTime : endTime?.toString(),
 						]}
 						repeats={
-							schedule?.recurrence as RuletypesRecurrenceDTO | null | undefined
+							schedule?.recurrence as AlertmanagertypesRecurrenceDTO | null | undefined
 						}
 						updated_at={updatedAt ? dayjs(updatedAt).toISOString() : ''}
 						updated_by_name={defaultTo(updatedBy, '')}
@@ -301,9 +301,10 @@ export function CustomCollapseList(
 	);
 }
 
-export type DowntimeSchedulesTableData = RuletypesPlannedMaintenanceDTO & {
-	alertOptions: DefaultOptionType[];
-};
+export type DowntimeSchedulesTableData =
+	AlertmanagertypesPlannedMaintenanceDTO & {
+		alertOptions: DefaultOptionType[];
+	};
 
 export function PlannedDowntimeList({
 	downtimeSchedules,
@@ -320,7 +321,7 @@ export function PlannedDowntimeList({
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
-		React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
+		React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
 	>;
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handleDeleteDowntime: (id: string, name: string) => void;
