@@ -16,35 +16,31 @@ enum SpanScope {
 	ENTRYPOINT_SPANS = 'entrypoint_spans',
 }
 
-interface SpanFilterConfig {
-	key: string;
-	type: string;
-}
-
 interface SpanScopeSelectorProps {
 	onChange?: (value: TagFilter) => void;
 	query?: IBuilderQuery;
 	skipQueryBuilderRedirect?: boolean;
 }
 
-const SPAN_FILTER_CONFIG: Record<SpanScope, SpanFilterConfig | null> = {
+const SPAN_FILTER_KEY: Record<SpanScope, string | null> = {
 	[SpanScope.ALL_SPANS]: null,
-	[SpanScope.ROOT_SPANS]: {
-		key: 'isRoot',
-		type: 'spanSearchScope',
-	},
-	[SpanScope.ENTRYPOINT_SPANS]: {
-		key: 'isEntryPoint',
-		type: 'spanSearchScope',
-	},
+	[SpanScope.ROOT_SPANS]: 'isRoot',
+	[SpanScope.ENTRYPOINT_SPANS]: 'isEntryPoint',
 };
 
-const createFilterItem = (config: SpanFilterConfig): TagFilterItem => ({
+const SCOPE_FILTER_KEYS = Object.values(SPAN_FILTER_KEY).filter(
+	(key): key is string => key !== null,
+);
+
+const isScopeFilter = (filter: TagFilterItem, key: string): boolean =>
+	filter.key?.key === key && String(filter.value) === 'true';
+
+const createFilterItem = (key: string): TagFilterItem => ({
 	id: uuid().slice(0, 8),
 	key: {
-		key: config.key,
+		key,
 		dataType: undefined,
-		type: config?.type,
+		type: '',
 	},
 	op: '=',
 	value: 'true',
@@ -70,12 +66,7 @@ function SpanScopeSelector({
 		filters: TagFilterItem[] = [],
 	): SpanScope => {
 		const hasFilter = (key: string): boolean =>
-			filters?.some(
-				(filter) =>
-					filter.key?.type === 'spanSearchScope' &&
-					filter.key.key === key &&
-					filter.value === 'true',
-			);
+			filters?.some((filter) => isScopeFilter(filter, key));
 
 		if (hasFilter('isRoot')) {
 			return SpanScope.ROOT_SPANS;
@@ -113,28 +104,21 @@ function SpanScopeSelector({
 
 			const nonScopeFilters = currentFilters.filter(
 				(filter) =>
-					!(
-						filter.key?.type === 'spanSearchScope' &&
-						(filter.key.key === 'isRoot' || filter.key.key === 'isEntryPoint')
-					),
+					!SCOPE_FILTER_KEYS.some((scopeKey) => isScopeFilter(filter, scopeKey)),
 			);
 
-			const config = SPAN_FILTER_CONFIG[newScope];
-			const newScopeFilter = config !== null ? [createFilterItem(config)] : [];
+			const scopeKey = SPAN_FILTER_KEY[newScope];
+			const newScopeFilter = scopeKey !== null ? [createFilterItem(scopeKey)] : [];
 
 			return [...nonScopeFilters, ...newScopeFilter];
 		};
-
-		const keysToRemove = Object.values(SPAN_FILTER_CONFIG)
-			.map((config) => config?.key)
-			.filter((key): key is string => typeof key === 'string');
 
 		newQuery.builder.queryData = newQuery.builder.queryData.map((item) => ({
 			...item,
 			filter: {
 				expression: removeKeysFromExpression(
 					item.filter?.expression ?? '',
-					keysToRemove,
+					SCOPE_FILTER_KEYS,
 				),
 			},
 			filters: {
