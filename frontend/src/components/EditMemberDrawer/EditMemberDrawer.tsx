@@ -614,7 +614,7 @@ function EditMemberDrawer({
 					<div className="edit-member-drawer__footer-left">
 						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
 							<span className="edit-member-drawer__tooltip-wrapper">
-								<NoAuthGuard>
+								<NoAuthGuard testId="no-auth-delete-member">
 									<Button
 										onClick={(): void => setShowDeleteConfirm(true)}
 										disabled={isRootUser || isSelf}
@@ -631,7 +631,7 @@ function EditMemberDrawer({
 						<div className="edit-member-drawer__footer-divider" />
 						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 							<span className="edit-member-drawer__tooltip-wrapper">
-								<NoAuthGuard>
+								<NoAuthGuard testId="no-auth-generate-reset-link">
 									<Button
 										onClick={handleGenerateResetLink}
 										disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
@@ -661,7 +661,7 @@ function EditMemberDrawer({
 							Cancel
 						</Button>
 
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-save-member">
 							<Button
 								variant="solid"
 								color="primary"

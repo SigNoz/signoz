@@ -86,7 +86,10 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 						ns: 'common',
 					})}
 				</Button>,
-				<NoAuthGuard key={t('invite_team_members').toString()}>
+				<NoAuthGuard
+					key={t('invite_team_members').toString()}
+					testId="no-auth-invite-user"
+				>
 					<Button
 						onClick={modalForm.submit}
 						data-testid="invite-team-members-button"

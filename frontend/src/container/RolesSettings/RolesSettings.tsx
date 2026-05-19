@@ -43,7 +43,7 @@ function RolesSettings(): JSX.Element {
 					/>
 					{isRolesEnabled && (
 						<AuthZTooltip checks={[RoleCreatePermission]}>
-							<NoAuthGuard>
+							<NoAuthGuard testId="no-auth-create-custom-role">
 								<Button
 									variant="solid"
 									color="primary"

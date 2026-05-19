@@ -154,7 +154,7 @@ function AuthDomain(): JSX.Element {
 				width: 100,
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-configure-sso">
 							<Button
 								className="auth-domain-list-action-link"
 								onClick={(): void => setRecord(record)}
@@ -163,7 +163,7 @@ function AuthDomain(): JSX.Element {
 								Configure {SSOType.get(record.config?.ssoType || '')}
 							</Button>
 						</NoAuthGuard>
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-delete-domain">
 							<Button
 								className="auth-domain-list-action-link delete"
 								onClick={(): void => showDeleteModal(record)}
@@ -183,7 +183,7 @@ function AuthDomain(): JSX.Element {
 		<div className="auth-domain">
 			<section className="auth-domain-header">
 				<h3 className="auth-domain-title">Authenticated Domains</h3>
-				<NoAuthGuard>
+				<NoAuthGuard testId="no-auth-add-domain">
 					<Button
 						prefix={<Plus size="md" />}
 						onClick={(): void => {
@@ -238,7 +238,7 @@ function AuthDomain(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<NoAuthGuard key="submit">
+					<NoAuthGuard key="submit" testId="no-auth-delete-domain-confirm">
 						<Button
 							prefix={<Trash2 size={16} />}
 							onClick={handleDeleteDomain}

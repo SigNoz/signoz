@@ -136,7 +136,7 @@ function UserInfo(): JSX.Element {
 			</div>
 
 			<div className="user-info-update-section">
-				<NoAuthGuard>
+				<NoAuthGuard testId="no-auth-update-name">
 					<Button
 						type="default"
 						className="periscope-btn secondary"
@@ -147,7 +147,7 @@ function UserInfo(): JSX.Element {
 					</Button>
 				</NoAuthGuard>
 
-				<NoAuthGuard>
+				<NoAuthGuard testId="no-auth-reset-password">
 					<Button
 						type="default"
 						className="periscope-btn secondary"
@@ -166,7 +166,7 @@ function UserInfo(): JSX.Element {
 				closable
 				onCancel={hideUpdateNameModal}
 				footer={[
-					<NoAuthGuard key="submit">
+					<NoAuthGuard key="submit" testId="no-auth-update-name-submit">
 						<Button
 							type="primary"
 							icon={<Check size={16} />}

@@ -282,7 +282,7 @@ function InviteTeamMembers({
 					Cancel
 				</Button>
 
-				<NoAuthGuard>
+				<NoAuthGuard testId="no-auth-v2-invite">
 					<Button
 						type="primary"
 						className="next-button periscope-btn primary"

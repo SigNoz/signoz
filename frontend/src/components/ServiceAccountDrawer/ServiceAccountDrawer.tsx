@@ -437,7 +437,7 @@ function ServiceAccountDrawer({
 						]}
 						enabled={!isDeleted && !!selectedAccountId}
 					>
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-add-key">
 							<Button
 								variant="outlined"
 								size="sm"
@@ -553,7 +553,7 @@ function ServiceAccountDrawer({
 							checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 							enabled={!!selectedAccountId}
 						>
-							<NoAuthGuard>
+							<NoAuthGuard testId="no-auth-delete-service-account">
 								<Button
 									variant="link"
 									color="destructive"
@@ -573,7 +573,7 @@ function ServiceAccountDrawer({
 								<X size={14} />
 								Cancel
 							</Button>
-							<NoAuthGuard>
+							<NoAuthGuard testId="no-auth-save-service-account">
 								<Button
 									variant="solid"
 									color="primary"

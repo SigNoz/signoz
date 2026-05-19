@@ -66,7 +66,7 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<NoAuthGuard>
+		<NoAuthGuard testId="no-auth-sso-toggle">
 			<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
 		</NoAuthGuard>
 	);

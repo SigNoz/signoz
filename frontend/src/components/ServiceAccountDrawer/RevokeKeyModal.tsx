@@ -53,7 +53,7 @@ export function RevokeKeyFooter({
 				]}
 				enabled={!!accountId && !!keyId}
 			>
-				<NoAuthGuard>
+				<NoAuthGuard testId="no-auth-confirm-revoke">
 					<Button
 						variant="solid"
 						color="destructive"

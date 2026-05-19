@@ -149,7 +149,7 @@ function CreateRoleModal({
 					<X size={14} />
 					Cancel
 				</Button>,
-				<NoAuthGuard key="submit">
+				<NoAuthGuard key="submit" testId="no-auth-save-role">
 					<Button
 						variant="solid"
 						color="primary"

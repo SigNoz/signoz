@@ -650,7 +650,7 @@ function OnboardingAddDataSource(): JSX.Element {
 						</div>
 
 						<div className="header-right-section">
-							<NoAuthGuard>
+							<NoAuthGuard testId="no-auth-invite-teammate">
 								<Button
 									type="default"
 									className="periscope-btn invite-teammate-btn outlined"

@@ -126,7 +126,7 @@ function KeyFormPhase({
 						]}
 						enabled={!!accountId}
 					>
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-create-key">
 							<Button
 								type="submit"
 								// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput

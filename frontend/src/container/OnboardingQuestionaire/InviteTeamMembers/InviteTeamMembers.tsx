@@ -369,7 +369,7 @@ function InviteTeamMembers({
 				)}
 
 				<div className="onboarding-buttons-container">
-					<NoAuthGuard>
+					<NoAuthGuard testId="no-auth-onboarding-invite">
 						<Button
 							variant="solid"
 							color="primary"

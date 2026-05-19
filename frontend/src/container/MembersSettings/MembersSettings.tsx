@@ -201,7 +201,7 @@ function MembersSettings(): JSX.Element {
 						/>
 					</div>
 
-					<NoAuthGuard>
+					<NoAuthGuard testId="no-auth-invite-member">
 						<Button
 							variant="solid"
 							color="primary"

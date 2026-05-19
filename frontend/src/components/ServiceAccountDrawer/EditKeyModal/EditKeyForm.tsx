@@ -175,7 +175,7 @@ function EditKeyForm({
 					]}
 					enabled={!!accountId && !!keyItem?.id}
 				>
-					<NoAuthGuard>
+					<NoAuthGuard testId="no-auth-revoke-key">
 						<Button variant="link" color="destructive" onClick={onRevokeClick}>
 							<Trash2 size={12} />
 							Revoke Key
@@ -191,7 +191,7 @@ function EditKeyForm({
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 						enabled={!!accountId && !!keyItem?.id}
 					>
-						<NoAuthGuard>
+						<NoAuthGuard testId="no-auth-save-key">
 							<Button
 								type="submit"
 								// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput

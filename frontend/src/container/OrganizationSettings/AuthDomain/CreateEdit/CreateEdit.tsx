@@ -258,7 +258,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 									Cancel
 								</Button>
 							)}
-							<NoAuthGuard>
+							<NoAuthGuard testId="no-auth-save-auth-domain">
 								<Button
 									onClick={onSubmitHandler}
 									variant="solid"
