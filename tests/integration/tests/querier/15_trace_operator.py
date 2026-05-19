@@ -31,6 +31,7 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _SpanDef:
     """Span spec relative to 'now'. parent_idx=-1 for root spans."""
@@ -80,7 +81,6 @@ def _builder_query(name: str, filter_expr: str, limit: int = 100) -> dict:
     }
 
 
-
 # ---------------------------------------------------------------------------
 # Order-by variants
 # ---------------------------------------------------------------------------
@@ -119,10 +119,12 @@ _ORDER_BY_CASES: list[_OrderByCase] = [
         filter_b="operation.type = 'fnis-grandchild'",
         expression="A -> B",
         select_fields=[TelemetryFieldKey(name="service.name", field_data_type="string", field_context="resource")],
-        order=[OrderBy(
-            key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
-            direction="desc",
-        )],
+        order=[
+            OrderBy(
+                key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
+                direction="desc",
+            )
+        ],
         # POST > GET in DESC → svc-a first
         expected_rows=[{"service.name": "svc-a"}, {"service.name": "svc-b"}],
     ),
@@ -160,10 +162,12 @@ _ORDER_BY_CASES: list[_OrderByCase] = [
         filter_b="operation.type = 'ncis-child'",
         expression="A => B",
         select_fields=[TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute")],
-        order=[OrderBy(
-            key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
-            direction="desc",
-        )],
+        order=[
+            OrderBy(
+                key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
+                direction="desc",
+            )
+        ],
         # POST > GET in DESC; http.method must appear in both rows (it is in selectFields)
         expected_rows=[{"http.method": "POST"}, {"http.method": "GET"}],
     ),
@@ -191,11 +195,7 @@ def test_trace_operator_query_order_by(
     trace_id_1 = TraceIdGenerator.trace_id()
     trace_id_2 = TraceIdGenerator.trace_id()
 
-    insert_traces(
-        _build_trace(now, trace_id_1, case.trace1_spans)
-        + _build_trace(now, trace_id_2, case.trace2_spans)
-        + _build_trace(now, TraceIdGenerator.trace_id(), [_SpanDef("noise-span", "svc-noise", "noise-op", 1, 2)])
-    )
+    insert_traces(_build_trace(now, trace_id_1, case.trace1_spans) + _build_trace(now, trace_id_2, case.trace2_spans) + _build_trace(now, TraceIdGenerator.trace_id(), [_SpanDef("noise-span", "svc-noise", "noise-op", 1, 2)]))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
@@ -231,9 +231,7 @@ def test_trace_operator_query_order_by(
 
     for i, (row, expected) in enumerate(zip(rows, case.expected_rows)):
         for key, value in expected.items():
-            assert row["data"].get(key) == value, (
-                f"[{case.id}] row {i}: expected {key}={value!r}, got {row['data'].get(key)!r}"
-            )
+            assert row["data"].get(key) == value, f"[{case.id}] row {i}: expected {key}={value!r}, got {row['data'].get(key)!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -262,8 +260,8 @@ class _ExprCase:
     filter_a: str
     filter_b: str
     expression: str
-    return_spans_from: str          # "" → use expression root CTE
-    expected_names: set[str]        # span.name values that must appear (exact set)
+    return_spans_from: str  # "" → use expression root CTE
+    expected_names: set[str]  # span.name values that must appear (exact set)
 
 
 _EXPR_CASES: list[_ExprCase] = [
@@ -482,6 +480,4 @@ def test_trace_operator_expressions(
     rows = results[0].get("rows") or []
 
     actual_names = {row["data"]["name"] for row in rows}
-    assert actual_names == case.expected_names, (
-        f"[{case.id}] expected spans {case.expected_names}, got {actual_names}"
-    )
+    assert actual_names == case.expected_names, f"[{case.id}] expected spans {case.expected_names}, got {actual_names}"
