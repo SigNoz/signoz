@@ -194,9 +194,14 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 }
 
 // mergeDeprecatedTraceKeys prepends deprecated intrinsic/calculated trace field
-// definitions to the keys map so that filter expressions referencing deprecated
-// columns continue to resolve. Prepending keeps the intrinsic/calculated entry
-// first so it wins in the multi_if SQL expression.
+// definitions to the keys map. We do this during statement building, not at
+// metadata fetch time, because:
+//  1. Filter expressions that reference deprecated columns must continue to
+//     resolve — otherwise they fail with "key not found".
+//  2. Doing it at metadata fetch time would also surface deprecated keys in
+//     autocomplete suggestions, which we don't want.
+//  3. We prepend (not append) so the intrinsic/calculated entry wins ordering
+//     in the multi_if SQL expression.
 func mergeDeprecatedTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey) {
 	for fieldKeyName, fieldKey := range IntrinsicFieldsDeprecated {
 		keys[fieldKeyName] = append([]*telemetrytypes.TelemetryFieldKey{&fieldKey}, keys[fieldKeyName]...)
@@ -252,8 +257,7 @@ func adjustTraceKeys(ctx context.Context, logger *slog.Logger, keys map[string][
 	}
 }
 
-// adjustTraceKey resolves a single TelemetryFieldKey against the keys map,
-// preferring intrinsic/calculated field definitions when the name matches one.
+// adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
 func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
 	// for recording actions taken

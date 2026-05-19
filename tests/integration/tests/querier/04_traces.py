@@ -20,7 +20,7 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, add_string_attribute_to_traces
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
 def test_traces_list(
@@ -712,14 +712,13 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
     [
         # Case 1: CTE filter uses the deprecated intrinsic field `durationNano`.
         pytest.param(
-            lambda traces, marker: [
+            lambda traces: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
-                        "disabled": True,
-                        "filter": {"expression": f'durationNano = "3s" AND adjust.keys.test_id = "{marker}"'},
+                        "filter": {"expression": 'durationNano = "3s"'},
                     },
                 },
                 {
@@ -727,8 +726,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     "spec": {
                         "name": "B",
                         "signal": "traces",
-                        "disabled": True,
-                        "filter": {"expression": f'durationNano = "5s" AND adjust.keys.test_id = "{marker}"'},
+                        "filter": {"expression": 'durationNano = "5s"'},
                     },
                 },
                 {
@@ -746,14 +744,13 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
         ),
         # Case 2: CTE filter uses the deprecated calculated field `responseStatusCode`.
         pytest.param(
-            lambda traces, marker: [
+            lambda traces: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
-                        "disabled": True,
-                        "filter": {"expression": f'responseStatusCode = "200" AND adjust.keys.test_id = "{marker}"'},
+                        "filter": {"expression": 'responseStatusCode = "200"'},
                     },
                 },
                 {
@@ -761,8 +758,7 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                     "spec": {
                         "name": "B",
                         "signal": "traces",
-                        "disabled": True,
-                        "filter": {"expression": f'durationNano = "5s" AND adjust.keys.test_id = "{marker}"'},
+                        "filter": {"expression": 'durationNano = "5s"'},
                     },
                 },
                 {
@@ -781,14 +777,12 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
         # Case 3: order by uses `count_` with fieldContext `span`, which has
         # to be rewritten to the aggregation alias `span.count_`.
         pytest.param(
-            lambda traces, marker: [
+            lambda traces: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
-                        "disabled": True,
-                        "filter": {"expression": f'adjust.keys.test_id = "{marker}"'},
                         "aggregations": [{"expression": "count()"}],
                     },
                 },
@@ -806,19 +800,16 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
             lambda response, traces: assert_scalar_value(response, "C", len(traces)),
             id="context-prefixed-aggregation-alias-order",
         ),
-        # Case 4: group by lists `adjust.keys.test_id` twice (once with an
-        # attribute context, once without). Without dedup, the SELECT would
-        # emit the column twice and ClickHouse would reject the query with
-        # DUPLICATE_COLUMN.
+        # Case 4: group by lists `cloud.provider` twice (once with a resource
+        # context, once without).
         pytest.param(
-            lambda traces, marker: [
+            lambda traces: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
                         "disabled": True,
-                        "filter": {"expression": f'adjust.keys.test_id = "{marker}"'},
                         "aggregations": [{"expression": "count()"}],
                     },
                 },
@@ -829,16 +820,14 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                         "expression": "A",
                         "aggregations": [{"expression": "count()"}],
                         "groupBy": [
-                            {"name": "adjust.keys.test_id", "fieldContext": "attribute"},
-                            {"name": "adjust.keys.test_id"},
+                            {"name": "cloud.provider", "fieldContext": "resource"},
+                            {"name": "cloud.provider"},
                         ],
                     },
                 },
             ],
             "scalar",
-            lambda response, traces: assert_grouped_scalar(
-                response, "C", expected_groups=1, expected_columns=2, last_col_value=len(traces)
-            ),
+            lambda response, traces: assert_grouped_scalar(response, "C", expected_groups=1, expected_columns=2, last_col_value=len(traces)),
             id="duplicate-group-by-deduplicated",
         ),
     ],
@@ -848,7 +837,7 @@ def test_trace_operator_with_adjusted_keys(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    payload_factory: Callable[[list[Traces], str], list[dict[str, Any]]],
+    payload_factory: Callable[[list[Traces]], list[dict[str, Any]]],
     request_type: str,
     assert_result: Callable[[requests.Response, list[Traces]], None],
 ) -> None:
@@ -859,10 +848,8 @@ def test_trace_operator_with_adjusted_keys(
     resolve.
     """
     traces = generate_traces_with_corrupt_metadata()
-    marker = f"trace-operator-adjust-{TraceIdGenerator.span_id()}"
-    add_string_attribute_to_traces(traces, "adjust.keys.test_id", marker)
     insert_traces(traces)
-    payload = payload_factory(traces, marker)
+    payload = payload_factory(traces)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
