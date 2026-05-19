@@ -94,7 +94,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	stateStore := alertmanagertypestest.NewStateStore()
 	registry := prometheus.NewRegistry()
 	logger := slog.New(slog.DiscardHandler)
-	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
+	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), providerSettings)
 	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager, maintenanceStore)
 	require.NoError(t, err)
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, orgID)
