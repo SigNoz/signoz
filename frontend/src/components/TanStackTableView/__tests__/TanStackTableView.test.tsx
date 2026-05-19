@@ -405,10 +405,11 @@ describe('TanStackTableView Integration', () => {
 		it('resets page to 1 when limit changes', async () => {
 			const user = userEvent.setup();
 			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onPageChange = jest.fn();
 
 			renderTanStackTable({
 				props: {
-					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
 					enableQueryParams: true,
 				},
 				onUrlUpdate,
@@ -452,6 +453,9 @@ describe('TanStackTableView Integration', () => {
 				expect(lastPage === '1' || lastPage === null).toBe(true);
 				expect(lastCall[0].searchParams.get('limit')).toBe('20');
 			});
+
+			// Verify onPageChange callback was called with 1
+			expect(onPageChange).toHaveBeenCalledWith(1);
 		});
 	});
 
