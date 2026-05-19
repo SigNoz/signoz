@@ -13,6 +13,7 @@ import {
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
+import type { HandleChangeQueryDataOptions } from 'types/common/operations.types';
 
 import { EQueryType } from './dashboard';
 
@@ -253,6 +254,7 @@ export type QueryBuilderContextType = {
 		index: number,
 		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
 		newQueryData: IPromQLQuery | IClickHouseQuery,
+		options?: HandleChangeQueryDataOptions,
 	) => void;
 	handleSetConfig: (
 		newPanelType: PANEL_TYPES,

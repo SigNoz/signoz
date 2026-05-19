@@ -56,6 +56,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
+import { HandleChangeQueryDataOptions } from 'types/common/operations.types';
 import {
 	DataSource,
 	IsDefaultQueryProps,
@@ -773,41 +774,6 @@ export function QueryBuilderProvider({
 		[panelType],
 	);
 
-	const handleSetQueryItemData = useCallback(
-		(
-			index: number,
-			type: EQueryType.PROM | EQueryType.CLICKHOUSE,
-			newQueryData: IPromQLQuery | IClickHouseQuery,
-		) => {
-			setCurrentQuery((prevState) => {
-				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState[type],
-					index,
-					newQueryData,
-				);
-
-				return {
-					...prevState,
-					[type]: updatedQueryBuilderData,
-				};
-			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setSupersetQuery((prevState) => {
-				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState[type],
-					index,
-					newQueryData,
-				);
-
-				return {
-					...prevState,
-					[type]: updatedQueryBuilderData,
-				};
-			});
-		},
-		[updateQueryBuilderData],
-	);
-
 	const handleSetQueryData = useCallback(
 		(index: number, newQueryData: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
@@ -1074,6 +1040,55 @@ export function QueryBuilderProvider({
 			});
 		},
 		[currentQuery, location.pathname, queryType, redirectWithQueryBuilderData],
+	);
+
+	const handleSetQueryItemData = useCallback(
+		(
+			index: number,
+			type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+			newQueryData: IPromQLQuery | IClickHouseQuery,
+			options?: HandleChangeQueryDataOptions,
+		) => {
+			setCurrentQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+
+			// `runAfterUpdate` lets callers stage-and-run inline. We pass the
+			// freshly-computed query straight to `handleRunQuery` because the
+			// setState above hasn't flushed yet.
+			if (options?.runAfterUpdate) {
+				handleRunQuery({
+					...currentQuery,
+					queryType,
+					[type]: currentQuery[type].map((item, i) =>
+						i === index ? newQueryData : item,
+					),
+				});
+			}
+		},
+		[updateQueryBuilderData, handleRunQuery, currentQuery, queryType],
 	);
 
 	useEffect(() => {
