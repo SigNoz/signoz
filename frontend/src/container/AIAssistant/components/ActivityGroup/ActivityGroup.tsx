@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import cx from 'classnames';
 import { ChevronDown, ChevronRight, Sparkles } from '@signozhq/icons';
 
@@ -23,9 +23,6 @@ interface ActivityGroupProps {
 }
 
 function formatElapsed(ms: number): string {
-	if (ms < 1000) {
-		return '<1s';
-	}
 	const seconds = Math.round(ms / 1000);
 	if (seconds < 60) {
 		return `${seconds}s`;
@@ -44,6 +41,7 @@ export default function ActivityGroup({
 	isLive = false,
 }: ActivityGroupProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
+	const bodyId = useId();
 
 	// Captures the moment this live phase started. Re-stamped on every
 	// false→true transition so a stream that pauses on
@@ -64,9 +62,11 @@ export default function ActivityGroup({
 		if (!isLive) {
 			return undefined;
 		}
+		// Tick once per second — the display is integer-second precision, so
+		// faster ticks would just re-render the bubble for no visible change.
 		const id = window.setInterval(() => {
 			setElapsed(Date.now() - startedAtRef.current);
-		}, 500);
+		}, 1000);
 		return (): void => window.clearInterval(id);
 	}, [isLive]);
 
@@ -75,8 +75,10 @@ export default function ActivityGroup({
 
 	let summary: string;
 	if (isLive) {
+		// Suppress the elapsed token until ≥ 1s — the first tick fires after
+		// 1s anyway, and showing "0s" or "<1s" briefly adds noise.
 		summary =
-			elapsed > 0
+			elapsed >= 1000
 				? `Working… · ${formatElapsed(elapsed)} · ${stepLabel}`
 				: `Working… · ${stepLabel}`;
 	} else {
@@ -87,7 +89,13 @@ export default function ActivityGroup({
 
 	return (
 		<div className={styles.group}>
-			<button type="button" className={styles.header} onClick={toggle}>
+			<button
+				type="button"
+				className={styles.header}
+				onClick={toggle}
+				aria-expanded={expanded}
+				aria-controls={bodyId}
+			>
 				<Sparkles
 					size={12}
 					className={cx(styles.icon, { [styles.spin]: isLive })}
@@ -101,7 +109,7 @@ export default function ActivityGroup({
 			</button>
 
 			{expanded && (
-				<div className={styles.body}>
+				<div id={bodyId} className={styles.body}>
 					{/* eslint-disable react/no-array-index-key */}
 					{items.map((item, i) => {
 						// A thinking step is live only while it's the trailing item in

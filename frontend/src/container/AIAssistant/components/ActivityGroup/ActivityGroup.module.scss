@@ -30,11 +30,11 @@
 	color: var(--accent-primary);
 
 	&.spin {
-		animation: pulse 1.4s ease-in-out infinite;
+		animation: activityGroupPulse 1.4s ease-in-out infinite;
 	}
 }
 
-@keyframes pulse {
+@keyframes activityGroupPulse {
 	0%,
 	100% {
 		opacity: 0.55;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import cx from 'classnames';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,6 +13,8 @@ import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
+import ThinkingStep from '../ThinkingStep';
+import ToolCallStep from '../ToolCallStep';
 import UserMessageActions from '../UserMessageActions';
 
 import styles from './MessageBubble.module.scss';
@@ -79,6 +81,14 @@ function groupBlocks(blocks: MessageBlock[]): RenderGroup[] {
 	return groups;
 }
 
+function renderActivityItem(item: ActivityItem, index: number): JSX.Element {
+	return item.kind === 'thinking' ? (
+		<ThinkingStep key={index} content={item.content} />
+	) : (
+		<ToolCallStep key={index} toolCall={item.toolCall} />
+	);
+}
+
 function renderGroup(group: RenderGroup, index: number): JSX.Element {
 	if (group.kind === 'text') {
 		return (
@@ -91,6 +101,11 @@ function renderGroup(group: RenderGroup, index: number): JSX.Element {
 				{group.content}
 			</ReactMarkdown>
 		);
+	}
+	// A lone activity item doesn't need a "Worked through 1 step" wrapper —
+	// render it bare so the chevron on the underlying step does the disclosure.
+	if (group.items.length === 1) {
+		return renderActivityItem(group.items[0], index);
 	}
 	return <ActivityGroup key={index} items={group.items} />;
 }
@@ -110,6 +125,14 @@ export default function MessageBubble({
 	const isCompact = variant === 'panel';
 	const isUser = message.role === 'user';
 	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
+
+	// Recompute groups only when the blocks array identity changes — store
+	// updates that don't touch this message's blocks should not re-render the
+	// underlying ThinkingStep/ToolCallStep children.
+	const groups = useMemo(
+		() => (hasBlocks ? groupBlocks(message.blocks!) : []),
+		[hasBlocks, message.blocks],
+	);
 
 	const messageClass = cx(
 		styles.message,
@@ -150,7 +173,7 @@ export default function MessageBubble({
 						) : hasBlocks ? (
 							<MessageContext.Provider value={{ messageId: message.id }}>
 								{/* eslint-disable-next-line react/no-array-index-key */}
-								{groupBlocks(message.blocks!).map((g, i) => renderGroup(g, i))}
+								{groups.map((g, i) => renderGroup(g, i))}
 							</MessageContext.Provider>
 						) : (
 							<MessageContext.Provider value={{ messageId: message.id }}>
