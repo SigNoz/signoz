@@ -9,15 +9,18 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    assert_grouped_scalar,
     assert_identical_query_response,
     assert_minutely_bucket_values,
+    assert_raw_row_subset,
+    assert_scalar_value,
     find_named_result,
     format_timestamp,
     generate_traces_with_corrupt_metadata,
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode, add_string_attribute_to_traces
 
 
 def test_traces_list(
@@ -693,19 +696,30 @@ def test_traces_list_with_corrupt_data(
                 assert data[key] == value
 
 
+def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
+    return {
+        "duration_nano": trace.duration_nano,
+        "name": trace.name,
+        "parent_span_id": trace.parent_span_id,
+        "span_id": trace.span_id,
+        "timestamp": format_timestamp(trace.timestamp),
+        "trace_id": trace.trace_id,
+    }
+
+
 @pytest.mark.parametrize(
-    "payload,status_code,results",
+    "payload_factory,request_type,assert_result",
     [
-        # Case 1: builder CTE filters use deprecated intrinsic field durationNano
+        # Case 1: CTE filter uses the deprecated intrinsic field `durationNano`.
         pytest.param(
-            [
+            lambda traces, marker: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
                         "disabled": True,
-                        "filter": {"expression": 'durationNano = "3s"'},
+                        "filter": {"expression": f'durationNano = "3s" AND adjust.keys.test_id = "{marker}"'},
                     },
                 },
                 {
@@ -714,7 +728,7 @@ def test_traces_list_with_corrupt_data(
                         "name": "B",
                         "signal": "traces",
                         "disabled": True,
-                        "filter": {"expression": 'durationNano = "5s"'},
+                        "filter": {"expression": f'durationNano = "5s" AND adjust.keys.test_id = "{marker}"'},
                     },
                 },
                 {
@@ -726,26 +740,20 @@ def test_traces_list_with_corrupt_data(
                     },
                 },
             ],
-            HTTPStatus.OK,
-            lambda x: {
-                "duration_nano": x[0].duration_nano,
-                "name": x[0].name,
-                "parent_span_id": x[0].parent_span_id,
-                "span_id": x[0].span_id,
-                "timestamp": format_timestamp(x[0].timestamp),
-                "trace_id": x[0].trace_id,
-            },  # type: Callable[[List[Traces]], Dict[str, Any]]
+            "raw",
+            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            id="deprecated-intrinsic-filter",
         ),
-        # Case 2: builder CTE filter uses deprecated calculated field responseStatusCode
+        # Case 2: CTE filter uses the deprecated calculated field `responseStatusCode`.
         pytest.param(
-            [
+            lambda traces, marker: [
                 {
                     "type": "builder_query",
                     "spec": {
                         "name": "A",
                         "signal": "traces",
                         "disabled": True,
-                        "filter": {"expression": 'responseStatusCode = "200"'},
+                        "filter": {"expression": f'responseStatusCode = "200" AND adjust.keys.test_id = "{marker}"'},
                     },
                 },
                 {
@@ -754,7 +762,7 @@ def test_traces_list_with_corrupt_data(
                         "name": "B",
                         "signal": "traces",
                         "disabled": True,
-                        "filter": {"expression": 'durationNano = "5s"'},
+                        "filter": {"expression": f'durationNano = "5s" AND adjust.keys.test_id = "{marker}"'},
                     },
                 },
                 {
@@ -766,34 +774,95 @@ def test_traces_list_with_corrupt_data(
                     },
                 },
             ],
-            HTTPStatus.OK,
-            lambda x: {
-                "duration_nano": x[0].duration_nano,
-                "name": x[0].name,
-                "parent_span_id": x[0].parent_span_id,
-                "span_id": x[0].span_id,
-                "timestamp": format_timestamp(x[0].timestamp),
-                "trace_id": x[0].trace_id,
-            },  # type: Callable[[List[Traces]], Dict[str, Any]]
+            "raw",
+            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            id="deprecated-calculated-filter",
+        ),
+        # Case 3: order by uses `count_` with fieldContext `span`, which has
+        # to be rewritten to the aggregation alias `span.count_`.
+        pytest.param(
+            lambda traces, marker: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": f'adjust.keys.test_id = "{marker}"'},
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A",
+                        "aggregations": [{"expression": "count()", "alias": "span.count_"}],
+                        "order": [{"key": {"name": "count_", "fieldContext": "span"}, "direction": "desc"}],
+                    },
+                },
+            ],
+            "scalar",
+            lambda response, traces: assert_scalar_value(response, "C", len(traces)),
+            id="context-prefixed-aggregation-alias-order",
+        ),
+        # Case 4: group by lists `adjust.keys.test_id` twice (once with an
+        # attribute context, once without). Without dedup, the SELECT would
+        # emit the column twice and ClickHouse would reject the query with
+        # DUPLICATE_COLUMN.
+        pytest.param(
+            lambda traces, marker: [
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": True,
+                        "filter": {"expression": f'adjust.keys.test_id = "{marker}"'},
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                },
+                {
+                    "type": "builder_trace_operator",
+                    "spec": {
+                        "name": "C",
+                        "expression": "A",
+                        "aggregations": [{"expression": "count()"}],
+                        "groupBy": [
+                            {"name": "adjust.keys.test_id", "fieldContext": "attribute"},
+                            {"name": "adjust.keys.test_id"},
+                        ],
+                    },
+                },
+            ],
+            "scalar",
+            lambda response, traces: assert_grouped_scalar(
+                response, "C", expected_groups=1, expected_columns=2, last_col_value=len(traces)
+            ),
+            id="duplicate-group-by-deduplicated",
         ),
     ],
 )
-def test_traces_operator_cte_with_adjusted_keys(
+def test_trace_operator_with_adjusted_keys(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    payload: list[dict[str, Any]],
-    status_code: HTTPStatus,
-    results: Callable[[list[Traces]], dict[str, Any]],
+    payload_factory: Callable[[list[Traces], str], list[dict[str, Any]]],
+    request_type: str,
+    assert_result: Callable[[requests.Response, list[Traces]], None],
 ) -> None:
     """
-    Trace operators compile each referenced disabled builder query into a CTE.
-    Those CTE filters must adjust deprecated trace keys before preparing the
-    where clause, otherwise these payloads fail with "key not found".
+    Trace operators build a CTE per referenced builder query and an outer
+    query on top. Both layers need the same key adjustment as regular trace
+    queries, otherwise deprecated keys and context-prefixed aliases don't
+    resolve.
     """
     traces = generate_traces_with_corrupt_metadata()
+    marker = f"trace-operator-adjust-{TraceIdGenerator.span_id()}"
+    add_string_attribute_to_traces(traces, "adjust.keys.test_id", marker)
     insert_traces(traces)
+    payload = payload_factory(traces, marker)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -802,23 +871,12 @@ def test_traces_operator_cte_with_adjusted_keys(
         token,
         start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
-        request_type="raw",
+        request_type=request_type,
         queries=payload,
     )
 
-    assert response.status_code == status_code, response.text
-
-    if response.status_code == HTTPStatus.OK:
-        operator_result = find_named_result(response.json()["data"]["data"]["results"], "C")
-        assert operator_result is not None
-        rows = operator_result["rows"]
-        if not results(traces):
-            assert rows is None
-        else:
-            assert rows is not None
-            data = rows[0]["data"]
-            for key, value in results(traces).items():
-                assert data[key] == value
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert_result(response, traces)
 
 
 @pytest.mark.parametrize(

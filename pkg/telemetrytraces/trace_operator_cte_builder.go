@@ -197,12 +197,8 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	}
 	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", slog.String("query_name", queryName), slog.Int("keys_count", len(keys)))
 
-	// RequestTypeRaw is correct here regardless of the operator's outer
-	// request type: this CTE is a raw projection of spans matching the filter
-	// (no aggregations, no GroupBy, no OrderBy) — aggregation/grouping happens
-	// in buildFinalQuery on top of the CTE. AdjustKeysForAliasExpressions
-	// (the only requestType-sensitive step inside adjustTraceKeys) is a
-	// no-op for raw.
+	// The CTE only selects spans matching the filter. Aggregations, group by
+	// and order by run later in buildFinalQuery, so RequestTypeRaw is fine here.
 	adjustTraceKeys(ctx, b.stmtBuilder.logger, keys, query, qbtypes.RequestTypeRaw)
 
 	// Build resource filter CTE for this specific query
@@ -411,7 +407,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 	if err != nil {
 		return nil, err
 	}
-	b.adjustOperatorKeys(keys)
+	b.adjustOperatorKeys(ctx, keys, requestType)
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
@@ -498,19 +494,42 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	}, nil
 }
 
-// adjustOperatorKeys merges deprecated trace field definitions into keys and
-// reconciles each operator-level SelectFields/GroupBy/Order key against the
-// keys map, mirroring the per-field portion of adjustTraceKeys.
-func (b *traceOperatorCTEBuilder) adjustOperatorKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey) {
+// adjustOperatorKeys runs the same key adjustments as adjustTraceKeys, but on
+// the operator's own fields. The operator has a different struct shape than
+// QueryBuilderQuery, so we copy the relevant fields into a temp query, run
+// the shared helpers, and copy the results back.
+func (b *traceOperatorCTEBuilder) adjustOperatorKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, requestType qbtypes.RequestType) {
 	mergeDeprecatedTraceKeys(keys)
-	for idx := range b.operator.SelectFields {
-		adjustTraceKey(&b.operator.SelectFields[idx], keys)
+
+	tmp := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Aggregations: b.operator.Aggregations,
+		SelectFields: b.operator.SelectFields,
+		GroupBy:      b.operator.GroupBy,
+		Order:        b.operator.Order,
 	}
-	for idx := range b.operator.GroupBy {
-		adjustTraceKey(&b.operator.GroupBy[idx].TelemetryFieldKey, keys)
+
+	actions := querybuilder.AdjustKeysForAliasExpressions(&tmp, requestType)
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(&tmp)...)
+
+	for idx := range tmp.SelectFields {
+		actions = append(actions, adjustTraceKey(&tmp.SelectFields[idx], keys)...)
 	}
-	for idx := range b.operator.Order {
-		adjustTraceKey(&b.operator.Order[idx].Key.TelemetryFieldKey, keys)
+	for idx := range tmp.GroupBy {
+		actions = append(actions, adjustTraceKey(&tmp.GroupBy[idx].TelemetryFieldKey, keys)...)
+	}
+	for idx := range tmp.Order {
+		actions = append(actions, adjustTraceKey(&tmp.Order[idx].Key.TelemetryFieldKey, keys)...)
+	}
+
+	// Copy back the three slices that the helpers above can rewrite
+	// (AdjustDuplicateKeys reconstructs them, adjustTraceKey mutates in place).
+	// Aggregations is only read by the helpers, never reassigned, so no copy-back.
+	b.operator.SelectFields = tmp.SelectFields
+	b.operator.GroupBy = tmp.GroupBy
+	b.operator.Order = tmp.Order
+
+	for _, action := range actions {
+		b.stmtBuilder.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 }
 

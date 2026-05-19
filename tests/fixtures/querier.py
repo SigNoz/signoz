@@ -413,6 +413,57 @@ def find_named_result(
     )
 
 
+def assert_scalar_value(
+    response: requests.Response,
+    name: str,
+    expected: Any,
+    *,
+    row: int = 0,
+    col: int = 0,
+) -> None:
+    """Assert that the named scalar result has `expected` at data[row][col]."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    assert result["data"][row][col] == expected, f"expected {expected} at [{row}][{col}], got {result['data'][row][col]}"
+
+
+def assert_grouped_scalar(
+    response: requests.Response,
+    name: str,
+    *,
+    expected_groups: int,
+    expected_columns: int,
+    last_col_value: Any | None = None,
+) -> None:
+    """Assert grouped scalar result has the expected column count and group count.
+    If `last_col_value` is set and there is exactly one group, also assert the
+    last column of that single row equals it (a common aggregation-value check)."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    columns = result["columns"]
+    rows = result["data"]
+    assert len(columns) == expected_columns, f"expected {expected_columns} columns, got {len(columns)}: {columns}"
+    assert len(rows) == expected_groups, f"expected {expected_groups} groups, got {len(rows)}: {rows}"
+    if last_col_value is not None and expected_groups == 1:
+        assert rows[0][-1] == last_col_value, f"expected last col {last_col_value}, got row {rows[0]}"
+
+
+def assert_raw_row_subset(
+    response: requests.Response,
+    name: str,
+    expected: dict[str, Any],
+    *,
+    row: int = 0,
+) -> None:
+    """Assert that the named raw result's rows[row]['data'] is a superset of `expected`."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    rows = result["rows"]
+    assert rows is not None, f"no rows for query {name}"
+    data = rows[row]["data"]
+    assert expected.items() <= data.items(), f"expected subset {expected}, got data {data}"
+
+
 def build_scalar_query(
     name: str,
     signal: str,

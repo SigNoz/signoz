@@ -778,6 +778,33 @@ def truncate_traces_tables(conn, cluster: str) -> None:
         conn.query(f"TRUNCATE TABLE signoz_traces.{table} ON CLUSTER '{cluster}' SYNC")
 
 
+def add_string_attribute_to_traces(traces: list[Traces], key: str, value: str) -> None:
+    """Add a string attribute to every trace, updating the lookup tables that
+    drive auto-complete and metadata APIs (tag_attributes, attribute_keys,
+    span_attributes)."""
+    for trace in traces:
+        trace.attribute_string[key] = value
+        trace.tag_attributes.append(
+            TracesTagAttributes(
+                timestamp=trace.timestamp,
+                tag_key=key,
+                tag_type="tag",
+                tag_data_type="string",
+                string_value=value,
+                number_value=None,
+            )
+        )
+        trace.attribute_keys.append(TracesResourceOrAttributeKeys(name=key, datatype="string", tag_type="tag"))
+        trace.span_attributes.append(
+            TracesSpanAttribute(
+                key=key,
+                tag_type="tag",
+                data_type="string",
+                string_value=value,
+            )
+        )
+
+
 @pytest.fixture(name="insert_traces", scope="function")
 def insert_traces(
     clickhouse: types.TestContainerClickhouse,
