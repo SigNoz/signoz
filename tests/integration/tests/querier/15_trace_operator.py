@@ -10,11 +10,12 @@ Covers:
 3. Expression operators (=>, ->, &&, ||, A NOT B) with and without returnSpansFrom.
 """
 
-import pytest
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -25,7 +26,6 @@ from fixtures.querier import (
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -47,7 +47,7 @@ class _SpanDef:
 def _build_trace(now: datetime, trace_id: str, spans: list[_SpanDef]) -> list[Traces]:
     span_ids = [TraceIdGenerator.span_id() for _ in spans]
     result = []
-    for i, (defn, span_id) in enumerate(zip(spans, span_ids)):
+    for defn, span_id in zip(spans, span_ids):
         parent_id = "" if defn.parent_idx < 0 else span_ids[defn.parent_idx]
         kind = TracesKind.SPAN_KIND_SERVER if defn.parent_idx < 0 else TracesKind.SPAN_KIND_INTERNAL
         result.append(
