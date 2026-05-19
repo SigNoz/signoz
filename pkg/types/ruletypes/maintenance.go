@@ -11,9 +11,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var (
-	ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
-)
+var ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 
 type MaintenanceStatus struct {
 	valuer.String
@@ -133,6 +131,26 @@ type PlannedMaintenanceWithRules struct {
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
+// HasScheduleRecurrenceBoundsMismatch reports whether a recurring maintenance
+// has different start/end bounds in Schedule and Schedule.Recurrence.
+//
+// This is used to detect if there are any entries with recurrence that don't
+// have the same timestamps stored at the schedule-level.
+// UI payloads duplicated those values in both places, but direct API users may
+// have stored bounds that are missing from, or different than, the schedule-level bounds.
+// We need to observe these before we can safely drop Recurrence.StartTime and
+// Recurrence.EndTime.
+func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
+	recurrence := m.Schedule.Recurrence
+	if recurrence == nil {
+		return false
+	}
+
+	return !recurrence.StartTime.Equal(m.Schedule.StartTime) ||
+		(recurrence.EndTime == nil && !m.Schedule.EndTime.IsZero()) ||
+		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
+}
+
 func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
@@ -159,42 +177,43 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 		return false
 	}
 
-	currentTime := now.In(loc)
+	startTime := m.Schedule.StartTime
+	endTime := m.Schedule.EndTime
+	recurrence := m.Schedule.Recurrence
 
-	// fixed schedule
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		startTime := m.Schedule.StartTime.In(loc)
-		endTime := m.Schedule.EndTime.In(loc)
-		if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
-			(currentTime.After(startTime) && currentTime.Before(endTime)) {
+	// fixed schedule — only when no recurrence is configured.
+	// When recurrence is set, the recurring check below handles everything;
+	// falling through here would cause the window to match the absolute
+	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
+	if recurrence == nil && !startTime.IsZero() && !endTime.IsZero() {
+		if now.Equal(startTime) || now.Equal(endTime) ||
+			(now.After(startTime) && now.Before(endTime)) {
 			return true
 		}
 	}
 
 	// recurring schedule
-	if m.Schedule.Recurrence != nil {
-		start := m.Schedule.Recurrence.StartTime
-
+	if recurrence != nil {
 		// Make sure the recurrence has started
-		if currentTime.Before(start.In(loc)) {
+		if now.Before(recurrence.StartTime) {
 			return false
 		}
 
 		// Check if recurrence has expired
-		if m.Schedule.Recurrence.EndTime != nil {
-			endTime := *m.Schedule.Recurrence.EndTime
-			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
+		if recurrence.EndTime != nil {
+			if !recurrence.EndTime.IsZero() && now.After(*recurrence.EndTime) {
 				return false
 			}
 		}
 
-		switch m.Schedule.Recurrence.RepeatType {
+		currentTime := now.In(loc)
+		switch recurrence.RepeatType {
 		case RepeatTypeDaily:
-			return m.checkDaily(currentTime, m.Schedule.Recurrence, loc)
+			return m.checkDaily(currentTime, recurrence, loc)
 		case RepeatTypeWeekly:
-			return m.checkWeekly(currentTime, m.Schedule.Recurrence, loc)
+			return m.checkWeekly(currentTime, recurrence, loc)
 		case RepeatTypeMonthly:
-			return m.checkMonthly(currentTime, m.Schedule.Recurrence, loc)
+			return m.checkMonthly(currentTime, recurrence, loc)
 		}
 	}
 
