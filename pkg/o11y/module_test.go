@@ -8,7 +8,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/hanzoai/o11y/pkg/alertmanager"
 	"github.com/hanzoai/o11y/pkg/alertmanager/nfmanager/nfmanagertest"
-	"github.com/hanzoai/o11y/pkg/alertmanager/signozalertmanager"
+	"github.com/hanzoai/o11y/pkg/alertmanager/o11yalertmanager"
 	"github.com/hanzoai/o11y/pkg/emailing/emailingtest"
 	"github.com/hanzoai/o11y/pkg/factory/factorytest"
 	"github.com/hanzoai/o11y/pkg/flagger"

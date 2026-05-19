@@ -15,7 +15,7 @@ import (
 	"github.com/hanzoai/o11y/pkg/prometheus"
 	"github.com/hanzoai/o11y/pkg/prometheus/prometheustest"
 	"github.com/hanzoai/o11y/pkg/querier"
-	"github.com/hanzoai/o11y/pkg/querier/signozquerier"
+	"github.com/hanzoai/o11y/pkg/querier/o11yquerier"
 	"github.com/hanzoai/o11y/pkg/query-service/app/clickhouseReader"
 	"github.com/hanzoai/o11y/pkg/sqlstore"
 	"github.com/hanzoai/o11y/pkg/sqlstore/sqlstoretest"

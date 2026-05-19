@@ -19,7 +19,7 @@ func NewFactory() factory.ProviderFactory[global.Global, global.Config] {
 }
 
 func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config global.Config) (global.Global, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/global/signozglobal")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/global/o11yglobal")
 	return &provider{
 		config:   config,
 		settings: settings,

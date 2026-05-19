@@ -39,7 +39,7 @@ func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notif
 }
 
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/alertmanager/signozalertmanager")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/alertmanager/o11yalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 

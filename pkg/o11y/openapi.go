@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/hanzoai/o11y/pkg/apiserver"
-	"github.com/hanzoai/o11y/pkg/apiserver/signozapiserver"
+	"github.com/hanzoai/o11y/pkg/apiserver/o11yapiserver"
 	"github.com/hanzoai/o11y/pkg/authz"
 	"github.com/hanzoai/o11y/pkg/flagger"
 	"github.com/hanzoai/o11y/pkg/gateway"

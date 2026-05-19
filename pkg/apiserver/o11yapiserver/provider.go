@@ -125,7 +125,7 @@ func newProvider(
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 ) (apiserver.APIServer, error) {
-	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/apiserver/signozapiserver")
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/hanzoai/o11y/pkg/apiserver/o11yapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
