@@ -105,6 +105,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 		if (impersonationEnabled) {
 			clearAuthStorage();
+			setDefaultUser(getUserDefaults());
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setNoAuthMode(true);
 			setIsNoAuthMode(true);

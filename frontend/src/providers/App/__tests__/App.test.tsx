@@ -399,7 +399,7 @@ describe('AppProvider no-auth preflight', () => {
 		expect(getIsNoAuthMode()).toBe(false);
 	});
 
-	it('clears stale auth tokens from localStorage when impersonation is enabled', async () => {
+	it('clears stale auth tokens from localStorage and resets in-memory JWT state when impersonation is enabled', async () => {
 		setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, 'stale-access-token');
 		setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, 'stale-refresh-token');
 		setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, 'old@example.com');
@@ -417,18 +417,24 @@ describe('AppProvider no-auth preflight', () => {
 		);
 
 		const wrapper = createWrapper();
-		renderHook(() => useAppContext(), { wrapper });
+		const { result } = renderHook(() => useAppContext(), { wrapper });
 
 		await waitFor(
 			() => {
-				expect(localStorage.getItem(LOCALSTORAGE.AUTH_TOKEN)).toBeNull();
+				expect(result.current.isNoAuthMode).toBe(true);
 			},
 			{ timeout: 3000 },
 		);
 
+		// localStorage cleared
+		expect(localStorage.getItem(LOCALSTORAGE.AUTH_TOKEN)).toBeNull();
 		expect(localStorage.getItem(LOCALSTORAGE.REFRESH_AUTH_TOKEN)).toBeNull();
 		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_EMAIL)).toBeNull();
 		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_NAME)).toBeNull();
+
+		// in-memory JWTs reset so stale tokens don't linger in context or React Query keys
+		expect(result.current.user.accessJwt).toBe('');
+		expect(result.current.user.refreshJwt).toBe('');
 	});
 
 	it('transitions isPreflightLoading from true to false once preflight resolves', async () => {
