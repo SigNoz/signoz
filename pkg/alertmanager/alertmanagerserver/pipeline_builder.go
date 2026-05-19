@@ -35,7 +35,7 @@ import (
 // which is not possible by wrapping the output of the upstream builder.
 //
 // Upstream pipeline order:
-// GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
+// GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver.
 type pipelineBuilder struct {
 	metrics *notify.Metrics
 	ff      featurecontrol.Flagger

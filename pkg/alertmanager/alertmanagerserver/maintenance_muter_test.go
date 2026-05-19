@@ -2,7 +2,6 @@ package alertmanagerserver
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"sort"
 	"sync"
@@ -13,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -51,13 +51,13 @@ func (s *fakeMaintenanceStore) setError(err error) {
 
 // Remaining MaintenanceStore methods — unused by MaintenanceMuter.
 func (s *fakeMaintenanceStore) CreatePlannedMaintenance(context.Context, *alertmanagertypes.PostablePlannedMaintenance) (*alertmanagertypes.PlannedMaintenance, error) {
-	return nil, nil
+	return &alertmanagertypes.PlannedMaintenance{}, nil
 }
 func (s *fakeMaintenanceStore) DeletePlannedMaintenance(context.Context, valuer.UUID) error {
 	return nil
 }
 func (s *fakeMaintenanceStore) GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
-	return nil, nil
+	return &alertmanagertypes.PlannedMaintenance{}, nil
 }
 func (s *fakeMaintenanceStore) UpdatePlannedMaintenance(context.Context, *alertmanagertypes.PostablePlannedMaintenance, valuer.UUID) error {
 	return nil
@@ -197,7 +197,7 @@ func TestCache_StoreErrorReturnsStaleCache(t *testing.T) {
 
 	// Store now errors. The muter should fall back to the previously cached value
 	// (i.e. still mute rule-1) rather than returning false.
-	store.setError(errors.New("boom"))
+	store.setError(errors.New(errors.TypeInternal, errors.MustNewCode(""), "boom"))
 	assert.True(t, muter.Mutes(ctx, labelsFor("rule-1")),
 		"on store error, muter should keep using the last known cache to avoid losing suppression")
 	assert.Equal(t, 2, store.callCount())
