@@ -11,7 +11,14 @@ export function NoAuthBanner(): JSX.Element {
 			className={styles.banner}
 		>
 			No-auth mode: authentication is disabled and you are currently signed in as
-			an admin.
+			an admin.{' '}
+			<a
+				href="https://signoz.io/docs/manage/administrator-guide/configuration/no-auth-mode/"
+				target="_blank"
+				rel="noreferrer"
+			>
+				Learn more
+			</a>
 		</PersistedAnnouncementBanner>
 	);
 }
