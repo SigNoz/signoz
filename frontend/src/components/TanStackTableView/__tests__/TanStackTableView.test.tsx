@@ -23,6 +23,13 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
+// Mock ResizeObserver for combobox tests
+global.ResizeObserver = class ResizeObserver {
+	observe(): void {}
+	unobserve(): void {}
+	disconnect(): void {}
+};
+
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
 		it('renders all data rows', async () => {
@@ -269,6 +276,131 @@ describe('TanStackTableView Integration', () => {
 				screen.queryByTestId('pagination-total-count'),
 			).not.toBeInTheDocument();
 		});
+
+		it('shows page size selector by default (showPageSize undefined)', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			// Page size combobox trigger should be visible by default (button with aria-haspopup)
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).toBeInTheDocument();
+		});
+
+		it('shows page size selector when showPageSize is true', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showPageSize: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).toBeInTheDocument();
+		});
+
+		it('hides page size selector when showPageSize is false', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showPageSize: false,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).not.toBeInTheDocument();
+		});
+
+		it('calls onPageChange callback when page changes', async () => {
+			const user = userEvent.setup();
+			const onPageChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
+
+			await waitFor(() => {
+				expect(onPageChange).toHaveBeenCalledWith(2);
+			});
+		});
+
+		it('calls onLimitChange callback when limit changes', async () => {
+			const user = userEvent.setup();
+			const onLimitChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						onLimitChange,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(
+					document.querySelector('button[aria-haspopup="dialog"]'),
+				).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			// Select a different page size option
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			await waitFor(() => {
+				expect(onLimitChange).toHaveBeenCalledWith(20);
+			});
+		});
 	});
 
 	describe('sorting', () => {
@@ -330,6 +462,55 @@ describe('TanStackTableView Integration', () => {
 					const parsed = JSON.parse(lastOrderBy);
 					expect(parsed.order).toBe('desc');
 				}
+			});
+		});
+
+		it('calls onSort callback when sorting', async () => {
+			const user = userEvent.setup();
+			const onSort = jest.fn();
+
+			renderTanStackTable({
+				props: { onSort },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			const sortButton = screen.getByTitle('ID');
+			await user.click(sortButton);
+
+			await waitFor(() => {
+				expect(onSort).toHaveBeenCalledWith(
+					expect.objectContaining({ columnName: 'id', order: 'asc' }),
+				);
+			});
+		});
+
+		it('calls onSort with null when sort is cleared', async () => {
+			const user = userEvent.setup();
+			const onSort = jest.fn();
+
+			renderTanStackTable({
+				props: { onSort },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			const sortButton = screen.getByTitle('ID');
+
+			// First click - asc
+			await user.click(sortButton);
+			// Second click - desc
+			await user.click(sortButton);
+			// Third click - clear
+			await user.click(sortButton);
+
+			await waitFor(() => {
+				const lastCall = onSort.mock.calls[onSort.mock.calls.length - 1];
+				expect(lastCall[0]).toBeNull();
 			});
 		});
 	});

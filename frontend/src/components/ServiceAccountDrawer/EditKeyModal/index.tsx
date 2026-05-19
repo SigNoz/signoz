@@ -16,6 +16,8 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
+import { buildAPIKeyUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -69,6 +71,16 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 
 	const expiryMode = watch('expiryMode');
 
+	const { permissions: editPermissions, isLoading: isAuthZLoading } = useAuthZ(
+		editKeyId ? [buildAPIKeyUpdatePermission(editKeyId)] : [],
+		{ enabled: !!editKeyId },
+	);
+
+	const canUpdate = isAuthZLoading
+		? false
+		: (editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]
+				?.isGranted ?? true);
+
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
@@ -115,7 +127,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 		});
 
 	function handleClose(): void {
-		setEditKeyId(null);
+		void setEditKeyId(null);
 		setIsRevokeConfirmOpen(false);
 	}
 
@@ -169,6 +181,8 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 						isRevoking={isRevoking}
 						onCancel={(): void => setIsRevokeConfirmOpen(false)}
 						onConfirm={handleRevoke}
+						accountId={selectedAccountId ?? undefined}
+						keyId={keyItem?.id ?? undefined}
 					/>
 				) : undefined
 			}
@@ -190,6 +204,8 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					onClose={handleClose}
 					onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
 					formatTimezoneAdjustedTimestamp={formatTimezoneAdjustedTimestamp}
+					canUpdate={canUpdate}
+					accountId={selectedAccountId ?? ''}
 				/>
 			)}
 		</DialogWrapper>

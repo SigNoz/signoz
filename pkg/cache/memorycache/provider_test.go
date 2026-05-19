@@ -31,6 +31,10 @@ func (cloneable *CloneableA) Clone() cachetypes.Cacheable {
 	}
 }
 
+func (cloneable *CloneableA) Cost() int64 {
+	return int64(len(cloneable.Key)) + 16
+}
+
 func (cloneable *CloneableA) MarshalBinary() ([]byte, error) {
 	return json.Marshal(cloneable)
 }
@@ -163,6 +167,45 @@ func TestSetGetWithDifferentTypes(t *testing.T) {
 	cachedCacheable := new(CacheableB)
 	err = cache.Get(context.Background(), orgID, "key", cachedCacheable)
 	assert.Error(t, err)
+}
+
+// LargeCloneable reports a large byte cost so we can test ristretto eviction
+// without allocating the full payload in memory.
+type LargeCloneable struct {
+	Key      string
+	CostHint int64
+}
+
+func (c *LargeCloneable) Clone() cachetypes.Cacheable {
+	return &LargeCloneable{Key: c.Key, CostHint: c.CostHint}
+}
+
+func (c *LargeCloneable) Cost() int64 { return c.CostHint }
+
+func (c *LargeCloneable) MarshalBinary() ([]byte, error) { return json.Marshal(c) }
+
+func (c *LargeCloneable) UnmarshalBinary(data []byte) error { return json.Unmarshal(data, c) }
+
+func TestCloneableExceedingMaxCostIsRejected(t *testing.T) {
+	const maxCost int64 = 1 << 20  // 1 MiB
+	const oversize int64 = 2 << 20 // 2 MiB, larger than the entire cache
+
+	c, err := New(context.Background(), factorytest.NewSettings(), cache.Config{Provider: "memory", Memory: cache.Memory{
+		NumCounters: 10 * 1000,
+		MaxCost:     maxCost,
+	}})
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	const key = "oversize-key"
+	assert.NoError(t, c.Set(context.Background(), orgID, key,
+		&LargeCloneable{Key: key, CostHint: oversize}, time.Minute))
+
+	// Ristretto rejects any entry with cost > MaxCost (policy.go:100). Probe
+	// ristretto directly to confirm no admission, instead of relying on metrics.
+	cc := c.(*provider).cc
+	_, ok := cc.Get(strings.Join([]string{orgID.StringValue(), key}, "::"))
+	assert.False(t, ok, "entry with Cost() > MaxCost must be rejected")
 }
 
 func TestCloneableConcurrentSetGet(t *testing.T) {

@@ -34,3 +34,7 @@ func (resourceServiceAccount *resourceServiceAccount) Object(orgID valuer.UUID, 
 func (resourceServiceAccount *resourceServiceAccount) Scope(verb Verb) string {
 	return resourceServiceAccount.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceServiceAccount) AllowedVerbs() []Verb {
+	return TypeServiceAccount.AllowedVerbs()
+}

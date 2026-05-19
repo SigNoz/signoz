@@ -6,7 +6,7 @@ type Transaction struct {
 }
 
 func NewTransaction(verb Verb, object Object) (*Transaction, error) {
-	if err := ErrIfVerbNotValidForType(verb, object.Resource.Type); err != nil {
+	if err := ErrIfVerbNotValidForResource(verb, object.Resource); err != nil {
 		return nil, err
 	}
 
