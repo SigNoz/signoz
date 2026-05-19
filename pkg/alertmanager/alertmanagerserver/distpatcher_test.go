@@ -24,7 +24,6 @@ import (
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider/mem"
-	promTypes "github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -365,7 +364,7 @@ route:
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
-	marker := promTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -638,7 +637,7 @@ route:
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
-	marker := promTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -897,7 +896,7 @@ route:
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
-	marker := promTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -1159,7 +1158,7 @@ func newAlert(labels model.LabelSet) *alertmanagertypes.Alert {
 
 func TestDispatcherRace(t *testing.T) {
 	logger := promslog.NewNopLogger()
-	marker := promTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -1195,7 +1194,7 @@ route:
 	route := dispatch.NewRoute(conf.Route, nil)
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
-	marker := promTypes.NewMarker(prometheus.NewRegistry())
+	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -1265,7 +1264,7 @@ route:
 
 func TestDispatcher_DoMaintenance(t *testing.T) {
 	r := prometheus.NewRegistry()
-	marker := promTypes.NewMarker(r)
+	marker := alertmanagertypes.NewMarker(r)
 
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, 0, nil, promslog.NewNopLogger(), prometheus.NewRegistry(), nil)
 	if err != nil {
@@ -1371,7 +1370,7 @@ route:
 			providerSettings := createTestProviderSettings()
 			logger := providerSettings.Logger
 			route := dispatch.NewRoute(conf.Route, nil)
-			marker := promTypes.NewMarker(prometheus.NewRegistry())
+			marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 			if err != nil {
 				t.Fatal(err)

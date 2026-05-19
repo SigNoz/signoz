@@ -13,11 +13,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -125,7 +125,7 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 			for k, v := range alert.Labels {
 				set[model.LabelName(k)] = model.LabelValue(v)
 			}
-			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[labels.AlertRuleIdLabel], set)
+			match, err := provider.notificationManager.Match(ctx, orgID, alert.Labels[ruletypes.LabelRuleID], set)
 			if err != nil {
 				return err
 			}
