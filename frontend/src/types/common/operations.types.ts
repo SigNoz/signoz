@@ -26,6 +26,16 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 		savePreviousQuery?: boolean;
 	};
 
+export interface HandleChangeQueryDataOptions {
+	/**
+	 * When true, stage-and-run the query immediately after the local state
+	 * update — no need to wait for the user to click "Stage and Run".
+	 * Useful for inline toggles (visibility, disable, etc.) where the panel
+	 * should reflect the change without an extra click.
+	 */
+	runAfterUpdate?: boolean;
+}
+
 // Generic type that can work with both legacy and V5 query types
 export type HandleChangeQueryData<T = IBuilderQuery> = <
 	Key extends keyof T,
@@ -33,6 +43,7 @@ export type HandleChangeQueryData<T = IBuilderQuery> = <
 >(
 	key: Key,
 	value: Value,
+	options?: HandleChangeQueryDataOptions,
 ) => void;
 
 export type HandleChangeTraceOperatorData<T = IBuilderTraceOperator> = <

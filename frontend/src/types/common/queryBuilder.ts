@@ -280,7 +280,7 @@ export type QueryBuilderContextType = {
 		shallStringify?: boolean,
 		newTab?: boolean,
 	) => void;
-	handleRunQuery: () => void;
+	handleRunQuery: (overrideQuery?: Query) => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
 	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (

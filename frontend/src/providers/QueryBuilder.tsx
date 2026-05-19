@@ -1024,49 +1024,57 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(() => {
-		const isExplorer =
-			location.pathname === ROUTES.LOGS_EXPLORER ||
-			location.pathname === ROUTES.TRACES_EXPLORER;
-		if (isExplorer) {
-			setCalledFromHandleRunQuery(true);
-		}
-		const currentQueryData = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					filter: {
-						...item.filter,
-						expression:
-							item.filter?.expression.trim() === ''
-								? ''
-								: (item.filter?.expression ?? ''),
-					},
-					filters: {
-						items: [],
-						op: 'AND',
-					},
-				})),
-			},
-		};
+	// `overrideQuery` lets callers run a query value that hasn't been committed
+	// to `currentQuery` state yet — e.g. a click handler that toggles a flag
+	// and wants to stage-and-run in the same tick, without waiting for the
+	// state update to flush.
+	const handleRunQuery = useCallback(
+		(overrideQuery?: Query) => {
+			const isExplorer =
+				location.pathname === ROUTES.LOGS_EXPLORER ||
+				location.pathname === ROUTES.TRACES_EXPLORER;
+			if (isExplorer) {
+				setCalledFromHandleRunQuery(true);
+			}
+			const sourceQuery = overrideQuery ?? currentQuery;
+			const currentQueryData = {
+				...sourceQuery,
+				builder: {
+					...sourceQuery.builder,
+					queryData: sourceQuery.builder.queryData.map((item) => ({
+						...item,
+						filter: {
+							...item.filter,
+							expression:
+								item.filter?.expression.trim() === ''
+									? ''
+									: (item.filter?.expression ?? ''),
+						},
+						filters: {
+							items: [],
+							op: 'AND',
+						},
+					})),
+				},
+			};
 
-		redirectWithQueryBuilderData({
-			...{
-				...currentQueryData,
-				...updateStepInterval({
-					builder: currentQueryData.builder,
-					clickhouse_sql: currentQueryData.clickhouse_sql,
-					promql: currentQueryData.promql,
-					id: currentQueryData.id,
-					queryType,
-					unit: currentQueryData.unit,
-				}),
-			},
-			queryType,
-		});
-	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
+			redirectWithQueryBuilderData({
+				...{
+					...currentQueryData,
+					...updateStepInterval({
+						builder: currentQueryData.builder,
+						clickhouse_sql: currentQueryData.clickhouse_sql,
+						promql: currentQueryData.promql,
+						id: currentQueryData.id,
+						queryType,
+						unit: currentQueryData.unit,
+					}),
+				},
+				queryType,
+			});
+		},
+		[currentQuery, location.pathname, queryType, redirectWithQueryBuilderData],
+	);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
