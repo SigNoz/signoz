@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addIntegrationDashboards struct {
+type addIntegrationDashboard struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
@@ -19,16 +19,16 @@ func NewAddIntegrationDashboardsFactory(sqlstore sqlstore.SQLStore, sqlschema sq
 	return factory.NewProviderFactory(
 		factory.MustNewName("add_integration_dashboard"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &addIntegrationDashboards{sqlstore: sqlstore, sqlschema: sqlschema}, nil
+			return &addIntegrationDashboard{sqlstore: sqlstore, sqlschema: sqlschema}, nil
 		},
 	)
 }
 
-func (m *addIntegrationDashboards) Register(migrations *migrate.Migrations) error {
+func (m *addIntegrationDashboard) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(m.Up, m.Down)
 }
 
-func (m *addIntegrationDashboards) Up(ctx context.Context, db *bun.DB) error {
+func (m *addIntegrationDashboard) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -71,6 +71,6 @@ func (m *addIntegrationDashboards) Up(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
-func (m *addIntegrationDashboards) Down(context.Context, *bun.DB) error {
+func (m *addIntegrationDashboard) Down(context.Context, *bun.DB) error {
 	return nil
 }
