@@ -5,6 +5,7 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { Route, Switch } from 'react-router-dom';
 import {
 	fireEvent,
 	render,
@@ -15,6 +16,7 @@ import {
 } from 'tests/test-utils';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
+	invalidLicense,
 	mockUseAuthZDenyAll,
 	mockUseAuthZGrantAll,
 } from 'tests/authz-test-utils';
@@ -227,6 +229,28 @@ describe('RoleDetailsPage', () => {
 
 		await expect(
 			screen.findByText(/you don't have permission to view this page/i),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('redirects to the roles list when license is not valid', async () => {
+		render(
+			<Switch>
+				<Route path="/settings/roles/:roleId">
+					<RoleDetailsPage />
+				</Route>
+				<Route path="/settings/roles" exact>
+					<div data-testid="roles-list-redirect-target" />
+				</Route>
+			</Switch>,
+			undefined,
+			{
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+				appContextOverrides: { activeLicense: invalidLicense },
+			},
+		);
+
+		await expect(
+			screen.findByTestId('roles-list-redirect-target'),
 		).resolves.toBeInTheDocument();
 	});
 
