@@ -168,7 +168,10 @@ function TraceDetailsHeader({
 								/>
 							</>
 						)}
-						<div className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}>
+						<div
+							key="filter"
+							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
+						>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
