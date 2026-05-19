@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	daemonSetNameAttrKey     = "k8s.daemonset.name"
-	daemonSetsBaseFilterExpr = "k8s.daemonset.name != ''"
-)
+const daemonSetsBaseFilterExpr = "k8s.daemonset.name != ''"
 
 var daemonSetNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          daemonSetNameAttrKey,
+		Name:          inframonitoringtypes.DaemonSetNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

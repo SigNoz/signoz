@@ -19,8 +19,8 @@ type Clusters struct {
 
 type ClusterRecord struct {
 	// TODO(nikhilmantri0902): once the underlying attr key is migrated to
-	// k8s.cluster.uid (see clusterNameAttrKey TODO in implinframonitoring),
-	// surface ClusterUID alongside (or replace) ClusterName.
+	// k8s.cluster.uid (see ClusterNameAttrKey), surface ClusterUID alongside
+	// (or replace) ClusterName.
 	ClusterName              string                `json:"clusterName" required:"true"`
 	ClusterCPU               float64               `json:"clusterCPU" required:"true"`
 	ClusterCPUAllocatable    float64               `json:"clusterCPUAllocatable" required:"true"`
@@ -88,8 +88,8 @@ func (req *PostableClusters) Validate() error {
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
 		}
-		if req.OrderBy.Key.Name == OrderByName && len(req.GroupBy) > 0 {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by 'name' is only allowed when groupBy is empty")
+		if req.OrderBy.Key.Name == ClusterNameAttrKey && len(req.GroupBy) > 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by '%s' is only allowed when groupBy is empty", ClusterNameAttrKey)
 		}
 	}
 

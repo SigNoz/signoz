@@ -230,7 +230,7 @@ func TestPostableVolumes_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PersistentVolumeClaimNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},
@@ -246,7 +246,7 @@ func TestPostableVolumes_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PersistentVolumeClaimNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionDesc,
 				},
@@ -265,7 +265,7 @@ func TestPostableVolumes_Validate(t *testing.T) {
 				},
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PersistentVolumeClaimNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},

@@ -25,7 +25,7 @@ func buildDaemonSetRecords(
 	records := make([]inframonitoringtypes.DaemonSetRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		daemonSetName := labels[daemonSetNameAttrKey]
+		daemonSetName := labels[inframonitoringtypes.DaemonSetNameAttrKey]
 
 		record := inframonitoringtypes.DaemonSetRecord{ // initialize with default values
 			DaemonSetName:          daemonSetName,
@@ -95,8 +95,8 @@ func (m *module) getTopDaemonSetGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, daemonSetNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.DaemonSetNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DaemonSetNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToDaemonSetsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]

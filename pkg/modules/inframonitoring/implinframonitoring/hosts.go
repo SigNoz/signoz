@@ -38,7 +38,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		uint64(req.Start), uint64(req.End), nil,
 	)
 
-	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", hostNameAttrKey)
+	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", inframonitoringtypes.HostNameAttrKey)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	selectCols := make([]string, 0, len(req.GroupBy)+2)
@@ -48,7 +48,7 @@ func (m *module) getPerGroupHostStatusCounts(
 		)
 	}
 
-	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey, sinceUnixMilli)
+	activeHostsSQ := m.getActiveHostsQuery(metricNames, inframonitoringtypes.HostNameAttrKey, sinceUnixMilli)
 	selectCols = append(selectCols,
 		fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
 		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),
@@ -142,7 +142,7 @@ func buildHostRecords(
 	records := make([]inframonitoringtypes.HostRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		hostName := labels[hostNameAttrKey]
+		hostName := labels[inframonitoringtypes.HostNameAttrKey]
 
 		activeStatus := inframonitoringtypes.HostStatusNone
 		activeHostCount := 0
@@ -216,8 +216,8 @@ func (m *module) getTopHostGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, hostNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.HostNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToHostsQueryNames[orderByKey]
 	// The last entry is the formula/query whose value we sort by.
@@ -284,7 +284,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 	if req.Filter.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
 	}
-	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
+	statusClause := fmt.Sprintf("%s %s (%s)", inframonitoringtypes.HostNameAttrKey, op, strings.Join(activeHosts, ", "))
 	req.Filter.Expression = mergeFilterExpressions(req.Filter.Expression, statusClause)
 	return false
 }

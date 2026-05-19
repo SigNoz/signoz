@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const JobNameAttrKey = "k8s.job.name"
+
 const (
 	JobsOrderByCPU                   = "cpu"
 	JobsOrderByCPURequest            = "cpu_request"
@@ -24,5 +26,5 @@ var JobsValidOrderByKeys = []string{
 	JobsOrderByActivePods,
 	JobsOrderByFailedPods,
 	JobsOrderBySuccessfulPods,
-	OrderByName,
+	JobNameAttrKey,
 }

@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const StatefulSetNameAttrKey = "k8s.statefulset.name"
+
 const (
 	StatefulSetsOrderByCPU           = "cpu"
 	StatefulSetsOrderByCPURequest    = "cpu_request"
@@ -20,5 +22,5 @@ var StatefulSetsValidOrderByKeys = []string{
 	StatefulSetsOrderByMemoryLimit,
 	StatefulSetsOrderByDesiredPods,
 	StatefulSetsOrderByCurrentPods,
-	OrderByName,
+	StatefulSetNameAttrKey,
 }

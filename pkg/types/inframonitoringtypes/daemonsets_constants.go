@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const DaemonSetNameAttrKey = "k8s.daemonset.name"
+
 const (
 	DaemonSetsOrderByCPU           = "cpu"
 	DaemonSetsOrderByCPURequest    = "cpu_request"
@@ -20,5 +22,5 @@ var DaemonSetsValidOrderByKeys = []string{
 	DaemonSetsOrderByMemoryLimit,
 	DaemonSetsOrderByDesiredNodes,
 	DaemonSetsOrderByCurrentNodes,
-	OrderByName,
+	DaemonSetNameAttrKey,
 }

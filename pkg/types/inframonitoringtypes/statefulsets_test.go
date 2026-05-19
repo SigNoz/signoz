@@ -266,7 +266,7 @@ func TestPostableStatefulSets_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: StatefulSetNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},
@@ -282,7 +282,7 @@ func TestPostableStatefulSets_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: StatefulSetNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionDesc,
 				},
@@ -301,7 +301,7 @@ func TestPostableStatefulSets_Validate(t *testing.T) {
 				},
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: StatefulSetNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},

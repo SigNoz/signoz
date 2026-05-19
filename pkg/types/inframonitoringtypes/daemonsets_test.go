@@ -267,7 +267,7 @@ func TestPostableDaemonSets_Validate(t *testing.T) {
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: OrderByName,
+							Name: DaemonSetNameAttrKey,
 						},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
@@ -285,7 +285,7 @@ func TestPostableDaemonSets_Validate(t *testing.T) {
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: OrderByName,
+							Name: DaemonSetNameAttrKey,
 						},
 					},
 					Direction: qbtypes.OrderDirectionDesc,
@@ -306,7 +306,7 @@ func TestPostableDaemonSets_Validate(t *testing.T) {
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
 						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: OrderByName,
+							Name: DaemonSetNameAttrKey,
 						},
 					},
 					Direction: qbtypes.OrderDirectionAsc,

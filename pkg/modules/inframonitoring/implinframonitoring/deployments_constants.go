@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	deploymentNameAttrKey     = "k8s.deployment.name"
-	deploymentsBaseFilterExpr = "k8s.deployment.name != ''"
-)
+const deploymentsBaseFilterExpr = "k8s.deployment.name != ''"
 
 var deploymentNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          deploymentNameAttrKey,
+		Name:          inframonitoringtypes.DeploymentNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

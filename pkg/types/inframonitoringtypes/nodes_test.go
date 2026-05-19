@@ -248,7 +248,7 @@ func TestPostableNodes_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NodeNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},
@@ -264,7 +264,7 @@ func TestPostableNodes_Validate(t *testing.T) {
 				Offset: 0,
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NodeNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionDesc,
 				},
@@ -283,7 +283,7 @@ func TestPostableNodes_Validate(t *testing.T) {
 				},
 				OrderBy: &qbtypes.OrderBy{
 					Key: qbtypes.OrderByKey{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: OrderByName},
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NodeNameAttrKey},
 					},
 					Direction: qbtypes.OrderDirectionAsc,
 				},

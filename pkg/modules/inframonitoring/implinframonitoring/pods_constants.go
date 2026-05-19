@@ -9,7 +9,6 @@ import (
 
 const (
 	podUIDAttrKey       = "k8s.pod.uid"
-	podNameAttrKey      = "k8s.pod.name"
 	podStartTimeAttrKey = "k8s.pod.start_time"
 	podPhaseMetricName  = "k8s.pod.phase"
 )

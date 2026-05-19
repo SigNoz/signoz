@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const NamespaceNameAttrKey = "k8s.namespace.name"
+
 const (
 	NamespacesOrderByCPU    = "cpu"
 	NamespacesOrderByMemory = "memory"
@@ -8,5 +10,5 @@ const (
 var NamespacesValidOrderByKeys = []string{
 	NamespacesOrderByCPU,
 	NamespacesOrderByMemory,
-	OrderByName,
+	NamespaceNameAttrKey,
 }

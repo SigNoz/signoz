@@ -33,7 +33,7 @@ func buildNodeRecords(
 	records := make([]inframonitoringtypes.NodeRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		nodeName := labels[nodeNameAttrKey]
+		nodeName := labels[inframonitoringtypes.NodeNameAttrKey]
 
 		record := inframonitoringtypes.NodeRecord{ // initialize with default values
 			NodeName:              nodeName,
@@ -105,8 +105,8 @@ func (m *module) getTopNodeGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, nodeNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
@@ -202,7 +202,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
 	timeSeriesFPsSelectCols := []string{
 		"fingerprint",
-		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(nodeNameAttrKey)),
+		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(inframonitoringtypes.NodeNameAttrKey)),
 	}
 	for _, key := range req.GroupBy {
 		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,

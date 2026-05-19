@@ -25,7 +25,7 @@ func buildStatefulSetRecords(
 	records := make([]inframonitoringtypes.StatefulSetRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		statefulSetName := labels[statefulSetNameAttrKey]
+		statefulSetName := labels[inframonitoringtypes.StatefulSetNameAttrKey]
 
 		record := inframonitoringtypes.StatefulSetRecord{ // initialize with default values
 			StatefulSetName:          statefulSetName,
@@ -95,8 +95,8 @@ func (m *module) getTopStatefulSetGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, statefulSetNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.StatefulSetNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.StatefulSetNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToStatefulSetsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]

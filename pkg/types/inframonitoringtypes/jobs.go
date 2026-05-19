@@ -90,8 +90,8 @@ func (req *PostableJobs) Validate() error {
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
 		}
-		if req.OrderBy.Key.Name == OrderByName && len(req.GroupBy) > 0 {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by 'name' is only allowed when groupBy is empty")
+		if req.OrderBy.Key.Name == JobNameAttrKey && len(req.GroupBy) > 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by '%s' is only allowed when groupBy is empty", JobNameAttrKey)
 		}
 	}
 

@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const DeploymentNameAttrKey = "k8s.deployment.name"
+
 const (
 	DeploymentsOrderByCPU           = "cpu"
 	DeploymentsOrderByCPURequest    = "cpu_request"
@@ -20,5 +22,5 @@ var DeploymentsValidOrderByKeys = []string{
 	DeploymentsOrderByMemoryLimit,
 	DeploymentsOrderByDesiredPods,
 	DeploymentsOrderByAvailablePods,
-	OrderByName,
+	DeploymentNameAttrKey,
 }

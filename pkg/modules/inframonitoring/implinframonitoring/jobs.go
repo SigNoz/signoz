@@ -25,7 +25,7 @@ func buildJobRecords(
 	records := make([]inframonitoringtypes.JobRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		jobName := labels[jobNameAttrKey]
+		jobName := labels[inframonitoringtypes.JobNameAttrKey]
 
 		record := inframonitoringtypes.JobRecord{ // initialize with default values
 			JobName:               jobName,
@@ -103,8 +103,8 @@ func (m *module) getTopJobGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, jobNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.JobNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.JobNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToJobsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]

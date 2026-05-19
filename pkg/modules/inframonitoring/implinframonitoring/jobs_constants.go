@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	jobNameAttrKey     = "k8s.job.name"
-	jobsBaseFilterExpr = "k8s.job.name != ''"
-)
+const jobsBaseFilterExpr = "k8s.job.name != ''"
 
 var jobNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          jobNameAttrKey,
+		Name:          inframonitoringtypes.JobNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

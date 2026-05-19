@@ -25,7 +25,7 @@ func buildDeploymentRecords(
 	records := make([]inframonitoringtypes.DeploymentRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		deploymentName := labels[deploymentNameAttrKey]
+		deploymentName := labels[inframonitoringtypes.DeploymentNameAttrKey]
 
 		record := inframonitoringtypes.DeploymentRecord{ // initialize with default values
 			DeploymentName:          deploymentName,
@@ -95,8 +95,8 @@ func (m *module) getTopDeploymentGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.OrderByName {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, deploymentNameAttrKey), nil
+	if orderByKey == inframonitoringtypes.DeploymentNameAttrKey {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.DeploymentNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToDeploymentsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
