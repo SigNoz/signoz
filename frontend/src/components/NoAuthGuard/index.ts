@@ -1,1 +1,1 @@
-export { DEFAULT_MESSAGE, NoAuthGuard } from './NoAuthGuard';
+export { DEFAULT_NO_AUTH_MESSAGE, NoAuthGuard } from './NoAuthGuard';

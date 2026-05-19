@@ -7,18 +7,20 @@ import {
 } from '@signozhq/ui/tooltip';
 import { useAppContext } from 'providers/App/App';
 
-export const DEFAULT_MESSAGE = 'Not available in no-auth mode';
+export const DEFAULT_NO_AUTH_MESSAGE = 'Not available in no-auth mode';
 
 interface NoAuthGuardProps {
 	children: React.ReactElement;
 	message?: string;
 	disabled?: boolean;
+	testId?: string;
 }
 
 export function NoAuthGuard({
 	children,
-	message = DEFAULT_MESSAGE,
+	message = DEFAULT_NO_AUTH_MESSAGE,
 	disabled,
+	testId,
 }: NoAuthGuardProps): JSX.Element {
 	const { isNoAuthMode } = useAppContext();
 
@@ -37,6 +39,7 @@ export function NoAuthGuard({
 				<TooltipTrigger asChild>
 					<span
 						data-no-auth-trigger
+						data-testid={testId}
 						style={{ display: 'inline-flex', cursor: 'not-allowed' }}
 					>
 						{disabledChild}

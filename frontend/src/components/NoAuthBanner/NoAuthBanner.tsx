@@ -10,7 +10,8 @@ export function NoAuthBanner(): JSX.Element {
 			testId="no-auth-banner"
 			className={styles.banner}
 		>
-			No-auth mode: authentication is disabled, network is the trust boundary.
+			No-auth mode: authentication is disabled and you are currently signed in as
+			an admin.
 		</PersistedAnnouncementBanner>
 	);
 }
