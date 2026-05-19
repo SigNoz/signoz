@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from '@signozhq/icons';
+import { useAppContext } from 'providers/App/App';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
 
@@ -32,11 +33,31 @@ const interestedInOptions: Record<string, string> = {
 	openSourceTooling: 'Prefer open-source tooling',
 };
 
+function seededShuffle<T>(array: T[], seed: string): T[] {
+	const result = [...array];
+
+	let num = 0;
+	for (let i = 0; i < seed.length; i++) {
+		num = Math.imul(num + seed.charCodeAt(i), 2654435761);
+		num = Math.abs(num);
+	}
+
+	for (let i = result.length - 1; i > 0; i--) {
+		num = Math.abs(Math.imul(num, 1664525) + 1013904223);
+		const j = num % (i + 1);
+		[result[i], result[j]] = [result[j], result[i]];
+	}
+
+	return result;
+}
+
 export function AboutSigNozQuestions({
 	signozDetails,
 	setSignozDetails,
 	onNext,
 }: AboutSigNozQuestionsProps): JSX.Element {
+	const { versionData } = useAppContext();
+
 	const [interestInSignoz, setInterestInSignoz] = useState<string[]>(
 		signozDetails?.interestInSignoz || [],
 	);
@@ -47,6 +68,12 @@ export function AboutSigNozQuestions({
 		signozDetails?.discoverSignoz || '',
 	);
 	const [isNextDisabled, setIsNextDisabled] = useState<boolean>(true);
+
+	const shuffledOptionKeys = useMemo(
+		() =>
+			seededShuffle(Object.keys(interestedInOptions), versionData?.version ?? ''),
+		[versionData?.version],
+	);
 
 	useEffect((): void => {
 		if (
@@ -115,7 +142,7 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">What got you interested in SigNoz?</div>
 						<div className="checkbox-grid">
-							{Object.keys(interestedInOptions).map((option: string) => (
+							{shuffledOptionKeys.map((option: string) => (
 								<div key={option} className="checkbox-item">
 									<Checkbox
 										id={`checkbox-${option}`}

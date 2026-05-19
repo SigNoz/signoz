@@ -9,6 +9,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
@@ -30,6 +31,8 @@ interface RolesListingTableProps {
 function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
+	const { isRolesEnabled } = useRolesFeatureGate();
+
 	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
 		RoleListPermission,
 	]);
@@ -203,19 +206,27 @@ function RolesListingTable({
 	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className="roles-table-row roles-table-row--clickable"
-			role="button"
-			tabIndex={0}
-			onClick={(): void => {
-				if (role.id) {
-					navigateToRole(role.id, role.name);
-				}
-			}}
-			onKeyDown={(e): void => {
-				if ((e.key === 'Enter' || e.key === ' ') && role.id) {
-					navigateToRole(role.id, role.name);
-				}
-			}}
+			className={`roles-table-row${isRolesEnabled ? ' roles-table-row--clickable' : ''}`}
+			role={isRolesEnabled ? 'button' : undefined}
+			tabIndex={isRolesEnabled ? 0 : undefined}
+			onClick={
+				isRolesEnabled
+					? (): void => {
+							if (role.id) {
+								navigateToRole(role.id, role.name);
+							}
+						}
+					: undefined
+			}
+			onKeyDown={
+				isRolesEnabled
+					? (e): void => {
+							if ((e.key === 'Enter' || e.key === ' ') && role.id) {
+								navigateToRole(role.id, role.name);
+							}
+						}
+					: undefined
+			}
 		>
 			<div className="roles-table-cell roles-table-cell--name">
 				{role.name ?? '—'}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
 import { Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
@@ -21,6 +21,7 @@ import {
 	buildRoleUpdatePermission,
 } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 
 import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -52,8 +53,10 @@ function RoleDetailsPage(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
+	const { isRolesEnabled, isLoading: isRolesGateLoading } =
+		useRolesFeatureGate();
 
-	const authzResources = permissionsType.data as unknown as AuthzResources;
+	const authzResources: AuthzResources = permissionsType.data;
 
 	// Extract roleId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
@@ -157,6 +160,22 @@ function RoleDetailsPage(): JSX.Element {
 			onError: (err) => handleApiError(err, showErrorModal),
 		},
 	});
+
+	if (isRolesGateLoading) {
+		return (
+			<div className="role-details-page">
+				<Skeleton
+					active
+					paragraph={{ rows: 8 }}
+					className="role-details-skeleton"
+				/>
+			</div>
+		);
+	}
+
+	if (!isRolesEnabled) {
+		return <Redirect to={ROUTES.ROLES_SETTINGS} />;
+	}
 
 	if (!hasReadPermission && readPerms !== null) {
 		return <PermissionDeniedFullPage permissionName="role:read" />;
