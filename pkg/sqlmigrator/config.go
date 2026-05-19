@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrCodeInvalidSQLMigratorConfig = errors.MustNewCode("invalid_sqlmigrator_config")
+	ErrCodePendingSQLMigrations     = errors.MustNewCode("pending_sql_migrations")
 )
 
 type Config struct {

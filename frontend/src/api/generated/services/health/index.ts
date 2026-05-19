@@ -83,9 +83,7 @@ export function useHealthz<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -158,9 +156,7 @@ export function useLivez<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -230,9 +226,7 @@ export function useReadyz<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**

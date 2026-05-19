@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ChartNoAxesGantt, TriangleAlert } from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
@@ -19,7 +20,7 @@ import {
 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from './constants';
-import { TraceProvider } from './contexts/TraceContext';
+import TraceStoreSync from './stores/TraceStoreSync';
 import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
@@ -31,7 +32,9 @@ import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
 import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
 
-import './TraceDetailsV3.styles.scss';
+import cx from 'classnames';
+
+import styles from './TraceDetailsV3.module.scss';
 
 function TraceDetailsV3(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailV3URLProps>();
@@ -40,7 +43,6 @@ function TraceDetailsV3(): JSX.Element {
 		() => ({
 			spanId: urlQuery.get('spanId') || '',
 			isUncollapsed: urlQuery.get('spanId') !== '',
-			scrollToSpan: true,
 		}),
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
@@ -72,18 +74,21 @@ function TraceDetailsV3(): JSX.Element {
 		onClose: handleSpanDetailsClose,
 	});
 
+	const allSpansRef = useRef<SpanV3[]>([]);
+
+	// Refetch only when the URL target isn't already loaded. Keeps row clicks
+	// and other in-window URL navigation from triggering a backend window slide.
 	useEffect(() => {
 		const spanId = urlQuery.get('spanId') || '';
-		// Only update interestedSpanId when a new span is selected,
-		// not when it's cleared (panel close) — avoids unnecessary API refetch
 		if (!spanId) {
 			return;
 		}
-		setInterestedSpanId({
-			spanId,
-			isUncollapsed: true,
-			scrollToSpan: true,
-		});
+		const idx = allSpansRef.current.findIndex((s) => s.span_id === spanId);
+		if (idx !== -1) {
+			setSelectedSpan(allSpansRef.current[idx]);
+			return;
+		}
+		setInterestedSpanId({ spanId, isUncollapsed: true });
 	}, [urlQuery]);
 
 	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
@@ -143,6 +148,10 @@ function TraceDetailsV3(): JSX.Element {
 			aggregations: waterfallAggregationsRequest,
 		};
 	}
+
+	useEffect(() => {
+		allSpansRef.current = allSpans;
+	}, [allSpans]);
 
 	// Frontend mode: expand all parents by default when full data arrives
 	useEffect(() => {
@@ -285,8 +294,8 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceProvider aggregations={traceData?.payload?.aggregations}>
-			<div className="trace-details-v3">
+		<TraceStoreSync aggregations={traceData?.payload?.aggregations}>
+			<div className={styles.root}>
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}
 					onFilteredSpansChange={handleFilteredSpansChange}
@@ -298,39 +307,43 @@ function TraceDetailsV3(): JSX.Element {
 					<NoData />
 				) : (
 					<>
-						<div className="trace-details-v3__content">
+						<div className={styles.content}>
 							<Collapse
 								// @ts-expect-error motion is passed through to rc-collapse to disable animation
 								motion={false}
 								activeKey={activeKeys.filter((k) => k === 'flame')}
 								onChange={(): void => handleCollapseChange('flame')}
 								size="small"
-								className="trace-details-v3__flame-collapse"
+								className={styles.flameCollapse}
 								items={[
 									{
 										key: 'flame',
 										label: (
-											<div className="trace-details-v3__collapse-label">
-												<span>Flame Graph</span>
-												{traceData?.payload?.totalSpansCount ? (
-													<span className="trace-details-v3__collapse-count">
-														<span>Spans: {traceData.payload.totalSpansCount}</span>
-														<span
-															className={
-																traceData.payload.totalErrorSpansCount > 0
-																	? 'trace-details-v3__collapse-count-errors'
-																	: undefined
-															}
-														>
-															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
-														</span>
-														{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+											<div className={styles.collapseLabel}>
+												<span className={styles.collapseTitle}>
+													Flame Graph
+													{traceData?.payload?.totalSpansCount &&
+														traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
 															<WarningPopover
 																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
-																placement="bottomRight"
-																autoAdjustOverflow={false}
+																placement="bottomLeft"
 															/>
 														)}
+												</span>
+												{traceData?.payload?.totalSpansCount ? (
+													<span className={styles.collapseCount}>
+														<span className={styles.collapseCountItem}>
+															<ChartNoAxesGantt size={13} />
+															Spans: {traceData.payload.totalSpansCount}
+														</span>
+														<span
+															className={cx(styles.collapseCountItem, {
+																[styles.hasErrors]: traceData.payload.totalErrorSpansCount > 0,
+															})}
+														>
+															<TriangleAlert size={13} />
+															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+														</span>
 													</span>
 												) : null}
 											</div>
@@ -340,6 +353,8 @@ function TraceDetailsV3(): JSX.Element {
 												<TraceFlamegraph
 													filteredSpanIds={filteredSpanIds}
 													isFilterActive={isFilterActive}
+													selectedSpan={selectedSpan}
+													totalSpansCount={totalSpansCount}
 												/>
 											</ResizableBox>
 										),
@@ -353,11 +368,9 @@ function TraceDetailsV3(): JSX.Element {
 								activeKey={activeKeys.filter((k) => k === 'waterfall')}
 								onChange={(): void => handleCollapseChange('waterfall')}
 								size="small"
-								className={`trace-details-v3__waterfall-collapse${
-									isWaterfallDocked
-										? ' trace-details-v3__waterfall-collapse--docked'
-										: ''
-								}`}
+								className={cx(styles.waterfallCollapse, {
+									[styles.isDocked]: isWaterfallDocked,
+								})}
 								items={[
 									{
 										key: 'waterfall',
@@ -368,7 +381,7 @@ function TraceDetailsV3(): JSX.Element {
 							/>
 
 							{panelState.isOpen && isDocked && (
-								<div className="trace-details-v3__docked-span-details">
+								<div className={styles.dockedSpanDetails}>
 									<SpanDetailsPanel
 										panelState={panelState}
 										selectedSpan={selectedSpan}
@@ -394,7 +407,7 @@ function TraceDetailsV3(): JSX.Element {
 					</>
 				)}
 			</div>
-		</TraceProvider>
+		</TraceStoreSync>
 	);
 }
 

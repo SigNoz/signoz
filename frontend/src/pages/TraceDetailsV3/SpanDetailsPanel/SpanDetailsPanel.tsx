@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import {
 	TabsContent,
@@ -7,7 +7,7 @@ import {
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -15,11 +15,10 @@ import {
 import {
 	Bookmark,
 	CalendarClock,
-	ChartBar,
 	ChartColumnBig,
 	Dock,
 	Link2,
-	Logs,
+	List,
 	PanelBottom,
 	ScrollText,
 	Timer,
@@ -56,7 +55,6 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 
-import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import {
 	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
@@ -74,7 +72,7 @@ import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
 
-import './SpanDetailsPanel.styles.scss';
+import styles from './SpanDetailsPanel.module.scss';
 
 interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
@@ -277,9 +275,9 @@ function SpanDetailsContent({
 	// }, [selectedSpan]);
 
 	return (
-		<div className="span-details-panel__body">
-			<div className="span-details-panel__details-section">
-				<div className="span-details-panel__span-row">
+		<div className={styles.body}>
+			<div className={styles.detailsSection}>
+				<div className={styles.spanRow}>
 					<KeyValueLabel
 						badgeKey="Span name"
 						badgeValue={selectedSpan.name}
@@ -298,8 +296,8 @@ function SpanDetailsContent({
 				<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
 				{/* Span info: exec time + start time */}
-				<div className="span-details-panel__span-info">
-					<div className="span-details-panel__span-info-item">
+				<div className={styles.spanInfo}>
+					<div className={styles.spanInfoItem}>
 						<Timer size={14} />
 						<span>
 							{getYAxisFormattedValue(`${selectedSpan.duration_nano / 1000000}`, 'ms')}
@@ -318,13 +316,13 @@ function SpanDetailsContent({
 							)}
 						</span>
 					</div>
-					<div className="span-details-panel__span-info-item">
+					<div className={styles.spanInfoItem}>
 						<CalendarClock size={14} />
 						<span>
 							{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
 						</span>
 					</div>
-					<div className="span-details-panel__span-info-item">
+					<div className={styles.spanInfoItem}>
 						<Link2 size={14} />
 						<LinkedSpansToggle
 							count={linkedSpans.count}
@@ -340,7 +338,7 @@ function SpanDetailsContent({
 				/>
 
 				{/* Step 6: HighlightedOptions */}
-				<div className="span-details-panel__highlighted-options">
+				<div className={styles.highlightedOptions}>
 					{HIGHLIGHTED_OPTIONS.map((option) => {
 						const rendered = option.render(selectedSpan);
 						if (!rendered) {
@@ -384,7 +382,7 @@ function SpanDetailsContent({
 				{/* Step 8: MiniTraceContext */}
 			</div>
 
-			<div className="span-details-panel__tabs-section">
+			<div className={styles.tabsSection}>
 				{/* Step 9: ContentTabs */}
 				<TabsRoot defaultValue="overview">
 					<TabsList variant="secondary">
@@ -395,7 +393,7 @@ function SpanDetailsContent({
 							<ScrollText size={14} /> Events ({selectedSpan.events?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
-							<Logs size={14} /> Logs
+							<List size={14} /> Logs
 						</TabsTrigger>
 						{infraMetadata && (
 							<TabsTrigger value="metrics" variant="secondary">
@@ -404,7 +402,7 @@ function SpanDetailsContent({
 						)}
 					</TabsList>
 
-					<div className="span-details-panel__tabs-scroll">
+					<div className={styles.tabsScroll}>
 						<TabsContent value="overview">
 							<DataViewer
 								data={spanDisplayData}
@@ -470,24 +468,8 @@ function SpanDetailsPanel({
 	traceStartTime,
 	traceEndTime,
 }: SpanDetailsPanelProps): JSX.Element {
-	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
-			{
-				key: 'analytics',
-				component: (
-					<Button
-						variant="ghost"
-						size="sm"
-						color="secondary"
-						prefix={<ChartBar size={14} />}
-						onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
-					>
-						Analytics
-					</Button>
-				),
-			},
 			// TODO: Add back when driven through separate config for different pages
 			// {
 			// 	key: 'view-full-trace',
@@ -515,7 +497,7 @@ function SpanDetailsPanel({
 				key: 'dock-toggle',
 				component: (
 					<TooltipProvider>
-						<Tooltip>
+						<TooltipRoot>
 							<TooltipTrigger asChild>
 								<Button
 									variant="ghost"
@@ -530,10 +512,10 @@ function SpanDetailsPanel({
 									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent className="dock-toggle-tooltip">
+							<TooltipContent className={styles.dockToggleTooltip}>
 								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
 							</TooltipContent>
-						</Tooltip>
+						</TooltipRoot>
 					</TooltipProvider>
 				),
 			});
@@ -564,71 +546,53 @@ function SpanDetailsPanel({
 					traceEndTime={traceEndTime}
 				/>
 			) : (
-				<div className="span-details-panel__body">
+				<div className={styles.body}>
 					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
 				</div>
 			)}
 		</>
 	);
 
-	const analyticsPanel = (
-		<AnalyticsPanel
-			isOpen={isAnalyticsOpen}
-			onClose={(): void => setIsAnalyticsOpen(false)}
-		/>
-	);
-
 	if (variant === SpanDetailVariant.DOCKED) {
-		return (
-			<>
-				<div className="span-details-panel">{content}</div>
-				{analyticsPanel}
-			</>
-		);
+		return <div className={styles.root}>{content}</div>;
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
 		return (
-			<>
-				<DetailsPanelDrawer
-					isOpen={panelState.isOpen}
-					onClose={panelState.close}
-					className="span-details-panel"
-				>
-					{content}
-				</DetailsPanelDrawer>
-				{analyticsPanel}
-			</>
+			<DetailsPanelDrawer
+				isOpen={panelState.isOpen}
+				onClose={panelState.close}
+				className={styles.root}
+			>
+				{content}
+			</DetailsPanelDrawer>
 		);
 	}
 
 	return (
-		<>
-			<FloatingPanel
-				isOpen={panelState.isOpen}
-				className="span-details-panel"
-				width={PANEL_WIDTH}
-				minWidth={480}
-				height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
-				defaultPosition={{
-					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
-					y: PANEL_MARGIN_TOP,
-				}}
-				enableResizing={{
-					top: true,
-					right: true,
-					bottom: true,
-					left: true,
-					topRight: false,
-					bottomRight: false,
-					bottomLeft: false,
-					topLeft: false,
-				}}
-			>
-				{content}
-			</FloatingPanel>
-			{analyticsPanel}
-		</>
+		<FloatingPanel
+			isOpen={panelState.isOpen}
+			className={styles.root}
+			width={PANEL_WIDTH}
+			minWidth={480}
+			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
+			defaultPosition={{
+				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
+				y: PANEL_MARGIN_TOP,
+			}}
+			enableResizing={{
+				top: true,
+				right: true,
+				bottom: true,
+				left: true,
+				topRight: false,
+				bottomRight: false,
+				bottomLeft: false,
+				topLeft: false,
+			}}
+		>
+			{content}
+		</FloatingPanel>
 	);
 }
 

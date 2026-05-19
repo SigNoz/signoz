@@ -10,16 +10,19 @@ import {
 	Search,
 	X,
 } from '@signozhq/icons';
-import { Switch, ToggleGroup, ToggleGroupItem, toast } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
+import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -40,7 +43,7 @@ import {
 	useSpanCategoryFilter,
 } from './hooks/useSpanCategoryFilter';
 
-import './Filters.styles.scss';
+import styles from './Filters.module.scss';
 
 function prepareQuery(filters: TagFilter, traceID: string): Query {
 	return {
@@ -157,8 +160,21 @@ function Filters({
 		expressionRef,
 		runQuery,
 	};
-	const { isHighlightErrors, handleToggle: handleToggleHighlightErrors } =
+	const { isHighlightErrors, handleToggle: toggleHighlightErrors } =
 		useHighlightErrors(filterProps);
+
+	// Auto-expand the filter row when turning Highlight errors ON so the user
+	// can immediately use prev/next navigation. Turning it OFF doesn't auto-
+	// collapse — the user keeps whatever expansion state they had.
+	const handleToggleHighlightErrors = useCallback(
+		(checked: boolean): void => {
+			if (checked && !isExpanded) {
+				onExpand();
+			}
+			toggleHighlightErrors(checked);
+		},
+		[isExpanded, onExpand, toggleHighlightErrors],
+	);
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
@@ -240,7 +256,7 @@ function Filters({
 	);
 
 	const highlightErrorsToggle = (
-		<div className="highlight-errors-toggle">
+		<div className={styles.highlightErrorsToggle}>
 			<Typography.Text>Highlight errors</Typography.Text>
 			<Switch
 				color="cherry"
@@ -254,9 +270,9 @@ function Filters({
 		<>
 			{isFetching && <Loader className="animate-spin" />}
 			{error && (
-				<Tooltip>
+				<TooltipRoot>
 					<TooltipTrigger asChild>
-						<span className="filter-status filter-status--error">
+						<span className={cx(styles.filterStatus, styles.hasError)}>
 							<Info />
 							API error
 						</span>
@@ -264,10 +280,10 @@ function Filters({
 					<TooltipContent>
 						{(error as AxiosError)?.message || 'Something went wrong'}
 					</TooltipContent>
-				</Tooltip>
+				</TooltipRoot>
 			)}
 			{!error && noData && (
-				<Typography.Text className="filter-status">
+				<Typography.Text className={styles.filterStatus}>
 					No results found
 				</Typography.Text>
 			)}
@@ -278,22 +294,22 @@ function Filters({
 	if (!isExpanded) {
 		const pill = (
 			/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-			<div className="filter-pill" onClick={onExpand}>
+			<div className={styles.pill} onClick={onExpand}>
 				<Search size={12} />
-				<span className="filter-pill__text">{expression || 'Search...'}</span>
-				{expression && <span className="filter-pill__indicator" />}
+				<span className={styles.pillText}>{expression || 'Search...'}</span>
+				{expression && <span className={styles.pillIndicator} />}
 			</div>
 		);
 
 		return (
 			<TooltipProvider>
-				<div className="trace-v3-filter-row collapsed">
+				<div className={styles.root}>
 					{expression ? (
-						<Tooltip>
+						<TooltipRoot>
 							<TooltipTrigger asChild>{pill}</TooltipTrigger>
 							<TooltipContent side="bottom" align="start">
-								<div className="filter-pill-popover">
-									<div className="filter-pill-popover__header">
+								<div className={styles.pillPopover}>
+									<div className={styles.pillPopoverHeader}>
 										<Typography.Text>Search query</Typography.Text>
 										<Button
 											variant="ghost"
@@ -310,10 +326,10 @@ function Filters({
 											<Copy size={12} />
 										</Button>
 									</div>
-									<div className="filter-pill-popover__expression">{expression}</div>
+									<div className={styles.pillPopoverExpression}>{expression}</div>
 								</div>
 							</TooltipContent>
-						</Tooltip>
+						</TooltipRoot>
 					) : (
 						pill
 					)}
@@ -327,7 +343,7 @@ function Filters({
 	// --- EXPANDED VIEW ---
 	return (
 		<TooltipProvider>
-			<div className="trace-v3-filter-row expanded">
+			<div className={cx(styles.root, styles.isExpanded)}>
 				<ToggleGroup
 					type="single"
 					value={selectedCategory}
@@ -346,7 +362,7 @@ function Filters({
 				</ToggleGroup>
 				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
 				<div
-					className="filter-search-container"
+					className={styles.searchContainer}
 					ref={containerRef}
 					onBlur={(e): void => {
 						if (!containerRef.current?.contains(e.relatedTarget as Node)) {
@@ -367,8 +383,8 @@ function Filters({
 					/>
 				</div>
 				{filteredSpanIds.length > 0 && (
-					<div className="pre-next-toggle">
-						<Typography.Text className="pre-next-toggle__count">
+					<div className={styles.preNextToggle}>
+						<Typography.Text className={styles.preNextCount}>
 							{currentSearchedIndex + 1} / {filteredSpanIds.length}
 						</Typography.Text>
 						<Button
@@ -401,7 +417,7 @@ function Filters({
 					variant="ghost"
 					size="icon"
 					color="secondary"
-					className="filter-collapse-btn"
+					className={styles.collapseBtn}
 					onClick={onCollapse}
 				>
 					<X size={14} />

@@ -1,17 +1,17 @@
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from '@signozhq/ui';
+} from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
-import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
-import './SpanHoverCard.styles.scss';
+import styles from './SpanHoverCard.module.scss';
 
 /**
  * Span-level fields that the tooltip always shows (as the colored title or
@@ -51,27 +51,21 @@ export function SpanTooltipContent({
 		convertTimeToRelevantUnit(durationMs);
 
 	return (
-		<div className="span-hover-card-content">
-			<div className="span-hover-card-content__name" style={{ color }}>
+		<div className={styles.content}>
+			<div className={styles.name} style={{ color }}>
 				{spanName}
 			</div>
-			<div className="span-hover-card-content__row">
-				status: {hasError ? 'error' : 'ok'}
-			</div>
-			<div className="span-hover-card-content__row">
-				start: {toFixed(relativeStartMs, 2)} ms
-			</div>
-			<div className="span-hover-card-content__row">
+			<div className={styles.row}>status: {hasError ? 'error' : 'ok'}</div>
+			<div className={styles.row}>start: {toFixed(relativeStartMs, 2)} ms</div>
+			<div className={styles.row}>
 				duration: {toFixed(formattedDuration, 2)} {timeUnitName}
 			</div>
 			{previewRows && previewRows.length > 0 && (
-				<div className="span-hover-card-content__preview">
+				<div className={styles.preview}>
 					{previewRows.map((row) => (
-						<div key={row.key} className="span-hover-card-content__row">
-							<span className="span-hover-card-content__preview-key">{row.key}:</span>{' '}
-							<span className="span-hover-card-content__preview-value">
-								{row.value}
-							</span>
+						<div key={row.key} className={styles.row}>
+							<span className={styles.previewKey}>{row.key}:</span>{' '}
+							<span className={styles.previewValue}>{row.value}</span>
 						</div>
 					))}
 				</div>
@@ -105,7 +99,8 @@ export function SpanHoverCard({
 	spans,
 	traceStartTime,
 }: SpanHoverCardProps): JSX.Element {
-	const { previewFields, resolveSpanColor } = useTraceContext();
+	const previewFields = useTraceStore((s) => s.previewFields);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 
 	const hoverCardData = useMemo(() => {
 		if (!hoveredSpanId) {
@@ -130,7 +125,7 @@ export function SpanHoverCard({
 			anchorTop: idx * rowHeight,
 			tooltip: {
 				spanName: span.name,
-				color: resolveSpanColor(span),
+				color: resolveSpanColor(span, colorByFieldName),
 				hasError: span.has_error,
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
@@ -141,17 +136,17 @@ export function SpanHoverCard({
 		hoveredSpanId,
 		spans,
 		previewFields,
-		resolveSpanColor,
+		colorByFieldName,
 		rowHeight,
 		traceStartTime,
 	]);
 
 	return (
 		<TooltipProvider>
-			<Tooltip open={hoverCardData !== null} onOpenChange={onOpenChange}>
+			<TooltipRoot open={hoverCardData !== null} onOpenChange={onOpenChange}>
 				<TooltipTrigger asChild>
 					<div
-						className="span-hover-card-anchor"
+						className={styles.anchor}
 						style={{
 							top: hoverCardData?.anchorTop ?? 0,
 							left: anchorLeft,
@@ -163,11 +158,11 @@ export function SpanHoverCard({
 					side="right"
 					align="start"
 					sideOffset={8}
-					className="span-hover-card-popover"
+					className={styles.popover}
 				>
 					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
 				</TooltipContent>
-			</Tooltip>
+			</TooltipRoot>
 		</TooltipProvider>
 	);
 }

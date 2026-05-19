@@ -27,6 +27,7 @@ pytest_plugins = [
     "fixtures.seeder",
     "fixtures.serviceaccount",
     "fixtures.role",
+    "fixtures.seed_golden_dataset",
 ]
 
 

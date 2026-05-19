@@ -1,34 +1,13 @@
 import { ReactElement } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
-import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { AllTheProviders } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { BrandedPermission } from './types';
 import { useAuthZ } from './useAuthZ';
 import { buildPermission } from './utils';
-
-const BASE_URL = ENVIRONMENT.baseURL || '';
-const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 const wrapper = ({ children }: { children: ReactElement }): ReactElement => (
 	<AllTheProviders>{children}</AllTheProviders>
