@@ -12,7 +12,7 @@ import {
 
 import logEvent from 'api/common/logEvent';
 
-import { AIAssistantEvents } from '../../events';
+import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
@@ -163,7 +163,7 @@ export default function VirtualizedMessages({
 							onClick={(): void => {
 								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
 									promptId: s.text,
-									category: 'empty_state',
+									category: SuggestedPromptCategory.EmptyState,
 								});
 								onSendSuggestedPrompt(s.text);
 							}}

@@ -56,6 +56,13 @@ export function getBrowserInfo(): BrowserInfo {
 	return { browserName, browserVersion };
 }
 
+export const SuggestedPromptCategory = {
+	FollowUp: 'follow_up',
+	EmptyState: 'empty_state',
+} as const;
+export type SuggestedPromptCategory =
+	(typeof SuggestedPromptCategory)[keyof typeof SuggestedPromptCategory];
+
 export enum AIAssistantEvents {
 	Opened = 'AI Assistant: Opened',
 	MessageSent = 'AI Assistant: Message sent',

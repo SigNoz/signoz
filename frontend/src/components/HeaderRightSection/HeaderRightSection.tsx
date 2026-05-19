@@ -54,7 +54,7 @@ function HeaderRightSection({
 
 	const handleOpenAIAssistant = useCallback((): void => {
 		void logEvent(AIAssistantEvents.Opened, {
-			source: 'icon',
+			source: 'header',
 			currentPage: normalizePage(location.pathname),
 		});
 		openAIAssistant();

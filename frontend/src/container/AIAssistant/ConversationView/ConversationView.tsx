@@ -113,10 +113,12 @@ export default function ConversationView({
 	// `secondsSinceStart` on Cancel clicked. Cleared whenever streaming ends.
 	const streamStartedAtRef = useRef<number | null>(null);
 	useEffect(() => {
-		if (isStreamingHere && streamStartedAtRef.current === null) {
-			streamStartedAtRef.current = Date.now();
-		} else if (!isStreamingHere) {
+		if (!isStreamingHere) {
 			streamStartedAtRef.current = null;
+			return;
+		}
+		if (streamStartedAtRef.current === null) {
+			streamStartedAtRef.current = Date.now();
 		}
 	}, [isStreamingHere]);
 

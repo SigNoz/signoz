@@ -94,7 +94,7 @@ export default function AIAssistantPage(): JSX.Element {
 
 	const handleNewConversation = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
-			page: pathname,
+			page: normalizePage(pathname),
 			mode: 'full_screen',
 			source: 'history_list',
 		});
