@@ -2,9 +2,11 @@ package sqlrulestore
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -14,10 +16,14 @@ import (
 
 type maintenance struct {
 	sqlstore sqlstore.SQLStore
+	logger   *slog.Logger
 }
 
-func NewMaintenanceStore(store sqlstore.SQLStore) ruletypes.MaintenanceStore {
-	return &maintenance{sqlstore: store}
+func NewMaintenanceStore(store sqlstore.SQLStore, providerSettings factory.ProviderSettings) ruletypes.MaintenanceStore {
+	return &maintenance{
+		sqlstore: store,
+		logger:   providerSettings.Logger,
+	}
 }
 
 func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.PlannedMaintenance, error) {
@@ -35,7 +41,11 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 
 	gettablePlannedMaintenance := make([]*ruletypes.PlannedMaintenance, 0)
 	for _, gettableMaintenancesRule := range gettableMaintenancesRules {
-		gettablePlannedMaintenance = append(gettablePlannedMaintenance, gettableMaintenancesRule.ToPlannedMaintenance())
+		m := gettableMaintenancesRule.ToPlannedMaintenance()
+		gettablePlannedMaintenance = append(gettablePlannedMaintenance, m)
+		if m.HasScheduleRecurrenceBoundsMismatch() {
+			r.logger.WarnContext(ctx, "planned_downtime_recurrence_schedule_mismatch", slog.String("maintenance_id", m.ID.StringValue()))
+		}
 	}
 
 	return gettablePlannedMaintenance, nil

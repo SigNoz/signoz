@@ -144,18 +144,18 @@ const routes: AppRoutes[] = [
 	// /trace-old serves V3 (URL-only access). Flip the two `component`
 	// values back to release V3.
 	{
-		path: ROUTES.TRACE_DETAIL,
+		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
 		component: TraceDetail,
 		isPrivate: true,
-		key: 'TRACE_DETAIL',
+		key: 'TRACE_DETAIL_OLD',
 	},
 	{
-		path: ROUTES.TRACE_DETAIL_OLD,
+		path: ROUTES.TRACE_DETAIL,
 		exact: true,
 		component: TraceDetailV3,
 		isPrivate: true,
-		key: 'TRACE_DETAIL_OLD',
+		key: 'TRACE_DETAIL',
 	},
 	{
 		path: ROUTES.SETTINGS,

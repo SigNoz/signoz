@@ -16,6 +16,8 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
+import PermissionDeniedCallout from 'components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
@@ -28,6 +30,15 @@ import {
 	useServiceAccountRoleManager,
 } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
+	APIKeyCreatePermission,
+	APIKeyListPermission,
+	buildSAAttachPermission,
+	buildSADeletePermission,
+	buildSAReadPermission,
+	buildSAUpdatePermission,
+} from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import {
 	parseAsBoolean,
 	parseAsInteger,
 	parseAsString,
@@ -37,6 +48,7 @@ import {
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';
@@ -96,6 +108,22 @@ function ServiceAccountDrawer({
 
 	const queryClient = useQueryClient();
 
+	const { permissions: drawerPermissions, isLoading: isAuthZLoading } = useAuthZ(
+		selectedAccountId
+			? [
+					buildSAReadPermission(selectedAccountId),
+					buildSAUpdatePermission(selectedAccountId),
+					buildSADeletePermission(selectedAccountId),
+					APIKeyListPermission,
+				]
+			: [],
+		{ enabled: !!selectedAccountId },
+	);
+
+	const canRead =
+		drawerPermissions?.[buildSAReadPermission(selectedAccountId ?? '')]
+			?.isGranted ?? false;
+
 	const {
 		data: accountData,
 		isLoading: isAccountLoading,
@@ -104,7 +132,7 @@ function ServiceAccountDrawer({
 		refetch: refetchAccount,
 	} = useGetServiceAccount(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: canRead && !!selectedAccountId } },
 	);
 
 	const account = useMemo(
@@ -117,7 +145,9 @@ function ServiceAccountDrawer({
 		currentRoles,
 		isLoading: isRolesLoading,
 		applyDiff,
-	} = useServiceAccountRoleManager(selectedAccountId ?? '');
+	} = useServiceAccountRoleManager(selectedAccountId ?? '', {
+		enabled: canRead && !!selectedAccountId,
+	});
 
 	const roleSessionRef = useRef<string | null>(null);
 
@@ -165,9 +195,16 @@ function ServiceAccountDrawer({
 		refetch: refetchRoles,
 	} = useRoles();
 
+	const canListKeys =
+		drawerPermissions?.[APIKeyListPermission]?.isGranted ?? false;
+
+	const canUpdate =
+		drawerPermissions?.[buildSAUpdatePermission(selectedAccountId ?? '')]
+			?.isGranted ?? true;
+
 	const { data: keysData, isLoading: keysLoading } = useListServiceAccountKeys(
 		{ id: selectedAccountId ?? '' },
-		{ query: { enabled: !!selectedAccountId } },
+		{ query: { enabled: !!selectedAccountId && canListKeys } },
 	);
 	const keys = keysData?.data ?? [];
 
@@ -392,18 +429,26 @@ function ServiceAccountDrawer({
 					</ToggleGroupItem>
 				</ToggleGroup>
 				{activeTab === ServiceAccountDrawerTab.Keys && (
-					<Button
-						variant="outlined"
-						size="sm"
-						color="secondary"
-						disabled={isDeleted}
-						onClick={(): void => {
-							void setIsAddKeyOpen(true);
-						}}
+					<AuthZTooltip
+						checks={[
+							APIKeyCreatePermission,
+							buildSAAttachPermission(selectedAccountId ?? ''),
+						]}
+						enabled={!isDeleted && !!selectedAccountId}
 					>
-						<Plus size={12} />
-						Add Key
-					</Button>
+						<Button
+							variant="outlined"
+							size="sm"
+							color="secondary"
+							disabled={isDeleted}
+							onClick={(): void => {
+								void setIsAddKeyOpen(true);
+							}}
+						>
+							<Plus size={12} />
+							Add Key
+						</Button>
+					</AuthZTooltip>
 				)}
 			</div>
 
@@ -412,7 +457,9 @@ function ServiceAccountDrawer({
 					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
 				}`}
 			>
-				{isAccountLoading && <Skeleton active paragraph={{ rows: 6 }} />}
+				{(isAuthZLoading || isAccountLoading) && (
+					<Skeleton active paragraph={{ rows: 6 }} />
+				)}
 				{isAccountError && (
 					<ErrorInPlace
 						error={toAPIError(
@@ -421,38 +468,55 @@ function ServiceAccountDrawer({
 						)}
 					/>
 				)}
-				{!isAccountLoading && !isAccountError && (
-					<>
-						{activeTab === ServiceAccountDrawerTab.Overview && account && (
-							<OverviewTab
-								account={account}
-								localName={localName}
-								onNameChange={handleNameChange}
-								localRoles={localRoles}
-								onRolesChange={(roles): void => {
-									setLocalRoles(roles);
-									clearRoleErrors();
-								}}
-								isDisabled={isDeleted}
-								availableRoles={availableRoles}
-								rolesLoading={rolesLoading}
-								rolesError={rolesError}
-								rolesErrorObj={rolesErrorObj}
-								onRefetchRoles={refetchRoles}
-								saveErrors={saveErrors}
-							/>
-						)}
-						{activeTab === ServiceAccountDrawerTab.Keys && (
-							<KeysTab
-								keys={keys}
-								isLoading={keysLoading}
-								isDisabled={isDeleted}
-								currentPage={keysPage}
-								pageSize={PAGE_SIZE}
-							/>
-						)}
-					</>
-				)}
+				{!isAuthZLoading &&
+					!isAccountLoading &&
+					!isAccountError &&
+					selectedAccountId && (
+						<GuardAuthZ
+							relation="read"
+							object={`serviceaccount:${selectedAccountId}`}
+							fallbackOnNoPermissions={(): JSX.Element => (
+								<PermissionDeniedCallout permissionName="serviceaccount:read" />
+							)}
+						>
+							<>
+								{activeTab === ServiceAccountDrawerTab.Overview && account && (
+									<OverviewTab
+										account={account}
+										localName={localName}
+										onNameChange={handleNameChange}
+										localRoles={localRoles}
+										onRolesChange={(roles): void => {
+											setLocalRoles(roles);
+											clearRoleErrors();
+										}}
+										isDisabled={isDeleted}
+										canUpdate={canUpdate}
+										availableRoles={availableRoles}
+										rolesLoading={rolesLoading}
+										rolesError={rolesError}
+										rolesErrorObj={rolesErrorObj}
+										onRefetchRoles={refetchRoles}
+										saveErrors={saveErrors}
+									/>
+								)}
+								{activeTab === ServiceAccountDrawerTab.Keys &&
+									(canListKeys ? (
+										<KeysTab
+											keys={keys}
+											isLoading={keysLoading}
+											isDisabled={isDeleted}
+											canUpdate={canUpdate}
+											accountId={selectedAccountId}
+											currentPage={keysPage}
+											pageSize={PAGE_SIZE}
+										/>
+									) : (
+										<PermissionDeniedCallout permissionName="factor-api-key:list" />
+									))}
+							</>
+						</GuardAuthZ>
+					)}
 			</div>
 		</div>
 	);
@@ -482,16 +546,21 @@ function ServiceAccountDrawer({
 			) : (
 				<>
 					{!isDeleted && (
-						<Button
-							variant="link"
-							color="destructive"
-							onClick={(): void => {
-								void setIsDeleteOpen(true);
-							}}
+						<AuthZTooltip
+							checks={[buildSADeletePermission(selectedAccountId ?? '')]}
+							enabled={!!selectedAccountId}
 						>
-							<Trash2 size={12} />
-							Delete Service Account
-						</Button>
+							<Button
+								variant="link"
+								color="destructive"
+								onClick={(): void => {
+									void setIsDeleteOpen(true);
+								}}
+							>
+								<Trash2 size={12} />
+								Delete Service Account
+							</Button>
+						</AuthZTooltip>
 					)}
 					{!isDeleted && (
 						<div className="sa-drawer__footer-right">

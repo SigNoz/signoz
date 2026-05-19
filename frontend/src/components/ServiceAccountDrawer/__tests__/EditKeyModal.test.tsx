@@ -6,6 +6,15 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
+jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+	__esModule: true,
+	default: ({
+		children,
+	}: {
+		children: React.ReactElement;
+	}): React.ReactElement => children,
+}));
+
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
@@ -19,7 +28,7 @@ const mockKey: ServiceaccounttypesGettableFactorAPIKeyDTO = {
 	id: 'key-1',
 	name: 'Original Key Name',
 	expiresAt: 0,
-	lastObservedAt: null as any,
+	lastObservedAt: null as unknown as Date,
 	serviceAccountId: 'sa-1',
 };
 

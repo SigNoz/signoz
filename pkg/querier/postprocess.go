@@ -335,10 +335,8 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			}
 		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
-			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
-				results[name] = result
-			}
+			// For scalar results, apply limit by processScalarFormula itself since it needs to be applied before converting back to scalar format
+			results[name] = result
 		}
 	}
 
@@ -525,6 +523,9 @@ func (q *querier) processScalarFormula(
 		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
+
+	// Apply ordering (and limit) before converting to scalar format.
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
 
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{
