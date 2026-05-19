@@ -745,52 +745,6 @@
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
 		padding: 0px;
-
-		.dashboard-action-content {
-			.section-1 {
-				display: flex;
-				flex-direction: column;
-
-				.action-btn {
-					display: flex;
-					padding: 8px;
-					height: unset;
-					align-items: center;
-					gap: 6px;
-					color: var(--l2-foreground);
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.14px;
-
-					.ant-icon-btn {
-						margin-inline-end: 0px;
-					}
-				}
-			}
-
-			.section-2 {
-				display: flex;
-				flex-direction: column;
-				border-top: 1px solid var(--l1-border);
-
-				.ant-typography {
-					display: flex;
-					padding: 12px 8px;
-					align-items: center;
-					gap: 6px;
-					color: var(--bg-cherry-400) !important;
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.14px;
-				}
-			}
-		}
 	}
 }
 
