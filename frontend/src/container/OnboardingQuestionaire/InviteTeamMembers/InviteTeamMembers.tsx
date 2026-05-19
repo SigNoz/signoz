@@ -8,7 +8,9 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useNotifications } from 'hooks/useNotifications';
+import { useAppContext } from 'providers/App/App';
 import { cloneDeep, debounce } from 'lodash-es';
 import {
 	ArrowRight,
@@ -140,6 +142,8 @@ function InviteTeamMembers({
 		}, 1000);
 	};
 
+	const { isNoAuthMode } = useAppContext();
+
 	const { mutate: sendInvites, isLoading: isSendingInvites } = useMutation(
 		inviteUsers,
 		{
@@ -257,7 +261,7 @@ function InviteTeamMembers({
 	const hasInvites =
 		(teamMembersToInvite?.filter(isMemberTouched) ?? []).length > 0;
 	const isButtonDisabled = isSendingInvites || isLoading;
-	const isInviteButtonDisabled = isButtonDisabled || !hasInvites;
+	const isInviteButtonDisabled = isButtonDisabled || !hasInvites || isNoAuthMode;
 
 	return (
 		<div className="questions-container">
@@ -365,24 +369,26 @@ function InviteTeamMembers({
 				)}
 
 				<div className="onboarding-buttons-container">
-					<Button
-						variant="solid"
-						color="primary"
-						className={`onboarding-next-button ${
-							isInviteButtonDisabled ? 'disabled' : ''
-						}`}
-						onClick={handleNext}
-						disabled={isInviteButtonDisabled}
-						suffix={
-							isButtonDisabled ? (
-								<LoaderCircle className="animate-spin" size={12} />
-							) : (
-								<ArrowRight size={12} />
-							)
-						}
-					>
-						Send Invites
-					</Button>
+					<NoAuthGuard>
+						<Button
+							variant="solid"
+							color="primary"
+							className={`onboarding-next-button ${
+								isInviteButtonDisabled ? 'disabled' : ''
+							}`}
+							onClick={handleNext}
+							disabled={isInviteButtonDisabled}
+							suffix={
+								isButtonDisabled ? (
+									<LoaderCircle className="animate-spin" size={12} />
+								) : (
+									<ArrowRight size={12} />
+								)
+							}
+						>
+							Send Invites
+						</Button>
+					</NoAuthGuard>
 					<Button
 						variant="ghost"
 						color="secondary"

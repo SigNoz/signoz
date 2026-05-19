@@ -70,7 +70,6 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -1007,25 +1006,21 @@ function MultiIngestionSettings(): JSX.Element {
 									</div>
 								</div>
 								<div className="action-btn">
-									<NoAuthGuard>
-										<Button
-											variant="link"
-											size="icon"
-											color="secondary"
-											suffix={<PenLine size={14} />}
-											aria-label="Edit ingestion key"
-											onClick={onEditKey}
-										/>
-									</NoAuthGuard>
-									<NoAuthGuard>
-										<Button
-											variant="link"
-											size="icon"
-											color="destructive"
-											suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
-											onClick={onDeleteKey}
-										/>
-									</NoAuthGuard>
+									<Button
+										variant="link"
+										size="icon"
+										color="secondary"
+										suffix={<PenLine size={14} />}
+										aria-label="Edit ingestion key"
+										onClick={onEditKey}
+									/>
+									<Button
+										variant="link"
+										size="icon"
+										color="destructive"
+										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										onClick={onDeleteKey}
+									/>
 								</div>
 							</div>
 						),
@@ -1128,48 +1123,40 @@ function MultiIngestionSettings(): JSX.Element {
 															<div className="actions">
 																{hasLimits(signalName) ? (
 																	<>
-																		<NoAuthGuard>
-																			<Button
-																				variant="link"
-																				size="icon"
-																				color="secondary"
-																				prefix={<PenLine size={14} />}
-																				aria-label={`Edit ${signalName} limit`}
-																				disabled={
-																					!!(activeAPIKey?.id === APIKey?.id && activeSignal)
-																				}
-																				onClick={onEditSignalLimit}
-																			/>
-																		</NoAuthGuard>
-																		<NoAuthGuard>
-																			<Button
-																				variant="link"
-																				size="icon"
-																				color="destructive"
-																				prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
-																				aria-label={`Delete ${signalName} limit`}
-																				disabled={
-																					!!(activeAPIKey?.id === APIKey?.id && activeSignal)
-																				}
-																				onClick={onDeleteSignalLimit}
-																			/>
-																		</NoAuthGuard>
-																	</>
-																) : (
-																	<NoAuthGuard>
 																		<Button
-																			variant="outlined"
-																			size="sm"
+																			variant="link"
+																			size="icon"
 																			color="secondary"
-																			prefix={<Plus size={12} />}
+																			prefix={<PenLine size={14} />}
+																			aria-label={`Edit ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
-																			onClick={onAddSignalLimit}
-																		>
-																			Limits
-																		</Button>
-																	</NoAuthGuard>
+																			onClick={onEditSignalLimit}
+																		/>
+																		<Button
+																			variant="link"
+																			size="icon"
+																			color="destructive"
+																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			aria-label={`Delete ${signalName} limit`}
+																			disabled={
+																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
+																			}
+																			onClick={onDeleteSignalLimit}
+																		/>
+																	</>
+																) : (
+																	<Button
+																		variant="outlined"
+																		size="sm"
+																		color="secondary"
+																		prefix={<Plus size={12} />}
+																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
+																		onClick={onAddSignalLimit}
+																	>
+																		Limits
+																	</Button>
 																)}
 															</div>
 														</div>
@@ -1396,21 +1383,19 @@ function MultiIngestionSettings(): JSX.Element {
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
-																					<NoAuthGuard>
-																						<Button
-																							variant="solid"
-																							size="sm"
-																							disabled={
-																								isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																							}
-																							loading={
-																								isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																							}
-																							onClick={onSaveSignalLimit}
-																						>
-																							Save
-																						</Button>
-																					</NoAuthGuard>
+																					<Button
+																						variant="solid"
+																						size="sm"
+																						disabled={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						loading={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						onClick={onSaveSignalLimit}
+																					>
+																						Save
+																					</Button>
 																					<Button
 																						variant="outlined"
 																						color="secondary"
@@ -1694,16 +1679,14 @@ function MultiIngestionSettings(): JSX.Element {
 						onChange={handleSearch}
 					/>
 
-					<NoAuthGuard>
-						<Button
-							variant="solid"
-							className="add-new-ingestion-key-btn"
-							prefix={<Plus size={14} />}
-							onClick={showAddModal}
-						>
-							New Ingestion key
-						</Button>
-					</NoAuthGuard>
+					<Button
+						variant="solid"
+						className="add-new-ingestion-key-btn"
+						prefix={<Plus size={14} />}
+						onClick={showAddModal}
+					>
+						New Ingestion key
+					</Button>
 				</div>
 
 				<Table
@@ -1825,16 +1808,15 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<NoAuthGuard key="submit">
-						<Button
-							variant="solid"
-							prefix={<Check size={14} />}
-							loading={isLoadingUpdateAPIKey}
-							onClick={onUpdateApiKey}
-						>
-							Update Ingestion Key
-						</Button>
-					</NoAuthGuard>,
+					<Button
+						key="submit"
+						variant="solid"
+						prefix={<Check size={14} />}
+						loading={isLoadingUpdateAPIKey}
+						onClick={onUpdateApiKey}
+					>
+						Update Ingestion Key
+					</Button>,
 				]}
 			>
 				<Form
@@ -1894,17 +1876,16 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<NoAuthGuard key="submit">
-						<Button
-							variant="solid"
-							testId="create-new-key"
-							prefix={<Check size={14} />}
-							loading={isLoadingCreateAPIKey}
-							onClick={onCreateIngestionKey}
-						>
-							Create new Ingestion key
-						</Button>
-					</NoAuthGuard>,
+					<Button
+						key="submit"
+						variant="solid"
+						testId="create-new-key"
+						prefix={<Check size={14} />}
+						loading={isLoadingCreateAPIKey}
+						onClick={onCreateIngestionKey}
+					>
+						Create new Ingestion key
+					</Button>,
 				]}
 			>
 				<Form

@@ -21,6 +21,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
@@ -209,7 +210,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	useEffect(() => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.STARTED}`,
 			{},
 		);
@@ -253,7 +254,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		setSelectedFramework(null);
 		setSelectedEnvironment(null);
 
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SELECTED}`,
 			{
 				dataSource: dataSource.label,
@@ -276,7 +277,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSelectFramework = (option: any): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.FRAMEWORK_SELECTED}`,
 			{
 				dataSource: selectedDataSource?.label,
@@ -309,7 +310,7 @@ function OnboardingAddDataSource(): JSX.Element {
 		selectedEnvironment: any,
 		baseURL?: string,
 	): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.ENVIRONMENT_SELECTED}`,
 			{
 				dataSource: selectedDataSource?.label,
@@ -351,7 +352,7 @@ function OnboardingAddDataSource(): JSX.Element {
 			groupDataSourcesByTags(filteredDataSources as Entity[]),
 		);
 
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_SEARCHED}`,
 			{
 				searchedDataSource: query,
@@ -485,7 +486,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleShowInviteTeamMembersModal = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INVITE_TEAM_MEMBER_BUTTON_CLICKED}`,
 			{
 				dataSource: selectedDataSource?.label,
@@ -498,7 +499,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleSubmitDataSourceRequest = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
 			{
 				requestedDataSource: dataSourceRequest,
@@ -513,7 +514,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	const handleRaiseRequest = (): void => {
-		logEvent(
+		void logEvent(
 			`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.DATA_SOURCE_REQUESTED}`,
 			{
 				requestedDataSource: searchQuery,
@@ -635,7 +636,7 @@ function OnboardingAddDataSource(): JSX.Element {
 								size={14}
 								className="onboarding-header-container-close-icon"
 								onClick={(e): void => {
-									logEvent(
+									void logEvent(
 										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
 										{
 											currentPage: setupStepItems[currentStep]?.title || '',
@@ -649,14 +650,16 @@ function OnboardingAddDataSource(): JSX.Element {
 						</div>
 
 						<div className="header-right-section">
-							<Button
-								type="default"
-								className="periscope-btn invite-teammate-btn outlined"
-								onClick={handleShowInviteTeamMembersModal}
-								icon={<UserPlus size={16} />}
-							>
-								Invite a teammate
-							</Button>
+							<NoAuthGuard>
+								<Button
+									type="default"
+									className="periscope-btn invite-teammate-btn outlined"
+									onClick={handleShowInviteTeamMembersModal}
+									icon={<UserPlus size={16} />}
+								>
+									Invite a teammate
+								</Button>
+							</NoAuthGuard>
 
 							<LaunchChatSupport
 								attributes={{
@@ -970,7 +973,7 @@ function OnboardingAddDataSource(): JSX.Element {
 													disabled={!selectedDataSource}
 													shape="round"
 													onClick={(e): void => {
-														logEvent(
+														void logEvent(
 															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
 															{
 																dataSource: selectedDataSource?.label,
@@ -1038,7 +1041,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										type="default"
 										shape="round"
 										onClick={(): void => {
-											logEvent(
+											void logEvent(
 												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BACK_BUTTON_CLICKED}`,
 												{
 													dataSource: selectedDataSource?.label,
@@ -1057,7 +1060,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										type="primary"
 										shape="round"
 										onClick={(e): void => {
-											logEvent(
+											void logEvent(
 												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
 												{
 													dataSource: selectedDataSource?.label,
