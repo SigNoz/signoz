@@ -24,7 +24,6 @@ import {
 	Server,
 	Timer,
 } from '@signozhq/icons';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
@@ -226,27 +225,15 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{isPreviewFieldsOpen && (
-				<FloatingPanel
-					isOpen
-					width={350}
-					height={window.innerHeight - 100}
-					defaultPosition={{
-						x: window.innerWidth - 350 - 100,
-						y: 50,
-					}}
-					enableResizing={false}
-				>
-					<FieldsSelector
-						title="Preview fields"
-						fields={previewFields}
-						onFieldsChange={setPreviewFields}
-						onClose={(): void => setIsPreviewFieldsOpen(false)}
-						signal={DataSource.TRACES}
-						maxFields={10}
-					/>
-				</FloatingPanel>
-			)}
+			<FieldsSelector
+				isOpen={isPreviewFieldsOpen}
+				title="Preview fields"
+				fields={previewFields}
+				onFieldsChange={setPreviewFields}
+				onClose={(): void => setIsPreviewFieldsOpen(false)}
+				signal={DataSource.TRACES}
+				maxFields={10}
+			/>
 
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}
