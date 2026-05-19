@@ -93,6 +93,7 @@ func enhancePromQLError(query string, parseErr error) error {
 type promqlQuery struct {
 	logger      *slog.Logger
 	promEngine  prometheus.Prometheus
+	parser      parser.Parser
 	query       qbv5.PromQuery
 	tr          qbv5.TimeRange
 	requestType qbv5.RequestType
@@ -109,7 +110,15 @@ func newPromqlQuery(
 	requestType qbv5.RequestType,
 	variables map[string]qbv5.VariableItem,
 ) *promqlQuery {
-	return &promqlQuery{logger, promEngine, query, tr, requestType, variables}
+	return &promqlQuery{
+		logger:      logger,
+		promEngine:  promEngine,
+		parser:      promEngine.Parser(),
+		query:       query,
+		tr:          tr,
+		requestType: requestType,
+		vars:        variables,
+	}
 }
 
 func (q *promqlQuery) Fingerprint() string {
@@ -150,7 +159,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 		return query, nil
 	}
 
-	expr, err := parser.ParseExpr(query)
+	expr, err := q.parser.ParseExpr(query)
 	if err != nil {
 		return "", enhancePromQLError(query, err)
 	}

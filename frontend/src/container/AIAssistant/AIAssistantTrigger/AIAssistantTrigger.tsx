@@ -1,6 +1,6 @@
 import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { Bot } from '@signozhq/icons';
 
@@ -30,7 +30,7 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 	}
 
 	return (
-		<Tooltip title="AI Assistant">
+		<TooltipSimple title="AI Assistant">
 			<Button
 				variant="solid"
 				color="primary"
@@ -40,6 +40,6 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 			>
 				<Bot size={20} />
 			</Button>
-		</Tooltip>
+		</TooltipSimple>
 	);
 }

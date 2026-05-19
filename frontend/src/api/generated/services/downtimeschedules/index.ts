@@ -111,9 +111,7 @@ export function useListDowntimeSchedules<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -137,7 +135,7 @@ export const invalidateListDowntimeSchedules = async (
  * @summary Create downtime schedule
  */
 export const createDowntimeSchedule = (
-	ruletypesPostablePlannedMaintenanceDTO: BodyType<RuletypesPostablePlannedMaintenanceDTO>,
+	ruletypesPostablePlannedMaintenanceDTO?: BodyType<RuletypesPostablePlannedMaintenanceDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateDowntimeSchedule201>({
@@ -156,13 +154,13 @@ export const getCreateDowntimeScheduleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDowntimeSchedule>>,
 		TError,
-		{ data: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
+		{ data?: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createDowntimeSchedule>>,
 	TError,
-	{ data: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
+	{ data?: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
 	TContext
 > => {
 	const mutationKey = ['createDowntimeSchedule'];
@@ -176,7 +174,7 @@ export const getCreateDowntimeScheduleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createDowntimeSchedule>>,
-		{ data: BodyType<RuletypesPostablePlannedMaintenanceDTO> }
+		{ data?: BodyType<RuletypesPostablePlannedMaintenanceDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -190,7 +188,8 @@ export type CreateDowntimeScheduleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createDowntimeSchedule>>
 >;
 export type CreateDowntimeScheduleMutationBody =
-	BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+	| BodyType<RuletypesPostablePlannedMaintenanceDTO>
+	| undefined;
 export type CreateDowntimeScheduleMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -204,29 +203,29 @@ export const useCreateDowntimeSchedule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDowntimeSchedule>>,
 		TError,
-		{ data: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
+		{ data?: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createDowntimeSchedule>>,
 	TError,
-	{ data: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
+	{ data?: BodyType<RuletypesPostablePlannedMaintenanceDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateDowntimeScheduleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateDowntimeScheduleMutationOptions(options));
 };
 /**
  * This endpoint deletes a downtime schedule by ID
  * @summary Delete downtime schedule
  */
-export const deleteDowntimeScheduleByID = ({
-	id,
-}: DeleteDowntimeScheduleByIDPathParameters) => {
+export const deleteDowntimeScheduleByID = (
+	{ id }: DeleteDowntimeScheduleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/downtime_schedules/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -293,9 +292,7 @@ export const useDeleteDowntimeScheduleByID = <
 	{ pathParams: DeleteDowntimeScheduleByIDPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteDowntimeScheduleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteDowntimeScheduleByIDMutationOptions(options));
 };
 /**
  * This endpoint returns a downtime schedule by ID
@@ -381,9 +378,7 @@ export function useGetDowntimeScheduleByID<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -408,13 +403,15 @@ export const invalidateGetDowntimeScheduleByID = async (
  */
 export const updateDowntimeScheduleByID = (
 	{ id }: UpdateDowntimeScheduleByIDPathParameters,
-	ruletypesPostablePlannedMaintenanceDTO: BodyType<RuletypesPostablePlannedMaintenanceDTO>,
+	ruletypesPostablePlannedMaintenanceDTO?: BodyType<RuletypesPostablePlannedMaintenanceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/downtime_schedules/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostablePlannedMaintenanceDTO,
+		signal,
 	});
 };
 
@@ -427,7 +424,7 @@ export const getUpdateDowntimeScheduleByIDMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateDowntimeScheduleByIDPathParameters;
-			data: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+			data?: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
 		},
 		TContext
 	>;
@@ -436,7 +433,7 @@ export const getUpdateDowntimeScheduleByIDMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateDowntimeScheduleByIDPathParameters;
-		data: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+		data?: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
 	},
 	TContext
 > => {
@@ -453,7 +450,7 @@ export const getUpdateDowntimeScheduleByIDMutationOptions = <
 		Awaited<ReturnType<typeof updateDowntimeScheduleByID>>,
 		{
 			pathParams: UpdateDowntimeScheduleByIDPathParameters;
-			data: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+			data?: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -468,7 +465,8 @@ export type UpdateDowntimeScheduleByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateDowntimeScheduleByID>>
 >;
 export type UpdateDowntimeScheduleByIDMutationBody =
-	BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+	| BodyType<RuletypesPostablePlannedMaintenanceDTO>
+	| undefined;
 export type UpdateDowntimeScheduleByIDMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -484,7 +482,7 @@ export const useUpdateDowntimeScheduleByID = <
 		TError,
 		{
 			pathParams: UpdateDowntimeScheduleByIDPathParameters;
-			data: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+			data?: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
 		},
 		TContext
 	>;
@@ -493,11 +491,9 @@ export const useUpdateDowntimeScheduleByID = <
 	TError,
 	{
 		pathParams: UpdateDowntimeScheduleByIDPathParameters;
-		data: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+		data?: BodyType<RuletypesPostablePlannedMaintenanceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateDowntimeScheduleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateDowntimeScheduleByIDMutationOptions(options));
 };

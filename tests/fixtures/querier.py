@@ -200,6 +200,8 @@ def build_formula_query(
     *,
     functions: list[dict] | None = None,
     disabled: bool = False,
+    order: list[dict] | None = None,
+    limit: int | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -208,6 +210,10 @@ def build_formula_query(
     }
     if functions:
         spec["functions"] = functions
+    if order:
+        spec["order"] = order
+    if limit is not None:
+        spec["limit"] = limit
     return {"type": "builder_formula", "spec": spec}
 
 
@@ -446,6 +452,35 @@ def build_scalar_query(
 
     if having_expression:
         spec["having"] = {"expression": having_expression}
+
+    return {"type": "builder_query", "spec": spec}
+
+
+def build_raw_query(
+    name: str,
+    signal: str,
+    *,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+) -> dict:
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "disabled": disabled,
+    }
+
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
 
     return {"type": "builder_query", "spec": spec}
 

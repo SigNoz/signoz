@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 
 import { Message } from '../../types';
@@ -32,7 +32,7 @@ export default function UserMessageActions({
 
 	return (
 		<div className={styles.actions}>
-			<Tooltip title={copied ? 'Copied!' : 'Copy'}>
+			<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
 				<Button
 					className={styles.btn}
 					size="icon"
@@ -42,7 +42,7 @@ export default function UserMessageActions({
 				>
 					{copied ? <Check size={12} /> : <Copy size={12} />}
 				</Button>
-			</Tooltip>
+			</TooltipSimple>
 		</div>
 	);
 }

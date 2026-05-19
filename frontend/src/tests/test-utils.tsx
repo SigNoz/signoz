@@ -105,6 +105,59 @@ jest.mock('react-i18next', () => ({
 	}),
 }));
 
+export const defaultFeatureFlags = [
+	{ name: FeatureKeys.SSO, active: true, usage: 0, usage_limit: -1, route: '' },
+	{
+		name: FeatureKeys.USE_SPAN_METRICS,
+		active: false,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.GATEWAY,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.PREMIUM_SUPPORT,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.ANOMALY_DETECTION,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.ONBOARDING,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.CHAT_SUPPORT,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+	{
+		name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
+		active: true,
+		usage: 0,
+		usage_limit: -1,
+		route: '',
+	},
+];
+
 export function getAppContextMock(
 	role: string,
 	appContextOverrides?: Partial<IAppContext>,
@@ -168,57 +221,7 @@ export function getAppContextMock(
 		hasEditPermission: role === USER_ROLES.ADMIN || role === USER_ROLES.EDITOR,
 		isFetchingUser: false,
 		userFetchError: null,
-		featureFlags: [
-			{
-				name: FeatureKeys.SSO,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.USE_SPAN_METRICS,
-				active: false,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.GATEWAY,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.PREMIUM_SUPPORT,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ANOMALY_DETECTION,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.ONBOARDING,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-			{
-				name: FeatureKeys.CHAT_SUPPORT,
-				active: true,
-				usage: 0,
-				usage_limit: -1,
-				route: '',
-			},
-		],
+		featureFlags: defaultFeatureFlags,
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
 		hostsData: null,

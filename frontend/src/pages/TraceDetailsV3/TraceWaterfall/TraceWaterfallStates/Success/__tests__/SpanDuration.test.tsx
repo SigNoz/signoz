@@ -2,18 +2,33 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+// Local identity-proxy mock for this module so `styles.foo` resolves to
+// `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as
+// `export default {}`; we override resolution for this specific file only.
+jest.mock(
+	'../Success.module.scss',
+	() =>
+		new Proxy(
+			{},
+			{
+				get: (_target, prop): string | undefined =>
+					typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
+			},
+		),
+);
+
 import { SpanDuration } from '../Success';
+import successStyles from '../Success.module.scss';
 
 const renderWithTraceProvider: typeof render = (ui, options) =>
 	render(ui, options);
 
-// Constants to avoid string duplication
 const SPAN_DURATION_TEXT = '1.16 ms';
-const SPAN_DURATION_CLASS = '.span-duration';
-const INTERESTED_SPAN_CLASS = 'interested-span';
-const HIGHLIGHTED_SPAN_CLASS = 'highlighted-span';
-const DIMMED_SPAN_CLASS = 'dimmed-span';
-const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
+const SPAN_DURATION_CLASS = `.${successStyles.spanDuration}`;
+const INTERESTED_SPAN_CLASS = successStyles.isInterested;
+const HIGHLIGHTED_SPAN_CLASS = successStyles.isHighlighted;
+const DIMMED_SPAN_CLASS = successStyles.isDimmed;
+const SELECTED_NON_MATCHING_SPAN_CLASS = successStyles.isSelectedNonMatching;
 
 jest.mock('components/TimelineV3/TimelineV3', () => ({
 	__esModule: true,
@@ -127,10 +142,7 @@ describe('SpanDuration', () => {
 
 		const spanElement = screen.getByText(SPAN_DURATION_TEXT);
 
-		// Hover over the span should add hovered-span class
 		fireEvent.mouseEnter(spanElement);
-
-		// Mouse leave should remove hovered-span class
 		fireEvent.mouseLeave(spanElement);
 	});
 
@@ -259,8 +271,8 @@ describe('SpanDuration', () => {
 				traceMetadata={mockTraceMetadata}
 				selectedSpan={undefined}
 				handleSpanClick={mockSetSelectedSpan}
-				filteredSpanIds={[]} // Empty array but filter is active
-				isFilterActive // This is the key difference
+				filteredSpanIds={[]}
+				isFilterActive
 			/>,
 		);
 
