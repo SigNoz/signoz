@@ -56,6 +56,15 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 					FieldDataType: key.FieldDataType,
 				})
 			}
+
+			if key.FieldContext == telemetrytypes.FieldContextScope {
+				keys = append(keys, &telemetrytypes.FieldKeySelector{
+					Name:          key.FieldContext.StringValue() + "." + key.Name,
+					Signal:        key.Signal,
+					FieldContext:  key.FieldContext,
+					FieldDataType: key.FieldDataType,
+				})
+			}
 		}
 	}
 
