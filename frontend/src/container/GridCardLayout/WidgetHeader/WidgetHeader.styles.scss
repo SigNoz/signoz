@@ -26,10 +26,13 @@
 	gap: 8px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	flex: 1;
+	min-width: 0;
 }
 
 .widget-header-title {
 	max-width: 80%;
+	min-width: 0;
 }
 
 .widget-header-actions {

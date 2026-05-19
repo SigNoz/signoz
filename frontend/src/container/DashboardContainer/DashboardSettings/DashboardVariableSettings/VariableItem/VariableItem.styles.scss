@@ -211,7 +211,12 @@
 			display: grid;
 			grid-template-columns: max-content 1fr;
 
+			.typography-variables {
+				display: block;
+			}
+
 			.default-value-description {
+				display: block;
 				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
