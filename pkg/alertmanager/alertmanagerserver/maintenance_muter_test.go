@@ -20,8 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func newMuter(t *testing.T, store alertmanagertypes.MaintenanceStore) *MaintenanceMuter {
-	t.Helper()
+func newMuter(store alertmanagertypes.MaintenanceStore) *MaintenanceMuter {
 	return NewMaintenanceMuter(store, "org-1", slog.New(slog.DiscardHandler))
 }
 
@@ -55,12 +54,12 @@ func futureFixed(ruleIDs ...string) *alertmanagertypes.PlannedMaintenance {
 }
 
 func labelsFor(ruleID string) model.LabelSet {
-	return model.LabelSet{model.LabelName(ruletypes.AlertRuleIDLabel): model.LabelValue(ruleID)}
+	return model.LabelSet{ruletypes.AlertRuleIDLabel: model.LabelValue(ruleID)}
 }
 
 func TestMutes_EmptyRuleIDLabel(t *testing.T) {
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.False(t, muter.Mutes(context.Background(), model.LabelSet{}))
 	// Short-circuit: no store lookup needed when the label is missing.
 	store.AssertNotCalled(t, "ListPlannedMaintenance")
@@ -69,38 +68,32 @@ func TestMutes_EmptyRuleIDLabel(t *testing.T) {
 func TestMutes_NoMaintenanceWindows(t *testing.T) {
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return([]*alertmanagertypes.PlannedMaintenance(nil), nil)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.False(t, muter.Mutes(context.Background(), labelsFor("rule-1")))
 }
 
-func TestMutes_MatchingRule(t *testing.T) {
+func TestMutes_MaintenanceWindowWithRules(t *testing.T) {
 	mw := activeFixed("rule-1", "rule-2")
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return([]*alertmanagertypes.PlannedMaintenance{mw}, nil)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.True(t, muter.Mutes(context.Background(), labelsFor("rule-1")))
 	assert.True(t, muter.Mutes(context.Background(), labelsFor("rule-2")))
-}
-
-func TestMutes_NonMatchingRule(t *testing.T) {
-	store := alertmanagertypestest.NewMockMaintenanceStore(t)
-	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return([]*alertmanagertypes.PlannedMaintenance{activeFixed("rule-1")}, nil)
-	muter := newMuter(t, store)
-	assert.False(t, muter.Mutes(context.Background(), labelsFor("rule-other")))
+	assert.False(t, muter.Mutes(context.Background(), labelsFor("rule-3")))
 }
 
 func TestMutes_EmptyRuleIDsMatchesAllRules(t *testing.T) {
 	// A maintenance with no RuleIDs is treated as scoping every rule.
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return([]*alertmanagertypes.PlannedMaintenance{activeFixed()}, nil)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.True(t, muter.Mutes(context.Background(), labelsFor("any-rule")))
 }
 
 func TestMutes_FutureWindowDoesNotMute(t *testing.T) {
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return([]*alertmanagertypes.PlannedMaintenance{futureFixed("rule-1")}, nil)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.False(t, muter.Mutes(context.Background(), labelsFor("rule-1")))
 }
 
@@ -109,13 +102,13 @@ func TestMutes_AnyOfMultipleWindowsMatches(t *testing.T) {
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return(
 		[]*alertmanagertypes.PlannedMaintenance{futureFixed("rule-1"), activeFixed("rule-1")}, nil,
 	)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.True(t, muter.Mutes(context.Background(), labelsFor("rule-1")))
 }
 
 func TestMutedBy_EmptyRuleIDLabel(t *testing.T) {
 	store := alertmanagertypestest.NewMockMaintenanceStore(t)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.Nil(t, muter.MutedBy(context.Background(), model.LabelSet{}))
 	store.AssertNotCalled(t, "ListPlannedMaintenance")
 }
@@ -125,7 +118,7 @@ func TestMutedBy_NoMatches(t *testing.T) {
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return(
 		[]*alertmanagertypes.PlannedMaintenance{activeFixed("rule-1"), futureFixed("rule-1")}, nil,
 	)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	assert.Nil(t, muter.MutedBy(context.Background(), labelsFor("rule-other")))
 }
 
@@ -139,7 +132,7 @@ func TestMutedBy_ReturnsIDsOfAllActiveMatchingWindows(t *testing.T) {
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return(
 		[]*alertmanagertypes.PlannedMaintenance{mw1, mw2, mw3, mw4}, nil,
 	)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	ids := muter.MutedBy(context.Background(), labelsFor("rule-1"))
 
 	want := []string{mw1.ID.String(), mw2.ID.String()}
@@ -153,7 +146,7 @@ func TestCache_RepeatedCallsHitStoreOnce(t *testing.T) {
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return(
 		[]*alertmanagertypes.PlannedMaintenance{activeFixed("rule-1")}, nil,
 	)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	ctx := context.Background()
 	for i := 0; i < 5; i++ {
 		require.True(t, muter.Mutes(ctx, labelsFor("rule-1")))
@@ -173,7 +166,7 @@ func TestCache_StoreErrorReturnsStaleCache(t *testing.T) {
 	).Once()
 
 	ctx := context.Background()
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 
 	// First call populates the cache from a working store.
 	require.True(t, muter.Mutes(ctx, labelsFor("rule-1")))
@@ -201,7 +194,7 @@ func TestCache_ExpiredCacheRefetchesUpdatedData(t *testing.T) {
 	).Once()
 
 	ctx := context.Background()
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 
 	require.True(t, muter.Mutes(ctx, labelsFor("rule-1")))
 
@@ -219,7 +212,7 @@ func TestMutes_IsConcurrencySafe(t *testing.T) {
 	store.On("ListPlannedMaintenance", mock.Anything, "org-1").Return(
 		[]*alertmanagertypes.PlannedMaintenance{activeFixed("rule-1")}, nil,
 	)
-	muter := newMuter(t, store)
+	muter := newMuter(store)
 	ctx := context.Background()
 
 	const goroutines = 32
