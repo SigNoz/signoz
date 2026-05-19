@@ -45,10 +45,16 @@ func (m *addIntegrationDashboard) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "slug", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
 			ColumnNames: []sqlschema.ColumnName{"id"},
+		},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("dashboard_id"),
+				ReferencedTableName:   sqlschema.TableName("dashboard"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
 		},
 	})
 	sqls = append(sqls, m.sqlschema.Operator().CreateIndex(
