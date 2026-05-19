@@ -63,7 +63,16 @@ export default function ClarificationForm({
 		setAnswers((prev) => ({ ...prev, [id]: value }));
 	};
 
+	const isFormValid = fields.every(
+		(f) => !f.required || isFieldFilled(f, answers[f.id]),
+	);
+
 	const handleSubmit = async (): Promise<void> => {
+		// Guard against the Submit-button-bypass case (e.g. Enter inside a text
+		// field): required fields must be filled before we resume the agent.
+		if (!isFormValid) {
+			return;
+		}
 		setSubmitted(true);
 		// Approximate queryLength as the JSON encoding of the form answers — the
 		// clarification API doesn't render a single user-visible string, but the
@@ -136,7 +145,7 @@ export default function ClarificationForm({
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
-					disabled={isStreaming}
+					disabled={isStreaming || !isFormValid}
 					prefix={<Send />}
 				>
 					Submit
@@ -176,6 +185,27 @@ function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
 		return Array.isArray(raw) ? raw : [];
 	}
 	return raw ?? '';
+}
+
+// Whether a required field has been answered. Booleans are always considered
+// filled (they're initialised to a concrete true/false). For other types we
+// reject empty strings, empty arrays, and NaN numbers — including the
+// `allowCustom` case where the user picked "Other" but typed nothing, which
+// propagates an empty string through `onChange`.
+function isFieldFilled(
+	field: ClarificationFieldEventDTO,
+	value: unknown,
+): boolean {
+	switch (field.type) {
+		case ClarificationFieldTypeDTO.multi_select:
+			return Array.isArray(value) && value.length > 0;
+		case ClarificationFieldTypeDTO.boolean:
+			return true;
+		case ClarificationFieldTypeDTO.number:
+			return typeof value === 'number' && !Number.isNaN(value);
+		default:
+			return typeof value === 'string' && value.trim().length > 0;
+	}
 }
 
 interface FieldInputProps {

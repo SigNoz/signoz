@@ -90,6 +90,11 @@ export default function VirtualizedMessages({
 
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 	const scrollerRef = useRef<HTMLElement | Window | null>(null);
+	// Tracks whether the scroller is pinned to (or near) the bottom. Updated
+	// via Virtuoso's `atBottomStateChange` so we can stop force-scrolling the
+	// user back down when they've intentionally scrolled up to read earlier
+	// content.
+	const atBottomRef = useRef(true);
 
 	const handleRegenerate = useCallback(
 		(messageId: string): void => {
@@ -111,8 +116,13 @@ export default function VirtualizedMessages({
 	// align: 'end')` would only reach the last item's bottom and leave the
 	// padding hidden below the fold. Use `auto` while streaming so the bottom
 	// stays glued as text deltas arrive; `smooth` lags when triggered every
-	// few ms.
+	// few ms. Bail out if the user has scrolled away from the bottom — that's
+	// an explicit signal they want to read earlier content without being
+	// yanked back.
 	useEffect(() => {
+		if (!atBottomRef.current) {
+			return;
+		}
 		const scroller = scrollerRef.current;
 		if (!(scroller instanceof HTMLElement)) {
 			return;
@@ -132,13 +142,17 @@ export default function VirtualizedMessages({
 
 	const followOutput = useCallback(
 		(atBottom: boolean): false | 'auto' | 'smooth' => {
-			if (isStreaming) {
-				return 'auto';
+			if (!atBottom) {
+				return false;
 			}
-			return atBottom ? 'smooth' : false;
+			return isStreaming ? 'auto' : 'smooth';
 		},
 		[isStreaming],
 	);
+
+	const handleAtBottomStateChange = useCallback((atBottom: boolean): void => {
+		atBottomRef.current = atBottom;
+	}, []);
 
 	const showStreamingSlot =
 		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
@@ -188,6 +202,8 @@ export default function VirtualizedMessages({
 			className={styles.messages}
 			totalCount={totalCount}
 			followOutput={followOutput}
+			atBottomStateChange={handleAtBottomStateChange}
+			atBottomThreshold={64}
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}
 			itemContent={(index): JSX.Element => {
 				if (index < messages.length) {

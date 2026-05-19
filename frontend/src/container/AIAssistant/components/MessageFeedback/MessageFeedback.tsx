@@ -160,6 +160,7 @@ export default function MessageFeedback({
 							variant="ghost"
 							onClick={handleCopy}
 							color="secondary"
+							aria-label={copied ? 'Copied' : 'Copy message'}
 						>
 							{copied ? <Check size={12} /> : <Copy size={12} />}
 						</Button>
@@ -172,6 +173,8 @@ export default function MessageFeedback({
 							variant="ghost"
 							color="secondary"
 							onClick={(): void => handleVote('positive')}
+							aria-label="Good response"
+							aria-pressed={vote === 'positive'}
 						>
 							<ThumbsUp size={12} />
 						</Button>
@@ -186,6 +189,8 @@ export default function MessageFeedback({
 							variant="ghost"
 							color="secondary"
 							onClick={(): void => handleVote('negative')}
+							aria-label="Bad response"
+							aria-pressed={vote === 'negative'}
 						>
 							<ThumbsDown size={12} />
 						</Button>
@@ -199,6 +204,7 @@ export default function MessageFeedback({
 								variant="ghost"
 								color="secondary"
 								onClick={onRegenerate}
+								aria-label="Regenerate response"
 							>
 								<RefreshCw size={12} />
 							</Button>

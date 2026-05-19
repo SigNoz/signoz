@@ -251,13 +251,18 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	width: 100%;
 	height: 32px;
 	padding: 0 8px;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	font-size: 12px;
 	font-weight: 550;
 	text-align: left;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	appearance: none;
 	cursor: pointer;
 	transition:
 		background 0.15s ease,
@@ -268,6 +273,11 @@
 		background: var(--l2-background);
 		color: var(--l1-foreground);
 		border-color: var(--l2-border);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--accent-primary);
+		outline-offset: 1px;
 	}
 
 	&.active {
@@ -316,14 +326,18 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
+	width: 100%;
 	padding: 8px;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
+	background: transparent;
 	color: var(--l1-foreground);
+	font: inherit;
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 1.35;
 	text-align: left;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	appearance: none;
 	cursor: pointer;
 	// Required for the inner span's `text-overflow: ellipsis` to engage —
 	// flex items default to `min-width: auto` (intrinsic width) and would
@@ -339,6 +353,11 @@
 		background: var(--l2-background);
 		border-color: var(--l2-border);
 		transform: translateY(-1px);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--accent-primary);
+		outline-offset: 1px;
 	}
 
 	&.selected {

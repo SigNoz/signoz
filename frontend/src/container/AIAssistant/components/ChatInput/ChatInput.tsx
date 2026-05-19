@@ -900,15 +900,23 @@ export default function ChatInput({
 							sideOffset={8}
 						>
 							<div className={styles.contextPopoverContent}>
-								<div className={styles.contextPopoverCategories}>
+								<div
+									className={styles.contextPopoverCategories}
+									role="tablist"
+									aria-orientation="vertical"
+									aria-label="Context categories"
+								>
 									{CONTEXT_CATEGORIES.map((category) => {
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										const isActive = activeContextCategory === category;
 										return (
-											<div
+											<button
 												key={category}
+												type="button"
 												role="tab"
-												tabIndex={0}
+												// Roving tabindex: only the active tab participates in
+												// the Tab sequence; arrow keys move between tabs.
+												tabIndex={isActive ? 0 : -1}
 												aria-selected={isActive}
 												className={cx(styles.contextPopoverCategoryItem, {
 													[styles.active]: isActive,
@@ -918,16 +926,23 @@ export default function ChatInput({
 													setPickerSearchQuery('');
 												}}
 												onKeyDown={(e): void => {
-													if (e.key === 'Enter' || e.key === ' ') {
+													if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 														e.preventDefault();
-														setActiveContextCategory(category);
+														const idx = CONTEXT_CATEGORIES.indexOf(category);
+														const nextIdx =
+															e.key === 'ArrowDown'
+																? (idx + 1) % CONTEXT_CATEGORIES.length
+																: (idx - 1 + CONTEXT_CATEGORIES.length) %
+																	CONTEXT_CATEGORIES.length;
+														const next = CONTEXT_CATEGORIES[nextIdx];
+														setActiveContextCategory(next);
 														setPickerSearchQuery('');
 													}
 												}}
 											>
 												<CategoryIcon size={13} />
 												<span>{category}</span>
-											</div>
+											</button>
 										);
 									})}
 								</div>
@@ -970,8 +985,10 @@ export default function ChatInput({
 												);
 
 												return (
-													<div
+													<button
 														key={option.id}
+														type="button"
+														aria-pressed={isSelected}
 														className={cx(styles.contextPopoverEntityItem, {
 															[styles.selected]: isSelected,
 														})}
@@ -986,7 +1003,7 @@ export default function ChatInput({
 														<span className={styles.contextPopoverEntityItemText}>
 															{option.value}
 														</span>
-													</div>
+													</button>
 												);
 											})
 										)}
