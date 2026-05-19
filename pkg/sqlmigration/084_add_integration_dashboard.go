@@ -15,7 +15,7 @@ type addIntegrationDashboard struct {
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddIntegrationDashboardsFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewAddIntegrationDashboardFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("add_integration_dashboard"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
@@ -35,7 +35,6 @@ func (m *addIntegrationDashboard) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// dashboard_id is knowingly kept loosing coupled with dashboard's id and is not a foreign key to dashboard's id.
 	sqls := m.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "integration_dashboard",
 		Columns: []*sqlschema.Column{

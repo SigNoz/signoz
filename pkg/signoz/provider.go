@@ -203,7 +203,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
-		sqlmigration.NewAddIntegrationDashboardsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
 	)
 }
 
