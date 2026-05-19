@@ -56,12 +56,14 @@
 }
 
 .sectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 	color: var(--muted-foreground);
 	font-size: 11px;
 	font-weight: 500;
 	line-height: 18px;
-	letter-spacing: 0.88px;
-	text-transform: uppercase;
 	padding: 8px 12px;
 }
 
@@ -87,13 +89,6 @@
 	text-align: center;
 	color: var(--l2-foreground);
 	font-size: 12px;
-}
-
-.limitHint {
-	padding: 8px 12px;
-	text-align: center;
-	color: var(--muted-foreground);
-	font-size: 11px;
 }
 
 .fieldItem {

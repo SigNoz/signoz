@@ -18,21 +18,22 @@ import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { Typography } from '@signozhq/ui/typography';
 
-import styles from './FieldsSettings.module.scss';
+import styles from './FieldsSelector.module.scss';
 
 function SortableField({
 	field,
 	onRemove,
 	allowDrag,
 }: {
-	field: BaseAutocompleteData;
-	onRemove: (field: BaseAutocompleteData) => void;
+	field: TelemetryFieldKey;
+	onRemove: (field: TelemetryFieldKey) => void;
 	allowDrag: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: field.key });
+		useSortable({ id: field.name });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -50,7 +51,7 @@ function SortableField({
 		>
 			<div {...attributes} {...listeners} className={styles.dragHandle}>
 				{allowDrag && <GripVertical size={14} />}
-				<span className={styles.fieldKey}>{field.key}</span>
+				<span className={styles.fieldKey}>{field.name}</span>
 			</div>
 			<Button
 				className={cx(styles.removeBtn, 'periscope-btn')}
@@ -67,41 +68,52 @@ function SortableField({
 
 interface AddedFieldsProps {
 	inputValue: string;
-	fields: BaseAutocompleteData[];
-	onFieldsChange: (fields: BaseAutocompleteData[]) => void;
+	fields: TelemetryFieldKey[];
+	onFieldsChange: (fields: TelemetryFieldKey[]) => void;
+	maxFields?: number;
 }
 
 function AddedFields({
 	inputValue,
 	fields,
 	onFieldsChange,
+	maxFields,
 }: AddedFieldsProps): JSX.Element {
 	const sensors = useSensors(useSensor(PointerSensor));
 
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
 		if (over && active.id !== over.id) {
-			const oldIndex = fields.findIndex((f) => f.key === active.id);
-			const newIndex = fields.findIndex((f) => f.key === over.id);
+			const oldIndex = fields.findIndex((f) => f.name === active.id);
+			const newIndex = fields.findIndex((f) => f.name === over.id);
 			onFieldsChange(arrayMove(fields, oldIndex, newIndex));
 		}
 	};
 
 	const filteredFields = useMemo(
 		() =>
-			fields.filter((f) => f.key.toLowerCase().includes(inputValue.toLowerCase())),
+			fields.filter((f) =>
+				f.name.toLowerCase().includes(inputValue.toLowerCase()),
+			),
 		[fields, inputValue],
 	);
 
-	const handleRemove = (field: BaseAutocompleteData): void => {
-		onFieldsChange(fields.filter((f) => f.key !== field.key));
+	const handleRemove = (field: TelemetryFieldKey): void => {
+		onFieldsChange(fields.filter((f) => f.name !== field.name));
 	};
 
 	const allowDrag = inputValue.length === 0;
 
 	return (
 		<div className={cx(styles.section, styles.sectionAdded)}>
-			<div className={styles.sectionHeader}>ADDED FIELDS</div>
+			<div className={styles.sectionHeader}>
+				<span>ADDED FIELDS</span>
+				{maxFields !== undefined && (
+					<Typography.Text size="sm" weight="medium" color="muted">
+						Max Allowed: {maxFields}
+					</Typography.Text>
+				)}
+			</div>
 			<div className={styles.addedList}>
 				<OverlayScrollbar>
 					<DndContext
@@ -113,13 +125,13 @@ function AddedFields({
 							<div className={styles.noValues}>No values found</div>
 						) : (
 							<SortableContext
-								items={fields.map((f) => f.key)}
+								items={fields.map((f) => f.name)}
 								strategy={verticalListSortingStrategy}
 								disabled={!allowDrag}
 							>
 								{filteredFields.map((field) => (
 									<SortableField
-										key={field.key}
+										key={field.name}
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}

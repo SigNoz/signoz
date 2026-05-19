@@ -4,38 +4,32 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
 import OtherFields from './OtherFields';
 
-import styles from './FieldsSettings.module.scss';
+import styles from './FieldsSelector.module.scss';
 
-const MAX_FIELDS_DEFAULT = 10;
-
-interface FieldsSettingsProps {
+interface FieldsSelectorProps {
 	title: string;
-	// Picker's native shape (`BaseAutocompleteData`) is preserved end-to-end so
-	// downstream consumers (flamegraph `selectFields`, hover popovers) get full
-	// field metadata without a lossy conversion at add-time.
-	fields: BaseAutocompleteData[];
-	onFieldsChange: (fields: BaseAutocompleteData[]) => void;
+	fields: TelemetryFieldKey[];
+	onFieldsChange: (fields: TelemetryFieldKey[]) => void;
 	onClose: () => void;
-	dataSource: DataSource;
+	signal: DataSource;
 	maxFields?: number;
 }
 
-function FieldsSettings({
+function FieldsSelector({
 	title,
 	fields,
 	onFieldsChange,
 	onClose,
-	dataSource,
-	maxFields = MAX_FIELDS_DEFAULT,
-}: FieldsSettingsProps): JSX.Element {
-	// Local draft state — changes here don't persist until Save
-	const [draftFields, setDraftFields] = useState<BaseAutocompleteData[]>(fields);
+	signal,
+	maxFields,
+}: FieldsSelectorProps): JSX.Element {
+	const [draftFields, setDraftFields] = useState<TelemetryFieldKey[]>(fields);
 	const [inputValue, setInputValue] = useState('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState('');
 
@@ -53,11 +47,11 @@ function FieldsSettings({
 	);
 
 	const handleAdd = useCallback(
-		(field: BaseAutocompleteData): void => {
-			if (draftFields.length >= maxFields) {
+		(field: TelemetryFieldKey): void => {
+			if (maxFields !== undefined && draftFields.length >= maxFields) {
 				return;
 			}
-			if (draftFields.some((f) => f.key === field.key)) {
+			if (draftFields.some((f) => f.name === field.name)) {
 				return;
 			}
 			setDraftFields((prev) => [...prev, field]);
@@ -81,12 +75,12 @@ function FieldsSettings({
 		() =>
 			!(
 				draftFields.length === fields.length &&
-				draftFields.every((f, i) => f.key === fields[i]?.key)
+				draftFields.every((f, i) => f.name === fields[i]?.name)
 			),
 		[draftFields, fields],
 	);
 
-	const isAtLimit = draftFields.length >= maxFields;
+	const isAtLimit = maxFields !== undefined && draftFields.length >= maxFields;
 
 	return (
 		<div className={styles.root}>
@@ -112,10 +106,11 @@ function FieldsSettings({
 				inputValue={inputValue}
 				fields={draftFields}
 				onFieldsChange={setDraftFields}
+				maxFields={maxFields}
 			/>
 
 			<OtherFields
-				dataSource={dataSource}
+				signal={signal}
 				debouncedInputValue={debouncedInputValue}
 				addedFields={draftFields}
 				onAdd={handleAdd}
@@ -146,4 +141,4 @@ function FieldsSettings({
 	);
 }
 
-export default FieldsSettings;
+export default FieldsSelector;

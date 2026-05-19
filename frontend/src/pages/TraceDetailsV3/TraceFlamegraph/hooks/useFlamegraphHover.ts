@@ -144,14 +144,14 @@ export function useFlamegraphHover(
 	const buildPreviewRows = useCallback(
 		(span: FlamegraphSpan): SpanPreviewRowData[] =>
 			previewFields
-				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.name))
 				.map((field) => {
 					const value = getSpanAttribute(
 						{ resource: span.resource, attributes: span.attributes },
-						field.key,
+						field.name,
 					);
 					return value !== undefined && value !== ''
-						? { key: field.key, value: String(value) }
+						? { key: field.name, value: String(value) }
 						: null;
 				})
 				.filter((r): r is SpanPreviewRowData => r !== null),

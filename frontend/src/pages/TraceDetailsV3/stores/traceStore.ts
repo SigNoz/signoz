@@ -15,6 +15,7 @@ import {
 	AGGREGATIONS,
 	getAggregationMap as findAggregationMap,
 } from '../utils/aggregations';
+import { toTelemetryFieldKey } from '../utils/previewFields';
 
 interface MutateOptions {
 	onSuccess?: () => void;
@@ -37,7 +38,7 @@ interface TraceStoreState {
 	// --- Derived state (cached for reference stability) ---
 	colorByField: TelemetryFieldKey;
 	availableColorByOptions: ColorByOption[];
-	previewFields: BaseAutocompleteData[];
+	previewFields: TelemetryFieldKey[];
 
 	// --- Setters used only by TraceStoreSync ---
 	setAggregations: (
@@ -51,7 +52,7 @@ interface TraceStoreState {
 
 	// --- Public actions (called from components) ---
 	setColorByField: (field: TelemetryFieldKey) => void;
-	setPreviewFields: (next: BaseAutocompleteData[]) => void;
+	setPreviewFields: (next: TelemetryFieldKey[]) => void;
 }
 
 /**
@@ -105,21 +106,31 @@ function deriveColorState(
 }
 
 /**
- * Reads preview fields from user preferences and filters out malformed entries.
+ * Reads preview fields from user preferences and normalizes them to
+ * `TelemetryFieldKey`. Legacy entries persisted as `BaseAutocompleteData` (with
+ * a `.key` instead of `.name`) are upgraded in-place so existing users don't
+ * lose their saved preview-field selection.
  */
 function derivePreviewFields(
 	userPreferences: UserPreference[] | null,
-): BaseAutocompleteData[] {
+): TelemetryFieldKey[] {
 	const pref = userPreferences?.find(
 		(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PREVIEW_ATTRIBUTES,
 	);
-	const raw = (pref?.value as BaseAutocompleteData[] | undefined) ?? [];
-	return raw.filter(
-		(f): f is BaseAutocompleteData =>
-			typeof f === 'object' &&
-			f !== null &&
-			typeof (f as { key?: unknown }).key === 'string',
-	);
+	const raw = (pref?.value as unknown[] | undefined) ?? [];
+	const result: TelemetryFieldKey[] = [];
+	for (const entry of raw) {
+		if (typeof entry !== 'object' || entry === null) {
+			continue;
+		}
+		const candidate = entry as { name?: unknown; key?: unknown };
+		if (typeof candidate.name === 'string') {
+			result.push(entry as TelemetryFieldKey);
+		} else if (typeof candidate.key === 'string') {
+			result.push(toTelemetryFieldKey(entry as BaseAutocompleteData));
+		}
+	}
+	return result;
 }
 
 export const useTraceStore = create<TraceStoreState>()((set, get) => ({

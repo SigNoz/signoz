@@ -112,11 +112,11 @@ export function SpanHoverCard({
 		}
 		const span = spans[idx];
 		const previewRows: SpanPreviewRow[] = previewFields
-			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.key))
+			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.name))
 			.map((f) => {
-				const value = getSpanAttribute(span, f.key);
+				const value = getSpanAttribute(span, f.name);
 				return value !== undefined && value !== ''
-					? { key: f.key, value: String(value) }
+					? { key: f.name, value: String(value) }
 					: null;
 			})
 			.filter((r): r is SpanPreviewRow => r !== null);

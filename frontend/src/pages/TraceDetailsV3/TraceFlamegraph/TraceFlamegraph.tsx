@@ -9,10 +9,7 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { COLOR_BY_FIELDS } from '../constants';
 import { useTraceStore } from '../stores/traceStore';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
-import {
-	mergeTelemetryFieldKeys,
-	toTelemetryFieldKey,
-} from '../utils/previewFields';
+import { mergeTelemetryFieldKeys } from '../utils/previewFields';
 import { FLAMEGRAPH_SPAN_LIMIT } from './constants';
 import FlamegraphCanvas from './FlamegraphCanvas';
 import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
@@ -60,11 +57,7 @@ function TraceFlamegraph({
 	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
 	// color-by entries first so their canonical metadata wins on collision.
 	const flamegraphSelectFields = useMemo(
-		() =>
-			mergeTelemetryFieldKeys(
-				COLOR_BY_FIELDS,
-				previewFields.map(toTelemetryFieldKey),
-			),
+		() => mergeTelemetryFieldKeys(COLOR_BY_FIELDS, previewFields),
 		[previewFields],
 	);
 

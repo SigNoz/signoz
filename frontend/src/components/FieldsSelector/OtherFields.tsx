@@ -4,51 +4,58 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
+import {
+	FieldContext,
+	FieldDataType,
+	SignalType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-import styles from './FieldsSettings.module.scss';
+import styles from './FieldsSelector.module.scss';
 
 interface OtherFieldsProps {
-	dataSource: DataSource;
+	signal: DataSource;
 	debouncedInputValue: string;
-	addedFields: BaseAutocompleteData[];
-	onAdd: (field: BaseAutocompleteData) => void;
+	addedFields: TelemetryFieldKey[];
+	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 }
 
 function OtherFields({
-	dataSource,
+	signal,
 	debouncedInputValue,
 	addedFields,
 	onAdd,
 	isAtLimit,
 }: OtherFieldsProps): JSX.Element {
-	// API call to get available attribute keys
-	const { data, isFetching } = useGetAggregateKeys(
+	const { data, isFetching } = useGetQueryKeySuggestions(
 		{
+			signal,
 			searchText: debouncedInputValue,
-			dataSource,
-			aggregateOperator: 'noop',
-			aggregateAttribute: '',
-			tagType: '',
 		},
 		{
 			queryKey: [
-				REACT_QUERY_KEY.GET_OTHER_FILTERS,
-				'preview-fields',
+				REACT_QUERY_KEY.GET_FIELDS_SELECTOR_SUGGESTIONS,
+				signal,
 				debouncedInputValue,
 			],
 			enabled: true,
 		},
 	);
 
-	// Filter out already-added fields, match on .key from API response objects
-	const otherFields = useMemo(() => {
-		const attributes = data?.payload?.attributeKeys || [];
-		const addedKeys = new Set(addedFields.map((f) => f.key));
-		return attributes.filter((attr) => !addedKeys.has(attr.key));
+	const otherFields: TelemetryFieldKey[] = useMemo(() => {
+		const suggestions = Object.values(data?.data.data.keys || {}).flat();
+		const addedNames = new Set(addedFields.map((f) => f.name));
+		return suggestions
+			.filter((attr) => !addedNames.has(attr.name))
+			.map((attr) => ({
+				...attr,
+				signal: attr.signal as SignalType,
+				fieldContext: attr.fieldContext as FieldContext,
+				fieldDataType: attr.fieldDataType as FieldDataType,
+			}));
 	}, [data, addedFields]);
 
 	if (isFetching) {
@@ -76,10 +83,10 @@ function OtherFields({
 						) : (
 							otherFields.map((attr) => (
 								<div
-									key={attr.key}
+									key={attr.name}
 									className={cx(styles.fieldItem, styles.otherFieldItem)}
 								>
-									<span className={styles.fieldKey}>{attr.key}</span>
+									<span className={styles.fieldKey}>{attr.name}</span>
 									{!isAtLimit && (
 										<Button
 											className={cx(styles.addBtn, 'periscope-btn')}
@@ -94,7 +101,6 @@ function OtherFields({
 								</div>
 							))
 						)}
-						{isAtLimit && <div className={styles.limitHint}>Maximum 10 fields</div>}
 					</>
 				</OverlayScrollbar>
 			</div>

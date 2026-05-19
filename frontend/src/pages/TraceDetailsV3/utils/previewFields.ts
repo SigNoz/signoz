@@ -41,8 +41,9 @@ function mapFieldDataType(
 }
 
 /**
- * Convert a picker-shaped field to the API's `TelemetryFieldKey` shape used
- * for `selectFields` on the flamegraph request.
+ * Upgrades a legacy `BaseAutocompleteData`-shaped preview field (persisted by
+ * pre-migration clients) to the current `TelemetryFieldKey` shape. Kept around
+ * for the read-side compatibility shim in `traceStore.derivePreviewFields`.
  */
 export function toTelemetryFieldKey(
 	field: BaseAutocompleteData,
@@ -51,6 +52,7 @@ export function toTelemetryFieldKey(
 		name: field.key,
 		fieldContext: mapFieldContext(field.type),
 		fieldDataType: mapFieldDataType(field.dataType),
+		isIndexed: field.isIndexed,
 	};
 }
 
