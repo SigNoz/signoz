@@ -5,7 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
 import {
 	getListRulesQueryKey,
@@ -899,7 +899,7 @@ export default function ChatInput({
 								</div>
 							</div>
 						) : (
-							<Tooltip title="Voice input">
+							<TooltipSimple title="Voice input">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -910,11 +910,11 @@ export default function ChatInput({
 								>
 									<Mic size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 						))}
 
 					{isStreaming && onCancel ? (
-						<Tooltip title="Stop generating">
+						<TooltipSimple title="Stop generating">
 							<Button
 								variant="solid"
 								size="icon"
@@ -924,7 +924,7 @@ export default function ChatInput({
 							>
 								<Square size={10} fill="currentColor" strokeWidth={0} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 					) : (
 						<Button
 							variant="solid"

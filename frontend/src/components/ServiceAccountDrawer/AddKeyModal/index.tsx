@@ -161,6 +161,7 @@ function AddKeyModal(): JSX.Element {
 					isValid={isValid}
 					onSubmit={handleSubmit(handleCreate)}
 					onClose={handleClose}
+					accountId={accountId ?? undefined}
 				/>
 			)}
 

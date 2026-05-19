@@ -1,6 +1,6 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
@@ -76,32 +76,27 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 
-		await user.click(screen.getByRole('button', { name: /all members/i }));
+		fireEvent.click(screen.getByRole('button', { name: /all members/i }));
 
 		const pendingOption = await screen.findByText(/pending invites/i);
-		await user.click(pendingOption);
+		fireEvent.click(pendingOption);
 
 		await screen.findByText('charlie@signoz.io');
 		expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
 	});
 
 	it('filters members by name using the search input', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 
-		await user.type(
-			screen.getByPlaceholderText(/Search by name or email/i),
-			'bob',
-		);
+		fireEvent.change(screen.getByPlaceholderText(/Search by name or email/i), {
+			target: { value: 'bob' },
+		});
 
 		await screen.findByText('Bob Jones');
 		expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
@@ -109,31 +104,25 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('opens EditMemberDrawer when an active member row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(await screen.findByText('Alice Smith'));
+		fireEvent.click(await screen.findByText('Alice Smith'));
 
 		await screen.findByText('Member Details');
 	});
 
 	it('opens EditMemberDrawer when a deleted member row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(await screen.findByText('Dave Deleted'));
+		fireEvent.click(await screen.findByText('Dave Deleted'));
 
 		expect(screen.queryByText('Member Details')).toBeInTheDocument();
 	});
 
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(screen.getByRole('button', { name: /invite member/i }));
+		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
 
 		await expect(
 			screen.findAllByPlaceholderText('john@signoz.io'),

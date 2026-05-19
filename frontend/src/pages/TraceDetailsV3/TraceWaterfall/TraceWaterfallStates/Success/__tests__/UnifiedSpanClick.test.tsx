@@ -2,7 +2,23 @@ import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+// Local identity-proxy mock for this module so `styles.foo` resolves to
+// `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as
+// `export default {}`; we override resolution for this specific file only.
+jest.mock(
+	'../Success.module.scss',
+	() =>
+		new Proxy(
+			{},
+			{
+				get: (_target, prop): string | undefined =>
+					typeof prop === 'string' && prop !== '__esModule' ? prop : undefined,
+			},
+		),
+);
+
 import Success from '../Success';
+import successStyles from '../Success.module.scss';
 
 const renderWithTraceProvider: typeof render = (ui, options, customOptions) =>
 	render(ui, options, customOptions);
@@ -211,10 +227,10 @@ describe('Span Click User Flows', () => {
 	const FIRST_SPAN_TEST_ID = 'cell-0-span-1';
 	const FIRST_SPAN_DURATION_TEST_ID = 'cell-1-span-1';
 	const SECOND_SPAN_TEST_ID = 'cell-0-span-2';
-	const SPAN_OVERVIEW_CLASS = '.span-overview';
-	const SPAN_DURATION_CLASS = '.span-duration';
-	const INTERESTED_SPAN_CLASS = 'interested-span';
 	const SECOND_SPAN_DURATION_TEST_ID = 'cell-1-span-2';
+	const SPAN_OVERVIEW_CLASS = `.${successStyles.spanOverview}`;
+	const SPAN_DURATION_CLASS = `.${successStyles.spanDuration}`;
+	const INTERESTED_SPAN_CLASS = successStyles.isInterested;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -268,7 +284,6 @@ describe('Span Click User Flows', () => {
 			initialRoute: '/trace',
 		});
 
-		// Wait for initial render and selection
 		await waitFor(() => {
 			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
 			const spanDurationElement = spanDuration.querySelector(
@@ -277,14 +292,12 @@ describe('Span Click User Flows', () => {
 			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		// Click on span-2 to test selection change
 		const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
 		const span2DurationElement = span2Duration.querySelector(
 			SPAN_DURATION_CLASS,
 		) as HTMLElement;
 		await user.click(span2DurationElement);
 
-		// Wait for the state update and re-render
 		await waitFor(() => {
 			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
 			const spanDurationElement = spanDuration.querySelector(
@@ -307,7 +320,6 @@ describe('Span Click User Flows', () => {
 			initialRoute: '/trace',
 		});
 
-		// Wait for initial render and selection
 		await waitFor(() => {
 			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
@@ -318,19 +330,16 @@ describe('Span Click User Flows', () => {
 				SPAN_DURATION_CLASS,
 			) as HTMLElement;
 
-			// Initially both areas should show the same visual selection (first span is auto-selected)
 			expect(spanOverviewElement).toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		// Click span-2 to test selection change
 		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
 		const span2Element = span2Overview.querySelector(
 			SPAN_OVERVIEW_CLASS,
 		) as HTMLElement;
 		await user.click(span2Element);
 
-		// Wait for the state update and re-render
 		await waitFor(() => {
 			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
@@ -341,17 +350,15 @@ describe('Span Click User Flows', () => {
 				SPAN_DURATION_CLASS,
 			) as HTMLElement;
 
-			// Now span-2 should be selected, span-1 should not
 			expect(spanOverviewElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(spanDurationElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 
-			// Check that span-2 is selected
-			const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
-			const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
-			const span2OverviewElement = span2Overview.querySelector(
+			const span2OverviewSub = screen.getByTestId(SECOND_SPAN_TEST_ID);
+			const span2DurationSub = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
+			const span2OverviewElement = span2OverviewSub.querySelector(
 				SPAN_OVERVIEW_CLASS,
 			) as HTMLElement;
-			const span2DurationElement = span2Duration.querySelector(
+			const span2DurationElement = span2DurationSub.querySelector(
 				SPAN_DURATION_CLASS,
 			) as HTMLElement;
 
@@ -367,7 +374,6 @@ describe('Span Click User Flows', () => {
 			initialRoute: '/trace',
 		});
 
-		// Wait for initial render and selection
 		await waitFor(() => {
 			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 			const span1Element = span1Overview.querySelector(
@@ -376,27 +382,24 @@ describe('Span Click User Flows', () => {
 			expect(span1Element).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		// Click second span
 		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
 		const span2Element = span2Overview.querySelector(
 			SPAN_OVERVIEW_CLASS,
 		) as HTMLElement;
 		await user.click(span2Element);
 
-		// Wait for the state update and re-render
 		await waitFor(() => {
 			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 			const span1Element = span1Overview.querySelector(
 				SPAN_OVERVIEW_CLASS,
 			) as HTMLElement;
-			const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
-			const span2Element = span2Overview.querySelector(
+			const span2OverviewSub = screen.getByTestId(SECOND_SPAN_TEST_ID);
+			const span2ElementSub = span2OverviewSub.querySelector(
 				SPAN_OVERVIEW_CLASS,
 			) as HTMLElement;
 
-			// Second span should be selected, first should not
 			expect(span1Element).not.toHaveClass(INTERESTED_SPAN_CLASS);
-			expect(span2Element).toHaveClass(INTERESTED_SPAN_CLASS);
+			expect(span2ElementSub).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 	});
 
@@ -426,7 +429,6 @@ describe('Span Click User Flows', () => {
 			{ initialRoute: '/trace' },
 		);
 
-		// Click on the actual span element (not the wrapper)
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 		const spanElement = spanOverview.querySelector(
 			SPAN_OVERVIEW_CLASS,
@@ -438,7 +440,6 @@ describe('Span Click User Flows', () => {
 		expect(mockUrlQuery.get('anotherParam')).toBe('anotherValue');
 		expect(mockUrlQuery.get('spanId')).toBe('span-1');
 
-		// Verify navigation was called with all parameters
 		expect(mockSafeNavigate).toHaveBeenCalledWith({
 			search: expect.stringMatching(
 				/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
