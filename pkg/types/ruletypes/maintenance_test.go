@@ -13,7 +13,6 @@ func timePtr(t time.Time) *time.Time {
 }
 
 func TestShouldSkipMaintenance(t *testing.T) {
-
 	cases := []struct {
 		name        string
 		maintenance *PlannedMaintenance
@@ -499,7 +498,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 1, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 4, 1, 12, 10, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
@@ -508,14 +507,14 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 01, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 15, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 4, 15, 12, 10, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
@@ -524,14 +523,14 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 01, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 14, 12, 10, 0, 0, time.UTC), // 14th 04 is sunday
+			ts:   time.Date(2024, 4, 14, 12, 10, 0, 0, time.UTC), // 14th 04 is sunday
 			skip: false,
 		},
 		{
@@ -540,14 +539,14 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 01, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 16, 12, 10, 0, 0, time.UTC), // 16th 04 is tuesday
+			ts:   time.Date(2024, 4, 16, 12, 10, 0, 0, time.UTC), // 16th 04 is tuesday
 			skip: false,
 		},
 		{
@@ -556,14 +555,14 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 01, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
 					},
 				},
 			},
-			ts:   time.Date(2024, 05, 06, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 5, 6, 12, 10, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
@@ -572,14 +571,14 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 01, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
 					},
 				},
 			},
-			ts:   time.Date(2024, 05, 06, 14, 00, 0, 0, time.UTC),
+			ts:   time.Date(2024, 5, 6, 14, 0, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
@@ -588,13 +587,13 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 04, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 04, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 4, 4, 12, 10, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
@@ -603,13 +602,13 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 04, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
 				},
 			},
-			ts:   time.Date(2024, 04, 04, 14, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 4, 4, 14, 10, 0, 0, time.UTC),
 			skip: false,
 		},
 		{
@@ -618,13 +617,52 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 04, 04, 12, 0, 0, 0, time.UTC),
+						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
 				},
 			},
-			ts:   time.Date(2024, 05, 04, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 5, 4, 12, 10, 0, 0, time.UTC),
+			skip: true,
+		},
+		// The recurrence should govern, when set. Not the fixed range.
+		{
+			name: "recurring-daily-with-fixed-times-outside-daily-window",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone: "UTC",
+					// These fixed fields should be ignored when Recurrence is set.
+					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC), // daily at 14:00
+						Duration:   valuer.MustParseTextDuration("2h"),           // until 16:00
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			// 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
+			// Before the fix this returned true (bug); after fix it returns false.
+			ts:   time.Date(2026, 4, 15, 11, 0, 0, 0, time.UTC),
+			skip: false,
+		},
+		{
+			name: "recurring-daily-with-fixed-times-inside-daily-window",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
+					Recurrence: &Recurrence{
+						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
+						Duration:   valuer.MustParseTextDuration("2h"),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			// 15:00 is inside the daily 14:00-16:00 window — should skip.
+			ts:   time.Date(2026, 4, 15, 15, 0, 0, 0, time.UTC),
 			skip: true,
 		},
 	}

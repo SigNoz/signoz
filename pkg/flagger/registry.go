@@ -9,7 +9,8 @@ var (
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
 	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
 	FeatureUseMeterReporter  = featuretypes.MustNewName("use_meter_reporter")
-	FeatureUseJSONBody       = featuretypes.MustNewName("use_json_body")
+	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
+	FeatureUseFineGrainedAuthz    = featuretypes.MustNewName("use_fine_grained_authz")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -67,6 +68,14 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether body JSON querying is enabled",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureUseFineGrainedAuthz,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageExperimental,
+			Description:    "Controls whether fine-grained authorization is enabled",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

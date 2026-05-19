@@ -1,0 +1,36 @@
+.actionContent {
+	display: flex;
+	flex-direction: column;
+}
+
+.actionBtn {
+	display: flex;
+	padding: 8px;
+	height: unset;
+	align-items: center;
+	gap: 6px;
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: normal;
+	letter-spacing: 0.14px;
+
+	:global(.ant-icon-btn) {
+		margin-inline-end: 0px;
+	}
+}
+
+.deleteBtn {
+	composes: actionBtn;
+	color: var(--danger-background) !important;
+	border-top: 1px solid var(--l1-border);
+}
+
+.deleteBtn:hover {
+	background-color: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
+}
+
+.deleteModal :global(.ant-modal-confirm-body) {
+	align-items: center;
+}

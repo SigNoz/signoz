@@ -5,7 +5,8 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
-import { Button, FormInstance, Modal, SelectProps } from 'antd';
+import { Button, FormInstance, SelectProps } from 'antd';
+import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -188,6 +189,7 @@ function FormAlertRules({
 	const alertTypeFromURL = urlQuery.get(QueryParams.ruleType);
 
 	const [detectionMethod, setDetectionMethod] = useState<string | null>(null);
+	const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
 
 	useEffect(() => {
 		if (!isEqual(currentQuery.unit, yAxisUnit)) {
@@ -603,18 +605,16 @@ function FormAlertRules({
 			});
 
 			// invalidate rule in cache
-			ruleCache.invalidateQueries([
+			await ruleCache.invalidateQueries([
 				REACT_QUERY_KEY.ALERT_RULE_DETAILS,
 				`${ruleId}`,
 			]);
 
-			setTimeout(() => {
-				urlQuery.delete(QueryParams.compositeQuery);
-				urlQuery.delete(QueryParams.panelTypes);
-				urlQuery.delete(QueryParams.ruleId);
-				urlQuery.delete(QueryParams.relativeTime);
-				safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
-			}, 2000);
+			urlQuery.delete(QueryParams.compositeQuery);
+			urlQuery.delete(QueryParams.panelTypes);
+			urlQuery.delete(QueryParams.ruleId);
+			urlQuery.delete(QueryParams.relativeTime);
+			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
 		} catch (e) {
 			const apiError = convertToApiError(e as AxiosError<RenderErrorResponseDTO>);
 			logData = {
@@ -650,24 +650,9 @@ function FormAlertRules({
 		urlQuery,
 	]);
 
-	const onSaveHandler = useCallback(async () => {
-		const content = (
-			<Typography.Text>
-				{' '}
-				{t('confirm_save_content_part1')}{' '}
-				<QueryTypeTag queryType={currentQuery.queryType} />{' '}
-				{t('confirm_save_content_part2')}
-			</Typography.Text>
-		);
-		Modal.confirm({
-			icon: <CircleAlert size="md" />,
-			title: t('confirm_save_title'),
-			centered: true,
-			content,
-			onOk: saveRule,
-			className: 'create-alert-modal',
-		});
-	}, [t, saveRule, currentQuery]);
+	const onSaveHandler = useCallback(() => {
+		setIsConfirmSaveOpen(true);
+	}, []);
 
 	const onTestRuleHandler = useCallback(async () => {
 		if (!isFormValid()) {
@@ -1013,6 +998,27 @@ function FormAlertRules({
 					</ButtonContainer>
 				</MainFormContainer>
 			</div>
+
+			<ConfirmDialog
+				open={isConfirmSaveOpen}
+				onOpenChange={setIsConfirmSaveOpen}
+				title={t('confirm_save_title')}
+				titleIcon={<CircleAlert size={14} />}
+				confirmText="OK"
+				confirmColor="primary"
+				onConfirm={async (): Promise<boolean> => {
+					await saveRule();
+					return true;
+				}}
+				onCancel={() => setIsConfirmSaveOpen(false)}
+				width="narrow"
+			>
+				<Typography.Text>
+					{t('confirm_save_content_part1')}{' '}
+					<QueryTypeTag queryType={currentQuery.queryType} />{' '}
+					{t('confirm_save_content_part2')}
+				</Typography.Text>
+			</ConfirmDialog>
 		</>
 	);
 }
