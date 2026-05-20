@@ -46,19 +46,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      SIGNOZ_INTEGRATION_BUILD_CACHE_DIR: /tmp/signoz-e2e-buildx-cache
+      SIGNOZ_BUILDX_GHA_SCOPE: signoz-e2e
     steps:
       - name: checkout
         uses: actions/checkout@v4
       - name: setup-buildx
         uses: docker/setup-buildx-action@v3
-      - name: restore-buildx-cache
-        uses: actions/cache@v4
-        with:
-          path: /tmp/signoz-e2e-buildx-cache
-          key: ${{ runner.os }}-signoz-e2e-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-signoz-e2e-buildx-
       - name: python
         uses: actions/setup-python@v5
         with:

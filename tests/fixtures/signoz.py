@@ -60,7 +60,14 @@ def start_signoz_image_build(pytestconfig: pytest.Config, dockerfile_path: str, 
 
     cache_path = None
     next_cache_path = None
-    if build_cache_dir := os.environ.get("SIGNOZ_INTEGRATION_BUILD_CACHE_DIR"):
+    if os.environ.get("ACTIONS_RUNTIME_TOKEN"):
+        # Running in GitHub Actions — use BuildKit's native GHA cache backend.
+        # Avoids the local-write races and partial exports seen with type=local.
+        scope = os.environ.get("SIGNOZ_BUILDX_GHA_SCOPE", "signoz-integration")
+        command.extend(["--cache-from", f"type=gha,scope={scope}"])
+        command.extend(["--cache-to", f"type=gha,scope={scope},mode=max"])
+    elif build_cache_dir := os.environ.get("SIGNOZ_INTEGRATION_BUILD_CACHE_DIR"):
+        # Local cache for developer machines / non-GHA CI.
         cache_path = Path(build_cache_dir)
         next_cache_path = Path(f"{build_cache_dir}-next")
         cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,7 +75,7 @@ def start_signoz_image_build(pytestconfig: pytest.Config, dockerfile_path: str, 
 
         if cache_path.exists():
             command.extend(["--cache-from", f"type=local,src={cache_path}"])
-        command.extend(["--cache-to", f"type=local,dest={next_cache_path},mode=max,ignore-error=true"])
+        command.extend(["--cache-to", f"type=local,dest={next_cache_path},mode=max"])
 
     logger.info("Building SigNoz integration image with %s", " ".join(command))
     process = subprocess.Popen(
