@@ -166,17 +166,16 @@ function UserInfo(): JSX.Element {
 				closable
 				onCancel={hideUpdateNameModal}
 				footer={[
-					<NoAuthGuard key="submit" testId="no-auth-update-name-submit">
-						<Button
-							type="primary"
-							icon={<Check size={16} />}
-							onClick={onSaveHandler}
-							disabled={isLoading}
-							data-testid="update-name-btn"
-						>
-							Update name
-						</Button>
-					</NoAuthGuard>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<Check size={16} />}
+						onClick={onSaveHandler}
+						disabled={isLoading}
+						data-testid="update-name-btn"
+					>
+						Update name
+					</Button>,
 				]}
 			>
 				<Typography.Text>Name</Typography.Text>

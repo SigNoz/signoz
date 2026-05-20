@@ -21,7 +21,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Alice Smith',
 		email: 'alice@signoz.io',
 		status: 'active',
-		createdAt: new Date('2024-01-01T00:00:00.000Z'),
+		createdAt: '2024-01-01T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 ];
