@@ -6,7 +6,7 @@ describe('NoAuthBanner', () => {
 	it('renders the no-auth message', () => {
 		render(<NoAuthBanner />);
 		expect(
-			screen.getByText(/No-auth mode: authentication is disabled/i),
+			screen.getByText(/Impersonation mode: authentication is disabled/i),
 		).toBeInTheDocument();
 	});
 
