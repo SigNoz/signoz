@@ -5,7 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/goccy/go-yaml"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -41,10 +41,14 @@ type spanMapperProcessorExistsAny struct {
 }
 
 type spanMapperProcessorAttribute struct {
-	Target  string   `yaml:"target" json:"target"`
-	Context string   `yaml:"context,omitempty" json:"context,omitempty"`
-	Action  string   `yaml:"action,omitempty" json:"action,omitempty"`
-	Sources []string `yaml:"sources" json:"sources"`
+	Target  string                      `yaml:"target" json:"target"`
+	Context string                      `yaml:"context,omitempty" json:"context,omitempty"`
+	Sources []spanMapperProcessorSource `yaml:"sources" json:"sources"`
+}
+
+type spanMapperProcessorSource struct {
+	Key    string `yaml:"key" json:"key"`
+	Action string `yaml:"action,omitempty" json:"action,omitempty"`
 }
 
 func GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml []byte, groups []*SpanMapperGroupWithMappers) ([]byte, error) {
@@ -67,16 +71,8 @@ func GenerateCollectorConfigWithSpanMapperProcessor(currentConfYaml []byte, grou
 	}
 
 	procConfig := buildProcessorConfig(groups)
-	configBytes, err := yaml.Marshal(procConfig)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeBuildMappingProcessorConfig, "failed to marshal span mapper processor config")
-	}
-	var configMap any
-	if err := yaml.Unmarshal(configBytes, &configMap); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, ErrCodeBuildMappingProcessorConfig, "failed to re-unmarshal span mapper processor config")
-	}
 
-	processors[ProcessorName] = configMap
+	processors[ProcessorName] = procConfig
 	collectorConf["processors"] = processors
 
 	out, err := yaml.Marshal(collectorConf)
@@ -109,25 +105,26 @@ func buildProcessorConfig(groups []*SpanMapperGroupWithMappers) *spanMapperProce
 }
 
 // buildAttributeRule maps a single SpanMapper to a collector attribute rule.
-// Sources are sorted by Priority DESC (highest-priority first), and read-from-
-// resource sources are encoded via the "resource." prefix.
+// Sources are sorted by Priority DESC (highest-priority first); read-from-
+// resource sources are encoded via the "resource." prefix on the key. Each
+// source carries its own action — "copy" is omitted to keep the emitted YAML
+// compact, and only "move" is set explicitly.
 func buildAttributeRule(m *SpanMapper) spanMapperProcessorAttribute {
 	sources := make([]SpanMapperSource, len(m.Config.Sources))
 	copy(sources, m.Config.Sources)
 	sort.SliceStable(sources, func(i, j int) bool { return sources[i].Priority > sources[j].Priority })
 
-	keys := make([]string, 0, len(sources))
+	out := make([]spanMapperProcessorSource, 0, len(sources))
 	for _, s := range sources {
+		key := s.Key
 		if s.Context == FieldContextResource {
-			keys = append(keys, FieldContextResource.StringValue()+"."+s.Key)
-		} else {
-			keys = append(keys, s.Key)
+			key = FieldContextResource.StringValue() + "." + s.Key
 		}
-	}
-
-	action := SpanMapperOperationCopy
-	if len(sources) > 0 && sources[0].Operation == SpanMapperOperationMove {
-		action = SpanMapperOperationMove
+		var action string
+		if s.Operation == SpanMapperOperationMove {
+			action = SpanMapperOperationMove.StringValue()
+		}
+		out = append(out, spanMapperProcessorSource{Key: key, Action: action})
 	}
 
 	ctx := FieldContextSpanAttribute
@@ -138,7 +135,6 @@ func buildAttributeRule(m *SpanMapper) spanMapperProcessorAttribute {
 	return spanMapperProcessorAttribute{
 		Target:  m.Name,
 		Context: ctx.StringValue(),
-		Action:  action.StringValue(),
-		Sources: keys,
+		Sources: out,
 	}
 }

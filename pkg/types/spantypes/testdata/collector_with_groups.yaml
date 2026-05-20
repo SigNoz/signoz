@@ -14,23 +14,22 @@ processors:
         attributes:
           - target: gen_ai.request.model
             context: resource
-            action: copy
             sources:
-              - gen_ai.llm.model
-              - llm.model
-              - resource.service.name
+              - key: gen_ai.llm.model
+              - key: llm.model
+              - key: resource.service.name
           - target: gen_ai.request.tokens
             context: attribute
-            action: copy
             sources:
-              - gen_ai.request_tokens
-              - llm.tokens
+              - key: gen_ai.request_tokens
+              - key: llm.tokens
           - target: gen_ai.request.input
             context: attribute
-            action: move
             sources:
-              - gen_ai.input
-              - llm.input
+              - key: gen_ai.input
+                action: move
+              - key: llm.input
+                action: move
       - id: agent
         exists_any:
           attributes:
@@ -38,16 +37,14 @@ processors:
         attributes:
           - target: gen_ai.agent.name
             context: attribute
-            action: copy
             sources:
-              - agent.name
-              - llm.agent.name
+              - key: agent.name
+              - key: llm.agent.name
           - target: gen_ai.agent.id
             context: attribute
-            action: copy
             sources:
-              - gen_ai.agent.id
-              - llm.agent.id
+              - key: gen_ai.agent.id
+              - key: llm.agent.id
       - id: tool
         exists_any:
           attributes:
@@ -55,10 +52,9 @@ processors:
         attributes:
           - target: gen_ai.tool.name
             context: attribute
-            action: copy
             sources:
-              - ai.tool.name
-              - llm.tool.name
+              - key: ai.tool.name
+              - key: llm.tool.name
   batch: {}
 exporters:
   otlp:

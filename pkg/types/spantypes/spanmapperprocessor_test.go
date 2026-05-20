@@ -123,21 +123,26 @@ func TestBuildAttributeRule(t *testing.T) {
 			want: spanMapperProcessorAttribute{
 				Target:  "gen_ai.request.model",
 				Context: FieldContextResource.StringValue(),
-				Action:  SpanMapperOperationCopy.StringValue(),
-				Sources: []string{"gen_ai.llm.model", "llm.model", "resource.service.name"},
+				Sources: []spanMapperProcessorSource{
+					{Key: "gen_ai.llm.model"},
+					{Key: "llm.model"},
+					{Key: "resource.service.name"},
+				},
 			},
 		},
 		{
-			name: "move_action_follows_highest_priority_source",
+			name: "per_source_actions",
 			mapper: newMapper("gen_ai.request.input", FieldContextSpanAttribute,
 				attrSrc("gen_ai.input", SpanMapperOperationMove, 20),
-				attrSrc("llm.input", SpanMapperOperationMove, 10),
+				attrSrc("llm.input", SpanMapperOperationCopy, 10),
 			),
 			want: spanMapperProcessorAttribute{
 				Target:  "gen_ai.request.input",
 				Context: FieldContextSpanAttribute.StringValue(),
-				Action:  SpanMapperOperationMove.StringValue(),
-				Sources: []string{"gen_ai.input", "llm.input"},
+				Sources: []spanMapperProcessorSource{
+					{Key: "gen_ai.input", Action: SpanMapperOperationMove.StringValue()},
+					{Key: "llm.input"},
+				},
 			},
 		},
 	}

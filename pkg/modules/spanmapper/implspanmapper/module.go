@@ -11,8 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var _ spanmapper.Module = (*module)(nil)
-
 type module struct {
 	store spantypes.SpanMapperStore
 }
@@ -143,14 +141,14 @@ func (module *module) listEnabledGroupsWithMappers(ctx context.Context, orgID va
 		if err != nil {
 			return nil, err
 		}
-		if len(mappers) == 0 {
-			continue
-		}
 		enabledMappers := make([]*spantypes.SpanMapper, 0, len(mappers))
 		for _, m := range mappers {
 			if m.Enabled {
 				enabledMappers = append(enabledMappers, m)
 			}
+		}
+		if len(enabledMappers) == 0 {
+			continue
 		}
 		out = append(out, &spantypes.SpanMapperGroupWithMappers{Group: g, Mappers: enabledMappers})
 	}
