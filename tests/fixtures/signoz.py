@@ -1,19 +1,94 @@
+import os
 import platform
+import shutil
+import subprocess
 import time
+from dataclasses import dataclass
 from http import HTTPStatus
 from os import path
+from pathlib import Path
 
 import docker
 import docker.errors
 import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
-from testcontainers.core.image import DockerImage
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+
+@dataclass
+class SigNozImageBuild:
+    process: subprocess.Popen
+    command: list[str]
+    cache_path: Path | None = None
+    next_cache_path: Path | None = None
+
+
+def start_signoz_image_build(pytestconfig: pytest.Config, dockerfile_path: str, arch: str, zeus_url: str) -> SigNozImageBuild:
+    root = pytestconfig.rootpath.parent
+    command = [
+        "docker",
+        "buildx",
+        "build",
+        "--load",
+        "--progress",
+        "plain",
+        "--tag",
+        "signoz:integration",
+        "--file",
+        dockerfile_path,
+        "--build-arg",
+        f"TARGETARCH={arch}",
+        "--build-arg",
+        f"ZEUSURL={zeus_url}",
+        str(root),
+    ]
+
+    cache_path = None
+    next_cache_path = None
+    if build_cache_dir := os.environ.get("SIGNOZ_INTEGRATION_BUILD_CACHE_DIR"):
+        cache_path = Path(build_cache_dir)
+        next_cache_path = Path(f"{build_cache_dir}-next")
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(next_cache_path, ignore_errors=True)
+
+        if cache_path.exists():
+            command.extend(["--cache-from", f"type=local,src={cache_path}"])
+        command.extend(["--cache-to", f"type=local,dest={next_cache_path},mode=max,ignore-error=true"])
+
+    logger.info("Building SigNoz integration image with %s", " ".join(command))
+    return SigNozImageBuild(
+        process=subprocess.Popen(command, cwd=root),
+        command=command,
+        cache_path=cache_path,
+        next_cache_path=next_cache_path,
+    )
+
+
+def wait_for_signoz_image_build(build: SigNozImageBuild) -> None:
+    returncode = build.process.wait()
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, build.command)
+
+    if build.cache_path and build.next_cache_path and build.next_cache_path.exists():
+        shutil.rmtree(build.cache_path, ignore_errors=True)
+        shutil.move(build.next_cache_path, build.cache_path)
+
+
+def stop_signoz_image_build(build: SigNozImageBuild) -> None:
+    if build.process.poll() is not None:
+        return
+
+    build.process.terminate()
+    try:
+        build.process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        build.process.kill()
+        build.process.wait()
 
 
 def create_signoz(
@@ -33,9 +108,6 @@ def create_signoz(
     """
 
     def create() -> types.SigNoz:
-        # Run the migrations for clickhouse
-        request.getfixturevalue("migrator")
-
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
 
@@ -48,19 +120,15 @@ def create_signoz(
         if with_web:
             dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
 
-        # Docker build context is the repo root — one up from pytest's
-        # rootdir (tests/).
-        self = DockerImage(
-            path=str(pytestconfig.rootpath.parent),
-            dockerfile_path=dockerfile_path,
-            tag="signoz:integration",
-            buildargs={
-                "TARGETARCH": arch,
-                "ZEUSURL": zeus.container_configs["8080"].base(),
-            },
-        )
-
-        self.build()
+        image_build = start_signoz_image_build(pytestconfig, dockerfile_path, arch, zeus.container_configs["8080"].base())
+        try:
+            # The SigNoz image does not depend on ClickHouse migrations, so
+            # build it while the migrator container runs.
+            request.getfixturevalue("migrator")
+            wait_for_signoz_image_build(image_build)
+        except Exception:  # pylint: disable=broad-exception-caught
+            stop_signoz_image_build(image_build)
+            raise
 
         env = (
             {

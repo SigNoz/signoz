@@ -34,6 +34,7 @@ DOCKER_BUILD_ARCHS_ENTERPRISE 	= $(addprefix docker-build-enterprise-,$(ARCHS))
 DOCKERFILE_ENTERPRISE 			= $(SRC)/cmd/enterprise/Dockerfile
 DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
+DOCKER_BUILDX_PRUNE_FLAGS 		?= --force
 
 ##############################################################
 # directories
@@ -228,6 +229,21 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@find tests -type f -name "*.pyc" -delete 2>/dev/null || true
 	@find tests -type f -name "*.pyo" -delete 2>/dev/null || true
 	@echo ">> python cache cleaned"
+
+.PHONY: py-docker-clean
+py-docker-clean: ## Remove Docker image and build caches used by python integration tests
+	@echo ">> removing SigNoz integration test image"
+	@docker image rm -f signoz:integration 2>/dev/null || true
+	@echo ">> removing local integration buildx cache directories"
+	@rm -rf /tmp/signoz-integration-buildx-cache /tmp/signoz-integration-buildx-cache-next /tmp/signoz-e2e-buildx-cache /tmp/signoz-e2e-buildx-cache-next
+	@echo ">> pruning docker buildx cache with flags: $(DOCKER_BUILDX_PRUNE_FLAGS)"
+	@docker buildx prune $(DOCKER_BUILDX_PRUNE_FLAGS)
+
+.PHONY: py-test-clean
+py-test-clean: ## Tear down python test stack and remove python/Docker test caches
+	@$(MAKE) py-test-teardown || true
+	@$(MAKE) py-clean
+	@$(MAKE) py-docker-clean
 
 
 ##############################################################
