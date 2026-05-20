@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import cx from 'classnames';
+
+import logEvent from 'api/common/logEvent';
 
 import ChatInput, { autoContextKey } from '../components/ChatInput';
 import ConversationSkeleton from '../components/ConversationSkeleton';
 import VirtualizedMessages from '../components/VirtualizedMessages';
+import { AIAssistantEvents } from '../events';
 import { getAutoContexts } from '../getAutoContexts';
+import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { MessageAttachment } from '../types';
 import { MessageContext } from '../../../api/ai-assistant/chat';
@@ -39,6 +43,7 @@ export default function ConversationView({
 	);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
+	const analyticsCtx = useAIAssistantAnalyticsContext(conversationId);
 
 	// Auto-derived contexts come from the route the user is currently looking
 	// at (dashboard detail, service metrics, an explorer, …). Skip when the
@@ -82,14 +87,50 @@ export default function ConversationView({
 			attachments?: MessageAttachment[],
 			contexts?: MessageContext[],
 		) => {
+			const hasAuto = contexts?.some((c) => c.source === 'auto') ?? false;
+			const hasManual = contexts?.some((c) => c.source === 'mention') ?? false;
+			let contextType: 'manual' | 'auto' | 'both' | undefined;
+			if (hasAuto && hasManual) {
+				contextType = 'both';
+			} else if (hasAuto) {
+				contextType = 'auto';
+			} else if (hasManual) {
+				contextType = 'manual';
+			}
+			void logEvent(AIAssistantEvents.MessageSent, {
+				...analyticsCtx,
+				queryLength: text.length,
+				hasContext: hasAuto || hasManual,
+				contextType,
+				respondingToClarification: Boolean(pendingClarificationHere),
+			});
 			void sendMessage(text, attachments, contexts);
 		},
-		[sendMessage],
+		[sendMessage, analyticsCtx, pendingClarificationHere],
 	);
 
+	// Wall-clock timestamp of the current streaming start, used to compute
+	// `secondsSinceStart` on Cancel clicked. Cleared whenever streaming ends.
+	const streamStartedAtRef = useRef<number | null>(null);
+	useEffect(() => {
+		if (!isStreamingHere) {
+			streamStartedAtRef.current = null;
+			return;
+		}
+		if (streamStartedAtRef.current === null) {
+			streamStartedAtRef.current = Date.now();
+		}
+	}, [isStreamingHere]);
+
 	const handleCancel = useCallback(() => {
+		const startedAt = streamStartedAtRef.current;
+		void logEvent(AIAssistantEvents.CancelClicked, {
+			threadId: analyticsCtx.threadId,
+			secondsSinceStart:
+				startedAt !== null ? Math.round((Date.now() - startedAt) / 1000) : null,
+		});
 		cancelStream(conversationId);
-	}, [cancelStream, conversationId]);
+	}, [cancelStream, conversationId, analyticsCtx.threadId]);
 
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
@@ -134,6 +175,7 @@ export default function ConversationView({
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
+				onSendSuggestedPrompt={(text): void => handleSend(text)}
 			/>
 			{showDisclaimer && (
 				<div className={disclaimerClass} role="note" aria-live="polite">

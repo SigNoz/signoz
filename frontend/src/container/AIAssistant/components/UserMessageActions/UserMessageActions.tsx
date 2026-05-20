@@ -4,6 +4,9 @@ import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents } from '../../events';
 import { Message } from '../../types';
 
 import styles from './UserMessageActions.module.scss';
@@ -25,10 +28,15 @@ export default function UserMessageActions({
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const handleCopy = useCallback((): void => {
+		void logEvent(AIAssistantEvents.MessageCopied, {
+			role: message.role,
+			messageId: message.id,
+			hadToolCalls: false,
+		});
 		copyToClipboard(message.content);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1500);
-	}, [copyToClipboard, message.content]);
+	}, [copyToClipboard, message.content, message.id, message.role]);
 
 	return (
 		<div className={styles.actions}>
