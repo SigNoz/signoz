@@ -2,6 +2,7 @@ import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import { buildSADeletePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
@@ -88,15 +89,17 @@ function DeleteAccountModal(): JSX.Element {
 				checks={[buildSADeletePermission(accountId ?? '')]}
 				enabled={!!accountId}
 			>
-				<Button
-					variant="solid"
-					color="destructive"
-					loading={isDeleting}
-					onClick={handleConfirm}
-				>
-					<Trash2 size={12} />
-					Delete
-				</Button>
+				<NoAuthGuard testId="no-auth-delete-account">
+					<Button
+						variant="solid"
+						color="destructive"
+						loading={isDeleting}
+						onClick={handleConfirm}
+					>
+						<Trash2 size={12} />
+						Delete
+					</Button>
+				</NoAuthGuard>
 			</AuthZTooltip>
 		</div>
 	);
