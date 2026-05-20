@@ -1,12 +1,12 @@
 // Collapsed activity summary — one row that hides the underlying
 // thinking + tool-call steps. Reuses the same quiet treatment as
 // ThinkingStep / ToolCallStep so it sits flush in the assistant bubble.
-.group {
+.activityGroup {
 	width: 100%;
 	font-size: 12px;
 }
 
-.header {
+.activityHeader {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -25,11 +25,11 @@
 	}
 }
 
-.icon {
+.sparkleIcon {
 	flex-shrink: 0;
 	color: var(--accent-primary);
 
-	&.spin {
+	&.iconPulsing {
 		animation: activityGroupPulse 1.4s ease-in-out infinite;
 	}
 }
@@ -44,7 +44,7 @@
 	}
 }
 
-.label {
+.activitySummary {
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -52,12 +52,12 @@
 	font-weight: 400;
 }
 
-.chevron {
+.toggleChevron {
 	flex-shrink: 0;
 	color: inherit;
 }
 
-.body {
+.activityBody {
 	display: flex;
 	flex-direction: column;
 	padding: 2px 0 4px;

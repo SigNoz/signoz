@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import cx from 'classnames';
 import { ChevronDown, ChevronRight, Sparkles } from '@signozhq/icons';
 
@@ -14,8 +14,8 @@ import ToolCallStep, {
 import styles from './ActivityGroup.module.scss';
 
 export type ActivityItem =
-	| { kind: 'thinking'; content: string }
-	| { kind: 'tool'; toolCall: StreamingToolCall };
+	| { id: string; kind: 'thinking'; content: string }
+	| { id: string; kind: 'tool'; toolCall: StreamingToolCall };
 
 interface ActivityGroupProps {
 	items: ActivityItem[];
@@ -66,7 +66,6 @@ export default function ActivityGroup({
 	isLive = false,
 }: ActivityGroupProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
-	const bodyId = useId();
 
 	// Captures the moment this live phase started. Re-stamped on every
 	// false→true transition so a stream that pauses on
@@ -78,7 +77,6 @@ export default function ActivityGroup({
 
 	useEffect(() => {
 		if (isLive && !wasLiveRef.current) {
-			// Entering a fresh live phase — reset the clock.
 			startedAtRef.current = Date.now();
 			setElapsed(0);
 		}
@@ -101,28 +99,22 @@ export default function ActivityGroup({
 	const toggle = (): void => setExpanded((v) => !v);
 
 	return (
-		<div className={styles.group}>
-			<button
-				type="button"
-				className={styles.header}
-				onClick={toggle}
-				aria-expanded={expanded}
-				aria-controls={bodyId}
-			>
+		<div className={styles.activityGroup}>
+			<div className={styles.activityHeader} onClick={toggle}>
 				<Sparkles
 					size={12}
-					className={cx(styles.icon, { [styles.spin]: isLive })}
+					className={cx(styles.sparkleIcon, { [styles.iconPulsing]: isLive })}
 				/>
-				<span className={styles.label}>{summary}</span>
+				<span className={styles.activitySummary}>{summary}</span>
 				{expanded ? (
-					<ChevronDown size={12} className={styles.chevron} />
+					<ChevronDown size={12} className={styles.toggleChevron} />
 				) : (
-					<ChevronRight size={12} className={styles.chevron} />
+					<ChevronRight size={12} className={styles.toggleChevron} />
 				)}
-			</button>
+			</div>
 
 			{expanded && (
-				<div id={bodyId} className={styles.body}>
+				<div className={styles.activityBody}>
 					{isSingle ? (
 						// Single-item: the outer chevron already provides disclosure,
 						// so render the underlying content directly instead of wrapping
@@ -133,7 +125,6 @@ export default function ActivityGroup({
 							<ToolCallContent toolCall={items[0].toolCall} />
 						)
 					) : (
-						/* eslint-disable react/no-array-index-key */
 						items.map((item, i) => {
 							// A thinking step is live only while it's the trailing item
 							// in a trailing live group — once any later event (text or
@@ -141,15 +132,14 @@ export default function ActivityGroup({
 							const isLastItem = i === items.length - 1;
 							return item.kind === 'thinking' ? (
 								<ThinkingStep
-									key={i}
+									key={item.id}
 									content={item.content}
 									isLive={isLive && isLastItem}
 								/>
 							) : (
-								<ToolCallStep key={i} toolCall={item.toolCall} />
+								<ToolCallStep key={item.id} toolCall={item.toolCall} />
 							);
 						})
-						/* eslint-enable react/no-array-index-key */
 					)}
 				</div>
 			)}

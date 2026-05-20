@@ -33,8 +33,13 @@ const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 type RenderGroup =
-	| { kind: 'text'; content: string }
-	| { kind: 'activity'; items: ActivityItem[]; isTrailing: boolean };
+	| { kind: 'text'; id: string; content: string }
+	| {
+			kind: 'activity';
+			id: string;
+			items: ActivityItem[];
+			isTrailing: boolean;
+	  };
 
 /**
  * Partition the streaming event timeline into render groups: runs of
@@ -47,25 +52,32 @@ type RenderGroup =
  * `items` — they never shrink the array or re-key existing groups. That
  * keeps each ActivityGroup React instance stable across re-renders so the
  * timer's `wasLive` → `isLive` re-stamp captures the right transition.
+ * The id fields below piggyback on that invariant: each event's position in
+ * `events` is stable, so the derived id stays stable across re-renders.
  */
 function groupStreamingEvents(events: StreamingEventItem[]): RenderGroup[] {
 	const groups: RenderGroup[] = [];
-	for (const event of events) {
+	events.forEach((event, i) => {
 		if (event.kind === 'text') {
-			groups.push({ kind: 'text', content: event.content });
-			continue;
+			groups.push({ kind: 'text', id: `text-${i}`, content: event.content });
+			return;
 		}
 		const item: ActivityItem =
 			event.kind === 'thinking'
-				? { kind: 'thinking', content: event.content }
-				: { kind: 'tool', toolCall: event.toolCall };
+				? { id: `t-${i}`, kind: 'thinking', content: event.content }
+				: { id: `c-${i}`, kind: 'tool', toolCall: event.toolCall };
 		const last = groups[groups.length - 1];
 		if (last?.kind === 'activity') {
 			last.items.push(item);
 		} else {
-			groups.push({ kind: 'activity', items: [item], isTrailing: false });
+			groups.push({
+				kind: 'activity',
+				id: `a-${i}`,
+				items: [item],
+				isTrailing: false,
+			});
 		}
-	}
+	});
 	const last = groups[groups.length - 1];
 	if (last?.kind === 'activity') {
 		last.isTrailing = true;
@@ -133,16 +145,15 @@ export default function StreamingMessage({
 				)}
 				{isEmpty && !statusLabel && <TypingDots />}
 
-				{/* eslint-disable react/no-array-index-key */}
 				{/* Runs of consecutive thinking + tool events collapse into a
 				    single ActivityGroup; text events render inline between
 				    them. The trailing group is "live" while streaming is
 				    active and not blocked on the user. */}
-				{groups.map((group, i) => {
+				{groups.map((group) => {
 					if (group.kind === 'text') {
 						return (
 							<ReactMarkdown
-								key={i}
+								key={group.id}
 								className={messageStyles.markdown}
 								remarkPlugins={MD_PLUGINS}
 								components={MD_COMPONENTS}
@@ -152,9 +163,10 @@ export default function StreamingMessage({
 						);
 					}
 					const groupIsLive = group.isTrailing && !isWaitingOnUser;
-					return <ActivityGroup key={i} items={group.items} isLive={groupIsLive} />;
+					return (
+						<ActivityGroup key={group.id} items={group.items} isLive={groupIsLive} />
+					);
 				})}
-				{/* eslint-enable react/no-array-index-key */}
 
 				{/* While events are still streaming, append the typing dots so the
 				    user has a clear "more is coming" signal. Hidden when the agent

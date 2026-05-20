@@ -40,8 +40,8 @@ const MD_PLUGINS = [remarkGfm];
 const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
 
 type RenderGroup =
-	| { kind: 'text'; content: string }
-	| { kind: 'activity'; items: ActivityItem[] };
+	| { kind: 'text'; id: string; content: string }
+	| { kind: 'activity'; id: string; items: ActivityItem[] };
 
 /**
  * Partition message blocks into render groups so consecutive thinking and
@@ -50,15 +50,16 @@ type RenderGroup =
  */
 function groupBlocks(blocks: MessageBlock[]): RenderGroup[] {
 	const groups: RenderGroup[] = [];
-	for (const block of blocks) {
+	blocks.forEach((block, i) => {
 		if (block.type === 'text') {
-			groups.push({ kind: 'text', content: block.content });
-			continue;
+			groups.push({ kind: 'text', id: `text-${i}`, content: block.content });
+			return;
 		}
 		const item: ActivityItem =
 			block.type === 'thinking'
-				? { kind: 'thinking', content: block.content }
+				? { id: `t-${i}`, kind: 'thinking', content: block.content }
 				: {
+						id: `c-${block.toolCallId}`,
 						kind: 'tool',
 						// Persisted blocks are always complete.
 						toolCall: {
@@ -73,17 +74,17 @@ function groupBlocks(blocks: MessageBlock[]): RenderGroup[] {
 		if (last?.kind === 'activity') {
 			last.items.push(item);
 		} else {
-			groups.push({ kind: 'activity', items: [item] });
+			groups.push({ kind: 'activity', id: `a-${i}`, items: [item] });
 		}
-	}
+	});
 	return groups;
 }
 
-function renderGroup(group: RenderGroup, index: number): JSX.Element {
+function renderGroup(group: RenderGroup): JSX.Element {
 	if (group.kind === 'text') {
 		return (
 			<ReactMarkdown
-				key={index}
+				key={group.id}
 				className={styles.markdown}
 				remarkPlugins={MD_PLUGINS}
 				components={MD_COMPONENTS}
@@ -92,7 +93,7 @@ function renderGroup(group: RenderGroup, index: number): JSX.Element {
 			</ReactMarkdown>
 		);
 	}
-	return <ActivityGroup key={index} items={group.items} />;
+	return <ActivityGroup key={group.id} items={group.items} />;
 }
 
 interface MessageBubbleProps {
@@ -157,8 +158,7 @@ export default function MessageBubble({
 							<p className={styles.text}>{message.content}</p>
 						) : hasBlocks ? (
 							<MessageContext.Provider value={{ messageId: message.id }}>
-								{/* eslint-disable-next-line react/no-array-index-key */}
-								{groups.map((g, i) => renderGroup(g, i))}
+								{groups.map((g) => renderGroup(g))}
 							</MessageContext.Provider>
 						) : (
 							<MessageContext.Provider value={{ messageId: message.id }}>
