@@ -1109,14 +1109,16 @@ export default function ChatInput({
 								aria-live="polite"
 								aria-label="Recording voice input"
 							>
-								<button
-									type="button"
-									className={cx(styles.micDiscard, styles.secondary)}
-									onClick={handleDiscard}
-									aria-label="Discard recording"
-								>
-									<X size={12} />
-								</button>
+								<TooltipSimple title="Discard recording">
+									<button
+										type="button"
+										className={cx(styles.micDiscard, styles.secondary)}
+										onClick={handleDiscard}
+										aria-label="Discard recording"
+									>
+										<X size={12} />
+									</button>
+								</TooltipSimple>
 								<span className={styles.micWaves} aria-hidden="true">
 									<span />
 									<span />
@@ -1127,14 +1129,16 @@ export default function ChatInput({
 									<span />
 									<span />
 								</span>
-								<button
-									type="button"
-									className={cx(styles.micStop, styles.destructive)}
-									onClick={handleStopAndSend}
-									aria-label="Stop and send"
-								>
-									<Square size={9} fill="currentColor" strokeWidth={0} />
-								</button>
+								<TooltipSimple title="Stop and send">
+									<button
+										type="button"
+										className={cx(styles.micStop, styles.destructive)}
+										onClick={handleStopAndSend}
+										aria-label="Stop and send"
+									>
+										<Square size={9} fill="currentColor" strokeWidth={0} />
+									</button>
+								</TooltipSimple>
 							</div>
 						) : (
 							<TooltipSimple title="Voice input">
@@ -1164,16 +1168,18 @@ export default function ChatInput({
 							</Button>
 						</TooltipSimple>
 					) : (
-						<Button
-							variant="solid"
-							size="icon"
-							color="primary"
-							onClick={isListening ? handleStopAndSend : handleSend}
-							disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
-							aria-label="Send message"
-						>
-							<Send size={14} />
-						</Button>
+						<TooltipSimple title="Send message">
+							<Button
+								variant="solid"
+								size="icon"
+								color="primary"
+								onClick={isListening ? handleStopAndSend : handleSend}
+								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
+								aria-label="Send message"
+							>
+								<Send size={14} />
+							</Button>
+						</TooltipSimple>
 					)}
 				</div>
 			</div>

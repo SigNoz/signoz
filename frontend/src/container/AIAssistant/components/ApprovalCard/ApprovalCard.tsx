@@ -11,6 +11,7 @@ import {
 	DialogTitle,
 } from '@signozhq/ui/dialog';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
@@ -100,16 +101,17 @@ export default function ApprovalCard({
 				<div className={styles.diffSection}>
 					<div className={styles.diffHeader}>
 						<span className={styles.diffHeaderLabel}>Diff</span>
-						<Button
-							variant="link"
-							size="sm"
-							color="secondary"
-							onClick={(): void => setDiffExpanded(true)}
-							title="Expand diff"
-							aria-label="Expand diff"
-						>
-							<Maximize2 size={12} />
-						</Button>
+						<TooltipSimple title="Expand diff">
+							<Button
+								variant="link"
+								size="sm"
+								color="secondary"
+								onClick={(): void => setDiffExpanded(true)}
+								aria-label="Expand diff"
+							>
+								<Maximize2 size={12} />
+							</Button>
+						</TooltipSimple>
 					</div>
 					<DiffView diff={approval.diff} />
 				</div>
@@ -141,12 +143,16 @@ export default function ApprovalCard({
 									}
 								}}
 							>
-								<ToggleGroupItem value="split" aria-label="Split view">
-									<Columns2 size={12} />
-								</ToggleGroupItem>
-								<ToggleGroupItem value="unified" aria-label="Unified view">
-									<List size={12} />
-								</ToggleGroupItem>
+								<TooltipSimple title="Split view">
+									<ToggleGroupItem value="split" aria-label="Split view">
+										<Columns2 size={12} />
+									</ToggleGroupItem>
+								</TooltipSimple>
+								<TooltipSimple title="Unified view">
+									<ToggleGroupItem value="unified" aria-label="Unified view">
+										<List size={12} />
+									</ToggleGroupItem>
+								</TooltipSimple>
 							</ToggleGroup>
 							<ToggleGroup
 								type="multiple"
@@ -154,12 +160,16 @@ export default function ApprovalCard({
 								value={wrapText ? ['wrap'] : []}
 								onChange={(next): void => setWrapText(next.includes('wrap'))}
 							>
-								<ToggleGroupItem
-									value="wrap"
-									aria-label={wrapText ? 'Disable text wrap' : 'Wrap long lines'}
+								<TooltipSimple
+									title={wrapText ? 'Disable text wrap' : 'Wrap long lines'}
 								>
-									<WrapText size={12} />
-								</ToggleGroupItem>
+									<ToggleGroupItem
+										value="wrap"
+										aria-label={wrapText ? 'Disable text wrap' : 'Wrap long lines'}
+									>
+										<WrapText size={12} />
+									</ToggleGroupItem>
+								</TooltipSimple>
 							</ToggleGroup>
 						</div>
 						{approval.diff && (
@@ -457,15 +467,16 @@ function CopyButton({ text, label }: CopyButtonProps): JSX.Element {
 	};
 
 	return (
-		<Button
-			variant="ghost"
-			size="sm"
-			color="secondary"
-			onClick={handleCopy}
-			title={copied ? `Copied ${label}` : `Copy ${label}`}
-			aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
-		>
-			{copied ? <Check size={12} /> : <Copy size={12} />}
-		</Button>
+		<TooltipSimple title={copied ? `Copied ${label}` : `Copy ${label}`}>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				onClick={handleCopy}
+				aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+			>
+				{copied ? <Check size={12} /> : <Copy size={12} />}
+			</Button>
+		</TooltipSimple>
 	);
 }
