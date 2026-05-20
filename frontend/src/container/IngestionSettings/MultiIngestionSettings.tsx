@@ -438,9 +438,7 @@ function MultiIngestionSettings(): JSX.Element {
 							data: {
 								name: values.name,
 								tags: updatedTags,
-								expires_at: new Date(
-									dayjs(values.expires_at).endOf('day').toISOString(),
-								),
+								expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 							},
 						},
 						{
@@ -471,13 +469,11 @@ function MultiIngestionSettings(): JSX.Element {
 					const requestPayload = {
 						name: values.name,
 						tags: updatedTags,
-						expires_at: new Date(dayjs(values.expires_at).endOf('day').toISOString()),
+						expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 					};
 
 					createIngestionKey(
-						{
-							data: requestPayload,
-						},
+						{ data: requestPayload },
 						{
 							onSuccess: (_data) => {
 								notifications.success({

@@ -4,7 +4,13 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import {
+	defaultFeatureFlags,
+	fireEvent,
+	render,
+	screen,
+} from 'tests/test-utils';
+import { FeatureKeys } from 'constants/features';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { invalidLicense, mockUseAuthZGrantAll } from 'tests/authz-test-utils';
 
@@ -174,6 +180,30 @@ describe('RolesSettings', () => {
 				expect(screen.getByText(role.description)).toBeInTheDocument();
 			}
 		}
+	});
+
+	it('hides the create button and disables row clicks when fine-grained authz flag is inactive', async () => {
+		render(<RolesSettings />, undefined, {
+			appContextOverrides: {
+				featureFlags: defaultFeatureFlags.map((f) =>
+					f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
+						? { ...f, active: false }
+						: f,
+				),
+			},
+		});
+
+		await expect(screen.findByText('signoz-admin')).resolves.toBeInTheDocument();
+
+		expect(
+			screen.queryByRole('button', { name: /custom role/i }),
+		).not.toBeInTheDocument();
+
+		const rows = document.querySelectorAll('.roles-table-row');
+		rows.forEach((row) => {
+			expect(row).not.toHaveClass('roles-table-row--clickable');
+			expect(row.getAttribute('role')).not.toBe('button');
+		});
 	});
 
 	it('hides the create button and disables row clicks when license is not valid', async () => {

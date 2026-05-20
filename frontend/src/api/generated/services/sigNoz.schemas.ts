@@ -9,7 +9,7 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -34,7 +34,7 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ModelLabelSetDTO {
@@ -62,7 +62,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	endsAt?: Date;
+	endsAt?: string;
 	/**
 	 * @type string
 	 */
@@ -80,7 +80,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startsAt?: Date;
+	startsAt?: string;
 	status?: TypesAlertStatusDTO;
 }
 
@@ -97,7 +97,7 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: Date;
+	createdAt: string;
 	/**
 	 * @type string,null
 	 */
@@ -127,11 +127,114 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: Date;
+	updatedAt: string;
 	/**
 	 * @type string,null
 	 */
 	updatedBy?: string | null;
+}
+
+export enum AlertmanagertypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum AlertmanagertypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum AlertmanagertypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum AlertmanagertypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface AlertmanagertypesRecurrenceDTO {
+	/**
+	 * @type string
+	 */
+	duration: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	endTime?: string | null;
+	/**
+	 * @type array,null
+	 */
+	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
+	repeatType: AlertmanagertypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: string;
+}
+
+export interface AlertmanagertypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface AlertmanagertypesPlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesMaintenanceKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+	status: AlertmanagertypesMaintenanceStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
 }
 
 export interface ConfigAuthorizationDTO {
@@ -1597,6 +1700,22 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	wechat_configs?: ConfigWechatConfigDTO[];
 };
 
+export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+}
+
 export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type array,null
@@ -1834,7 +1953,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -1851,7 +1970,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -2009,7 +2128,7 @@ export interface AuthtypesRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2034,7 +2153,7 @@ export interface AuthtypesRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface AuthtypesSessionContextDTO {
@@ -2062,7 +2181,7 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: Date;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -2076,7 +2195,7 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: Date;
+	updatedAt: string;
 	/**
 	 * @type string
 	 */
@@ -2088,7 +2207,7 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2117,7 +2236,7 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type array,null
 	 */
@@ -2284,7 +2403,7 @@ export interface CloudintegrationtypesAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2305,12 +2424,12 @@ export interface CloudintegrationtypesAccountDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	removedAt: Date | null;
+	removedAt: string | null;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface DashboardtypesStorableDashboardDataDTO {
@@ -2441,7 +2560,7 @@ export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2451,7 +2570,7 @@ export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 };
 
 /**
@@ -2645,12 +2764,12 @@ export interface CloudintegrationtypesGettableAgentCheckInDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	removed_at: Date | null;
+	removed_at: string | null;
 	/**
 	 * @type string,null
 	 * @format date-time
 	 */
-	removedAt: Date | null;
+	removedAt: string | null;
 }
 
 export interface CloudintegrationtypesServiceMetadataDTO {
@@ -3566,12 +3685,17 @@ export interface DashboardtypesCustomVariableSpecDTO {
 	customValue: string;
 }
 
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -3589,11 +3713,12 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -4462,7 +4587,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -4484,7 +4609,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -4708,7 +4833,7 @@ export interface GatewaytypesLimitDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: Date;
+	created_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4730,7 +4855,7 @@ export interface GatewaytypesLimitDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: Date;
+	updated_at?: string;
 }
 
 export interface GatewaytypesIngestionKeyDTO {
@@ -4738,12 +4863,12 @@ export interface GatewaytypesIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: Date;
+	created_at?: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	expires_at?: Date;
+	expires_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4764,7 +4889,7 @@ export interface GatewaytypesIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: Date;
+	updated_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4788,7 +4913,7 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	expires_at?: Date;
+	expires_at?: string;
 	/**
 	 * @type string
 	 */
@@ -5986,7 +6111,7 @@ export interface LlmpricingruletypesLLMPricingRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -6025,13 +6150,13 @@ export interface LlmpricingruletypesLLMPricingRuleDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	syncedAt?: Date | null;
+	syncedAt?: string | null;
 	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -6683,7 +6808,7 @@ export interface Querybuildertypesv5RawRowDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	timestamp?: Date;
+	timestamp?: string;
 }
 
 export interface Querybuildertypesv5RawDataDTO {
@@ -7089,15 +7214,6 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
-export enum RuletypesMaintenanceKindDTO {
-	fixed = 'fixed',
-	recurring = 'recurring',
-}
-export enum RuletypesMaintenanceStatusDTO {
-	active = 'active',
-	upcoming = 'upcoming',
-	expired = 'expired',
-}
 export interface RuletypesRenotifyDTO {
 	/**
 	 * @type array
@@ -7127,116 +7243,6 @@ export interface RuletypesNotificationSettingsDTO {
 	 * @type boolean
 	 */
 	usePolicy?: boolean;
-}
-
-export enum RuletypesRepeatOnDTO {
-	sunday = 'sunday',
-	monday = 'monday',
-	tuesday = 'tuesday',
-	wednesday = 'wednesday',
-	thursday = 'thursday',
-	friday = 'friday',
-	saturday = 'saturday',
-}
-export enum RuletypesRepeatTypeDTO {
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export interface RuletypesRecurrenceDTO {
-	/**
-	 * @type string
-	 */
-	duration: string;
-	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: Date | null;
-	/**
-	 * @type array,null
-	 */
-	repeatOn?: RuletypesRepeatOnDTO[] | null;
-	repeatType: RuletypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: Date;
-}
-
-export interface RuletypesScheduleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: Date;
-	recurrence?: RuletypesRecurrenceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime?: Date;
-	/**
-	 * @type string
-	 */
-	timezone: string;
-}
-
-export interface RuletypesPlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: RuletypesMaintenanceKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-	status: RuletypesMaintenanceStatusDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface RuletypesPostablePlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
 }
 
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
@@ -7379,7 +7385,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7428,7 +7434,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7447,7 +7453,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7461,7 +7467,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	lastObservedAt: Date;
+	lastObservedAt: string;
 	/**
 	 * @type string
 	 */
@@ -7474,7 +7480,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
@@ -7519,7 +7525,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7544,7 +7550,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountRoleDTO {
@@ -7552,7 +7558,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7570,7 +7576,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountWithRolesDTO {
@@ -7578,7 +7584,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7607,7 +7613,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
@@ -7649,7 +7655,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7674,7 +7680,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7743,7 +7749,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7769,7 +7775,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8136,7 +8142,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8169,7 +8175,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesIdentifiableDTO {
@@ -8184,7 +8190,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8217,7 +8223,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -8229,7 +8235,7 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8251,7 +8257,7 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesPostableInviteDTO {
@@ -8318,7 +8324,7 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	expiresAt?: Date;
+	expiresAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8345,7 +8351,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8374,7 +8380,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ZeustypesHostDTO {
@@ -8766,7 +8772,7 @@ export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array
 	 */
-	data: RuletypesPlannedMaintenanceDTO[];
+	data: AlertmanagertypesPlannedMaintenanceDTO[];
 	/**
 	 * @type string
 	 */
@@ -8774,7 +8780,7 @@ export type ListDowntimeSchedules200 = {
 };
 
 export type CreateDowntimeSchedule201 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -8788,7 +8794,7 @@ export type GetDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
 export type GetDowntimeScheduleByID200 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
