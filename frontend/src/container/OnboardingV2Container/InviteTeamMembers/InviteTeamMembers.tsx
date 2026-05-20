@@ -5,7 +5,6 @@ import { Button, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import {
@@ -282,17 +281,15 @@ function InviteTeamMembers({
 					Cancel
 				</Button>
 
-				<NoAuthGuard>
-					<Button
-						type="primary"
-						className="next-button periscope-btn primary"
-						onClick={handleNext}
-						loading={isSendingInvites || isLoading}
-					>
-						Send Invites
-						<ArrowRight size={14} />
-					</Button>
-				</NoAuthGuard>
+				<Button
+					type="primary"
+					className="next-button periscope-btn primary"
+					onClick={handleNext}
+					loading={isSendingInvites || isLoading}
+				>
+					Send Invites
+					<ArrowRight size={14} />
+				</Button>
 			</div>
 		</div>
 	);

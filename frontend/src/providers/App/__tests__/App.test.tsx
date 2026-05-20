@@ -348,7 +348,7 @@ describe('AppProvider no-auth preflight', () => {
 		setNoAuthMode(false);
 	});
 
-	it('sets isNoAuthMode=true and noAuthMode singleton when impersonation is enabled', async () => {
+	it('sets noAuthMode singleton when impersonation is enabled', async () => {
 		server.use(
 			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
 				res(
@@ -365,7 +365,7 @@ describe('AppProvider no-auth preflight', () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.isNoAuthMode).toBe(true);
+				expect(result.current.isPreflightLoading).toBe(false);
 			},
 			{ timeout: 3000 },
 		);
@@ -373,7 +373,7 @@ describe('AppProvider no-auth preflight', () => {
 		expect(getIsNoAuthMode()).toBe(true);
 	});
 
-	it('leaves isNoAuthMode=false and clears noAuthMode singleton when impersonation is disabled', async () => {
+	it('leaves noAuthMode singleton false when impersonation is disabled', async () => {
 		server.use(
 			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
 				res(
@@ -395,7 +395,6 @@ describe('AppProvider no-auth preflight', () => {
 			{ timeout: 3000 },
 		);
 
-		expect(result.current.isNoAuthMode).toBe(false);
 		expect(getIsNoAuthMode()).toBe(false);
 	});
 
@@ -421,7 +420,7 @@ describe('AppProvider no-auth preflight', () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.isNoAuthMode).toBe(true);
+				expect(result.current.isPreflightLoading).toBe(false);
 			},
 			{ timeout: 3000 },
 		);

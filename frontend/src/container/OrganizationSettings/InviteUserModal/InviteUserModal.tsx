@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Form, FormInstance, Modal } from 'antd';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import sendInvite from 'api/v1/invite/create';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
@@ -86,17 +85,16 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 						ns: 'common',
 					})}
 				</Button>,
-				<NoAuthGuard key={t('invite_team_members').toString()}>
-					<Button
-						onClick={modalForm.submit}
-						data-testid="invite-team-members-button"
-						type="primary"
-						disabled={isInvitingMembers}
-						loading={isInvitingMembers}
-					>
-						{t('invite_team_members')}
-					</Button>
-				</NoAuthGuard>,
+				<Button
+					key={t('invite_team_members').toString()}
+					onClick={modalForm.submit}
+					data-testid="invite-team-members-button"
+					type="primary"
+					disabled={isInvitingMembers}
+					loading={isInvitingMembers}
+				>
+					{t('invite_team_members')}
+				</Button>,
 			]}
 		>
 			<InviteTeamMembers form={modalForm} onFinish={onInviteClickHandler} />

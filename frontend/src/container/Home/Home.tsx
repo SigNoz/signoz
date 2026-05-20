@@ -19,6 +19,7 @@ import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import NoAuthBanner from 'components/NoAuthBanner/NoAuthBanner';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -63,7 +64,7 @@ const homeInterval = 30 * 60 * 1000;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
-	const { user, isNoAuthMode } = useAppContext();
+	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const isDarkMode = useIsDarkMode();
 
@@ -277,7 +278,7 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			{isNoAuthMode && <NoAuthBanner />}
+			{getIsNoAuthMode() && <NoAuthBanner />}
 			<div className="sticky-header">
 				<Header
 					leftComponent={

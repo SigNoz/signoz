@@ -5,7 +5,6 @@ import { Input } from '@signozhq/ui/input';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import { RoleCreatePermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';
@@ -43,17 +42,15 @@ function RolesSettings(): JSX.Element {
 					/>
 					{isRolesEnabled && (
 						<AuthZTooltip checks={[RoleCreatePermission]}>
-							<NoAuthGuard>
-								<Button
-									variant="solid"
-									color="primary"
-									className="role-settings-toolbar-button"
-									onClick={(): void => setIsCreateModalOpen(true)}
-								>
-									<Plus size={14} />
-									Custom role
-								</Button>
-							</NoAuthGuard>
+							<Button
+								variant="solid"
+								color="primary"
+								className="role-settings-toolbar-button"
+								onClick={(): void => setIsCreateModalOpen(true)}
+							>
+								<Plus size={14} />
+								Custom role
+							</Button>
 						</AuthZTooltip>
 					)}
 				</div>

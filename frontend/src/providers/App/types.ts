@@ -20,7 +20,6 @@ export interface IAppContext {
 	userPreferences: UserPreference[] | null;
 	hostsData: GetHosts200 | null;
 	isLoggedIn: boolean;
-	isNoAuthMode: boolean;
 	isPreflightLoading: boolean;
 	org: Organization[] | null;
 	isFetchingUser: boolean;

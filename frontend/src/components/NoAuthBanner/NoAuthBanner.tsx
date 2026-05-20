@@ -10,8 +10,8 @@ export function NoAuthBanner(): JSX.Element {
 			testId="no-auth-banner"
 			className={styles.banner}
 		>
-			No-auth mode: authentication is disabled and you are currently signed in as
-			an admin.{' '}
+			Impersonation mode: authentication is disabled. Anyone with access to this
+			instance has admin privileges.{' '}
 			<a
 				href="https://signoz.io/docs/manage/administrator-guide/configuration/no-auth-mode/"
 				target="_blank"

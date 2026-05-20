@@ -18,7 +18,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { handleApiError } from 'utils/errorUtils';
 
@@ -149,17 +148,16 @@ function CreateRoleModal({
 					<X size={14} />
 					Cancel
 				</Button>,
-				<NoAuthGuard key="submit">
-					<Button
-						variant="solid"
-						color="primary"
-						onClick={onSubmit}
-						loading={isLoading}
-						size="sm"
-					>
-						{isEditMode ? 'Save Changes' : 'Create Role'}
-					</Button>
-				</NoAuthGuard>,
+				<Button
+					key="submit"
+					variant="solid"
+					color="primary"
+					onClick={onSubmit}
+					loading={isLoading}
+					size="sm"
+				>
+					{isEditMode ? 'Save Changes' : 'Create Role'}
+				</Button>,
 			]}
 			destroyOnClose
 			className="create-role-modal"

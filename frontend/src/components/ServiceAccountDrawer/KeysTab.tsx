@@ -2,8 +2,6 @@ import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton, Table, Tooltip } from 'antd';
-import { DEFAULT_NO_AUTH_MESSAGE, NoAuthGuard } from 'components/NoAuthGuard';
-import { useAppContext } from 'providers/App/App';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
@@ -35,7 +33,6 @@ interface KeysTabProps {
 interface BuildColumnsParams {
 	isDisabled: boolean;
 	accountId: string;
-	isNoAuthMode: boolean;
 	onRevokeClick: (keyId: string) => void;
 	handleformatLastObservedAt: (
 		lastObservedAt: Date | null | undefined,
@@ -56,7 +53,6 @@ function formatExpiry(expiresAt: number): JSX.Element {
 function buildColumns({
 	isDisabled,
 	accountId,
-	isNoAuthMode,
 	onRevokeClick,
 	handleformatLastObservedAt,
 }: BuildColumnsParams): ColumnsType<ServiceaccounttypesGettableFactorAPIKeyDTO> {
@@ -115,11 +111,7 @@ function buildColumns({
 				style: { cursor: 'default' },
 			}),
 			render: (_, record): JSX.Element => {
-				const tooltipTitle = isDisabled
-					? 'Service account disabled'
-					: isNoAuthMode
-						? DEFAULT_NO_AUTH_MESSAGE
-						: 'Revoke Key';
+				const tooltipTitle = isDisabled ? 'Service account disabled' : 'Revoke Key';
 				return (
 					<AuthZTooltip
 						checks={[
@@ -133,7 +125,7 @@ function buildColumns({
 								variant="ghost"
 								size="sm"
 								color="destructive"
-								disabled={isDisabled || isNoAuthMode}
+								disabled={isDisabled}
 								onClick={(e): void => {
 									e.stopPropagation();
 									onRevokeClick(record.id);
@@ -172,7 +164,6 @@ function KeysTab({
 		parseAsString.withDefault(''),
 	);
 	const editKey = keys.find((k) => k.id === editKeyId) ?? null;
-	const { isNoAuthMode } = useAppContext();
 
 	const handleformatLastObservedAt = useCallback(
 		(lastObservedAt: Date | null | undefined): string =>
@@ -192,17 +183,10 @@ function KeysTab({
 			buildColumns({
 				isDisabled,
 				accountId,
-				isNoAuthMode,
 				onRevokeClick,
 				handleformatLastObservedAt,
 			}),
-		[
-			isDisabled,
-			accountId,
-			isNoAuthMode,
-			onRevokeClick,
-			handleformatLastObservedAt,
-		],
+		[isDisabled, accountId, onRevokeClick, handleformatLastObservedAt],
 	);
 
 	if (isLoading) {
@@ -232,18 +216,16 @@ function KeysTab({
 					checks={[APIKeyCreatePermission, buildSAAttachPermission(accountId)]}
 					enabled={!isDisabled && !!accountId}
 				>
-					<NoAuthGuard testId="no-auth-add-first-key">
-						<Button
-							variant="link"
-							color="primary"
-							onClick={async (): Promise<void> => {
-								await setIsAddKeyOpen(true);
-							}}
-							disabled={isDisabled}
-						>
-							+ Add your first key
-						</Button>
-					</NoAuthGuard>
+					<Button
+						variant="link"
+						color="primary"
+						onClick={async (): Promise<void> => {
+							await setIsAddKeyOpen(true);
+						}}
+						disabled={isDisabled}
+					>
+						+ Add your first key
+					</Button>
 				</AuthZTooltip>
 			</div>
 		);

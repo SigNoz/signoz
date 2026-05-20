@@ -21,7 +21,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
@@ -650,16 +649,14 @@ function OnboardingAddDataSource(): JSX.Element {
 						</div>
 
 						<div className="header-right-section">
-							<NoAuthGuard>
-								<Button
-									type="default"
-									className="periscope-btn invite-teammate-btn outlined"
-									onClick={handleShowInviteTeamMembersModal}
-									icon={<UserPlus size={16} />}
-								>
-									Invite a teammate
-								</Button>
-							</NoAuthGuard>
+							<Button
+								type="default"
+								className="periscope-btn invite-teammate-btn outlined"
+								onClick={handleShowInviteTeamMembersModal}
+								icon={<UserPlus size={16} />}
+							>
+								Invite a teammate
+							</Button>
 
 							<LaunchChatSupport
 								attributes={{

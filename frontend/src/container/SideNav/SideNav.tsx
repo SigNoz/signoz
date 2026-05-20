@@ -134,7 +134,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		featureFlags,
 		trialInfo,
 		isLoggedIn,
-		isNoAuthMode,
 		userPreferences,
 		changelog,
 		toggleChangelogModal,
@@ -490,14 +489,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				isWorkspaceBlocked,
 				isEnterpriseSelfHostedUser,
 				isCommunityEnterpriseUser,
-				isNoAuthMode,
 			}),
 		[
 			isEnterpriseSelfHostedUser,
 			isCommunityEnterpriseUser,
 			user.email,
 			isWorkspaceBlocked,
-			isNoAuthMode,
 		],
 	);
 

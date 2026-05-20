@@ -14,7 +14,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -154,24 +153,20 @@ function AuthDomain(): JSX.Element {
 				width: 100,
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
-						<NoAuthGuard>
-							<Button
-								className="auth-domain-list-action-link"
-								onClick={(): void => setRecord(record)}
-								variant="link"
-							>
-								Configure {SSOType.get(record.config?.ssoType || '')}
-							</Button>
-						</NoAuthGuard>
-						<NoAuthGuard>
-							<Button
-								className="auth-domain-list-action-link delete"
-								onClick={(): void => showDeleteModal(record)}
-								variant="link"
-							>
-								Delete
-							</Button>
-						</NoAuthGuard>
+						<Button
+							className="auth-domain-list-action-link"
+							onClick={(): void => setRecord(record)}
+							variant="link"
+						>
+							Configure {SSOType.get(record.config?.ssoType || '')}
+						</Button>
+						<Button
+							className="auth-domain-list-action-link delete"
+							onClick={(): void => showDeleteModal(record)}
+							variant="link"
+						>
+							Delete
+						</Button>
 					</section>
 				),
 			},
@@ -183,19 +178,17 @@ function AuthDomain(): JSX.Element {
 		<div className="auth-domain">
 			<section className="auth-domain-header">
 				<h3 className="auth-domain-title">Authenticated Domains</h3>
-				<NoAuthGuard>
-					<Button
-						prefix={<Plus size="md" />}
-						onClick={(): void => {
-							setAddDomain(true);
-						}}
-						variant="solid"
-						size="sm"
-						color="primary"
-					>
-						Add Domain
-					</Button>
-				</NoAuthGuard>
+				<Button
+					prefix={<Plus size="md" />}
+					onClick={(): void => {
+						setAddDomain(true);
+					}}
+					variant="solid"
+					size="sm"
+					color="primary"
+				>
+					Add Domain
+				</Button>
 			</section>
 			{formattedError && <ErrorContent error={formattedError} />}
 			{!errorFetchingAuthDomainListResponse && (
@@ -238,16 +231,15 @@ function AuthDomain(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<NoAuthGuard key="submit">
-						<Button
-							prefix={<Trash2 size={16} />}
-							onClick={handleDeleteDomain}
-							className="delete-btn"
-							loading={isLoading}
-						>
-							Delete Domain
-						</Button>
-					</NoAuthGuard>,
+					<Button
+						key="submit"
+						prefix={<Trash2 size={16} />}
+						onClick={handleDeleteDomain}
+						className="delete-btn"
+						loading={isLoading}
+					>
+						Delete Domain
+					</Button>,
 				]}
 			>
 				<p className="delete-text">

@@ -7,7 +7,6 @@ import {
 	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -136,27 +135,23 @@ function UserInfo(): JSX.Element {
 			</div>
 
 			<div className="user-info-update-section">
-				<NoAuthGuard>
-					<Button
-						type="default"
-						className="periscope-btn secondary"
-						icon={<FileTerminal size={16} />}
-						onClick={(): void => setIsUpdateNameModalOpen(true)}
-					>
-						Update name
-					</Button>
-				</NoAuthGuard>
+				<Button
+					type="default"
+					className="periscope-btn secondary"
+					icon={<FileTerminal size={16} />}
+					onClick={(): void => setIsUpdateNameModalOpen(true)}
+				>
+					Update name
+				</Button>
 
-				<NoAuthGuard>
-					<Button
-						type="default"
-						className="periscope-btn secondary"
-						icon={<FileTerminal size={16} />}
-						onClick={(): void => setIsResetPasswordModalOpen(true)}
-					>
-						Reset password
-					</Button>
-				</NoAuthGuard>
+				<Button
+					type="default"
+					className="periscope-btn secondary"
+					icon={<FileTerminal size={16} />}
+					onClick={(): void => setIsResetPasswordModalOpen(true)}
+				>
+					Reset password
+				</Button>
 			</div>
 
 			<Modal
@@ -166,17 +161,16 @@ function UserInfo(): JSX.Element {
 				closable
 				onCancel={hideUpdateNameModal}
 				footer={[
-					<NoAuthGuard key="submit">
-						<Button
-							type="primary"
-							icon={<Check size={16} />}
-							onClick={onSaveHandler}
-							disabled={isLoading}
-							data-testid="update-name-btn"
-						>
-							Update name
-						</Button>
-					</NoAuthGuard>,
+					<Button
+						key="submit"
+						type="primary"
+						icon={<Check size={16} />}
+						onClick={onSaveHandler}
+						disabled={isLoading}
+						data-testid="update-name-btn"
+					>
+						Update name
+					</Button>,
 				]}
 			>
 				<Typography.Text>Name</Typography.Text>

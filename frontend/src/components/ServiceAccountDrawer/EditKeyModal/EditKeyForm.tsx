@@ -8,7 +8,6 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import {
 	buildAPIKeyDeletePermission,
 	buildAPIKeyUpdatePermission,
@@ -175,12 +174,10 @@ function EditKeyForm({
 					]}
 					enabled={!!accountId && !!keyItem?.id}
 				>
-					<NoAuthGuard>
-						<Button variant="link" color="destructive" onClick={onRevokeClick}>
-							<Trash2 size={12} />
-							Revoke Key
-						</Button>
-					</NoAuthGuard>
+					<Button variant="link" color="destructive" onClick={onRevokeClick}>
+						<Trash2 size={12} />
+						Revoke Key
+					</Button>
 				</AuthZTooltip>
 				<div className="edit-key-modal__footer-right">
 					<Button variant="solid" color="secondary" onClick={onClose}>
@@ -191,19 +188,17 @@ function EditKeyForm({
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 						enabled={!!accountId && !!keyItem?.id}
 					>
-						<NoAuthGuard>
-							<Button
-								type="submit"
-								// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
-								form={FORM_ID}
-								variant="solid"
-								color="primary"
-								loading={isSaving}
-								disabled={!isDirty}
-							>
-								Save Changes
-							</Button>
-						</NoAuthGuard>
+						<Button
+							type="submit"
+							// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
+							form={FORM_ID}
+							variant="solid"
+							color="primary"
+							loading={isSaving}
+							disabled={!isDirty}
+						>
+							Save Changes
+						</Button>
 					</AuthZTooltip>
 				</div>
 			</div>

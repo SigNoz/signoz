@@ -487,7 +487,6 @@ export interface UserSettingsMenuItemsParams {
 	isWorkspaceBlocked: boolean;
 	isEnterpriseSelfHostedUser: boolean;
 	isCommunityEnterpriseUser: boolean;
-	isNoAuthMode: boolean;
 }
 
 export const getUserSettingsDropdownMenuItems = ({
@@ -495,7 +494,6 @@ export const getUserSettingsDropdownMenuItems = ({
 	isWorkspaceBlocked,
 	isEnterpriseSelfHostedUser,
 	isCommunityEnterpriseUser,
-	isNoAuthMode,
 }: UserSettingsMenuItemsParams): MenuProps['items'] =>
 	[
 		{
@@ -539,25 +537,21 @@ export const getUserSettingsDropdownMenuItems = ({
 			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
 			dataTestId: 'keyboard-shortcuts-nav-item',
 		},
-		...(isNoAuthMode
-			? []
-			: [
-					{ type: 'divider' as const },
-					{
-						key: 'logout',
-						label: (
-							<span className="user-settings-dropdown-logout-section">Sign out</span>
-						),
-						icon: (
-							<LogOut
-								size={14}
-								className="user-settings-dropdown-logout-section"
-								color={Style.DANGER_BACKGROUND}
-							/>
-						),
-						dataTestId: 'logout-nav-item',
-					},
-				]),
+		{ type: 'divider' as const },
+		{
+			key: 'logout',
+			label: (
+				<span className="user-settings-dropdown-logout-section">Sign out</span>
+			),
+			icon: (
+				<LogOut
+					size={14}
+					className="user-settings-dropdown-logout-section"
+					color={Style.DANGER_BACKGROUND}
+				/>
+			),
+			dataTestId: 'logout-nav-item',
+		},
 	].filter(Boolean);
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */

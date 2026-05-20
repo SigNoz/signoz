@@ -37,7 +37,6 @@ import {
 } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 
 function ServiceAccountsSettings(): JSX.Element {
 	const [currentPage, setPage] = useQueryState(
@@ -265,18 +264,16 @@ function ServiceAccountsSettings(): JSX.Element {
 						</div>
 
 						<AuthZTooltip checks={[SACreatePermission]}>
-							<NoAuthGuard>
-								<Button
-									variant="solid"
-									color="primary"
-									onClick={async (): Promise<void> => {
-										await setIsCreateModalOpen(true);
-									}}
-								>
-									<Plus size={12} />
-									New Service Account
-								</Button>
-							</NoAuthGuard>
+							<Button
+								variant="solid"
+								color="primary"
+								onClick={async (): Promise<void> => {
+									await setIsCreateModalOpen(true);
+								}}
+							>
+								<Plus size={12} />
+								New Service Account
+							</Button>
 						</AuthZTooltip>
 					</div>
 

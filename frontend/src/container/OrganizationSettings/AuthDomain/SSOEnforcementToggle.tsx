@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
 import {
@@ -66,9 +65,7 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<NoAuthGuard>
-			<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
-		</NoAuthGuard>
+		<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
 	);
 }
 

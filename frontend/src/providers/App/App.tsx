@@ -17,7 +17,7 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
-import { setNoAuthMode } from 'utils/noAuthMode';
+import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -73,7 +73,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
-	const [isNoAuthMode, setIsNoAuthMode] = useState<boolean>(false);
 	const [isPreflightLoading, setIsPreflightLoading] = useState<boolean>(true);
 	const [org, setOrg] = useState<Organization[] | null>(null);
 	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
@@ -108,11 +107,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			setDefaultUser(getUserDefaults());
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
 			setNoAuthMode(true);
-			setIsNoAuthMode(true);
 			setIsLoggedIn(true);
 		} else {
 			setNoAuthMode(false);
-			setIsNoAuthMode(false);
 		}
 
 		setIsPreflightLoading(false);
@@ -409,7 +406,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	// global event listener for LOGOUT event to clean the app context state
 	useGlobalEventListener('LOGOUT', () => {
-		if (isNoAuthMode) {
+		if (getIsNoAuthMode()) {
 			return;
 		} // logout is meaningless in no-auth; defensively no-op
 		setIsLoggedIn(false);
@@ -431,7 +428,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferences,
 			hostsData,
 			isLoggedIn,
-			isNoAuthMode,
 			isPreflightLoading,
 			org,
 			isFetchingUser,
@@ -473,7 +469,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			hostsData,
 			hostsFetchError,
-			isNoAuthMode,
 			isPreflightLoading,
 			org,
 			orgPreferences,

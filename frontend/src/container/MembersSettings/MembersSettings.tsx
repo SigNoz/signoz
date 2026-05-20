@@ -9,7 +9,6 @@ import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { toISOString } from 'utils/app';
 
@@ -201,16 +200,14 @@ function MembersSettings(): JSX.Element {
 						/>
 					</div>
 
-					<NoAuthGuard>
-						<Button
-							variant="solid"
-							color="primary"
-							onClick={(): void => setIsInviteModalOpen(true)}
-						>
-							<Plus size={12} />
-							Invite member
-						</Button>
-					</NoAuthGuard>
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={(): void => setIsInviteModalOpen(true)}
+					>
+						<Plus size={12} />
+						Invite member
+					</Button>
 				</div>
 			</div>
 			<MembersTable

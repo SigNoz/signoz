@@ -2,7 +2,6 @@ import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import {
 	buildAPIKeyDeletePermission,
 	buildSADetachPermission,
@@ -53,17 +52,15 @@ export function RevokeKeyFooter({
 				]}
 				enabled={!!accountId && !!keyId}
 			>
-				<NoAuthGuard>
-					<Button
-						variant="solid"
-						color="destructive"
-						loading={isRevoking}
-						onClick={onConfirm}
-					>
-						<Trash2 size={12} />
-						Revoke Key
-					</Button>
-				</NoAuthGuard>
+				<Button
+					variant="solid"
+					color="destructive"
+					loading={isRevoking}
+					onClick={onConfirm}
+				>
+					<Trash2 size={12} />
+					Revoke Key
+				</Button>
 			</AuthZTooltip>
 		</>
 	);
