@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from '@signozhq/icons';
-import { Card, InputNumber } from 'antd';
+import { Card } from 'antd';
+import InputNumber from 'components/InputNumber';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
 import {

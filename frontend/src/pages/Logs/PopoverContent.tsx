@@ -1,5 +1,6 @@
-import { InputNumber, Row, Space } from 'antd';
+import { Row, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import InputNumber from 'components/InputNumber';
 
 interface PopoverContentProps {
 	linesPerRow: number;

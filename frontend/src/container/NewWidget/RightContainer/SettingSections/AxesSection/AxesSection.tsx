@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Select } from 'antd';
+import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Axis3D, ChartLine, Spline } from '@signozhq/icons';
+import InputNumber from 'components/InputNumber';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
@@ -48,7 +49,6 @@ export default function AxesSection({
 					<section className="container">
 						<Typography.Text className="text">Soft Min</Typography.Text>
 						<InputNumber
-							type="number"
 							value={softMin}
 							onChange={softMinHandler}
 							rootClassName="input"
@@ -58,7 +58,6 @@ export default function AxesSection({
 						<Typography.Text className="text">Soft Max</Typography.Text>
 						<InputNumber
 							value={softMax}
-							type="number"
 							rootClassName="input"
 							onChange={softMaxHandler}
 						/>

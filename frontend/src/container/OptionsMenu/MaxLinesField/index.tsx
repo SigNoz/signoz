@@ -14,12 +14,7 @@ function MaxLinesField({ config }: MaxLinesFieldProps): JSX.Element | null {
 	return (
 		<MaxLinesFieldWrapper>
 			<FieldTitle>{t('options_menu.maxLines')}</FieldTitle>
-			<MaxLinesInput
-				controls
-				size="small"
-				value={config.value}
-				onChange={config.onChange}
-			/>
+			<MaxLinesInput value={config.value} onChange={config.onChange} />
 		</MaxLinesFieldWrapper>
 	);
 }

@@ -1,4 +1,4 @@
-import { InputNumber } from 'antd';
+import InputNumber from 'components/InputNumber';
 
 import { selectStyle } from '../../QueryBuilderSearch/config';
 import { handleKeyDownLimitFilter } from '../../utils';
@@ -8,7 +8,6 @@ function LimitFilter({ onChange, formula }: LimitFilterProps): JSX.Element {
 	return (
 		<InputNumber
 			min={1}
-			type="number"
 			value={formula.limit}
 			style={selectStyle}
 			onChange={onChange}

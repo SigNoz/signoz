@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { InputNumber, InputNumberProps } from 'antd';
+import InputNumber from 'components/InputNumber';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -15,9 +15,9 @@ function AggregateEveryFilter({
 		[query.dataSource],
 	);
 
-	const onChangeHandler: InputNumberProps<number>['onChange'] = (event) => {
-		if (event && event >= 0) {
-			onChange(event);
+	const onChangeHandler = (value: number | null): void => {
+		if (value !== null && value >= 0) {
+			onChange(value);
 		}
 	};
 

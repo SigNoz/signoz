@@ -1,4 +1,4 @@
-import { InputNumber } from 'antd';
+import InputNumber from 'components/InputNumber';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -13,7 +13,6 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 	return (
 		<InputNumber
 			min={1}
-			type="number"
 			value={query.limit}
 			style={selectStyle}
 			disabled={isDisabled}

@@ -11,7 +11,6 @@ import {
 	DatePicker,
 	Form,
 	Input,
-	InputNumber,
 	Modal,
 	Row,
 	Select,
@@ -23,6 +22,7 @@ import {
 	Tooltip,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import InputNumber from 'components/InputNumber';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {
@@ -1212,7 +1212,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						<Form.Item name="dailyLimit" key="dailyLimit">
 																							<InputNumber
 																								disabled={!activeSignal?.config?.day?.enabled}
-																								addonAfter={
+																								suffix={
 																									<Select defaultValue="GiB" disabled>
 																										<Option value="TiB">TiB</Option>
 																										<Option value="GiB">GiB</Option>
@@ -1235,7 +1235,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						<Form.Item name="dailyCount" key="dailyCount">
 																							<InputNumber
 																								placeholder="Enter max # of samples/day"
-																								addonAfter={
+																								suffix={
 																									<Form.Item
 																										name="dailyCountUnit"
 																										noStyle
@@ -1302,7 +1302,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						<Form.Item name="secondsLimit" key="secondsLimit">
 																							<InputNumber
 																								disabled={!activeSignal?.config?.second?.enabled}
-																								addonAfter={
+																								suffix={
 																									<Select defaultValue="GiB" disabled>
 																										<Option value="TiB">TiB</Option>
 																										<Option value="GiB">GiB</Option>
@@ -1325,7 +1325,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						<Form.Item name="secondsCount" key="secondsCount">
 																							<InputNumber
 																								placeholder="Enter max # of samples/s"
-																								addonAfter={
+																								suffix={
 																									<Form.Item
 																										name="secondsCountUnit"
 																										noStyle

@@ -3,14 +3,13 @@ import {
 	Checkbox,
 	Collapse,
 	Form,
-	InputNumber,
-	InputNumberProps,
 	Select,
 	SelectProps,
 	Space,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
+import InputNumber from 'components/InputNumber';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -289,7 +288,7 @@ function RuleOptions({
 		</Form.Item>
 	);
 
-	const onChange: InputNumberProps['onChange'] = (value): void => {
+	const onChange = (value: number | null): void => {
 		setAlertDef({
 			...alertDef,
 			condition: {
@@ -391,11 +390,9 @@ function RuleOptions({
 						<Space direction="horizontal" align="center">
 							<Form.Item noStyle>
 								<InputNumber
-									addonBefore={t('field_threshold')}
+									prefix={t('field_threshold')}
 									value={alertDef?.condition?.target}
 									onChange={onChange}
-									type="number"
-									onWheel={(e): void => e.currentTarget.blur()}
 								/>
 							</Form.Item>
 
@@ -455,8 +452,6 @@ function RuleOptions({
 														},
 													});
 												}}
-												type="number"
-												onWheel={(e): void => e.currentTarget.blur()}
 											/>
 										</Form.Item>
 										<Typography.Text>{t('text_for')}</Typography.Text>
@@ -494,8 +489,6 @@ function RuleOptions({
 														},
 													});
 												}}
-												type="number"
-												onWheel={(e): void => e.currentTarget.blur()}
 											/>
 										</Form.Item>
 										<Typography.Text>{t('text_num_points')}</Typography.Text>

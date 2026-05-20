@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Switch } from 'antd';
+import { Switch } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import InputNumber from 'components/InputNumber';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
@@ -31,7 +32,6 @@ export default function HistogramBucketsSection({
 				</Typography.Text>
 				<InputNumber
 					value={bucketCount || null}
-					type="number"
 					min={0}
 					rootClassName="bucket-input"
 					placeholder="Default: 30"
@@ -44,7 +44,6 @@ export default function HistogramBucketsSection({
 				</Typography.Text>
 				<InputNumber
 					value={bucketWidth || null}
-					type="number"
 					precision={2}
 					placeholder="Default: Auto"
 					step={0.1}
