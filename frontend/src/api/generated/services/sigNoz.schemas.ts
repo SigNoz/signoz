@@ -2880,6 +2880,11 @@ export interface CoretypesPatchableObjectsDTO {
 	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -2903,6 +2908,7 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
