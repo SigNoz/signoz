@@ -56,8 +56,10 @@ describe('LabelColumn', () => {
 
 		renderWithProviders(<LabelColumn labels={labels} />);
 
-		// Simulate narrow container that fits ~3 badges (500px = 3 badges + overflow)
-		triggerResize(500);
+		// Simulate narrow container that fits ~3 badges
+		// Badge widths: env=37, service=65, region=58, team=44, owner=51, version=65
+		// 220px available = 3 badges (160px) + gaps (8px) + overflow (44px)
+		triggerResize(220);
 
 		// First 3 visible
 		expect(screen.getByTestId('label-tag-env')).toBeInTheDocument();
@@ -97,7 +99,8 @@ describe('LabelColumn', () => {
 		renderWithProviders(<LabelColumn labels={labels} />);
 
 		// Simulate narrow container to trigger overflow (shows 3 labels)
-		triggerResize(500);
+		// 220px fits first 3 badges before overflow
+		triggerResize(220);
 
 		// Overflow badge shows +3 (remaining labels)
 		const overflowBadge = screen.getByTestId('label-overflow-badge');
