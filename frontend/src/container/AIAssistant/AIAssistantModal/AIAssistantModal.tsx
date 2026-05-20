@@ -10,7 +10,7 @@ import logEvent from 'api/common/logEvent';
 
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents } from '../events';
+import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
@@ -65,7 +65,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					startNewConversation();
 					setShowHistory(false);
 					void logEvent(AIAssistantEvents.Opened, {
-						source: 'shortcut',
+						source: AIAssistantOpenSource.Shortcut,
 						currentPage: normalizePage(pathname),
 					});
 					openModal();

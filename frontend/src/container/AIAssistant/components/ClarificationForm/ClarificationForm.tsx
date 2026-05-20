@@ -68,8 +68,10 @@ export default function ClarificationForm({
 	);
 
 	const handleSubmit = async (): Promise<void> => {
-		// Guard against the Submit-button-bypass case (e.g. Enter inside a text
-		// field): required fields must be filled before we resume the agent.
+		// Defensive guard for direct handler invocation. The disabled Submit
+		// button already gates the pointer / keyboard activation path, but
+		// re-checking here keeps validity authoritative inside this function
+		// in case a future caller wires `onClick` to anything else.
 		if (!isFormValid) {
 			return;
 		}
@@ -171,8 +173,9 @@ export default function ClarificationForm({
 
 /**
  * Per-type seed value. The DTO's `default` is `string | string[] | null`,
- * which doesn't fit boolean fields cleanly — we coerce 'true'/'false' strings
- * for them, fall back to `[]` for multi_select, and the raw string otherwise.
+ * which doesn't fit boolean / number fields cleanly — we coerce 'true'/'false'
+ * strings for booleans, parse number defaults out of the string form,
+ * fall back to `[]` for multi_select, and the raw string otherwise.
  */
 function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
 	const raw = f.default;
@@ -183,6 +186,17 @@ function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
 	}
 	if (f.type === ClarificationFieldTypeDTO.multi_select) {
 		return Array.isArray(raw) ? raw : [];
+	}
+	if (f.type === ClarificationFieldTypeDTO.number) {
+		// Server sends number defaults as strings (e.g. `"5"`). Parse so the
+		// stored value is a real `number` — otherwise `isFieldFilled` (which
+		// requires `typeof === 'number'`) rejects a visibly-filled field and
+		// Submit stays disabled.
+		if (typeof raw !== 'string' || raw === '') {
+			return null;
+		}
+		const parsed = Number(raw);
+		return Number.isNaN(parsed) ? null : parsed;
 	}
 	return raw ?? '';
 }

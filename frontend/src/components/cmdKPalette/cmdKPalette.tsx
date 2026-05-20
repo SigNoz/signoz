@@ -10,7 +10,10 @@ import {
 	CommandShortcut,
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
-import { AIAssistantEvents } from 'container/AIAssistant/events';
+import {
+	AIAssistantEvents,
+	AIAssistantOpenSource,
+} from 'container/AIAssistant/events';
 import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
@@ -87,7 +90,7 @@ export function CmdKPalette({
 
 	const handleOpenAIAssistant = (): void => {
 		void logEvent(AIAssistantEvents.Opened, {
-			source: 'cmdk',
+			source: AIAssistantOpenSource.Cmdk,
 			currentPage: normalizePage(location.pathname),
 		});
 		openAIAssistant();

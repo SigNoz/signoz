@@ -32,7 +32,11 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { AIAssistantEvents, getBrowserInfo } from '../../events';
+import {
+	AIAssistantEvents,
+	VoiceInputSource,
+	getBrowserInfo,
+} from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
@@ -417,7 +421,7 @@ export default function ChatInput({
 	// start time so we can attribute `durationMs` on the Voice input used
 	// event regardless of which control ended the session.
 	const voiceStartedAtRef = useRef<number | null>(null);
-	const voiceSourceRef = useRef<'button' | 'shortcut' | null>(null);
+	const voiceSourceRef = useRef<VoiceInputSource | null>(null);
 	// Set to true after a `network`, `not-allowed`, or `not-supported` failure
 	// so we hide the mic button for the rest of the tab session — silent
 	// retries don't help, and Chromium derivatives without the Google Speech
@@ -494,7 +498,7 @@ export default function ChatInput({
 	const showMic = isSupported && micPermission !== 'denied' && !voiceUnavailable;
 
 	const startVoiceInput = useCallback(
-		(source: 'button' | 'shortcut') => {
+		(source: VoiceInputSource) => {
 			// Defense in depth: the button is hidden when `voiceUnavailable` is
 			// true, but the PTT shortcut listener can still call us. Bailing here
 			// keeps a single source of truth and prevents repeat `Voice input
@@ -571,7 +575,7 @@ export default function ChatInput({
 				return; // ignore auto-repeat
 			}
 			pttActiveRef.current = true;
-			startVoiceInput('shortcut');
+			startVoiceInput(VoiceInputSource.Shortcut);
 		};
 
 		const handleKeyUp = (e: KeyboardEvent): void => {
@@ -936,7 +940,13 @@ export default function ChatInput({
 												type="button"
 												role="tab"
 												id={`ai-context-tab-${category}`}
-												aria-controls={`ai-context-tabpanel-${category}`}
+												// Single stable panel id shared by every tab: only the
+												// active category's tabpanel is rendered, so per-category
+												// `aria-controls` ids would point at nonexistent nodes
+												// for the two inactive tabs. APG allows a single
+												// dynamic panel whose `aria-labelledby` swaps to the
+												// active tab.
+												aria-controls="ai-context-tabpanel"
 												// Roving tabindex: only the active tab participates in
 												// the Tab sequence; arrow keys move between tabs.
 												tabIndex={isActive ? 0 : -1}
@@ -996,7 +1006,7 @@ export default function ChatInput({
 								<div
 									className={styles.contextPopoverRight}
 									role="tabpanel"
-									id={`ai-context-tabpanel-${activeContextCategory}`}
+									id="ai-context-tabpanel"
 									aria-labelledby={`ai-context-tab-${activeContextCategory}`}
 								>
 									<div className={styles.contextPopoverSearch}>
@@ -1131,7 +1141,7 @@ export default function ChatInput({
 								<Button
 									variant="ghost"
 									size="icon"
-									onClick={(): void => startVoiceInput('button')}
+									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
 									disabled={disabled}
 									aria-label="Start voice input"
 									className={styles.micBtn}
