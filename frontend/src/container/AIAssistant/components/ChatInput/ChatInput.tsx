@@ -241,6 +241,11 @@ export default function ChatInput({
 	const categoryTabRefs = useRef(
 		new Map<ContextCategory, HTMLButtonElement | null>(),
 	);
+	// Refs to each entity row in the active tab panel, so we can cross from
+	// the category tablist (ArrowRight) into the panel and step through
+	// entities with ArrowUp/Down. Array is rewritten each render — there's
+	// only ever one tab panel mounted so stale indices clear naturally.
+	const entityRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const queryClient = useQueryClient();
 
 	// When the picker was opened by typing `@` in the textarea, this holds the
@@ -924,6 +929,8 @@ export default function ChatInput({
 												}}
 												type="button"
 												role="tab"
+												id={`ai-context-tab-${category}`}
+												aria-controls={`ai-context-tabpanel-${category}`}
 												// Roving tabindex: only the active tab participates in
 												// the Tab sequence; arrow keys move between tabs.
 												tabIndex={isActive ? 0 : -1}
@@ -952,6 +959,24 @@ export default function ChatInput({
 														// tab's. Without this, the roving-tabindex pattern
 														// stalls and arrows can't reach the third tab.
 														categoryTabRefs.current.get(next)?.focus();
+													} else if (e.key === 'Home') {
+														e.preventDefault();
+														const first = CONTEXT_CATEGORIES[0];
+														setActiveContextCategory(first);
+														setPickerSearchQuery('');
+														categoryTabRefs.current.get(first)?.focus();
+													} else if (e.key === 'End') {
+														e.preventDefault();
+														const last = CONTEXT_CATEGORIES[CONTEXT_CATEGORIES.length - 1];
+														setActiveContextCategory(last);
+														setPickerSearchQuery('');
+														categoryTabRefs.current.get(last)?.focus();
+													} else if (e.key === 'ArrowRight') {
+														// Cross from the tablist into the panel: focus the
+														// first entity so the user can pick a context with
+														// ArrowDown / Enter without reaching for the mouse.
+														e.preventDefault();
+														entityRefs.current[0]?.focus();
 													}
 												}}
 											>
@@ -962,7 +987,12 @@ export default function ChatInput({
 									})}
 								</div>
 
-								<div className={styles.contextPopoverRight}>
+								<div
+									className={styles.contextPopoverRight}
+									role="tabpanel"
+									id={`ai-context-tabpanel-${activeContextCategory}`}
+									aria-labelledby={`ai-context-tab-${activeContextCategory}`}
+								>
 									<div className={styles.contextPopoverSearch}>
 										<Input
 											type="text"
@@ -992,7 +1022,7 @@ export default function ChatInput({
 												No matching entities
 											</div>
 										) : (
-											filteredContextOptions.map((option) => {
+											filteredContextOptions.map((option, index) => {
 												const isSelected = selectedContexts.some(
 													(item) =>
 														item.category === activeContextCategory &&
@@ -1002,6 +1032,9 @@ export default function ChatInput({
 												return (
 													<button
 														key={option.id}
+														ref={(el): void => {
+															entityRefs.current[index] = el;
+														}}
 														type="button"
 														aria-pressed={isSelected}
 														className={cx(styles.contextPopoverEntityItem, {
@@ -1014,6 +1047,28 @@ export default function ChatInput({
 																option.value,
 															)
 														}
+														onKeyDown={(e): void => {
+															const count = filteredContextOptions.length;
+															if (e.key === 'ArrowDown') {
+																e.preventDefault();
+																entityRefs.current[(index + 1) % count]?.focus();
+															} else if (e.key === 'ArrowUp') {
+																e.preventDefault();
+																entityRefs.current[(index - 1 + count) % count]?.focus();
+															} else if (e.key === 'Home') {
+																e.preventDefault();
+																entityRefs.current[0]?.focus();
+															} else if (e.key === 'End') {
+																e.preventDefault();
+																entityRefs.current[count - 1]?.focus();
+															} else if (e.key === 'ArrowLeft') {
+																// Cross back to the tablist: focus the active
+																// tab so the user can move categories without
+																// reaching for Shift+Tab.
+																e.preventDefault();
+																categoryTabRefs.current.get(activeContextCategory)?.focus();
+															}
+														}}
 													>
 														<span className={styles.contextPopoverEntityItemText}>
 															{option.value}
