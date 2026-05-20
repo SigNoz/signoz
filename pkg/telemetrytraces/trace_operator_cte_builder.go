@@ -78,27 +78,19 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 		}
 		filteredCTEName := fmt.Sprintf("__return_from_%s", b.operator.ReturnSpansFrom)
 
-		// DISTINCT is essential here. The operator CTE (rootCTEName) holds one row
-		// per matching *span*, not one row per matching *trace*. A single trace can
-		// satisfy the operator through multiple spans — e.g. for "A -> B", every
-		// A-span that is an indirect ancestor of any B-span appears as a separate
-		// row. If we joined sourceQueryCTE directly against rootCTEName on trace_id,
-		// each source span would be duplicated once for every operator-matching span
-		// on the same trace. DISTINCT collapses rootCTEName to one row per trace_id,
-		// making the join a clean membership test with no fan-out.
+		// rootCTEName holds one row per matching *span*, not per *trace*, so it can
+		// contain many rows for the same trace_id. DISTINCT de-duplicates that set
+		// before ClickHouse builds the hash table for the IN check, keeping memory
+		// usage proportional to the number of distinct traces rather than spans.
 		matchingTracedSB := sqlbuilder.NewSelectBuilder()
 		matchingTracedSB.Select("DISTINCT trace_id")
 		matchingTracedSB.From(rootCTEName)
 		matchedTracesSQL, matchedTracesArgs := matchingTracedSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 		filteredSB := sqlbuilder.NewSelectBuilder()
-		filteredSB.Select("src.*")
-		filteredSB.From(fmt.Sprintf("%s AS src", sourceQueryCTE))
-		filteredSB.JoinWithOption(
-			sqlbuilder.InnerJoin,
-			fmt.Sprintf("(%s) AS matched_traces", matchedTracesSQL),
-			"src.trace_id = matched_traces.trace_id",
-		)
+		filteredSB.Select("*")
+		filteredSB.From(sourceQueryCTE)
+		filteredSB.Where(fmt.Sprintf("trace_id IN (%s)", matchedTracesSQL))
 		filteredSQL, filteredArgs := filteredSB.BuildWithFlavor(sqlbuilder.ClickHouse, matchedTracesArgs...)
 
 		b.addCTE(filteredCTEName, filteredSQL, filteredArgs, []string{sourceQueryCTE, rootCTEName})
