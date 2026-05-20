@@ -496,7 +496,21 @@ export function PlannedDowntimeForm(
 					label={
 						<span>
 							Scope&nbsp;
-							<Tooltip title='Filter by alert labels. Examples: env = "prod", region = "us-east-1" && severity = "critical"'>
+							<Tooltip
+								mouseLeaveDelay={0.3}
+								title={
+									<span>
+										Scope the planned downtime by alert labels.{' '}
+										<a
+											href="https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Learn more
+										</a>
+									</span>
+								}
+							>
 								<Info size={13} />
 							</Tooltip>
 						</span>
