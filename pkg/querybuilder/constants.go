@@ -7,7 +7,7 @@ const (
 
 	// FullTextSearchDefaultWarning is emitted when a full-text search or "body" searches are hit
 	// with New JSON Body enhancements.
-	FullTextSearchDefaultWarning = "Full text searches across all fields and will be slow and expensive. Consider using specific field to search a specific field inside body."
+	FullTextSearchDefaultWarning = "Full text searches across all fields and will be slow and expensive. Consider using specific field to search e.g. <context>.<field>:<field_data_type>"
 
 	// FTSInternalKey is the sentinel Name on TelemetryFieldKey instances that represent
 	// wildcard map searches (all attribute/resource keys+values). The unconventional value

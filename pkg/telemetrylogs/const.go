@@ -127,15 +127,15 @@ var (
 		},
 	}
 
-	// DefaultFTSFieldKeys is the ordered set of TelemetryFieldKey instances that
+	// defaultFTSFieldKeys is set of TelemetryFieldKey instances that
 	// search() fans out across. Intrinsic log columns use the normal conditionFor
 	// path; entries with Name==FTSInternalKey are short-circuited in conditionFor
 	// to emit arrayExists conditions over mapKeys/mapValues without arrayConcat.
-	DefaultFTSFieldKeys = []*telemetrytypes.TelemetryFieldKey{
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextBody, FieldDataType: telemetrytypes.FieldDataTypeString},
+	defaultFTSFieldKeys = []*telemetrytypes.TelemetryFieldKey{
 		{Name: LogsV2SeverityTextColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: LogsV2TraceIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: LogsV2SpanIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextBody, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
 		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeBool},

@@ -68,7 +68,7 @@ func NewLogQueryStatementBuilder(
 		fl:                        fl,
 		fullTextColumn:            fullTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
-		ftsFieldKeys:              DefaultFTSFieldKeys,
+		ftsFieldKeys:              defaultFTSFieldKeys,
 	}
 }
 
@@ -81,7 +81,6 @@ func (b *logQueryStatementBuilder) Build(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 	// TODO(Tushar): thread orgID here to evaluate correctly
