@@ -253,8 +253,8 @@ func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
 // expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
 // nested maps so that expr can resolve them without panicking. When a dotted
 // path conflicts with a plain key, the nested structure takes precedence.
-func ConvertLabelSetToEnv(lset model.LabelSet) map[string]interface{} {
-	env := make(map[string]interface{})
+func ConvertLabelSetToEnv(lset model.LabelSet) map[string]any {
+	env := map[string]any{}
 	for lk, lv := range lset {
 		key := strings.TrimSpace(string(lk))
 		value := string(lv)
@@ -264,22 +264,22 @@ func ConvertLabelSetToEnv(lset model.LabelSet) map[string]interface{} {
 			for i, raw := range parts {
 				part := strings.TrimSpace(raw)
 				if i == len(parts)-1 {
-					if _, isMap := current[part].(map[string]interface{}); !isMap {
+					if _, isMap := current[part].(map[string]any); !isMap {
 						current[part] = value
 					}
 					break
 				}
-				if nextMap, ok := current[part].(map[string]interface{}); ok {
+				if nextMap, ok := current[part].(map[string]any); ok {
 					current = nextMap
 				} else {
-					newMap := make(map[string]interface{})
+					newMap := map[string]any{}
 					current[part] = newMap
 					current = newMap
 				}
 			}
 			continue
 		}
-		if _, isMap := env[key].(map[string]interface{}); !isMap {
+		if _, isMap := env[key].(map[string]any); !isMap {
 			env[key] = value
 		}
 	}

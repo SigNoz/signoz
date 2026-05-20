@@ -33,13 +33,12 @@ const menuItemStyleV2: CSSProperties = {
 function AlertActionButtons({
 	ruleId,
 	alertDetails,
-	setUpdatedName,
 }: {
 	ruleId: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
-	setUpdatedName: (name: string) => void;
 }): JSX.Element {
-	const { alertRuleState, setAlertRuleState } = useAlertRule();
+	const { alertRuleState, setAlertRuleState, alertRuleName, setAlertRuleName } =
+		useAlertRule();
 	const [intermediateName, setIntermediateName] = useState<string>(
 		alertDetails.alert,
 	);
@@ -53,7 +52,7 @@ function AlertActionButtons({
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
 		alertDetails: alertDetails as unknown as AlertDef,
-		setUpdatedName,
+		setAlertRuleName,
 		intermediateName,
 	});
 
@@ -112,6 +111,12 @@ function AlertActionButtons({
 			setIsAlertRuleDisabled(alertDetails.state === 'disabled');
 		}
 	}, [setAlertRuleState, alertRuleState, alertDetails.state]);
+
+	useEffect(() => {
+		if (alertRuleName !== undefined) {
+			setIntermediateName(alertRuleName);
+		}
+	}, [alertRuleName]);
 
 	// on unmount remove the alert state
 	// eslint-disable-next-line react-hooks/exhaustive-deps

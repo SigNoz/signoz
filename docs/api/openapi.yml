@@ -2346,6 +2346,8 @@ components:
           type: boolean
         org_id:
           type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
         updatedAt:
           format: date-time
           type: string
@@ -2374,6 +2376,12 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
+      type: object
+    DashboardtypesSource:
+      enum:
+      - user
+      - system
+      - integration
       type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
