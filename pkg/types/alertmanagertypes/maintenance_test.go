@@ -675,3 +675,278 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		}
 	}
 }
+
+func TestShouldSkip_Scope(t *testing.T) {
+	activeSchedule := func() *Schedule {
+		return &Schedule{
+			Timezone:  "UTC",
+			StartTime: time.Now().UTC().Add(-time.Hour),
+			EndTime:   time.Now().UTC().Add(time.Hour),
+		}
+	}
+	now := time.Now().UTC()
+
+	cases := []struct {
+		name        string
+		maintenance *PlannedMaintenance
+		ruleID      string
+		ts          time.Time
+		lset        model.LabelSet
+		skip        bool
+	}{
+		{
+			name:        "empty scope - no label filtering applied",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule()},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production"},
+			skip:        true,
+		},
+		{
+			name:        "scope matches labels",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production"},
+			skip:        true,
+		},
+		{
+			name:        "scope does not match labels",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "staging"},
+			skip:        false,
+		},
+		{
+			name:        "AND expression - both conditions match",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" && service == "api"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production", "service": "api"},
+			skip:        true,
+		},
+		{
+			name:        "AND expression - one condition does not match",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" && service == "api"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production", "service": "worker"},
+			skip:        false,
+		},
+		{
+			name:        "OR expression - first alternative matches",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production"},
+			skip:        true,
+		},
+		{
+			name:        "OR expression - second alternative matches",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "staging"},
+			skip:        true,
+		},
+		{
+			name:        "OR expression - neither alternative matches",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "development"},
+			skip:        false,
+		},
+		{
+			name:        "scope references label absent from lset",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"service": "api"},
+			skip:        false,
+		},
+		{
+			name:        "in expression - value is in list",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "staging"},
+			skip:        true,
+		},
+		{
+			name:        "in expression - value not in list",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "development"},
+			skip:        false,
+		},
+		{
+			name:        "ruleID in list and scope matches - should skip",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production"},
+			skip:        true,
+		},
+		{
+			name:        "ruleID not in list and scope matches - ruleID gate prevents skip",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-2"}, Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "production"},
+			skip:        false,
+		},
+		{
+			name:        "ruleID in list but scope does not match - should not skip",
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1"}, Scope: `env == "production"`},
+			ruleID:      "rule-1",
+			ts:          now,
+			lset:        model.LabelSet{"env": "staging"},
+			skip:        false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := c.maintenance.ShouldSkip(c.ruleID, c.ts, c.lset)
+			if got != c.skip {
+				t.Errorf("ShouldSkip() = %v, want %v", got, c.skip)
+			}
+		})
+	}
+}
+
+func TestEvalScopeExpression(t *testing.T) {
+	cases := []struct {
+		name       string
+		expression string
+		lset       model.LabelSet
+		want       bool
+	}{
+		{
+			name:       "equality match",
+			expression: `env == "production"`,
+			lset:       model.LabelSet{"env": "production"},
+			want:       true,
+		},
+		{
+			name:       "equality no match",
+			expression: `env == "production"`,
+			lset:       model.LabelSet{"env": "staging"},
+			want:       false,
+		},
+		{
+			name:       "inequality match",
+			expression: `env != "production"`,
+			lset:       model.LabelSet{"env": "staging"},
+			want:       true,
+		},
+		{
+			name:       "AND - both match",
+			expression: `env == "production" && service == "api"`,
+			lset:       model.LabelSet{"env": "production", "service": "api"},
+			want:       true,
+		},
+		{
+			name:       "AND - partial match",
+			expression: `env == "production" && service == "api"`,
+			lset:       model.LabelSet{"env": "production", "service": "worker"},
+			want:       false,
+		},
+		{
+			name:       "OR - first matches",
+			expression: `env == "production" || env == "staging"`,
+			lset:       model.LabelSet{"env": "production"},
+			want:       true,
+		},
+		{
+			name:       "OR - second matches",
+			expression: `env == "production" || env == "staging"`,
+			lset:       model.LabelSet{"env": "staging"},
+			want:       true,
+		},
+		{
+			name:       "OR - none match",
+			expression: `env == "production" || env == "staging"`,
+			lset:       model.LabelSet{"env": "development"},
+			want:       false,
+		},
+		{
+			name:       "undefined label returns false",
+			expression: `env == "production"`,
+			lset:       model.LabelSet{"service": "api"},
+			want:       false,
+		},
+		{
+			name:       "in list - present",
+			expression: `env in ["production", "staging"]`,
+			lset:       model.LabelSet{"env": "production"},
+			want:       true,
+		},
+		{
+			name:       "in list - absent",
+			expression: `env in ["production", "staging"]`,
+			lset:       model.LabelSet{"env": "development"},
+			want:       false,
+		},
+		{
+			name:       "invalid expression returns false",
+			expression: `env ==`,
+			lset:       model.LabelSet{"env": "production"},
+			want:       false,
+		},
+		{
+			name:       "non-bool expression returns false",
+			expression: `env`,
+			lset:       model.LabelSet{"env": "production"},
+			want:       false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := evalScopeExpression(c.expression, c.lset)
+			if got != c.want {
+				t.Errorf("evalScopeExpression(%q, %v) = %v, want %v", c.expression, c.lset, got, c.want)
+			}
+		})
+	}
+}
+
+func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
+	validSchedule := &Schedule{
+		Timezone:  "UTC",
+		StartTime: time.Now().UTC(),
+		EndTime:   time.Now().UTC().Add(time.Hour),
+	}
+
+	cases := []struct {
+		name    string
+		scope   string
+		wantErr bool
+	}{
+		{name: "empty scope", scope: "", wantErr: false},
+		{name: "simple equality", scope: `env == "production"`, wantErr: false},
+		{name: "AND expression", scope: `env == "production" && service == "api"`, wantErr: false},
+		{name: "OR expression", scope: `env == "production" || env == "staging"`, wantErr: false},
+		{name: "in expression", scope: `env in ["production", "staging"]`, wantErr: false},
+		{name: "incomplete expression", scope: `env ==`, wantErr: true},
+		{name: "non-bool expression", scope: `"just a string"`, wantErr: true},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p := &PostablePlannedMaintenance{
+				Name:     "test",
+				Schedule: validSchedule,
+				Scope:    c.scope,
+			}
+			err := p.Validate()
+			if (err != nil) != c.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, c.wantErr)
+			}
+		})
+	}
+}
