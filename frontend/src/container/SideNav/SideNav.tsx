@@ -1053,10 +1053,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										}
 										onClickGetStarted(event);
 									}}
+									size={isCollapsed ? 'icon' : 'md'}
 									variant="outlined"
 									color="secondary"
+									prefix={<PackagePlus size={16} />}
 								>
-									<PackagePlus size={16} />
 									<div className="license tag nav-item-label"> New source </div>
 								</Button>
 							</div>
