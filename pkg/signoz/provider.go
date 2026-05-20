@@ -203,7 +203,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateMetaresourcesTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
-		sqlmigration.NewAddIntegrationDashboardsFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateCloudIntegrationDashboardsFactory(sqlstore),
 	)
 }
@@ -231,9 +231,14 @@ func NewNotificationManagerProviderFactories(routeStore alertmanagertypes.RouteS
 	)
 }
 
-func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, nfManager nfmanager.NotificationManager) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
+func NewAlertmanagerProviderFactories(
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	nfManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
+) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
-		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
+		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager, maintenanceStore),
 	)
 }
 

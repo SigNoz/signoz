@@ -59,7 +59,7 @@ function getDeleteTooltip(
 
 function getInviteButtonLabel(
 	isLoading: boolean,
-	existingToken: { expiresAt?: Date } | undefined,
+	existingToken: { expiresAt?: string } | undefined,
 	isExpired: boolean,
 	notFound: boolean,
 ): string {

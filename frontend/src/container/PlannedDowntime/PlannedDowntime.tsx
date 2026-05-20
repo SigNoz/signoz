@@ -9,7 +9,7 @@ import {
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -24,7 +24,7 @@ import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
 import { PlannedDowntimeList } from './PlannedDowntimeList';
 import {
-	defautlInitialValues,
+	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 
@@ -48,8 +48,8 @@ export function PlannedDowntime(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] =
-		useState<Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>>(
-			defautlInitialValues,
+		useState<Partial<AlertmanagertypesPlannedMaintenanceDTO>>(
+			defaultInitialValues,
 		);
 
 	const downtimeSchedules = useListDowntimeSchedules();
@@ -148,7 +148,7 @@ export function PlannedDowntime(): JSX.Element {
 						<Button
 							type="primary"
 							onClick={(): void => {
-								setInitialValues({ ...defautlInitialValues, editMode: false });
+								setInitialValues(defaultInitialValues);
 								setIsOpen(true);
 								setEditMode(false);
 								form.resetFields();
