@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
+import { AIAssistantEvents } from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { Sparkles } from '@signozhq/icons';
@@ -17,7 +20,26 @@ interface RouteParams {
 
 export default function AIAssistantPage(): JSX.Element {
 	const history = useHistory();
+	const location = useLocation<{ fromInApp?: boolean } | undefined>();
+	const { pathname } = location;
 	const { conversationId } = useParams<RouteParams>();
+
+	// Skip the mount-time Opened fire when the user expanded an already-open
+	// drawer/modal — that surface already emitted Opened with the right source.
+	// Router state (vs a module flag) survives StrictMode double-mount and
+	// aborted navigations.
+	const fromInApp = location.state?.fromInApp === true;
+	useEffect(() => {
+		if (fromInApp) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.Opened, {
+			source: 'deeplink',
+			currentPage: normalizePage(pathname),
+		});
+		// Only on mount; route param changes inside the same page aren't a re-open.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
@@ -71,9 +93,14 @@ export default function AIAssistantPage(): JSX.Element {
 	);
 
 	const handleNewConversation = useCallback(() => {
+		void logEvent(AIAssistantEvents.NewChatClicked, {
+			page: normalizePage(pathname),
+			mode: 'full_screen',
+			source: 'history_list',
+		});
 		const newId = startNewConversation();
 		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history]);
+	}, [startNewConversation, history, pathname]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so
