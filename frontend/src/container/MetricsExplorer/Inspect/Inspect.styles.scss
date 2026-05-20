@@ -64,20 +64,6 @@
 					align-items: center;
 					justify-content: space-between;
 
-					.periscope-btn-group {
-						.time-series-button-label,
-						.metric-name-button-label {
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							cursor: default;
-
-							span {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-
 					.view-toggle-button {
 						display: flex;
 						gap: 8px;

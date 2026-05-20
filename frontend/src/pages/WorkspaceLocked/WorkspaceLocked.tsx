@@ -310,7 +310,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 								size="middle"
 								href="mailto:cloud-support@signoz.io"
 								role="button"
-								className="periscope-btn"
 								onClick={handleContactUsClick}
 							>
 								Contact Us
@@ -385,7 +384,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 												type="default"
 												shape="round"
 												size="middle"
-												className="periscope-btn"
 												onClick={handleExtendTrial}
 											>
 												{t('needMoreTime')}

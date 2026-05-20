@@ -89,7 +89,7 @@ function OtherFields({
 									<span className={styles.fieldKey}>{attr.name}</span>
 									{!isAtLimit && (
 										<Button
-											className={cx(styles.addBtn, 'periscope-btn')}
+											className={styles.addBtn}
 											variant="outlined"
 											color="secondary"
 											size="sm"

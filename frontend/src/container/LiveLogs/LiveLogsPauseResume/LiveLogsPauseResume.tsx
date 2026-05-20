@@ -76,8 +76,7 @@ function LiveLogsPauseResume(): JSX.Element {
 		<div className="live-logs-pause-resume">
 			<Button
 				onClick={onLiveButtonClick}
-				className={`periscope-btn ${isPlaying ? 'warning' : 'success'}`}
-				color="destructive"
+				color={isPlaying ? 'destructive' : 'warning'}
 				prefix={isPlaying ? <CirclePause size="md" /> : <CirclePlay size="md" />}
 			>
 				{isPlaying ? 'Pause' : 'Resume'}

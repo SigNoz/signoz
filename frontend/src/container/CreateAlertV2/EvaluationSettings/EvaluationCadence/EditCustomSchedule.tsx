@@ -80,23 +80,18 @@ function EditCustomSchedule({
 		<div className="edit-custom-schedule">
 			{displayText}
 			<div className="button-row">
-				<ButtonGroup className="periscope-btn-group">
-					<Button onClick={handleEdit} variant="outlined" color="secondary">
-						<Pencil size={12} />
+				<ButtonGroup variant="outlined" color="secondary">
+					<Button onClick={handleEdit} prefix={<Pencil size={12} />}>
 						<Typography.Text>Edit custom schedule</Typography.Text>
 					</Button>
-					<Button onClick={handlePreview} variant="outlined" color="secondary">
-						<Calendar1 size={12} />
+					<Button onClick={handlePreview} prefix={<Calendar1 size={12} />}>
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
 					<Button
 						data-testid="discard-button"
 						onClick={handleDiscard}
-						variant="outlined"
-						color="secondary"
-					>
-						<Trash size={12} />
-					</Button>
+						prefix={<Trash size={12} />}
+					/>
 				</ButtonGroup>
 			</div>
 		</div>

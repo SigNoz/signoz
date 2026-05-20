@@ -40,7 +40,7 @@ function ShowButton({
 			loading={isLoading}
 			onClick={onClick}
 			className={cx(
-				'show-more-button periscope-btn',
+				'show-more-button',
 				order === ORDERBY_FILTERS.ASC ? 'up' : 'down',
 				isDisabled && 'disabled',
 			)}

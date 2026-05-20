@@ -106,7 +106,7 @@ describe.each([
 		renderWithStore(dataSource);
 		const button = screen.getByTestId(testId);
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveClass('periscope-btn', 'ghost');
+		expect(button).not.toBeDisabled();
 	});
 
 	it('shows popover with export options when download button is clicked', () => {

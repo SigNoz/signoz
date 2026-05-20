@@ -169,7 +169,7 @@ function LaunchChatSupport({
 				overlayClassName="tooltip-overlay"
 			>
 				<Button
-					className={cx('periscope-btn', 'facing-issue-button', className)}
+					className={cx('facing-issue-button', className)}
 					onClick={handleFacingIssuesClick}
 					variant="outlined"
 					color="secondary"

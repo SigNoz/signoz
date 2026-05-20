@@ -184,12 +184,10 @@ function GraphView({
 	return (
 		<div className="inspect-metrics-graph-view" ref={graphRef}>
 			<div className="inspect-metrics-graph-view-header">
-				<ButtonGroup className="periscope-btn-group">
+				<ButtonGroup variant="outlined" color="secondary">
 					<Button
 						className="metric-name-button-label"
 						disabled
-						variant="outlined"
-						color="secondary"
 						prefix={
 							MetricTypeIcon && metricType ? (
 								<MetricTypeIcon
@@ -201,12 +199,7 @@ function GraphView({
 					>
 						{metricName}
 					</Button>
-					<Button
-						className="time-series-button-label"
-						disabled
-						variant="outlined"
-						color="secondary"
-					>
+					<Button className="time-series-button-label" disabled>
 						{/* First time series in that of timestamps. Hence -1 */}
 						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>

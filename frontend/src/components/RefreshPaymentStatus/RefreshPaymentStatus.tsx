@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
 import refreshPaymentStatus from 'api/v3/licenses/put';
-import cx from 'classnames';
 import { RefreshCcw } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { Button } from '@signozhq/ui/button';
@@ -34,7 +33,6 @@ function RefreshPaymentStatus({
 		<span className="refresh-payment-status-btn-wrapper">
 			<Tooltip title={type === 'tooltip' ? t('refreshPaymentStatus') : ''}>
 				<Button
-					className={cx('periscope-btn', { text: type === 'text' })}
 					onClick={handleRefreshPaymentStatus}
 					loading={isLoading}
 					variant="outlined"

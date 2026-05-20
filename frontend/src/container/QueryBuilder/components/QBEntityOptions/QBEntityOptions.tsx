@@ -85,7 +85,7 @@ export default function QBEntityOptions({
 		<Col span={24}>
 			<div className="qb-entity-options">
 				<div className="left-col-items">
-					<div className="options periscope-btn-group">
+					<div className="options">
 						<ButtonGroup variant="outlined" color="secondary">
 							<Tooltip title={isCollapsed ? 'Uncollapse' : 'Collapse'}>
 								<Button className="collapse" onClick={onCollapseEntity}>
@@ -104,7 +104,7 @@ export default function QBEntityOptions({
 
 							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
-									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
+									<Button onClick={handleCloneEntity}>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
@@ -112,7 +112,6 @@ export default function QBEntityOptions({
 
 							<Button
 								className={cx(
-									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
 									query?.dataSource === DataSource.TRACES &&
 										(hasTraceOperator || (showTraceOperator && isListViewPanel))

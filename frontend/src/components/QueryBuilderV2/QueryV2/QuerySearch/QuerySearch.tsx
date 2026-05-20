@@ -1488,14 +1488,14 @@ function QuerySearch({
 									variant="ghost"
 									color="secondary"
 									size="icon"
-									className="periscope-btn ghost"
 									prefix={<CircleCheck size={14} />}
 								/>
 							) : (
 								<Button
+									color="destructive"
 									variant="ghost"
 									size="icon"
-									prefix={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
+									prefix={<TriangleAlert size={14} />}
 								/>
 							)}
 						</Popover>

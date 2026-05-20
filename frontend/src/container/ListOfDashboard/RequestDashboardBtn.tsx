@@ -76,7 +76,6 @@ export function RequestDashboardBtn(): JSX.Element {
 						onChange={(e): void => setRequestedDashboardName(e.target.value)}
 					/>
 					<Button
-						className="periscope-btn primary"
 						onClick={handleRequestDashboardSubmit}
 						disabled={
 							isSubmittingRequestForDashboard ||

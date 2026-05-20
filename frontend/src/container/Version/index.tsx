@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Button, Form } from 'antd';
+import { Form } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -72,8 +73,10 @@ function Version(): JSX.Element {
 								value={isLatestVersionError ? t('n_a').toString() : latestVersion}
 								placeholder={t('latest_version')}
 							/>
-							<Button href={latestVersionUrl} target="_blank" type="link">
-								{t('release_notes')}
+							<Button variant="link">
+								<a href={latestVersionUrl} target="_blank">
+									{t('release_notes')}
+								</a>
 							</Button>
 						</Form.Item>
 					</Form>
@@ -99,14 +102,13 @@ function Version(): JSX.Element {
 
 					{!isError && !isLatestVersion && (
 						<div className="version-page-upgrade-container">
-							<Button
-								href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
-								target="_blank"
-								type="primary"
-								className="periscope-btn primary"
-								icon={<CloudUpload size={16} />}
-							>
-								{t('read_how_to_upgrade')}
+							<Button asChild prefix={<CloudUpload size={16} />}>
+								<a
+									href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+									target="_blank"
+								>
+									{t('read_how_to_upgrade')}
+								</a>
 							</Button>
 						</div>
 					)}

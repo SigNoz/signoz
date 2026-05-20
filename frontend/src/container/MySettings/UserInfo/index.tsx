@@ -192,14 +192,11 @@ function UserInfo(): JSX.Element {
 				footer={[
 					<Button
 						key="submit"
-						className={`periscope-btn ${
-							isResetPasswordDisabled ? 'secondary' : 'primary'
-						}`}
 						onClick={onChangePasswordClickHandler}
 						disabled={isLoading || isResetPasswordDisabled}
 						data-testid="reset-password-btn"
-						variant="outlined"
-						color="secondary"
+						variant={isResetPasswordDisabled ? 'outlined' : 'solid'}
+						color={isResetPasswordDisabled ? 'secondary' : 'primary'}
 						prefix={<Check size={16} />}
 					>
 						Reset password

@@ -54,7 +54,7 @@ function SortableField({
 				<span className={styles.fieldKey}>{field.name}</span>
 			</div>
 			<Button
-				className={cx(styles.removeBtn, 'periscope-btn')}
+				className={styles.removeBtn}
 				variant="outlined"
 				color="destructive"
 				size="sm"

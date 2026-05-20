@@ -92,7 +92,6 @@ import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
-import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
@@ -128,9 +127,6 @@ function DashboardsList(): JSX.Element {
 		['action', 'create_new_dashboards'],
 		user.role,
 	);
-
-	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
-		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
@@ -888,14 +884,6 @@ function DashboardsList(): JSX.Element {
 					isImportJSONModalVisible={isImportJSONModalVisible}
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
-				/>
-
-				<DashboardTemplatesModal
-					showNewDashboardTemplatesModal={showNewDashboardTemplatesModal}
-					onCreateNewDashboard={onNewDashboardHandler}
-					onCancel={(): void => {
-						setShowNewDashboardTemplatesModal(false);
-					}}
 				/>
 
 				<Modal
