@@ -15,6 +15,7 @@
 
 const BANNED_COMPONENTS = {
 	Typography: 'Use @signozhq/ui Typography instead of antd Typography.',
+	Badge: 'Use @signozhq/ui/badge instead of antd Badge.',
 };
 
 export default {
