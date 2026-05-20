@@ -10,6 +10,10 @@ import {
 	Sparkles,
 } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
 import MessageBubble from '../MessageBubble';
@@ -46,17 +50,24 @@ interface VirtualizedMessagesProps {
 	conversationId: string;
 	messages: Message[];
 	isStreaming: boolean;
+	/**
+	 * Called when a user clicks an empty-state suggested prompt. Routed
+	 * through the parent so analytics (Message sent) fire with the same
+	 * page/mode/context attribution as a normal send.
+	 */
+	onSendSuggestedPrompt: (text: string) => void;
 }
 
 export default function VirtualizedMessages({
 	conversationId,
 	messages,
 	isStreaming,
+	onSendSuggestedPrompt,
 }: VirtualizedMessagesProps): JSX.Element {
-	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
 	);
+	const { threadId } = useAIAssistantAnalyticsContext(conversationId);
 	const streamingStatus = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.streamingStatus ?? '',
 	);
@@ -85,9 +96,13 @@ export default function VirtualizedMessages({
 			if (isStreaming) {
 				return;
 			}
+			void logEvent(AIAssistantEvents.RegenerateClicked, {
+				messageId,
+				threadId,
+			});
 			void regenerateAssistantMessage(conversationId, messageId);
 		},
-		[conversationId, isStreaming, regenerateAssistantMessage],
+		[conversationId, isStreaming, regenerateAssistantMessage, threadId],
 	);
 
 	// Scroll all the way to the actual bottom — including the 64px of bottom
@@ -146,7 +161,11 @@ export default function VirtualizedMessages({
 							color="secondary"
 							className={styles.emptyChip}
 							onClick={(): void => {
-								sendMessage(s.text);
+								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
+									promptId: s.text,
+									category: SuggestedPromptCategory.EmptyState,
+								});
+								onSendSuggestedPrompt(s.text);
 							}}
 							prefix={<s.icon size={14} />}
 						>
