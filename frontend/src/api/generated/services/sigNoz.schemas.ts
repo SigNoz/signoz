@@ -3017,6 +3017,674 @@ export interface CoretypesPatchableObjectsDTO {
 	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
+export interface DashboardGridItemDTO {
+	content?: CommonJSONRefDTO;
+	/**
+	 * @type integer
+	 */
+	height?: number;
+	/**
+	 * @type integer
+	 */
+	width?: number;
+	/**
+	 * @type integer
+	 */
+	x?: number;
+	/**
+	 * @type integer
+	 */
+	y?: number;
+}
+
+export interface DashboardGridLayoutCollapseDTO {
+	/**
+	 * @type boolean
+	 */
+	open?: boolean;
+}
+
+export interface DashboardGridLayoutDisplayDTO {
+	collapse?: DashboardGridLayoutCollapseDTO;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface DashboardGridLayoutSpecDTO {
+	display?: DashboardGridLayoutDisplayDTO;
+	/**
+	 * @type array,null
+	 */
+	items?: DashboardGridItemDTO[] | null;
+	/**
+	 * @type string
+	 */
+	repeatVariable?: string;
+}
+
+export interface VariableDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type boolean
+	 */
+	hidden?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
+export interface DashboardTextVariableSpecDTO {
+	/**
+	 * @type boolean
+	 */
+	constant?: boolean;
+	display?: VariableDisplayDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface DashboardtypesAxesDTO {
+	/**
+	 * @type boolean
+	 */
+	isLogScale?: boolean;
+	/**
+	 * @type number,null
+	 */
+	softMax?: number | null;
+	/**
+	 * @type number,null
+	 */
+	softMin?: number | null;
+}
+
+export enum DashboardtypesPrecisionOptionDTO {
+	NUMBER_0 = '0',
+	NUMBER_1 = '1',
+	NUMBER_2 = '2',
+	NUMBER_3 = '3',
+	NUMBER_4 = '4',
+	full = 'full',
+}
+export interface DashboardtypesPanelFormattingDTO {
+	decimalPrecision?: DashboardtypesPrecisionOptionDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export enum DashboardtypesLegendPositionDTO {
+	bottom = 'bottom',
+	right = 'right',
+}
+export type DashboardtypesLegendDTOCustomColorsAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type DashboardtypesLegendDTOCustomColors =
+	DashboardtypesLegendDTOCustomColorsAnyOf | null;
+
+export interface DashboardtypesLegendDTO {
+	/**
+	 * @type object,null
+	 */
+	customColors?: DashboardtypesLegendDTOCustomColors;
+	position?: DashboardtypesLegendPositionDTO;
+}
+
+export interface DashboardtypesThresholdWithLabelDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	/**
+	 * @type string
+	 */
+	label: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export enum DashboardtypesTimePreferenceDTO {
+	global_time = 'global_time',
+	last_5_min = 'last_5_min',
+	last_15_min = 'last_15_min',
+	last_30_min = 'last_30_min',
+	last_1_hr = 'last_1_hr',
+	last_6_hr = 'last_6_hr',
+	last_1_day = 'last_1_day',
+	last_3_days = 'last_3_days',
+	last_1_week = 'last_1_week',
+	last_1_month = 'last_1_month',
+}
+export interface DashboardtypesBarChartVisualizationDTO {
+	/**
+	 * @type boolean
+	 */
+	fillSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	stackedBarChart?: boolean;
+	timePreference?: DashboardtypesTimePreferenceDTO;
+}
+
+export interface DashboardtypesBarChartPanelSpecDTO {
+	axes?: DashboardtypesAxesDTO;
+	formatting?: DashboardtypesPanelFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @type array,null
+	 */
+	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
+	visualization?: DashboardtypesBarChartVisualizationDTO;
+}
+
+export interface DashboardtypesBasicVisualizationDTO {
+	timePreference?: DashboardtypesTimePreferenceDTO;
+}
+
+export interface Querybuildertypesv5LogAggregationDTO {
+	/**
+	 * @type string
+	 */
+	alias?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+}
+
+export interface Querybuildertypesv5FilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+}
+
+export interface Querybuildertypesv5FunctionArgDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	value?: unknown;
+}
+
+export enum Querybuildertypesv5FunctionNameDTO {
+	cutoffmin = 'cutoffmin',
+	cutoffmax = 'cutoffmax',
+	clampmin = 'clampmin',
+	clampmax = 'clampmax',
+	absolute = 'absolute',
+	runningdiff = 'runningdiff',
+	log2 = 'log2',
+	log10 = 'log10',
+	cumulativesum = 'cumulativesum',
+	ewma3 = 'ewma3',
+	ewma5 = 'ewma5',
+	ewma7 = 'ewma7',
+	median3 = 'median3',
+	median5 = 'median5',
+	median7 = 'median7',
+	timeshift = 'timeshift',
+	anomaly = 'anomaly',
+	fillzero = 'fillzero',
+}
+export interface Querybuildertypesv5FunctionDTO {
+	/**
+	 * @type array
+	 */
+	args?: Querybuildertypesv5FunctionArgDTO[];
+	name?: Querybuildertypesv5FunctionNameDTO;
+}
+
+export enum TelemetrytypesFieldContextDTO {
+	metric = 'metric',
+	log = 'log',
+	span = 'span',
+	resource = 'resource',
+	attribute = 'attribute',
+	body = 'body',
+}
+export enum TelemetrytypesFieldDataTypeDTO {
+	string = 'string',
+	bool = 'bool',
+	float64 = 'float64',
+	int64 = 'int64',
+	number = 'number',
+}
+export enum TelemetrytypesSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+}
+export interface Querybuildertypesv5GroupByKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface Querybuildertypesv5HavingDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+}
+
+export interface Querybuildertypesv5LimitByDTO {
+	/**
+	 * @type array,null
+	 */
+	keys?: string[] | null;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export enum Querybuildertypesv5OrderDirectionDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export interface Querybuildertypesv5OrderByKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface Querybuildertypesv5OrderByDTO {
+	direction?: Querybuildertypesv5OrderDirectionDTO;
+	key?: Querybuildertypesv5OrderByKeyDTO;
+}
+
+/**
+ * Step interval. Accepts a Go duration string (e.g., "60s", "1m", "1h") or a number representing seconds (e.g., 60).
+ */
+export type Querybuildertypesv5StepDTO = string | number;
+
+export interface Querybuildertypesv5SecondaryAggregationDTO {
+	/**
+	 * @type string
+	 */
+	alias?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export interface TelemetrytypesTelemetryFieldKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export enum TelemetrytypesSourceDTO {
+	meter = 'meter',
+}
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5LogAggregationDTO[];
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export interface MetrictypesComparisonSpaceAggregationParamDTO {
+	/**
+	 * @type string
+	 */
+	operator: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	threshold: number;
+}
+
+export enum Querybuildertypesv5ReduceToDTO {
+	sum = 'sum',
+	count = 'count',
+	avg = 'avg',
+	min = 'min',
+	max = 'max',
+	last = 'last',
+	median = 'median',
+}
+export enum MetrictypesSpaceAggregationDTO {
+	sum = 'sum',
+	avg = 'avg',
+	min = 'min',
+	max = 'max',
+	count = 'count',
+	p50 = 'p50',
+	p75 = 'p75',
+	p90 = 'p90',
+	p95 = 'p95',
+	p99 = 'p99',
+}
+export enum MetrictypesTemporalityDTO {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetrictypesTimeAggregationDTO {
+	latest = 'latest',
+	sum = 'sum',
+	avg = 'avg',
+	min = 'min',
+	max = 'max',
+	count = 'count',
+	count_distinct = 'count_distinct',
+	rate = 'rate',
+	increase = 'increase',
+}
+export interface Querybuildertypesv5MetricAggregationDTO {
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
+	/**
+	 * @type string
+	 */
+	metricName?: string;
+	reduceTo?: Querybuildertypesv5ReduceToDTO;
+	spaceAggregation?: MetrictypesSpaceAggregationDTO;
+	temporality?: MetrictypesTemporalityDTO;
+	timeAggregation?: MetrictypesTimeAggregationDTO;
+}
+
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5MetricAggregationDTO[];
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export interface Querybuildertypesv5TraceAggregationDTO {
+	/**
+	 * @type string
+	 */
+	alias?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+}
+
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export type DashboardtypesBuilderQuerySpecDTO =
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
+	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+
+export enum DashboardtypesComparisonOperatorDTO {
+	'>' = '>',
+	'<' = '<',
+	'>=' = '>=',
+	'<=' = '<=',
+	'=' = '=',
+	above = 'above',
+	below = 'below',
+	above_or_equal = 'above_or_equal',
+	below_or_equal = 'below_or_equal',
+	equal = 'equal',
+	not_equal = 'not_equal',
+}
+export enum DashboardtypesThresholdFormatDTO {
+	text = 'text',
+	background = 'background',
+}
+export interface DashboardtypesComparisonThresholdDTO {
+	/**
+	 * @type string
+	 */
+	color: string;
+	format?: DashboardtypesThresholdFormatDTO;
+	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value: number;
+}
+
+export interface DashboardtypesCustomVariableSpecDTO {
+	/**
+	 * @type string
+	 */
+	customValue: string;
+}
+
 export enum DashboardtypesSourceDTO {
 	user = 'user',
 	system = 'system',
@@ -3919,7 +4587,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -3941,7 +4609,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */

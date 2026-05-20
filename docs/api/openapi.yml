@@ -2895,11 +2895,137 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
+    DashboardtypesPrecisionOption:
+      enum:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - full
+      type: string
+    DashboardtypesQuery:
+      properties:
+        kind:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesQuerySpec'
+      type: object
+    DashboardtypesQueryPlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+    DashboardtypesQueryPluginKind:
+      enum:
+      - signoz/BuilderQuery
+      - signoz/CompositeQuery
+      - signoz/Formula
+      - signoz/PromQLQuery
+      - signoz/ClickHouseSQL
+      - signoz/TraceOperator
+      type: string
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
+      properties:
+        kind:
+          enum:
+          - signoz/BuilderQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/ClickHouseSQL
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/CompositeQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/PromQLQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
+      properties:
+        kind:
+          enum:
+          - signoz/Formula
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
+      properties:
+        kind:
+          enum:
+          - signoz/TraceOperator
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQuerySpec:
+      properties:
+        name:
+          type: string
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+      type: object
+    DashboardtypesQueryVariableSpec:
+      properties:
+        queryValue:
+          type: string
+      required:
+      - queryValue
+      type: object
     DashboardtypesSource:
       enum:
       - user
       - system
       - integration
+      type: object
+    DashboardtypesSpanGaps:
+      properties:
+        fillLessThan:
+          type: string
+        fillOnlyBelow:
+          type: boolean
       type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
