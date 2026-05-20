@@ -119,11 +119,12 @@ def create_signoz(
         dockerfile_path = "cmd/enterprise/Dockerfile.integration"
         if with_web:
             dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
-
+            
+            
+        # The SigNoz image build does not depend on ClickHouse migrations, so
+        # build it while the migrator container runs.
         image_build = start_signoz_image_build(pytestconfig, dockerfile_path, arch, zeus.container_configs["8080"].base())
         try:
-            # The SigNoz image does not depend on ClickHouse migrations, so
-            # build it while the migrator container runs.
             request.getfixturevalue("migrator")
             wait_for_signoz_image_build(image_build)
         except Exception:  # pylint: disable=broad-exception-caught
