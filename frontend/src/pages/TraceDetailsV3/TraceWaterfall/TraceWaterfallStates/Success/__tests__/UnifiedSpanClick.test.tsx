@@ -199,10 +199,12 @@ const mockSpans = [
 	createMockSpan('span-3', 1),
 ];
 
-// Shared TestComponent for all tests
+// Shared TestComponent for all tests. Default selectedSpan to the root mirrors
+// what TraceDetailsV3's deep-link one-shot effect does when there's no spanId
+// in the URL — Success no longer owns that default itself.
 function TestComponent(): JSX.Element {
 	const [selectedSpan, setSelectedSpan] = React.useState<SpanV3 | undefined>(
-		undefined,
+		mockSpans[0],
 	);
 
 	return (
