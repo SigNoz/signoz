@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
+import { AIAssistantEvents } from '../events';
+import {
+	normalizePage,
+	useAIAssistantAnalyticsContext,
+} from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -24,6 +31,7 @@ import styles from './AIAssistantModal.module.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
 	const history = useHistory();
+	const { pathname } = useLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
@@ -36,6 +44,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
+	const analyticsCtx = useAIAssistantAnalyticsContext();
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
@@ -55,6 +64,10 @@ export default function AIAssistantModal(): JSX.Element | null {
 				} else {
 					startNewConversation();
 					setShowHistory(false);
+					void logEvent(AIAssistantEvents.Opened, {
+						source: 'shortcut',
+						currentPage: normalizePage(pathname),
+					});
 					openModal();
 				}
 				return;
@@ -68,7 +81,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 		window.addEventListener('keydown', handleKeyDown);
 		return (): void => window.removeEventListener('keydown', handleKeyDown);
-	}, [isOpen, openModal, closeModal, startNewConversation]);
+	}, [isOpen, openModal, closeModal, startNewConversation, pathname]);
 
 	// ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -77,15 +90,28 @@ export default function AIAssistantModal(): JSX.Element | null {
 			return;
 		}
 		closeModal();
+		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
+		// the assistant was already open in the modal, so this is a surface
+		// switch, not a new open.
 		history.push(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+			{ fromInApp: true },
 		);
 	}, [activeConversationId, closeModal, history]);
 
 	const handleNew = useCallback(() => {
+		void logEvent(AIAssistantEvents.NewChatClicked, {
+			...analyticsCtx,
+			// useAIAssistantAnalyticsContext() runs above this component's
+			// VariantContext.Provider, so the hook reports the default 'page'
+			// mode. Override here: the modal collapses to 'sidepane' in our
+			// taxonomy alongside the drawer.
+			mode: 'sidepane',
+			source: 'header',
+		});
 		startNewConversation();
 		setShowHistory(false);
-	}, [startNewConversation]);
+	}, [startNewConversation, analyticsCtx]);
 
 	const handleHistorySelect = useCallback(() => {
 		setShowHistory(false);
@@ -132,7 +158,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 						</div>
 
 						<div className={styles.actions}>
-							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+							<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
 								<Button
 									variant="ghost"
 									size="icon"
@@ -142,9 +168,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<History size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="New conversation">
+							<TooltipSimple title="New conversation">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -153,9 +179,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Plus size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Open full screen">
+							<TooltipSimple title="Open full screen">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -165,9 +191,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Maximize2 size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Minimize to side panel">
+							<TooltipSimple title="Minimize to side panel">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -176,9 +202,9 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<Minus size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 
-							<Tooltip title="Close">
+							<TooltipSimple title="Close">
 								<Button
 									variant="ghost"
 									size="icon"
@@ -187,7 +213,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 								>
 									<X size={14} />
 								</Button>
-							</Tooltip>
+							</TooltipSimple>
 						</div>
 					</div>
 

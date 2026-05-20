@@ -2,19 +2,15 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import type {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { USER_ROLES } from 'types/roles';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { AppProvider, useAppContext } from '../App';
 
-const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 const MY_USER_URL = 'http://localhost/api/v2/users/me';
 const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
 
@@ -22,25 +18,8 @@ jest.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
 }));
 
-/**
- * Since we are mocking the check permissions, this is needed
- */
 const waitForSinglePreflightToFinish = async (): Promise<void> =>
 	await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_TIME_MS));
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 const queryClient = new QueryClient({
 	defaultOptions: {

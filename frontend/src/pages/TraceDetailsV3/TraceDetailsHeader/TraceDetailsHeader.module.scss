@@ -1,0 +1,75 @@
+.wrapper {
+	flex-shrink: 0;
+	position: relative;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	gap: 8px;
+
+	// KeyValueLabel renders with a global `.key-value-label` root; keep it from
+	// shrinking on the trace details header.
+	:global(.key-value-label) {
+		flex-shrink: 0;
+	}
+}
+
+.backBtn {
+	flex-shrink: 0;
+}
+
+.filter {
+	min-width: 0;
+}
+
+.isExpanded {
+	max-width: none;
+	flex: 1;
+}
+
+.oldViewBtn {
+	flex-shrink: 0;
+}
+
+.analyticsBtn {
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.subHeader {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 4px 16px 8px;
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+.subItem {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.separator {
+	color: var(--l2-foreground);
+	opacity: 0.5;
+}
+
+.entryPointBadge {
+	padding: 2px 8px;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	font-size: 12px;
+}
+
+.skeleton {
+	:global(.ant-skeleton-input) {
+		width: 160px !important;
+		min-height: 20px !important;
+		height: 20px !important;
+	}
+}

@@ -1,0 +1,634 @@
+// Inside a .module.scss, postcss-modules auto-scopes `@keyframes` identifiers
+// and rewrites `animation`/`animation-name` references to match.
+@keyframes waterfallLoading {
+	0% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: left;
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+	100% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: right;
+	}
+}
+
+.loadingBar {
+	height: 2px;
+	background: var(--primary);
+	animation: waterfallLoading 1.5s ease-in-out infinite;
+	flex-shrink: 0;
+}
+
+// Event-dot tooltip. Visually matches SpanHoverCard's popover; styles are
+// inlined rather than `compose`d from another module because postcss-modules
+// loads cross-module composes through the plain CSS parser, which chokes on
+// SCSS `//` comments in the target file.
+.popover {
+	--tooltip-z-index: 1000;
+	background-color: var(--l1-background);
+	padding: 8px 12px;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--l2-border);
+	color: var(--l1-foreground);
+}
+
+.root {
+	overflow-y: hidden;
+	overflow-x: hidden;
+	max-width: 100%;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.missingSpans {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 44px;
+	margin: 16px;
+	padding: 12px;
+	border-radius: 4px;
+	background: rgba(69, 104, 220, 0.1);
+}
+
+.leftInfo {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.text {
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.rightInfo {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+
+	&:hover {
+		background-color: unset;
+		color: var(--bg-robin-200);
+	}
+}
+
+.splitPanel {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 0px 20px 0px 20px;
+
+	&::-webkit-scrollbar {
+		width: 0.1rem;
+	}
+}
+
+.splitHeader {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	display: flex;
+	height: 25px;
+	background-color: var(--l1-background);
+}
+
+.sidebarHeader {
+	flex-shrink: 0;
+}
+
+.resizeHandleHeader {
+	width: 4px;
+	flex-shrink: 0;
+}
+
+.statusHeader {
+	width: 50px;
+	flex-shrink: 0;
+}
+
+.timelineHeader {
+	flex: 1;
+	overflow: hidden;
+	padding: 0 15px;
+}
+
+.splitBody {
+	display: flex;
+	position: relative;
+}
+
+// Invisible IntersectionObserver targets pinned at the top and bottom of the
+// virtualized content. See `useBoundaryPagination`.
+.loadMoreSentinel {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 1px;
+	pointer-events: none;
+}
+
+.loadMoreSentinelTop {
+	top: 0;
+}
+
+.loadMoreSentinelBottom {
+	bottom: 0;
+}
+
+.sidebar {
+	overflow-x: auto;
+	overflow-y: hidden;
+	flex-shrink: 0;
+	border-right: 1px solid var(--l1-border);
+
+	// ResizableBox child renders with a global `.resizable-box__content` class
+	// — give it independent horizontal scrolling.
+	:global(.resizable-box__content) {
+		overflow-x: auto;
+		overflow-y: hidden;
+
+		&::-webkit-scrollbar {
+			height: 0;
+		}
+
+		scrollbar-width: none;
+	}
+
+	&::-webkit-scrollbar {
+		height: 0.3rem;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--l3-background);
+		border-radius: 4px;
+	}
+}
+
+.treeTable {
+	position: relative;
+	border-collapse: collapse;
+}
+
+.treeRow {
+	display: flex;
+	align-items: center;
+}
+
+.treeCell {
+	display: flex;
+	width: 100%;
+	height: 28px;
+	align-items: center;
+	overflow: visible;
+	padding: 0;
+}
+
+.treeRow:hover,
+.treeRow.hoveredSpan {
+	border-radius: 4px;
+	background: color-mix(
+		in srgb,
+		var(--l3-background) 20%,
+		transparent
+	) !important;
+
+	.spanOverview {
+		background: unset !important;
+	}
+}
+
+.sidebarResizeHandle {
+	width: 4px;
+	flex-shrink: 0;
+	cursor: col-resize;
+	user-select: none;
+	touch-action: none;
+	background: transparent;
+	transition: background 0.15s ease;
+	z-index: 1;
+
+	&:hover,
+	&:active {
+		background: rgba(35, 196, 248, 0.2);
+	}
+}
+
+.statusCol {
+	width: 50px;
+	flex-shrink: 0;
+	position: relative;
+}
+
+.statusCell {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+
+	--badge-border-radius: 2px;
+	--badge-padding: 3px 6px;
+	--badge-line-height: 12px;
+	--badge-border-width: 0px;
+
+	&.hoveredSpan {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 20%,
+			transparent
+		) !important;
+	}
+
+	&.isInterested,
+	&.isSelectedNonMatching {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 40%,
+			transparent
+		) !important;
+	}
+
+	&.isDimmed {
+		opacity: 0.15;
+	}
+}
+
+.timeline {
+	flex: 1;
+	position: relative;
+	overflow: hidden;
+}
+
+.crosshair {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--l3-background);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.timelineRow {
+	display: flex;
+	align-items: center;
+	// Match timelineHeader's 15px padding so bars align with ticks
+	padding: 0 15px;
+
+	&:hover,
+	&.hoveredSpan {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 20%,
+			transparent
+		) !important;
+	}
+
+	&:has(.isInterested),
+	&:has(.isSelectedNonMatching) {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 40%,
+			transparent
+		) !important;
+	}
+}
+
+.spanOverview {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 100%;
+	width: 100%;
+	cursor: pointer;
+	position: relative;
+	white-space: nowrap;
+
+	&:hover .rowActions {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	&.isInterested,
+	&.isSelectedNonMatching {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 40%,
+			transparent
+		) !important;
+	}
+}
+
+.treeIndent {
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.treeLine {
+	position: absolute;
+	background-color: var(--l2-border);
+	pointer-events: none;
+}
+
+.treeConnector {
+	position: absolute;
+	width: 14px;
+	height: 50%;
+	border-left: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l2-border);
+	border-bottom-left-radius: 6px;
+	pointer-events: none;
+}
+
+// Reserved horizontal space for the chevron — present on every row, filled
+// only when the span has children. Keeps sibling icons aligned.
+.treeArrowSlot {
+	width: 18px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.treeArrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	cursor: pointer;
+	color: var(--l1-foreground);
+	border-radius: 4px;
+
+	&:hover {
+		background: var(--l3-background);
+	}
+}
+
+// Reserved horizontal space for the subtree-count badge — same reason.
+// Right-aligns the badge inside so single-digit counts don't push the icon
+// left of where multi-digit counts would put it.
+.subtreeCountSlot {
+	min-width: 34px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding-right: 4px;
+}
+
+.subtreeCount {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+
+	:global(.badge) {
+		font-size: 10px;
+		line-height: 14px;
+		padding: 0 4px;
+		height: 14px;
+	}
+}
+
+.treeIcon {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	margin: 0 6px;
+
+	&.hasError {
+		box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
+	}
+}
+
+.treeLabel {
+	color: var(--l1-foreground);
+	font-family: 'Inter';
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 28px;
+	letter-spacing: 0.01em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+
+.treeServiceName {
+	margin-left: 18px;
+	color: var(--l3-foreground);
+	font-weight: 400;
+}
+
+.rowActions {
+	position: sticky;
+	right: 0;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: auto;
+	padding-right: 4px;
+	padding-left: 8px;
+	flex-shrink: 0;
+	height: 100%;
+	background: linear-gradient(to left, var(--l1-background) 60%, transparent);
+	z-index: 2;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.actionBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 2px;
+	cursor: pointer;
+	color: var(--l1-foreground);
+	background: transparent;
+	border: none;
+	padding: 0;
+
+	&:hover {
+		background: var(--l3-background);
+	}
+}
+
+// Also reveal the actions when the parent tree row is hovered.
+.treeRow:hover .rowActions,
+.treeRow.hoveredSpan .rowActions {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.spanDuration {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	position: relative;
+	width: 100%;
+	padding: 0 15px;
+	cursor: pointer;
+}
+
+.spanBar {
+	position: absolute;
+	height: 18px;
+	top: 5px;
+	border-radius: 2px;
+	display: flex;
+	align-items: center;
+	padding: 0 8px;
+	overflow: hidden;
+	cursor: pointer;
+	white-space: nowrap;
+	color: rgba(0, 0, 0, 0.9);
+	background-color: var(--span-color);
+	border: 1px solid transparent;
+}
+
+.spanInfo {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	overflow: hidden;
+	z-index: 1;
+}
+
+.spanName {
+	font-weight: 500;
+	font-size: 11px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex-grow: 1;
+	min-width: 0;
+}
+
+.spanDurationText {
+	color: inherit;
+	opacity: 0.8;
+	font-size: 10px;
+	margin-left: 8px;
+	flex-shrink: 0;
+}
+
+.eventDot {
+	position: absolute;
+	top: 50%;
+	transform: translate(-50%, -50%) rotate(45deg);
+	width: 5px;
+	height: 5px;
+	background-color: var(--event-dot-bg, var(--bg-robin-500));
+	border: 1px solid var(--event-dot-border, var(--bg-robin-600));
+	cursor: pointer;
+	z-index: 1;
+
+	&.hasError {
+		background-color: var(--destructive);
+		border-color: var(--destructive);
+	}
+
+	&:hover {
+		transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
+	}
+}
+
+// Hover state: solid l2-background fill + border (matches flamegraph)
+.timelineRow:hover .spanBar,
+.timelineRow.hoveredSpan .spanBar {
+	color: var(--span-color);
+	background-color: var(--l2-background);
+	background-image: none;
+	border: 1px solid var(--span-color);
+}
+
+// Selected state: solid l3-background fill + dashed border (matches flamegraph)
+.isInterested .spanBar,
+.isSelectedNonMatching .spanBar {
+	color: var(--span-color);
+	background-color: var(--l2-background);
+	background-image: none;
+	border: 1px dashed var(--span-color);
+}
+
+.isDimmed {
+	opacity: 0.15;
+}
+
+.isHighlighted {
+	opacity: 1;
+}
+
+.isSelectedNonMatching {
+	.treeLabel {
+		opacity: 0.5;
+	}
+}
+
+// `.spanBar` text color is the one place where semantic tokens don't fit
+// cleanly: in dark mode the bar's bright `--span-color` background needs dark
+// text; in light mode `generateColor` produces darker bar fills, so the text
+// must flip to white.
+:global(.lightMode) {
+	.root {
+		.spanDuration .spanBar {
+			color: rgba(255, 255, 255, 0.9);
+		}
+
+		.timelineRow:hover .spanBar,
+		.timelineRow.hoveredSpan .spanBar,
+		.isInterested .spanBar,
+		.isSelectedNonMatching .spanBar {
+			color: var(--span-color);
+		}
+	}
+}
+
+// Tooltips for the row's hover-revealed action buttons (Copy / Add to Funnel).
+// Bumped above FloatingPanel (z-index 999) so they stay visible when the
+// SpanDetailsPanel is docked as a floating panel.
+.actionTooltip {
+	--tooltip-z-index: 1000;
+}

@@ -20,6 +20,7 @@ type provider struct {
 	settings       factory.ScopedProviderSettings
 	telemetryStore telemetrystore.TelemetryStore
 	engine         *prometheus.Engine
+	parser         prometheus.Parser
 	queryable      storage.SampleAndChunkQueryable
 }
 
@@ -38,12 +39,17 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:       settings,
 		telemetryStore: telemetryStore,
 		engine:         prometheus.NewEngine(settings.Logger(), config),
+		parser:         prometheus.NewParser(),
 		queryable:      remote.NewSampleAndChunkQueryableClient(readClient, labels.EmptyLabels(), []*labels.Matcher{}, false, stCallback),
 	}, nil
 }
 
 func (provider *provider) Engine() *prometheus.Engine {
 	return provider.engine
+}
+
+func (provider *provider) Parser() prometheus.Parser {
+	return provider.parser
 }
 
 func (provider *provider) Storage() storage.Queryable {

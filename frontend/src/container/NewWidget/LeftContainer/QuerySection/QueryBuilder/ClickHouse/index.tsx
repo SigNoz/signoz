@@ -26,12 +26,12 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 							<a
 								href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
 								target="_blank"
-								rel="noreferrer"
+								rel="noopener"
 							>
 								Learn to write faster, optimized queries
 							</a>
 							{' · Using AI? '}
-							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noreferrer">
+							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
 								Install the SigNoz ClickHouse query agent skill
 							</a>
 						</span>

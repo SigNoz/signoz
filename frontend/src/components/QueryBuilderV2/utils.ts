@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
+import { v4 as uuid } from 'uuid';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	DEPRECATED_OPERATORS_MAP,
@@ -6,7 +9,16 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep, isEqual, sortBy } from 'lodash-es';
+import FilterQueryLexer from 'parser/FilterQueryLexer';
+import FilterQueryParser, {
+	AndExpressionContext,
+	ComparisonContext,
+	InClauseContext,
+	NotInClauseContext,
+	OrExpressionContext,
+	PrimaryContext,
+	UnaryExpressionContext,
+} from 'parser/FilterQueryParser';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -26,7 +38,6 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
-import { v4 as uuid } from 'uuid';
 
 /**
  * Check if an operator requires array values (like IN, NOT IN)
@@ -513,97 +524,201 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
- * Removes specified key-value pairs from a logical query expression string.
+ * Removes clauses for specified keys from a filter query expression.
  *
- * This function parses the given query expression and removes any query pairs
- * whose keys match those in the `keysToRemove` array. It also removes any trailing
- * logical conjunctions (e.g., `AND`, `OR`) and whitespace that follow the matched pairs,
- * ensuring that the resulting expression remains valid and clean.
+ * Uses an ANTLR parse-tree traversal over the existing FilterQuery grammar so that
+ * compound predicates like `BETWEEN x AND y`, `EXISTS`, and `IN (...)` are treated
+ * as atomic nodes — their internal tokens are never confused with top-level AND/OR
+ * conjunctions. Surviving siblings are rejoined with the correct operator at each
+ * level of the tree, producing no dangling operators regardless of expression shape.
+ * If the expression cannot be parsed, it is returned unchanged.
  *
- * @param expression - The full query string.
- * @param keysToRemove - An array of keys (case-insensitive) that should be removed from the expression.
- * @param removeOnlyVariableExpressions - When true, only removes key-value pairs where the value is a variable (starts with $). When false, uses the original behavior.
- * @returns A new expression string with the specified keys and their associated clauses removed.
+ * @param expression - The full filter query string.
+ * @param keysToRemove - Keys (case-insensitive) whose clauses should be dropped.
+ * @param removeOnlyVariableExpressions - Controls which clauses are eligible for removal:
+ *   - `false` (default): removes all clauses for the key regardless of value.
+ *   - `true`: removes only the first clause whose value contains any `$`.
+ *   - `string` (e.g. `"$service.name"`): removes only the clause whose value exactly
+ *     matches that string — preferred when the specific variable reference is known.
+ * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
-	removeOnlyVariableExpressions = false,
+	removeOnlyVariableExpressions: string | boolean = false,
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
 	}
-
-	let updatedExpression = expression;
-
-	if (updatedExpression) {
-		keysToRemove.forEach((key) => {
-			// Extract key-value query pairs from the expression
-			const existingQueryPairs = extractQueryPairs(updatedExpression);
-
-			let queryPairsMap: Map<string, IQueryPair>;
-
-			if (existingQueryPairs.length > 0) {
-				// Filter query pairs based on the removeOnlyVariableExpressions flag
-				const filteredQueryPairs = removeOnlyVariableExpressions
-					? existingQueryPairs.filter((pair) => {
-							const pairKey = pair.key?.trim().toLowerCase();
-							const matchesKey = pairKey === `${key}`.trim().toLowerCase();
-							if (!matchesKey) {
-								return false;
-							}
-							const value = pair.value?.toString().trim();
-							return value && value.includes('$');
-						})
-					: existingQueryPairs;
-
-				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
-				queryPairsMap = new Map(
-					filteredQueryPairs.map((pair) => {
-						const key = pair.key.trim().toLowerCase();
-						return [key, pair];
-					}),
-				);
-
-				// Lookup the current query pair using the attribute key (case-insensitive)
-				const currentQueryPair = queryPairsMap.get(`${key}`.trim().toLowerCase());
-				if (currentQueryPair && currentQueryPair.isComplete) {
-					// Determine the start index of the query pair (fallback order: key → operator → value)
-					const queryPairStart =
-						currentQueryPair.position.keyStart ??
-						currentQueryPair.position.operatorStart ??
-						currentQueryPair.position.valueStart;
-					// Determine the end index of the query pair (fallback order: value → operator → key)
-					let queryPairEnd =
-						currentQueryPair.position.valueEnd ??
-						currentQueryPair.position.operatorEnd ??
-						currentQueryPair.position.keyEnd;
-					// Get the part of the expression that comes after the current query pair
-					const expressionAfterPair = `${updatedExpression.slice(queryPairEnd + 1)}`;
-					// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
-					const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
-					const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
-					if (match && match.length > 0) {
-						// If match is found, extend the queryPairEnd to include the matched part
-						queryPairEnd += match[0].length;
-					}
-					// Remove the full query pair (including any conjunction/whitespace) from the expression
-					updatedExpression = `${updatedExpression.slice(
-						0,
-						queryPairStart,
-					)}${updatedExpression.slice(queryPairEnd + 1)}`.trim();
-				}
-			}
-		});
-
-		// Clean up any remaining trailing AND/OR operators and extra whitespace
-		updatedExpression = updatedExpression
-			.replace(/\s+(AND|OR)\s*$/i, '') // Remove trailing AND/OR
-			.replace(/^(AND|OR)\s+/i, '') // Remove leading AND/OR
-			.trim();
+	if (!expression.trim()) {
+		return expression;
 	}
 
-	return updatedExpression;
+	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+	// Tracks keys for which a variable expression has already been removed.
+	// Having multiple $-value clauses for the same key is invalid; we remove at most one.
+	const removedVariableKeys = new Set<string>();
+
+	const chars = CharStreams.fromString(expression);
+	const lexer = new FilterQueryLexer(chars);
+	lexer.removeErrorListeners();
+	const tokenStream = new CommonTokenStream(lexer);
+	const parser = new FilterQueryParser(tokenStream);
+	parser.removeErrorListeners();
+
+	const tree = parser.query();
+
+	// If the expression couldn't be parsed, return it unchanged rather than mangling it
+	if (parser.syntaxErrorsCount > 0) {
+		return expression;
+	}
+
+	// Extract original source text for a node, preserving the user's exact formatting
+	const src = (ctx: ParserRuleContext): string =>
+		expression.slice(ctx.start.start, (ctx.stop ?? ctx.start).stop + 1);
+
+	// Returns null when the entire node should be dropped.
+	// isSingle = true means the result is a single, non-compound expression at
+	// this level (no AND/OR between sibling clauses), which lets the paren
+	// visitor decide whether wrapping is still needed.
+	type VisitResult = { text: string; isSingle: boolean } | null;
+
+	function visitOrExpression(ctx: OrExpressionContext): VisitResult {
+		const parts = ctx
+			.andExpression_list()
+			.map(visitAndExpression)
+			.filter((r): r is NonNullable<VisitResult> => r !== null);
+		if (parts.length === 0) {
+			return null;
+		}
+		// Single surviving branch — pass its isSingle straight through so the
+		// paren visitor can decide whether to keep the outer parens.
+		if (parts.length === 1) {
+			return parts[0];
+		}
+		return { text: parts.map((p) => p.text).join(' OR '), isSingle: false };
+	}
+
+	function visitAndExpression(ctx: AndExpressionContext): VisitResult {
+		const parts = ctx
+			.unaryExpression_list()
+			.map(visitUnaryExpression)
+			.filter((r): r is NonNullable<VisitResult> => r !== null);
+		if (parts.length === 0) {
+			return null;
+		}
+		if (parts.length === 1) {
+			return { text: parts[0].text, isSingle: true };
+		}
+		return { text: parts.map((p) => p.text).join(' AND '), isSingle: false };
+	}
+
+	function visitUnaryExpression(ctx: UnaryExpressionContext): VisitResult {
+		const primaryResult = visitPrimary(ctx.primary());
+		if (primaryResult === null) {
+			return null;
+		}
+		return ctx.NOT()
+			? { text: `NOT ${primaryResult.text}`, isSingle: true }
+			: primaryResult;
+	}
+
+	function visitPrimary(ctx: PrimaryContext): VisitResult {
+		// Parenthesised sub-expression: ( orExpression )
+		const orCtx = ctx.orExpression();
+		if (orCtx) {
+			const inner = visitOrExpression(orCtx);
+			if (inner === null) {
+				return null;
+			}
+			// Drop redundant parens when the group collapses to a single clause;
+			// keep them when multiple clauses remain (operator-precedence matters).
+			if (inner.isSingle) {
+				return { text: inner.text, isSingle: true };
+			}
+			return { text: `(${inner.text})`, isSingle: true };
+		}
+
+		const compCtx = ctx.comparison();
+		if (compCtx) {
+			const result = visitComparison(compCtx);
+			return result !== null ? { text: result, isSingle: true } : null;
+		}
+
+		// functionCall, fullText, bare key, bare value — keep verbatim
+		return { text: src(ctx), isSingle: true };
+	}
+
+	function visitComparison(ctx: ComparisonContext): string | null {
+		const keyText = ctx.key().getText().trim().toLowerCase();
+
+		if (!keysSet.has(keyText)) {
+			return src(ctx);
+		}
+
+		if (removeOnlyVariableExpressions) {
+			// Scope the value check to value nodes only — not the full comparison text —
+			// so a key that contains '$' does not trigger removal when the value is a
+			// literal. The ANTLR4 runtime returns null from getTypedRuleContext when a
+			// rule is absent, despite the non-nullable TypeScript signatures.
+			const inCtx = ctx.inClause() as unknown as InClauseContext | null;
+			const notInCtx = ctx.notInClause() as unknown as NotInClauseContext | null;
+			// When a specific variable string is supplied, require an exact match so we
+			// never accidentally remove a different $-valued clause for the same key.
+			const matchesVariable = (text: string): boolean =>
+				typeof removeOnlyVariableExpressions === 'string'
+					? text === removeOnlyVariableExpressions
+					: text.includes('$');
+
+			const valueHasVariable = (): boolean => {
+				// Simple comparisons: key = $var, BETWEEN $v1 AND $v2, etc.
+				if (ctx.value_list().some((v) => matchesVariable(v.getText()))) {
+					return true;
+				}
+				// IN $var (bare single value) or IN ($v1, $v2) (value list)
+				if (inCtx) {
+					const bare = inCtx.value() as unknown as { getText(): string } | null;
+					if (bare && matchesVariable(bare.getText())) {
+						return true;
+					}
+					const list = inCtx.valueList() as unknown as {
+						value_list(): { getText(): string }[];
+					} | null;
+					if (list && list.value_list().some((v) => matchesVariable(v.getText()))) {
+						return true;
+					}
+				}
+				// NOT IN $var or NOT IN ($v1, $v2)
+				if (notInCtx) {
+					const bare = notInCtx.value() as unknown as { getText(): string } | null;
+					if (bare && matchesVariable(bare.getText())) {
+						return true;
+					}
+					const list = notInCtx.valueList() as unknown as {
+						value_list(): { getText(): string }[];
+					} | null;
+					if (list && list.value_list().some((v) => matchesVariable(v.getText()))) {
+						return true;
+					}
+				}
+				return false;
+			};
+
+			if (valueHasVariable()) {
+				if (removedVariableKeys.has(keyText)) {
+					return src(ctx);
+				}
+				removedVariableKeys.add(keyText);
+				return null;
+			}
+			return src(ctx);
+		}
+
+		return null;
+	}
+
+	const result = visitOrExpression(tree.expression().orExpression());
+	return result?.text ?? '';
 };
 
 /**

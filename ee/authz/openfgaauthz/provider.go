@@ -87,7 +87,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*o
 }
 
 func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error) {
-	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
+	tuples, correlations, err := authtypes.NewTuplesFromTransactionsWithCorrelations(transactions, subject, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +99,21 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 
 	results := make([]*authtypes.TransactionWithAuthorization, len(transactions))
 	for i, txn := range transactions {
-		result := batchResults[txn.ID.StringValue()]
+		txnID := txn.ID.StringValue()
+		authorized := batchResults[txnID].Authorized
+
+		if !authorized {
+			for _, correlationID := range correlations[txnID] {
+				if result, exists := batchResults[correlationID]; exists && result.Authorized {
+					authorized = true
+					break
+				}
+			}
+		}
+
 		results[i] = &authtypes.TransactionWithAuthorization{
 			Transaction: txn,
-			Authorized:  result.Authorized,
+			Authorized:  authorized,
 		}
 	}
 	return results, nil

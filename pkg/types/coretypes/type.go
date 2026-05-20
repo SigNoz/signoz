@@ -33,8 +33,8 @@ func NewType(input string) (Type, error) {
 		return TypeOrganization, nil
 	case "metaresource":
 		return TypeMetaResource, nil
-	case "metaresources":
-		return TypeMetaResources, nil
+	case "telemetryresource":
+		return TypeTelemetryResource, nil
 	default:
 		return Type{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidType, "invalid type: %s", input)
 	}
@@ -54,6 +54,25 @@ func ErrIfVerbNotValidForType(verb Verb, typed Type) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for type %s", verb.StringValue(), typed.StringValue())
 	}
 	return nil
+}
+
+func ErrIfVerbNotValidForResource(verb Verb, ref ResourceRef) error {
+	if err := ErrIfVerbNotValidForType(verb, ref.Type); err != nil {
+		return err
+	}
+
+	resource, err := NewResourceFromTypeAndKind(ref.Type, ref.Kind)
+	if err != nil {
+		return err
+	}
+
+	for _, allowed := range resource.AllowedVerbs() {
+		if verb == allowed {
+			return nil
+		}
+	}
+
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for resource %s:%s", verb.StringValue(), ref.Type.StringValue(), ref.Kind.String())
 }
 
 func (typed *Type) UnmarshalJSON(data []byte) error {
@@ -80,7 +99,7 @@ func (typed Type) Enum() []any {
 		TypeRole,
 		TypeOrganization,
 		TypeMetaResource,
-		TypeMetaResources,
+		TypeTelemetryResource,
 	}
 }
 

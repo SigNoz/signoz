@@ -366,6 +366,7 @@ func GetDashboardsFromAssets(
 				CreatedBy: author,
 				UpdatedBy: author,
 			},
+			Source: dashboardtypes.SourceIntegration,
 		})
 	}
 

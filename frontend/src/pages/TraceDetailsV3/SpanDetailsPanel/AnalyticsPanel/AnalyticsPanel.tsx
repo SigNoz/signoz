@@ -5,6 +5,7 @@ import {
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
+import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -16,7 +17,7 @@ import {
 	getAggregationMap as findAggregationMap,
 } from '../../utils/aggregations';
 
-import './AnalyticsPanel.styles.scss';
+import styles from './AnalyticsPanel.module.scss';
 
 interface AnalyticsPanelProps {
 	isOpen: boolean;
@@ -86,7 +87,6 @@ function AnalyticsPanel({
 	return (
 		<FloatingPanel
 			isOpen
-			className="analytics-panel"
 			width={PANEL_WIDTH}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 			defaultPosition={{
@@ -110,7 +110,7 @@ function AnalyticsPanel({
 				className="floating-panel__drag-handle"
 			/>
 
-			<div className="analytics-panel__body">
+			<div className={styles.body}>
 				<TabsRoot defaultValue="exec-time">
 					<TabsList variant="secondary">
 						<TabsTrigger value="exec-time" variant="secondary">
@@ -121,33 +121,30 @@ function AnalyticsPanel({
 						</TabsTrigger>
 					</TabsList>
 
-					<div className="analytics-panel__tabs-scroll">
+					<div className={styles.tabsScroll}>
 						<TabsContent value="exec-time">
-							<div className="analytics-panel__list">
+							<div className={styles.list}>
 								{execTimeRows.map((row) => (
 									<>
 										<div
 											key={`${row.group}-dot`}
-											className="analytics-panel__dot"
+											className={styles.dot}
 											style={{ backgroundColor: row.color }}
 										/>
-										<span
-											key={`${row.group}-name`}
-											className="analytics-panel__service-name"
-										>
+										<span key={`${row.group}-name`} className={styles.serviceName}>
 											{row.group}
 										</span>
-										<div key={`${row.group}-bar`} className="analytics-panel__bar-cell">
-											<div className="analytics-panel__bar">
+										<div key={`${row.group}-bar`} className={styles.barCell}>
+											<div className={styles.bar}>
 												<div
-													className="analytics-panel__bar-fill"
+													className={styles.barFill}
 													style={{
 														width: `${Math.min(row.percentage, 100)}%`,
 														backgroundColor: row.color,
 													}}
 												/>
 											</div>
-											<span className="analytics-panel__value analytics-panel__value--wide">
+											<span className={cx(styles.value, styles.valueWide)}>
 												{row.percentage.toFixed(2)}%
 											</span>
 										</div>
@@ -157,31 +154,28 @@ function AnalyticsPanel({
 						</TabsContent>
 
 						<TabsContent value="spans">
-							<div className="analytics-panel__list">
+							<div className={styles.list}>
 								{spanCountRows.map((row) => (
 									<>
 										<div
 											key={`${row.group}-dot`}
-											className="analytics-panel__dot"
+											className={styles.dot}
 											style={{ backgroundColor: row.color }}
 										/>
-										<span
-											key={`${row.group}-name`}
-											className="analytics-panel__service-name"
-										>
+										<span key={`${row.group}-name`} className={styles.serviceName}>
 											{row.group}
 										</span>
-										<div key={`${row.group}-bar`} className="analytics-panel__bar-cell">
-											<div className="analytics-panel__bar">
+										<div key={`${row.group}-bar`} className={styles.barCell}>
+											<div className={styles.bar}>
 												<div
-													className="analytics-panel__bar-fill"
+													className={styles.barFill}
 													style={{
 														width: `${(row.count / row.max) * 100}%`,
 														backgroundColor: row.color,
 													}}
 												/>
 											</div>
-											<span className="analytics-panel__value analytics-panel__value--narrow">
+											<span className={cx(styles.value, styles.valueNarrow)}>
 												{row.count}
 											</span>
 										</div>
