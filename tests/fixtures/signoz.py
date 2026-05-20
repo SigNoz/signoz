@@ -2,6 +2,7 @@ import os
 import platform
 import shutil
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
 from http import HTTPStatus
@@ -26,6 +27,15 @@ class SigNozImageBuild:
     command: list[str]
     cache_path: Path | None = None
     next_cache_path: Path | None = None
+    reader: threading.Thread | None = None
+
+
+def _stream_build_output(pipe, log) -> None:
+    try:
+        for line in iter(pipe.readline, ""):
+            log.info("buildx: %s", line.rstrip())
+    finally:
+        pipe.close()
 
 
 def start_signoz_image_build(pytestconfig: pytest.Config, dockerfile_path: str, arch: str, zeus_url: str) -> SigNozImageBuild:
@@ -61,16 +71,30 @@ def start_signoz_image_build(pytestconfig: pytest.Config, dockerfile_path: str, 
         command.extend(["--cache-to", f"type=local,dest={next_cache_path},mode=max,ignore-error=true"])
 
     logger.info("Building SigNoz integration image with %s", " ".join(command))
+    process = subprocess.Popen(
+        command,
+        cwd=root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    reader = threading.Thread(target=_stream_build_output, args=(process.stdout, logger), daemon=True)
+    reader.start()
+
     return SigNozImageBuild(
-        process=subprocess.Popen(command, cwd=root),
+        process=process,
         command=command,
         cache_path=cache_path,
         next_cache_path=next_cache_path,
+        reader=reader,
     )
 
 
 def wait_for_signoz_image_build(build: SigNozImageBuild) -> None:
     returncode = build.process.wait()
+    if build.reader is not None:
+        build.reader.join(timeout=5)
     if returncode != 0:
         raise subprocess.CalledProcessError(returncode, build.command)
 
@@ -89,6 +113,9 @@ def stop_signoz_image_build(build: SigNozImageBuild) -> None:
     except subprocess.TimeoutExpired:
         build.process.kill()
         build.process.wait()
+
+    if build.reader is not None:
+        build.reader.join(timeout=5)
 
 
 def create_signoz(
