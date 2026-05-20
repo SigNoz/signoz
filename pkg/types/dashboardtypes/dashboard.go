@@ -350,10 +350,6 @@ func (dashboard *Dashboard) ErrIfNotPublishable() error {
 }
 
 func (dashboard *Dashboard) CanUpdate(ctx context.Context, data StorableDashboardData, diff int) error {
-	if err := dashboard.ErrIfNotMutable(); err != nil {
-		return err
-	}
-
 	if dashboard.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
@@ -394,9 +390,6 @@ func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard Updat
 }
 
 func (dashboard *Dashboard) CanLockUnlock(isAdmin bool, updatedBy string) error {
-	if err := dashboard.ErrIfNotLockable(); err != nil {
-		return err
-	}
 	if dashboard.CreatedBy != updatedBy && !isAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}

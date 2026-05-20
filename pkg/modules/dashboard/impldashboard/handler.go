@@ -235,13 +235,8 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := dashboard.ErrIfNotPublishable(); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -410,13 +405,8 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := dashboard.ErrIfNotPublishable(); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -459,13 +449,8 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := dashboard.ErrIfNotPublishable(); err != nil {
 		render.Error(rw, err)
 		return
 	}

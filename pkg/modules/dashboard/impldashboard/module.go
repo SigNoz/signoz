@@ -90,6 +90,10 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
+	if err := dashboard.ErrIfNotMutable(); err != nil {
+		return nil, err
+	}
+
 	err = dashboard.Update(ctx, updatableDashboard, updatedBy, diff)
 	if err != nil {
 		return nil, err
@@ -111,6 +115,10 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
+		return err
+	}
+
+	if err := dashboard.ErrIfNotLockable(); err != nil {
 		return err
 	}
 
