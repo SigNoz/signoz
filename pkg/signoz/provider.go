@@ -204,7 +204,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
 		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddLabelExpressionToPlannedMaintenanceFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddScopeToPlannedMaintenanceFactory(sqlstore, sqlschema),
 	)
 }
 

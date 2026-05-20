@@ -125,12 +125,12 @@ components:
           type: string
         kind:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceKind'
-        labelExpression:
-          type: string
         name:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
         status:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceStatus'
         updatedAt:
@@ -270,12 +270,12 @@ components:
           type: array
         description:
           type: string
-        labelExpression:
-          type: string
         name:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
       required:
       - name
       - schedule

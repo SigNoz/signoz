@@ -10,16 +10,16 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addLabelExpressionToPlannedMaintenance struct {
+type addScopeToPlannedMaintenance struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddLabelExpressionToPlannedMaintenanceFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewAddScopeToPlannedMaintenanceFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("add_label_expr_to_planned"),
+		factory.MustNewName("add_scope_to_planned"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &addLabelExpressionToPlannedMaintenance{
+			return &addScopeToPlannedMaintenance{
 				sqlstore:  sqlstore,
 				sqlschema: sqlschema,
 			}, nil
@@ -27,14 +27,14 @@ func NewAddLabelExpressionToPlannedMaintenanceFactory(sqlstore sqlstore.SQLStore
 	)
 }
 
-func (migration *addLabelExpressionToPlannedMaintenance) Register(migrations *migrate.Migrations) error {
+func (migration *addScopeToPlannedMaintenance) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (migration *addLabelExpressionToPlannedMaintenance) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addScopeToPlannedMaintenance) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -44,13 +44,13 @@ func (migration *addLabelExpressionToPlannedMaintenance) Up(ctx context.Context,
 		_ = tx.Rollback()
 	}()
 
-	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance"))
+	table, _, err := migration.sqlschema.GetTable(ctx, "planned_maintenance")
 	if err != nil {
 		return err
 	}
 
 	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("label_expression"),
+		Name:     sqlschema.ColumnName("scope"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: true,
 	}
@@ -65,7 +65,7 @@ func (migration *addLabelExpressionToPlannedMaintenance) Up(ctx context.Context,
 	return tx.Commit()
 }
 
-func (migration *addLabelExpressionToPlannedMaintenance) Down(ctx context.Context, db *bun.DB) error {
+func (migration *addScopeToPlannedMaintenance) Down(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -75,13 +75,13 @@ func (migration *addLabelExpressionToPlannedMaintenance) Down(ctx context.Contex
 		_ = tx.Rollback()
 	}()
 
-	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance"))
+	table, _, err := migration.sqlschema.GetTable(ctx, "planned_maintenance")
 	if err != nil {
 		return err
 	}
 
 	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("label_expression"),
+		Name:     sqlschema.ColumnName("scope"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: true,
 	}

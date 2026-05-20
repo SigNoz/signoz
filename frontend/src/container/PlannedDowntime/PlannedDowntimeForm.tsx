@@ -79,7 +79,7 @@ interface PlannedDowntimeFormData {
 	alertRules: DefaultOptionType[];
 	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
-	labelExpression?: string;
+	scope?: string;
 }
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
@@ -146,7 +146,7 @@ export function PlannedDowntimeForm(
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
-				labelExpression: values.labelExpression,
+				scope: values.scope,
 				schedule: {
 					startTime: values.startTime?.format(),
 					endTime: values.endTime?.format(),
@@ -281,7 +281,7 @@ export function PlannedDowntimeForm(
 				duration: getDurationInfo(schedule?.recurrence?.duration)?.value ?? '',
 			} as AlertmanagertypesRecurrenceDTO,
 			timezone: schedule?.timezone as string,
-			labelExpression: initialValues.labelExpression || '',
+			scope: initialValues.scope || '',
 		};
 	}, [initialValues, alertOptions]);
 
@@ -495,16 +495,16 @@ export function PlannedDowntimeForm(
 				<Form.Item
 					label={
 						<span>
-							Label Expression&nbsp;
-							<Tooltip title='Filter by alert labels. Examples: env == "prod", region == "us-east-1" && severity == "critical"'>
+							Scope&nbsp;
+							<Tooltip title='Filter by alert labels. Examples: env = "prod", region = "us-east-1" && severity = "critical"'>
 								<Info size={13} />
 							</Tooltip>
 						</span>
 					}
-					name="labelExpression"
+					name="scope"
 				>
 					<Input.TextArea
-						placeholder='e.g. env == "prod" && region == "us-east-1"'
+						placeholder='e.g. env = "prod" && region = "us-east-1"'
 						autoSize={{ minRows: 2, maxRows: 4 }}
 					/>
 				</Form.Item>

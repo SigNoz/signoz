@@ -85,11 +85,11 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 			CreatedBy: claims.Email,
 			UpdatedBy: claims.Email,
 		},
-		Name:            maintenance.Name,
-		Description:     maintenance.Description,
-		Schedule:        maintenance.Schedule,
-		OrgID:           claims.OrgID,
-		LabelExpression: maintenance.LabelExpression,
+		Name:        maintenance.Name,
+		Description: maintenance.Description,
+		Schedule:    maintenance.Schedule,
+		OrgID:       claims.OrgID,
+		Scope:       maintenance.Scope,
 	}
 
 	maintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -136,16 +136,16 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 	}
 
 	return &alertmanagertypes.PlannedMaintenance{
-		ID:              storablePlannedMaintenance.ID,
-		Name:            storablePlannedMaintenance.Name,
-		Description:     storablePlannedMaintenance.Description,
-		Schedule:        storablePlannedMaintenance.Schedule,
-		RuleIDs:         maintenance.AlertIds,
-		LabelExpression: maintenance.LabelExpression,
-		CreatedAt:       storablePlannedMaintenance.CreatedAt,
-		CreatedBy:       storablePlannedMaintenance.CreatedBy,
-		UpdatedAt:       storablePlannedMaintenance.UpdatedAt,
-		UpdatedBy:       storablePlannedMaintenance.UpdatedBy,
+		ID:          storablePlannedMaintenance.ID,
+		Name:        storablePlannedMaintenance.Name,
+		Description: storablePlannedMaintenance.Description,
+		Schedule:    storablePlannedMaintenance.Schedule,
+		RuleIDs:     maintenance.AlertIds,
+		Scope:       maintenance.Scope,
+		CreatedAt:   storablePlannedMaintenance.CreatedAt,
+		CreatedBy:   storablePlannedMaintenance.CreatedBy,
+		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,
+		UpdatedBy:   storablePlannedMaintenance.UpdatedBy,
 	}, nil
 }
 
@@ -186,11 +186,11 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 			CreatedBy: existing.CreatedBy,
 			UpdatedBy: claims.Email,
 		},
-		Name:            maintenance.Name,
-		Description:     maintenance.Description,
-		Schedule:        maintenance.Schedule,
-		OrgID:           claims.OrgID,
-		LabelExpression: maintenance.LabelExpression,
+		Name:        maintenance.Name,
+		Description: maintenance.Description,
+		Schedule:    maintenance.Schedule,
+		OrgID:       claims.OrgID,
+		Scope:       maintenance.Scope,
 	}
 
 	storablePlannedMaintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
