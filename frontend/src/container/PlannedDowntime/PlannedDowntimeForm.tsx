@@ -504,7 +504,7 @@ export function PlannedDowntimeForm(
 					name="scope"
 				>
 					<Input.TextArea
-						placeholder='e.g. env = "prod" && region = "us-east-1"'
+						placeholder='e.g. env = "prod" AND region = "us-east-1"'
 						autoSize={{ minRows: 2, maxRows: 4 }}
 					/>
 				</Form.Item>
