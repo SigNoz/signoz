@@ -526,7 +526,7 @@ function SpanDetailsPanel({
 
 	const PANEL_WIDTH = 500;
 	const PANEL_MARGIN_RIGHT = 20;
-	const PANEL_MARGIN_TOP = 25;
+	const PANEL_MARGIN_TOP = 50;
 	const PANEL_MARGIN_BOTTOM = 25;
 
 	const content = (

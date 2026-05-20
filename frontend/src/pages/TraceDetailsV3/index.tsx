@@ -242,7 +242,7 @@ function TraceDetailsV3(): JSX.Element {
 		() =>
 			(getLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-			) as SpanDetailVariant) || SpanDetailVariant.DOCKED,
+			) as SpanDetailVariant) || SpanDetailVariant.DIALOG,
 	);
 
 	const handleVariantChange = useCallback(
