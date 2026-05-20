@@ -165,6 +165,7 @@ function QueryField({
 				onClick={handleClear}
 				size="sm"
 				variant="ghost"
+				color="secondary"
 				prefix={<X size="md" />}
 			/>
 		</QueryFieldContainer>

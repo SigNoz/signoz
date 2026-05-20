@@ -225,6 +225,7 @@ function OptionsMenu({
 						onClick={(): void => setIsFontSizeOptionsOpen(false)}
 						className="back-btn"
 						variant="ghost"
+						color="secondary"
 					>
 						<ChevronLeft size={14} className="icon" />
 						<Typography.Text className="text">Select font size</Typography.Text>
@@ -237,6 +238,7 @@ function OptionsMenu({
 							}}
 							className="option-btn"
 							variant="ghost"
+							color="secondary"
 						>
 							<Typography.Text className="text">{FontSize.SMALL}</Typography.Text>
 							{fontSizeValue === FontSize.SMALL && (
@@ -249,6 +251,7 @@ function OptionsMenu({
 							}}
 							className="option-btn"
 							variant="ghost"
+							color="secondary"
 						>
 							<Typography.Text className="text">{FontSize.MEDIUM}</Typography.Text>
 							{fontSizeValue === FontSize.MEDIUM && (
@@ -261,6 +264,7 @@ function OptionsMenu({
 							}}
 							className="option-btn"
 							variant="ghost"
+							color="secondary"
 						>
 							<Typography.Text className="text">{FontSize.LARGE}</Typography.Text>
 							{fontSizeValue === FontSize.LARGE && (
@@ -343,6 +347,7 @@ function OptionsMenu({
 								setIsFontSizeOptionsOpen(true);
 							}}
 							variant="ghost"
+							color="secondary"
 						>
 							<Typography.Text className="font-value">{fontSizeValue}</Typography.Text>
 							<ChevronRight size={14} className="icon" />

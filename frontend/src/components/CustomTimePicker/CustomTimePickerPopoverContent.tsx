@@ -184,6 +184,7 @@ function CustomTimePickerPopoverContent({
 							onSelectHandler(option.label, option.value);
 						}}
 						variant="ghost"
+						color="secondary"
 					>
 						{option.label}
 					</Button>
@@ -251,6 +252,7 @@ function CustomTimePickerPopoverContent({
 							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
 							onClick={handleGoLive}
 							variant="ghost"
+							color="secondary"
 						>
 							Live
 						</Button>
@@ -271,6 +273,7 @@ function CustomTimePickerPopoverContent({
 									: selectedTime === option.value && !isLiveLogsEnabled && 'active',
 							)}
 							variant="ghost"
+							color="secondary"
 						>
 							<span className="time-label">{option.label}</span>
 

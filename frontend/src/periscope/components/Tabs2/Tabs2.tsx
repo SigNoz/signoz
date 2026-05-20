@@ -5,8 +5,7 @@ import { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from '@signozhq/icons';
 
 import './Tabs2.styles.scss';
-import { Button } from '@signozhq/ui/button';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 
 interface Tab {
 	value: string;

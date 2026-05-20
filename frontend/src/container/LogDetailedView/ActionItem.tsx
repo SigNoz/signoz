@@ -30,11 +30,21 @@ function ActionItem({
 	const PopOverMenuContent = useMemo(
 		() => (
 			<Col>
-				<Button onClick={onClickHandler(OPERATORS.IN)} size="sm" variant="ghost">
+				<Button
+					onClick={onClickHandler(OPERATORS.IN)}
+					size="sm"
+					variant="ghost"
+					color="secondary"
+				>
 					<CirclePlus size={12} /> Filter for value
 				</Button>
 				<br />
-				<Button onClick={onClickHandler(OPERATORS.NIN)} size="sm" variant="ghost">
+				<Button
+					onClick={onClickHandler(OPERATORS.NIN)}
+					size="sm"
+					variant="ghost"
+					color="secondary"
+				>
 					<CircleMinus size={12} /> Filter out value
 				</Button>
 			</Col>
@@ -43,7 +53,7 @@ function ActionItem({
 	);
 	return (
 		<Popover placement="bottomLeft" content={PopOverMenuContent} trigger="click">
-			<Button size="sm" variant="ghost">
+			<Button size="sm" variant="ghost" color="secondary">
 				...
 			</Button>
 		</Popover>

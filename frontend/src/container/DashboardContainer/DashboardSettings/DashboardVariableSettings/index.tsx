@@ -336,6 +336,7 @@ function VariablesSettings({
 								className="apply-to-all-button"
 								loading={updateMutation.isLoading}
 								variant="ghost"
+								color="secondary"
 							>
 								<Typography.Text>Apply to all</Typography.Text>
 							</Button>
@@ -344,6 +345,7 @@ function VariablesSettings({
 							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
 							className="edit-variable-button"
 							variant="ghost"
+							color="secondary"
 						>
 							<PenLine size={14} />
 						</Button>
@@ -355,6 +357,7 @@ function VariablesSettings({
 							}}
 							className="delete-variable-button"
 							variant="ghost"
+							color="secondary"
 						>
 							<Trash2 size={14} />
 						</Button>

@@ -39,6 +39,7 @@ function SearchBar({
 							className="sort-popover-content__button"
 							onClick={(): void => onSort('created_at')}
 							variant="ghost"
+							color="secondary"
 						>
 							Last created
 							{sortOrder.columnKey === 'created_at' && <Check size={14} />}
@@ -47,6 +48,7 @@ function SearchBar({
 							className="sort-popover-content__button"
 							onClick={(): void => onSort('updated_at')}
 							variant="ghost"
+							color="secondary"
 						>
 							Last updated
 							{sortOrder.columnKey === 'updated_at' && <Check size={14} />}
@@ -57,7 +59,7 @@ function SearchBar({
 				placement="bottomRight"
 				arrow={false}
 			>
-				<Button className="search__sort-btn" variant="ghost">
+				<Button className="search__sort-btn" variant="ghost" color="secondary">
 					<ArrowDownWideNarrow size={12} data-testid="sort-by" />
 					<div className="search__sort-btn-text">Sort</div>
 				</Button>

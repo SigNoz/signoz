@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Skeleton } from 'antd';
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -30,7 +30,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
 import { prepareStatusCodeBarChartsConfig } from './utils';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 function StatusCodeBarCharts({
 	endPointStatusCodeBarChartsDataQuery,
@@ -249,7 +248,7 @@ function StatusCodeBarCharts({
 			<Card bordered className="endpoint-details-card">
 				<div className="header">
 					<Typography.Text>Call response status</Typography.Text>
-					<ButtonGroup className="views-tabs">
+					<ButtonGroup>
 						<Button
 							className={currentWidgetInfoIndex === 0 ? 'selected_view tab' : 'tab'}
 							disabled={false}

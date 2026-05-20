@@ -154,6 +154,7 @@ function LegendColors({
 									disabled={Object.keys(customLegendColors).length === 0}
 									size="sm"
 									variant="ghost"
+									color="secondary"
 								>
 									Reset All
 								</Button>

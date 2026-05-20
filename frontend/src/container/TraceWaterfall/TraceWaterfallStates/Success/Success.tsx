@@ -196,6 +196,7 @@ function SpanOverview({
 										disabled={!hasEditPermission}
 										size="sm"
 										variant="ghost"
+										color="secondary"
 										prefix={
 											<img
 												className="add-funnel-button__icon"
@@ -559,6 +560,7 @@ function Success(props: ISuccessProps): JSX.Element {
 							)
 						}
 						variant="ghost"
+						color="secondary"
 						prefix={<ArrowUpRight size={14} />}
 					>
 						Learn More

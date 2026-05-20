@@ -224,7 +224,7 @@ function AllAttributes({
 									}
 								}}
 							>
-								<Button variant="ghost">
+								<Button variant="ghost" color="secondary">
 									<Typography.Text>{field.label}</Typography.Text>
 								</Button>
 							</Popover>

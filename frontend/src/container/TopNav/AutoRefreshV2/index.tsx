@@ -188,6 +188,7 @@ function AutoRefresh({
 									onChangeHandler(option.key);
 								}}
 								variant="ghost"
+								color="secondary"
 							>
 								{option.label}
 								{option.key === selectedOption && <Check size={14} />}

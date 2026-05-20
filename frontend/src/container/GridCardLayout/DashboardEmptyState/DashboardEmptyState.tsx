@@ -111,6 +111,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							data-testid="show-drawer"
 							onClick={onConfigureClick}
 							variant="ghost"
+							color="secondary"
 							prefix={<ConfigureIcon />}
 						>
 							Configure

@@ -172,6 +172,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 												>
 													<Button
 														variant="ghost"
+														color="secondary"
 														size="icon"
 														prefix={<TriangleAlert size={14} />}
 													/>

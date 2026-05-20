@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';
 import { Calendar1, Pencil, Trash } from '@signozhq/icons';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 function EditCustomSchedule({
 	setIsEvaluationCadenceDetailsVisible,
@@ -81,7 +80,7 @@ function EditCustomSchedule({
 		<div className="edit-custom-schedule">
 			{displayText}
 			<div className="button-row">
-				<ButtonGroup>
+				<ButtonGroup className="periscope-btn-group">
 					<Button onClick={handleEdit} variant="outlined" color="secondary">
 						<Pencil size={12} />
 						<Typography.Text>Edit custom schedule</Typography.Text>

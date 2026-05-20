@@ -131,6 +131,7 @@ function HeaderRightSection({
 				>
 					<Button
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						className="share-feedback-btn"
 						aria-label="Feedback"
@@ -154,6 +155,7 @@ function HeaderRightSection({
 				>
 					<Button
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						aria-label="Announcements"
 						onClick={(): void => {
@@ -180,6 +182,7 @@ function HeaderRightSection({
 				>
 					<Button
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						aria-label="Share"
 						prefix={<Globe size={14} />}

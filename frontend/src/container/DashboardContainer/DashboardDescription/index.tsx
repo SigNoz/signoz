@@ -380,6 +380,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
 												variant="ghost"
+												color="secondary"
 												prefix={<LockKeyhole size={14} />}
 											>
 												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
@@ -394,6 +395,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 												setIsDashbordSettingsOpen(false);
 											}}
 											variant="ghost"
+											color="secondary"
 											prefix={<PenLine size={14} />}
 										>
 											Rename
@@ -403,6 +405,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									<Button
 										onClick={handle.enter}
 										variant="ghost"
+										color="secondary"
 										prefix={<Fullscreen size={14} />}
 									>
 										Full screen
@@ -416,6 +419,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 												setIsDashbordSettingsOpen(false);
 											}}
 											variant="ghost"
+											color="secondary"
 											prefix={<FolderKanban size={14} />}
 										>
 											New section
@@ -431,6 +435,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 											setIsDashbordSettingsOpen(false);
 										}}
 										variant="ghost"
+										color="secondary"
 										prefix={<FileJson size={14} />}
 									>
 										Export JSON
@@ -443,6 +448,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 											setIsDashbordSettingsOpen(false);
 										}}
 										variant="ghost"
+										color="secondary"
 										prefix={<ClipboardCopy size={14} />}
 									>
 										Copy as JSON
@@ -466,6 +472,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="icons"
 							data-testid="options"
 							variant="ghost"
+							color="secondary"
 							size="icon"
 							prefix={<Ellipsis size={14} />}
 						/>
@@ -477,6 +484,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								data-testid="show-drawer"
 								onClick={onConfigureClick}
 								variant="ghost"
+								color="secondary"
 								prefix={<ConfigureIcon />}
 							>
 								Configure
@@ -548,6 +556,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="cancel-btn"
 							onClick={(): void => setIsRenameDashboardOpen(false)}
 							variant="ghost"
+							color="secondary"
 							prefix={<X size={14} />}
 						>
 							Cancel
@@ -591,6 +600,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								setSectionName(DEFAULT_ROW_NAME);
 							}}
 							variant="ghost"
+							color="secondary"
 							prefix={<X size={14} />}
 						>
 							Cancel

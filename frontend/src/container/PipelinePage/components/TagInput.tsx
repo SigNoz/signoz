@@ -143,6 +143,7 @@ function TagInput({
 				<Button
 					onClick={handleClearAll}
 					variant="ghost"
+					color="secondary"
 					size="icon"
 					prefix={<CircleX />}
 				/>

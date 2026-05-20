@@ -21,8 +21,7 @@ import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
 import './QBEntityOptions.styles.scss';
-import { Button } from '@signozhq/ui/button';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
@@ -87,14 +86,9 @@ export default function QBEntityOptions({
 			<div className="qb-entity-options">
 				<div className="left-col-items">
 					<div className="options periscope-btn-group">
-						<ButtonGroup>
+						<ButtonGroup variant="outlined" color="secondary">
 							<Tooltip title={isCollapsed ? 'Uncollapse' : 'Collapse'}>
-								<Button
-									className="collapse"
-									onClick={onCollapseEntity}
-									variant="outlined"
-									color="secondary"
-								>
+								<Button className="collapse" onClick={onCollapseEntity}>
 									{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 								</Button>
 							</Tooltip>
@@ -103,8 +97,6 @@ export default function QBEntityOptions({
 									className="visibility-toggle"
 									onClick={onToggleVisibility}
 									disabled={isListViewPanel && !showTraceOperator}
-									variant="outlined"
-									color="secondary"
 								>
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
@@ -112,12 +104,7 @@ export default function QBEntityOptions({
 
 							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
-									<Button
-										className={cx('periscope-btn')}
-										onClick={handleCloneEntity}
-										variant="outlined"
-										color="secondary"
-									>
+									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
@@ -133,8 +120,6 @@ export default function QBEntityOptions({
 										: '',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
-								variant="outlined"
-								color="secondary"
 							>
 								{entityData.queryName}
 							</Button>

@@ -423,6 +423,7 @@ export default function TableViewActions(
 												className="more-filter-actions"
 												onClick={handleGroupByAttribute}
 												variant="ghost"
+												color="secondary"
 												prefix={<GroupByIcon />}
 											>
 												Group By Attribute
@@ -431,6 +432,7 @@ export default function TableViewActions(
 												className="more-filter-actions"
 												onClick={handleReplaceFilter}
 												variant="ghost"
+												color="secondary"
 												prefix={<RefreshCw size={14} />}
 											>
 												Replace filters with this value
@@ -519,6 +521,7 @@ export default function TableViewActions(
 											className="more-filter-actions"
 											onClick={handleGroupByAttribute}
 											variant="ghost"
+											color="secondary"
 											prefix={<GroupByIcon />}
 										>
 											Group By Attribute
@@ -527,6 +530,7 @@ export default function TableViewActions(
 											className="more-filter-actions"
 											onClick={handleReplaceFilter}
 											variant="ghost"
+											color="secondary"
 											prefix={<RefreshCw size={14} />}
 										>
 											Replace filters with this value

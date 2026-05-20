@@ -49,6 +49,7 @@ function FunnelStepActions({
 					setIsAddDetailsModalOpen(true);
 				}}
 				variant="ghost"
+				color="secondary"
 				prefix={<PencilLine size={14} />}
 			>
 				Add details
@@ -73,6 +74,7 @@ function FunnelStepActions({
 						}
 					}}
 					variant="ghost"
+					color="secondary"
 					prefix={<Trash2 size={14} />}
 				>
 					Delete
@@ -107,6 +109,7 @@ function FunnelStepPopover({
 					className="funnel-item__action-btn"
 					disabled
 					variant="ghost"
+					color="secondary"
 					size="icon"
 					prefix={<Ellipsis size={14} />}
 				/>

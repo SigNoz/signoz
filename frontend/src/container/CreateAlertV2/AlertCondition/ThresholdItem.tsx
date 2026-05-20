@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Input, Select, Tooltip } from 'antd';
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -10,7 +10,6 @@ import { AlertThresholdOperator } from '../context/types';
 import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
 import { NotificationChannelsNotFoundContent } from './utils';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 function ThresholdItem({
 	threshold,

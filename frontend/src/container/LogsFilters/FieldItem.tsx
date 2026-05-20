@@ -49,6 +49,7 @@ function FieldItem({
 						onClick={onClickHandler}
 						size="sm"
 						variant="ghost"
+						color="secondary"
 						prefix={buttonIcon as JSX.Element}
 					/>
 				</Popover>

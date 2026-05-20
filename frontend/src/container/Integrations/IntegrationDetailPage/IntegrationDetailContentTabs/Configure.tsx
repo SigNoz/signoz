@@ -53,6 +53,7 @@ function Configure(props: ConfigurationProps): JSX.Element {
 						})}
 						onClick={(): void => handleMenuClick(index, config)}
 						variant="ghost"
+						color="secondary"
 					>
 						<Typography.Text className="configure-text">
 							{config.title}

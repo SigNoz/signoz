@@ -135,6 +135,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 							<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
@@ -147,6 +148,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 							<TooltipSimple title="New conversation">
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={handleNew}
 									aria-label="New conversation"
@@ -158,6 +160,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 							<TooltipSimple title="Open full screen">
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={handleExpand}
 									disabled={!activeConversationId}
@@ -170,6 +173,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 							<TooltipSimple title="Minimize to side panel">
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={handleMinimize}
 									aria-label="Minimize to side panel"
@@ -181,6 +185,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 							<TooltipSimple title="Close">
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={closeModal}
 									aria-label="Close"

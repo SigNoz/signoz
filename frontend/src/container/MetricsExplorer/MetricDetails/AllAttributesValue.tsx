@@ -132,6 +132,7 @@ export function AllAttributesValue({
 											}}
 											size="sm"
 											variant="ghost"
+											color="secondary"
 											prefix={isCopied ? <Check size={12} /> : <Copy size={12} />}
 										/>
 									</Tooltip>
@@ -143,6 +144,7 @@ export function AllAttributesValue({
 											}}
 											size="sm"
 											variant="ghost"
+											color="secondary"
 											prefix={<SquareArrowOutUpRight size={12} />}
 										/>
 									</Tooltip>
@@ -178,7 +180,7 @@ export function AllAttributesValue({
 								}
 							}}
 						>
-							<Button variant="ghost">
+							<Button variant="ghost" color="secondary">
 								<Typography.Text>{attribute}</Typography.Text>
 							</Button>
 						</Popover>
@@ -204,7 +206,7 @@ export function AllAttributesValue({
 					}}
 					overlayClassName="metric-details-popover all-values-popover-overlay"
 				>
-					<Button className="all-values-button" variant="ghost">
+					<Button className="all-values-button" variant="ghost" color="secondary">
 						All values ({filterValue.length})
 					</Button>
 				</Popover>

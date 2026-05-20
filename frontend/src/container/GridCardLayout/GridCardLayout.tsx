@@ -526,6 +526,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					<Button
 						className="locked-text"
 						variant="ghost"
+						color="secondary"
 						prefix={<LockKeyhole size={14} />}
 					>
 						Locked
@@ -575,6 +576,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									setCurrentSelectRowId(null);
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<X size={14} />}
 							>
 								Cancel

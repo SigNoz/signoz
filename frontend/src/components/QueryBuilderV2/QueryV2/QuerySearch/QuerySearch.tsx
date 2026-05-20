@@ -1486,6 +1486,7 @@ function QuerySearch({
 							{validation.isValid ? (
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									className="periscope-btn ghost"
 									prefix={<CircleCheck size={14} />}

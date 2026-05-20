@@ -319,6 +319,7 @@ function UpdateContextLinks({
 											onClick={(): void => handleDeleteParameter(index)}
 											className="delete-parameter-btn"
 											variant="ghost"
+											color="secondary"
 											size="icon"
 											prefix={<Trash2 size={14} />}
 										/>

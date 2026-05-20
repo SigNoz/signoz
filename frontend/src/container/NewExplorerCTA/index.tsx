@@ -49,6 +49,7 @@ function NewExplorerCTA(): JSX.Element | null {
 				onClick={(e): void => onClickHandler(e)}
 				data-testid="newExplorerCTA"
 				variant="ghost"
+				color="secondary"
 				prefix={<Undo size={16} />}
 			>
 				{buttonText[location.pathname]}

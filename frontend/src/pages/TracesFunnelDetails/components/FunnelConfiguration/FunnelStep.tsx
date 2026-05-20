@@ -118,6 +118,7 @@ function FunnelStep({
 								onClick={(): void => setIsAddDetailsModalOpen(true)}
 								disabled={!hasEditPermission}
 								variant="ghost"
+								color="secondary"
 								size="icon"
 								prefix={<PencilLine size={14} />}
 							/>

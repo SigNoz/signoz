@@ -401,7 +401,7 @@ export function NotificationChannelsNotFoundContent({
 					<Typography.Text>Please ask your admin to create one.</Typography.Text>
 				)}
 			</Flex>
-			<Button onClick={refreshChannels} variant="ghost">
+			<Button onClick={refreshChannels} variant="ghost" color="secondary">
 				Refresh
 			</Button>
 		</Flex>

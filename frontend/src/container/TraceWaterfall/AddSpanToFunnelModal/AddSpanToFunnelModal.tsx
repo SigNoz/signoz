@@ -206,6 +206,7 @@ function AddSpanToFunnelModal({
 				className="add-span-to-funnel-modal__back-button"
 				onClick={handleBack}
 				variant="ghost"
+				color="secondary"
 			>
 				<ArrowLeft size={14} />
 				All funnels

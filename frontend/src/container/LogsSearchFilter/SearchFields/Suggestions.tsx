@@ -27,6 +27,7 @@ function SuggestedItem({
 			style={{ display: 'block', padding: '0.2rem' }}
 			onClick={addSuggestedField}
 			variant="ghost"
+			color="secondary"
 		>
 			<FieldKey name={name} type={type} />
 		</Button>

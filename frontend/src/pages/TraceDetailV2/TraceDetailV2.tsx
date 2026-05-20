@@ -93,6 +93,7 @@ function TraceDetailsV2(): JSX.Element {
 				<Button
 					className="flamegraph-waterfall-toggle"
 					variant="ghost"
+					color="secondary"
 					prefix={<FlamegraphImg />}
 				>
 					Flamegraph

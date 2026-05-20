@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton, Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -20,7 +20,6 @@ import HoverPopover from './HoverPopover';
 import TableView from './TableView';
 import { GraphPopoverOptions, GraphViewProps } from './types';
 import { onGraphClick, onGraphHover } from './utils';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 function GraphView({
 	inspectMetricsTimeSeries,
@@ -185,7 +184,7 @@ function GraphView({
 	return (
 		<div className="inspect-metrics-graph-view" ref={graphRef}>
 			<div className="inspect-metrics-graph-view-header">
-				<ButtonGroup>
+				<ButtonGroup className="periscope-btn-group">
 					<Button
 						className="metric-name-button-label"
 						disabled

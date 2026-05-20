@@ -72,6 +72,7 @@ function RenameModal({
 						className="cancel-btn"
 						onClick={handleClose}
 						variant="ghost"
+						color="secondary"
 						prefix={<X size={14} />}
 					>
 						Cancel

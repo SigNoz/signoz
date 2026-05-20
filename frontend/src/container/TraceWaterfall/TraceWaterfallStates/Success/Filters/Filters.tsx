@@ -180,6 +180,7 @@ function Filters({
 							setCurrentSearchedIndex((prev) => prev - 1);
 						}}
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						prefix={<ChevronUp size={14} />}
 					/>
@@ -190,6 +191,7 @@ function Filters({
 							setCurrentSearchedIndex((prev) => prev + 1);
 						}}
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						prefix={<ChevronDown size={14} />}
 					/>

@@ -768,11 +768,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								<div className="option-badge">{capitalize(option.type)}</div>
 							)}
 							{option.value && ensureValidOption(option.value) && (
-								<Button className="only-btn" variant="ghost">
+								<Button className="only-btn" variant="ghost" color="secondary">
 									{currentToggleTagValue({ option: option.value })}
 								</Button>
 							)}
-							<Button className="toggle-btn" variant="ghost">
+							<Button className="toggle-btn" variant="ghost" color="secondary">
 								Toggle
 							</Button>
 						</div>

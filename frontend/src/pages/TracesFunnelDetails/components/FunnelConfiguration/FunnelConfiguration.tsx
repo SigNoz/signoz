@@ -73,6 +73,7 @@ function FunnelConfiguration({
 								aria-label="Edit Funnel Description"
 								disabled={!hasEditPermission}
 								variant="ghost"
+								color="secondary"
 								size="icon"
 								prefix={<PencilLine size={14} />}
 							/>

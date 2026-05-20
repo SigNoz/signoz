@@ -313,7 +313,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<>
 				{!showFilters && (
 					<div>
-						<Button onClick={handleFilterVisibilityChange} size="sm" variant="ghost">
+						<Button
+							onClick={handleFilterVisibilityChange}
+							size="sm"
+							variant="ghost"
+							color="secondary"
+						>
 							<Filter size={14} />
 						</Button>
 					</div>

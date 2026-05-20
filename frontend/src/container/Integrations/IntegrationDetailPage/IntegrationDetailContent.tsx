@@ -30,6 +30,7 @@ function IntegrationDetailContent(
 				<Button
 					className="integration-tab-btns"
 					variant="ghost"
+					color="secondary"
 					prefix={<CableCar size={14} />}
 				>
 					<Typography.Text className="typography">Overview</Typography.Text>
@@ -49,6 +50,7 @@ function IntegrationDetailContent(
 				<Button
 					className="integration-tab-btns"
 					variant="ghost"
+					color="secondary"
 					prefix={<ConfigureIcon />}
 				>
 					<Typography.Text className="typography">Configure</Typography.Text>
@@ -67,6 +69,7 @@ function IntegrationDetailContent(
 				<Button
 					className="integration-tab-btns"
 					variant="ghost"
+					color="secondary"
 					prefix={<Group size={14} />}
 				>
 					<Typography.Text className="typography">Data Collected</Typography.Text>

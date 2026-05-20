@@ -75,6 +75,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 								setIsRowSettingsOpen(false);
 							}}
 							variant="ghost"
+							color="secondary"
 							prefix={<PenLine size={14} />}
 						>
 							Rename
@@ -94,6 +95,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 								setIsPanelTypeSelectionModalOpen(true);
 							}}
 							variant="ghost"
+							color="secondary"
 							prefix={<Plus size={14} />}
 						>
 							New Panel
@@ -110,6 +112,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 									setIsRowSettingsOpen(false);
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<X size={14} />}
 							>
 								Remove Section

@@ -301,6 +301,7 @@ function Metadata({
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
 						variant="ghost"
+						color="secondary"
 					>
 						<X size={14} />
 						<Typography.Text>Cancel</Typography.Text>
@@ -313,6 +314,7 @@ function Metadata({
 						}}
 						disabled={isUpdatingMetricsMetadata}
 						variant="ghost"
+						color="secondary"
 					>
 						<Save size={14} />
 						<Typography.Text>Save</Typography.Text>
@@ -333,6 +335,7 @@ function Metadata({
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 					variant="ghost"
+					color="secondary"
 				>
 					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>

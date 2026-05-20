@@ -151,6 +151,7 @@ function ResourceAttributesFilter({
 						<Button
 							onClick={handleClearAll}
 							variant="ghost"
+							color="secondary"
 							size="icon"
 							prefix={<SolidXCircle size="lg" />}
 						/>

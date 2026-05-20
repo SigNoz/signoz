@@ -466,6 +466,7 @@ function QueryBuilderSearch({
 											selectRef?.current?.focus();
 										}}
 										variant="ghost"
+										color="secondary"
 									>
 										<div className="content">
 											<section className="left-section">

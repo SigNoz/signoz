@@ -1,4 +1,4 @@
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	Dispatch,
@@ -59,7 +59,6 @@ import SpanRelatedSignals from './SpanRelatedSignals/SpanRelatedSignals';
 import { hasInfraMetadata } from './utils';
 
 import './SpanDetailsDrawer.styles.scss';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 interface ISpanDetailsDrawerProps {
 	isSpanDetailsDocked: boolean;
@@ -236,6 +235,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<Button
 						className="attributes-tab-btn"
 						variant="ghost"
+						color="secondary"
 						prefix={<Bookmark size="md" />}
 					>
 						<span className="tab-label">Attributes</span>
@@ -258,6 +258,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<Button
 						className="events-tab-btn"
 						variant="ghost"
+						color="secondary"
 						prefix={<Anvil size="md" />}
 					>
 						<span className="tab-label">Events</span>
@@ -278,6 +279,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 					<Button
 						className="linked-spans-tab-btn"
 						variant="ghost"
+						color="secondary"
 						prefix={<Link2 size="md" />}
 					>
 						<span className="tab-label">Links</span>

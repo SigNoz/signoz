@@ -184,6 +184,7 @@ function LabelSelect({
 					<Button
 						onClick={handleClearAll}
 						variant="ghost"
+						color="secondary"
 						size="icon"
 						prefix={<CircleX size="md" />}
 					/>

@@ -202,6 +202,7 @@ function IntegrationDetailHeader(
 							}}
 							className="understandBtn"
 							variant="ghost"
+							color="secondary"
 							prefix={
 								isConnectionStateNotInstalled ? <ConfigureIcon /> : <Check size={14} />
 							}

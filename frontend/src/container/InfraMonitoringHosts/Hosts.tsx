@@ -129,7 +129,12 @@ function Hosts(): JSX.Element {
 
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
-			<Button onClick={handleFilterVisibilityChange} size="sm" variant="ghost">
+			<Button
+				onClick={handleFilterVisibilityChange}
+				size="sm"
+				variant="ghost"
+				color="secondary"
+			>
 				<Filter size={14} />
 			</Button>
 		</div>

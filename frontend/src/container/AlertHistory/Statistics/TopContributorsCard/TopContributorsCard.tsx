@@ -56,6 +56,7 @@ function TopContributorsCard({
 							className="view-all"
 							onClick={toggleViewAllDrawer}
 							variant="ghost"
+							color="secondary"
 						>
 							<div className="label">View all</div>
 							<div className="icon">

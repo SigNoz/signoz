@@ -132,6 +132,7 @@ function ContextLogRenderer({
 				}}
 				size="sm"
 				variant="ghost"
+				color="secondary"
 			>
 				<RawLogView
 					isActiveLog={logTorender.id === log.id}

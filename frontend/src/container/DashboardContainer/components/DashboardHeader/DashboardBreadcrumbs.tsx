@@ -49,11 +49,16 @@ function DashboardBreadcrumbs(): JSX.Element {
 				className="dashboard-btn"
 				onClick={goToListPage}
 				variant="ghost"
+				color="secondary"
 				prefix={<LayoutGrid size={14} />}
 			>
 				Dashboard /
 			</Button>
-			<Button className="id-btn dashboard-name-btn" variant="ghost">
+			<Button
+				className="id-btn dashboard-name-btn"
+				variant="ghost"
+				color="secondary"
+			>
 				<img src={image} alt="dashboard-icon" className="dashboard-icon-image" />
 				{title}
 			</Button>

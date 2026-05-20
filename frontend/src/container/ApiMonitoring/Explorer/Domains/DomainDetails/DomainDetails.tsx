@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Radio } from 'antd';
-import { Button } from '@signozhq/ui/button';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -25,7 +25,6 @@ import EndPointDetails from './EndPointDetails';
 import TopErrors from './TopErrors';
 
 import './DomainDetails.styles.scss';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
 
 const TimeRangeOffset = 1000000000;
 

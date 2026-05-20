@@ -24,8 +24,7 @@ import {
 	DraftingCompass,
 	ScrollText,
 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import ButtonGroup from 'periscope/components/ButtonGroup/ButtonGroup';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,

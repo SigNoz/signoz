@@ -445,6 +445,7 @@ function VariableItem({
 						className="all-variables-btn"
 						onClick={onCancel}
 						variant="ghost"
+						color="secondary"
 						prefix={<ArrowLeft size={14} />}
 					>
 						All variables
@@ -539,6 +540,7 @@ function VariableItem({
 									}
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<Pyramid size={14} />}
 							>
 								Dynamic
@@ -560,6 +562,7 @@ function VariableItem({
 									}
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<ClipboardType size={14} />}
 							>
 								Textbox
@@ -578,6 +581,7 @@ function VariableItem({
 									}
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<LayoutList size={14} />}
 							>
 								Custom
@@ -596,6 +600,7 @@ function VariableItem({
 									}
 								}}
 								variant="ghost"
+								color="secondary"
 								prefix={<DatabaseZap size={14} />}
 							>
 								Query

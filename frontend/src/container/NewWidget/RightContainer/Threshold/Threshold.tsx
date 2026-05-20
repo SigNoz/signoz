@@ -232,6 +232,7 @@ function Threshold({
 							className="edit-btn"
 							onClick={editHandler}
 							variant="ghost"
+							color="secondary"
 							size="icon"
 							prefix={<Pencil size={14} />}
 						/>
@@ -239,6 +240,7 @@ function Threshold({
 							className="delete-btn"
 							onClick={deleteHandler}
 							variant="ghost"
+							color="secondary"
 							size="icon"
 							prefix={<Trash2 size={14} />}
 						/>

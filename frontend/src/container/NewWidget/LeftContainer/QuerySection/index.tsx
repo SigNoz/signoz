@@ -125,7 +125,7 @@ function QuerySection({
 		return supportedQueryTypes.map((queryType) => ({
 			key: queryType,
 			label: (
-				<Button className="nav-btns" variant="outlined" color="secondary">
+				<Button variant="outlined" color="secondary">
 					{queryTypeComponents[queryType].icon}
 					<Typography>{queryTypeComponents[queryType].label}</Typography>
 				</Button>

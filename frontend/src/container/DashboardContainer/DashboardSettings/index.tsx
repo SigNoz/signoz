@@ -37,6 +37,7 @@ function DashboardSettings({
 						user?.role !== USER_ROLES.ADMIN ? 'disabled-btn' : ''
 					}`}
 					variant="ghost"
+					color="secondary"
 					prefix={<Globe size={14} />}
 				>
 					Publish
@@ -54,6 +55,7 @@ function DashboardSettings({
 				<Button
 					className="overview-btn"
 					variant="ghost"
+					color="secondary"
 					prefix={<Table size={14} />}
 				>
 					Overview
@@ -67,6 +69,7 @@ function DashboardSettings({
 				<Button
 					className="variables-btn"
 					variant="ghost"
+					color="secondary"
 					prefix={<Braces size={14} />}
 				>
 					Variables

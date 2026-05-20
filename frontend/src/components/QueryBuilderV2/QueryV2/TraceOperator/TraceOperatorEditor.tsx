@@ -467,6 +467,7 @@ function TraceOperatorEditor({
 							{validation.isValid ? (
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									prefix={<CircleCheck size={14} />}
 								/>

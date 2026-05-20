@@ -46,7 +46,12 @@ function BreadCrumbItem({
 	};
 
 	return (
-		<Button className="breadcrumb-item" onClick={handleNavigate} variant="ghost">
+		<Button
+			className="breadcrumb-item"
+			onClick={handleNavigate}
+			variant="ghost"
+			color="secondary"
+		>
 			{title}
 		</Button>
 	);

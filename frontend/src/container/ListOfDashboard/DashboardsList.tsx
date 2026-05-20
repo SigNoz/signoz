@@ -442,6 +442,7 @@ function DashboardsList(): JSX.Element {
 													className="action-btn"
 													onClick={onClickHandler}
 													variant="ghost"
+													color="secondary"
 													prefix={<Expand size={12} />}
 												>
 													View
@@ -454,6 +455,7 @@ function DashboardsList(): JSX.Element {
 														openInNewTab(getLink());
 													}}
 													variant="ghost"
+													color="secondary"
 													prefix={<SquareArrowOutUpRight size={12} />}
 												>
 													Open in New Tab
@@ -466,6 +468,7 @@ function DashboardsList(): JSX.Element {
 														setCopy(getAbsoluteUrl(getLink()));
 													}}
 													variant="ghost"
+													color="secondary"
 													prefix={<Link2 size={12} />}
 												>
 													Copy Link
@@ -474,6 +477,7 @@ function DashboardsList(): JSX.Element {
 													className="action-btn"
 													onClick={handleJsonExport}
 													variant="ghost"
+													color="secondary"
 													prefix={<FileJson size={12} />}
 												>
 													Export JSON
@@ -686,6 +690,7 @@ function DashboardsList(): JSX.Element {
 								className="retry-btn"
 								onClick={(): Promise<any> => refetchDashboardList()}
 								variant="ghost"
+								color="secondary"
 								prefix={<RotateCw size={16} />}
 							>
 								Retry
@@ -694,6 +699,7 @@ function DashboardsList(): JSX.Element {
 								className="learn-more"
 								onClick={(): void => handleContactSupport(isCloudUserVal)}
 								variant="ghost"
+								color="secondary"
 							>
 								Contact Support
 							</Button>
@@ -726,6 +732,7 @@ function DashboardsList(): JSX.Element {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
 										variant="ghost"
+										color="secondary"
 										prefix={<Plus size={14} />}
 									>
 										New Dashboard
@@ -741,6 +748,7 @@ function DashboardsList(): JSX.Element {
 										);
 									}}
 									variant="ghost"
+									color="secondary"
 								>
 									Learn more
 								</Button>
@@ -808,6 +816,7 @@ function DashboardsList(): JSX.Element {
 															onClick={(): void => sortHandle('createdAt')}
 															data-testid="sort-by-last-created"
 															variant="ghost"
+															color="secondary"
 														>
 															Last created
 															{dashboardsListQueryParams.columnKey === 'createdAt' && (
@@ -819,6 +828,7 @@ function DashboardsList(): JSX.Element {
 															onClick={(): void => sortHandle('updatedAt')}
 															data-testid="sort-by-last-updated"
 															variant="ghost"
+															color="secondary"
 														>
 															Last updated
 															{dashboardsListQueryParams.columnKey === 'updatedAt' && (
@@ -846,6 +856,7 @@ function DashboardsList(): JSX.Element {
 															setIsConfigureMetadata(true);
 														}}
 														variant="ghost"
+														color="secondary"
 														prefix={<HdmiPort size={14} />}
 													>
 														Configure metadata
@@ -903,6 +914,7 @@ function DashboardsList(): JSX.Element {
 								setDynamicColumnsLocalStorage(visibleColumns);
 							}}
 							variant="ghost"
+							color="secondary"
 							prefix={<Check size={14} />}
 						>
 							Save Changes

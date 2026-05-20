@@ -661,14 +661,14 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 													{String(value)}
 												</Typography.Text>
 											)}
-											<Button className="only-btn" variant="ghost">
+											<Button className="only-btn" variant="ghost" color="secondary">
 												{isSomeFilterPresentForCurrentAttribute
 													? currentFilterState[value] && !isMultipleValuesTrueForTheKey
 														? 'All'
 														: 'Only'
 													: 'Only'}
 											</Button>
-											<Button className="toggle-btn" variant="ghost">
+											<Button className="toggle-btn" variant="ghost" color="secondary">
 												Toggle
 											</Button>
 										</div>
