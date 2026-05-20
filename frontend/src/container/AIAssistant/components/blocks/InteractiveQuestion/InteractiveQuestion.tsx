@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
+import logEvent from 'api/common/logEvent';
 import { Checkbox, Radio } from 'antd';
 
+import { AIAssistantEvents } from '../../../events';
+import { useAIAssistantAnalyticsContext } from '../../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';
 import { useMessageContext } from '../../MessageContext';
 
@@ -36,6 +39,7 @@ export default function InteractiveQuestion({
 	const answeredBlocks = useAIAssistantStore((s) => s.answeredBlocks);
 	const markBlockAnswered = useAIAssistantStore((s) => s.markBlockAnswered);
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 
 	// Persist selected state locally only for the pending (not-yet-submitted) case
 	const [selected, setSelected] = useState<string[]>([]);
@@ -52,6 +56,14 @@ export default function InteractiveQuestion({
 		if (messageId) {
 			markBlockAnswered(messageId, answer);
 		}
+		void logEvent(AIAssistantEvents.MessageSent, {
+			threadId,
+			page,
+			mode,
+			queryLength: answer.length,
+			hasContext: false,
+			respondingToClarification: false,
+		});
 		sendMessage(answer);
 	};
 

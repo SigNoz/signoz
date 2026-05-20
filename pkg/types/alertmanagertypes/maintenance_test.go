@@ -1,4 +1,4 @@
-package ruletypes
+package alertmanagertypes
 
 import (
 	"testing"
@@ -633,7 +633,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					// These fixed fields should be ignored when Recurrence is set.
-					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					StartTime: time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
 					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
 						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC), // daily at 14:00
@@ -642,8 +642,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 					},
 				},
 			},
-			// 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
-			// Before the fix this returned true (bug); after fix it returns false.
+			// 2026-04-15 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
 			ts:   time.Date(2026, 4, 15, 11, 0, 0, 0, time.UTC),
 			skip: false,
 		},
@@ -652,16 +651,17 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone:  "UTC",
-					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					StartTime: time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
 					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
 						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
+						EndTime:    timePtr(time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC)),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
 				},
 			},
-			// 15:00 is inside the daily 14:00-16:00 window — should skip.
+			// 15:00 is inside the daily 14:00-16:00 window. Should skip.
 			ts:   time.Date(2026, 4, 15, 15, 0, 0, 0, time.UTC),
 			skip: true,
 		},
