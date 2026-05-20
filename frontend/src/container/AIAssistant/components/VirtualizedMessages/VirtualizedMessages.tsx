@@ -95,6 +95,11 @@ export default function VirtualizedMessages({
 	// user back down when they've intentionally scrolled up to read earlier
 	// content.
 	const atBottomRef = useRef(true);
+	// Id of the latest user message we've already anchored to. Used to detect
+	// a fresh user send so we can re-anchor to the bottom regardless of where
+	// the user was scrolled — sending a message and not seeing it is worse
+	// than the anti-yank guarantee.
+	const lastSeenUserMessageIdRef = useRef<string | null>(null);
 
 	const handleRegenerate = useCallback(
 		(messageId: string): void => {
@@ -120,6 +125,18 @@ export default function VirtualizedMessages({
 	// an explicit signal they want to read earlier content without being
 	// yanked back.
 	useEffect(() => {
+		const lastMessage = messages[messages.length - 1];
+		const isFreshUserSend =
+			lastMessage?.role === 'user' &&
+			lastMessage.id !== lastSeenUserMessageIdRef.current;
+		if (isFreshUserSend) {
+			lastSeenUserMessageIdRef.current = lastMessage.id;
+			// Re-anchor so the user sees their own send (and the assistant's
+			// follow-up streaming) even if they were reading history when they
+			// hit Enter.
+			atBottomRef.current = true;
+		}
+
 		if (!atBottomRef.current) {
 			return;
 		}
@@ -132,6 +149,7 @@ export default function VirtualizedMessages({
 			behavior: isStreaming ? 'auto' : 'smooth',
 		});
 	}, [
+		messages,
 		messages.length,
 		streamingEvents.length,
 		streamingContentLength,
