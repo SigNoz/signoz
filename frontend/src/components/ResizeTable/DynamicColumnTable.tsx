@@ -4,13 +4,13 @@ import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
-import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { Button, Flex, Switch } from 'antd';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { SlidersHorizontal } from '@signozhq/icons';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
@@ -85,8 +85,9 @@ function DynamicColumnTable({
 			);
 		};
 
-	const items: MenuProps['items'] =
+	const items: MenuItem[] =
 		dynamicColumns?.map((column, index) => ({
+			key: String(index),
 			label: (
 				<div className="dynamicColumnsTable-items">
 					<div>{column.title?.toString()}</div>
@@ -96,8 +97,6 @@ function DynamicColumnTable({
 					/>
 				</div>
 			),
-			key: index,
-			type: 'checkbox',
 		})) || [];
 
 	// Get current page from URL or default to 1
@@ -126,18 +125,14 @@ function DynamicColumnTable({
 			<Flex justify="flex-end" align="center" gap={8}>
 				{facingIssueBtn && <LaunchChatSupport {...facingIssueBtn} />}
 				{dynamicColumns && (
-					<Dropdown
-						getPopupContainer={popupContainer}
-						menu={{ items }}
-						trigger={['click']}
-					>
+					<DropdownMenuSimple menu={{ items }}>
 						<Button
 							className="dynamicColumnTable-button filter-btn"
 							size="middle"
 							icon={<SlidersHorizontal size={14} />}
 							data-testid="additional-filters-button"
 						/>
-					</Dropdown>
+					</DropdownMenuSimple>
 				)}
 			</Flex>
 

@@ -1,46 +1,30 @@
-import { useState } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Button } from 'antd';
 
 import './DropDown.styles.scss';
+
+type DropDownItemClick = (info: { key: string; keyPath: string[] }) => void;
 
 function DropDown({
 	element,
 	onDropDownItemClick,
 }: {
 	element: JSX.Element[];
-	onDropDownItemClick?: MenuProps['onClick'];
+	onDropDownItemClick?: DropDownItemClick;
 }): JSX.Element {
-	const items: MenuProps['items'] = element.map(
-		(e: JSX.Element, index: number) => ({
-			label: e,
-			key: index,
-		}),
-	);
-
-	const [isDdOpen, setDdOpen] = useState<boolean>(false);
+	const items: MenuItem[] = element.map((e, index) => ({
+		key: String(index),
+		label: e,
+		onClick: onDropDownItemClick,
+	}));
 
 	return (
-		<Dropdown
-			menu={{
-				items,
-				onMouseEnter: (): void => setDdOpen(true),
-				onMouseLeave: (): void => setDdOpen(false),
-				onClick: (item): void => onDropDownItemClick?.(item),
-			}}
-			open={isDdOpen}
-		>
-			<Button
-				type="link"
-				className={`dropdown-button`}
-				onClick={(e): void => {
-					e.preventDefault();
-					setDdOpen(true);
-				}}
-			>
+		<DropdownMenuSimple menu={{ items }}>
+			<Button type="link" className="dropdown-button">
 				<Ellipsis className="dropdown-icon" size={16} />
 			</Button>
-		</Dropdown>
+		</DropdownMenuSimple>
 	);
 }
 
