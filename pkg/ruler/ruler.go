@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -44,5 +45,5 @@ type Ruler interface {
 	// MaintenanceStore returns the store for planned maintenance / downtime schedules.
 	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the
 	// store interface. The handler should not call store methods directly.
-	MaintenanceStore() ruletypes.MaintenanceStore
+	MaintenanceStore() alertmanagertypes.MaintenanceStore
 }

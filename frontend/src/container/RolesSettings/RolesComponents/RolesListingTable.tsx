@@ -9,11 +9,10 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { RoleListPermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
-import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -32,8 +31,7 @@ interface RolesListingTableProps {
 function RolesListingTable({
 	searchQuery,
 }: RolesListingTableProps): JSX.Element {
-	const { activeLicense } = useAppContext();
-	const isValidLicense = activeLicense?.status === LicenseStatus.VALID;
+	const { isRolesEnabled } = useRolesFeatureGate();
 
 	const { permissions: listPerms, isLoading: isAuthZLoading } = useAuthZ([
 		RoleListPermission,
@@ -208,11 +206,11 @@ function RolesListingTable({
 	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className={`roles-table-row${isValidLicense ? ' roles-table-row--clickable' : ''}`}
-			role={isValidLicense ? 'button' : undefined}
-			tabIndex={isValidLicense ? 0 : undefined}
+			className={`roles-table-row${isRolesEnabled ? ' roles-table-row--clickable' : ''}`}
+			role={isRolesEnabled ? 'button' : undefined}
+			tabIndex={isRolesEnabled ? 0 : undefined}
 			onClick={
-				isValidLicense
+				isRolesEnabled
 					? (): void => {
 							if (role.id) {
 								navigateToRole(role.id, role.name);
@@ -221,7 +219,7 @@ function RolesListingTable({
 					: undefined
 			}
 			onKeyDown={
-				isValidLicense
+				isRolesEnabled
 					? (e): void => {
 							if ((e.key === 'Enter' || e.key === ' ') && role.id) {
 								navigateToRole(role.id, role.name);

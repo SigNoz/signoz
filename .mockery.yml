@@ -8,6 +8,14 @@ packages:
       filename: "alertmanager.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/SigNoz/signoz/pkg/types/alertmanagertypes:
+    interfaces:
+      MaintenanceStore:
+    config:
+      dir: '{{.InterfaceDir}}/alertmanagertypestest'
+      filename: "maintenance.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
   github.com/SigNoz/signoz/pkg/tokenizer:
     config:
       all: true

@@ -1,0 +1,17 @@
+.breadcrumb {
+	padding-left: 16px;
+
+	ol {
+		align-items: center;
+	}
+
+	:global(.ant-breadcrumb-separator) {
+		color: var(--muted-foreground);
+	}
+}
+
+.divider {
+	border-color: var(--l1-border);
+	margin: 16px 0;
+	margin-top: 10px;
+}

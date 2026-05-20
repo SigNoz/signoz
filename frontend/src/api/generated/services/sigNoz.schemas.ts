@@ -9,7 +9,7 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -34,7 +34,7 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ModelLabelSetDTO {
@@ -62,7 +62,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	endsAt?: Date;
+	endsAt?: string;
 	/**
 	 * @type string
 	 */
@@ -80,7 +80,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startsAt?: Date;
+	startsAt?: string;
 	status?: TypesAlertStatusDTO;
 }
 
@@ -97,7 +97,7 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: Date;
+	createdAt: string;
 	/**
 	 * @type string,null
 	 */
@@ -127,11 +127,114 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: Date;
+	updatedAt: string;
 	/**
 	 * @type string,null
 	 */
 	updatedBy?: string | null;
+}
+
+export enum AlertmanagertypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum AlertmanagertypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum AlertmanagertypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum AlertmanagertypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface AlertmanagertypesRecurrenceDTO {
+	/**
+	 * @type string
+	 */
+	duration: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	endTime?: string | null;
+	/**
+	 * @type array,null
+	 */
+	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
+	repeatType: AlertmanagertypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: string;
+}
+
+export interface AlertmanagertypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface AlertmanagertypesPlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesMaintenanceKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+	status: AlertmanagertypesMaintenanceStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
 }
 
 export interface ConfigAuthorizationDTO {
@@ -1597,6 +1700,22 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	wechat_configs?: ConfigWechatConfigDTO[];
 };
 
+export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+}
+
 export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type array,null
@@ -1834,7 +1953,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -1851,7 +1970,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -2009,7 +2128,7 @@ export interface AuthtypesRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2034,7 +2153,7 @@ export interface AuthtypesRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface AuthtypesSessionContextDTO {
@@ -2062,7 +2181,7 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: Date;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -2076,7 +2195,7 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: Date;
+	updatedAt: string;
 	/**
 	 * @type string
 	 */
@@ -2088,7 +2207,7 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2117,7 +2236,7 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type array,null
 	 */
@@ -2284,7 +2403,7 @@ export interface CloudintegrationtypesAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2305,12 +2424,12 @@ export interface CloudintegrationtypesAccountDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	removedAt: Date | null;
+	removedAt: string | null;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface DashboardtypesStorableDashboardDataDTO {
@@ -2441,7 +2560,7 @@ export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2451,7 +2570,7 @@ export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 };
 
 /**
@@ -2645,12 +2764,12 @@ export interface CloudintegrationtypesGettableAgentCheckInDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	removed_at: Date | null;
+	removed_at: string | null;
 	/**
 	 * @type string,null
 	 * @format date-time
 	 */
-	removedAt: Date | null;
+	removedAt: string | null;
 }
 
 export interface CloudintegrationtypesServiceMetadataDTO {
@@ -2898,680 +3017,17 @@ export interface CoretypesPatchableObjectsDTO {
 	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
-export interface DashboardGridItemDTO {
-	content?: CommonJSONRefDTO;
-	/**
-	 * @type integer
-	 */
-	height?: number;
-	/**
-	 * @type integer
-	 */
-	width?: number;
-	/**
-	 * @type integer
-	 */
-	x?: number;
-	/**
-	 * @type integer
-	 */
-	y?: number;
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
 }
-
-export interface DashboardGridLayoutCollapseDTO {
-	/**
-	 * @type boolean
-	 */
-	open?: boolean;
-}
-
-export interface DashboardGridLayoutDisplayDTO {
-	collapse?: DashboardGridLayoutCollapseDTO;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface DashboardGridLayoutSpecDTO {
-	display?: DashboardGridLayoutDisplayDTO;
-	/**
-	 * @type array,null
-	 */
-	items?: DashboardGridItemDTO[] | null;
-	/**
-	 * @type string
-	 */
-	repeatVariable?: string;
-}
-
-export interface VariableDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type boolean
-	 */
-	hidden?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface DashboardTextVariableSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	constant?: boolean;
-	display?: VariableDisplayDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
-export interface DashboardtypesAxesDTO {
-	/**
-	 * @type boolean
-	 */
-	isLogScale?: boolean;
-	/**
-	 * @type number,null
-	 */
-	softMax?: number | null;
-	/**
-	 * @type number,null
-	 */
-	softMin?: number | null;
-}
-
-export enum DashboardtypesPrecisionOptionDTO {
-	NUMBER_0 = '0',
-	NUMBER_1 = '1',
-	NUMBER_2 = '2',
-	NUMBER_3 = '3',
-	NUMBER_4 = '4',
-	full = 'full',
-}
-export interface DashboardtypesPanelFormattingDTO {
-	decimalPrecision?: DashboardtypesPrecisionOptionDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export enum DashboardtypesLegendPositionDTO {
-	bottom = 'bottom',
-	right = 'right',
-}
-export type DashboardtypesLegendDTOCustomColorsAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type DashboardtypesLegendDTOCustomColors =
-	DashboardtypesLegendDTOCustomColorsAnyOf | null;
-
-export interface DashboardtypesLegendDTO {
-	/**
-	 * @type object,null
-	 */
-	customColors?: DashboardtypesLegendDTOCustomColors;
-	position?: DashboardtypesLegendPositionDTO;
-}
-
-export interface DashboardtypesThresholdWithLabelDTO {
-	/**
-	 * @type string
-	 */
-	color: string;
-	/**
-	 * @type string
-	 */
-	label: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	value: number;
-}
-
-export enum DashboardtypesTimePreferenceDTO {
-	global_time = 'global_time',
-	last_5_min = 'last_5_min',
-	last_15_min = 'last_15_min',
-	last_30_min = 'last_30_min',
-	last_1_hr = 'last_1_hr',
-	last_6_hr = 'last_6_hr',
-	last_1_day = 'last_1_day',
-	last_3_days = 'last_3_days',
-	last_1_week = 'last_1_week',
-	last_1_month = 'last_1_month',
-}
-export interface DashboardtypesBarChartVisualizationDTO {
-	/**
-	 * @type boolean
-	 */
-	fillSpans?: boolean;
-	/**
-	 * @type boolean
-	 */
-	stackedBarChart?: boolean;
-	timePreference?: DashboardtypesTimePreferenceDTO;
-}
-
-export interface DashboardtypesBarChartPanelSpecDTO {
-	axes?: DashboardtypesAxesDTO;
-	formatting?: DashboardtypesPanelFormattingDTO;
-	legend?: DashboardtypesLegendDTO;
-	/**
-	 * @type array,null
-	 */
-	thresholds?: DashboardtypesThresholdWithLabelDTO[] | null;
-	visualization?: DashboardtypesBarChartVisualizationDTO;
-}
-
-export interface DashboardtypesBasicVisualizationDTO {
-	timePreference?: DashboardtypesTimePreferenceDTO;
-}
-
-export interface Querybuildertypesv5LogAggregationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-}
-
-export interface Querybuildertypesv5FilterDTO {
-	/**
-	 * @type string
-	 */
-	expression?: string;
-}
-
-export interface Querybuildertypesv5FunctionArgDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	value?: unknown;
-}
-
-export enum Querybuildertypesv5FunctionNameDTO {
-	cutoffmin = 'cutoffmin',
-	cutoffmax = 'cutoffmax',
-	clampmin = 'clampmin',
-	clampmax = 'clampmax',
-	absolute = 'absolute',
-	runningdiff = 'runningdiff',
-	log2 = 'log2',
-	log10 = 'log10',
-	cumulativesum = 'cumulativesum',
-	ewma3 = 'ewma3',
-	ewma5 = 'ewma5',
-	ewma7 = 'ewma7',
-	median3 = 'median3',
-	median5 = 'median5',
-	median7 = 'median7',
-	timeshift = 'timeshift',
-	anomaly = 'anomaly',
-	fillzero = 'fillzero',
-}
-export interface Querybuildertypesv5FunctionDTO {
-	/**
-	 * @type array
-	 */
-	args?: Querybuildertypesv5FunctionArgDTO[];
-	name?: Querybuildertypesv5FunctionNameDTO;
-}
-
-export enum TelemetrytypesFieldContextDTO {
-	metric = 'metric',
-	log = 'log',
-	span = 'span',
-	resource = 'resource',
-	attribute = 'attribute',
-	body = 'body',
-}
-export enum TelemetrytypesFieldDataTypeDTO {
-	string = 'string',
-	bool = 'bool',
-	float64 = 'float64',
-	int64 = 'int64',
-	number = 'number',
-}
-export enum TelemetrytypesSignalDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-}
-export interface Querybuildertypesv5GroupByKeyDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export interface Querybuildertypesv5HavingDTO {
-	/**
-	 * @type string
-	 */
-	expression?: string;
-}
-
-export interface Querybuildertypesv5LimitByDTO {
-	/**
-	 * @type array,null
-	 */
-	keys?: string[] | null;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
-export enum Querybuildertypesv5OrderDirectionDTO {
-	asc = 'asc',
-	desc = 'desc',
-}
-export interface Querybuildertypesv5OrderByKeyDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export interface Querybuildertypesv5OrderByDTO {
-	direction?: Querybuildertypesv5OrderDirectionDTO;
-	key?: Querybuildertypesv5OrderByKeyDTO;
-}
-
-/**
- * Step interval. Accepts a Go duration string (e.g., "60s", "1m", "1h") or a number representing seconds (e.g., 60).
- */
-export type Querybuildertypesv5StepDTO = string | number;
-
-export interface Querybuildertypesv5SecondaryAggregationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
-export interface TelemetrytypesTelemetryFieldKeyDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export enum TelemetrytypesSourceDTO {
-	meter = 'meter',
-}
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5LogAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
-export interface MetrictypesComparisonSpaceAggregationParamDTO {
-	/**
-	 * @type string
-	 */
-	operator: string;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	threshold: number;
-}
-
-export enum Querybuildertypesv5ReduceToDTO {
-	sum = 'sum',
-	count = 'count',
-	avg = 'avg',
-	min = 'min',
-	max = 'max',
-	last = 'last',
-	median = 'median',
-}
-export enum MetrictypesSpaceAggregationDTO {
-	sum = 'sum',
-	avg = 'avg',
-	min = 'min',
-	max = 'max',
-	count = 'count',
-	p50 = 'p50',
-	p75 = 'p75',
-	p90 = 'p90',
-	p95 = 'p95',
-	p99 = 'p99',
-}
-export enum MetrictypesTemporalityDTO {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
-export enum MetrictypesTimeAggregationDTO {
-	latest = 'latest',
-	sum = 'sum',
-	avg = 'avg',
-	min = 'min',
-	max = 'max',
-	count = 'count',
-	count_distinct = 'count_distinct',
-	rate = 'rate',
-	increase = 'increase',
-}
-export interface Querybuildertypesv5MetricAggregationDTO {
-	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
-	/**
-	 * @type string
-	 */
-	metricName?: string;
-	reduceTo?: Querybuildertypesv5ReduceToDTO;
-	spaceAggregation?: MetrictypesSpaceAggregationDTO;
-	temporality?: MetrictypesTemporalityDTO;
-	timeAggregation?: MetrictypesTimeAggregationDTO;
-}
-
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5MetricAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
-export interface Querybuildertypesv5TraceAggregationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-}
-
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
-export type DashboardtypesBuilderQuerySpecDTO =
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
-	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
-
-export enum DashboardtypesComparisonOperatorDTO {
-	'>' = '>',
-	'<' = '<',
-	'>=' = '>=',
-	'<=' = '<=',
-	'=' = '=',
-	above = 'above',
-	below = 'below',
-	above_or_equal = 'above_or_equal',
-	below_or_equal = 'below_or_equal',
-	equal = 'equal',
-	not_equal = 'not_equal',
-}
-export enum DashboardtypesThresholdFormatDTO {
-	text = 'text',
-	background = 'background',
-}
-export interface DashboardtypesComparisonThresholdDTO {
-	/**
-	 * @type string
-	 */
-	color: string;
-	format?: DashboardtypesThresholdFormatDTO;
-	operator?: DashboardtypesComparisonOperatorDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	value: number;
-}
-
-export interface DashboardtypesCustomVariableSpecDTO {
-	/**
-	 * @type string
-	 */
-	customValue: string;
-}
-
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -3589,11 +3045,12 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -4708,7 +4165,7 @@ export interface GatewaytypesLimitDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: Date;
+	created_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4730,7 +4187,7 @@ export interface GatewaytypesLimitDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: Date;
+	updated_at?: string;
 }
 
 export interface GatewaytypesIngestionKeyDTO {
@@ -4738,12 +4195,12 @@ export interface GatewaytypesIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: Date;
+	created_at?: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	expires_at?: Date;
+	expires_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4764,7 +4221,7 @@ export interface GatewaytypesIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: Date;
+	updated_at?: string;
 	/**
 	 * @type string
 	 */
@@ -4788,7 +4245,7 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	expires_at?: Date;
+	expires_at?: string;
 	/**
 	 * @type string
 	 */
@@ -5986,7 +5443,7 @@ export interface LlmpricingruletypesLLMPricingRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -6025,13 +5482,13 @@ export interface LlmpricingruletypesLLMPricingRuleDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	syncedAt?: Date | null;
+	syncedAt?: string | null;
 	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -6683,7 +6140,7 @@ export interface Querybuildertypesv5RawRowDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	timestamp?: Date;
+	timestamp?: string;
 }
 
 export interface Querybuildertypesv5RawDataDTO {
@@ -7089,15 +6546,6 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
-export enum RuletypesMaintenanceKindDTO {
-	fixed = 'fixed',
-	recurring = 'recurring',
-}
-export enum RuletypesMaintenanceStatusDTO {
-	active = 'active',
-	upcoming = 'upcoming',
-	expired = 'expired',
-}
 export interface RuletypesRenotifyDTO {
 	/**
 	 * @type array
@@ -7127,116 +6575,6 @@ export interface RuletypesNotificationSettingsDTO {
 	 * @type boolean
 	 */
 	usePolicy?: boolean;
-}
-
-export enum RuletypesRepeatOnDTO {
-	sunday = 'sunday',
-	monday = 'monday',
-	tuesday = 'tuesday',
-	wednesday = 'wednesday',
-	thursday = 'thursday',
-	friday = 'friday',
-	saturday = 'saturday',
-}
-export enum RuletypesRepeatTypeDTO {
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export interface RuletypesRecurrenceDTO {
-	/**
-	 * @type string
-	 */
-	duration: string;
-	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: Date | null;
-	/**
-	 * @type array,null
-	 */
-	repeatOn?: RuletypesRepeatOnDTO[] | null;
-	repeatType: RuletypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: Date;
-}
-
-export interface RuletypesScheduleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: Date;
-	recurrence?: RuletypesRecurrenceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime?: Date;
-	/**
-	 * @type string
-	 */
-	timezone: string;
-}
-
-export interface RuletypesPlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: RuletypesMaintenanceKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-	status: RuletypesMaintenanceStatusDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface RuletypesPostablePlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
 }
 
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
@@ -7379,7 +6717,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7428,7 +6766,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7447,7 +6785,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -7461,7 +6799,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	lastObservedAt: Date;
+	lastObservedAt: string;
 	/**
 	 * @type string
 	 */
@@ -7474,7 +6812,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
@@ -7519,7 +6857,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7544,7 +6882,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountRoleDTO {
@@ -7552,7 +6890,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7570,7 +6908,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountWithRolesDTO {
@@ -7578,7 +6916,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7607,7 +6945,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
@@ -7649,7 +6987,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7674,7 +7012,7 @@ export interface SpantypesSpanMapperGroupDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7743,7 +7081,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7769,7 +7107,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8136,7 +7474,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8169,7 +7507,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesIdentifiableDTO {
@@ -8184,7 +7522,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8217,7 +7555,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -8229,7 +7567,7 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8251,7 +7589,7 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesPostableInviteDTO {
@@ -8318,7 +7656,7 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	expiresAt?: Date;
+	expiresAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8345,7 +7683,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -8374,7 +7712,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ZeustypesHostDTO {
@@ -8766,7 +8104,7 @@ export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array
 	 */
-	data: RuletypesPlannedMaintenanceDTO[];
+	data: AlertmanagertypesPlannedMaintenanceDTO[];
 	/**
 	 * @type string
 	 */
@@ -8774,7 +8112,7 @@ export type ListDowntimeSchedules200 = {
 };
 
 export type CreateDowntimeSchedule201 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -8788,7 +8126,7 @@ export type GetDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
 export type GetDowntimeScheduleByID200 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
