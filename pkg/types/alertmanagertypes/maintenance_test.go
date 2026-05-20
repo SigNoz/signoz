@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -946,6 +947,52 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 			err := p.Validate()
 			if (err != nil) != c.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, c.wantErr)
+			}
+		})
+	}
+}
+
+func TestConvertLabelSetToEnv(t *testing.T) {
+	cases := []struct {
+		name     string
+		lset     model.LabelSet
+		expected map[string]interface{}
+	}{
+		{
+			name: "simple keys",
+			lset: model.LabelSet{"key1": "value1", "key2": "value2"},
+			expected: map[string]interface{}{"key1": "value1", "key2": "value2"},
+		},
+		{
+			name: "dotted keys become nested maps",
+			lset: model.LabelSet{"foo.bar": "value1", "foo.baz": "value2"},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{"bar": "value1", "baz": "value2"},
+			},
+		},
+		{
+			name: "deeper dotted key wins over shallow dotted key",
+			lset: model.LabelSet{"foo.bar.baz": "deep", "foo.bar": "shallow"},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{
+					"bar": map[string]interface{}{"baz": "deep"},
+				},
+			},
+		},
+		{
+			name: "nested structure wins over plain key",
+			lset: model.LabelSet{"foo.bar": "value", "foo": "ignored"},
+			expected: map[string]interface{}{
+				"foo": map[string]interface{}{"bar": "value"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := ConvertLabelSetToEnv(c.lset)
+			if !reflect.DeepEqual(got, c.expected) {
+				t.Errorf("ConvertLabelSetToEnv() = %v, want %v", got, c.expected)
 			}
 		})
 	}

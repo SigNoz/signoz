@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -248,13 +249,47 @@ func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
 	return false
 }
 
+// ConvertLabelSetToEnv converts a label set into a map suitable for use as an
+// expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
+// nested maps so that expr can resolve them without panicking. When a dotted
+// path conflicts with a plain key, the nested structure takes precedence.
+func ConvertLabelSetToEnv(lset model.LabelSet) map[string]interface{} {
+	env := make(map[string]interface{})
+	for lk, lv := range lset {
+		key := strings.TrimSpace(string(lk))
+		value := string(lv)
+		if strings.Contains(key, ".") {
+			parts := strings.Split(key, ".")
+			current := env
+			for i, raw := range parts {
+				part := strings.TrimSpace(raw)
+				if i == len(parts)-1 {
+					if _, isMap := current[part].(map[string]interface{}); !isMap {
+						current[part] = value
+					}
+					break
+				}
+				if nextMap, ok := current[part].(map[string]interface{}); ok {
+					current = nextMap
+				} else {
+					newMap := make(map[string]interface{})
+					current[part] = newMap
+					current = newMap
+				}
+			}
+			continue
+		}
+		if _, isMap := env[key].(map[string]interface{}); !isMap {
+			env[key] = value
+		}
+	}
+	return env
+}
+
 // evalScopeExpression compiles and runs the expression against the provided labels.
 // Returns false on any error (safety-first: don't suppress on a bad expression).
 func evalScopeExpression(expression string, lset model.LabelSet) bool {
-	env := make(map[string]interface{}, len(lset))
-	for k, v := range lset {
-		env[string(k)] = string(v)
-	}
+	env := ConvertLabelSetToEnv(lset)
 	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
 	if err != nil {
 		return false
