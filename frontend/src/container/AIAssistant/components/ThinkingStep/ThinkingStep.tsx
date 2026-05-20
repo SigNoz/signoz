@@ -6,12 +6,9 @@ import styles from './ThinkingStep.module.scss';
 interface ThinkingStepProps {
 	content: string;
 	/**
-	 * True only while this thinking pass is still in flight — i.e. the latest
-	 * event in an active stream. Persisted (history) blocks and any thinking
-	 * step followed by a later event default to false and read as
-	 * "Thought for a few seconds". The phrase is intentionally vague: the API
-	 * doesn't persist precise timing, so we'd be inconsistent across fresh
-	 * vs reloaded threads if we tried to show seconds.
+	 * When false, label reads "Thought for a few seconds" — intentionally
+	 * vague because the API doesn't persist precise timing, so showing
+	 * seconds would be inconsistent between fresh and reloaded threads.
 	 */
 	isLive?: boolean;
 }

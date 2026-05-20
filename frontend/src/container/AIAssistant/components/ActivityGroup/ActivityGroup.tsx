@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import cx from 'classnames';
 import { ChevronDown, ChevronRight, Sparkles } from '@signozhq/icons';
 
+import { formatTime } from 'utils/timeUtils';
+
 import { StreamingToolCall } from '../../types';
 import ThinkingStep from '../ThinkingStep';
 import ToolCallStep from '../ToolCallStep';
@@ -15,21 +17,11 @@ export type ActivityItem =
 interface ActivityGroupProps {
 	items: ActivityItem[];
 	/**
-	 * True while this group is the trailing activity in an ongoing stream —
-	 * the underlying steps may still be growing or a tool may still be
-	 * running. Drives the live "Working…" label and elapsed-time tick.
+	 * True only for the trailing activity group of an active stream — drives
+	 * the live "Working…" label and the elapsed-time tick (which re-stamps on
+	 * approval/clarification resume so wait time isn't counted).
 	 */
 	isLive?: boolean;
-}
-
-function formatElapsed(ms: number): string {
-	const seconds = Math.round(ms / 1000);
-	if (seconds < 60) {
-		return `${seconds}s`;
-	}
-	const m = Math.floor(seconds / 60);
-	const s = seconds % 60;
-	return s === 0 ? `${m}m` : `${m}m ${s}s`;
 }
 
 /**
@@ -79,7 +71,7 @@ export default function ActivityGroup({
 		// 1s anyway, and showing "0s" or "<1s" briefly adds noise.
 		summary =
 			elapsed >= 1000
-				? `Working… · ${formatElapsed(elapsed)} · ${stepLabel}`
+				? `Working… · ${formatTime(elapsed / 1000)} · ${stepLabel}`
 				: `Working… · ${stepLabel}`;
 	} else {
 		summary = `Worked through ${stepLabel}`;
