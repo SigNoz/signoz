@@ -510,6 +510,12 @@
 	color: var(--bg-robin-400) !important;
 }
 
+// The MetricDetails Drawer sits at z-index 1000; the design-system tooltip
+// defaults to z-index 50 and would otherwise render behind the drawer.
+.metric-highlights-tooltip-content {
+	--tooltip-z-index: 1000;
+}
+
 @keyframes fade-in-out {
 	0% {
 		opacity: 0;

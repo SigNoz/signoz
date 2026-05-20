@@ -1,9 +1,12 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { Spin, Tooltip } from 'antd';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Spin } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Info } from '@signozhq/icons';
+import { useTimezone } from 'providers/Timezone';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { HighlightsProps } from './types';
@@ -11,6 +14,10 @@ import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,
 } from './utils';
+
+const TOOLTIP_CONTENT_PROPS = {
+	className: 'metric-highlights-tooltip-content',
+};
 
 function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const {
@@ -40,6 +47,13 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const lastReceivedText = formatTimestampToReadableDate(
 		metricHighlights?.lastReceived,
 	);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const lastReceivedTooltipText = metricHighlights?.lastReceived
+		? `Last received on ${formatTimezoneAdjustedTimestamp(
+				metricHighlights.lastReceived,
+				DATE_TIME_FORMATS.DASH_DATETIME_UTC,
+			)}`
+		: 'No data received yet';
 
 	if (isErrorMetricHighlights) {
 		return (
@@ -90,27 +104,42 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-data-points"
 						>
-							<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
-								{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
-							</Tooltip>
+							<TooltipSimple
+								title={metricHighlights?.dataPoints?.toLocaleString()}
+								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
+								arrow
+							>
+								<span>
+									{formatNumberIntoHumanReadableFormat(
+										metricHighlights?.dataPoints ?? 0,
+									)}
+								</span>
+							</TooltipSimple>
 						</Typography.Text>
 						<Typography.Text
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-time-series-total"
 						>
-							<Tooltip
-								title="Active time series are those that have received data points in the last 1
-							hour."
-								placement="top"
+							<TooltipSimple
+								title="Active time series are those that have received data points in the last 1 hour."
+								side="top"
+								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
+								arrow
 							>
 								<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
-							</Tooltip>
+							</TooltipSimple>
 						</Typography.Text>
 						<Typography.Text
 							className="metric-details-grid-value"
 							data-testid="metric-highlights-last-received"
 						>
-							<Tooltip title={lastReceivedText}>{lastReceivedText}</Tooltip>
+							<TooltipSimple
+								title={lastReceivedTooltipText}
+								tooltipContentProps={TOOLTIP_CONTENT_PROPS}
+								arrow
+							>
+								<span>{lastReceivedText}</span>
+							</TooltipSimple>
 						</Typography.Text>
 					</>
 				)}

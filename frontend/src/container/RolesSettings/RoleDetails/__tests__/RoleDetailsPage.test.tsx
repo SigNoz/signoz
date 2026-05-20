@@ -7,6 +7,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { Route, Switch } from 'react-router-dom';
 import {
+	defaultFeatureFlags,
 	fireEvent,
 	render,
 	screen,
@@ -14,6 +15,7 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
+import { FeatureKeys } from 'constants/features';
 import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import {
 	invalidLicense,
@@ -246,6 +248,34 @@ describe('RoleDetailsPage', () => {
 			{
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 				appContextOverrides: { activeLicense: invalidLicense },
+			},
+		);
+
+		await expect(
+			screen.findByTestId('roles-list-redirect-target'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('redirects to the roles list when fine-grained authz flag is inactive', async () => {
+		render(
+			<Switch>
+				<Route path="/settings/roles/:roleId">
+					<RoleDetailsPage />
+				</Route>
+				<Route path="/settings/roles" exact>
+					<div data-testid="roles-list-redirect-target" />
+				</Route>
+			</Switch>,
+			undefined,
+			{
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+				appContextOverrides: {
+					featureFlags: defaultFeatureFlags.map((f) =>
+						f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
+							? { ...f, active: false }
+							: f,
+					),
+				},
 			},
 		);
 
