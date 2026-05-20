@@ -37,8 +37,8 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, dashboardtypes.SourceUser, postableDashboard)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, source, postableDashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,9 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		return nil, err
 	}
 
-	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
+	if source == dashboardtypes.SourceUser {
+		module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
+	}
 	return dashboard, nil
 }
 

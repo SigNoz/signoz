@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -45,7 +44,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "disconnect account is not supported")
 }
 
-func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "create service is not supported")
 }
 
@@ -57,7 +56,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list services metadata is not supported")
 }
 
-func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "update service is not supported")
 }
 
@@ -67,14 +66,6 @@ func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudi
 
 func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "agent check-in is not supported")
-}
-
-func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
-	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get dashboard by ID is not supported")
-}
-
-func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list dashboards is not supported")
 }
 
 func (module *module) Collect(context.Context, valuer.UUID) (map[string]any, error) {

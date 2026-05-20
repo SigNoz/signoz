@@ -34,7 +34,7 @@ type Module interface {
 	// deletes the public sharing config and disables public sharing for the dashboard
 	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error
 
-	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 

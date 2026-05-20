@@ -46,6 +46,14 @@ type Store interface {
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
 	RunInTx(context.Context, func(ctx context.Context) error) error
+
+	CreateIntegrationDashboard(ctx context.Context, row *StorableIntegrationDashboard) error
+
+	GetIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slug string) (*StorableIntegrationDashboard, error)
+
+	ListIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slugPrefix string) ([]*StorableIntegrationDashboard, error)
+
+	DeleteIntegrationDashboardBySlug(ctx context.Context, provider IntegrationDashboardProviderType, slug string) error
 }
 
 type ServiceDefinitionStore interface {

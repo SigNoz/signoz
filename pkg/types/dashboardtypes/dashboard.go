@@ -97,6 +97,11 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 	}
 
 	currentTime := time.Now()
+	locked := false
+
+	if source == SourceIntegration {
+		locked = true
+	}
 
 	return &Dashboard{
 		ID: valuer.GenerateUUID().StringValue(),
@@ -110,7 +115,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 		},
 		OrgID:  orgID,
 		Data:   storableDashboardData,
-		Locked: false,
+		Locked: locked,
 		Source: source,
 	}, nil
 }

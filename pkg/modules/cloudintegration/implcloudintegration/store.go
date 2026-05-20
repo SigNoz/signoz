@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -217,4 +218,51 @@ func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 	return store.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		return cb(ctx)
 	})
+}
+
+func (store *store) CreateIntegrationDashboard(ctx context.Context, integrationDashboard *cloudintegrationtypes.StorableIntegrationDashboard) error {
+	_, err := store.store.BunDBCtx(ctx).NewInsert().Model(integrationDashboard).Exec(ctx)
+	return err
+}
+
+func (store *store) GetIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) (*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	integrationDashboard := new(cloudintegrationtypes.StorableIntegrationDashboard)
+	err := store.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(integrationDashboard).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", provider).
+		Where("storable_integration_dashboard.slug = ?", slug).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.store.WrapNotFoundErrf(err, errors.CodeNotFound, "integration dashboard with slug %s not found", slug)
+	}
+	return integrationDashboard, nil
+}
+
+func (store *store) ListIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slugPrefix string) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	var integrationDashboards []*cloudintegrationtypes.StorableIntegrationDashboard
+	err := store.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(&integrationDashboards).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", provider).
+		Where("storable_integration_dashboard.slug LIKE ?", slugPrefix+"%").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return integrationDashboards, nil
+}
+
+func (store *store) DeleteIntegrationDashboardBySlug(ctx context.Context, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) error {
+	_, err := store.store.BunDBCtx(ctx).
+		NewDelete().
+		TableExpr("integration_dashboard").
+		Where("provider = ?", provider).
+		Where("slug = ?", slug).
+		Exec(ctx)
+	return err
 }
