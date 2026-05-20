@@ -150,7 +150,6 @@ export default function VirtualizedMessages({
 		});
 	}, [
 		messages,
-		messages.length,
 		streamingEvents.length,
 		streamingContentLength,
 		isStreaming,

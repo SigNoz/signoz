@@ -759,6 +759,12 @@ export default function ChatInput({
 				entity.value.toLowerCase().includes(activeQuery),
 			)
 		: contextEntitiesByCategory[activeContextCategory];
+	// Truncate the ref array to match the current entity count so that
+	// switching from a large category (e.g. 100 dashboards) to a smaller one
+	// doesn't leave stale `null` slots from earlier renders. Keyboard nav math
+	// already uses `filteredContextOptions.length` for the modulo, so stale
+	// slots wouldn't be reached — this is purely housekeeping.
+	entityRefs.current.length = filteredContextOptions.length;
 	const { isLoading: isActiveContextLoading, isError: isActiveContextError } =
 		contextCategoryStateByCategory[activeContextCategory];
 	const currentLength = text.length;
@@ -1087,14 +1093,20 @@ export default function ChatInput({
 				<div className={styles.rightActions}>
 					{showMic &&
 						(isListening ? (
-							<div className={styles.micRecording}>
-								<div
+							<div
+								className={styles.micRecording}
+								role="status"
+								aria-live="polite"
+								aria-label="Recording voice input"
+							>
+								<button
+									type="button"
 									className={cx(styles.micDiscard, styles.secondary)}
 									onClick={handleDiscard}
 									aria-label="Discard recording"
 								>
 									<X size={12} />
-								</div>
+								</button>
 								<span className={styles.micWaves} aria-hidden="true">
 									<span />
 									<span />
@@ -1105,13 +1117,14 @@ export default function ChatInput({
 									<span />
 									<span />
 								</span>
-								<div
+								<button
+									type="button"
 									className={cx(styles.micStop, styles.destructive)}
 									onClick={handleStopAndSend}
 									aria-label="Stop and send"
 								>
 									<Square size={9} fill="currentColor" strokeWidth={0} />
-								</div>
+								</button>
 							</div>
 						) : (
 							<TooltipSimple title="Voice input">

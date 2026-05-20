@@ -401,6 +401,11 @@
 	border-radius: 50%;
 	border: none;
 	cursor: pointer;
+	// Reset native <button> defaults so the 24px circle isn't inflated by
+	// browser-default padding / font metrics.
+	padding: 0;
+	font: inherit;
+	appearance: none;
 }
 
 .micDiscard {
