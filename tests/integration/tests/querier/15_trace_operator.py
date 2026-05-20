@@ -3,11 +3,10 @@ Integration tests for TraceOperatorQuery (builder_trace_operator) through the
 /api/v5/query_range endpoint.
 
 Covers:
-1. Basic trace operator (A => B) — returns matched spans from the correct trace.
-2. Order by a field absent from selectFields — must not return a server error.
-   Guards against the ClickHouse NOT_FOUND_COLUMN_IN_BLOCK regression where
-   ordering by a column absent from an outer SELECT caused a query failure.
-3. Expression operators (=>, ->, &&, ||, A NOT B) with and without returnSpansFrom.
+1. Order-by variants for trace operator (A -> B, A => B) with returnSpansFrom="A".
+   Guards against the NOT_FOUND_COLUMN_IN_BLOCK regression where ordering by a
+   column absent from an outer SELECT caused a query failure.
+2. Expression operators (=>, ->, &&, ||, A NOT B) with and without returnSpansFrom.
 
 returnSpansFrom semantics
 --------------------------
@@ -20,64 +19,48 @@ returnSpansFrom="A"
     must hold), but the final rows are drawn from the A sub-query CTE,
     filtered to traces that appeared in the expression result.  Concretely:
     the query returns every A span whose trace_id belongs to a trace that
-    matched the expression.  This gives the full set of A spans in matching
-    traces rather than only the A spans that directly satisfied the predicate.
+    matched the expression.
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
-import pytest
-
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import (
-    OrderBy,
-    TelemetryFieldKey,
-    TraceOperatorQuery,
-    make_query_request,
-)
+from fixtures.querier import OrderBy, TelemetryFieldKey, TraceOperatorQuery, make_query_request
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 # ---------------------------------------------------------------------------
-# Shared helpers
+# Helpers
 # ---------------------------------------------------------------------------
 
 
-@dataclass
-class _SpanDef:
-    """Span spec relative to 'now'. parent_idx=-1 for root spans."""
-
-    name: str
-    service: str
-    op_type: str
-    duration_s: int
-    time_offset_s: int
-    parent_idx: int = -1
-    extra_attrs: dict = field(default_factory=dict)
-
-
-def _build_trace(now: datetime, trace_id: str, spans: list[_SpanDef]) -> list[Traces]:
-    span_ids = [TraceIdGenerator.span_id() for _ in spans]
+def _chain_trace(now: datetime, *spans: tuple) -> list[Traces]:
+    """
+    Build a single trace as a linear chain.
+    Each span tuple is (name, service, op_type, duration_s[, extra_attrs]).
+    The first span is the root; each subsequent span is a child of the previous.
+    """
+    trace_id = TraceIdGenerator.trace_id()
+    ids = [TraceIdGenerator.span_id() for _ in spans]
     result = []
-    for defn, span_id in zip(spans, span_ids):
-        parent_id = "" if defn.parent_idx < 0 else span_ids[defn.parent_idx]
-        kind = TracesKind.SPAN_KIND_SERVER if defn.parent_idx < 0 else TracesKind.SPAN_KIND_INTERNAL
+    for i, s in enumerate(spans):
+        name, service, op_type, duration_s = s[0], s[1], s[2], s[3]
+        extra = s[4] if len(s) > 4 else {}
         result.append(
             Traces(
-                timestamp=now - timedelta(seconds=defn.time_offset_s),
-                duration=timedelta(seconds=defn.duration_s),
+                timestamp=now - timedelta(seconds=10 - i),
+                duration=timedelta(seconds=duration_s),
                 trace_id=trace_id,
-                span_id=span_id,
-                parent_span_id=parent_id,
-                name=defn.name,
-                kind=kind,
+                span_id=ids[i],
+                parent_span_id="" if i == 0 else ids[i - 1],
+                name=name,
+                kind=TracesKind.SPAN_KIND_SERVER if i == 0 else TracesKind.SPAN_KIND_INTERNAL,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
-                resources={"service.name": defn.service},
-                attributes={"operation.type": defn.op_type, **defn.extra_attrs},
+                resources={"service.name": service},
+                attributes={"operation.type": op_type, **extra},
             )
         )
     return result
@@ -96,411 +79,208 @@ def _builder_query(name: str, filter_expr: str, limit: int = 100) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Order-by variants
+# Order-by test
 # ---------------------------------------------------------------------------
-# Each case uses a unique op_type prefix so spans inserted by earlier
-# parametrize runs (shared DB session) are never picked up by later ones.
 
 
-@dataclass
-class _OrderByCase:
-    id: str
-    trace1_spans: list[_SpanDef]
-    trace2_spans: list[_SpanDef]
-    filter_a: str
-    filter_b: str
-    expression: str
-    select_fields: list[TelemetryFieldKey] | None
-    order: list[OrderBy]
-    expected_rows: list[dict]  # ordered; each dict is a partial match against row data
-
-
-_ORDER_BY_CASES: list[_OrderByCase] = [
-    # Order by attribute absent from selectFields — NOT_FOUND_COLUMN_IN_BLOCK regression guard.
-    _OrderByCase(
-        id="field_not_in_select",
-        trace1_spans=[
-            _SpanDef("fnis-gp", "svc-a", "fnis-grandparent", 5, 10, extra_attrs={"http.method": "POST"}),
-            _SpanDef("fnis-mid", "svc-a", "fnis-middle", 3, 9, parent_idx=0),
-            _SpanDef("fnis-gc", "svc-a", "fnis-grandchild", 1, 8, parent_idx=1),
-        ],
-        trace2_spans=[
-            _SpanDef("fnis-gp", "svc-b", "fnis-grandparent", 5, 7, extra_attrs={"http.method": "GET"}),
-            _SpanDef("fnis-mid", "svc-b", "fnis-middle", 3, 6, parent_idx=0),
-            _SpanDef("fnis-gc", "svc-b", "fnis-grandchild", 1, 5, parent_idx=1),
-        ],
-        filter_a="operation.type = 'fnis-grandparent'",
-        filter_b="operation.type = 'fnis-grandchild'",
-        expression="A -> B",
-        select_fields=[TelemetryFieldKey(name="service.name", field_data_type="string", field_context="resource")],
-        order=[
-            OrderBy(
-                key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
-                direction="desc",
-            )
-        ],
-        # POST > GET in DESC → svc-a first
-        expected_rows=[{"service.name": "svc-a"}, {"service.name": "svc-b"}],
-    ),
-    # Order by a core span field (duration_nano) with no explicit selectFields.
-    _OrderByCase(
-        id="core_span_field",
-        trace1_spans=[
-            _SpanDef("csf-parent-long", "svc-long", "csf-parent", 5, 10),
-            _SpanDef("csf-child-long", "svc-long", "csf-child", 1, 9, parent_idx=0),
-        ],
-        trace2_spans=[
-            _SpanDef("csf-parent-short", "svc-short", "csf-parent", 1, 8),
-            _SpanDef("csf-child-short", "svc-short", "csf-child", 1, 7, parent_idx=0),
-        ],
-        filter_a="operation.type = 'csf-parent'",
-        filter_b="operation.type = 'csf-child'",
-        expression="A => B",
-        select_fields=None,
-        order=[OrderBy(key=TelemetryFieldKey(name="duration_nano", field_context="span"), direction="desc")],
-        # 5 s parent first, 1 s parent second
-        expected_rows=[{"name": "csf-parent-long"}, {"name": "csf-parent-short"}],
-    ),
-    # Order by a non-core attribute that IS in selectFields — checks ordering and field presence.
-    _OrderByCase(
-        id="non_core_field_in_select",
-        trace1_spans=[
-            _SpanDef("ncis-parent-post", "svc-post", "ncis-parent", 3, 10, extra_attrs={"http.method": "POST"}),
-            _SpanDef("ncis-child-post", "svc-post", "ncis-child", 1, 9, parent_idx=0),
-        ],
-        trace2_spans=[
-            _SpanDef("ncis-parent-get", "svc-get", "ncis-parent", 3, 8, extra_attrs={"http.method": "GET"}),
-            _SpanDef("ncis-child-get", "svc-get", "ncis-child", 1, 7, parent_idx=0),
-        ],
-        filter_a="operation.type = 'ncis-parent'",
-        filter_b="operation.type = 'ncis-child'",
-        expression="A => B",
-        select_fields=[TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute")],
-        order=[
-            OrderBy(
-                key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
-                direction="desc",
-            )
-        ],
-        # POST > GET in DESC; http.method must appear in both rows (it is in selectFields)
-        expected_rows=[{"http.method": "POST"}, {"http.method": "GET"}],
-    ),
-]
-
-
-@pytest.mark.parametrize("case", [pytest.param(c, id=c.id) for c in _ORDER_BY_CASES])
 def test_trace_operator_query_order_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    case: _OrderByCase,
 ) -> None:
     """
-    Verifies that trace operator queries honour the order-by clause.
+    Verifies order-by behaviour for three sub-cases, all inserted once:
 
-    Cases:
-    - field_not_in_select: order by attribute absent from selectFields
-      (NOT_FOUND_COLUMN_IN_BLOCK regression guard).
-    - core_span_field: order by duration_nano with no explicit selectFields.
-    - non_core_field_in_select: order by attribute present in selectFields.
+    field_not_in_select
+        Order by an attribute absent from selectFields.
+        Guards against the NOT_FOUND_COLUMN_IN_BLOCK ClickHouse regression.
+
+    core_span_field
+        Order by duration_nano with no explicit selectFields.
+
+    non_core_field_in_select
+        Order by an attribute that IS in selectFields.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    trace_id_1 = TraceIdGenerator.trace_id()
-    trace_id_2 = TraceIdGenerator.trace_id()
 
-    insert_traces(_build_trace(now, trace_id_1, case.trace1_spans) + _build_trace(now, trace_id_2, case.trace2_spans) + _build_trace(now, TraceIdGenerator.trace_id(), [_SpanDef("noise-span", "svc-noise", "noise-op", 1, 2)]))
+    insert_traces(
+        [
+            # field_not_in_select — two 3-level chains; differ only by http.method
+            *_chain_trace(
+                now,
+                ("fnis-gp", "svc-a", "fnis-grandparent", 5, {"http.method": "POST"}),
+                ("fnis-mid", "svc-a", "fnis-middle", 3),
+                ("fnis-gc", "svc-a", "fnis-grandchild", 1),
+            ),
+            *_chain_trace(
+                now,
+                ("fnis-gp", "svc-b", "fnis-grandparent", 5, {"http.method": "GET"}),
+                ("fnis-mid", "svc-b", "fnis-middle", 3),
+                ("fnis-gc", "svc-b", "fnis-grandchild", 1),
+            ),
+            # core_span_field — two parent→child chains; differ by duration
+            *_chain_trace(now, ("csf-parent-long", "svc-long", "csf-parent", 5), ("csf-child-long", "svc-long", "csf-child", 1)),
+            *_chain_trace(now, ("csf-parent-short", "svc-short", "csf-parent", 1), ("csf-child-short", "svc-short", "csf-child", 1)),
+            # non_core_field_in_select — two parent→child chains; differ by http.method
+            *_chain_trace(now, ("ncis-parent-post", "svc-post", "ncis-parent", 3, {"http.method": "POST"}), ("ncis-child-post", "svc-post", "ncis-child", 1)),
+            *_chain_trace(now, ("ncis-parent-get", "svc-get", "ncis-parent", 3, {"http.method": "GET"}), ("ncis-child-get", "svc-get", "ncis-child", 1)),
+            # noise
+            *_chain_trace(now, ("noise-span", "svc-noise", "noise-op", 1)),
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms=start_ms,
-        end_ms=end_ms,
-        request_type="raw",
-        queries=[
-            _builder_query("A", case.filter_a),
-            _builder_query("B", case.filter_b),
-            TraceOperatorQuery(
-                name="C",
-                expression=case.expression,
-                return_spans_from="A",
-                limit=100,
-                select_fields=case.select_fields,
-                order=case.order,
-            ).to_dict(),
-        ],
+    def check_order(case_id, filter_a, filter_b, expression, select_fields, order, expected_rows):
+        resp = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type="raw",
+            queries=[
+                _builder_query("A", filter_a),
+                _builder_query("B", filter_b),
+                TraceOperatorQuery(name="C", expression=expression, return_spans_from="A", limit=100, select_fields=select_fields, order=order).to_dict(),
+            ],
+        )
+        assert resp.status_code == HTTPStatus.OK, f"[{case_id}] {resp.text}"
+        assert resp.json()["status"] == "success"
+        rows = resp.json()["data"]["data"]["results"][0].get("rows") or []
+        assert len(rows) == len(expected_rows), f"[{case_id}] expected {len(expected_rows)} rows, got {len(rows)}"
+        for i, (row, expected) in enumerate(zip(rows, expected_rows)):
+            for key, value in expected.items():
+                assert row["data"].get(key) == value, f"[{case_id}] row {i}: {key}={value!r} expected, got {row['data'].get(key)!r}"
+
+    # POST > GET in DESC; order key is absent from selectFields
+    check_order(
+        "field_not_in_select",
+        "operation.type = 'fnis-grandparent'",
+        "operation.type = 'fnis-grandchild'",
+        "A -> B",
+        [TelemetryFieldKey(name="service.name", field_data_type="string", field_context="resource")],
+        [OrderBy(key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"), direction="desc")],
+        [{"service.name": "svc-a"}, {"service.name": "svc-b"}],
     )
 
-    assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["status"] == "success"
+    # 5 s parent before 1 s parent in DESC
+    check_order(
+        "core_span_field",
+        "operation.type = 'csf-parent'",
+        "operation.type = 'csf-child'",
+        "A => B",
+        None,
+        [OrderBy(key=TelemetryFieldKey(name="duration_nano", field_context="span"), direction="desc")],
+        [{"name": "csf-parent-long"}, {"name": "csf-parent-short"}],
+    )
 
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-    rows = results[0].get("rows") or []
-    assert len(rows) == len(case.expected_rows)
-
-    for i, (row, expected) in enumerate(zip(rows, case.expected_rows)):
-        for key, value in expected.items():
-            assert row["data"].get(key) == value, f"[{case.id}] row {i}: expected {key}={value!r}, got {row['data'].get(key)!r}"
+    # POST > GET in DESC; order key is in selectFields so it appears in each row
+    check_order(
+        "non_core_field_in_select",
+        "operation.type = 'ncis-parent'",
+        "operation.type = 'ncis-child'",
+        "A => B",
+        [TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute")],
+        [OrderBy(key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"), direction="desc")],
+        [{"http.method": "POST"}, {"http.method": "GET"}],
+    )
 
 
 # ---------------------------------------------------------------------------
-# Operator × returnSpansFrom matrix
+# Expression × returnSpansFrom test
 # ---------------------------------------------------------------------------
-# Each case uses a unique op_type prefix so DB rows from earlier parametrize
-# runs never contaminate later ones (the session-level ClickHouse is shared).
-#
-# Operators tested: => -> && || (A NOT B)
-# For each operator two cases:
-#   "default"  — returnSpansFrom="" → result comes from the expression's root CTE
-#   "return_A" — returnSpansFrom="A" → expression still evaluates; result is all
-#                A spans whose trace_id appeared in the expression result
-#
-# Root-CTE semantics (also the result for the "default" cases):
-#   =>        A spans that have a DIRECT child matching B
-#   ->        A spans that are ancestors of any B span
-#   &&        A spans from traces that also contain a B span
-#   ||        UNION of A spans and B spans
-#   A NOT B   A spans from traces that contain no B span
 
 
-@dataclass
-class _ExprCase:
-    id: str
-    traces: list[list[_SpanDef]]  # one inner list per trace
-    filter_a: str
-    filter_b: str
-    expression: str
-    return_spans_from: str  # "" → use expression root CTE
-    expected_names: set[str]  # span.name values that must appear (exact set)
-
-
-_EXPR_CASES: list[_ExprCase] = [
-    # ── A => B (direct child) ────────────────────────────────────────────────
-    # "default": root CTE = A spans that have a direct B child
-    _ExprCase(
-        id="direct_child_default",
-        traces=[
-            [
-                _SpanDef("dcd-root", "svc-dcd-a", "dcd-root", 5, 10),
-                _SpanDef("dcd-leaf", "svc-dcd-a", "dcd-leaf", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("dcd-root-only", "svc-dcd-b", "dcd-root", 2, 7)],  # A but no B child
-        ],
-        filter_a="operation.type = 'dcd-root'",
-        filter_b="operation.type = 'dcd-leaf'",
-        expression="A => B",
-        return_spans_from="",
-        expected_names={"dcd-root"},  # only the root that HAS a direct child
-    ),
-    # "return_A": expression must hold; returns A spans from matching traces only.
-    # Trace 1 matches (dca-root directly parents dca-leaf). Trace 2 has no B child
-    # so it never enters the expression result → dca-root-only is excluded.
-    _ExprCase(
-        id="direct_child_return_A",
-        traces=[
-            [
-                _SpanDef("dca-root", "svc-dca-a", "dca-root", 5, 10),
-                _SpanDef("dca-leaf", "svc-dca-a", "dca-leaf", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("dca-root-only", "svc-dca-b", "dca-root", 2, 7)],
-        ],
-        filter_a="operation.type = 'dca-root'",
-        filter_b="operation.type = 'dca-leaf'",
-        expression="A => B",
-        return_spans_from="A",
-        expected_names={"dca-root"},  # only from trace 1 where A => B holds
-    ),
-    # ── A -> B (indirect descendant) ─────────────────────────────────────────
-    _ExprCase(
-        id="indirect_descendant_default",
-        traces=[
-            [
-                _SpanDef("idd-gp", "svc-idd-a", "idd-gp", 5, 10),
-                _SpanDef("idd-mid", "svc-idd-a", "idd-mid", 3, 9, parent_idx=0),
-                _SpanDef("idd-gc", "svc-idd-a", "idd-gc", 1, 8, parent_idx=1),
-            ],
-            [_SpanDef("idd-gp-only", "svc-idd-b", "idd-gp", 2, 7)],  # A but no B descendant
-        ],
-        filter_a="operation.type = 'idd-gp'",
-        filter_b="operation.type = 'idd-gc'",
-        expression="A -> B",
-        return_spans_from="",
-        expected_names={"idd-gp"},
-    ),
-    # Trace 1 matches (ida-gp is indirect ancestor of ida-gc). Trace 2 has no B
-    # descendant → ida-gp-only is excluded.
-    _ExprCase(
-        id="indirect_descendant_return_A",
-        traces=[
-            [
-                _SpanDef("ida-gp", "svc-ida-a", "ida-gp", 5, 10),
-                _SpanDef("ida-mid", "svc-ida-a", "ida-mid", 3, 9, parent_idx=0),
-                _SpanDef("ida-gc", "svc-ida-a", "ida-gc", 1, 8, parent_idx=1),
-            ],
-            [_SpanDef("ida-gp-only", "svc-ida-b", "ida-gp", 2, 7)],
-        ],
-        filter_a="operation.type = 'ida-gp'",
-        filter_b="operation.type = 'ida-gc'",
-        expression="A -> B",
-        return_spans_from="A",
-        expected_names={"ida-gp"},  # only from trace 1 where A -> B holds
-    ),
-    # ── A && B ────────────────────────────────────────────────────────────────
-    _ExprCase(
-        id="and_default",
-        traces=[
-            [
-                _SpanDef("and-root", "svc-and-a", "and-root", 5, 10),
-                _SpanDef("and-leaf", "svc-and-a", "and-leaf", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("and-root-only", "svc-and-b", "and-root", 2, 7)],  # A but no B in trace
-        ],
-        filter_a="operation.type = 'and-root'",
-        filter_b="operation.type = 'and-leaf'",
-        expression="A && B",
-        return_spans_from="",
-        expected_names={"and-root"},  # A from traces that also contain B
-    ),
-    # Trace 1 matches (contains both A and B). Trace 2 has no B span → excluded.
-    _ExprCase(
-        id="and_return_A",
-        traces=[
-            [
-                _SpanDef("ana-root", "svc-ana-a", "ana-root", 5, 10),
-                _SpanDef("ana-leaf", "svc-ana-a", "ana-leaf", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("ana-root-only", "svc-ana-b", "ana-root", 2, 7)],
-        ],
-        filter_a="operation.type = 'ana-root'",
-        filter_b="operation.type = 'ana-leaf'",
-        expression="A && B",
-        return_spans_from="A",
-        expected_names={"ana-root"},  # only from trace 1 where A && B holds
-    ),
-    # ── A || B ────────────────────────────────────────────────────────────────
-    _ExprCase(
-        id="or_default",
-        traces=[
-            [_SpanDef("ord-a-span", "svc-ord-a", "ord-a", 5, 10)],
-            [_SpanDef("ord-b-span", "svc-ord-b", "ord-b", 2, 7)],
-        ],
-        filter_a="operation.type = 'ord-a'",
-        filter_b="operation.type = 'ord-b'",
-        expression="A || B",
-        return_spans_from="",
-        expected_names={"ord-a-span", "ord-b-span"},  # UNION of both A and B
-    ),
-    _ExprCase(
-        id="or_return_A",
-        traces=[
-            [_SpanDef("ora-a-span", "svc-ora-a", "ora-a", 5, 10)],
-            [_SpanDef("ora-b-span", "svc-ora-b", "ora-b", 2, 7)],
-        ],
-        filter_a="operation.type = 'ora-a'",
-        filter_b="operation.type = 'ora-b'",
-        expression="A || B",
-        return_spans_from="A",
-        expected_names={"ora-a-span"},
-    ),
-    # ── A NOT B (binary not) ──────────────────────────────────────────────────
-    # Unary NOT A is skipped: its root CTE reads from all_spans (unbounded by
-    # filter), making row counts non-deterministic across a shared test session.
-    _ExprCase(
-        id="not_binary_default",
-        traces=[
-            [
-                _SpanDef("nbd-root-with-child", "svc-nbd-a", "nbd-root", 5, 10),
-                _SpanDef("nbd-child", "svc-nbd-a", "nbd-child", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("nbd-root-no-child", "svc-nbd-b", "nbd-root", 2, 7)],  # A, no B
-        ],
-        filter_a="operation.type = 'nbd-root'",
-        filter_b="operation.type = 'nbd-child'",
-        expression="A NOT B",
-        return_spans_from="",
-        expected_names={"nbd-root-no-child"},  # A from traces that have no B
-    ),
-    # Trace 2 matches A NOT B (has A, no B). Trace 1 has B so it is excluded by
-    # the expression → nba-root-with-child is not in any matching trace.
-    _ExprCase(
-        id="not_binary_return_A",
-        traces=[
-            [
-                _SpanDef("nba-root-with-child", "svc-nba-a", "nba-root", 5, 10),
-                _SpanDef("nba-child", "svc-nba-a", "nba-child", 2, 9, parent_idx=0),
-            ],
-            [_SpanDef("nba-root-no-child", "svc-nba-b", "nba-root", 2, 7)],
-        ],
-        filter_a="operation.type = 'nba-root'",
-        filter_b="operation.type = 'nba-child'",
-        expression="A NOT B",
-        return_spans_from="A",
-        expected_names={"nba-root-no-child"},  # only from trace 2 where A NOT B holds
-    ),
-]
-
-
-@pytest.mark.parametrize("case", [pytest.param(c, id=c.id) for c in _EXPR_CASES])
 def test_trace_operator_expressions(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    case: _ExprCase,
 ) -> None:
     """
-    Matrix of expression operators × returnSpansFrom settings.
+    Covers all five operators × two returnSpansFrom settings in a single pass.
 
-    For each operator (=>, ->, &&, ||, A NOT B) two cases verify:
-    - default (returnSpansFrom=""): result comes from the expression's root CTE,
-      so only spans satisfying the full structural predicate are returned.
-    - return_A (returnSpansFrom="A"): the expression is still evaluated; the
-      result is A spans whose trace_id appeared in the expression result, i.e.
-      every A span from traces where the structural relationship holds.
+    All test spans are inserted once; each operator uses a unique op_type prefix
+    so queries never interfere with each other.
+
+    For each operator:
+      default (returnSpansFrom="")  — only spans satisfying the structural predicate
+      return_A (returnSpansFrom="A") — A spans from traces where the predicate held
+
+    Unary NOT A is skipped: its root CTE reads from all_spans (unbounded by any
+    filter), making row counts non-deterministic across a shared ClickHouse session.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    all_spans: list[Traces] = []
-    for span_defs in case.traces:
-        all_spans.extend(_build_trace(now, TraceIdGenerator.trace_id(), span_defs))
-    # Noise: op_type "noise-op" matches no filter in any case; surfacing it would
-    # mean a filter regression, which the set-equality assertion below would catch.
-    all_spans.extend(_build_trace(now, TraceIdGenerator.trace_id(), [_SpanDef("noise-span", "svc-noise", "noise-op", 1, 2)]))
-    insert_traces(all_spans)
+    insert_traces(
+        [
+            # A => B: trace 1 matches (dc-root directly parents dc-leaf); trace 2 does not
+            *_chain_trace(now, ("dc-root", "svc-dc-a", "dc-root", 5), ("dc-leaf", "svc-dc-a", "dc-leaf", 2)),
+            *_chain_trace(now, ("dc-root-only", "svc-dc-b", "dc-root", 2)),
+            # A -> B: trace 1 matches (id-gp is an indirect ancestor of id-gc); trace 2 does not
+            *_chain_trace(
+                now,
+                ("id-gp", "svc-id-a", "id-gp", 5),
+                ("id-mid", "svc-id-a", "id-mid", 3),
+                ("id-gc", "svc-id-a", "id-gc", 1),
+            ),
+            *_chain_trace(now, ("id-gp-only", "svc-id-b", "id-gp", 2)),
+            # A && B: trace 1 matches (contains both A and B); trace 2 does not (no B)
+            *_chain_trace(now, ("and-root", "svc-and-a", "and-root", 5), ("and-leaf", "svc-and-a", "and-leaf", 2)),
+            *_chain_trace(now, ("and-root-only", "svc-and-b", "and-root", 2)),
+            # A || B: trace 1 has A only, trace 2 has B only (both match A || B)
+            *_chain_trace(now, ("or-a-span", "svc-or-a", "or-a", 5)),
+            *_chain_trace(now, ("or-b-span", "svc-or-b", "or-b", 2)),
+            # A NOT B: trace 1 has A + B child (does NOT match); trace 2 has A only (matches)
+            *_chain_trace(now, ("not-root-with-child", "svc-not-a", "not-root", 5), ("not-child", "svc-not-a", "not-child", 2)),
+            *_chain_trace(now, ("not-root-no-child", "svc-not-b", "not-root", 2)),
+            # noise — must not surface in any query below
+            *_chain_trace(now, ("noise-span", "svc-noise", "noise-op", 1)),
+        ]
+    )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms=start_ms,
-        end_ms=end_ms,
-        request_type="raw",
-        queries=[
-            _builder_query("A", case.filter_a),
-            _builder_query("B", case.filter_b),
-            TraceOperatorQuery(
-                name="C",
-                expression=case.expression,
-                return_spans_from=case.return_spans_from,
-                limit=100,
-            ).to_dict(),
-        ],
-    )
+    def check(case_id, filter_a, filter_b, expression, return_spans_from, expected_names):
+        resp = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type="raw",
+            queries=[
+                _builder_query("A", filter_a),
+                _builder_query("B", filter_b),
+                TraceOperatorQuery(name="C", expression=expression, return_spans_from=return_spans_from, limit=100).to_dict(),
+            ],
+        )
+        assert resp.status_code == HTTPStatus.OK, f"[{case_id}] {resp.text}"
+        rows = resp.json()["data"]["data"]["results"][0].get("rows") or []
+        actual = {r["data"]["name"] for r in rows}
+        assert actual == expected_names, f"[{case_id}] expected {expected_names!r}, got {actual!r}"
 
-    assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["status"] == "success"
+    # ── A => B (direct child) ────────────────────────────────────────────────
+    check("direct_child_default", "operation.type = 'dc-root'", "operation.type = 'dc-leaf'", "A => B", "", {"dc-root"})
+    check("direct_child_return_A", "operation.type = 'dc-root'", "operation.type = 'dc-leaf'", "A => B", "A", {"dc-root"})
 
-    results = response.json()["data"]["data"]["results"]
-    assert len(results) == 1
-    rows = results[0].get("rows") or []
+    # ── A -> B (indirect descendant) ─────────────────────────────────────────
+    check("indirect_descendant_default", "operation.type = 'id-gp'", "operation.type = 'id-gc'", "A -> B", "", {"id-gp"})
+    check("indirect_descendant_return_A", "operation.type = 'id-gp'", "operation.type = 'id-gc'", "A -> B", "A", {"id-gp"})
 
-    actual_names = {row["data"]["name"] for row in rows}
-    assert actual_names == case.expected_names, f"[{case.id}] expected spans {case.expected_names}, got {actual_names}"
+    # ── A && B ────────────────────────────────────────────────────────────────
+    check("and_default", "operation.type = 'and-root'", "operation.type = 'and-leaf'", "A && B", "", {"and-root"})
+    check("and_return_A", "operation.type = 'and-root'", "operation.type = 'and-leaf'", "A && B", "A", {"and-root"})
+
+    # ── A || B ────────────────────────────────────────────────────────────────
+    # default returns UNION of A and B; return_A returns only A spans from matching traces
+    check("or_default", "operation.type = 'or-a'", "operation.type = 'or-b'", "A || B", "", {"or-a-span", "or-b-span"})
+    check("or_return_A", "operation.type = 'or-a'", "operation.type = 'or-b'", "A || B", "A", {"or-a-span"})
+
+    # ── A NOT B (binary not) ──────────────────────────────────────────────────
+    check("not_binary_default", "operation.type = 'not-root'", "operation.type = 'not-child'", "A NOT B", "", {"not-root-no-child"})
+    check("not_binary_return_A", "operation.type = 'not-root'", "operation.type = 'not-child'", "A NOT B", "A", {"not-root-no-child"})
