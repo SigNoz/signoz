@@ -138,6 +138,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
+		return err
+	}
+
 	if dashboard.Locked {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
