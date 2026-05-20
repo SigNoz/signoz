@@ -12,6 +12,7 @@ import { useCopyToClipboard } from 'react-use';
 import LabelTag from './LabelTag';
 
 import styles from './LabelColumn.module.scss';
+import { BADGE_GAP, estimateBadgeWidth, OVERFLOW_BADGE_WIDTH } from './utils';
 
 export interface LabelColumnProps {
 	labels: string[];
@@ -32,10 +33,6 @@ export interface LabelColumnProps {
 	value?: { [key: string]: string };
 }
 
-const BADGE_GAP = 4;
-const OVERFLOW_BADGE_WIDTH = 40;
-const ESTIMATED_BADGE_WIDTH = 120;
-
 function LabelColumn({
 	labels,
 	value,
@@ -52,12 +49,21 @@ function LabelColumn({
 			}
 
 			const availableWidth = width - OVERFLOW_BADGE_WIDTH - BADGE_GAP;
-			const badgeSlotWidth = ESTIMATED_BADGE_WIDTH + BADGE_GAP;
-			const maxFit = Math.max(1, Math.floor(availableWidth / badgeSlotWidth));
+			let usedWidth = 0;
+			let count = 0;
 
-			return Math.min(maxFit, labels.length);
+			for (const label of labels) {
+				const badgeWidth = estimateBadgeWidth(label, value?.[label]) + BADGE_GAP;
+				if (usedWidth + badgeWidth > availableWidth && count > 0) {
+					break;
+				}
+				usedWidth += badgeWidth;
+				count++;
+			}
+
+			return Math.max(1, count);
 		},
-		[labels.length],
+		[labels, value],
 	);
 
 	useEffect(() => {

@@ -135,6 +135,11 @@ export const groupedColumns: TableColumnDef<GroupedAlert>[] = [
 								{tag}
 							</Badge>
 						))}
+						{tags.length === 0 ? (
+							<Badge color="secondary" variant="outline">
+								{'<no-value>'}
+							</Badge>
+						) : null}
 					</div>
 				</div>
 			);
