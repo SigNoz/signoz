@@ -7,8 +7,8 @@ const defaultNuqsOptions: Options = {
 
 export const TRIGGERED_ALERTS_PARAMS = {
 	FILTERS: 'alertFilters',
-	GROUP_BY: 'alertGroupBy',
-	SEARCH: 'alertSearch',
+	GROUP_BY: 'groupBy',
+	SEARCH: 'search',
 } as const;
 
 export const useTriggeredAlertsFilters = (): UseQueryStateReturn<
