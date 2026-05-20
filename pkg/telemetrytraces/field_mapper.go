@@ -283,7 +283,7 @@ func (m *defaultFieldMapper) FieldFor(
 				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
 			}
 		}
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "json column type only supported for resource and scope context, got %s", key.FieldContext.String)
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "json column type only supported for resource and scope context, got %s", key.FieldContext.String)
 	case schema.ColumnTypeEnumString,
 		schema.ColumnTypeEnumUInt64,
 		schema.ColumnTypeEnumUInt32,
