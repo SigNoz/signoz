@@ -172,6 +172,12 @@ export default function ConversationView({
 	return (
 		<div className={styles.conversation}>
 			<VirtualizedMessages
+				// Remount on conversation switch so the scroll-anchor refs
+				// (`atBottomRef`, `lastSeenUserMessageIdRef`) and Virtuoso's
+				// internal scroll position reset together — otherwise a "user
+				// scrolled up" state from conv A would block auto-scroll for
+				// conv B's incoming stream.
+				key={conversationId}
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
