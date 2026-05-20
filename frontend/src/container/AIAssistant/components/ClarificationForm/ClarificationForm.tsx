@@ -371,7 +371,10 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 			// `fieldset` + `legend` is the WCAG-recommended grouping for
 			// related checkboxes (1.3.1). SRs announce the legend before each
 			// option, so users hear the group label as context.
-			<fieldset className={styles.fieldset} aria-required={required || undefined}>
+			<fieldset
+				className={styles.multiSelectFieldset}
+				aria-required={required || undefined}
+			>
 				<legend className={styles.label}>
 					{label}
 					{required && (
