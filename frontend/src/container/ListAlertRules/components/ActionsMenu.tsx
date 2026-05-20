@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -34,7 +34,38 @@ function ActionsMenu({
 }: ActionsMenuProps): JSX.Element {
 	const queryClient = useQueryClient();
 
-	const handleClone = (): void => {
+	const handleToggle = useCallback((): void => {
+		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
+		const newDisabled = !rule.disabled;
+		toast.promise(
+			patchRuleByID({ id: rule.id ?? '' }, {
+				disabled: newDisabled,
+			} as RuletypesPostableRuleDTO).then(() => invalidateListRules(queryClient)),
+			{
+				loading: newDisabled ? 'Disabling alert...' : 'Enabling alert...',
+				success: newDisabled ? 'Alert disabled' : 'Alert enabled',
+				error: (error): string => {
+					const apiError = convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO>,
+					);
+					return apiError?.getErrorMessage() || 'Failed to toggle alert state';
+				},
+				position: 'top-right',
+			},
+		);
+	}, [rule, queryClient]);
+
+	const handleEdit = useCallback((): void => {
+		alertActionLogEvent(ALERT_ACTIONS.EDIT, rule);
+		onEdit(rule);
+	}, [rule, onEdit]);
+
+	const handleEditNewTab = useCallback((): void => {
+		alertActionLogEvent(ALERT_ACTIONS.EDIT, rule);
+		onEdit(rule, { newTab: true });
+	}, [rule, onEdit]);
+
+	const handleClone = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.CLONE, rule);
 		toast.promise(
 			createRule({
@@ -59,9 +90,9 @@ function ActionsMenu({
 				position: 'top-right',
 			},
 		);
-	};
+	}, [rule, queryClient, onEdit]);
 
-	const handleDelete = (): void => {
+	const handleDelete = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
 		toast.promise(
 			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
@@ -79,28 +110,7 @@ function ActionsMenu({
 				position: 'top-right',
 			},
 		);
-	};
-
-	const handleToggle = (): void => {
-		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
-		const newDisabled = !rule.disabled;
-		toast.promise(
-			patchRuleByID({ id: rule.id ?? '' }, {
-				disabled: newDisabled,
-			} as RuletypesPostableRuleDTO).then(() => invalidateListRules(queryClient)),
-			{
-				loading: newDisabled ? 'Disabling alert...' : 'Enabling alert...',
-				success: newDisabled ? 'Alert disabled' : 'Alert enabled',
-				error: (error): string => {
-					const apiError = convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO>,
-					);
-					return apiError?.getErrorMessage() || 'Failed to toggle alert state';
-				},
-				position: 'top-right',
-			},
-		);
-	};
+	}, [rule, queryClient]);
 
 	const menuItems = useMemo(
 		() => [
@@ -114,19 +124,13 @@ function ActionsMenu({
 				key: 'edit',
 				label: 'Edit',
 				disabled: externalLoading,
-				onClick: (): void => {
-					alertActionLogEvent(ALERT_ACTIONS.EDIT, rule);
-					onEdit(rule);
-				},
+				onClick: handleEdit,
 			},
 			{
 				key: 'edit-new-tab',
 				label: 'Edit in New Tab',
 				disabled: externalLoading,
-				onClick: (): void => {
-					alertActionLogEvent(ALERT_ACTIONS.EDIT, rule);
-					onEdit(rule, { newTab: true });
-				},
+				onClick: handleEditNewTab,
 			},
 			{
 				key: 'clone',
@@ -143,8 +147,15 @@ function ActionsMenu({
 				onClick: handleDelete,
 			},
 		],
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[rule, externalLoading, onEdit],
+		[
+			rule.disabled,
+			externalLoading,
+			handleToggle,
+			handleEdit,
+			handleEditNewTab,
+			handleClone,
+			handleDelete,
+		],
 	);
 
 	const handleClick = (e: React.MouseEvent): void => {
