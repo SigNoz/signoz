@@ -4636,6 +4636,43 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export enum DashboardtypesJSONPatchOperationDTOOp {
+	add = 'add',
+	remove = 'remove',
+	replace = 'replace',
+	move = 'move',
+	copy = 'copy',
+	test = 'test',
+}
+export interface DashboardtypesJSONPatchOperationDTO {
+	/**
+	 * @type string
+	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
+	 */
+	from?: string;
+	/**
+	 * @enum add,remove,replace,move,copy,test
+	 * @type string
+	 */
+	op: DashboardtypesJSONPatchOperationDTOOp;
+	/**
+	 * @type string
+	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0, /tags/-.
+	 */
+	path: string;
+	/**
+	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable; /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /data/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
+	 */
+	value?: unknown;
+}
+
+/**
+ * @nullable
+ */
+export type DashboardtypesJSONPatchDocumentDTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
 export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',

@@ -17,8 +17,8 @@ import (
 // variable — the variable is not patched in any test here, that's
 // covered in a separate variable-focused suite.
 const basePostableJSON = `{
-	"metadata": {"schemaVersion": "v6"},
-	"data": {
+	"metadata": {"schemaVersion": "v6", "tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}]},
+	"spec": {
 		"display": {"name": "Service overview"},
 		"variables": [
 			{
@@ -93,8 +93,7 @@ const basePostableJSON = `{
 			}
 		],
 		"duration": "1h"
-	},
-	"tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}]
+	}
 }`
 
 func TestPatchableDashboardV2_Apply(t *testing.T) {
@@ -104,11 +103,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	var p PostableDashboardV2
 	require.NoError(t, json.Unmarshal([]byte(basePostableJSON), &p), "base postable JSON must validate")
 	base := &DashboardV2{
-		Info: DashboardInfo{
-			StoredDashboardInfo: p.StoredDashboardInfo,
-			Tags: []*tagtypes.Tag{
-				{Key: "team", Value: "alpha"},
-				{Key: "env", Value: "prod"},
+		Data: DashboardV2Data{
+			Metadata: DashboardV2Metadata{
+				Tags: []*tagtypes.Tag{
+					{Key: "team", Value: "alpha"},
+					{Key: "env", Value: "prod"},
+				},
 			},
 		},
 	}
@@ -136,16 +136,16 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("no-op preserves all fields", func(t *testing.T) {
 		out, err := decode(t, `[]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, base.Info.Metadata, out.Metadata)
-		assert.Equal(t, base.Info.Data.Display.Name, out.Data.Display.Name)
-		require.Equal(t, len(base.Info.Data.Panels), len(out.Data.Panels))
-		for k, panel := range base.Info.Data.Panels {
-			require.Contains(t, out.Data.Panels, k)
-			assert.Equal(t, panel.Spec.Plugin.Kind, out.Data.Panels[k].Spec.Plugin.Kind)
+		assert.Equal(t, base.Data.Metadata, out.Metadata)
+		assert.Equal(t, base.Data.Spec.Display.Name, out.Spec.Display.Name)
+		require.Equal(t, len(base.Data.Spec.Panels), len(out.Spec.Panels))
+		for k, panel := range base.Data.Spec.Panels {
+			require.Contains(t, out.Spec.Panels, k)
+			assert.Equal(t, panel.Spec.Plugin.Kind, out.Spec.Panels[k].Spec.Plugin.Kind)
 		}
-		assert.Len(t, out.Tags, len(base.Info.Tags))
-		assert.Len(t, out.Data.Variables, len(base.Info.Data.Variables))
-		assert.Len(t, out.Data.Layouts, len(base.Info.Data.Layouts))
+		assert.Len(t, out.Metadata.Tags, len(base.Data.Metadata.Tags))
+		assert.Len(t, out.Spec.Variables, len(base.Data.Spec.Variables))
+		assert.Len(t, out.Spec.Layouts, len(base.Data.Spec.Layouts))
 	})
 
 	t.Run("add metadata image", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("replace display name", func(t *testing.T) {
 		out, err := decode(t, `[{"op": "replace", "path": "/data/display/name", "value": "Renamed"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Renamed", out.Data.Display.Name)
+		assert.Equal(t, "Renamed", out.Spec.Display.Name)
 	})
 
 	// Per RFC 6902 § 4.1, `add` on an existing object member replaces the
@@ -166,13 +166,13 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("add overwrites existing display name", func(t *testing.T) {
 		out, err := decode(t, `[{"op": "add", "path": "/data/display/name", "value": "Overwritten"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Overwritten", out.Data.Display.Name)
+		assert.Equal(t, "Overwritten", out.Spec.Display.Name)
 	})
 
 	t.Run("add data refreshInterval", func(t *testing.T) {
 		out, err := decode(t, `[{"op": "add", "path": "/data/refreshInterval", "value": "30s"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "30s", string(out.Data.RefreshInterval))
+		assert.Equal(t, "30s", string(out.Spec.RefreshInterval))
 	})
 
 	t.Run("add panel leaves others untouched", func(t *testing.T) {
@@ -195,10 +195,10 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 3)
-		assert.Contains(t, out.Data.Panels, "p1")
-		assert.Contains(t, out.Data.Panels, "p2")
-		assert.Contains(t, out.Data.Panels, "p3")
+		assert.Len(t, out.Spec.Panels, 3)
+		assert.Contains(t, out.Spec.Panels, "p1")
+		assert.Contains(t, out.Spec.Panels, "p2")
+		assert.Contains(t, out.Spec.Panels, "p3")
 	})
 
 	t.Run("replace single panel", func(t *testing.T) {
@@ -226,8 +226,8 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, PanelPluginKind("signoz/BarChartPanel"), out.Data.Panels["p2"].Spec.Plugin.Kind)
-		assert.Equal(t, PanelPluginKind("signoz/TimeSeriesPanel"), out.Data.Panels["p1"].Spec.Plugin.Kind, "p1 untouched")
+		assert.Equal(t, PanelPluginKind("signoz/BarChartPanel"), out.Spec.Panels["p2"].Spec.Plugin.Kind)
+		assert.Equal(t, PanelPluginKind("signoz/TimeSeriesPanel"), out.Spec.Panels["p1"].Spec.Plugin.Kind, "p1 untouched")
 	})
 
 	// Removing a panel realistically also drops its layout item — exercise
@@ -238,9 +238,9 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			{"op": "remove", "path": "/data/layouts/0/spec/items/1"}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 1)
-		assert.Contains(t, out.Data.Panels, "p1")
-		assert.NotContains(t, out.Data.Panels, "p2")
+		assert.Len(t, out.Spec.Panels, 1)
+		assert.Contains(t, out.Spec.Panels, "p1")
+		assert.NotContains(t, out.Spec.Panels, "p2")
 		raw := jsonOf(t, out)
 		assert.NotContains(t, raw, `"$ref":"#/spec/panels/p2"`)
 		assert.Contains(t, raw, `"$ref":"#/spec/panels/p1"`)
@@ -256,7 +256,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		}]`).Apply(base)
 		require.NoError(t, err)
 
-		require.Len(t, out.Data.Panels["p1"].Spec.Queries, 1)
+		require.Len(t, out.Spec.Panels["p1"].Spec.Queries, 1)
 		assert.Contains(t, jsonOf(t, out), `"name":"renamed"`)
 	})
 
@@ -281,7 +281,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		require.Len(t, out.Data.Panels["p1"].Spec.Queries, 1)
+		require.Len(t, out.Spec.Panels["p1"].Spec.Queries, 1)
 		raw := jsonOf(t, out)
 		assert.Contains(t, raw, `"name":"B"`)
 		assert.NotContains(t, raw, `"name":"A"`)
@@ -353,7 +353,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 3)
+		assert.Len(t, out.Spec.Panels, 3)
 		raw := jsonOf(t, out)
 		assert.Contains(t, raw, `"$ref":"#/spec/panels/p3"`)
 	})
@@ -361,34 +361,34 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("append tag", func(t *testing.T) {
 		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"key": "env", "value": "staging"}}]`).Apply(base)
 		require.NoError(t, err)
-		require.Len(t, out.Tags, 3)
-		assert.Equal(t, "env", out.Tags[2].Key)
-		assert.Equal(t, "staging", out.Tags[2].Value)
+		require.Len(t, out.Metadata.Tags, 3)
+		assert.Equal(t, "env", out.Metadata.Tags[2].Key)
+		assert.Equal(t, "staging", out.Metadata.Tags[2].Value)
 	})
 
 	t.Run("append tag when none exist", func(t *testing.T) {
 		noTagsBase := &DashboardV2{
-			Info: DashboardInfo{
-				StoredDashboardInfo: base.Info.StoredDashboardInfo,
-				Tags:                nil,
+			Data: DashboardV2Data{
+				Metadata: base.Data.Metadata,
+				Spec:     base.Data.Spec,
 			},
 		}
 		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"key": "team", "value": "new"}}]`).Apply(noTagsBase)
 		require.NoError(t, err)
-		require.Len(t, out.Tags, 1)
-		assert.Equal(t, "team", out.Tags[0].Key)
-		assert.Equal(t, "new", out.Tags[0].Value)
+		require.Len(t, out.Metadata.Tags, 1)
+		assert.Equal(t, "team", out.Metadata.Tags[0].Key)
+		assert.Equal(t, "new", out.Metadata.Tags[0].Value)
 	})
 
 	t.Run("replace tag value", func(t *testing.T) {
 		out, err := decode(t, `[{"op": "replace", "path": "/tags/0/value", "value": "beta"}]`).Apply(base)
 		require.NoError(t, err)
-		require.Len(t, out.Tags, 2)
-		assert.Equal(t, "team", out.Tags[0].Key)
-		assert.Equal(t, "beta", out.Tags[0].Value)
-		assert.Equal(t, "env", out.Tags[1].Key, "tag at index 1 untouched")
-		assert.Equal(t, "prod", out.Tags[1].Value, "tag at index 1 untouched")
-		for _, tag := range out.Tags {
+		require.Len(t, out.Metadata.Tags, 2)
+		assert.Equal(t, "team", out.Metadata.Tags[0].Key)
+		assert.Equal(t, "beta", out.Metadata.Tags[0].Value)
+		assert.Equal(t, "env", out.Metadata.Tags[1].Key, "tag at index 1 untouched")
+		assert.Equal(t, "prod", out.Metadata.Tags[1].Value, "tag at index 1 untouched")
+		for _, tag := range out.Metadata.Tags {
 			assert.NotEqual(t, "alpha", tag.Value, "old tag value must be gone")
 		}
 	})
@@ -400,9 +400,9 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			{"op": "add",     "path": "/tags/-", "value": {"key": "env", "value": "staging"}}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Multi-step", out.Data.Display.Name)
-		assert.Len(t, out.Data.Panels, 1)
-		assert.Len(t, out.Tags, 3)
+		assert.Equal(t, "Multi-step", out.Spec.Display.Name)
+		assert.Len(t, out.Spec.Panels, 1)
+		assert.Len(t, out.Metadata.Tags, 3)
 	})
 
 	// `test` is an RFC 6902 precondition op: aborts the patch if the value
@@ -414,7 +414,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			{"op": "replace", "path": "/data/display/name", "value": "Confirmed"}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Confirmed", out.Data.Display.Name)
+		assert.Equal(t, "Confirmed", out.Spec.Display.Name)
 	})
 
 	// ─────────────────────────────────────────────────────────────────
