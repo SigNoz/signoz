@@ -13,6 +13,19 @@ interface ThinkingStepProps {
 	isLive?: boolean;
 }
 
+/** Body of a thinking step — extracted so ActivityGroup can render it directly. */
+export function ThinkingContent({ content }: { content: string }): JSX.Element {
+	return (
+		<div className={styles.body}>
+			<p className={styles.content}>{content}</p>
+		</div>
+	);
+}
+
+export function thinkingLabel(isLive: boolean): string {
+	return isLive ? 'Thinking…' : 'Thought for a few seconds';
+}
+
 /** Collapsible thinking row — chevron + label, content in the expanded body. */
 export default function ThinkingStep({
 	content,
@@ -22,8 +35,6 @@ export default function ThinkingStep({
 
 	const toggle = (): void => setExpanded((v) => !v);
 
-	const label = isLive ? 'Thinking…' : 'Thought for a few seconds';
-
 	return (
 		<div className={styles.row}>
 			<div className={styles.header} onClick={toggle}>
@@ -32,14 +43,10 @@ export default function ThinkingStep({
 				) : (
 					<ChevronRight size={12} className={styles.chevron} />
 				)}
-				<span className={styles.label}>{label}</span>
+				<span className={styles.label}>{thinkingLabel(isLive)}</span>
 			</div>
 
-			{expanded && (
-				<div className={styles.body}>
-					<p className={styles.content}>{content}</p>
-				</div>
-			)}
+			{expanded && <ThinkingContent content={content} />}
 		</div>
 	);
 }

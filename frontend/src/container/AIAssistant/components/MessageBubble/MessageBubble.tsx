@@ -13,8 +13,6 @@ import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
-import ThinkingStep from '../ThinkingStep';
-import ToolCallStep from '../ToolCallStep';
 import UserMessageActions from '../UserMessageActions';
 
 import styles from './MessageBubble.module.scss';
@@ -81,14 +79,6 @@ function groupBlocks(blocks: MessageBlock[]): RenderGroup[] {
 	return groups;
 }
 
-function renderActivityItem(item: ActivityItem, index: number): JSX.Element {
-	return item.kind === 'thinking' ? (
-		<ThinkingStep key={index} content={item.content} />
-	) : (
-		<ToolCallStep key={index} toolCall={item.toolCall} />
-	);
-}
-
 function renderGroup(group: RenderGroup, index: number): JSX.Element {
 	if (group.kind === 'text') {
 		return (
@@ -101,11 +91,6 @@ function renderGroup(group: RenderGroup, index: number): JSX.Element {
 				{group.content}
 			</ReactMarkdown>
 		);
-	}
-	// A lone activity item doesn't need a "Worked through 1 step" wrapper —
-	// render it bare so the chevron on the underlying step does the disclosure.
-	if (group.items.length === 1) {
-		return renderActivityItem(group.items[0], index);
 	}
 	return <ActivityGroup key={index} items={group.items} />;
 }
