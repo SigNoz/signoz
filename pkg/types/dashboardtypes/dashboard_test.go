@@ -33,7 +33,7 @@ func TestSourceEnum(t *testing.T) {
 	})
 
 	t.Run("invalid source is rejected by Value", func(t *testing.T) {
-		bogus := Source{valuer.NewString("hacker")}
+		bogus := Source{s: valuer.NewString("hacker")}
 		_, err := bogus.Value()
 		assert.Error(t, err)
 	})

@@ -2,10 +2,8 @@ package dashboardtypes
 
 import (
 	"context"
-	"database/sql/driver"
 	"encoding/json"
 	"log/slog"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -24,62 +22,6 @@ var (
 	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
 	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
 )
-
-type Source struct {
-	valuer.String
-}
-
-var (
-	SourceUser        = Source{valuer.NewString("user")}
-	SourceSystem      = Source{valuer.NewString("system")}
-	SourceIntegration = Source{valuer.NewString("integration")}
-)
-
-func (Source) Enum() []any {
-	return []any{SourceUser, SourceSystem, SourceIntegration}
-}
-
-func (s Source) IsValid() bool {
-	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
-}
-
-// Value rejects anything outside the enum so unknown values can't be written.
-func (s Source) Value() (driver.Value, error) {
-	if !s.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", s.StringValue())
-	}
-	return s.StringValue(), nil
-}
-
-// Scan is lenient on read; deliberate choice to not break
-// reads. Strictness lives in Value.
-func (s *Source) Scan(src any) error {
-	if src == nil {
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "dashboard source: cannot scan nil")
-	}
-
-	var val string
-	switch v := src.(type) {
-	case string:
-		val = v
-	case []byte:
-		val = string(v)
-	default:
-		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "dashboard source: cannot scan %T", src)
-	}
-
-	*s = Source{valuer.NewString(val)}
-	return nil
-}
-
-// NewSource validates a caller-supplied source string.
-func NewSource(source string) (Source, error) {
-	candidate := Source{valuer.NewString(source)}
-	if !candidate.IsValid() {
-		return Source{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source)
-	}
-	return candidate, nil
-}
 
 type StorableDashboard struct {
 	bun.BaseModel `bun:"table:dashboard,alias:dashboard"`
@@ -314,7 +256,7 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 
 func (dashboard *Dashboard) ErrIfNotMutable() error {
 	if dashboard.Source == SourceIntegration {
-		return errors.Newf(errors.TypeForbidden, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
 	}
 	return nil
 }
@@ -324,7 +266,7 @@ func (dashboard *Dashboard) ErrIfNotDeletable() error {
 		return err
 	}
 	if dashboard.Source == SourceSystem {
-		return errors.Newf(errors.TypeForbidden, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
 	}
 	return nil
 }
@@ -334,7 +276,7 @@ func (dashboard *Dashboard) ErrIfNotLockable() error {
 		return err
 	}
 	if dashboard.Source == SourceSystem {
-		return errors.Newf(errors.TypeForbidden, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
 	}
 	return nil
 }
@@ -344,7 +286,7 @@ func (dashboard *Dashboard) ErrIfNotPublishable() error {
 		return err
 	}
 	if dashboard.Source == SourceSystem {
-		return errors.Newf(errors.TypeForbidden, ErrCodeDashboardImmutable, "system dashboards cannot be made public")
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be made public")
 	}
 	return nil
 }
