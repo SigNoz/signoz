@@ -21,8 +21,10 @@ import (
 var cloudIntegrationDashboardFiles embed.FS
 
 var (
-	cloudProviderAWS   = valuer.NewString("aws")
-	cloudProviderAzure = valuer.NewString("azure")
+	cloudProviderAWS         = valuer.NewString("aws")
+	cloudProviderAzure       = valuer.NewString("azure")
+	integrationSource        = valuer.NewString("integration")
+	cloudIntegrationProvider = valuer.NewString("cloud_integration")
 )
 
 type migrateCloudIntegrationDashboards struct {
@@ -197,7 +199,7 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 				Data:      string(dashboardJSON),
 				Locked:    true,
 				OrgID:     service.orgID,
-				Source:    "integration",
+				Source:    integrationSource.StringValue(),
 			}
 			if _, err := tx.NewInsert().Model(dashRow).Exec(ctx); err != nil {
 				return err
@@ -206,7 +208,7 @@ func (m *migrateCloudIntegrationDashboards) Up(ctx context.Context, db *bun.DB) 
 			intRow := &integrationDashboardRow{
 				ID:          valuer.GenerateUUID().StringValue(),
 				DashboardID: dashID,
-				Provider:    "cloud_integration",
+				Provider:    cloudIntegrationProvider.StringValue(),
 				Slug:        slug,
 				CreatedAt:   now,
 				UpdatedAt:   now,
