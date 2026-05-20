@@ -5,8 +5,8 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -66,7 +66,7 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	recurrence?: RuletypesRecurrenceDTO | null,
+	recurrence?: AlertmanagertypesRecurrenceDTO | null,
 	timezone?: string,
 ): string => {
 	if (!recurrence) {
@@ -87,19 +87,20 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defaultInitialValues: Partial<RuletypesPlannedMaintenanceDTO> = {
-	name: '',
-	description: '',
-	schedule: {
-		timezone: '',
-		endTime: undefined,
-		recurrence: undefined,
-		startTime: undefined,
-	},
-	alertIds: [],
-	createdAt: undefined,
-	createdBy: undefined,
-};
+export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> =
+	{
+		name: '',
+		description: '',
+		schedule: {
+			timezone: '',
+			endTime: undefined,
+			recurrence: undefined,
+			startTime: undefined,
+		},
+		alertIds: [],
+		createdAt: undefined,
+		createdBy: undefined,
+	};
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
@@ -215,5 +216,5 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 ];
 
 export const isScheduleRecurring = (
-	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,
+	schedule?: AlertmanagertypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);

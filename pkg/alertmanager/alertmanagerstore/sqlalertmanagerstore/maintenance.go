@@ -1,4 +1,4 @@
-package sqlrulestore
+package sqlalertmanagerstore
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -19,15 +19,15 @@ type maintenance struct {
 	logger   *slog.Logger
 }
 
-func NewMaintenanceStore(store sqlstore.SQLStore, providerSettings factory.ProviderSettings) ruletypes.MaintenanceStore {
+func NewMaintenanceStore(store sqlstore.SQLStore, providerSettings factory.ProviderSettings) alertmanagertypes.MaintenanceStore {
 	return &maintenance{
 		sqlstore: store,
 		logger:   providerSettings.Logger,
 	}
 }
 
-func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.PlannedMaintenance, error) {
-	gettableMaintenancesRules := make([]*ruletypes.PlannedMaintenanceWithRules, 0)
+func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) ([]*alertmanagertypes.PlannedMaintenance, error) {
+	gettableMaintenancesRules := make([]*alertmanagertypes.PlannedMaintenanceWithRules, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -39,7 +39,7 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 		return nil, err
 	}
 
-	gettablePlannedMaintenance := make([]*ruletypes.PlannedMaintenance, 0)
+	gettablePlannedMaintenance := make([]*alertmanagertypes.PlannedMaintenance, 0)
 	for _, gettableMaintenancesRule := range gettableMaintenancesRules {
 		m := gettableMaintenancesRule.ToPlannedMaintenance()
 		gettablePlannedMaintenance = append(gettablePlannedMaintenance, m)
@@ -51,8 +51,8 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 	return gettablePlannedMaintenance, nil
 }
 
-func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.PlannedMaintenance, error) {
-	storableMaintenanceRule := new(ruletypes.PlannedMaintenanceWithRules)
+func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
+	storableMaintenanceRule := new(alertmanagertypes.PlannedMaintenanceWithRules)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -67,13 +67,13 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 	return storableMaintenanceRule.ToPlannedMaintenance(), nil
 }
 
-func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance) (*ruletypes.PlannedMaintenance, error) {
+func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *alertmanagertypes.PostablePlannedMaintenance) (*alertmanagertypes.PlannedMaintenance, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
+	storablePlannedMaintenance := alertmanagertypes.StorablePlannedMaintenance{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
@@ -91,14 +91,14 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		OrgID:       claims.OrgID,
 	}
 
-	maintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
+	maintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
 	for _, ruleIDStr := range maintenance.AlertIds {
 		ruleID, err := valuer.NewUUID(ruleIDStr)
 		if err != nil {
 			return nil, err
 		}
 
-		maintenanceRules = append(maintenanceRules, &ruletypes.StorablePlannedMaintenanceRule{
+		maintenanceRules = append(maintenanceRules, &alertmanagertypes.StorablePlannedMaintenanceRule{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -135,7 +135,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		return nil, err
 	}
 
-	return &ruletypes.PlannedMaintenance{
+	return &alertmanagertypes.PlannedMaintenance{
 		ID:          storablePlannedMaintenance.ID,
 		Name:        storablePlannedMaintenance.Name,
 		Description: storablePlannedMaintenance.Description,
@@ -152,7 +152,7 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 	_, err := r.sqlstore.
 		BunDB().
 		NewDelete().
-		Model(new(ruletypes.StorablePlannedMaintenance)).
+		Model(new(alertmanagertypes.StorablePlannedMaintenance)).
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
@@ -162,7 +162,7 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 	return nil
 }
 
-func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance, id valuer.UUID) error {
+func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance *alertmanagertypes.PostablePlannedMaintenance, id valuer.UUID) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return err
@@ -173,7 +173,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		return err
 	}
 
-	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
+	storablePlannedMaintenance := alertmanagertypes.StorablePlannedMaintenance{
 		Identifiable: types.Identifiable{
 			ID: id,
 		},
@@ -191,14 +191,14 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		OrgID:       claims.OrgID,
 	}
 
-	storablePlannedMaintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
+	storablePlannedMaintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
 	for _, ruleIDStr := range maintenance.AlertIds {
 		ruleID, err := valuer.NewUUID(ruleIDStr)
 		if err != nil {
 			return err
 		}
 
-		storablePlannedMaintenanceRules = append(storablePlannedMaintenanceRules, &ruletypes.StorablePlannedMaintenanceRule{
+		storablePlannedMaintenanceRules = append(storablePlannedMaintenanceRules, &alertmanagertypes.StorablePlannedMaintenanceRule{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
@@ -221,7 +221,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		_, err = r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
-			Model(new(ruletypes.StorablePlannedMaintenanceRule)).
+			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
 			Where("planned_maintenance_id = ?", storablePlannedMaintenance.ID.StringValue()).
 			Exec(ctx)
 
