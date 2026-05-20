@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -86,11 +87,25 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	err = notificationManager.SetNotificationConfig(orgID, "high-cpu-usage", &notifConfig)
 	require.NoError(t, err)
 
+	mwID := valuer.GenerateUUID()
+	maintenanceStore := alertmanagertypestest.NewMockMaintenanceStore(t)
+	maintenanceStore.On("ListPlannedMaintenance", mock.Anything, orgID).Return(
+		[]*alertmanagertypes.PlannedMaintenance{{
+			ID: mwID,
+			Schedule: &alertmanagertypes.Schedule{
+				Timezone:  "UTC",
+				StartTime: time.Now().Add(-time.Hour),
+				EndTime:   time.Now().Add(time.Hour),
+			},
+			RuleIDs: []string{"high-cpu-usage"},
+		}}, nil,
+	)
+
 	srvCfg := NewConfig()
 	stateStore := alertmanagertypestest.NewStateStore()
 	registry := prometheus.NewRegistry()
 	logger := slog.New(slog.DiscardHandler)
-	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager)
+	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager, maintenanceStore)
 	require.NoError(t, err)
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, orgID)
 	require.NoError(t, err)
@@ -151,6 +166,16 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 			StartsAt: strfmt.DateTime(now.Add(-3 * time.Minute)),
 			EndsAt:   strfmt.DateTime(time.Time{}), // Active alert
 		},
+		{
+			Alert: alertmanagertypes.AlertModel{
+				Labels: map[string]string{
+					"ruleId":    "other-rule",
+					"alertname": "OtherAlert",
+				},
+			},
+			StartsAt: strfmt.DateTime(now.Add(-time.Minute)),
+			EndsAt:   strfmt.DateTime(time.Time{}), // Active alert
+		},
 	}
 
 	err = server.PutAlerts(ctx, testAlerts)
@@ -166,10 +191,12 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 		require.NoError(t, err)
 		alerts, err := server.GetAlerts(context.Background(), params)
 		require.NoError(t, err)
-		require.Len(t, alerts, 3, "Expected 3 active alerts")
+		require.Len(t, alerts, 4, "Expected 4 active alerts")
 
 		for _, alert := range alerts {
-			require.Equal(t, "high-cpu-usage", alert.Labels["ruleId"])
+			if alert.Labels["ruleId"] != "high-cpu-usage" {
+				continue
+			}
 			require.NotEmpty(t, alert.Labels["severity"])
 			require.Contains(t, []string{"critical", "warning"}, alert.Labels["severity"])
 			require.Equal(t, "prod-cluster", alert.Labels["cluster"])
@@ -220,5 +247,21 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 		require.Equal(t, "{__receiver__=\"webhook\"}:{cluster=\"prod-cluster\", instance=\"server-01\", ruleId=\"high-cpu-usage\"}", alertGroups[0].GroupKey)
 		require.Equal(t, "{__receiver__=\"webhook\"}:{cluster=\"prod-cluster\", instance=\"server-02\", ruleId=\"high-cpu-usage\"}", alertGroups[1].GroupKey)
 		require.Equal(t, "{__receiver__=\"webhook\"}:{cluster=\"prod-cluster\", instance=\"server-03\", ruleId=\"high-cpu-usage\"}", alertGroups[2].GroupKey)
+	})
+
+	t.Run("verify_muting", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/alerts", nil)
+		require.NoError(t, err)
+		params, err := alertmanagertypes.NewGettableAlertsParams(req)
+		require.NoError(t, err)
+		alerts, err := server.GetAlerts(ctx, params)
+		require.NoError(t, err)
+		for _, alert := range alerts {
+			if alert.Labels["ruleId"] == "high-cpu-usage" {
+				require.Equal(t, []string{mwID.String()}, alert.Status.MutedBy)
+			} else {
+				require.Empty(t, alert.Status.MutedBy)
+			}
+		}
 	})
 }

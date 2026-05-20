@@ -32,30 +32,28 @@ import (
 )
 
 type PrepareTaskOptions struct {
-	Rule             *ruletypes.PostableRule
-	TaskName         string
-	RuleStore        ruletypes.RuleStore
-	MaintenanceStore ruletypes.MaintenanceStore
-	Querier          querier.Querier
-	Logger           *slog.Logger
-	Cache            cache.Cache
-	ManagerOpts      *ManagerOptions
-	NotifyFunc       NotifyFunc
-	SQLStore         sqlstore.SQLStore
-	OrgID            valuer.UUID
+	Rule        *ruletypes.PostableRule
+	TaskName    string
+	RuleStore   ruletypes.RuleStore
+	Querier     querier.Querier
+	Logger      *slog.Logger
+	Cache       cache.Cache
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+	SQLStore    sqlstore.SQLStore
+	OrgID       valuer.UUID
 }
 
 type PrepareTestRuleOptions struct {
-	Rule             *ruletypes.PostableRule
-	RuleStore        ruletypes.RuleStore
-	MaintenanceStore ruletypes.MaintenanceStore
-	Querier          querier.Querier
-	Logger           *slog.Logger
-	Cache            cache.Cache
-	ManagerOpts      *ManagerOptions
-	NotifyFunc       NotifyFunc
-	SQLStore         sqlstore.SQLStore
-	OrgID            valuer.UUID
+	Rule        *ruletypes.PostableRule
+	RuleStore   ruletypes.RuleStore
+	Querier     querier.Querier
+	Logger      *slog.Logger
+	Cache       cache.Cache
+	ManagerOpts *ManagerOptions
+	NotifyFunc  NotifyFunc
+	SQLStore    sqlstore.SQLStore
+	OrgID       valuer.UUID
 }
 
 const taskNameSuffix = "webAppEditor"
@@ -89,7 +87,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	OrgGetter           organization.Getter
 	RuleStore           ruletypes.RuleStore
-	MaintenanceStore    ruletypes.MaintenanceStore
+	MaintenanceStore    alertmanagertypes.MaintenanceStore
 	SQLStore            sqlstore.SQLStore
 	QueryParser         queryparser.QueryParser
 }
@@ -103,7 +101,7 @@ type Manager struct {
 	block chan struct{}
 	// datastore to store alert definitions
 	ruleStore        ruletypes.RuleStore
-	maintenanceStore ruletypes.MaintenanceStore
+	maintenanceStore alertmanagertypes.MaintenanceStore
 
 	logger              *slog.Logger
 	cache               cache.Cache
@@ -134,7 +132,6 @@ func defaultOptions(o *ManagerOptions) *ManagerOptions {
 }
 
 func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
-
 	rules := make([]Rule, 0)
 	var task Task
 
@@ -159,7 +156,6 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
-
 		if err != nil {
 			return task, err
 		}
@@ -167,7 +163,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, tr)
 
 		// create ch rule task for evaluation
-		task = newTask(TaskTypeCh, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeCh, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -183,7 +179,6 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
-
 		if err != nil {
 			return task, err
 		}
@@ -191,7 +186,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, pr)
 
 		// create promql rule task for evaluation
-		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -237,10 +232,11 @@ func (m *Manager) RuleStore() ruletypes.RuleStore {
 	return m.ruleStore
 }
 
-func (m *Manager) MaintenanceStore() ruletypes.MaintenanceStore {
+func (m *Manager) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return m.maintenanceStore
 }
 
+// TODO(jatinderjit): remove (unused)?
 func (m *Manager) Pause(b bool) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -430,19 +426,17 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 	m.logger.Debug("editing a rule task", "name", taskName)
 
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:             rule,
-		TaskName:         taskName,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
-		Logger:           m.opts.Logger,
-		Cache:            m.cache,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.notifyFunc,
-		SQLStore:         m.sqlstore,
-		OrgID:            orgID,
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleStore:   m.ruleStore,
+		Querier:     m.opts.Querier,
+		Logger:      m.opts.Logger,
+		Cache:       m.cache,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.notifyFunc,
+		SQLStore:    m.sqlstore,
+		OrgID:       orgID,
 	})
-
 	if err != nil {
 		m.logger.Error("loading tasks failed", errors.Attr(err))
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
@@ -643,19 +637,17 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 
 	m.logger.Debug("adding a new rule task", "name", taskName)
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
-		Rule:             rule,
-		TaskName:         taskName,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
-		Logger:           m.opts.Logger,
-		Cache:            m.cache,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.notifyFunc,
-		SQLStore:         m.sqlstore,
-		OrgID:            orgID,
+		Rule:        rule,
+		TaskName:    taskName,
+		RuleStore:   m.ruleStore,
+		Querier:     m.opts.Querier,
+		Logger:      m.opts.Logger,
+		Cache:       m.cache,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.notifyFunc,
+		SQLStore:    m.sqlstore,
+		OrgID:       orgID,
 	})
-
 	if err != nil {
 		m.logger.Error("creating rule task failed", "name", taskName, errors.Attr(err))
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
@@ -703,7 +695,6 @@ func (m *Manager) RuleTasks() []Task {
 // RuleTasksWithoutLock returns the list of manager's rule tasks without
 // acquiring a lock on the manager.
 func (m *Manager) RuleTasksWithoutLock() []Task {
-
 	rgs := make([]Task, 0, len(m.tasks))
 	for _, g := range m.tasks {
 		rgs = append(rgs, g)
@@ -897,7 +888,6 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 // the task state. For example - if a stored rule is disabled, then
 // there is no task running against it.
 func (m *Manager) syncRuleStateWithTask(ctx context.Context, orgID valuer.UUID, taskName string, rule *ruletypes.PostableRule) error {
-
 	if rule.Disabled {
 		// check if rule has any task running
 		if _, ok := m.tasks[taskName]; ok {
@@ -1029,16 +1019,15 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	}
 
 	alertCount, err := m.prepareTestRuleFunc(PrepareTestRuleOptions{
-		Rule:             &parsedRule,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
-		Logger:           m.opts.Logger,
-		Cache:            m.cache,
-		ManagerOpts:      m.opts,
-		NotifyFunc:       m.testNotifyFunc,
-		SQLStore:         m.sqlstore,
-		OrgID:            orgID,
+		Rule:        &parsedRule,
+		RuleStore:   m.ruleStore,
+		Querier:     m.opts.Querier,
+		Logger:      m.opts.Logger,
+		Cache:       m.cache,
+		ManagerOpts: m.opts,
+		NotifyFunc:  m.testNotifyFunc,
+		SQLStore:    m.sqlstore,
+		OrgID:       orgID,
 	})
 
 	return alertCount, err
