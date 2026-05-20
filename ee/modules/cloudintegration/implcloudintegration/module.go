@@ -257,7 +257,70 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	return module.store.RemoveAccount(ctx, orgID, accountID, provider)
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		services, err := module.store.ListServices(ctx, accountID)
+		if err != nil {
+			return err
+		}
+
+		// Fetch all active accounts for this org+provider to detect shared dashboard usage.
+		allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+		if err != nil {
+			return err
+		}
+
+		for _, svc := range services {
+			svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, svc.Config)
+			if err != nil {
+				return err
+			}
+			if !svcCfg.IsMetricsEnabled(provider) {
+				continue
+			}
+
+			// Check if any other account has this service with metrics enabled.
+			// If so, the shared dashboard must not be deleted.
+			shared := false
+			for _, otherAccount := range allAccounts {
+				if otherAccount.ID == accountID {
+					continue
+				}
+				otherSvc, err := module.store.GetServiceByServiceID(ctx, otherAccount.ID, svc.Type)
+				if err != nil {
+					if errors.Ast(err, errors.TypeNotFound) {
+						continue
+					}
+					return err
+				}
+				otherCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, otherSvc.Config)
+				if err != nil {
+					return err
+				}
+				if otherCfg.IsMetricsEnabled(provider) {
+					shared = true
+					break
+				}
+			}
+
+			if shared {
+				continue
+			}
+
+			integrationService := &cloudintegrationtypes.CloudIntegrationService{
+				Type:               svc.Type,
+				CloudIntegrationID: accountID,
+			}
+			if err := module.deprovisionDashboards(ctx, orgID, provider, integrationService); err != nil {
+				return err
+			}
+		}
+
+		if err := module.store.DeleteServicesByCloudIntegrationID(ctx, accountID); err != nil {
+			return err
+		}
+
+		return module.store.RemoveAccount(ctx, orgID, accountID, provider)
+	})
 }
 
 func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
@@ -535,7 +598,7 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 			return err
 		}
 
-		if err := module.dashboardModule.Delete(ctx, orgID, dashID); err != nil {
+		if err := module.dashboardModule.DeleteBySource(ctx, orgID, dashID, dashboardtypes.SourceIntegration); err != nil {
 			return err
 		}
 	}

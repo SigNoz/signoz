@@ -201,6 +201,17 @@ func (store *store) CreateService(ctx context.Context, service *cloudintegration
 	return nil
 }
 
+func (store *store) DeleteServicesByCloudIntegrationID(ctx context.Context, cloudIntegrationID valuer.UUID) error {
+	_, err := store.
+		store.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(cloudintegrationtypes.StorableCloudIntegrationService)).
+		Where("cloud_integration_id = ?", cloudIntegrationID).
+		Exec(ctx)
+	return err
+}
+
 func (store *store) UpdateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := store.
 		store.

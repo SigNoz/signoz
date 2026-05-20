@@ -182,6 +182,24 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
+func (module *module) DeleteBySource(ctx context.Context, orgID valuer.UUID, id valuer.UUID, source dashboardtypes.Source) error {
+	dashboard, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	if dashboard.Source != source {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard source does not match")
+	}
+
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.store.Delete(ctx, orgID, id)
+	})
+}
+
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {

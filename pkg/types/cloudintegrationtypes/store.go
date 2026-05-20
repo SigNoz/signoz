@@ -45,6 +45,9 @@ type Store interface {
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
+	// DeleteServicesByCloudIntegrationID deletes all services for the given cloud integration id
+	DeleteServicesByCloudIntegrationID(ctx context.Context, cloudIntegrationID valuer.UUID) error
+
 	RunInTx(context.Context, func(ctx context.Context) error) error
 
 	CreateIntegrationDashboard(ctx context.Context, row *StorableIntegrationDashboard) error

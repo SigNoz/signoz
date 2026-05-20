@@ -46,6 +46,10 @@ type Module interface {
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
+	// DeleteBySource deletes a dashboard only if its source matches the given source,
+	// bypassing the guards. Intended for internal system callers.
+	DeleteBySource(ctx context.Context, orgID valuer.UUID, id valuer.UUID, source dashboardtypes.Source) error
+
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 
 	statsreporter.StatsCollector
