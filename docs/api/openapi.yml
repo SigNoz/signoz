@@ -96,6 +96,53 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesMaintenanceKind:
+      enum:
+      - fixed
+      - recurring
+      type: string
+    AlertmanagertypesMaintenanceStatus:
+      enum:
+      - active
+      - upcoming
+      - expired
+      type: string
+    AlertmanagertypesPlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesMaintenanceKind'
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        status:
+          $ref: '#/components/schemas/AlertmanagertypesMaintenanceStatus'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - name
+      - schedule
+      - status
+      - kind
+      type: object
     AlertmanagertypesPostableChannel:
       oneOf:
       - required:
@@ -212,6 +259,23 @@ components:
       required:
       - name
       type: object
+    AlertmanagertypesPostablePlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        description:
+          type: string
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/AlertmanagertypesSchedule'
+      required:
+      - name
+      - schedule
+      type: object
     AlertmanagertypesPostableRoutePolicy:
       properties:
         channels:
@@ -236,6 +300,60 @@ components:
       - expression
       - channels
       - name
+      type: object
+    AlertmanagertypesRecurrence:
+      properties:
+        duration:
+          type: string
+        endTime:
+          format: date-time
+          nullable: true
+          type: string
+        repeatOn:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesRepeatOn'
+          nullable: true
+          type: array
+        repeatType:
+          $ref: '#/components/schemas/AlertmanagertypesRepeatType'
+        startTime:
+          format: date-time
+          type: string
+      required:
+      - startTime
+      - duration
+      - repeatType
+      type: object
+    AlertmanagertypesRepeatOn:
+      enum:
+      - sunday
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+      - saturday
+      type: string
+    AlertmanagertypesRepeatType:
+      enum:
+      - daily
+      - weekly
+      - monthly
+      type: string
+    AlertmanagertypesSchedule:
+      properties:
+        endTime:
+          format: date-time
+          type: string
+        recurrence:
+          $ref: '#/components/schemas/AlertmanagertypesRecurrence'
+        startTime:
+          format: date-time
+          type: string
+        timezone:
+          type: string
+      required:
+      - timezone
       type: object
     AuthtypesAttributeMapping:
       properties:
@@ -2224,6 +2342,8 @@ components:
           type: boolean
         org_id:
           type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
         updatedAt:
           format: date-time
           type: string
@@ -2252,6 +2372,12 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
+      type: object
+    DashboardtypesSource:
+      enum:
+      - user
+      - system
+      - integration
       type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
@@ -5137,17 +5263,6 @@ components:
         message:
           type: string
       type: object
-    RuletypesMaintenanceKind:
-      enum:
-      - fixed
-      - recurring
-      type: string
-    RuletypesMaintenanceStatus:
-      enum:
-      - active
-      - upcoming
-      - expired
-      type: string
     RuletypesMatchType:
       enum:
       - at_least_once
@@ -5175,59 +5290,6 @@ components:
       - table
       - graph
       type: string
-    RuletypesPlannedMaintenance:
-      properties:
-        alertIds:
-          items:
-            type: string
-          nullable: true
-          type: array
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        kind:
-          $ref: '#/components/schemas/RuletypesMaintenanceKind'
-        name:
-          type: string
-        schedule:
-          $ref: '#/components/schemas/RuletypesSchedule'
-        status:
-          $ref: '#/components/schemas/RuletypesMaintenanceStatus'
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      - name
-      - schedule
-      - status
-      - kind
-      type: object
-    RuletypesPostablePlannedMaintenance:
-      properties:
-        alertIds:
-          items:
-            type: string
-          nullable: true
-          type: array
-        description:
-          type: string
-        name:
-          type: string
-        schedule:
-          $ref: '#/components/schemas/RuletypesSchedule'
-      required:
-      - name
-      - schedule
-      type: object
     RuletypesPostableRule:
       properties:
         alert:
@@ -5280,29 +5342,6 @@ components:
       - clickhouse_sql
       - promql
       type: string
-    RuletypesRecurrence:
-      properties:
-        duration:
-          type: string
-        endTime:
-          format: date-time
-          nullable: true
-          type: string
-        repeatOn:
-          items:
-            $ref: '#/components/schemas/RuletypesRepeatOn'
-          nullable: true
-          type: array
-        repeatType:
-          $ref: '#/components/schemas/RuletypesRepeatType'
-        startTime:
-          format: date-time
-          type: string
-      required:
-      - startTime
-      - duration
-      - repeatType
-      type: object
     RuletypesRenotify:
       properties:
         alertStates:
@@ -5314,22 +5353,6 @@ components:
         interval:
           type: string
       type: object
-    RuletypesRepeatOn:
-      enum:
-      - sunday
-      - monday
-      - tuesday
-      - wednesday
-      - thursday
-      - friday
-      - saturday
-      type: string
-    RuletypesRepeatType:
-      enum:
-      - daily
-      - weekly
-      - monthly
-      type: string
     RuletypesRollingWindow:
       properties:
         evalWindow:
@@ -5449,21 +5472,6 @@ components:
       - promql_rule
       - anomaly_rule
       type: string
-    RuletypesSchedule:
-      properties:
-        endTime:
-          format: date-time
-          type: string
-        recurrence:
-          $ref: '#/components/schemas/RuletypesRecurrence'
-        startTime:
-          format: date-time
-          type: string
-        timezone:
-          type: string
-      required:
-      - timezone
-      type: object
     RuletypesScheduleType:
       enum:
       - hourly
@@ -8024,7 +8032,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                      $ref: '#/components/schemas/AlertmanagertypesPlannedMaintenance'
                     type: array
                   status:
                     type: string
@@ -8067,7 +8075,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
+              $ref: '#/components/schemas/AlertmanagertypesPostablePlannedMaintenance'
       responses:
         "201":
           content:
@@ -8075,7 +8083,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                    $ref: '#/components/schemas/AlertmanagertypesPlannedMaintenance'
                   status:
                     type: string
                 required:
@@ -8178,7 +8186,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                    $ref: '#/components/schemas/AlertmanagertypesPlannedMaintenance'
                   status:
                     type: string
                 required:
@@ -8232,7 +8240,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
+              $ref: '#/components/schemas/AlertmanagertypesPostablePlannedMaintenance'
       responses:
         "204":
           description: No Content

@@ -1,5 +1,3 @@
-jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
-
 import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,
@@ -7,7 +5,9 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { Route, Switch } from 'react-router-dom';
 import {
+	defaultFeatureFlags,
 	fireEvent,
 	render,
 	screen,
@@ -15,8 +15,17 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
-
+import { FeatureKeys } from 'constants/features';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import {
+	invalidLicense,
+	mockUseAuthZDenyAll,
+	mockUseAuthZGrantAll,
+} from 'tests/authz-test-utils';
 import RoleDetailsPage from '../RoleDetailsPage';
+
+jest.mock('hooks/useAuthZ/useAuthZ');
+const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
@@ -29,7 +38,7 @@ const allScopeObjectsResponse = {
 	status: 'success',
 	data: [
 		{
-			resource: { kind: 'role', type: 'metaresources' },
+			resource: { kind: 'role', type: 'role' },
 			selectors: ['*'],
 		},
 	],
@@ -45,6 +54,10 @@ function setupDefaultHandlers(roleId = CUSTOM_ROLE_ID): void {
 		),
 	);
 }
+
+beforeEach(() => {
+	mockUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+});
 
 afterEach(() => {
 	jest.clearAllMocks();
@@ -62,9 +75,6 @@ describe('RoleDetailsPage', () => {
 		await expect(
 			screen.findByText('Role — billing-manager'),
 		).resolves.toBeInTheDocument();
-
-		expect(screen.getByText('Overview')).toBeInTheDocument();
-		expect(screen.getByText('Members')).toBeInTheDocument();
 
 		expect(
 			screen.getByText('Custom role for managing billing and invoices.'),
@@ -212,6 +222,68 @@ describe('RoleDetailsPage', () => {
 		);
 	});
 
+	it('shows PermissionDeniedFullPage when read permission is denied via query param', async () => {
+		mockUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
+
+		render(<RoleDetailsPage />, undefined, {
+			initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}?name=billing-manager`,
+		});
+
+		await expect(
+			screen.findByText(/you don't have permission to view this page/i),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('redirects to the roles list when license is not valid', async () => {
+		render(
+			<Switch>
+				<Route path="/settings/roles/:roleId">
+					<RoleDetailsPage />
+				</Route>
+				<Route path="/settings/roles" exact>
+					<div data-testid="roles-list-redirect-target" />
+				</Route>
+			</Switch>,
+			undefined,
+			{
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+				appContextOverrides: { activeLicense: invalidLicense },
+			},
+		);
+
+		await expect(
+			screen.findByTestId('roles-list-redirect-target'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('redirects to the roles list when fine-grained authz flag is inactive', async () => {
+		render(
+			<Switch>
+				<Route path="/settings/roles/:roleId">
+					<RoleDetailsPage />
+				</Route>
+				<Route path="/settings/roles" exact>
+					<div data-testid="roles-list-redirect-target" />
+				</Route>
+			</Switch>,
+			undefined,
+			{
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+				appContextOverrides: {
+					featureFlags: defaultFeatureFlags.map((f) =>
+						f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
+							? { ...f, active: false }
+							: f,
+					),
+				},
+			},
+		);
+
+		await expect(
+			screen.findByTestId('roles-list-redirect-target'),
+		).resolves.toBeInTheDocument();
+	});
+
 	describe('permission side panel', () => {
 		beforeEach(() => {
 			// Both hooks mocked so data renders synchronously — no React Query scheduler or MSW round-trip.
@@ -238,7 +310,18 @@ describe('RoleDetailsPage', () => {
 			const panel = document.querySelector(
 				'.permission-side-panel',
 			) as HTMLElement;
-			await within(panel).findByRole('button', { name: 'Role' });
+			await within(panel).findByRole('button', { name: 'role' });
+			return panel;
+		}
+
+		async function openReadPanel(): Promise<HTMLElement> {
+			await screen.findByText('Role — billing-manager');
+			fireEvent.click(screen.getByText('Read'));
+			await screen.findByText('Edit Read Permissions');
+			const panel = document.querySelector(
+				'.permission-side-panel',
+			) as HTMLElement;
+			await within(panel).findByRole('button', { name: 'role' });
 			return panel;
 		}
 
@@ -253,7 +336,7 @@ describe('RoleDetailsPage', () => {
 				within(panel).getByRole('button', { name: /save changes/i }),
 			).toBeDisabled();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 
 			expect(
@@ -281,7 +364,7 @@ describe('RoleDetailsPage', () => {
 
 			const panel = await openCreatePanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 			fireEvent.click(
 				within(panel).getByRole('button', { name: /save changes/i }),
@@ -317,9 +400,11 @@ describe('RoleDetailsPage', () => {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			const panel = await openCreatePanel();
+			const panel = await openReadPanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			// Default is NONE, so switch to Only selected first to reveal the combobox
+			fireEvent.click(screen.getByText('Only selected'));
 
 			const combobox = within(panel).getByRole('combobox');
 			fireEvent.change(combobox, { target: { value: 'role-001' } });
@@ -338,6 +423,48 @@ describe('RoleDetailsPage', () => {
 						},
 					],
 					deletions: null,
+				}),
+			);
+		});
+
+		it('set scope to None on create panel (existing All) → patchObjects deletions: ["*"], additions: null', async () => {
+			const patchSpy = jest.fn();
+
+			jest.spyOn(roleApi, 'useGetObjects').mockReturnValue({
+				data: allScopeObjectsResponse,
+				isLoading: false,
+			} as any);
+			server.use(
+				rest.patch(
+					`${rolesApiBase}/:id/relations/:relation/objects`,
+					async (req, res, ctx) => {
+						patchSpy(await req.json());
+						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
+					},
+				),
+			);
+
+			render(<RoleDetailsPage />, undefined, {
+				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
+			});
+
+			const panel = await openCreatePanel();
+
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
+			fireEvent.click(screen.getByText('None'));
+			fireEvent.click(
+				within(panel).getByRole('button', { name: /save changes/i }),
+			);
+
+			await waitFor(() =>
+				expect(patchSpy).toHaveBeenCalledWith({
+					additions: null,
+					deletions: [
+						{
+							resource: { kind: 'role', type: 'role' },
+							selectors: ['*'],
+						},
+					],
 				}),
 			);
 		});
@@ -363,9 +490,9 @@ describe('RoleDetailsPage', () => {
 				initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 			});
 
-			const panel = await openCreatePanel();
+			const panel = await openReadPanel();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('Only selected'));
 			fireEvent.click(
 				within(panel).getByRole('button', { name: /save changes/i }),
@@ -393,7 +520,7 @@ describe('RoleDetailsPage', () => {
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
 
-			fireEvent.click(within(panel).getByRole('button', { name: 'Role' }));
+			fireEvent.click(within(panel).getByRole('button', { name: 'role' }));
 			fireEvent.click(screen.getByText('All'));
 
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();

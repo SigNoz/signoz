@@ -61,7 +61,7 @@ export function useAlertRulesHandlers(
 				number: allRulesCount,
 				layout: 'new',
 			});
-			safeNavigate(ROUTES.ALERT_TYPE_SELECTION, {
+			safeNavigate(ROUTES.ALERTS_NEW, {
 				newTab: isModifierKeyPressed(e),
 			});
 		},

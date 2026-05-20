@@ -27,6 +27,13 @@ export const operatorTypeMapper: Record<string, OperatorType> = {
 	[OPERATORS['!=']]: 'SINGLE_VALUE',
 	[OPERATORS.HAS]: 'SINGLE_VALUE',
 	[OPERATORS.NHAS]: 'SINGLE_VALUE',
+	// Short-form operators for InfraMonitoring
+	NIN: 'MULTIPLY_VALUE',
+	NLIKE: 'SINGLE_VALUE',
+	NOTILIKE: 'SINGLE_VALUE',
+	NREGEX: 'SINGLE_VALUE',
+	NEXISTS: 'NON_VALUE',
+	NCONTAINS: 'SINGLE_VALUE',
 };
 
 export const useOperatorType = (operator: string): OperatorType =>

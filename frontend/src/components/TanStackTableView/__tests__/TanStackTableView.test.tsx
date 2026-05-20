@@ -421,34 +421,58 @@ describe('TanStackTableView Integration', () => {
 
 		it('resets page to 1 when limit changes', async () => {
 			const user = userEvent.setup();
+			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onPageChange = jest.fn();
 
 			renderTanStackTable({
 				props: {
-					pagination: { total: 100, defaultPage: 1, defaultLimit: 5 },
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
 					enableQueryParams: true,
 				},
+				onUrlUpdate,
 			});
-
-			const nav = await screen.findByRole('navigation');
-			const page1Button = within(nav).getByRole('button', { name: '1' });
-			const page2Button = within(nav).getByRole('button', { name: '2' });
-
-			expect(page1Button).toHaveAttribute('aria-current', 'page');
-
-			await user.click(page2Button);
 
 			await waitFor(() => {
-				expect(page2Button).toHaveAttribute('aria-current', 'page');
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
 			});
 
-			await user.click(screen.getByTestId('pagination-page-size'));
-
-			const option10 = await screen.findByRole('option', { name: '10' });
-			await user.click(option10);
+			// Navigate to page 2
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
 
 			await waitFor(() => {
-				expect(page1Button).toHaveAttribute('aria-current', 'page');
+				const lastPage = onUrlUpdate.mock.calls
+					.map((call) => call[0].searchParams.get('page'))
+					.filter(Boolean)
+					.pop();
+				expect(lastPage).toBe('2');
 			});
+
+			// Change page size
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			// Verify page reset to 1 (nuqs removes default values from URL)
+			await waitFor(() => {
+				const lastCall = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+				const lastPage = lastCall[0].searchParams.get('page');
+				expect(lastPage === '1' || lastPage === null).toBe(true);
+				expect(lastCall[0].searchParams.get('limit')).toBe('20');
+			});
+
+			// Verify onPageChange callback was called with 1
+			expect(onPageChange).toHaveBeenCalledWith(1);
 		});
 	});
 

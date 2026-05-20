@@ -12,7 +12,10 @@ import { useLocation } from 'react-router-dom';
 import { Button, Select, Spin, Tag, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { OPERATORS } from 'constants/queryBuilder';
+import {
+	INFRA_LONG_TO_SHORT_OPERATOR_MAP,
+	OPERATORS,
+} from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
@@ -67,6 +70,17 @@ import {
 } from './utils';
 
 import './QueryBuilderSearch.styles.scss';
+
+function getOperatorValueForContext(
+	op: string,
+	isInfraMonitoring?: boolean,
+): string {
+	const mappedOp =
+		isInfraMonitoring && INFRA_LONG_TO_SHORT_OPERATOR_MAP[op]
+			? INFRA_LONG_TO_SHORT_OPERATOR_MAP[op]
+			: op;
+	return getOperatorValue(mappedOp);
+}
 
 function QueryBuilderSearch({
 	query,
@@ -301,7 +315,7 @@ function QueryBuilderSearch({
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
 				},
-				op: getOperatorValue(tagOperator),
+				op: getOperatorValueForContext(tagOperator, isInfraMonitoring),
 				value: computedTagValue,
 			};
 		});

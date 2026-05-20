@@ -285,7 +285,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 	switch query.QueryType {
 	case v3.QueryTypePromQL:
 		for _, query := range query.PromQueries {
-			expr, err := parser.ParseExpr(query.Query)
+			expr, err := q.parser.ParseExpr(query.Query)
 			if err != nil {
 				q.logger.DebugContext(ctx, "error parsing promql expression", "query", query.Query, errors.Attr(err))
 				continue

@@ -69,11 +69,11 @@ def _scalar(
 
 
 def _body_users(response: requests.Response) -> set[str | None]:
-    return {json.loads(row["data"]["body"]).get("user") for row in get_rows(response)}
+    return {row["data"]["body"].get("user") for row in get_rows(response)}
 
 
 def _body_scores(response: requests.Response) -> list[int | None]:
-    return [json.loads(row["data"]["body"]).get("score") for row in get_rows(response)]
+    return [row["data"]["body"].get("score") for row in get_rows(response)]
 
 
 def _services(response: requests.Response) -> list[str]:
