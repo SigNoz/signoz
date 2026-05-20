@@ -52,6 +52,8 @@ jobs:
         uses: actions/checkout@v4
       - name: setup-buildx
         uses: docker/setup-buildx-action@v3
+      - name: expose-gha-runtime
+        uses: crazy-max/ghaction-github-runtime@v3
       - name: python
         uses: actions/setup-python@v5
         with:
