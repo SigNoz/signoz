@@ -2378,7 +2378,7 @@ components:
       - user
       - system
       - integration
-      type: string
+      type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
       type: object

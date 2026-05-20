@@ -69,7 +69,7 @@ func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard
 	}
 
 	if !dashboard.Source.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q", dashboard.Source.StringValue())
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", dashboard.Source.StringValue())
 	}
 
 	return &StorableDashboard{
@@ -93,7 +93,7 @@ func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard
 
 func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDashboardData StorableDashboardData) (*Dashboard, error) {
 	if !source.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q", source.StringValue())
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source.StringValue())
 	}
 
 	currentTime := time.Now()
