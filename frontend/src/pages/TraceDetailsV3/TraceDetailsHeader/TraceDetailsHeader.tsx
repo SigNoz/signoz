@@ -10,6 +10,7 @@ import {
 import { Skeleton } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import cx from 'classnames';
+import FieldsSelector from 'components/FieldsSelector';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
@@ -23,12 +24,10 @@ import {
 	Server,
 	Timer,
 } from '@signozhq/icons';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
-import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
 import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -226,26 +225,15 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{isPreviewFieldsOpen && (
-				<FloatingPanel
-					isOpen
-					width={350}
-					height={window.innerHeight - 100}
-					defaultPosition={{
-						x: window.innerWidth - 350 - 100,
-						y: 50,
-					}}
-					enableResizing={false}
-				>
-					<FieldsSettings
-						title="Preview fields"
-						fields={previewFields}
-						onFieldsChange={setPreviewFields}
-						onClose={(): void => setIsPreviewFieldsOpen(false)}
-						dataSource={DataSource.TRACES}
-					/>
-				</FloatingPanel>
-			)}
+			<FieldsSelector
+				isOpen={isPreviewFieldsOpen}
+				title="Preview fields"
+				fields={previewFields}
+				onFieldsChange={setPreviewFields}
+				onClose={(): void => setIsPreviewFieldsOpen(false)}
+				signal={DataSource.TRACES}
+				maxFields={10}
+			/>
 
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}

@@ -29,14 +29,14 @@ const keys: ServiceaccounttypesGettableFactorAPIKeyDTO[] = [
 		id: 'key-1',
 		name: 'Production Key',
 		expiresAt: 0,
-		lastObservedAt: null as unknown as Date,
+		lastObservedAt: null as unknown as string,
 		serviceAccountId: 'sa-1',
 	},
 	{
 		id: 'key-2',
 		name: 'Staging Key',
 		expiresAt: 1924905600, // 2030-12-31
-		lastObservedAt: new Date('2026-03-10T10:00:00Z'),
+		lastObservedAt: '2026-03-10T10:00:00Z',
 		serviceAccountId: 'sa-1',
 	},
 ];

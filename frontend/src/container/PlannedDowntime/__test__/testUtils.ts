@@ -24,7 +24,7 @@ export const createMockDowntime = (
 	description: overrides.description ?? '',
 	schedule: buildSchedule({
 		timezone: 'UTC',
-		startTime: new Date('2024-01-01'),
+		startTime: '2024-01-01',
 		...overrides.schedule,
 	}),
 	alertIds: overrides.alertIds ?? [],
