@@ -69,6 +69,7 @@ export type UseAuthZResult = {
 	 * If query is fetching, even if happens in background, this is true.
 	 */
 	isFetching: boolean;
+	error: Error | null;
 	permissions: AuthZCheckResponse | null;
 	refetchPermissions: () => void;
 };

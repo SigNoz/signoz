@@ -87,27 +87,25 @@ describe('GuardAuthZ', () => {
 		expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
 	});
 
-	it('should render null when API error occurs and no fallbackOnNoPermissions provided', async () => {
+	it('should render children when API error occurs and no fallbackOnError provided (fail open)', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => {
 				return res(ctx.status(500), ctx.json({ error: 'Internal Server Error' }));
 			}),
 		);
 
-		const { container } = render(
+		render(
 			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
 
 		await waitFor(() => {
-			expect(container.firstChild).toBeNull();
+			expect(screen.getByText('Protected Content')).toBeInTheDocument();
 		});
-
-		expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
 	});
 
-	it('should render fallbackOnNoPermissions when API error occurs', async () => {
+	it('should render fallbackOnError when API error occurs and fallbackOnError is provided', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => {
 				return res(ctx.status(500), ctx.json({ error: 'Internal Server Error' }));
@@ -118,14 +116,14 @@ describe('GuardAuthZ', () => {
 			<GuardAuthZ
 				relation="read"
 				object="role:*"
-				fallbackOnNoPermissions={NoPermissionFallback}
+				fallbackOnError={<div>Custom error fallback</div>}
 			>
 				<TestChild />
 			</GuardAuthZ>,
 		);
 
 		await waitFor(() => {
-			expect(screen.getByText('Access denied')).toBeInTheDocument();
+			expect(screen.getByText('Custom error fallback')).toBeInTheDocument();
 		});
 
 		expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();

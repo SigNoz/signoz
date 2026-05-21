@@ -204,7 +204,7 @@ describe('createGuardedRoute', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('should render permission denied page when API error occurs', async () => {
+	it('should render the component when API error occurs (fail open)', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => {
 				return res(ctx.status(500), ctx.json({ error: 'Internal Server Error' }));
@@ -230,14 +230,8 @@ describe('createGuardedRoute', () => {
 		render(<GuardedComponent {...props} />);
 
 		await waitFor(() => {
-			expect(
-				screen.getByRole('heading', { name: /permission to view this page/i }),
-			).toBeInTheDocument();
+			expect(screen.getByText('Test Component: test-value')).toBeInTheDocument();
 		});
-
-		expect(
-			screen.queryByText('Test Component: test-value'),
-		).not.toBeInTheDocument();
 	});
 
 	it('should render no permissions fallback when permission is denied', async () => {

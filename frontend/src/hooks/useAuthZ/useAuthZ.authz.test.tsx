@@ -51,7 +51,7 @@ describe('useAuthZ', () => {
 		expect(result.current.permissions).toStrictEqual(expectedResponse);
 	});
 
-	it('should handle API errors', async () => {
+	it('should return error and null permissions when API errors', async () => {
 		const permission = buildPermission('read', 'role:*');
 
 		server.use(
@@ -68,6 +68,7 @@ describe('useAuthZ', () => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
+		expect(result.current.error).not.toBeNull();
 		expect(result.current.permissions).toBeNull();
 	});
 

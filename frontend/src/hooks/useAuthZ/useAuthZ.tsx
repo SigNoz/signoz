@@ -146,6 +146,7 @@ export function useAuthZ(
 	return {
 		isLoading,
 		isFetching,
+		error,
 		permissions: data ?? null,
 		refetchPermissions,
 	};
