@@ -421,8 +421,19 @@ export const useAlertRuleStatusToggle = ({
 		toggleAlertState(args, {
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				// Update the cached rule directly instead of invalidate + refetch.
+				// Invalidating triggers a refetch, which causes EditRules to render
+				// its <Spinner /> (via isRefetching) and unmount the entire form
+				// subtree. That cascade caused the success toast to briefly flicker
+				// as the notification holder's children remounted.
+				const ruleQueryKey = getGetRuleByIDQueryKey({ id: ruleId });
+				const existingRule = queryClient.getQueryData<GetRuleByID200>(ruleQueryKey);
+				if (existingRule) {
+					queryClient.setQueryData<GetRuleByID200>(ruleQueryKey, {
+						...existingRule,
+						data: { ...existingRule.data, ...data.data },
+					});
+				}
 				notifications.success({
 					message: `Alert has been ${
 						data.data.state === 'disabled' ? 'disabled' : 'enabled'
@@ -431,7 +442,6 @@ export const useAlertRuleStatusToggle = ({
 			},
 			onError: (error) => {
 				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
