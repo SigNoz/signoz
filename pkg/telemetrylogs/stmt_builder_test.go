@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -1041,7 +1042,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 		query             qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 		enableUseJSONBody bool
 		expected          qbtypes.Statement
-		expectedErr       error
+		expectedErr       string
 		// optional per-case time window (ms); zero → use default 1747947419000/1747983448000
 		startMs uint64
 		endMs   uint64
@@ -1058,11 +1059,10 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(toString(body_v2)), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "fts_2",
@@ -1076,11 +1076,10 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(toString(body_v2)), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "fts_json_disabled",
@@ -1094,11 +1093,10 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(body), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
-			expectedErr: nil,
 		},
 		// search() function: uses a 2-hour window to stay under the 6-hour limit
 		{
@@ -1113,7 +1111,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(body), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
@@ -1130,7 +1128,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(body), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
@@ -1147,7 +1145,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE NOT ((match(LOWER(body), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE NOT ((match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
@@ -1164,7 +1162,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((match(LOWER(body), LOWER(?)) OR match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND severity_text = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND severity_text = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "ERROR", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
@@ -1179,7 +1177,7 @@ func TestStmtBuilderFTS(t *testing.T) {
 				Limit:  10,
 			},
 			enableUseJSONBody: false,
-			expectedErr:       fmt.Errorf("maximum of 6-hour time"),
+			expectedErr:       "maximum of 6-hour time",
 		},
 	}
 
@@ -1214,8 +1212,17 @@ func TestStmtBuilderFTS(t *testing.T) {
 				endMs = c.endMs
 			}
 			q, err := statementBuilder.Build(context.Background(), startMs, endMs, c.requestType, c.query, nil)
-			if c.expectedErr != nil {
-				require.Contains(t, err.Error(), err.Error())
+			if c.expectedErr != "" {
+				require.Error(t, err)
+				_, _, _, _, _, a := errors.Unwrapb(err)
+				found := false
+				for _, msg := range a {
+					if strings.Contains(msg, c.expectedErr) {
+						found = true
+						break
+					}
+				}
+				require.True(t, found, "expected additionals to contain %q, got %v", c.expectedErr, a)
 			} else {
 				require.NoError(t, err)
 				if c.expected.Query != "" {
