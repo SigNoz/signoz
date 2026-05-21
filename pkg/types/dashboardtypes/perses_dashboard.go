@@ -141,6 +141,13 @@ func (m PostableDashboardV2Metadata) toDashboardV2Metadata(orgID valuer.UUID) Da
 	}
 }
 
+func (m DashboardV2Metadata) toPostableDashboardV2Metadata() PostableDashboardV2Metadata {
+	return PostableDashboardV2Metadata{
+		DashboardV2MetadataBase: m.DashboardV2MetadataBase,
+		Tags:                    tagtypes.NewPostableTagsFromTags(m.Tags),
+	}
+}
+
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
@@ -202,6 +209,13 @@ type GettableDashboardV2Metadata struct {
 	Tags []*tagtypes.GettableTag `json:"tags"`
 }
 
+func (m DashboardV2Metadata) toGettableDashboardV2Metadata() GettableDashboardV2Metadata {
+	return GettableDashboardV2Metadata{
+		DashboardV2MetadataBase: m.DashboardV2MetadataBase,
+		Tags:                    tagtypes.NewGettableTagsFromTags(m.Tags),
+	}
+}
+
 func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 	return GettableDashboardV2{
 		Identifiable:  d.Identifiable,
@@ -215,11 +229,8 @@ func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 
 func (d DashboardV2Data) toGettableDashboardData() GettableDashboardV2Data {
 	return GettableDashboardV2Data{
-		Metadata: GettableDashboardV2Metadata{
-			DashboardV2MetadataBase: d.Metadata.DashboardV2MetadataBase,
-			Tags:                    tagtypes.NewGettableTagsFromTags(d.Metadata.Tags),
-		},
-		Spec: d.Spec,
+		Metadata: d.Metadata.toGettableDashboardV2Metadata(),
+		Spec:     d.Spec,
 	}
 }
 
@@ -265,11 +276,8 @@ type UpdateableDashboardV2 = PostableDashboardV2
 
 func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
 	return PostableDashboardV2{
-		Metadata: PostableDashboardV2Metadata{
-			DashboardV2MetadataBase: d.Data.Metadata.DashboardV2MetadataBase,
-			Tags:                    tagtypes.NewPostableTagsFromTags(d.Data.Metadata.Tags),
-		},
-		Spec: d.Data.Spec,
+		Metadata: d.Data.Metadata.toPostableDashboardV2Metadata(),
+		Spec:     d.Data.Spec,
 	}
 }
 
