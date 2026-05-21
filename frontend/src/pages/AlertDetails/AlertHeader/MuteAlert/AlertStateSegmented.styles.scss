@@ -46,11 +46,12 @@
 			}
 		}
 
-		&--active-muted {
+		&.alert-state-segmented__pill--active-muted,
+		&.alert-state-segmented__pill--active-muted:hover:not(:disabled) {
 			background: var(--bg-amber-500);
 			color: #1a1407;
 
-			&:hover:not(:disabled) {
+			.alert-state-segmented__icon {
 				color: #1a1407;
 			}
 		}
