@@ -2,10 +2,10 @@ package telemetrymetrics
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -235,7 +235,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 				Limit: 10,
 			},
-			expectedErr: errors.New("invalid space aggregation `p95` for metric type `sum`, percentile space aggregations are only supported for [`histogram`, `exponentialhistogram`, `summary`] metric types"),
+			expectedErr: errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid space aggregation `p95` for metric type `sum`, percentile space aggregations are only supported for [`histogram`, `exponentialhistogram`, `summary`] metric types"),
 		},
 	}
 
