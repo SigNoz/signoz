@@ -408,17 +408,7 @@ export const useAlertRuleStatusToggle = ({
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
 		(args: { id: string; data: Partial<RuletypesPostableRuleDTO> }) =>
 			patchRulePartial(args.id, args.data),
-	);
-
-	const handleAlertStateToggle = (): void => {
-		const args = {
-			id: ruleId,
-			data: { disabled: alertRuleState !== 'disabled' },
-		};
-		// Per-call callbacks: react-query v3 invokes these exactly once per
-		// mutate() — unlike hook-level onSuccess which can re-fire when the
-		// MutationObserver re-subscribes during context-driven re-renders.
-		toggleAlertState(args, {
+		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
 				invalidateGetRuleByID(queryClient, { id: ruleId });
@@ -436,7 +426,15 @@ export const useAlertRuleStatusToggle = ({
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
 			},
-		});
+		},
+	);
+
+	const handleAlertStateToggle = (): void => {
+		const args = {
+			id: ruleId,
+			data: { disabled: alertRuleState !== 'disabled' },
+		};
+		toggleAlertState(args);
 	};
 
 	return { handleAlertStateToggle };
