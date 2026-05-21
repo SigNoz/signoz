@@ -1,12 +1,15 @@
-import './InputNumber.styles.scss';
-
 import {
 	ChangeEvent,
 	CSSProperties,
+	FocusEvent,
 	FocusEventHandler,
 	forwardRef,
 	KeyboardEventHandler,
 	ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
 } from 'react';
 import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
@@ -18,7 +21,12 @@ export type InputNumberProps = {
 	min?: number;
 	max?: number;
 	step?: number;
-	/** When set, values emitted via onChange are rounded to this many decimals. */
+	/**
+	 * Number of decimal places to display and round to on blur. Mirrors antd
+	 * InputNumber's `precision`: while focused the user can type freely, and on
+	 * blur the value is rounded and rendered with trailing zeros (e.g.
+	 * precision=2 → "1.50").
+	 */
 	precision?: number;
 	placeholder?: string;
 	disabled?: boolean;
@@ -38,26 +46,40 @@ export type InputNumberProps = {
 	'data-testid'?: string;
 };
 
-const toInputValue = (value: number | null | undefined): string | undefined => {
+// Permits the in-progress shapes a user types while building a number:
+// "", "-", "1", "1.", "1.5", ".5", "-1.5"
+const NUMERIC_TOKEN_REGEX = /^-?(\d+\.?\d*|\.\d*)?$/;
+
+const formatForDisplay = (
+	value: number | null | undefined,
+	precision?: number,
+): string => {
 	if (value === null || value === undefined || Number.isNaN(value)) {
 		return '';
 	}
-	return String(value);
+	if (precision === undefined) {
+		return String(value);
+	}
+	return value.toFixed(precision);
 };
 
-const parseValue = (raw: string, precision?: number): number | null => {
-	if (raw === '' || raw === '-') {
+const parseRaw = (raw: string): number | null => {
+	if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
 		return null;
 	}
 	const parsed = Number(raw);
-	if (Number.isNaN(parsed)) {
-		return null;
+	return Number.isNaN(parsed) ? null : parsed;
+};
+
+const clamp = (value: number, min?: number, max?: number): number => {
+	let next = value;
+	if (min !== undefined && next < min) {
+		next = min;
 	}
-	if (precision === undefined) {
-		return parsed;
+	if (max !== undefined && next > max) {
+		next = max;
 	}
-	const factor = 10 ** precision;
-	return Math.round(parsed * factor) / factor;
+	return next;
 };
 
 const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
@@ -89,19 +111,78 @@ const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
 		},
 		ref,
 	): JSX.Element => {
-		const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-			onChange?.(parseValue(event.target.value, precision));
-		};
+		const isControlled = value !== undefined;
+		const isFocusedRef = useRef(false);
+		const [displayValue, setDisplayValue] = useState<string>(() =>
+			formatForDisplay(isControlled ? value : defaultValue, precision),
+		);
+
+		// Sync display from the controlled value when the user isn't actively
+		// typing, so external state changes (and precision changes) propagate.
+		useEffect(() => {
+			if (!isControlled || isFocusedRef.current) {
+				return;
+			}
+			setDisplayValue(formatForDisplay(value, precision));
+		}, [isControlled, value, precision]);
+
+		const handleChange = useCallback(
+			(event: ChangeEvent<HTMLInputElement>): void => {
+				const raw = event.target.value;
+				if (raw !== '' && !NUMERIC_TOKEN_REGEX.test(raw)) {
+					return;
+				}
+				setDisplayValue(raw);
+				onChange?.(parseRaw(raw));
+			},
+			[onChange],
+		);
+
+		const handleFocus = useCallback(
+			(event: FocusEvent<HTMLInputElement>): void => {
+				isFocusedRef.current = true;
+				onFocus?.(event);
+			},
+			[onFocus],
+		);
+
+		const handleBlur = useCallback(
+			(event: FocusEvent<HTMLInputElement>): void => {
+				isFocusedRef.current = false;
+				const parsed = parseRaw(displayValue);
+				if (parsed === null) {
+					if (displayValue !== '') {
+						setDisplayValue('');
+						onChange?.(null);
+					}
+				} else {
+					const clamped = clamp(parsed, min, max);
+					const finalValue =
+						precision === undefined
+							? clamped
+							: Math.round(clamped * 10 ** precision) / 10 ** precision;
+					const nextDisplay = formatForDisplay(finalValue, precision);
+					if (nextDisplay !== displayValue) {
+						setDisplayValue(nextDisplay);
+					}
+					if (finalValue !== parsed) {
+						onChange?.(finalValue);
+					}
+				}
+				onBlur?.(event);
+			},
+			[displayValue, min, max, precision, onChange, onBlur],
+		);
 
 		return (
 			<Input
 				ref={ref}
-				type="number"
-				value={value === undefined ? undefined : toInputValue(value)}
-				defaultValue={
-					defaultValue === undefined ? undefined : toInputValue(defaultValue)
-				}
+				type="text"
+				inputMode="decimal"
+				value={displayValue}
 				onChange={handleChange}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
 				min={min}
 				max={max}
 				step={step}
@@ -117,8 +198,6 @@ const InputNumber = forwardRef<HTMLInputElement, InputNumberProps>(
 				testId={testId ?? dataTestId}
 				autoFocus={autoFocus}
 				onKeyDown={onKeyDown}
-				onBlur={onBlur}
-				onFocus={onFocus}
 				aria-label={ariaLabel}
 			/>
 		);

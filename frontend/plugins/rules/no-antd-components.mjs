@@ -15,6 +15,7 @@
 
 const BANNED_COMPONENTS = {
 	Typography: 'Use @signozhq/ui Typography instead of antd Typography.',
+	InputNumber: 'Use components/InputNumber instead of antd InputNumber.',
 };
 
 export default {
@@ -49,7 +50,7 @@ export default {
 					return;
 				}
 
-				const pathComponent = match[1].toLowerCase();
+				const pathComponent = match[1].toLowerCase().replace(/-/g, '');
 
 				for (const [componentName, message] of Object.entries(BANNED_COMPONENTS)) {
 					if (pathComponent === componentName.toLowerCase()) {
