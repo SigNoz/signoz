@@ -170,7 +170,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
+	const sidenavRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const isDropdownOpenRef = useRef(false);
 
 	const [isHovered, setIsHovered] = useState(false);
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
@@ -183,7 +185,25 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, []);
 
 	const handleMouseLeave = useCallback(() => {
+		// When the dropdown is open its content renders in a portal outside
+		// the sidenav, which causes the browser to fire mouseleave on the
+		// sidenav. Keep the sidenav expanded in that case.
+		if (isDropdownOpenRef.current) {
+			return;
+		}
 		setIsHovered(false);
+	}, []);
+
+	const handleDropdownOpenChange = useCallback((open: boolean): void => {
+		isDropdownOpenRef.current = open;
+		setIsDropdownOpen(open);
+		if (!open) {
+			// Re-sync hover state on close: the cursor may have moved to the
+			// portal content (outside .sideNav), so mouseleave never fired.
+			requestAnimationFrame(() => {
+				setIsHovered(sidenavRef.current?.matches(':hover') ?? false);
+			});
+		}
 	}, []);
 
 	const checkScroll = useCallback((): void => {
@@ -967,9 +987,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div
+				ref={sidenavRef}
 				className={cx(
 					'sideNav',
 					isPinned && 'pinned',
+					isHovered && 'is-hovered',
 					isDropdownOpen && 'dropdown-open',
 				)}
 				onMouseEnter={handleMouseEnter}
@@ -1190,7 +1212,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
 
 							<div className="nav-dropdown-item">
-								<DropdownMenu onOpenChange={(open): void => setIsDropdownOpen(open)}>
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
 									<DropdownMenuTrigger asChild>
 										<div className="nav-item">
 											<div className="nav-item-data" data-testid="help-support-nav-item">
@@ -1231,7 +1253,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							</div>
 
 							<div className="nav-dropdown-item">
-								<DropdownMenu onOpenChange={(open): void => setIsDropdownOpen(open)}>
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
 									<DropdownMenuTrigger asChild>
 										<div className={cx('nav-item', isSettingsPage && 'active')}>
 											<div className="nav-item-active-marker" />
