@@ -5,7 +5,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func gbKey(name string) qbtypes.GroupByKey {
@@ -345,11 +345,11 @@ func TestPaginateMetadataByName(t *testing.T) {
 				tt.sortByMetaKey,
 			)
 			if tt.wantNotNil {
-				require.NotNil(t, got)
-				require.Len(t, got, 0)
+				assert.NotNil(t, got)
+				assert.Len(t, got, 0)
 				return
 			}
-			require.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -366,6 +366,6 @@ func TestPaginateMetadataByName_Deterministic(t *testing.T) {
 	first := PaginateMetadataByName(m, gb, qbtypes.OrderDirectionAsc, 0, 10, "host.name")
 	for i := range 50 {
 		got := PaginateMetadataByName(m, gb, qbtypes.OrderDirectionAsc, 0, 10, "host.name")
-		require.Equal(t, first, got, "iteration %d differed — map-iteration nondeterminism leaked through sort", i)
+		assert.Equal(t, first, got, "iteration %d differed — map-iteration nondeterminism leaked through sort", i)
 	}
 }
