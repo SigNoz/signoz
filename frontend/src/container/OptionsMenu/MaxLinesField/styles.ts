@@ -1,4 +1,4 @@
-import { InputNumber } from 'antd';
+import InputNumber from 'components/InputNumber';
 import styled from 'styled-components';
 
 export const MaxLinesFieldWrapper = styled.div`

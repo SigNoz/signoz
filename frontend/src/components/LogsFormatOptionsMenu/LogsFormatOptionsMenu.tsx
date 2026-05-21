@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
+import { Button, Input, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
+import InputNumber from 'components/InputNumber';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';

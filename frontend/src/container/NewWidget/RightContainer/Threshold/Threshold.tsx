@@ -1,7 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
-import { Button, Input, InputNumber, Select, Space } from 'antd';
+import { Button, Input, Select, Space } from 'antd';
+import InputNumber from 'components/InputNumber';
 import { Typography } from '@signozhq/ui/typography';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
