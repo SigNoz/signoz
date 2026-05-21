@@ -13,11 +13,7 @@ import styles from './ExpandableValue.module.scss';
 
 const DEFAULT_THRESHOLD = 100;
 const DEFAULT_DIALOG_TITLE = 'Value';
-// signoz tooltip defaults to `--tooltip-z-index: 50` and signoz dialog
-// hardcodes `z-index: 50`. ExpandableValue is meant to be embedded in
-// surfaces with much higher stacking — FloatingPanel (999), antd Drawer
-// / Modal (1000) — so we lift both above that range by default. Consumers
-// inside deeper layers can override via `zIndex`.
+
 const DEFAULT_Z_INDEX = 1100;
 
 interface ExpandableValueProps {
@@ -28,10 +24,6 @@ interface ExpandableValueProps {
 	children: ReactNode;
 }
 
-// Self-contained TooltipProvider mirrors the AuthZTooltip / CopyIconButton
-// pattern: nesting inside AppLayout's global provider is benign, and the
-// alternative (relying on a hoisted provider) silently breaks the tooltip
-// if a consumer forgets to wrap.
 function ExpandableValue({
 	value,
 	title = DEFAULT_DIALOG_TITLE,
