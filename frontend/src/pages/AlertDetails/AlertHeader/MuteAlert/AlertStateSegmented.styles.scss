@@ -51,7 +51,8 @@
 			background: var(--bg-amber-500);
 			color: #1a1407;
 
-			.alert-state-segmented__icon {
+			.alert-state-segmented__icon,
+			.alert-state-segmented__label {
 				color: #1a1407;
 			}
 		}

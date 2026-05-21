@@ -45,7 +45,7 @@ const AlertStateSegmented = forwardRef<
 				{state === 'active' && (
 					<span className="alert-state-segmented__dot" aria-hidden />
 				)}
-				Active
+				<span className="alert-state-segmented__label">Active</span>
 			</button>
 			<button
 				type="button"
@@ -61,7 +61,7 @@ const AlertStateSegmented = forwardRef<
 				{state === 'muted' && (
 					<BellOff size={12} className="alert-state-segmented__icon" />
 				)}
-				Mute
+				<span className="alert-state-segmented__label">Mute</span>
 			</button>
 			<button
 				type="button"
@@ -74,7 +74,7 @@ const AlertStateSegmented = forwardRef<
 				onClick={onDisable}
 				disabled={disabled}
 			>
-				Disable
+				<span className="alert-state-segmented__label">Disable</span>
 			</button>
 		</div>
 	);
