@@ -224,6 +224,8 @@ function UpdateContextLinks({
 							},
 						]}
 					>
+						{/* TODO: replace with AutoComplete with options for variables and
+						previously used URLs for better UX */}
 						<VariablesPopover
 							onVariableSelect={handleVariableSelect}
 							variables={transformedVariables}
