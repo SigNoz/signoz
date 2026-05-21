@@ -230,7 +230,6 @@ function PrettyView({
 						// onClick on the dropdown content is forwarded to the underlying div via ...props
 						// but is not in the public type. Stop click bubbling so item clicks don't reach
 						// clickable ancestors of the trigger through the React tree.
-						// @ts-expect-error see comment above
 						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
 					>
 						<span
