@@ -17,6 +17,27 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
+jest.mock('@signozhq/ui/switch', () => ({
+	...jest.requireActual('@signozhq/ui/switch'),
+	Switch: ({
+		value,
+		onChange,
+		disabled,
+	}: {
+		value: boolean;
+		onChange: (checked: boolean) => void;
+		disabled?: boolean;
+	}): JSX.Element => (
+		<button
+			type="button"
+			role="switch"
+			aria-checked={value}
+			disabled={disabled}
+			onClick={(): void => onChange(!value)}
+		/>
+	),
+}));
+
 describe('AuthDomain', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -56,6 +77,26 @@ describe('AuthDomain', () => {
 				expect(screen.getByText('example.com')).toBeInTheDocument();
 				expect(screen.getByText('corp.io')).toBeInTheDocument();
 			});
+		});
+
+		it('reflects ssoEnabled state from nested config in each row toggle', async () => {
+			server.use(
+				rest.get(AUTH_DOMAINS_LIST_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json(mockDomainsListResponse)),
+				),
+			);
+
+			render(<AuthDomain />);
+
+			// mockDomainsListResponse rows:
+			//   [0] signoz.io   → config.ssoEnabled: true
+			//   [1] example.com → config.ssoEnabled: false
+			//   [2] corp.io     → config.ssoEnabled: true
+			const switches = await screen.findAllByRole('switch');
+			expect(switches).toHaveLength(3);
+			expect(switches[0]).toBeChecked();
+			expect(switches[1]).not.toBeChecked();
+			expect(switches[2]).toBeChecked();
 		});
 
 		it('renders empty state when no domains exist', async () => {
