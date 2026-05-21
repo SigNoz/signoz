@@ -1,4 +1,5 @@
-import { Button, Tabs, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Tabs } from '@signozhq/ui/tabs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Braces, Globe, Table } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -73,7 +74,7 @@ function DashboardSettings({
 		...(enablePublicDashboard ? [publicDashboardItem] : []),
 	];
 
-	return <Tabs items={items} animated className="settings-tabs" />;
+	return <Tabs items={items} className="settings-tabs" />;
 }
 
 export default DashboardSettings;

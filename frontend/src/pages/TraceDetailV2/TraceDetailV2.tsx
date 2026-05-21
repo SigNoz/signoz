@@ -5,7 +5,8 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/resizable';
-import { Button, Tabs } from 'antd';
+import { Button } from 'antd';
+import { Tabs } from '@signozhq/ui/tabs';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import cx from 'classnames';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
@@ -146,7 +147,7 @@ function TraceDetailsV2(): JSX.Element {
 					notFound={noData}
 				/>
 				{!noData ? (
-					<Tabs items={items} animated className="trace-visualisation-tabs" />
+					<Tabs items={items} className="trace-visualisation-tabs" />
 				) : (
 					<NoData />
 				)}

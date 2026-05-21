@@ -1,4 +1,5 @@
-import { Button, Tabs, TabsProps } from 'antd';
+import { Button } from 'antd';
+import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { CableCar, Group } from '@signozhq/icons';
@@ -22,7 +23,7 @@ function IntegrationDetailContent(
 ): JSX.Element {
 	const { activeDetailTab, integrationData, integrationId, setActiveDetailTab } =
 		props;
-	const items: TabsProps['items'] = [
+	const items: TabItemProps[] = [
 		{
 			key: 'overview',
 			label: (
@@ -81,11 +82,7 @@ function IntegrationDetailContent(
 	];
 	return (
 		<div className="integration-detail-container">
-			<Tabs
-				activeKey={activeDetailTab}
-				items={items}
-				onChange={setActiveDetailTab}
-			/>
+			<Tabs value={activeDetailTab} items={items} onChange={setActiveDetailTab} />
 		</div>
 	);
 }

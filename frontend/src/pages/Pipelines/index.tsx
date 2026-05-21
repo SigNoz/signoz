@@ -2,8 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import * as Sentry from '@sentry/react';
-import type { TabsProps } from 'antd';
-import { Tabs } from 'antd';
+import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
 import getPipeline from 'api/pipeline/get';
 import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
@@ -46,7 +45,7 @@ function Pipelines(): JSX.Element {
 		refetchInterval: pipelineRefetchInterval,
 	});
 
-	const tabItems: TabsProps['items'] = useMemo(
+	const tabItems: TabItemProps[] = useMemo(
 		() => [
 			{
 				key: 'pipelines',
@@ -83,11 +82,7 @@ function Pipelines(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<Tabs
-				className="pipeline-tabs"
-				defaultActiveKey="pipelines"
-				items={tabItems}
-			/>
+			<Tabs className="pipeline-tabs" defaultValue="pipelines" items={tabItems} />
 		</Sentry.ErrorBoundary>
 	);
 }
