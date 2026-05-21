@@ -140,6 +140,22 @@ func parseAndSortGroups(
 	return groups
 }
 
+// filterMetricGroupsByMetadata drops any ranked group whose compositeKey is
+// not present in metadataMap. Keeps metricGroups a strict subset of the
+// metadata universe so totalAll lines up with len(metadataMap).
+func filterMetricGroupsByMetadata(
+	metricGroups []rankedGroup,
+	metadataMap map[string]map[string]string,
+) []rankedGroup {
+	processed := make([]rankedGroup, 0, len(metricGroups))
+	for _, g := range metricGroups {
+		if _, ok := metadataMap[g.compositeKey]; ok {
+			processed = append(processed, g)
+		}
+	}
+	return processed
+}
+
 // paginateWithBackfill returns the page of groups for [offset, offset+limit).
 // The virtual sorted list is: metric-ranked groups first, then metadata-only
 // groups (those in metadataMap but not in metric results) sorted alphabetically.
@@ -149,6 +165,9 @@ func paginateWithBackfill(
 	groupBy []qbtypes.GroupByKey,
 	offset, limit int,
 ) []map[string]string {
+
+	metricGroups = filterMetricGroupsByMetadata(metricGroups, metadataMap)
+
 	metricKeySet := make(map[string]bool, len(metricGroups))
 	for _, g := range metricGroups {
 		metricKeySet[g.compositeKey] = true
