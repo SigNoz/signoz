@@ -181,24 +181,23 @@ function AlertActionButtons({
 		<>
 			<div className="alert-action-buttons">
 				{isAlertRuleDisabled !== undefined && (
-					<MutePopover
-						open={isMutePopoverOpen}
-						onOpenChange={setIsMutePopoverOpen}
-						ruleName={ruleDisplayName}
-						isLoading={isMuting}
-						onSubmit={mute}
-						onOpenCustomWindow={(): void => setIsMuteDrawerOpen(true)}
-						anchor={
-							<span>
-								<AlertStateSegmented
-									state={segmentedState}
-									onActive={handleActiveClick}
-									onMute={handleMuteClick}
-									onDisable={handleDisableClick}
-								/>
-							</span>
-						}
-					/>
+					<div className="alert-state-segmented-wrapper">
+						<AlertStateSegmented
+							state={segmentedState}
+							onActive={handleActiveClick}
+							onMute={handleMuteClick}
+							onDisable={handleDisableClick}
+						/>
+						<MutePopover
+							open={isMutePopoverOpen}
+							onOpenChange={setIsMutePopoverOpen}
+							ruleName={ruleDisplayName}
+							isLoading={isMuting}
+							onSubmit={mute}
+							onOpenCustomWindow={(): void => setIsMuteDrawerOpen(true)}
+							anchor={<span className="alert-state-segmented-anchor" />}
+						/>
+					</div>
 				)}
 
 				<CopyToClipboard textToCopy={window.location.href} />
