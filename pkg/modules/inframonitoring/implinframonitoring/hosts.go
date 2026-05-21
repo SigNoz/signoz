@@ -217,7 +217,7 @@ func (m *module) getTopHostGroups(
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.HostNameAttrKey {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey), nil
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToHostsQueryNames[orderByKey]
 	// The last entry is the formula/query whose value we sort by.

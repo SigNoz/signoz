@@ -71,7 +71,7 @@ func (m *module) getTopNamespaceGroups(
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.NamespaceNameAttrKey {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NamespaceNameAttrKey), nil
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NamespaceNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToNamespacesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]

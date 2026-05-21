@@ -88,7 +88,7 @@ func (m *module) getTopClusterGroups(
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.ClusterNameAttrKey {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey), nil
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToClustersQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]

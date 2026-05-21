@@ -106,7 +106,7 @@ func (m *module) getTopNodeGroups(
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
 	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
-		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
 	}
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
