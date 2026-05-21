@@ -103,12 +103,8 @@
 			.progress-container {
 				width: 158px;
 
-				.ant-progress {
-					margin: 0;
-
-					.ant-progress-text {
-						font-weight: 600;
-					}
+				span {
+					font-weight: 600;
 				}
 			}
 
@@ -292,10 +288,8 @@
 			}
 
 			.progress-container {
-				.ant-progress-bg {
-					height: 8px !important;
-					border-radius: 4px;
-				}
+				--progress-height: 8px;
+				--progress-border-radius: 4px;
 			}
 
 			.ant-table-tbody > tr:hover > td {

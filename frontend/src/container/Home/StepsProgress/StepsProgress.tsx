@@ -1,4 +1,4 @@
-import { Progress } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 
 import { ChecklistItem } from '../HomeChecklist/HomeChecklist';
 

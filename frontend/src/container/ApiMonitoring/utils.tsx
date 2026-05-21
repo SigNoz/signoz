@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -261,6 +262,7 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) {
@@ -1030,6 +1032,7 @@ export const getEndPointsColumnsConfig = (
 				)}
 				strokeLinecap="butt"
 				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) {
@@ -2518,6 +2521,7 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
@@ -3030,6 +3034,7 @@ export const getAllEndpointsWidgetData = (
 				)}
 				strokeLinecap="butt"
 				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number(
 						(
