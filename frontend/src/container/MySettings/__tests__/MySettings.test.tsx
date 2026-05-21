@@ -172,7 +172,9 @@ describe('MySettings Flows', () => {
 
 			fireEvent.click(modalUpdateNameButton);
 
-			await waitFor(() => expect(toast.success).toHaveBeenCalledWith('success'));
+			await waitFor(() =>
+				expect(toast.success).toHaveBeenCalledWith('Name updated successfully'),
+			);
 		});
 	});
 
@@ -262,6 +264,29 @@ describe('MySettings Flows', () => {
 
 			await waitFor(() => {
 				expect(showErrorModalFn).toHaveBeenCalledWith(expect.any(APIError));
+			});
+		});
+
+		it('Should show success toast and close modal on successful password reset', async () => {
+			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
+			fireEvent.click(resetPasswordButtons[0]);
+
+			act(() => {
+				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
+					target: { value: 'oldPassword1' },
+				});
+				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
+					target: { value: 'newPassword1' },
+				});
+			});
+
+			fireEvent.click(screen.getByTestId(RESET_PASSWORD_BUTTON_TEST_ID));
+
+			await waitFor(() => {
+				expect(toast.success).toHaveBeenCalledWith('Password updated successfully');
+				expect(
+					screen.queryByTestId(CURRENT_PASSWORD_TEST_ID),
+				).not.toBeInTheDocument();
 			});
 		});
 

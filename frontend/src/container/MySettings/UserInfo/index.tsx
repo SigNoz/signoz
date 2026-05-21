@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -21,7 +20,6 @@ import './UserInfo.styles.scss';
 
 function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
-	const { t } = useTranslation(['routes', 'settings', 'common']);
 
 	const { showErrorModal } = useErrorModal();
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
@@ -63,7 +61,7 @@ function UserInfo(): JSX.Element {
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
 			});
-			toast.success(t('success', { ns: 'common' }));
+			toast.success('Password updated successfully');
 			hideResetPasswordModal();
 			setIsLoading(false);
 		} catch (error) {
@@ -102,7 +100,7 @@ function UserInfo(): JSX.Element {
 			setIsLoading(true);
 			await updateMyUser({ data: { displayName: changedName } });
 
-			toast.success(t('success', { ns: 'common' }));
+			toast.success('Name updated successfully');
 			updateUser({
 				...user,
 				displayName: changedName,
@@ -171,7 +169,7 @@ function UserInfo(): JSX.Element {
 						type="primary"
 						icon={<Check size={16} />}
 						onClick={onSaveHandler}
-						disabled={isLoading}
+						loading={isLoading}
 						data-testid="update-name-btn"
 					>
 						Update name
@@ -184,6 +182,9 @@ function UserInfo(): JSX.Element {
 						placeholder="e.g. John Doe"
 						value={changedName}
 						onChange={(e): void => setChangedName(e.target.value)}
+						onPressEnter={(): void => {
+							void onSaveHandler();
+						}}
 					/>
 				</div>
 			</Modal>
@@ -225,6 +226,11 @@ function UserInfo(): JSX.Element {
 							type="password"
 							autoComplete="off"
 							visibilityToggle
+							onPressEnter={(): void => {
+								if (!isResetPasswordDisabled) {
+									void onChangePasswordClickHandler();
+								}
+							}}
 						/>
 					</div>
 
@@ -243,6 +249,11 @@ function UserInfo(): JSX.Element {
 							autoComplete="off"
 							visibilityToggle={false}
 							status={passwordsMatch ? 'error' : ''}
+							onPressEnter={(): void => {
+								if (!isResetPasswordDisabled) {
+									void onChangePasswordClickHandler();
+								}
+							}}
 						/>
 						{passwordsMatch && (
 							<span className="password-error-text">
