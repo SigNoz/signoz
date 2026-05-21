@@ -19,11 +19,11 @@ import {
 	Info,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
+import { Input } from '@signozhq/ui/input';
 import {
 	Button,
 	ColorPicker,
 	Divider,
-	Input,
 	Modal,
 	RefSelectProps,
 	Select,

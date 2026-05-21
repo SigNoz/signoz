@@ -12,11 +12,11 @@ import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
+import { Input } from '@signozhq/ui/input';
 import {
 	Button,
 	Dropdown,
 	Flex,
-	Input,
 	MenuProps,
 	Modal,
 	Popover,

@@ -1,4 +1,5 @@
-import { Checkbox, Input, Select, Skeleton } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Checkbox, Select, Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
