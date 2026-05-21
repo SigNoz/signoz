@@ -13,7 +13,7 @@ export function NoAuthBanner(): JSX.Element {
 			Impersonation mode: authentication is disabled. Anyone with access to this
 			instance has admin privileges.{' '}
 			<a
-				href="https://signoz.io/docs/manage/administrator-guide/configuration/no-auth-mode/"
+				href="https://signoz.io/docs/manage/administrator-guide/configuration/impersonation-mode/"
 				target="_blank"
 				rel="noreferrer"
 			>
