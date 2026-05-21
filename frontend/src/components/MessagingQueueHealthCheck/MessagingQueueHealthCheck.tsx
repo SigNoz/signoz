@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from 'antd';
 import cx from 'classnames';
 import { useOnboardingStatus } from 'hooks/messagingQueue/useOnboardingStatus';
 import { Bolt, FolderTree } from '@signozhq/icons';
@@ -8,6 +7,7 @@ import { MessagingQueueHealthCheckService } from 'pages/MessagingQueues/Messagin
 import AttributeCheckList from './AttributeCheckList';
 
 import './MessagingQueueHealthCheck.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface MessagingQueueHealthCheckProps {
 	serviceToInclude: string[];
@@ -94,7 +94,9 @@ function MessagingQueueHealthCheck({
 					'config-btn',
 					missingConfiguration ? 'missing-config-btn' : '',
 				)}
-				icon={<Bolt size={12} />}
+				variant="outlined"
+				color="secondary"
+				prefix={<Bolt size={12} />}
 			>
 				<div className="config-btn-content">
 					{missingConfiguration

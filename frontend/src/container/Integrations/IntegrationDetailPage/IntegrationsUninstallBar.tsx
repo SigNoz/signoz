@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
@@ -77,8 +78,10 @@ function IntergrationsUninstallBar(
 			</div>
 			<Button
 				className="uninstall-integration-btn"
-				icon={<X size={14} />}
 				onClick={(): void => showModal()}
+				variant="outlined"
+				color="secondary"
+				prefix={<X size={14} />}
 			>
 				{removeIntegrationTitle}
 			</Button>

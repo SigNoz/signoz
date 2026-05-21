@@ -311,6 +311,8 @@ export default function Home(): JSX.Element {
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
+										size="sm"
+										className="welcome-checklist-btn"
 									>
 										Welcome checklist
 									</Button>
@@ -493,7 +495,6 @@ export default function Home(): JSX.Element {
 											<Button
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
@@ -510,7 +511,6 @@ export default function Home(): JSX.Element {
 											<Button
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
@@ -527,7 +527,6 @@ export default function Home(): JSX.Element {
 											<Button
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
@@ -566,7 +565,6 @@ export default function Home(): JSX.Element {
 											<Button
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
@@ -611,7 +609,6 @@ export default function Home(): JSX.Element {
 											<Button
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {

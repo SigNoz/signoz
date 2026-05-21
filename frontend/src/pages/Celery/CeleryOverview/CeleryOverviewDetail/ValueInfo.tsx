@@ -3,7 +3,7 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { FileSearch } from '@signozhq/icons';
-import { Button, Card, Col, Row } from 'antd';
+import { Card, Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -26,6 +26,7 @@ import {
 import { getQueryPayloadFromWidgetsData } from '../CeleryOverviewUtils';
 
 import './ValueInfo.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 export default function ValueInfo({
 	filters,
@@ -155,8 +156,6 @@ export default function ValueInfo({
 						<div className="metric-unit">req/s</div>
 					</div>
 					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -173,6 +172,7 @@ export default function ValueInfo({
 								endTime: maxTime,
 							});
 						}}
+						prefix={<FileSearch size="md" />}
 					>
 						View Traces
 					</Button>
@@ -190,8 +190,6 @@ export default function ValueInfo({
 						<div className="metric-unit">%</div>
 					</div>
 					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -221,6 +219,7 @@ export default function ValueInfo({
 								endTime: maxTime,
 							});
 						}}
+						prefix={<FileSearch size="md" />}
 					>
 						View Traces
 					</Button>
@@ -238,8 +237,6 @@ export default function ValueInfo({
 						<div className="metric-unit">ms</div>
 					</div>
 					<Button
-						type="primary"
-						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -256,6 +253,7 @@ export default function ValueInfo({
 								endTime: maxTime,
 							});
 						}}
+						prefix={<FileSearch size="md" />}
 					>
 						View Traces
 					</Button>

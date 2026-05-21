@@ -738,6 +738,7 @@ export default function ChatInput({
 							<span className={styles.attachmentName}>{f.name}</span>
 							<Button
 								variant="ghost"
+								color="secondary"
 								size="icon"
 								className={styles.attachmentRemove}
 								onClick={(): void => removeFile(f.uid)}
@@ -1007,6 +1008,7 @@ export default function ChatInput({
 							<TooltipSimple title="Voice input">
 								<Button
 									variant="ghost"
+									color="secondary"
 									size="icon"
 									onClick={(): void => startVoiceInput('button')}
 									disabled={disabled}

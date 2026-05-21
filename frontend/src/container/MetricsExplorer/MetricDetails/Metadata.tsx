@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Button, Collapse, Input, Select, Spin } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Collapse, Input, Select, Spin } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,
@@ -297,21 +298,23 @@ function Metadata({
 				<div className="action-menu">
 					<Button
 						className="action-button"
-						type="text"
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
+						variant="ghost"
+						color="secondary"
 					>
 						<X size={14} />
 						<Typography.Text>Cancel</Typography.Text>
 					</Button>
 					<Button
 						className="action-button"
-						type="text"
 						onClick={(e): void => {
 							e.stopPropagation();
 							handleSave();
 						}}
 						disabled={isUpdatingMetricsMetadata}
+						variant="ghost"
+						color="secondary"
 					>
 						<Save size={14} />
 						<Typography.Text>Save</Typography.Text>
@@ -326,12 +329,13 @@ function Metadata({
 			<div className="action-menu">
 				<Button
 					className="action-button"
-					type="text"
 					onClick={(e): void => {
 						e.stopPropagation();
 						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
+					variant="ghost"
+					color="secondary"
 				>
 					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>

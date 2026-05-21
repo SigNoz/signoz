@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -129,10 +130,10 @@ function Hosts(): JSX.Element {
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
-				className="periscope-btn ghost"
-				type="text"
-				size="small"
 				onClick={handleFilterVisibilityChange}
+				size="sm"
+				variant="ghost"
+				color="secondary"
 			>
 				<Filter size={14} />
 			</Button>

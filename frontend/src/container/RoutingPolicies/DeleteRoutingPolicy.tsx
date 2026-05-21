@@ -1,4 +1,5 @@
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { Loader, Trash2, X } from '@signozhq/icons';
 
@@ -28,18 +29,19 @@ function DeleteRoutingPolicy({
 					key="cancel"
 					onClick={handleClose}
 					className="cancel-btn"
-					icon={<X size={16} />}
 					disabled={isDeletingRoutingPolicy}
+					variant="outlined"
+					color="secondary"
+					prefix={<X size={16} />}
 				>
 					Cancel
 				</Button>,
 				<Button
 					key="submit"
-					type="primary"
-					icon={deleteButtonIcon}
 					onClick={handleDelete}
 					className="delete-btn"
 					disabled={isDeletingRoutingPolicy}
+					prefix={deleteButtonIcon}
 				>
 					Delete Routing Policy
 				</Button>,

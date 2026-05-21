@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Card, Skeleton } from 'antd';
+import { Card, Skeleton } from 'antd';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -247,23 +248,25 @@ function StatusCodeBarCharts({
 			<Card bordered className="endpoint-details-card">
 				<div className="header">
 					<Typography.Text>Call response status</Typography.Text>
-					<Button.Group className="views-tabs">
+					<ButtonGroup>
 						<Button
-							value={0}
 							className={currentWidgetInfoIndex === 0 ? 'selected_view tab' : 'tab'}
 							disabled={false}
 							onClick={(): void => setCurrentWidgetInfoIndex(0)}
+							variant="outlined"
+							color="secondary"
 						>
 							Number of calls
 						</Button>
 						<Button
-							value={1}
 							className={currentWidgetInfoIndex === 1 ? 'selected_view tab' : 'tab'}
 							onClick={(): void => setCurrentWidgetInfoIndex(1)}
+							variant="outlined"
+							color="secondary"
 						>
 							Latency
 						</Button>
-					</Button.Group>
+					</ButtonGroup>
 				</div>
 				<div className="graph-container" ref={graphRef}>
 					{renderCardContent(endPointStatusCodeBarChartsDataQuery)}

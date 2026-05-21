@@ -1,6 +1,6 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Modal, Tag } from 'antd';
+import { Modal, Tag } from 'antd';
 import { CircleAlert, X } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { useAppContext } from 'providers/App/App';
@@ -9,6 +9,7 @@ import APIError from 'types/api/error';
 import ErrorContent from './components/ErrorContent';
 
 import './ErrorModal.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 type Props = {
 	error: APIError;
@@ -73,10 +74,11 @@ function ErrorModal({
 							<div className="error-modal__version-placeholder" />
 						)}
 						<Button
-							type="default"
 							className="close-button"
 							onClick={handleClose}
 							data-testid="close-button"
+							variant="outlined"
+							color="secondary"
 						>
 							<X size={16} color={Color.BG_VANILLA_400} />
 						</Button>

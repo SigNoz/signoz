@@ -1,7 +1,7 @@
 import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -11,6 +11,7 @@ import { UPDATE_SPAN_UPDATE_FILTER_DISPLAY_VALUE } from 'types/actions/trace';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
 import CheckBoxComponent from '../Common/Checkbox';
+import { Button } from '@signozhq/ui/button';
 
 const { Search } = Input;
 
@@ -89,7 +90,7 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 				))}
 
 			{isMoreButtonAvilable && (
-				<Button onClick={onClickMoreHandler} type="link">
+				<Button onClick={onClickMoreHandler} variant="link">
 					More
 				</Button>
 			)}

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Button } from 'antd';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import PipelineSimulationResult from './PipelineSimulationResult';
+import { Button } from '@signozhq/ui/button';
 
 function LogsProcessingSimulator({
 	inputLogs,
@@ -15,11 +15,7 @@ function LogsProcessingSimulator({
 	if (simulationInput !== inputLogs) {
 		return (
 			<div>
-				<Button
-					disabled={(inputLogs?.length || 0) < 1}
-					type="primary"
-					onClick={simulate}
-				>
+				<Button disabled={(inputLogs?.length || 0) < 1} onClick={simulate}>
 					Simulate Processing
 				</Button>
 			</div>

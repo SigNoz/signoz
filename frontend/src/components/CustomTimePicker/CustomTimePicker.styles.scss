@@ -108,7 +108,7 @@
 }
 
 .info-text:hover {
-	&.ant-btn-text {
+	& {
 		background-color: unset !important;
 	}
 }

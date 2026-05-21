@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
@@ -15,6 +15,7 @@ import { getChartManagerColumns } from './getChartMangerColumns';
 import { ExtendedChartDataset, getDefaultTableDataSet } from './utils';
 
 import './ChartManager.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface ChartManagerProps {
 	config: UPlotConfigBuilder;
@@ -151,12 +152,10 @@ export default function ChartManager({
 					data-testid="filter-input"
 				/>
 				<div className="chart-manager-actions-container">
-					<Button type="default" onClick={onCancel}>
+					<Button onClick={onCancel} variant="outlined" color="secondary">
 						Cancel
 					</Button>
-					<Button type="primary" onClick={handleSave}>
-						Save
-					</Button>
+					<Button onClick={handleSave}>Save</Button>
 				</div>
 			</div>
 			<div className="chart-manager-table-container">

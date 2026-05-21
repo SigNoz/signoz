@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { RotateCw } from '@signozhq/icons';
 
@@ -22,7 +22,9 @@ function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
 				<Button
 					className="refresh-cta"
 					onClick={(): void => refetch()}
-					icon={<RotateCw size={16} />}
+					variant="outlined"
+					color="secondary"
+					prefix={<RotateCw size={16} />}
 				>
 					Refresh this panel
 				</Button>

@@ -1,7 +1,8 @@
 import { ChangeEvent, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Input, Tooltip } from 'antd';
+import { Flex, Input, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -74,14 +75,11 @@ function RoutingPolicies(): JSX.Element {
 					/>
 					<Tooltip title={tooltipTitle}>
 						<Button
-							type="primary"
 							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
 							disabled={disableCreateButton}
+							prefix={<Plus size={16} />}
 						>
-							<Flex gap={4} align="center">
-								<Plus size={16} />
-								New routing policy
-							</Flex>
+							New routing policy
 						</Button>
 					</Tooltip>
 				</Flex>

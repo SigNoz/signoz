@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button, Popover, Spin, Tooltip } from 'antd';
+import { Button as AntdButton, Popover, Spin, Tooltip } from 'antd';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/antlrQueryConstants';
@@ -11,6 +11,7 @@ import {
 	Ellipsis,
 	Pin,
 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 interface AttributeRecord {
 	field: string;
@@ -100,7 +101,7 @@ export default function AttributeActions({
 
 	const moreActionsContent = (
 		<div className="attribute-actions-menu">
-			<Button
+			<AntdButton
 				className="group-by-clause"
 				type="text"
 				icon={<GroupByIcon />}
@@ -108,25 +109,25 @@ export default function AttributeActions({
 				block
 			>
 				Group By Attribute
-			</Button>
+			</AntdButton>
 			{showCopyOptions && (
 				<>
-					<Button
+					<AntdButton
 						type="text"
 						icon={<Copy size={14} />}
 						onClick={handleCopyFieldName}
 						block
 					>
 						Copy Field Name
-					</Button>
-					<Button
+					</AntdButton>
+					<AntdButton
 						type="text"
 						icon={<Copy size={14} />}
 						onClick={handleCopyFieldValue}
 						block
 					>
 						Copy Field Value
-					</Button>
+					</AntdButton>
 				</>
 			)}
 		</div>
@@ -139,39 +140,45 @@ export default function AttributeActions({
 					<Button
 						className={`filter-btn periscope-btn ${isPinned ? 'pinned' : ''}`}
 						aria-label={isPinned ? 'Unpin attribute' : 'Pin attribute'}
-						icon={<Pin size={14} fill={isPinned ? 'currentColor' : 'none'} />}
 						onClick={handleTogglePin}
+						variant="outlined"
+						color="secondary"
+						prefix={<Pin size={14} fill={isPinned ? 'currentColor' : 'none'} />}
 					/>
 				</Tooltip>
 			)}
 			<Tooltip title="Filter for value">
 				<Button
-					className="filter-btn periscope-btn"
+					className="filter-btn"
 					aria-label="Filter for value"
 					disabled={isFilterInLoading}
-					icon={
+					onClick={handleFilterIn}
+					variant="outlined"
+					color="secondary"
+					prefix={
 						isFilterInLoading ? (
 							<Spin size="small" />
 						) : (
 							<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
 						)
 					}
-					onClick={handleFilterIn}
 				/>
 			</Tooltip>
 			<Tooltip title="Filter out value">
 				<Button
-					className="filter-btn periscope-btn"
+					className="filter-btn"
 					aria-label="Filter out value"
 					disabled={isFilterOutLoading}
-					icon={
+					onClick={handleFilterOut}
+					variant="outlined"
+					color="secondary"
+					prefix={
 						isFilterOutLoading ? (
 							<Spin size="small" />
 						) : (
 							<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
 						)
 					}
-					onClick={handleFilterOut}
 				/>
 			</Tooltip>
 			<Popover
@@ -186,8 +193,10 @@ export default function AttributeActions({
 				<Button
 					data-testid="attribute-actions-more"
 					aria-label="More attribute actions"
-					icon={<Ellipsis size={14} />}
 					className="filter-btn periscope-btn"
+					variant="outlined"
+					color="secondary"
+					prefix={<Ellipsis size={14} />}
 				/>
 			</Popover>
 		</div>

@@ -542,7 +542,7 @@
 	gap: 16px;
 	margin-bottom: 16px;
 
-	.ant-btn {
+	button {
 		width: 120px;
 	}
 }
@@ -744,7 +744,7 @@
 			height: 100%;
 		}
 
-		.ant-btn-default {
+		button {
 			border: none !important;
 			box-shadow: none;
 			background: var(
@@ -773,7 +773,7 @@
 			flex-direction: column;
 			gap: 16px;
 
-			.ant-btn {
+			button {
 				border: none !important;
 				box-shadow: none;
 				border-radius: var(--Radii-radius-round, 9999px);

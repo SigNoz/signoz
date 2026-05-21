@@ -1,7 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Spin } from 'antd';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Spin } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Info } from '@signozhq/icons';
@@ -66,11 +67,10 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 						Something went wrong while fetching metric highlights
 					</Typography.Text>
 					<Button
-						type="link"
-						size="large"
 						onClick={(): void => {
 							refetchMetricHighlights();
 						}}
+						variant="link"
 					>
 						Retry ?
 					</Button>

@@ -13,7 +13,6 @@ import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
-	Button,
 	Dropdown,
 	Flex,
 	Input,
@@ -26,6 +25,7 @@ import {
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -92,7 +92,6 @@ import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
-import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { RequestDashboardBtn } from './RequestDashboardBtn';
 import { DeleteButton } from './TableComponents/DeleteButton';
@@ -102,7 +101,6 @@ import {
 	filterDashboards,
 } from './utils';
 
-import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -129,9 +127,6 @@ function DashboardsList(): JSX.Element {
 		['action', 'create_new_dashboards'],
 		user.role,
 	);
-
-	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
-		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
@@ -437,53 +432,61 @@ function DashboardsList(): JSX.Element {
 							{action && (
 								<Popover
 									content={
-										<div className={styles.actionContent}>
-											<Button
-												type="text"
-												className={styles.actionBtn}
-												icon={<Expand size={12} />}
-												onClick={onClickHandler}
-											>
-												View
-											</Button>
-											<Button
-												type="text"
-												className={styles.actionBtn}
-												icon={<SquareArrowOutUpRight size={12} />}
-												onClick={(e): void => {
-													e.stopPropagation();
-													e.preventDefault();
-													openInNewTab(getLink());
-												}}
-											>
-												Open in New Tab
-											</Button>
-											<Button
-												type="text"
-												className={styles.actionBtn}
-												icon={<Link2 size={12} />}
-												onClick={(e): void => {
-													e.stopPropagation();
-													e.preventDefault();
-													setCopy(getAbsoluteUrl(getLink()));
-												}}
-											>
-												Copy Link
-											</Button>
-											<Button
-												type="text"
-												className={styles.actionBtn}
-												icon={<FileJson size={12} />}
-												onClick={handleJsonExport}
-											>
-												Export JSON
-											</Button>
-											<DeleteButton
-												name={dashboard.name}
-												id={dashboard.id}
-												isLocked={dashboard.isLocked}
-												createdBy={dashboard.createdBy}
-											/>
+										<div className="dashboard-action-content">
+											<section className="section-1">
+												<Button
+													className="action-btn"
+													onClick={onClickHandler}
+													variant="ghost"
+													color="secondary"
+													prefix={<Expand size={12} />}
+												>
+													View
+												</Button>
+												<Button
+													className="action-btn"
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														openInNewTab(getLink());
+													}}
+													variant="ghost"
+													color="secondary"
+													prefix={<SquareArrowOutUpRight size={12} />}
+												>
+													Open in New Tab
+												</Button>
+												<Button
+													className="action-btn"
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														setCopy(getAbsoluteUrl(getLink()));
+													}}
+													variant="ghost"
+													color="secondary"
+													prefix={<Link2 size={12} />}
+												>
+													Copy Link
+												</Button>
+												<Button
+													className="action-btn"
+													onClick={handleJsonExport}
+													variant="ghost"
+													color="secondary"
+													prefix={<FileJson size={12} />}
+												>
+													Export JSON
+												</Button>
+											</section>
+											<section className="section-2">
+												<DeleteButton
+													name={dashboard.name}
+													id={dashboard.id}
+													isLocked={dashboard.isLocked}
+													createdBy={dashboard.createdBy}
+												/>
+											</section>
 										</div>
 									}
 									placement="bottomRight"
@@ -681,16 +684,18 @@ function DashboardsList(): JSX.Element {
 						<section className="action-btns">
 							<Button
 								className="retry-btn"
-								type="text"
-								icon={<RotateCw size={16} />}
 								onClick={(): Promise<any> => refetchDashboardList()}
+								variant="ghost"
+								color="secondary"
+								prefix={<RotateCw size={16} />}
 							>
 								Retry
 							</Button>
 							<Button
-								type="text"
 								className="learn-more"
 								onClick={(): void => handleContactSupport(isCloudUserVal)}
+								variant="ghost"
+								color="secondary"
 							>
 								Contact Support
 							</Button>
@@ -718,18 +723,18 @@ function DashboardsList(): JSX.Element {
 									trigger={['click']}
 								>
 									<Button
-										type="text"
 										className="new-dashboard"
-										icon={<Plus size={14} />}
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
+										variant="ghost"
+										color="secondary"
+										prefix={<Plus size={14} />}
 									>
 										New Dashboard
 									</Button>
 								</Dropdown>
 								<Button
-									type="text"
 									className="learn-more"
 									data-testid="learn-more"
 									onClick={(): void => {
@@ -738,6 +743,8 @@ function DashboardsList(): JSX.Element {
 											'_blank',
 										);
 									}}
+									variant="ghost"
+									color="secondary"
 								>
 									Learn more
 								</Button>
@@ -763,13 +770,14 @@ function DashboardsList(): JSX.Element {
 									trigger={['click']}
 								>
 									<Button
-										type="primary"
-										className="periscope-btn primary btn"
-										icon={<Plus size={14} />}
+										className="btn"
 										data-testid="new-dashboard-cta"
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
+										prefix={<Plus size={14} />}
+										variant="solid"
+										color="primary"
 									>
 										New dashboard
 									</Button>
@@ -800,10 +808,11 @@ function DashboardsList(): JSX.Element {
 															Sort By
 														</Typography.Text>
 														<Button
-															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('createdAt')}
 															data-testid="sort-by-last-created"
+															variant="ghost"
+															color="secondary"
 														>
 															Last created
 															{dashboardsListQueryParams.columnKey === 'createdAt' && (
@@ -811,10 +820,11 @@ function DashboardsList(): JSX.Element {
 															)}
 														</Button>
 														<Button
-															type="text"
 															className={cx('sort-btns')}
 															onClick={(): void => sortHandle('updatedAt')}
 															data-testid="sort-by-last-updated"
+															variant="ghost"
+															color="secondary"
 														>
 															Last updated
 															{dashboardsListQueryParams.columnKey === 'updatedAt' && (
@@ -835,14 +845,15 @@ function DashboardsList(): JSX.Element {
 											content={
 												<div className="configure-content">
 													<Button
-														type="text"
-														icon={<HdmiPort size={14} />}
 														className="configure-btn"
 														onClick={(e): void => {
 															e.preventDefault();
 															e.stopPropagation();
 															setIsConfigureMetadata(true);
 														}}
+														variant="ghost"
+														color="secondary"
+														prefix={<HdmiPort size={14} />}
 													>
 														Configure metadata
 													</Button>
@@ -875,14 +886,6 @@ function DashboardsList(): JSX.Element {
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
 
-				<DashboardTemplatesModal
-					showNewDashboardTemplatesModal={showNewDashboardTemplatesModal}
-					onCreateNewDashboard={onNewDashboardHandler}
-					onCancel={(): void => {
-						setShowNewDashboardTemplatesModal(false);
-					}}
-				/>
-
 				<Modal
 					open={isConfigureMetadataOpen}
 					onCancel={(): void => {
@@ -893,13 +896,14 @@ function DashboardsList(): JSX.Element {
 					title="Configure Metadata"
 					footer={
 						<Button
-							type="text"
-							icon={<Check size={14} />}
 							className="save-changes"
 							onClick={(): void => {
 								setIsConfigureMetadata(false);
 								setDynamicColumnsLocalStorage(visibleColumns);
 							}}
+							variant="ghost"
+							color="secondary"
+							prefix={<Check size={14} />}
 						>
 							Save Changes
 						</Button>

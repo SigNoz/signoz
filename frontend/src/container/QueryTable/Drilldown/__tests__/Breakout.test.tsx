@@ -3,7 +3,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -21,6 +20,7 @@ import {
 	// MOCK_KEY_SUGGESTIONS_SEARCH_RESPONSE,
 	MOCK_QUERY,
 } from './mockTableData';
+import { Button } from '@signozhq/ui/button';
 
 // Mock the necessary hooks and dependencies
 const mockSafeNavigate = jest.fn();
@@ -108,13 +108,9 @@ function MockTableDrilldown(): JSX.Element {
 
 	return (
 		<div style={{ padding: '20px' }}>
-			<Button type="primary" onClick={(): void => handleClick('aggregate')}>
-				Aggregate
-			</Button>
+			<Button onClick={(): void => handleClick('aggregate')}>Aggregate</Button>
 
-			<Button type="primary" onClick={(): void => handleClick('filter')}>
-				Filter
-			</Button>
+			<Button onClick={(): void => handleClick('filter')}>Filter</Button>
 
 			<ContextMenu
 				coordinates={coordinates}

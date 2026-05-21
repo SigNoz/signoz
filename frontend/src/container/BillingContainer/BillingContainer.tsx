@@ -1,3 +1,4 @@
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,6 @@ import { CircleCheck, CloudDownload } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
-	Button,
 	Card,
 	Col,
 	Flex,
@@ -445,12 +445,11 @@ export default function BillingContainer(): JSX.Element {
 					</Flex>
 					<Flex gap={8}>
 						<Button
-							type="default"
-							size="middle"
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
-							className="periscope-btn"
+							variant="outlined"
+							color="secondary"
 						>
 							<Flex align="center" justify="center" gap={4}>
 								<CloudDownload size="md" />
@@ -459,8 +458,6 @@ export default function BillingContainer(): JSX.Element {
 						</Button>
 						<Button
 							data-testid="header-billing-button"
-							type="primary"
-							size="middle"
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading}
 							onClick={handleBilling}
@@ -584,8 +581,6 @@ export default function BillingContainer(): JSX.Element {
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<Button
 								data-testid="upgrade-plan-button"
-								type="primary"
-								size="middle"
 								loading={isLoadingBilling || isLoadingManageBilling}
 								onClick={handleBilling}
 							>

@@ -3,7 +3,7 @@ import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Button, Select, Skeleton, Table } from 'antd';
+import { Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -38,6 +38,7 @@ import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
+import { Button } from '@signozhq/ui/button';
 
 const homeInterval = 30 * 60 * 1000;
 
@@ -67,8 +68,6 @@ const EmptyState = memo(
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
 						<Button
-							type="default"
-							className="periscope-btn secondary"
 							onClick={(): void => {
 								logEvent('Homepage: Get Started clicked', {
 									source: 'Service Metrics',
@@ -83,12 +82,13 @@ const EmptyState = memo(
 									openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 								}
 							}}
+							variant="outlined"
+							color="secondary"
 						>
 							Get Started &nbsp; <ArrowRight size={16} />
 						</Button>
 
 						<Button
-							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
 								logEvent('Homepage: Learn more clicked', {
@@ -99,6 +99,7 @@ const EmptyState = memo(
 									'_blank',
 								);
 							}}
+							variant="link"
 						>
 							Learn more <ArrowUpRight size={12} />
 						</Button>
@@ -349,11 +350,11 @@ function ServiceMetrics({
 					<div className="services-footer home-data-card-footer">
 						<Link to="/services">
 							<Button
-								type="link"
-								className="periscope-btn link learn-more-link"
+								className="learn-more-link"
 								onClick={(): void => {
 									logEvent('Homepage: All Services clicked', {});
 								}}
+								variant="link"
 							>
 								All Services <ArrowRight size={12} />
 							</Button>

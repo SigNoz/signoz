@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { Button } from 'antd';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
 import APIError from 'types/api/error';
+import { Button } from '@signozhq/ui/button';
 
 function Delete({ notifications, id }: DeleteProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
@@ -38,8 +38,8 @@ function Delete({ notifications, id }: DeleteProps): JSX.Element {
 		<Button
 			loading={loading}
 			disabled={loading}
-			type="link"
 			onClick={onClickHandler}
+			variant="link"
 		>
 			Delete
 		</Button>

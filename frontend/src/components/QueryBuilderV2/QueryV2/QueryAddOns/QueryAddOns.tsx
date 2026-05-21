@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
+import { Radio, RadioChangeEvent, Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -17,6 +17,7 @@ import HavingFilter from './HavingFilter/HavingFilter';
 import { buildDefaultLegendFromGroupBy } from './utils';
 
 import './QueryAddOns.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface AddOn {
 	icon: React.ReactNode;
@@ -370,9 +371,12 @@ function QueryAddOns({
 									/>
 								</div>
 								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<ChevronUp size={16} />}
+									className="close-btn"
 									onClick={(): void => handleRemoveView('group_by')}
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<ChevronUp size={16} />}
 								/>
 							</div>
 						</div>
@@ -455,9 +459,12 @@ function QueryAddOns({
 								</div>
 								{!isListViewPanel && (
 									<Button
-										className="close-btn periscope-btn ghost"
-										icon={<ChevronUp size={16} />}
+										className="close-btn"
 										onClick={(): void => handleRemoveView('order_by')}
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										prefix={<ChevronUp size={16} />}
 									/>
 								)}
 							</div>
@@ -488,9 +495,12 @@ function QueryAddOns({
 									</div>
 
 									<Button
-										className="close-btn periscope-btn ghost"
-										icon={<ChevronUp size={16} />}
+										className="close-btn"
 										onClick={(): void => handleRemoveView('reduce_to')}
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										prefix={<ChevronUp size={16} />}
 									/>
 								</div>
 							</div>

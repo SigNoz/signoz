@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Drawer, Empty, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Drawer, Empty, Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -287,9 +288,11 @@ function Inspect({
 						<Typography.Text>Metrics Explorer —</Typography.Text>
 						<Button
 							className="inspect-metrics-button"
-							size="small"
-							icon={<Compass size={14} />}
 							disabled
+							size="sm"
+							variant="outlined"
+							color="secondary"
+							prefix={<Compass size={14} />}
 						>
 							Inspect Metric
 						</Button>

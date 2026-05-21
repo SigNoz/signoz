@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { Button, Col, Tooltip } from 'antd';
+import { Col, Tooltip } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -21,6 +21,7 @@ import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
 import './QBEntityOptions.styles.scss';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
@@ -84,21 +85,16 @@ export default function QBEntityOptions({
 		<Col span={24}>
 			<div className="qb-entity-options">
 				<div className="left-col-items">
-					<div className="options periscope-btn-group">
-						<Button.Group>
+					<div className="options">
+						<ButtonGroup variant="outlined" color="secondary">
 							<Tooltip title={isCollapsed ? 'Uncollapse' : 'Collapse'}>
-								<Button
-									value="search"
-									className="periscope-btn collapse"
-									onClick={onCollapseEntity}
-								>
+								<Button className="collapse" onClick={onCollapseEntity}>
 									{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 								</Button>
 							</Tooltip>
 							<Tooltip title={entityData.disabled ? 'Show' : 'Hide'}>
 								<Button
-									value="query-builder"
-									className="periscope-btn visibility-toggle"
+									className="visibility-toggle"
 									onClick={onToggleVisibility}
 									disabled={isListViewPanel && !showTraceOperator}
 								>
@@ -108,7 +104,7 @@ export default function QBEntityOptions({
 
 							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
-									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
+									<Button onClick={handleCloneEntity}>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
@@ -116,7 +112,6 @@ export default function QBEntityOptions({
 
 							<Button
 								className={cx(
-									'periscope-btn',
 									entityType === 'query' ? 'query-name' : 'formula-name',
 									query?.dataSource === DataSource.TRACES &&
 										(hasTraceOperator || (showTraceOperator && isListViewPanel))
@@ -157,7 +152,7 @@ export default function QBEntityOptions({
 										maxFunctions={isLogsDataSource ? 1 : 3}
 									/>
 								)}
-						</Button.Group>
+						</ButtonGroup>
 					</div>
 
 					{isCollapsed && (
@@ -169,7 +164,7 @@ export default function QBEntityOptions({
 				</div>
 
 				{showDeleteButton && !isListViewPanel && (
-					<Button className="periscope-btn ghost" onClick={onDelete}>
+					<Button onClick={onDelete} variant="outlined" color="secondary">
 						<Trash2 size={14} />
 					</Button>
 				)}

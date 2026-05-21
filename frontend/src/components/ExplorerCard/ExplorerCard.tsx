@@ -1,16 +1,8 @@
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import {
-	Button,
-	Col,
-	Dropdown,
-	MenuProps,
-	Popover,
-	Row,
-	Select,
-	Space,
-} from 'antd';
+import { Col, Dropdown, MenuProps, Popover, Row, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -159,7 +151,6 @@ function ExplorerCard({
 		],
 	};
 
-	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
 	const saveButtonIcon = isQueryUpdated ? null : <Save size="md" />;
 
 	const showSaveView = false;
@@ -210,7 +201,7 @@ function ExplorerCard({
 									</Space>
 								)}
 								{isQueryUpdated && (
-									<Button type="primary" icon={<Save />} onClick={onUpdateQueryHandler}>
+									<Button onClick={onUpdateQueryHandler} prefix={<Save />}>
 										Save changes
 									</Button>
 								)}
@@ -230,9 +221,10 @@ function ExplorerCard({
 									onOpenChange={handleOpenChange}
 								>
 									<Button
-										type={saveButtonType}
-										icon={saveButtonIcon}
 										data-testid="traces-save-view-action"
+										variant="outlined"
+										color="secondary"
+										prefix={saveButtonIcon ?? undefined}
 									>
 										{isQueryUpdated
 											? SaveButtonText.SAVE_AS_NEW_VIEW

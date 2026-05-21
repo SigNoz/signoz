@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, CollapseProps } from 'antd';
+import { CollapseProps } from 'antd';
 import { Collapse, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
@@ -313,10 +314,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				{!showFilters && (
 					<div>
 						<Button
-							className="periscope-btn ghost"
-							type="text"
-							size="small"
 							onClick={handleFilterVisibilityChange}
+							size="sm"
+							variant="ghost"
+							color="secondary"
 						>
 							<Filter size={14} />
 						</Button>

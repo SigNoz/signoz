@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Select } from 'antd';
+import { Input, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
@@ -240,10 +241,12 @@ function InviteTeamMembers({
 
 								{teamMembersToInvite?.length > 1 && (
 									<Button
-										type="default"
-										className="remove-team-member-button periscope-btn"
-										icon={<X size={14} />}
+										className="remove-team-member-button"
 										onClick={(): void => handleRemoveTeamMember(member.id)}
+										variant="outlined"
+										color="secondary"
+										size="icon"
+										prefix={<X size={14} />}
 									/>
 								)}
 							</div>
@@ -252,10 +255,11 @@ function InviteTeamMembers({
 
 					<div className="invite-team-members-add-another-member-container">
 						<Button
-							type="primary"
-							className="add-another-member-button periscope-btn"
-							icon={<Plus size={14} />}
+							className="add-another-member-button"
 							onClick={handleAddTeamMember}
+							prefix={<Plus size={14} />}
+							variant="outlined"
+							color="secondary"
 						>
 							Member
 						</Button>
@@ -273,19 +277,21 @@ function InviteTeamMembers({
 			</div>
 			<div className="next-prev-container">
 				<Button
-					type="default"
-					className="next-button periscope-btn"
+					className="next-button"
 					onClick={onClose}
+					variant="outlined"
+					color="secondary"
 				>
 					<X size={14} />
 					Cancel
 				</Button>
 
 				<Button
-					type="primary"
-					className="next-button periscope-btn primary"
+					className="next-button"
 					onClick={handleNext}
 					loading={isSendingInvites || isLoading}
+					variant="solid"
+					color="primary"
 				>
 					Send Invites
 					<ArrowRight size={14} />

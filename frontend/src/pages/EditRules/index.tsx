@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Card } from 'antd';
+import { Card } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
 import type {
@@ -26,6 +26,7 @@ import {
 } from 'types/api/alerts/convert';
 
 import './EditRules.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function EditRules(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
@@ -83,7 +84,7 @@ function EditRules(): JSX.Element {
 				<Card size="small" className="edit-rules-card">
 					<p className="content">{errorMsg || t('something_went_wrong')}</p>
 					<div className="btn-container">
-						<Button type="default" size="large" onClick={clickHandler}>
+						<Button onClick={clickHandler} variant="outlined" color="secondary">
 							Return to Alerts Page
 						</Button>
 					</div>

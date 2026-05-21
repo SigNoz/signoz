@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
@@ -7,6 +7,7 @@ import EvaluationWindowPopover from './EvaluationWindowPopover';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 import './styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
@@ -29,7 +30,11 @@ function EvaluationSettings(): JSX.Element {
 			trigger="click"
 			showArrow={false}
 		>
-			<Button data-testid="evaluation-settings-button">
+			<Button
+				data-testid="evaluation-settings-button"
+				variant="outlined"
+				color="secondary"
+			>
 				<div className="evaluate-alert-conditions-button-left">
 					{getTimeframeText(evaluationWindow)}
 				</div>

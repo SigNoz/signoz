@@ -1,3 +1,4 @@
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5,7 +6,7 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
+import { Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
 import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
@@ -266,9 +267,8 @@ function AllErrors(): JSX.Element {
 						onPressEnter={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
 					/>
 					<Button
-						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						size="small"
+						size="sm"
 					>
 						<Flex align="center" justify="center" gap={4}>
 							<Search size="md" />

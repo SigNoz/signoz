@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, Input } from 'antd';
+import { Form, Input } from 'antd';
 import apply from 'api/v3/licenses/post';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
@@ -12,6 +12,7 @@ import {
 	KeyPreview,
 	LicenseInput,
 } from './styles';
+import { Button } from '@signozhq/ui/button';
 
 function ApplyLicenseForm({
 	licenseRefetch,
@@ -69,12 +70,7 @@ function ApplyLicenseForm({
 					<Input placeholder={t('placeholder_license_key')} />
 				</LicenseInput>
 				<Form.Item>
-					<Button
-						loading={isLoading}
-						disabled={isDisabled}
-						type="primary"
-						htmlType="submit"
-					>
+					<Button loading={isLoading} disabled={isDisabled} type="submit">
 						{t('button_apply')}
 					</Button>
 				</Form.Item>

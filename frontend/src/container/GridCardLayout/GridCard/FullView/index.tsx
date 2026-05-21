@@ -10,7 +10,7 @@ import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { Loader, RefreshCw, Search } from '@signozhq/icons';
-import { Button, Input, Spin } from 'antd';
+import { Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -61,6 +61,7 @@ import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
 import './WidgetFullView.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function FullView({
 	widget,
@@ -302,7 +303,7 @@ function FullView({
 								{enableDrillDown && (
 									<div className="drildown-options-container">
 										{showResetQuery && (
-											<Button type="link" onClick={handleResetQuery}>
+											<Button onClick={handleResetQuery} variant="link">
 												Reset Query
 											</Button>
 										)}
@@ -317,6 +318,8 @@ function FullView({
 														});
 													}
 												}}
+												variant="outlined"
+												color="secondary"
 											>
 												Switch to Edit Mode
 											</Button>
@@ -350,8 +353,8 @@ function FullView({
 										onClick={(): void => {
 											response.refetch();
 										}}
-										type="primary"
-										icon={<RefreshCw size="md" />}
+										size="icon"
+										prefix={<RefreshCw size="md" />}
 									/>
 								</div>
 							</TimeContainer>

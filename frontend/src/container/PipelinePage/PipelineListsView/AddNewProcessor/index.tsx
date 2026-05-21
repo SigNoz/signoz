@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, Modal } from 'antd';
+import { Form, Modal } from 'antd';
 import {
 	ActionMode,
 	ActionType,
@@ -14,6 +14,7 @@ import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE, processorFields } from './config';
 import TypeSelect from './FormFields/TypeSelect';
 import ProcessorForm from './ProcessorForm';
+import { Button } from '@signozhq/ui/button';
 
 function AddNewProcessor({
 	isActionType,
@@ -180,15 +181,15 @@ function AddNewProcessor({
 
 				<Form.Item>
 					<ModalButtonWrapper>
-						<Button
-							key="submit"
-							type="primary"
-							htmlType="submit"
-							onClick={onOkModalHandler}
-						>
+						<Button key="submit" onClick={onOkModalHandler} type="submit">
 							{isEdit ? t('update') : t('create')}
 						</Button>
-						<Button key="cancel" onClick={onCancelModal}>
+						<Button
+							key="cancel"
+							onClick={onCancelModal}
+							variant="outlined"
+							color="secondary"
+						>
 							{t('cancel')}
 						</Button>
 					</ModalButtonWrapper>

@@ -4,7 +4,7 @@ import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
-import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { Dropdown, Flex, MenuProps, Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -21,6 +21,7 @@ import {
 } from './utils';
 
 import './DynamicColumnTable.syles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function DynamicColumnTable({
 	tablesource,
@@ -133,9 +134,11 @@ function DynamicColumnTable({
 					>
 						<Button
 							className="dynamicColumnTable-button filter-btn"
-							size="middle"
-							icon={<SlidersHorizontal size={14} />}
 							data-testid="additional-filters-button"
+							variant="outlined"
+							color="secondary"
+							size="icon"
+							prefix={<SlidersHorizontal size={14} />}
 						/>
 					</Dropdown>
 				)}

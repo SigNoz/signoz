@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Input, Radio, RadioChangeEvent } from 'antd';
+import { Input, Radio, RadioChangeEvent } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -125,11 +126,11 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 
 			<div className="feedback-modal-content-footer">
 				<Button
-					className="periscope-btn primary"
-					type="primary"
 					onClick={handleSubmit}
 					loading={isLoading}
 					disabled={feedback.length === 0}
+					variant="solid"
+					color="primary"
 				>
 					Submit
 				</Button>

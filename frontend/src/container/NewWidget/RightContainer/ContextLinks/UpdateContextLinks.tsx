@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Col, Form, Input as AntInput, Input, Row } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Col, Form, Input as AntInput, Input, Row } from 'antd';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {
 	getInitialValues,
@@ -315,10 +316,12 @@ function UpdateContextLinks({
 									</Col>
 									<Col span={2}>
 										<Button
-											type="text"
-											icon={<Trash2 size={14} />}
 											onClick={(): void => handleDeleteParameter(index)}
 											className="delete-parameter-btn"
+											variant="ghost"
+											color="secondary"
+											size="icon"
+											prefix={<Trash2 size={14} />}
 										/>
 									</Col>
 								</Row>
@@ -329,10 +332,9 @@ function UpdateContextLinks({
 
 				{/* Add URL parameter btn */}
 				<Button
-					type="primary"
 					className="add-url-parameter-btn"
-					icon={<Plus size={12} />}
 					onClick={handleAddUrlParameter}
+					prefix={<Plus size={12} />}
 				>
 					Add URL parameter
 				</Button>
@@ -340,10 +342,10 @@ function UpdateContextLinks({
 
 			{/* Footer with Cancel and Save buttons */}
 			<div className="context-link-footer">
-				<Button onClick={onCancel}>Cancel</Button>
-				<Button type="primary" onClick={handleSave}>
-					Save
+				<Button onClick={onCancel} variant="outlined" color="secondary">
+					Cancel
 				</Button>
+				<Button onClick={handleSave}>Save</Button>
 			</div>
 		</div>
 	);

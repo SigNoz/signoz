@@ -1,12 +1,13 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ChevronDown } from '@signozhq/icons';
-import { Button, ColorPicker, Dropdown, MenuProps, Space } from 'antd';
+import { ColorPicker, Dropdown, MenuProps, Space } from 'antd';
 import type { Color } from 'antd/es/color-picker';
 import useDebounce from 'hooks/useDebounce';
 
 import CustomColor from './CustomColor';
 
 import './ColorSelector.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function ColorSelector({
 	thresholdColor = 'Red',
@@ -66,6 +67,8 @@ function ColorSelector({
 			<Button
 				onClick={(e): void => e.preventDefault()}
 				className="color-selector-button"
+				variant="outlined"
+				color="secondary"
 			>
 				<Space className="color-selector-space">
 					<CustomColor color={thresholdColor} />

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -56,9 +57,11 @@ function TraceOperatorSection({
 				}
 			>
 				<Button
-					className="add-trace-operator-button periscope-btn"
-					icon={<DraftingCompass size={16} />}
+					className="add-trace-operator-button"
 					onClick={(): void => addTraceOperator?.()}
+					variant="outlined"
+					color="secondary"
+					prefix={<DraftingCompass size={16} />}
 				>
 					<div className="qb-trace-operator-button-container-text">
 						Add Trace Matching
@@ -92,9 +95,12 @@ export default function QueryFooter({
 				<div className="qb-add-new-query">
 					<Tooltip title={<div style={{ textAlign: 'center' }}>Add New Query</div>}>
 						<Button
-							className="add-new-query-button periscope-btn "
-							icon={<Plus size={16} />}
+							className="add-new-query-button"
 							onClick={addNewBuilderQuery}
+							variant="outlined"
+							color="secondary"
+							size="icon"
+							prefix={<Plus size={16} />}
 						/>
 					</Tooltip>
 				</div>
@@ -118,9 +124,11 @@ export default function QueryFooter({
 							}
 						>
 							<Button
-								className="add-formula-button periscope-btn "
-								icon={<Sigma size={16} />}
+								className="add-formula-button"
 								onClick={addNewFormula}
+								variant="outlined"
+								color="secondary"
+								prefix={<Sigma size={16} />}
 							>
 								Add Formula
 							</Button>

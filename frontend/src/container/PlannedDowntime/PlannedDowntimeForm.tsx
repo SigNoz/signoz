@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check } from '@signozhq/icons';
 import {
-	Button,
 	DatePicker,
 	Flex,
 	Form,
@@ -12,6 +11,7 @@ import {
 	SelectProps,
 	Spin,
 } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -311,7 +311,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	const endTimeText = useMemo((): string => {
 		const endTime = formData.endTime;
@@ -322,7 +322,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	return (
 		<Modal
@@ -492,8 +492,7 @@ export function PlannedDowntimeForm(
 					<ModalButtonWrapper>
 						<Button
 							key="submit"
-							type="primary"
-							htmlType="submit"
+							type="submit"
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 							className="downtime-schedule-btn"

@@ -261,10 +261,6 @@ describe('RoutingPolicyDetails', () => {
 		});
 		expect(saveButton).toBeDisabled();
 		expect(saveButton.querySelector('svg')).toBeInTheDocument();
-		expect(saveButton.querySelector('svg')).toHaveAttribute(
-			'data-icon',
-			'loading',
-		);
 	});
 
 	it('submit should not be called when inputs are invalid', () => {

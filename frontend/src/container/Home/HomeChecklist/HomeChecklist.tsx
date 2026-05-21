@@ -1,6 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
-import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -11,6 +10,7 @@ import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import './HomeChecklist.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 export type ChecklistItem = {
 	id: string;
@@ -85,8 +85,6 @@ function HomeChecklist({
 										<div className="whats-next-checklist-item-action-buttons">
 											<div className="whats-next-checklist-item-action-buttons-container">
 												<Button
-													type="default"
-													className="periscope-btn secondary"
 													onClick={(): void => {
 														logEvent('Welcome Checklist: Get started clicked', {
 															step: item.id,
@@ -103,14 +101,14 @@ function HomeChecklist({
 															openInNewTab(item.docsLink || '');
 														}
 													}}
+													variant="outlined"
+													color="secondary"
 												>
 													Get Started &nbsp; <ArrowRight size={16} />
 												</Button>
 
 												{item.docsLink && (
 													<Button
-														type="default"
-														className="periscope-btn secondary"
 														onClick={(): void => {
 															logEvent('Welcome Checklist: Docs clicked', {
 																step: item.id,
@@ -118,6 +116,8 @@ function HomeChecklist({
 
 															openInNewTab(item.docsLink ?? '');
 														}}
+														variant="outlined"
+														color="secondary"
 													>
 														<BookOpenText size={16} />
 													</Button>
@@ -127,8 +127,7 @@ function HomeChecklist({
 											{!item.isSkipped && item.isSkippable && (
 												<div className="whats-next-checklist-item-action-buttons-container">
 													<Button
-														type="link"
-														className="periscope-btn link skip-btn"
+														className="skip-btn"
 														onClick={(): void => {
 															logEvent('Welcome Checklist: Skip clicked', {
 																step: item.id,
@@ -137,7 +136,8 @@ function HomeChecklist({
 														}}
 														disabled={isLoading}
 														loading={isLoading}
-														icon={<ArrowRightToLine size={16} />}
+														variant="link"
+														prefix={<ArrowRightToLine size={16} />}
 													>
 														Skip for now
 													</Button>

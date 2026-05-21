@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
-import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
@@ -19,6 +18,7 @@ import {
 } from './MessagingQueuesUtils';
 
 import './MessagingQueues.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function MessagingQueues(): JSX.Element {
 	const history = useHistory();
@@ -93,7 +93,6 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Consumers}`,
@@ -101,6 +100,8 @@ function MessagingQueues(): JSX.Element {
 										e,
 									)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('configureConsumer.button')}
 							</Button>
@@ -113,7 +114,6 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_APPLICATION_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Producers}`,
@@ -121,6 +121,8 @@ function MessagingQueues(): JSX.Element {
 										e,
 									)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('configureProducer.button')}
 							</Button>
@@ -133,7 +135,6 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									getStartedRedirect(
 										`${ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING}?${QueryParams.getStartedSource}=kafka&${QueryParams.getStartedSourceService}=${MessagingQueueHealthCheckService.Kafka}`,
@@ -141,6 +142,8 @@ function MessagingQueues(): JSX.Element {
 										e,
 									)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('monitorKafka.button')}
 							</Button>
@@ -160,10 +163,11 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value, e)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>
@@ -178,10 +182,11 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value, e)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>
@@ -196,13 +201,14 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(
 										MessagingQueuesViewType.partitionLatency.value,
 										e,
 									)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>
@@ -217,10 +223,11 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value, e)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>
@@ -235,10 +242,11 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
-								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value, e)
 								}
+								variant="outlined"
+								color="secondary"
 							>
 								{t('summarySection.viewDetailsButton')}
 							</Button>

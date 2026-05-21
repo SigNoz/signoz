@@ -157,19 +157,6 @@
 			justify-content: flex-end;
 			padding: 16px 16px;
 			margin: 0;
-
-			> button {
-				display: flex;
-				align-items: center;
-				border-radius: 2px;
-				background-color: var(--primary-background) !important;
-				color: var(--primary-foreground) !important;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 24px;
-			}
 		}
 	}
 

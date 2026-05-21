@@ -4,8 +4,9 @@ import { useSelector } from 'react-redux';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Switch } from 'antd';
+import { Switch } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -155,9 +156,10 @@ function ShareURLModal(): JSX.Element {
 					</div>
 
 					<Button
-						className="periscope-btn secondary"
 						onClick={handleCopyURL}
-						icon={isURLCopied ? <Check size={14} /> : <Link2 size={14} />}
+						variant="outlined"
+						color="secondary"
+						prefix={isURLCopied ? <Check size={14} /> : <Link2 size={14} />}
 					>
 						Copy page link
 					</Button>

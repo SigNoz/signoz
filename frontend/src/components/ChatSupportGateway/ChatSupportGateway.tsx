@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { useNotifications } from 'hooks/useNotifications';
@@ -72,6 +73,8 @@ export default function ChatSupportGateway(): JSX.Element {
 
 						setIsAddCreditCardModalOpen(true);
 					}}
+					variant="outlined"
+					color="secondary"
 				>
 					<MessageSquareText size={24} />
 				</Button>
@@ -90,19 +93,19 @@ export default function ChatSupportGateway(): JSX.Element {
 						key="cancel"
 						onClick={(): void => setIsAddCreditCardModalOpen(false)}
 						className="cancel-btn"
-						icon={<X size={16} />}
+						variant="outlined"
+						color="secondary"
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
 						loading={isLoadingBilling}
 						disabled={isLoadingBilling}
 						onClick={handleAddCreditCard}
 						className="add-credit-card-btn"
+						prefix={<CreditCard size={16} />}
 					>
 						Add Credit Card
 					</Button>,

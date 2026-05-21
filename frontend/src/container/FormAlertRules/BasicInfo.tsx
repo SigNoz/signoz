@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Plus } from '@signozhq/icons';
-import { Button, Flex, Form, Select, Switch, Tooltip } from 'antd';
+import { Flex, Form, Select, Switch, Tooltip } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -30,6 +30,7 @@ import {
 } from './styles';
 
 import './FormAlertRules.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 const { Option } = Select;
 
@@ -256,6 +257,8 @@ function BasicInfo({
 							onClick={handleCreateNewChannels}
 							className="create-notification-btn"
 							disabled={!addNewChannelPermission}
+							variant="outlined"
+							color="secondary"
 						>
 							<Flex align="center" justify="center">
 								<Plus size="md" />

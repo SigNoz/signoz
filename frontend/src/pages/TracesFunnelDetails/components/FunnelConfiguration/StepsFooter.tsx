@@ -1,10 +1,11 @@
 import { useIsMutating } from 'react-query';
-import { Button, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { Check, Cone } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
 import './StepsFooter.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface StepsFooterProps {
 	stepsCount: number;
@@ -70,10 +71,9 @@ function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
 				<Button
 					disabled={hasIncompleteStepFields || !hasUnsavedChanges}
 					onClick={handleSaveFunnel}
-					type="primary"
 					className="steps-footer__button steps-footer__button--run"
-					icon={<Check size={14} />}
 					loading={isSaving}
+					prefix={<Check size={14} />}
 				>
 					Save funnel
 				</Button>

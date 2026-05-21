@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, Select } from 'antd';
+import { DatePicker, Input, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
@@ -311,6 +312,8 @@ function EvaluationCadenceDetails({
 									onClick={(): void => {
 										handleChangeTab(tab.value as 'editor' | 'rrule');
 									}}
+									variant="outlined"
+									color="secondary"
 								>
 									{tab.icon}
 									{tab.label}
@@ -321,14 +324,10 @@ function EvaluationCadenceDetails({
 					{activeTab === 'editor' && EditorView}
 					{activeTab === 'rrule' && RRuleView}
 					<div className="buttons-row">
-						<Button type="default" onClick={handleDiscard}>
+						<Button onClick={handleDiscard} variant="outlined" color="secondary">
 							Discard
 						</Button>
-						<Button
-							type="primary"
-							onClick={handleSaveCustomSchedule}
-							disabled={disableSaveButton}
-						>
+						<Button onClick={handleSaveCustomSchedule} disabled={disableSaveButton}>
 							Save Custom Schedule
 						</Button>
 					</div>

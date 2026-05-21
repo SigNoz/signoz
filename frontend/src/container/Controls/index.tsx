@@ -1,11 +1,12 @@
 import { memo, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
-import { Button, Flex, Select } from 'antd';
+import { Flex, Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';
 import { Container } from './styles';
+import { Button } from '@signozhq/ui/button';
 
 function Controls({
 	offset = 0,
@@ -37,10 +38,10 @@ function Controls({
 		<Container>
 			<Button
 				loading={isLoading}
-				size="small"
-				type="link"
 				disabled={isPreviousDisabled}
 				onClick={handleNavigatePrevious}
+				size="sm"
+				variant="link"
 			>
 				<Flex align="center" gap="4px">
 					<ChevronLeft size={16} /> Previous
@@ -48,10 +49,10 @@ function Controls({
 			</Button>
 			<Button
 				loading={isLoading}
-				size="small"
-				type="link"
 				disabled={isNextDisabled}
 				onClick={handleNavigateNext}
+				size="sm"
+				variant="link"
 			>
 				<Flex align="center" gap="4px">
 					Next <ChevronRight size={16} />

@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
 import { ChartLine } from '@signozhq/icons';
@@ -16,6 +16,7 @@ import AnomalyThreshold from './AnomalyThreshold';
 import { ANOMALY_TAB_TOOLTIP, THRESHOLD_TAB_TOOLTIP } from './constants';
 
 import './styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
@@ -82,6 +83,8 @@ function AlertCondition(): JSX.Element {
 										handleAlertTypeChange(tab.value as AlertTypes);
 									}
 								}}
+								variant="outlined"
+								color="secondary"
 							>
 								{tab.icon}
 								{tab.label}

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -10,6 +9,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import { buttonText } from './config';
 
 import './NewExplorerCTA.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
@@ -46,11 +46,11 @@ function NewExplorerCTA(): JSX.Element | null {
 	const button = useMemo(
 		() => (
 			<Button
-				icon={<Undo size={16} />}
 				onClick={(e): void => onClickHandler(e)}
 				data-testid="newExplorerCTA"
-				type="text"
-				className="periscope-btn link"
+				variant="ghost"
+				color="secondary"
+				prefix={<Undo size={16} />}
 			>
 				{buttonText[location.pathname]}
 			</Button>

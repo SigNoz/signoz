@@ -16,7 +16,8 @@ import {
 	Plus,
 	X,
 } from '@signozhq/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
@@ -375,11 +376,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 											}
 										>
 											<Button
-												type="text"
-												icon={<LockKeyhole size={14} />}
 												disabled={dashboardData?.createdBy === 'integration'}
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
+												variant="ghost"
+												color="secondary"
+												prefix={<LockKeyhole size={14} />}
 											>
 												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 											</Button>
@@ -388,21 +390,23 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 									{!isDashboardLocked && editDashboard && (
 										<Button
-											type="text"
-											icon={<PenLine size={14} />}
 											onClick={(): void => {
 												setIsRenameDashboardOpen(true);
 												setIsDashbordSettingsOpen(false);
 											}}
+											variant="ghost"
+											color="secondary"
+											prefix={<PenLine size={14} />}
 										>
 											Rename
 										</Button>
 									)}
 
 									<Button
-										type="text"
-										icon={<Fullscreen size={14} />}
 										onClick={handle.enter}
+										variant="ghost"
+										color="secondary"
+										prefix={<Fullscreen size={14} />}
 									>
 										Full screen
 									</Button>
@@ -410,20 +414,19 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								<section className="section-2">
 									{!isDashboardLocked && addPanelPermission && (
 										<Button
-											type="text"
-											icon={<FolderKanban size={14} />}
 											onClick={(): void => {
 												setIsPanelNameModalOpen(true);
 												setIsDashbordSettingsOpen(false);
 											}}
+											variant="ghost"
+											color="secondary"
+											prefix={<FolderKanban size={14} />}
 										>
 											New section
 										</Button>
 									)}
 
 									<Button
-										type="text"
-										icon={<FileJson size={14} />}
 										onClick={(): void => {
 											downloadObjectAsJson(
 												sanitizeDashboardData(selectedData),
@@ -431,18 +434,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 											);
 											setIsDashbordSettingsOpen(false);
 										}}
+										variant="ghost"
+										color="secondary"
+										prefix={<FileJson size={14} />}
 									>
 										Export JSON
 									</Button>
 									<Button
-										type="text"
-										icon={<ClipboardCopy size={14} />}
 										onClick={(): void => {
 											setCopy(
 												JSON.stringify(sanitizeDashboardData(selectedData), null, 2),
 											);
 											setIsDashbordSettingsOpen(false);
 										}}
+										variant="ghost"
+										color="secondary"
+										prefix={<ClipboardCopy size={14} />}
 									>
 										Copy as JSON
 									</Button>
@@ -462,20 +469,23 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						placement="bottomRight"
 					>
 						<Button
-							icon={<Ellipsis size={14} />}
-							type="text"
 							className="icons"
 							data-testid="options"
+							variant="ghost"
+							color="secondary"
+							size="icon"
+							prefix={<Ellipsis size={14} />}
 						/>
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
 						<>
 							<Button
-								type="text"
 								className="configure-button"
-								icon={<ConfigureIcon />}
 								data-testid="show-drawer"
 								onClick={onConfigureClick}
+								variant="ghost"
+								color="secondary"
+								prefix={<ConfigureIcon />}
 							>
 								Configure
 							</Button>
@@ -494,9 +504,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						<Button
 							className="add-panel-btn"
 							onClick={onEmptyWidgetHandler}
-							icon={<Plus size="md" />}
-							type="primary"
 							data-testid="add-panel-header"
+							prefix={<Plus size="md" />}
 						>
 							New Panel
 						</Button>
@@ -536,19 +545,19 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				footer={
 					<div className="dashboard-rename">
 						<Button
-							type="primary"
-							icon={<Check size={14} />}
 							className="rename-btn"
 							onClick={onNameChangeHandler}
 							disabled={updateDashboardMutation.isLoading}
+							prefix={<Check size={14} />}
 						>
 							Rename Dashboard
 						</Button>
 						<Button
-							type="text"
-							icon={<X size={14} />}
 							className="cancel-btn"
 							onClick={(): void => setIsRenameDashboardOpen(false)}
+							variant="ghost"
+							color="secondary"
+							prefix={<X size={14} />}
 						>
 							Cancel
 						</Button>
@@ -577,22 +586,22 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				footer={
 					<div className="dashboard-rename">
 						<Button
-							type="primary"
-							icon={<Check size={14} />}
 							className="rename-btn"
 							onClick={(): void => handleAddRow()}
 							disabled={updateDashboardMutation.isLoading}
+							prefix={<Check size={14} />}
 						>
 							Create Section
 						</Button>
 						<Button
-							type="text"
-							icon={<X size={14} />}
 							className="cancel-btn"
 							onClick={(): void => {
 								setIsPanelNameModalOpen(false);
 								setSectionName(DEFAULT_ROW_NAME);
 							}}
+							variant="ghost"
+							color="secondary"
+							prefix={<X size={14} />}
 						>
 							Cancel
 						</Button>

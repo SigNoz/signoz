@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
 import { CircleCheckBig, HandPlatter } from '@signozhq/icons';
@@ -57,17 +57,18 @@ export default function WaitlistFragment({
 			</Typography.Text>
 
 			<Button
-				className="periscope-btn join-waitlist-btn"
-				type="default"
+				className="join-waitlist-btn"
 				loading={isSubmitting}
-				icon={
+				onClick={handleJoinWaitlist}
+				variant="outlined"
+				color="secondary"
+				prefix={
 					isSuccess ? (
 						<CircleCheckBig size={16} color={Color.BG_FOREST_500} />
 					) : (
 						<HandPlatter size={16} />
 					)
 				}
-				onClick={handleJoinWaitlist}
 			>
 				Get early access
 			</Button>

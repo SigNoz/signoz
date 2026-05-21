@@ -1,9 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
 import { ArrowUpRight } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 
 import './LearnMore.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 type LearnMoreProps = {
 	text?: string;
@@ -19,7 +19,7 @@ function LearnMore({ text, url, onClick }: LearnMoreProps): JSX.Element {
 		}
 	};
 	return (
-		<Button type="link" className="learn-more" onClick={handleClick}>
+		<Button className="learn-more" onClick={handleClick} variant="link">
 			<div className="learn-more__text">{text}</div>
 			<ArrowUpRight size={16} color={Color.BG_ROBIN_400} />
 		</Button>

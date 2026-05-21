@@ -36,7 +36,7 @@
 			align-items: center;
 			gap: 8px;
 
-			.ant-btn {
+			button {
 				margin-top: 8px;
 			}
 		}
@@ -57,7 +57,7 @@
 					justify-content: center;
 					gap: 16px;
 
-					.ant-btn {
+					button {
 						display: flex;
 						align-items: center;
 					}
@@ -123,7 +123,7 @@
 					align-items: center;
 					cursor: pointer;
 
-					.ant-btn {
+					button {
 						display: flex;
 						align-items: center;
 						justify-content: center;
@@ -252,7 +252,7 @@
 		gap: 12px;
 		margin-top: 16px;
 
-		.ant-btn {
+		button {
 			border-radius: 2px;
 			display: flex;
 			align-items: center;

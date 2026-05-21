@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Divider, Flex } from 'antd';
+import { Divider, Flex } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
 import Download from 'container/Download/Download';
@@ -26,6 +26,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 import { SkipBack } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -110,10 +111,10 @@ function LogControls(): JSX.Element | null {
 			<Download data={flattenLogData} isLoading={isLoading} fileName="log_data" />
 			<Button
 				loading={isLoading}
-				size="small"
-				type="link"
 				disabled={order === OrderPreferenceItems.ASC}
 				onClick={handleGoToLatest}
+				size="sm"
+				variant="link"
 			>
 				<Flex align="center" gap="4px">
 					<SkipBack size="md" /> Go to latest

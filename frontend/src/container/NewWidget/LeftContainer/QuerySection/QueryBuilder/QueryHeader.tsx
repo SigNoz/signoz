@@ -6,7 +6,8 @@ import {
 	EyeOpen,
 	Trash2,
 } from '@signozhq/icons';
-import { Button, Row } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Row } from 'antd';
 
 import { QueryWrapper } from '../styles';
 
@@ -35,28 +36,32 @@ function QueryHeader({
 			<Row style={{ justifyContent: 'space-between', marginBottom: '0.4rem' }}>
 				<Row>
 					<Button
-						type="default"
-						icon={disabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />}
 						onClick={onDisable}
 						className="action-btn"
+						variant="outlined"
+						color="secondary"
+						prefix={disabled ? <EyeClosed size="md" /> : <EyeOpen size="md" />}
 					>
 						{name}
 					</Button>
 					<Button
-						type="default"
-						icon={collapse ? <ChevronRight size="md" /> : <ChevronDown size="md" />}
 						onClick={(): void => setCollapse(!collapse)}
 						className="action-btn"
+						variant="outlined"
+						color="secondary"
+						size="icon"
+						prefix={collapse ? <ChevronRight size="md" /> : <ChevronDown size="md" />}
 					/>
 				</Row>
 
 				{deletable && (
 					<Button
-						type="default"
-						danger
-						icon={<Trash2 size="md" />}
 						onClick={onDelete}
 						className="action-btn"
+						variant="outlined"
+						color="destructive"
+						size="icon"
+						prefix={<Trash2 size="md" />}
 					/>
 				)}
 			</Row>

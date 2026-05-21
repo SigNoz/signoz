@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Button, Card } from 'antd';
+import { Card } from 'antd';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { Atom } from '@signozhq/icons';
 
@@ -8,6 +8,7 @@ import MetricNameSearch from './MetricNameSearch';
 import MetricSpaceAggregation from './MetricSpaceAggregation';
 import MetricTimeAggregation from './MetricTimeAggregation';
 import { QueryBuilderProps } from './types';
+import { Button } from '@signozhq/ui/button';
 
 function QueryBuilder({
 	currentMetricName,
@@ -42,9 +43,10 @@ function QueryBuilder({
 			<div className="inspect-metrics-query-builder-header">
 				<Button
 					className="query-builder-button-label"
-					size="middle"
-					icon={<Atom size={14} />}
 					disabled
+					variant="outlined"
+					color="secondary"
+					prefix={<Atom size={14} />}
 				>
 					Query Builder
 				</Button>

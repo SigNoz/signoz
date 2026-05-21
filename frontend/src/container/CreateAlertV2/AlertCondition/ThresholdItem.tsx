@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Input, Select, Tooltip } from 'antd';
+import { Input, Select, Tooltip } from 'antd';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -166,16 +167,18 @@ function ThresholdItem({
 							/>
 							<Tooltip title="Remove recovery threshold">
 								<Button
-									type="default"
-									icon={<Trash size={16} />}
 									onClick={removeRecoveryThreshold}
 									className="icon-btn"
 									data-testid="remove-recovery-threshold-button"
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<Trash size={16} />}
 								/>
 							</Tooltip>
 						</>
 					)}
-					<Button.Group>
+					<ButtonGroup>
 						{/* TODO: Add recovery threshold back once the functionality is implemented */}
 						{/* {!showRecoveryThreshold && (
 							<Tooltip title="Add recovery threshold">
@@ -190,15 +193,17 @@ function ThresholdItem({
 						{showRemoveButton && (
 							<Tooltip title="Remove threshold">
 								<Button
-									type="default"
-									icon={<CircleX size={16} />}
 									onClick={(): void => removeThreshold(threshold.id)}
 									className="icon-btn"
 									data-testid="remove-threshold-button"
+									variant="outlined"
+									color="secondary"
+									size="icon"
+									prefix={<CircleX size={16} />}
 								/>
 							</Tooltip>
 						)}
-					</Button.Group>
+					</ButtonGroup>
 				</div>
 			</div>
 		</div>

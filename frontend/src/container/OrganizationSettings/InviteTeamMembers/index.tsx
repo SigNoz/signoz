@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from '@signozhq/icons';
-import { Button, Form, FormInstance, Input, Select, Space } from 'antd';
+import { Form, FormInstance, Input, Select, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
@@ -50,17 +51,23 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 										</SelectDrawer>
 									</Form.Item>
 									<Button
-										type="text"
-										icon={<Trash2 size="md" />}
 										onClick={(): void => remove(name)}
-										danger
 										data-testid={`delete-member-${name}`}
 										disabled={fields.length === 1}
+										variant="ghost"
+										color="destructive"
+										size="icon"
+										prefix={<Trash2 size="md" />}
 									/>
 								</Space>
 							))}
 							<Form.Item>
-								<Button onClick={add} icon={<Plus size="md" />} type="default">
+								<Button
+									onClick={add}
+									variant="outlined"
+									color="secondary"
+									prefix={<Plus size="md" />}
+								>
 									{t('add_another_team_member')}
 								</Button>
 							</Form.Item>

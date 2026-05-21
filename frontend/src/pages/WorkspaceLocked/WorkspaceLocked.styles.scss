@@ -50,7 +50,7 @@ $dark-theme: 'darkMode';
 				align-items: center;
 				gap: 8px;
 
-				.ant-btn-link {
+				button {
 					color: var(--muted-foreground);
 
 					.#{$light-theme} & {

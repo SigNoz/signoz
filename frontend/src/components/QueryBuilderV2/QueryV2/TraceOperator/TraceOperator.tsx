@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -108,7 +109,7 @@ export default function TraceOperator({
 				)}
 			</div>
 			<Tooltip title="Remove Trace Operator" placement="topLeft">
-				<Button className="periscope-btn ghost" onClick={removeTraceOperator}>
+				<Button onClick={removeTraceOperator} variant="outlined" color="secondary">
 					<Trash2 size={14} />
 				</Button>
 			</Tooltip>

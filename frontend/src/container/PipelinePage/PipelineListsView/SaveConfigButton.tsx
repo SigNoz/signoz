@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from 'antd';
-
 import { SaveConfigWrapper } from './styles';
+import { Button } from '@signozhq/ui/button';
 
 function SaveConfigButton({
 	showSaveButton,
@@ -13,16 +12,16 @@ function SaveConfigButton({
 	return (
 		<SaveConfigWrapper>
 			{showSaveButton && (
-				<Button
-					key="submit"
-					type="primary"
-					htmlType="submit"
-					onClick={onSaveConfigurationHandler}
-				>
+				<Button key="submit" onClick={onSaveConfigurationHandler} type="submit">
 					{t('save_configuration')}
 				</Button>
 			)}
-			<Button key="cancel" onClick={onCancelConfigurationHandler}>
+			<Button
+				key="cancel"
+				onClick={onCancelConfigurationHandler}
+				variant="outlined"
+				color="secondary"
+			>
 				{t('cancel')}
 			</Button>
 		</SaveConfigWrapper>

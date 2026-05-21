@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from 'antd';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
@@ -80,23 +80,19 @@ function EditCustomSchedule({
 		<div className="edit-custom-schedule">
 			{displayText}
 			<div className="button-row">
-				<Button.Group>
-					<Button type="default" onClick={handleEdit}>
-						<Pencil size={12} />
+				<ButtonGroup variant="outlined" color="secondary">
+					<Button onClick={handleEdit} prefix={<Pencil size={12} />}>
 						<Typography.Text>Edit custom schedule</Typography.Text>
 					</Button>
-					<Button type="default" onClick={handlePreview}>
-						<Calendar1 size={12} />
+					<Button onClick={handlePreview} prefix={<Calendar1 size={12} />}>
 						<Typography.Text>Preview</Typography.Text>
 					</Button>
 					<Button
 						data-testid="discard-button"
-						type="default"
 						onClick={handleDiscard}
-					>
-						<Trash size={12} />
-					</Button>
-				</Button.Group>
+						prefix={<Trash size={12} />}
+					/>
+				</ButtonGroup>
 			</div>
 		</div>
 	);

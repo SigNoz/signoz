@@ -1,9 +1,10 @@
 import { memo, useCallback, useMemo } from 'react';
 import { CircleMinus, CirclePlus } from '@signozhq/icons';
-import { Button, Col, Popover } from 'antd';
+import { Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Button } from '@signozhq/ui/button';
 
 function ActionItem({
 	fieldKey,
@@ -29,11 +30,21 @@ function ActionItem({
 	const PopOverMenuContent = useMemo(
 		() => (
 			<Col>
-				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.IN)}>
+				<Button
+					onClick={onClickHandler(OPERATORS.IN)}
+					size="sm"
+					variant="ghost"
+					color="secondary"
+				>
 					<CirclePlus size={12} /> Filter for value
 				</Button>
 				<br />
-				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.NIN)}>
+				<Button
+					onClick={onClickHandler(OPERATORS.NIN)}
+					size="sm"
+					variant="ghost"
+					color="secondary"
+				>
 					<CircleMinus size={12} /> Filter out value
 				</Button>
 			</Col>
@@ -42,7 +53,7 @@ function ActionItem({
 	);
 	return (
 		<Popover placement="bottomLeft" content={PopOverMenuContent} trigger="click">
-			<Button type="text" size="small">
+			<Button size="sm" variant="ghost" color="secondary">
 				...
 			</Button>
 		</Popover>

@@ -13,12 +13,12 @@ import { javascript } from '@codemirror/lang-javascript';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
-import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronUp } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { Button } from '@signozhq/ui/button';
 
 const havingOperators = [
 	{
@@ -368,9 +368,12 @@ function HavingFilter({
 					}}
 				/>
 				<Button
-					className="close-btn periscope-btn ghost"
-					icon={<ChevronUp size={16} />}
+					className="close-btn"
 					onClick={onClose}
+					variant="outlined"
+					color="secondary"
+					size="icon"
+					prefix={<ChevronUp size={16} />}
 				/>
 			</div>
 		</div>

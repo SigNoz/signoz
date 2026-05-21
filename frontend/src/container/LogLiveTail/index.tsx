@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { green } from '@ant-design/colors';
 import { Pause, Play, EllipsisVertical } from '@signozhq/icons';
-import { Button, Flex, Popover, Select, Space } from 'antd';
+import { Flex, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -32,6 +32,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import { TIME_PICKER_OPTIONS } from './config';
 import { StopContainer, TimePickerCard, TimePickerSelect } from './styles';
+import { Button } from '@signozhq/ui/button';
 
 function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 	const {
@@ -212,7 +213,6 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 			<Space size={0} align="center">
 				{liveTail === 'PLAYING' ? (
 					<Button
-						type="primary"
 						onClick={onLiveTailStop}
 						title="Pause live tail"
 						style={{ background: green[6] }}
@@ -224,7 +224,6 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 					</Button>
 				) : (
 					<Button
-						type="primary"
 						onClick={handleLiveTailStart}
 						title="Start live tail"
 						disabled={isDisabled}
@@ -236,7 +235,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 				)}
 
 				{liveTail !== 'STOPPED' && (
-					<Button type="dashed" onClick={onLiveTailStop} title="Exit live tail">
+					<Button onClick={onLiveTailStop} title="Exit live tail" variant="dashed">
 						<StopContainer isDarkMode={isDarkMode} />
 					</Button>
 				)}

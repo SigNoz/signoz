@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Server, LoaderCircle } from '@signozhq/icons';
-import { Button, Card, Form, Input, Space } from 'antd';
+import { Card, Form, Input, Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -182,19 +183,18 @@ export default function EnvironmentDetails(): JSX.Element {
 						</Form.Item>
 						<Button
 							className="periscope-btn primary"
-							icon={
-								isSubmittingRequestForEnvironment ? (
-									<LoaderCircle size="md" className="animate-spin" />
-								) : (
-									<Check size={12} />
-								)
-							}
-							type="primary"
 							onClick={handleRequestedEnvironmentSubmit}
 							disabled={
 								isSubmittingRequestForEnvironment ||
 								!requestedEnvironmentName ||
 								requestedEnvironmentName?.trim().length === 0
+							}
+							prefix={
+								isSubmittingRequestForEnvironment ? (
+									<LoaderCircle size="md" className="animate-spin" />
+								) : (
+									<Check size={12} />
+								)
 							}
 						>
 							Submit

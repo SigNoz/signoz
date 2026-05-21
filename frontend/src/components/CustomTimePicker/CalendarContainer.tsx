@@ -1,5 +1,5 @@
 import { Calendar } from '@signozhq/ui/calendar';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { Calendar as CalendarIcon, Check, X } from '@signozhq/icons';
@@ -78,18 +78,20 @@ function CalendarContainer({
 
 				<div className="calendar-actions">
 					<Button
-						type="primary"
-						className="periscope-btn secondary cancel-btn"
+						className="cancel-btn"
 						onClick={onCancel}
-						icon={<X size={12} />}
+						prefix={<X size={12} />}
+						variant="outlined"
+						color="secondary"
 					>
 						Cancel
 					</Button>
 					<Button
-						type="primary"
-						className="periscope-btn primary apply-btn"
+						className="apply-btn"
 						onClick={onApply}
-						icon={<Check size={12} />}
+						prefix={<Check size={12} />}
+						variant="solid"
+						color="primary"
 					>
 						Apply
 					</Button>

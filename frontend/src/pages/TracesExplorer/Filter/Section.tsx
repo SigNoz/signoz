@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Button, Collapse, Divider } from 'antd';
+import { Collapse, Divider } from 'antd';
 
 import { DurationSection } from './DurationSection';
 import {
@@ -18,6 +18,7 @@ import {
 import { SectionBody } from './SectionContent';
 
 import './Filter.styles.scss';
+import { Button } from '@signozhq/ui/button';
 
 interface SectionProps {
 	panelName: AllTraceFilterKeys;
@@ -98,9 +99,9 @@ export function Section(props: SectionProps): JSX.Element {
 					]}
 				/>
 				<Button
-					type="link"
 					onClick={onClearHandler}
 					data-testid={`collapse-${panelName}-clearBtn`}
+					variant="link"
 				>
 					Clear All
 				</Button>

@@ -3,7 +3,8 @@ import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Select } from 'antd';
+import { Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
@@ -294,20 +295,21 @@ function PublicDashboardSetting(): JSX.Element {
 							</Typography.Text>
 
 							<Button
-								type="link"
-								className="url-copy-btn periscope-btn ghost"
-								icon={<Copy size={12} />}
+								className="url-copy-btn"
 								onClick={handleCopyPublicDashboardURL}
+								variant="link"
+								size="icon"
+								prefix={<Copy size={12} />}
 							/>
 							<Button
-								type="link"
-								className="periscope-btn ghost"
-								icon={<ExternalLink size={12} />}
 								onClick={(): void => {
 									if (publicDashboardURL) {
 										openInNewTab(publicDashboardURL);
 									}
 								}}
+								variant="link"
+								size="icon"
+								prefix={<ExternalLink size={12} />}
 							/>
 						</div>
 					</div>
@@ -323,8 +325,7 @@ function PublicDashboardSetting(): JSX.Element {
 				<div className="public-dashboard-setting-actions">
 					{!isPublicDashboard ? (
 						<Button
-							type="primary"
-							className="create-public-dashboard-btn periscope-btn primary"
+							className="create-public-dashboard-btn"
 							disabled={isLoading || !isAdmin}
 							onClick={handleCreatePublicDashboard}
 							loading={
@@ -332,7 +333,7 @@ function PublicDashboardSetting(): JSX.Element {
 								isFetchingPublicDashboard ||
 								isLoadingPublicDashboard
 							}
-							icon={
+							prefix={
 								isLoadingCreatePublicDashboard ||
 								isFetchingPublicDashboard ||
 								isLoadingPublicDashboard ? (
@@ -341,29 +342,32 @@ function PublicDashboardSetting(): JSX.Element {
 									<Globe size={14} />
 								)
 							}
+							variant="solid"
+							color="primary"
 						>
 							Publish dashboard
 						</Button>
 					) : (
 						<>
 							<Button
-								type="default"
-								className="periscope-btn secondary"
 								disabled={isLoading || !isAdmin}
 								onClick={handleRevokePublicDashboardAccess}
 								loading={isLoadingRevokePublicDashboardAccess}
-								icon={<Trash size={14} />}
+								variant="outlined"
+								color="secondary"
+								prefix={<Trash size={14} />}
 							>
 								Unpublish dashboard
 							</Button>
 
 							<Button
-								type="primary"
-								className="create-public-dashboard-btn periscope-btn primary"
+								className="create-public-dashboard-btn"
 								disabled={isLoading || !isAdmin}
 								onClick={handleUpdatePublicDashboard}
 								loading={isLoadingUpdatePublicDashboard}
-								icon={<Globe size={14} />}
+								prefix={<Globe size={14} />}
+								variant="solid"
+								color="primary"
 							>
 								Update published dashboard
 							</Button>

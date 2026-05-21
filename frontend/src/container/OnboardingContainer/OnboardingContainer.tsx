@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 import { ArrowRight, UserPlus } from '@signozhq/icons';
-import { Button, Card, Form } from 'antd';
+import { Card, Form } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
@@ -359,9 +360,8 @@ export default function Onboarding(): JSX.Element {
 					</div>
 					<div className="continue-to-next-step">
 						<Button
-							type="primary"
-							icon={<ArrowRight size="md" />}
 							onClick={(e): void => handleNext(e)}
+							prefix={<ArrowRight size="md" />}
 						>
 							{t('get_started')}
 						</Button>
@@ -380,8 +380,7 @@ export default function Onboarding(): JSX.Element {
 									});
 									setIsInviteTeamMemberModalOpen(true);
 								}}
-								icon={<UserPlus size={16} />}
-								type="primary"
+								prefix={<UserPlus size={16} />}
 							>
 								{t('invite')}
 							</Button>

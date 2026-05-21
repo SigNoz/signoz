@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { RefreshCcw, SquareArrowOutUpRight } from '@signozhq/icons';
@@ -80,7 +80,12 @@ function Stepper({
 						<Typography.Text>
 							You can inspect a new metric or reset the query builder.
 						</Typography.Text>
-						<Button icon={<RefreshCcw size={12} />} onClick={resetInspection}>
+						<Button
+							onClick={resetInspection}
+							variant="outlined"
+							color="secondary"
+							prefix={<RefreshCcw size={12} />}
+						>
 							Reset query
 						</Button>
 					</>

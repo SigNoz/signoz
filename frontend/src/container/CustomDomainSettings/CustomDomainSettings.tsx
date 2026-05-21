@@ -44,6 +44,7 @@ function DomainUpdateToast({
 			<div className="custom-domain-toast-actions">
 				<Button
 					variant="ghost"
+					color="secondary"
 					size="sm"
 					className="custom-domain-toast-visit-btn"
 					suffix={<ExternalLink size={12} />}
@@ -56,6 +57,7 @@ function DomainUpdateToast({
 				</Button>
 				<Button
 					variant="ghost"
+					color="secondary"
 					size="icon"
 					className="custom-domain-toast-dismiss-btn"
 					onClick={(): void => {

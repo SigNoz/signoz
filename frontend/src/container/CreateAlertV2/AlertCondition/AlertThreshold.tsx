@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Button, Select, Tooltip } from 'antd';
+import { Select, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -294,11 +295,11 @@ function AlertThreshold({
 					/>
 				))}
 				<Button
-					type="dashed"
-					icon={<Plus size={16} />}
 					onClick={addThreshold}
 					className="add-threshold-btn"
 					data-testid="add-threshold-button"
+					variant="dashed"
+					prefix={<Plus size={16} />}
 				>
 					Add Threshold
 				</Button>

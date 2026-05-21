@@ -2,7 +2,7 @@
 	color: var(--bg-amber-500);
 	border-color: var(--bg-amber-500);
 
-	> .ant-btn:hover {
+	> button:hover {
 		color: var(--bg-amber-400) !important;
 		border-color: var(--bg-amber-300) !important;
 	}

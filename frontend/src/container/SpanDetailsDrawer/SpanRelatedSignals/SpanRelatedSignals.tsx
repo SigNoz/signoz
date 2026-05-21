@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, RadioChangeEvent } from 'antd';
+import { Divider, Drawer, RadioChangeEvent } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
@@ -206,10 +207,12 @@ function SpanRelatedSignals({
 						/>
 						{selectedView === RelatedSignalsViews.LOGS && (
 							<Button
-								icon={<Compass size={18} />}
 								className="open-in-explorer"
 								onClick={handleExplorerPageRedirect}
 								data-testid="open-in-explorer-button"
+								variant="outlined"
+								color="secondary"
+								prefix={<Compass size={18} />}
 							>
 								Open in Logs Explorer
 							</Button>

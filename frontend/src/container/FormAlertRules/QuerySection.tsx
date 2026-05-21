@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip } from 'antd';
+import { Tabs, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
@@ -105,7 +106,7 @@ function QuerySection({
 		{
 			label: (
 				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
+					<Button className="nav-btns" variant="outlined" color="secondary">
 						<Atom size={14} />
 						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
@@ -122,7 +123,12 @@ function QuerySection({
 							: 'ClickHouse'
 					}
 				>
-					<Button className="nav-btns" disabled={isAnomalyDetection}>
+					<Button
+						className="nav-btns"
+						disabled={isAnomalyDetection}
+						variant="outlined"
+						color="secondary"
+					>
 						<Terminal size={14} />
 						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
@@ -145,7 +151,12 @@ function QuerySection({
 			{
 				label: (
 					<Tooltip title="Query Builder">
-						<Button className="nav-btns" data-testid="query-builder-tab">
+						<Button
+							className="nav-btns"
+							data-testid="query-builder-tab"
+							variant="outlined"
+							color="secondary"
+						>
 							<Atom size={14} />
 							<Typography.Text>Query Builder</Typography.Text>
 						</Button>
@@ -162,7 +173,12 @@ function QuerySection({
 								: 'ClickHouse'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							variant="outlined"
+							color="secondary"
+						>
 							<Terminal size={14} />
 							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
@@ -180,7 +196,12 @@ function QuerySection({
 								: 'PromQL'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							variant="outlined"
+							color="secondary"
+						>
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>

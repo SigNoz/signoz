@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Skeleton, Switch } from 'antd';
+import { Button, ButtonGroup } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Skeleton, Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -183,27 +184,26 @@ function GraphView({
 	return (
 		<div className="inspect-metrics-graph-view" ref={graphRef}>
 			<div className="inspect-metrics-graph-view-header">
-				<Button.Group>
+				<ButtonGroup variant="outlined" color="secondary">
 					<Button
 						className="metric-name-button-label"
-						size="middle"
-						icon={
+						disabled
+						prefix={
 							MetricTypeIcon && metricType ? (
 								<MetricTypeIcon
 									size={14}
 									color={METRIC_TYPE_TO_COLOR_MAP[metricType]}
 								/>
-							) : null
+							) : undefined
 						}
-						disabled
 					>
 						{metricName}
 					</Button>
-					<Button className="time-series-button-label" size="middle" disabled>
+					<Button className="time-series-button-label" disabled>
 						{/* First time series in that of timestamps. Hence -1 */}
 						{`${formattedInspectMetricsTimeSeries.length - 1} time series`}
 					</Button>
-				</Button.Group>
+				</ButtonGroup>
 				<div className="view-toggle-button">
 					<Switch
 						checked={viewType === 'graph'}

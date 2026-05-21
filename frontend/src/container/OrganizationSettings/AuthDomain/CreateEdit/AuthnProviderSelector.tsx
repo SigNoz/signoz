@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -77,7 +77,8 @@ function AuthnProviderSelector({
 								</div>
 								<Button
 									onClick={(): void => setAuthnProvider(provider.key)}
-									type="primary"
+									variant="outlined"
+									color="secondary"
 								>
 									Configure
 								</Button>

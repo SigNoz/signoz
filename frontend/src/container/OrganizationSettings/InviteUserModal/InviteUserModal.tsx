@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Form, FormInstance, Modal } from 'antd';
+import { Form, FormInstance, Modal } from 'antd';
 import sendInvite from 'api/v1/invite/create';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
@@ -8,6 +8,7 @@ import { getBaseUrl } from 'utils/basePath';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 import { InviteMemberFormValues } from '../utils';
+import { Button } from '@signozhq/ui/button';
 
 export interface InviteUserModalProps {
 	isInviteTeamMemberModalOpen: boolean;
@@ -80,7 +81,12 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 			className="invite-user-modal"
 			destroyOnClose
 			footer={[
-				<Button key="back" onClick={(): void => toggleModal(false)} type="default">
+				<Button
+					key="back"
+					onClick={(): void => toggleModal(false)}
+					variant="outlined"
+					color="secondary"
+				>
 					{t('cancel', {
 						ns: 'common',
 					})}
@@ -89,7 +95,6 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 					key={t('invite_team_members').toString()}
 					onClick={modalForm.submit}
 					data-testid="invite-team-members-button"
-					type="primary"
 					disabled={isInvitingMembers}
 					loading={isInvitingMembers}
 				>

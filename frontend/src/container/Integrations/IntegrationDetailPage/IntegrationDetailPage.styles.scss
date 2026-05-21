@@ -187,7 +187,7 @@
 			}
 
 			.integration-tab-btns:hover {
-				&.ant-btn-text {
+				& {
 					background-color: unset !important;
 				}
 			}
@@ -262,7 +262,7 @@
 			}
 
 			.uninstall-integration-btn:hover {
-				&.ant-btn-default {
+				& {
 					color: var(--l1-foreground) !important;
 				}
 			}

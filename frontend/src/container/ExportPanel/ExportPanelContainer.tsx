@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -100,7 +100,6 @@ function ExportPanelContainer({
 					filterOption={filterOptions}
 				/>
 				<Button
-					type="primary"
 					loading={isLoading}
 					disabled={isDisabled}
 					onClick={handleExportClick}
