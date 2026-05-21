@@ -26,6 +26,7 @@
 
 		&:hover:not(:disabled) {
 			color: var(--bg-vanilla-100);
+			background: var(--bg-ink-200);
 		}
 
 		&:disabled {
@@ -42,18 +43,22 @@
 			color: var(--bg-vanilla-100);
 
 			&:hover:not(:disabled) {
+				background: var(--bg-robin-600);
 				color: var(--bg-vanilla-100);
 			}
 		}
 
-		&.alert-state-segmented__pill--active-muted,
-		&.alert-state-segmented__pill--active-muted:hover:not(:disabled) {
+		&.alert-state-segmented__pill--active-muted {
 			background: var(--bg-amber-500);
 			color: #1a1407;
 
 			.alert-state-segmented__icon,
 			.alert-state-segmented__label {
 				color: #1a1407;
+			}
+
+			&:hover:not(:disabled) {
+				background: var(--bg-amber-600);
 			}
 		}
 
@@ -62,6 +67,7 @@
 			color: var(--bg-vanilla-100);
 
 			&:hover:not(:disabled) {
+				background: var(--bg-slate-200);
 				color: var(--bg-vanilla-100);
 			}
 		}
@@ -89,6 +95,7 @@
 
 			&:hover:not(:disabled) {
 				color: var(--bg-ink-500);
+				background: var(--bg-vanilla-300);
 			}
 		}
 	}
