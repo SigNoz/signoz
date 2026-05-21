@@ -53,9 +53,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 		return nil, err
 	}
 
-	if source == dashboardtypes.SourceUser {
-		module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
-	}
+	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
 
@@ -163,16 +161,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
-func (module *module) DeleteBySource(ctx context.Context, orgID valuer.UUID, id valuer.UUID, source dashboardtypes.Source) error {
-	dashboard, err := module.Get(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-
-	if dashboard.Source != source {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard source does not match")
-	}
-
+func (module *module) DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	return module.store.Delete(ctx, orgID, id)
 }
 

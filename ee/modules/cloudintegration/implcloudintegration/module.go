@@ -263,7 +263,6 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 			return err
 		}
 
-		// Fetch all active accounts for this org+provider to detect shared dashboard usage.
 		allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
 		if err != nil {
 			return err
@@ -278,44 +277,20 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 				continue
 			}
 
-			// Check if any other account has this service with metrics enabled.
-			// If so, the shared dashboard must not be deleted.
-			shared := false
-			for _, otherAccount := range allAccounts {
-				if otherAccount.ID == accountID {
-					continue
-				}
-				otherSvc, err := module.store.GetServiceByServiceID(ctx, otherAccount.ID, svc.Type)
-				if err != nil {
-					if errors.Ast(err, errors.TypeNotFound) {
-						continue
-					}
-					return err
-				}
-				otherCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, otherSvc.Config)
-				if err != nil {
-					return err
-				}
-				if otherCfg.IsMetricsEnabled(provider) {
-					shared = true
-					break
-				}
+			shared, err := module.isServiceSharedInAccounts(ctx, provider, accountID, svc.Type, allAccounts)
+			if err != nil {
+				return err
 			}
-
 			if shared {
 				continue
 			}
 
-			integrationService := &cloudintegrationtypes.CloudIntegrationService{
-				Type:               svc.Type,
-				CloudIntegrationID: accountID,
-			}
-			if err := module.deprovisionDashboards(ctx, orgID, provider, integrationService); err != nil {
+			if err := module.deprovisionDashboards(ctx, orgID, provider, svc.Type); err != nil {
 				return err
 			}
 		}
 
-		if err := module.store.DeleteServicesByCloudIntegrationID(ctx, accountID); err != nil {
+		if err := module.store.DeleteServicesByCloudIntegrationID(ctx, orgID, accountID); err != nil {
 			return err
 		}
 
@@ -469,13 +444,20 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, crea
 		if err := module.store.UpdateService(ctx, storableService); err != nil {
 			return err
 		}
-		switch {
-		case metricsEnabled:
+
+		if metricsEnabled {
 			return module.provisionDashboards(ctx, orgID, createdBy, creator, provider, integrationService, serviceDefinition)
-		case !metricsEnabled:
-			return module.deprovisionDashboards(ctx, orgID, provider, integrationService)
 		}
-		return nil
+
+		shared, err := module.isServiceShared(ctx, orgID, provider, integrationService.CloudIntegrationID, integrationService.Type)
+		if err != nil {
+			return err
+		}
+		if shared {
+			return nil
+		}
+
+		return module.deprovisionDashboards(ctx, orgID, provider, integrationService.Type)
 	})
 }
 
@@ -582,8 +564,8 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 }
 
 // deprovisionDashboards deletes all dashboard and integration_dashboard rows for the given service.
-func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, service *cloudintegrationtypes.CloudIntegrationService) error {
-	slugPrefix := cloudintegrationtypes.IntegrationDashboardSlugPrefix(provider, service.Type)
+func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID) error {
+	slugPrefix := cloudintegrationtypes.IntegrationDashboardSlugPrefix(provider, serviceID)
 	rows, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
 	if err != nil {
 		return err
@@ -594,15 +576,52 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 			return err
 		}
 
-		if err := module.store.DeleteIntegrationDashboardBySlug(ctx, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, row.Slug); err != nil {
+		if err := module.store.DeleteIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, row.Slug); err != nil {
 			return err
 		}
 
-		if err := module.dashboardModule.DeleteBySource(ctx, orgID, dashID, dashboardtypes.SourceIntegration); err != nil {
+		if err := module.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// isServiceShared fetches connected accounts and delegates to isServiceSharedInAccounts.
+// Use this when the caller doesn't already have the connected accounts list.
+func (module *module) isServiceShared(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (bool, error) {
+	allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+	if err != nil {
+		return false, err
+	}
+	return module.isServiceSharedInAccounts(ctx, provider, excludeAccountID, serviceID, allAccounts)
+}
+
+// isServiceSharedInAccounts returns true if any account in the provided list other than
+// excludeAccountID has the given service with metrics enabled. Use this when the caller
+// already holds the account list to avoid a redundant query per service.
+func (module *module) isServiceSharedInAccounts(ctx context.Context, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, accounts []*cloudintegrationtypes.StorableCloudIntegration) (bool, error) {
+	for _, account := range accounts {
+		if account.ID == excludeAccountID {
+			continue
+		}
+
+		otherSvc, err := module.store.GetServiceByServiceID(ctx, account.ID, serviceID)
+		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				continue
+			}
+			return false, err
+		}
+		otherCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, otherSvc.Config)
+		if err != nil {
+			return false, err
+		}
+		if otherCfg.IsMetricsEnabled(provider) {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID,

@@ -15,12 +15,12 @@ var IntegrationDashboardProviderCloudIntegration = IntegrationDashboardProviderT
 type StorableIntegrationDashboard struct {
 	bun.BaseModel `bun:"table:integration_dashboard"`
 
-	ID          string    `bun:"id,pk,type:text"`
-	DashboardID string    `bun:"dashboard_id,type:text"`
-	Provider    string    `bun:"provider,type:text"`
-	Slug        string    `bun:"slug,type:text"`
-	CreatedAt   time.Time `bun:"created_at"`
-	UpdatedAt   time.Time `bun:"updated_at"`
+	ID          string                           `bun:"id,pk,type:text"`
+	DashboardID string                           `bun:"dashboard_id,type:text"`
+	Provider    IntegrationDashboardProviderType `bun:"provider,type:text"`
+	Slug        string                           `bun:"slug,type:text"`
+	CreatedAt   time.Time                        `bun:"created_at"`
+	UpdatedAt   time.Time                        `bun:"updated_at"`
 }
 
 func NewStorableIntegrationDashboard(dashboardID string, provider IntegrationDashboardProviderType, slug string) *StorableIntegrationDashboard {
@@ -28,7 +28,7 @@ func NewStorableIntegrationDashboard(dashboardID string, provider IntegrationDas
 	return &StorableIntegrationDashboard{
 		ID:          valuer.GenerateUUID().StringValue(),
 		DashboardID: dashboardID,
-		Provider:    provider.StringValue(),
+		Provider:    provider,
 		Slug:        slug,
 		CreatedAt:   now,
 		UpdatedAt:   now,

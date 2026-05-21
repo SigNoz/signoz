@@ -46,7 +46,7 @@ type Store interface {
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
 	// DeleteServicesByCloudIntegrationID deletes all services for the given cloud integration id
-	DeleteServicesByCloudIntegrationID(ctx context.Context, cloudIntegrationID valuer.UUID) error
+	DeleteServicesByCloudIntegrationID(ctx context.Context, orgID, cloudIntegrationID valuer.UUID) error
 
 	RunInTx(context.Context, func(ctx context.Context) error) error
 
@@ -56,7 +56,7 @@ type Store interface {
 
 	ListIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slugPrefix string) ([]*StorableIntegrationDashboard, error)
 
-	DeleteIntegrationDashboardBySlug(ctx context.Context, provider IntegrationDashboardProviderType, slug string) error
+	DeleteIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slug string) error
 }
 
 type ServiceDefinitionStore interface {

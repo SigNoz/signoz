@@ -201,13 +201,20 @@ func (store *store) CreateService(ctx context.Context, service *cloudintegration
 	return nil
 }
 
-func (store *store) DeleteServicesByCloudIntegrationID(ctx context.Context, cloudIntegrationID valuer.UUID) error {
-	_, err := store.
-		store.
-		BunDBCtx(ctx).
+func (store *store) DeleteServicesByCloudIntegrationID(ctx context.Context, orgID, cloudIntegrationID valuer.UUID) error {
+	cte := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service AS cis_inner").
+		ColumnExpr("cis_inner.id").
+		Join("JOIN cloud_integration AS ci ON cis_inner.cloud_integration_id = ci.id").
+		Where("ci.org_id = ?", orgID).
+		Where("cis_inner.cloud_integration_id = ?", cloudIntegrationID)
+
+	_, err := store.store.BunDBCtx(ctx).
 		NewDelete().
 		Model(new(cloudintegrationtypes.StorableCloudIntegrationService)).
-		Where("cloud_integration_id = ?", cloudIntegrationID).
+		With("target", cte).
+		Where("id IN (SELECT id FROM target)").
 		Exec(ctx)
 	return err
 }
@@ -223,12 +230,6 @@ func (store *store) UpdateService(ctx context.Context, service *cloudintegration
 		Where("type = ?", service.Type).
 		Exec(ctx)
 	return err
-}
-
-func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
-	return store.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		return cb(ctx)
-	})
 }
 
 func (store *store) CreateIntegrationDashboard(ctx context.Context, integrationDashboard *cloudintegrationtypes.StorableIntegrationDashboard) error {
@@ -268,12 +269,27 @@ func (store *store) ListIntegrationDashboardsBySlugPrefix(ctx context.Context, o
 	return integrationDashboards, nil
 }
 
-func (store *store) DeleteIntegrationDashboardBySlug(ctx context.Context, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) error {
+func (store *store) DeleteIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) error {
+	cte := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("integration_dashboard AS id_inner").
+		ColumnExpr("id_inner.id").
+		Join("JOIN dashboard AS d ON id_inner.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("id_inner.provider = ?", provider).
+		Where("id_inner.slug = ?", slug)
+
 	_, err := store.store.BunDBCtx(ctx).
 		NewDelete().
-		TableExpr("integration_dashboard").
-		Where("provider = ?", provider).
-		Where("slug = ?", slug).
+		Model(new(cloudintegrationtypes.StorableIntegrationDashboard)).
+		With("target", cte).
+		Where("id IN (SELECT id FROM target)").
 		Exec(ctx)
 	return err
+}
+
+func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return store.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		return cb(ctx)
+	})
 }
