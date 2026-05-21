@@ -263,6 +263,16 @@ func (stored StorableDashboardV2Data) toDashboardV2Data(tags []*tagtypes.Tag) Da
 
 type UpdateableDashboardV2 = PostableDashboardV2
 
+func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
+	return PostableDashboardV2{
+		Metadata: PostableDashboardV2Metadata{
+			DashboardV2MetadataBase: d.Data.Metadata.DashboardV2MetadataBase,
+			Tags:                    tagtypes.NewPostableTagsFromTags(d.Data.Metadata.Tags),
+		},
+		Spec: d.Data.Spec,
+	}
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Patchable
 // ════════════════════════════════════════════════════════════════════════
@@ -312,28 +322,9 @@ func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// patchableDashboardV2View is the JSON shape a patch is applied against.
-// It mirrors PostableDashboardV2 except `tags` is always emitted (even when
-// empty) — RFC 6902 `add /tags/-` requires the array to exist in the target
-// document, and PostableDashboardV2's own `omitempty` on tags would drop it.
-type patchableDashboardV2View struct {
-	StorableDashboardV2Data
-	Tags []tagtypes.PostableTag `json:"tags"`
-}
-
-// Apply runs the patch against the existing dashboard. The dashboard is
-// projected into the postable JSON shape, the patch is applied, and the
-// result is decoded back into an UpdateableDashboardV2 — which re-runs
-// the full v2 validation chain.
 func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboardV2, error) {
-	base := patchableDashboardV2View{
-		StorableDashboardV2Data: StorableDashboardV2Data{
-			Metadata: existing.Data.Metadata.DashboardV2MetadataBase,
-			Spec:     existing.Data.Spec,
-		},
-		Tags: tagtypes.NewPostableTagsFromTags(existing.Data.Metadata.Tags),
-	}
-	raw, err := json.Marshal(base)
+	existingAsUpdateable := existing.toUpdateableDashboardV2()
+	raw, err := json.Marshal(existingAsUpdateable)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal existing dashboard for patch")
 	}
