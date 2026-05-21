@@ -53,7 +53,9 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 			}
 		} else if (q.type === 'builder_trace_operator') {
 			if (spec.name) {
-				builderQueries[spec.name] = spec as unknown as IBuilderTraceOperator;
+				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
+					spec as BuilderQuery,
+				) as IBuilderTraceOperator;
 				builderQueryTypes[spec.name] = 'builder_trace_operator';
 			}
 		} else if (q.type === 'promql') {

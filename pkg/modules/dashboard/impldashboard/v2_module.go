@@ -10,33 +10,33 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
 
-	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, nil)
+	dashboard := postable.NewDashboardV2WithoutTags(orgID, createdBy)
 	var storableDashboard *dashboardtypes.StorableDashboard
 
-	err := module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Metadata.Tags)
 		if err != nil {
 			return err
 		}
-		dashboard.Info.Tags = resolvedTags
+		dashboard.Data.Metadata.Tags = resolvedTags
 
 		storable, err := dashboard.ToStorableDashboard()
 		if err != nil {
 			return err
 		}
 		storableDashboard = storable
-		return module.store.Create(ctx, storable)
+		return m.store.Create(ctx, storable)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	module.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
+	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
 }
 
@@ -62,7 +62,7 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
-	storable, public, err := module.store.GetV2(ctx, orgID, id)
+	storable, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	return dashboardtypes.NewDashboardV2FromStorable(storable, public, tags)
+	return storable.ToDashboardV2(tags)
 }
 
 func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error) {
@@ -89,8 +89,8 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
 		if err != nil {
 			return err
 		}
@@ -129,8 +129,8 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 
-	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,11 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	if err := existing.LockUnlock(lock, isAdmin, updatedBy); err != nil {
 		return err
 	}
-	return module.store.LockUnlockV2(ctx, orgID, id, lock, updatedBy)
+	storable, err := existing.ToStorableDashboard()
+	if err != nil {
+		return err
+	}
+	return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
 }
 
 func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {

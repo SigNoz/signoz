@@ -769,6 +769,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
+	// Clamp the top-level Step for PromQL
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		if minStep := common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End); queryRangeParams.Step < minStep {
+			queryRangeParams.Step = minStep
+		}
+	}
+
 	// prepare the variables for the corresponding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range queryRangeParams.Variables {

@@ -7,11 +7,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addRoleRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Create), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.Check(provider.authzHandler.Create, authtypes.Relation{Verb: coretypes.VerbCreate}, coretypes.ResourceRole, roleCollectionSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "CreateRole",
 		Tags:                []string{"role"},
 		Summary:             "Create role",
@@ -23,12 +26,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbCreate)}),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.List), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.Check(provider.authzHandler.List, authtypes.Relation{Verb: coretypes.VerbList}, coretypes.ResourceRole, roleCollectionSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "ListRoles",
 		Tags:                []string{"role"},
 		Summary:             "List roles",
@@ -40,12 +45,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbList)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.Check(provider.authzHandler.Get, authtypes.Relation{Verb: coretypes.VerbRead}, coretypes.ResourceRole, provider.roleInstanceSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "GetRole",
 		Tags:                []string{"role"},
 		Summary:             "Get role",
@@ -57,12 +64,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.GetObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.Check(provider.authzHandler.GetObjects, authtypes.Relation{Verb: coretypes.VerbRead}, coretypes.ResourceRole, provider.roleInstanceSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "GetObjects",
 		Tags:                []string{"role"},
 		Summary:             "Get objects for a role by relation",
@@ -74,12 +83,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Patch), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.Check(provider.authzHandler.Patch, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceRole, provider.roleInstanceSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "PatchRole",
 		Tags:                []string{"role"},
 		Summary:             "Patch role",
@@ -91,12 +102,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.PatchObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.Check(provider.authzHandler.PatchObjects, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceRole, provider.roleInstanceSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "PatchObjects",
 		Tags:                []string{"role"},
 		Summary:             "Patch objects for a role by relation",
@@ -108,12 +121,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbUpdate)}),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Delete), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.Check(provider.authzHandler.Delete, authtypes.Relation{Verb: coretypes.VerbDelete}, coretypes.ResourceRole, provider.roleInstanceSelectorCallback, []string{
+		authtypes.SigNozAdminRoleName,
+	}), handler.OpenAPIDef{
 		ID:                  "DeleteRole",
 		Tags:                []string{"role"},
 		Summary:             "Delete role",
@@ -125,10 +140,33 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceRole.Scope(coretypes.VerbDelete)}),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func roleCollectionSelectorCallback(_ *http.Request, _ authtypes.Claims) ([]coretypes.Selector, error) {
+	return []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(coretypes.WildCardSelectorString),
+	}, nil
+}
+
+func (provider *provider) roleInstanceSelectorCallback(req *http.Request, claims authtypes.Claims) ([]coretypes.Selector, error) {
+	roleID, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := provider.authzService.Get(req.Context(), valuer.MustNewUUID(claims.OrgID), roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(role.Name),
+		coretypes.TypeRole.MustSelector(coretypes.WildCardSelectorString),
+	}, nil
 }

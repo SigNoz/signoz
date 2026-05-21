@@ -50,12 +50,36 @@ export default defineConfig({
 		viewport: { width: 1280, height: 720 },
 	},
 
-	// Browser projects. No project-level auth — specs opt in via the
-	// authedPage fixture in tests/e2e/fixtures/auth.ts, which logs a user
-	// in on first use and caches the resulting storageState per worker.
+	// `setup` runs `bootstrap/global.setup.ts` once before any browser
+	// project — refreshes the golden dataset so chart-data assertions
+	// land inside default panel time windows. Per
+	// https://playwright.dev/docs/test-global-setup-teardown#option-1-project-dependencies.
 	projects: [
-		{ name: 'chromium', use: devices['Desktop Chrome'] },
-		{ name: 'firefox', use: devices['Desktop Firefox'] },
-		{ name: 'webkit', use: devices['Desktop Safari'] },
+		{
+			name: 'setup',
+			testDir: './bootstrap',
+			testMatch: /global\.setup\.ts/,
+			teardown: 'teardown',
+		},
+		{
+			name: 'teardown',
+			testDir: './bootstrap',
+			testMatch: /global\.teardown\.ts/,
+		},
+		{
+			name: 'chromium',
+			use: devices['Desktop Chrome'],
+			dependencies: ['setup'],
+		},
+		{
+			name: 'firefox',
+			use: devices['Desktop Firefox'],
+			dependencies: ['setup'],
+		},
+		{
+			name: 'webkit',
+			use: devices['Desktop Safari'],
+			dependencies: ['setup'],
+		},
 	],
 });

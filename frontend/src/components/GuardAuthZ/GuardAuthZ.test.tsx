@@ -1,33 +1,12 @@
 import { ReactElement } from 'react';
-import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { ENVIRONMENT } from 'constants/env';
 import { BrandedPermission } from 'hooks/useAuthZ/types';
 import { buildPermission } from 'hooks/useAuthZ/utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { GuardAuthZ } from './GuardAuthZ';
-
-const BASE_URL = ENVIRONMENT.baseURL || '';
-const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 describe('GuardAuthZ', () => {
 	const TestChild = (): ReactElement => <div>Protected Content</div>;

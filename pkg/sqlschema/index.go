@@ -1,8 +1,6 @@
 package sqlschema
 
 import (
-	"fmt"
-	"hash/fnv"
 	"slices"
 	"strings"
 
@@ -51,23 +49,9 @@ type Index interface {
 	ToDropSQL(fmter SQLFormatter) []byte
 }
 
-// UniqueIndex models a unique index on a table.
-//
-// In the common case the index keys on plain columns: set only ColumnNames and
-// the SQL is emitted with each column identifier-quoted by the formatter
-// (`CREATE UNIQUE INDEX uq_t_a_b ON t (a, b)`).
-//
-// For functional indexes (e.g. case-insensitive uniqueness on `LOWER(col)`),
-// set Expressions to the raw SQL parts and use ColumnNames as metadata for
-// "which columns does this index touch". When Expressions is non-empty, it
-// overrides ColumnNames for SQL emission — each entry is written verbatim, so
-// the caller owns well-formedness — and the auto-generated name uses a hash
-// suffix instead of a readable column join because expressions aren't valid
-// identifier fragments.
 type UniqueIndex struct {
 	TableName   TableName
 	ColumnNames []ColumnName
-	Expressions []string
 	name        string
 }
 
@@ -87,28 +71,16 @@ func (index *UniqueIndex) Name() string {
 		}
 		b.WriteString(string(column))
 	}
-
-	if len(index.Expressions) > 0 {
-		if len(index.ColumnNames) > 0 {
-			b.WriteString("_")
-		}
-		hasher := fnv.New32a()
-		_, _ = hasher.Write([]byte(strings.Join(index.Expressions, "\x00")))
-		fmt.Fprintf(&b, "%08x", hasher.Sum32())
-	}
 	return b.String()
 }
 
 func (index *UniqueIndex) Named(name string) Index {
 	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
 	copy(copyOfColumnNames, index.ColumnNames)
-	copyOfExpressions := make([]string, len(index.Expressions))
-	copy(copyOfExpressions, index.Expressions)
 
 	return &UniqueIndex{
 		TableName:   index.TableName,
 		ColumnNames: copyOfColumnNames,
-		Expressions: copyOfExpressions,
 		name:        name,
 	}
 }
@@ -129,18 +101,7 @@ func (index *UniqueIndex) Equals(other Index) bool {
 	if other.Type() != IndexTypeUnique {
 		return false
 	}
-	otherUnique, ok := other.(*UniqueIndex)
-	if !ok {
-		return false
-	}
-	// Plain and functional indexes produce different SQL even if their column
-	// sets overlap; require both shapes to match.
-	if (len(index.Expressions) == 0) != (len(otherUnique.Expressions) == 0) {
-		return false
-	}
-	if len(index.Expressions) > 0 && !slices.Equal(index.Expressions, otherUnique.Expressions) {
-		return false
-	}
+
 	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns())
 }
 
@@ -153,20 +114,12 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql = fmter.AppendIdent(sql, string(index.TableName))
 	sql = append(sql, " ("...)
 
-	if len(index.Expressions) > 0 {
-		for i, expr := range index.Expressions {
-			if i > 0 {
-				sql = append(sql, ", "...)
-			}
-			sql = append(sql, expr...)
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			sql = append(sql, ", "...)
 		}
-	} else {
-		for i, column := range index.ColumnNames {
-			if i > 0 {
-				sql = append(sql, ", "...)
-			}
-			sql = fmter.AppendIdent(sql, string(column))
-		}
+
+		sql = fmter.AppendIdent(sql, string(column))
 	}
 
 	sql = append(sql, ")"...)

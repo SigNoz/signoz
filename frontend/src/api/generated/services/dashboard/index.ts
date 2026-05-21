@@ -21,8 +21,6 @@ import type {
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
-	CreatePublicDashboardV2200,
-	CreatePublicDashboardV2PathParameters,
 	DashboardtypesJSONPatchDocumentDTO,
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
@@ -55,12 +53,14 @@ import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
  * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
  * @summary Delete public dashboard
  */
-export const deletePublicDashboard = ({
-	id,
-}: DeletePublicDashboardPathParameters) => {
+export const deletePublicDashboard = (
+	{ id }: DeletePublicDashboardPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -127,9 +127,7 @@ export const useDeletePublicDashboard = <
 	{ pathParams: DeletePublicDashboardPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeletePublicDashboardMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeletePublicDashboardMutationOptions(options));
 };
 /**
  * This endpoint returns public sharing config for a dashboard
@@ -214,9 +212,7 @@ export function useGetPublicDashboard<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -241,7 +237,7 @@ export const invalidateGetPublicDashboard = async (
  */
 export const createPublicDashboard = (
 	{ id }: CreatePublicDashboardPathParameters,
-	dashboardtypesPostablePublicDashboardDTO: BodyType<DashboardtypesPostablePublicDashboardDTO>,
+	dashboardtypesPostablePublicDashboardDTO?: BodyType<DashboardtypesPostablePublicDashboardDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreatePublicDashboard201>({
@@ -262,7 +258,7 @@ export const getCreatePublicDashboardMutationOptions = <
 		TError,
 		{
 			pathParams: CreatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
 		},
 		TContext
 	>;
@@ -271,7 +267,7 @@ export const getCreatePublicDashboardMutationOptions = <
 	TError,
 	{
 		pathParams: CreatePublicDashboardPathParameters;
-		data: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+		data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
 	},
 	TContext
 > => {
@@ -288,7 +284,7 @@ export const getCreatePublicDashboardMutationOptions = <
 		Awaited<ReturnType<typeof createPublicDashboard>>,
 		{
 			pathParams: CreatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -303,7 +299,8 @@ export type CreatePublicDashboardMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createPublicDashboard>>
 >;
 export type CreatePublicDashboardMutationBody =
-	BodyType<DashboardtypesPostablePublicDashboardDTO>;
+	| BodyType<DashboardtypesPostablePublicDashboardDTO>
+	| undefined;
 export type CreatePublicDashboardMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -319,7 +316,7 @@ export const useCreatePublicDashboard = <
 		TError,
 		{
 			pathParams: CreatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
 		},
 		TContext
 	>;
@@ -328,13 +325,11 @@ export const useCreatePublicDashboard = <
 	TError,
 	{
 		pathParams: CreatePublicDashboardPathParameters;
-		data: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+		data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getCreatePublicDashboardMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreatePublicDashboardMutationOptions(options));
 };
 /**
  * This endpoint updates the public sharing config for a dashboard
@@ -342,13 +337,15 @@ export const useCreatePublicDashboard = <
  */
 export const updatePublicDashboard = (
 	{ id }: UpdatePublicDashboardPathParameters,
-	dashboardtypesUpdatablePublicDashboardDTO: BodyType<DashboardtypesUpdatablePublicDashboardDTO>,
+	dashboardtypesUpdatablePublicDashboardDTO?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/dashboards/${id}/public`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: dashboardtypesUpdatablePublicDashboardDTO,
+		signal,
 	});
 };
 
@@ -361,7 +358,7 @@ export const getUpdatePublicDashboardMutationOptions = <
 		TError,
 		{
 			pathParams: UpdatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
 		},
 		TContext
 	>;
@@ -370,7 +367,7 @@ export const getUpdatePublicDashboardMutationOptions = <
 	TError,
 	{
 		pathParams: UpdatePublicDashboardPathParameters;
-		data: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+		data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
 	},
 	TContext
 > => {
@@ -387,7 +384,7 @@ export const getUpdatePublicDashboardMutationOptions = <
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
 		{
 			pathParams: UpdatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -402,7 +399,8 @@ export type UpdatePublicDashboardMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updatePublicDashboard>>
 >;
 export type UpdatePublicDashboardMutationBody =
-	BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+	| BodyType<DashboardtypesUpdatablePublicDashboardDTO>
+	| undefined;
 export type UpdatePublicDashboardMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -418,7 +416,7 @@ export const useUpdatePublicDashboard = <
 		TError,
 		{
 			pathParams: UpdatePublicDashboardPathParameters;
-			data: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
 		},
 		TContext
 	>;
@@ -427,13 +425,11 @@ export const useUpdatePublicDashboard = <
 	TError,
 	{
 		pathParams: UpdatePublicDashboardPathParameters;
-		data: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+		data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdatePublicDashboardMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdatePublicDashboardMutationOptions(options));
 };
 /**
  * This endpoint returns the sanitized dashboard data for public access
@@ -519,9 +515,7 @@ export function useGetPublicDashboardData<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -629,9 +623,7 @@ export function useGetPublicDashboardWidgetQueryRange<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -655,7 +647,7 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
  * @summary Create dashboard (v2)
  */
 export const createDashboardV2 = (
-	dashboardtypesPostableDashboardV2DTO: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	dashboardtypesPostableDashboardV2DTO?: BodyType<DashboardtypesPostableDashboardV2DTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateDashboardV2201>({
@@ -674,13 +666,13 @@ export const getCreateDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
 	TContext
 > => {
 	const mutationKey = ['createDashboardV2'];
@@ -694,7 +686,7 @@ export const getCreateDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createDashboardV2>>,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> }
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -708,7 +700,8 @@ export type CreateDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof createDashboardV2>>
 >;
 export type CreateDashboardV2MutationBody =
-	BodyType<DashboardtypesPostableDashboardV2DTO>;
+	| BodyType<DashboardtypesPostableDashboardV2DTO>
+	| undefined;
 export type CreateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -721,18 +714,16 @@ export const useCreateDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateDashboardV2MutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint returns a v2-shape dashboard with its tags and public sharing config (if any).
@@ -816,9 +807,7 @@ export function useGetDashboardV2<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -843,13 +832,15 @@ export const invalidateGetDashboardV2 = async (
  */
 export const patchDashboardV2 = (
 	{ id }: PatchDashboardV2PathParameters,
-	dashboardtypesJSONPatchDocumentDTO: BodyType<DashboardtypesJSONPatchDocumentDTO>,
+	dashboardtypesJSONPatchDocumentDTONull?: BodyType<DashboardtypesJSONPatchDocumentDTO | null> | null,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<PatchDashboardV2200>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesJSONPatchDocumentDTO,
+		data: dashboardtypesJSONPatchDocumentDTONull,
+		signal,
 	});
 };
 
@@ -862,7 +853,7 @@ export const getPatchDashboardV2MutationOptions = <
 		TError,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data: BodyType<DashboardtypesJSONPatchDocumentDTO>;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
 		},
 		TContext
 	>;
@@ -871,7 +862,7 @@ export const getPatchDashboardV2MutationOptions = <
 	TError,
 	{
 		pathParams: PatchDashboardV2PathParameters;
-		data: BodyType<DashboardtypesJSONPatchDocumentDTO>;
+		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
 	},
 	TContext
 > => {
@@ -888,7 +879,7 @@ export const getPatchDashboardV2MutationOptions = <
 		Awaited<ReturnType<typeof patchDashboardV2>>,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data: BodyType<DashboardtypesJSONPatchDocumentDTO>;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -903,7 +894,8 @@ export type PatchDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchDashboardV2>>
 >;
 export type PatchDashboardV2MutationBody =
-	BodyType<DashboardtypesJSONPatchDocumentDTO>;
+	| BodyType<DashboardtypesJSONPatchDocumentDTO | null>
+	| undefined;
 export type PatchDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -918,7 +910,7 @@ export const usePatchDashboardV2 = <
 		TError,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data: BodyType<DashboardtypesJSONPatchDocumentDTO>;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
 		},
 		TContext
 	>;
@@ -927,13 +919,11 @@ export const usePatchDashboardV2 = <
 	TError,
 	{
 		pathParams: PatchDashboardV2PathParameters;
-		data: BodyType<DashboardtypesJSONPatchDocumentDTO>;
+		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchDashboardV2MutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.
@@ -941,13 +931,15 @@ export const usePatchDashboardV2 = <
  */
 export const updateDashboardV2 = (
 	{ id }: UpdateDashboardV2PathParameters,
-	dashboardtypesPostableDashboardV2DTO: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	dashboardtypesPostableDashboardV2DTO?: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<UpdateDashboardV2200>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: dashboardtypesPostableDashboardV2DTO,
+		signal,
 	});
 };
 
@@ -960,7 +952,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -969,7 +961,7 @@ export const getUpdateDashboardV2MutationOptions = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
 	},
 	TContext
 > => {
@@ -986,7 +978,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		Awaited<ReturnType<typeof updateDashboardV2>>,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -1001,7 +993,8 @@ export type UpdateDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateDashboardV2>>
 >;
 export type UpdateDashboardV2MutationBody =
-	BodyType<DashboardtypesPostableDashboardV2DTO>;
+	| BodyType<DashboardtypesPostableDashboardV2DTO>
+	| undefined;
 export type UpdateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1016,7 +1009,7 @@ export const useUpdateDashboardV2 = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -1025,13 +1018,169 @@ export const useUpdateDashboardV2 = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateDashboardV2MutationOptions(options);
+	return useMutation(getUpdateDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.
+ * @summary Unlock dashboard (v2)
+ */
+export const unlockDashboardV2 = (
+	{ id }: UnlockDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/dashboards/${id}/lock`,
+		method: 'DELETE',
+		signal,
+	});
+};
 
-	return useMutation(mutationOptions);
+export const getUnlockDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		TError,
+		{ pathParams: UnlockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof unlockDashboardV2>>,
+	TError,
+	{ pathParams: UnlockDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['unlockDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		{ pathParams: UnlockDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return unlockDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UnlockDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof unlockDashboardV2>>
+>;
+
+export type UnlockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Unlock dashboard (v2)
+ */
+export const useUnlockDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof unlockDashboardV2>>,
+		TError,
+		{ pathParams: UnlockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof unlockDashboardV2>>,
+	TError,
+	{ pathParams: UnlockDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getUnlockDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint locks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.
+ * @summary Lock dashboard (v2)
+ */
+export const lockDashboardV2 = (
+	{ id }: LockDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v2/dashboards/${id}/lock`,
+		method: 'PUT',
+		signal,
+	});
+};
+
+export const getLockDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		TError,
+		{ pathParams: LockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof lockDashboardV2>>,
+	TError,
+	{ pathParams: LockDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['lockDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		{ pathParams: LockDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return lockDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type LockDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof lockDashboardV2>>
+>;
+
+export type LockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Lock dashboard (v2)
+ */
+export const useLockDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof lockDashboardV2>>,
+		TError,
+		{ pathParams: LockDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof lockDashboardV2>>,
+	TError,
+	{ pathParams: LockDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getLockDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.

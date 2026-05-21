@@ -1,0 +1,146 @@
+.root {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.body {
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: none;
+	background: var(--l1-background);
+	font-size: 14px;
+	gap: 16px;
+
+	// DataViewer keeps its global `.data-viewer` class — give it a min-height
+	// so the tab area doesn't collapse on short content.
+	:global(.data-viewer) {
+		min-height: 500px;
+	}
+}
+
+.detailsSection {
+	flex-shrink: 0;
+	min-width: 0;
+}
+
+.tabsSection {
+	flex: 1;
+	min-width: 0;
+	max-height: 100%;
+	min-height: 400px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	// TabsRoot — direct child of tabs-section
+	> div {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	[role='tablist'] {
+		flex-shrink: 0;
+	}
+
+	[class*='tabs__list-wrapper'] {
+		padding-left: 0 !important;
+	}
+}
+
+.tabsScroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: none;
+	display: flex;
+	flex-direction: column;
+
+	[role='tabpanel'] {
+		padding: 0;
+		flex: 1;
+		min-height: 0;
+	}
+}
+
+.spanRow {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: space-between;
+}
+
+.spanInfo {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	padding: 8px 0;
+}
+
+.spanInfoItem {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--l2-foreground);
+	white-space: nowrap;
+}
+
+.highlightedOptions {
+	padding: 8px 0;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0;
+
+	// KeyValueLabel uses a global `.key-value-label` root; constrain it
+	// inside the two-column grid so values can ellipsize cleanly.
+	:global(.key-value-label) {
+		width: auto;
+		min-width: 0;
+		overflow: hidden;
+	}
+}
+
+.serviceDot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent-forest);
+	flex-shrink: 0;
+}
+
+.traceId {
+	color: var(--accent-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: block;
+}
+
+.traceIdCopy {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0;
+	height: auto;
+	justify-content: flex-start;
+}
+
+// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
+// FloatingPanel (z-index 999), which would otherwise sit on top of the default
+// tooltip (z-index 50). Bump the tooltip above the panel.
+.dockToggleTooltip {
+	--tooltip-z-index: 1000;
+}

@@ -34,7 +34,7 @@ type module struct {
 
 func NewModule(store dashboardtypes.Store, sqlstore sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
-	pkgDashboardModule := pkgimpldashboard.NewModule(store, sqlstore, settings, analytics, orgGetter, queryParser, tagModule)
+	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser, tagModule)
 
 	return &module{
 		pkgDashboardModule: pkgDashboardModule,
@@ -49,6 +49,14 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
 	}
 
 	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
@@ -131,12 +139,24 @@ func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
+	}
+
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
+		return err
+	}
+
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 
@@ -168,6 +188,14 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	dashboard, err := module.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
 	}
 
 	err = module.store.DeletePublic(ctx, dashboardID.StringValue())
@@ -217,48 +245,6 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
-}
-
-func (module *module) CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	existing, err := module.pkgDashboardModule.GetV2(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-	if existing.PublicConfig != nil {
-		return nil, errors.Newf(errors.TypeAlreadyExists, dashboardtypes.ErrCodePublicDashboardAlreadyExists, "dashboard with id %s is already public", id)
-	}
-
-	publicDashboard := dashboardtypes.NewPublicDashboard(postable.TimeRangeEnabled, postable.DefaultTimeRange, id)
-	if err := module.store.CreatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard)); err != nil {
-		return nil, err
-	}
-
-	existing.PublicConfig = publicDashboard
-	return existing, nil
-}
-
-func (module *module) UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	if _, err := module.licensing.GetActive(ctx, orgID); err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	existing, err := module.pkgDashboardModule.GetV2(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-	if existing.PublicConfig == nil {
-		return nil, errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodePublicDashboardNotFound, "dashboard with id %s isn't public", id)
-	}
-
-	existing.PublicConfig.Update(updatable.TimeRangeEnabled, updatable.DefaultTimeRange)
-	if err := module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(existing.PublicConfig)); err != nil {
-		return nil, err
-	}
-	return existing, nil
 }
 
 func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {

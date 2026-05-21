@@ -41,6 +41,11 @@ func (c *GetWaterfallSpansForTraceWithMetadataCache) Clone() cachetypes.Cacheabl
 	}
 }
 
+func (c *GetWaterfallSpansForTraceWithMetadataCache) Cost() int64 {
+	const perSpanBytes = 256
+	return int64(c.TotalSpans) * perSpanBytes
+}
+
 func (c *GetWaterfallSpansForTraceWithMetadataCache) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(c)
 }
@@ -64,6 +69,16 @@ func (c *GetFlamegraphSpansForTraceCache) Clone() cachetypes.Cacheable {
 		SelectedSpans: c.SelectedSpans,
 		TraceRoots:    c.TraceRoots,
 	}
+}
+
+func (c *GetFlamegraphSpansForTraceCache) Cost() int64 {
+	const perSpanBytes = 128
+	var spans int64
+	for _, row := range c.SelectedSpans {
+		spans += int64(len(row))
+	}
+	spans += int64(len(c.TraceRoots))
+	return spans * perSpanBytes
 }
 
 func (c *GetFlamegraphSpansForTraceCache) MarshalBinary() (data []byte, err error) {

@@ -69,6 +69,14 @@ func NewPostableTagsFromTags(tags []*Tag) []PostableTag {
 	return out
 }
 
+func NewTagsFromPostableTags(orgID valuer.UUID, kind coretypes.Kind, tags []PostableTag) []*Tag {
+	out := make([]*Tag, len(tags))
+	for i, t := range tags {
+		out[i] = NewTag(orgID, kind, t.Key, t.Value)
+	}
+	return out
+}
+
 func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value string) *Tag {
 	now := time.Now()
 	return &Tag{
