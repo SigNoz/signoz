@@ -88,6 +88,42 @@ function MutePopover(props: MutePopoverProps): JSX.Element {
 		}
 	}, [open, ruleName]);
 
+	// Close on outside click / Escape. We use trigger={[]} on the Popover so
+	// antd doesn't handle these — without this hook, the popover only closes
+	// via Cancel / × / Mute submit.
+	useEffect(() => {
+		if (!open) {
+			return undefined;
+		}
+
+		const handleMouseDown = (e: MouseEvent): void => {
+			const target = e.target as HTMLElement | null;
+			if (target?.closest('.mute-popover-overlay')) {
+				return;
+			}
+			onOpenChange(false);
+		};
+		const handleKey = (e: KeyboardEvent): void => {
+			if (e.key === 'Escape') {
+				onOpenChange(false);
+			}
+		};
+
+		// Defer attaching listeners until after the click that opened the
+		// popover has finished bubbling — otherwise it counts as an outside
+		// click and we close immediately.
+		const timer = window.setTimeout(() => {
+			document.addEventListener('mousedown', handleMouseDown);
+			document.addEventListener('keydown', handleKey);
+		}, 0);
+
+		return (): void => {
+			window.clearTimeout(timer);
+			document.removeEventListener('mousedown', handleMouseDown);
+			document.removeEventListener('keydown', handleKey);
+		};
+	}, [open, onOpenChange]);
+
 	const selectedDuration = QUICK_DURATIONS.find((d) => d.value === selected);
 	const primaryLabel =
 		selectedDuration?.minutes === null
