@@ -181,6 +181,7 @@ function UserInfo(): JSX.Element {
 					<Input
 						placeholder="e.g. John Doe"
 						value={changedName}
+						disabled={isLoading}
 						onChange={(e): void => setChangedName(e.target.value)}
 						onPressEnter={(): void => {
 							void onSaveHandler();
