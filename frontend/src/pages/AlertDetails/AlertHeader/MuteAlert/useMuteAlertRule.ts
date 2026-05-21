@@ -69,7 +69,10 @@ export const useMuteAlertRule = ({
 				alertIds: [ruleId],
 				schedule: {
 					startTime: payload.startTime,
-					endTime: payload.endTime ?? undefined,
+					// null = no end ("Forever"). The generated type narrows endTime to
+					// string, but the API accepts null to mean indefinite.
+					endTime:
+						payload.endTime === null ? (null as unknown as string) : payload.endTime,
 					timezone: payload.timezone,
 					recurrence: payload.recurrence,
 				},

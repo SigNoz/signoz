@@ -30,8 +30,6 @@ export const QUICK_DURATIONS: QuickDuration[] = [
 
 const DEFAULT_DURATION_VALUE = '4h';
 
-const FAR_FUTURE_END = (): string => dayjs().add(10, 'year').toISOString();
-
 export const buildMutePayloadFromQuickDuration = (
 	durationValue: string,
 	name: string,
@@ -42,9 +40,11 @@ export const buildMutePayloadFromQuickDuration = (
 	}
 	const now = dayjs();
 	const startTime = now.toISOString();
+	// duration.minutes === null → "Forever"; send endTime as null so the
+	// backend treats the mute as indefinite.
 	const endTime =
 		duration.minutes === null
-			? FAR_FUTURE_END()
+			? null
 			: now.add(duration.minutes, 'minute').toISOString();
 	return {
 		name,
