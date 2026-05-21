@@ -27,7 +27,7 @@ describe('getLogIndicatorType', () => {
 		expect(getLogIndicatorType(log)).toBe('TRACE');
 	});
 
-	it('severity_text should be used when severity_number is absent ', () => {
+	it('severity_text should be used when severity_number is absent', () => {
 		const log = {
 			date: '2024-02-29T12:34:46Z',
 			timestamp: 1646115296,

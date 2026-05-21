@@ -4,6 +4,8 @@ import (
 	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // base is the fundamental struct that implements the error interface.
@@ -252,4 +254,11 @@ func NewTimeoutf(code Code, format string, args ...any) *base {
 // Attr returns an slog.Attr with a standardized "exception" key for the given error.
 func Attr(err error) slog.Attr {
 	return slog.Any("exception", err)
+}
+
+// TypeAttr returns an OTel attribute.KeyValue with the "error.type" semconv key
+// set to the error's type string.
+func TypeAttr(err error) attribute.KeyValue {
+	t, _, _, _, _, _ := Unwrapb(err)
+	return attribute.String("error.type", t.String())
 }

@@ -13,8 +13,11 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
-import { VIEWS } from './constants';
-import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategories } from './constants';
+import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	K8sCategories,
+	VIEWS,
+} from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
 
 const defaultNuqsOptions: Options = {
@@ -28,6 +31,24 @@ export const useInfraMonitoringCurrentPage = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE,
 		parseAsInteger.withDefault(1).withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringPageListing = (): UseQueryStateReturn<
+	number,
+	number
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
+		parseAsInteger.withDefault(1).withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringPageSizeListing = (): UseQueryStateReturn<
+	number,
+	number
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,
+		parseAsInteger.withDefault(10).withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
@@ -98,7 +119,7 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 		parseAsString.withDefault(K8sCategories.PODS).withOptions(defaultNuqsOptions),
 	);
 
-export const useInfraMonitoringFilters = (): UseQueryStateReturn<
+export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 	TagFilter,
 	undefined
 > =>

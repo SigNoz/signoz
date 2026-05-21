@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { ArrowLeft, ArrowRight } from '@signozhq/icons';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import { Form, Select } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useForgotPassword } from 'api/generated/services/users';
@@ -9,6 +10,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import APIError from 'types/api/error';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
+import { getBaseUrl } from 'utils/basePath';
 
 import tvUrl from '@/assets/svgs/tv.svg';
 
@@ -104,7 +106,7 @@ function ForgotPassword({
 			data: {
 				email: values.email,
 				orgId: currentOrgId,
-				frontendBaseURL: window.location.origin,
+				frontendBaseURL: getBaseUrl(),
 			},
 		});
 	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);

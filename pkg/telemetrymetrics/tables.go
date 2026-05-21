@@ -124,6 +124,17 @@ func CountExpressionForSamplesTable(tableName string) string {
 	return "sum(count)"
 }
 
+// ValueColumnForSamplesTable returns the column name holding the sample value:
+// "last" for the 5m/30m aggregated tables, "value" otherwise.
+// note all the other columns in the aggregated samples tables are nothing but aggregations.
+// and so "last" is the value column for these tables.
+func ValueColumnForSamplesTable(tableName string) string {
+	if tableName == SamplesV4Agg5mTableName || tableName == SamplesV4Agg30mTableName {
+		return "last"
+	}
+	return "value"
+}
+
 // start and end are in milliseconds
 // we have three tables for samples
 // 1. distributed_samples_v4

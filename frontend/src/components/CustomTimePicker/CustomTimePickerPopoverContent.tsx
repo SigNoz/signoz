@@ -21,7 +21,7 @@ import {
 	Option,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import dayjs from 'dayjs';
-import { Clock, PenLine, TriangleAlertIcon } from 'lucide-react';
+import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
@@ -116,9 +116,10 @@ function CustomTimePickerPopoverContent({
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const url = new URLSearchParams(window.location.search);
 
@@ -154,8 +155,8 @@ function CustomTimePickerPopoverContent({
 		if (!customDateTimeVisible) {
 			const customTimeRanges = getCustomTimeRanges();
 
-			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] = customTimeRanges.map(
-				(range) => ({
+			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] =
+				customTimeRanges.map((range) => ({
 					label: `${dayjs(range.from)
 						.tz(timezone.value)
 						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(range.to)
@@ -165,8 +166,7 @@ function CustomTimePickerPopoverContent({
 					to: range.to,
 					value: range.timestamp,
 					timestamp: range.timestamp,
-				}),
-			);
+				}));
 
 			setRecentlyUsedTimeRanges(formattedCustomTimeRanges);
 		}
@@ -300,7 +300,7 @@ function CustomTimePickerPopoverContent({
 								inputErrorDetails && (
 									<div className="input-error-message-container">
 										<div className="input-error-message-title">
-											<TriangleAlertIcon color={Color.BG_CHERRY_400} size={16} />
+											<TriangleAlert color={Color.BG_CHERRY_400} size={16} />
 											<span className="input-error-message-text">
 												{inputErrorDetails.message}
 											</span>

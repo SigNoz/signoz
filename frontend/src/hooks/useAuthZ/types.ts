@@ -1,15 +1,16 @@
 import permissionsType from './permissions.type';
-import { ObjectSeparator } from './utils';
+
+const ObjectSeparator = ':';
 
 type PermissionsData = typeof permissionsType.data;
 export type Resource = PermissionsData['resources'][number];
-export type ResourceName = Resource['name'];
+export type ResourceName = Resource['kind'];
 export type ResourceType = Resource['type'];
 
 type RelationsByType = PermissionsData['relations'];
 
 type ResourceTypeMap = {
-	[K in ResourceName]: Extract<Resource, { name: K }>['type'];
+	[K in ResourceName]: Extract<Resource, { kind: K }>['type'];
 };
 
 type RelationName = keyof RelationsByType;
@@ -17,11 +18,10 @@ type RelationName = keyof RelationsByType;
 export type ResourcesForRelation<R extends RelationName> = Extract<
 	Resource,
 	{ type: RelationsByType[R][number] }
->['name'];
+>['kind'];
 
-type IsPluralResource<
-	R extends ResourceName
-> = ResourceTypeMap[R] extends 'metaresources' ? true : false;
+type IsPluralResource<R extends ResourceName> =
+	ResourceTypeMap[R] extends 'metaresources' ? true : false;
 
 type ObjectForResource<R extends ResourceName> = R extends infer U
 	? U extends ResourceName

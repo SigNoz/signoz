@@ -12,22 +12,25 @@ export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
 	const newLegendMap: Record<string, string> = {};
 
 	const preparedResult =
-		data?.reduce<Record<string, Data>>((acc, query) => {
-			const newResult: Record<string, Data> = {
-				...acc,
-				[query[nameField] as string]: {
-					...query,
-					...tableParams?.pagination,
-					...(tableParams?.selectColumns
-						? { selectColumns: tableParams?.selectColumns }
-						: null),
-				},
-			};
+		data?.reduce<Record<string, Data>>(
+			(acc, query) => {
+				const newResult: Record<string, Data> = {
+					...acc,
+					[query[nameField] as string]: {
+						...query,
+						...tableParams?.pagination,
+						...(tableParams?.selectColumns
+							? { selectColumns: tableParams?.selectColumns }
+							: null),
+					},
+				};
 
-			newLegendMap[query[nameField] as string] = query.legend;
+				newLegendMap[query[nameField] as string] = query.legend;
 
-			return newResult;
-		}, {} as Record<string, Data>) || {};
+				return newResult;
+			},
+			{} as Record<string, Data>,
+		) || {};
 
 	return {
 		data: preparedResult,

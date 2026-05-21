@@ -92,7 +92,7 @@ export const getK8sDaemonSetsList = async (
 							[] as typeof props.filters.items,
 						),
 					},
-			  }
+				}
 			: props;
 
 		const response = await axios.post('/daemonsets/list', requestProps, {

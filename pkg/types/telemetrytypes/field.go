@@ -37,9 +37,9 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
-	JSONPlan     JSONAccessPlan      `json:"-"`
-	Indexes      []JSONDataTypeIndex `json:"-"`
-	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+	JSONPlan     JSONAccessPlan               `json:"-"`
+	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
+	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
 	Evolutions []*EvolutionEntry `json:"-"`
 }
@@ -102,7 +102,7 @@ func (f TelemetryFieldKey) String() string {
 			if i > 0 {
 				sb.WriteString("; ")
 			}
-			fmt.Fprintf(&sb, "{type=%s, columnExpr=%s, indexExpr=%s}", index.Type.StringValue(), index.ColumnExpression, index.IndexExpression)
+			fmt.Fprintf(&sb, "{type=%s, indexExpr=%s}", MappingFieldDataTypeToJSONDataType[index.FieldDataType].StringValue(), index.IndexExpression)
 		}
 		sb.WriteString("]")
 	}
@@ -399,4 +399,15 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+type TelemetryFieldKeySkipIndex struct {
+	Name            string        `json:"name"` // Name is TelemetryFieldKey.Name not IndexName from ClickHouse
+	FieldContext    FieldContext  `json:"fieldContext,omitzero"`
+	FieldDataType   FieldDataType `json:"fieldDataType,omitzero"`
+	BaseColumn      string        `json:"baseColumn"`
+	IndexName       string        `json:"indexName"`
+	IndexType       string        `json:"indexType"`
+	IndexExpression string        `json:"indexExpression"`
+	Granularity     int           `json:"granularity"`
 }

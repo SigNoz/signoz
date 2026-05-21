@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Select, Switch, Typography } from 'antd';
+import { Select, Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -7,7 +8,7 @@ import {
 	PanelTypesWithData,
 } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

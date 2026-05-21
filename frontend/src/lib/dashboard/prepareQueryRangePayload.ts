@@ -53,17 +53,20 @@ export const prepareQueryRangePayload = ({
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
-			const chQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) {
+			const chQueries = query[query.queryType].reduce(
+				(acc, query) => {
+					if (!query.query) {
+						return acc;
+					}
+
+					acc[query.name] = query;
+
+					legendMap[query.name] = query.legend;
+
 					return acc;
-				}
-
-				acc[query.name] = query;
-
-				legendMap[query.name] = query.legend;
-
-				return acc;
-			}, {} as NonNullable<QueryRangePayload['compositeQuery']['chQueries']>);
+				},
+				{} as NonNullable<QueryRangePayload['compositeQuery']['chQueries']>,
+			);
 
 			compositeQuery.chQueries = chQueries;
 
@@ -71,17 +74,20 @@ export const prepareQueryRangePayload = ({
 		}
 		case EQueryType.PROM: {
 			// eslint-disable-next-line sonarjs/no-identical-functions
-			const promQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) {
+			const promQueries = query[query.queryType].reduce(
+				(acc, query) => {
+					if (!query.query) {
+						return acc;
+					}
+
+					acc[query.name] = query;
+
+					legendMap[query.name] = query.legend;
+
 					return acc;
-				}
-
-				acc[query.name] = query;
-
-				legendMap[query.name] = query.legend;
-
-				return acc;
-			}, {} as NonNullable<QueryRangePayload['compositeQuery']['promQueries']>);
+				},
+				{} as NonNullable<QueryRangePayload['compositeQuery']['promQueries']>,
+			);
 
 			compositeQuery.promQueries = promQueries;
 			break;

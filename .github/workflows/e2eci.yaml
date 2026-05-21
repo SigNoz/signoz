@@ -21,15 +21,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: install
         run: |
-          cd tests/e2e && yarn install --frozen-lockfile
+          cd tests/e2e && pnpm install
       - name: fmt
         run: |
-          cd tests/e2e && yarn fmt:check
+          cd tests/e2e && pnpm fmt:check
       - name: lint
         run: |
-          cd tests/e2e && yarn lint
+          cd tests/e2e && pnpm lint
   test:
     strategy:
       fail-fast: false
@@ -54,15 +58,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: python-install
         run: |
           cd tests && uv sync
-      - name: yarn-install
+      - name: pnpm-install
         run: |
-          cd tests/e2e && yarn install --frozen-lockfile
+          cd tests/e2e && pnpm install --frozen-lockfile
       - name: playwright-browsers
         run: |
-          cd tests/e2e && yarn playwright install --with-deps ${{ matrix.project }}
+          cd tests/e2e && pnpm playwright install --with-deps ${{ matrix.project }}
       - name: bring-up-stack
         run: |
           cd tests && \
@@ -73,7 +81,7 @@ jobs:
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            yarn playwright test --project=${{ matrix.project }}
+            pnpm playwright test --project=${{ matrix.project }}
       - name: teardown-stack
         if: always()
         run: |

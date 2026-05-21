@@ -33,12 +33,12 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			const result = buildSortedVariablesArray(variables);
 
-			expect(result.map((v) => v.name)).toEqual(['a', 'b', 'c']);
+			expect(result.map((v) => v.name)).toStrictEqual(['a', 'b', 'c']);
 		});
 
 		it('should return empty array for empty variables', () => {
 			const result = buildSortedVariablesArray({});
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should create copies of variables (not references)', () => {
@@ -48,7 +48,7 @@ describe('dashboardVariablesStoreUtils', () => {
 			const result = buildSortedVariablesArray(variables);
 
 			expect(result[0]).not.toBe(original);
-			expect(result[0]).toEqual(original);
+			expect(result[0]).toStrictEqual(original);
 		});
 	});
 
@@ -63,7 +63,7 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			const result = buildVariableTypesMap(sorted);
 
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				env: 'QUERY',
 				region: 'CUSTOM',
 				dynVar: 'DYNAMIC',
@@ -72,7 +72,7 @@ describe('dashboardVariablesStoreUtils', () => {
 		});
 
 		it('should return empty object for empty array', () => {
-			expect(buildVariableTypesMap([])).toEqual({});
+			expect(buildVariableTypesMap([])).toStrictEqual({});
 		});
 	});
 
@@ -87,7 +87,7 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			const result = buildDynamicVariableOrder(sorted);
 
-			expect(result).toEqual(['dyn1', 'dyn2']);
+			expect(result).toStrictEqual(['dyn1', 'dyn2']);
 		});
 
 		it('should return empty array when no DYNAMIC variables exist', () => {
@@ -96,11 +96,11 @@ describe('dashboardVariablesStoreUtils', () => {
 				createVariable({ name: 'b', type: 'CUSTOM' }),
 			];
 
-			expect(buildDynamicVariableOrder(sorted)).toEqual([]);
+			expect(buildDynamicVariableOrder(sorted)).toStrictEqual([]);
 		});
 
 		it('should return empty array for empty input', () => {
-			expect(buildDynamicVariableOrder([])).toEqual([]);
+			expect(buildDynamicVariableOrder([])).toStrictEqual([]);
 		});
 	});
 
@@ -125,12 +125,12 @@ describe('dashboardVariablesStoreUtils', () => {
 			expect(result.sortedVariablesArray[0].name).toBe('env');
 			expect(result.sortedVariablesArray[1].name).toBe('dyn1');
 
-			expect(result.variableTypes).toEqual({
+			expect(result.variableTypes).toStrictEqual({
 				env: 'QUERY',
 				dyn1: 'DYNAMIC',
 			});
 
-			expect(result.dynamicVariableOrder).toEqual(['dyn1']);
+			expect(result.dynamicVariableOrder).toStrictEqual(['dyn1']);
 
 			// dependencyData should exist since there are variables
 			expect(result.dependencyData).not.toBeNull();
@@ -139,10 +139,10 @@ describe('dashboardVariablesStoreUtils', () => {
 		it('should return null dependencyData for empty variables', () => {
 			const result = computeDerivedValues({});
 
-			expect(result.sortedVariablesArray).toEqual([]);
+			expect(result.sortedVariablesArray).toStrictEqual([]);
 			expect(result.dependencyData).toBeNull();
-			expect(result.variableTypes).toEqual({});
-			expect(result.dynamicVariableOrder).toEqual([]);
+			expect(result.variableTypes).toStrictEqual({});
+			expect(result.dynamicVariableOrder).toStrictEqual([]);
 		});
 
 		it('should handle all four variable types together', () => {
@@ -172,21 +172,21 @@ describe('dashboardVariablesStoreUtils', () => {
 			const result = computeDerivedValues(variables);
 
 			expect(result.sortedVariablesArray).toHaveLength(4);
-			expect(result.sortedVariablesArray.map((v) => v.name)).toEqual([
+			expect(result.sortedVariablesArray.map((v) => v.name)).toStrictEqual([
 				'queryVar',
 				'customVar',
 				'dynVar',
 				'textVar',
 			]);
 
-			expect(result.variableTypes).toEqual({
+			expect(result.variableTypes).toStrictEqual({
 				queryVar: 'QUERY',
 				customVar: 'CUSTOM',
 				dynVar: 'DYNAMIC',
 				textVar: 'TEXTBOX',
 			});
 
-			expect(result.dynamicVariableOrder).toEqual(['dynVar']);
+			expect(result.dynamicVariableOrder).toStrictEqual(['dynVar']);
 			expect(result.dependencyData).not.toBeNull();
 		});
 
@@ -201,7 +201,7 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			const result = computeDerivedValues(variables);
 
-			expect(result.sortedVariablesArray.map((v) => v.name)).toEqual([
+			expect(result.sortedVariablesArray.map((v) => v.name)).toStrictEqual([
 				'a',
 				'b',
 				'm',
@@ -221,7 +221,7 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			const result = computeDerivedValues(variables);
 
-			expect(result.dynamicVariableOrder).toEqual(['dyn1', 'dyn2', 'dyn3']);
+			expect(result.dynamicVariableOrder).toStrictEqual(['dyn1', 'dyn2', 'dyn3']);
 		});
 
 		it('should build dependency data with query variable order for dependent queries', () => {
@@ -316,7 +316,7 @@ describe('dashboardVariablesStoreUtils', () => {
 			expect(depData).not.toBeNull();
 			expect(depData?.transitiveDescendants).toBeDefined();
 			// region's transitive descendants should include cluster and host
-			expect(depData?.transitiveDescendants['region']).toEqual(
+			expect(depData?.transitiveDescendants['region']).toStrictEqual(
 				expect.arrayContaining(['cluster', 'host']),
 			);
 		});
@@ -333,10 +333,10 @@ describe('dashboardVariablesStoreUtils', () => {
 			const result = computeDerivedValues(variables);
 
 			expect(result.sortedVariablesArray).toHaveLength(1);
-			expect(result.variableTypes).toEqual({ solo: 'QUERY' });
-			expect(result.dynamicVariableOrder).toEqual([]);
+			expect(result.variableTypes).toStrictEqual({ solo: 'QUERY' });
+			expect(result.dynamicVariableOrder).toStrictEqual([]);
 			expect(result.dependencyData).not.toBeNull();
-			expect(result.dependencyData?.order).toEqual(['solo']);
+			expect(result.dependencyData?.order).toStrictEqual(['solo']);
 		});
 
 		it('should handle only non-QUERY variables', () => {
@@ -362,8 +362,8 @@ describe('dashboardVariablesStoreUtils', () => {
 
 			expect(result.sortedVariablesArray).toHaveLength(3);
 			// No QUERY variables, so dependency order should be empty
-			expect(result.dependencyData?.order).toEqual([]);
-			expect(result.dynamicVariableOrder).toEqual(['dyn1']);
+			expect(result.dependencyData?.order).toStrictEqual([]);
+			expect(result.dynamicVariableOrder).toStrictEqual(['dyn1']);
 		});
 	});
 });

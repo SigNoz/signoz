@@ -1,4 +1,5 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import { IntegrationType } from 'container/Integrations/types';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import ServiceDetails from '../ServiceDetails/ServiceDetails';
@@ -11,10 +12,11 @@ import { accountsResponse } from './mockData';
 const renderServiceDetails = (
 	_initialConfigLogsS3Buckets: Record<string, string[]> = {},
 	_serviceId = 's3sync',
+	type: IntegrationType = IntegrationType.AWS_SERVICES,
 ): RenderResult =>
 	render(
 		<MockQueryClientProvider>
-			<ServiceDetails />
+			<ServiceDetails type={type} />
 		</MockQueryClientProvider>,
 	);
 

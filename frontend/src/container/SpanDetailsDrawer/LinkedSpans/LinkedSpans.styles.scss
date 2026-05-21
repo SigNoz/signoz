@@ -50,22 +50,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.linked-spans-container {
-		.item {
-			.item-key {
-				color: var(--l2-foreground);
-			}
-
-			.value-wrapper {
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-
-				.item-value {
-					color: var(--l2-background);
-				}
-			}
-		}
-	}
-}

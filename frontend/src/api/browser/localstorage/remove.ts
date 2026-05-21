@@ -1,8 +1,11 @@
+/* oxlint-disable no-restricted-globals */
+import { getScopedKey } from 'utils/storage';
+
 const remove = (key: string): boolean => {
 	try {
-		window.localStorage.removeItem(key);
+		localStorage.removeItem(getScopedKey(key));
 		return true;
-	} catch (e) {
+	} catch {
 		return false;
 	}
 };

@@ -1,7 +1,7 @@
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import ExplorerPage from 'container/ApiMonitoring/Explorer/Explorer';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 
 export const Explorer: TabRoutes = {
 	Component: ExplorerPage,

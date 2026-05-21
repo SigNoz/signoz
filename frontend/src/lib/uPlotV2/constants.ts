@@ -32,8 +32,8 @@ export const DEFAULT_CURSOR_CONFIG: Cursor = {
 				strokeFn !== undefined
 					? strokeFn(u, seriesIdx)
 					: typeof points?.stroke === 'string'
-					? points.stroke
-					: '';
+						? points.stroke
+						: '';
 			return `${strokeValue}90`;
 		},
 		fill: (): string => POINTS_FILL_COLOR,

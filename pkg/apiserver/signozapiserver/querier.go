@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addQuerierRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v5/query_range", handler.New(provider.authZ.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
+	if err := router.Handle("/api/v5/query_range", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
 		ID:                 "QueryRangeV5",
 		Tags:               []string{"querier"},
 		Summary:            "Query range",
@@ -451,7 +451,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authZ.ViewAccess(provider.querierHandler.ReplaceVariables), handler.OpenAPIDef{
+	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.ReplaceVariables), handler.OpenAPIDef{
 		ID:                  "ReplaceVariables",
 		Tags:                []string{"querier"},
 		Summary:             "Replace variables",

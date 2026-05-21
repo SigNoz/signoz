@@ -239,6 +239,10 @@ func (service *CloudIntegrationService) Update(provider CloudProviderType, servi
 		}
 
 		// other validations happen in newStorableServiceConfig
+	case CloudProviderTypeAzure:
+		if config.Azure == nil {
+			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "Azure config is required for Azure service")
+		}
 	default:
 		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -362,6 +366,7 @@ func GetDashboardsFromAssets(
 				CreatedBy: author,
 				UpdatedBy: author,
 			},
+			Source: dashboardtypes.SourceIntegration,
 		})
 	}
 

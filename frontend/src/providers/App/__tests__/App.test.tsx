@@ -2,45 +2,26 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import type {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { USER_ROLES } from 'types/roles';
+import { AUTHZ_CHECK_URL, authzMockResponse } from 'tests/authz-test-utils';
 
 import { AppProvider, useAppContext } from '../App';
 
-const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 const MY_USER_URL = 'http://localhost/api/v2/users/me';
 const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
+const GLOBAL_CONFIG_URL = 'http://localhost/api/v1/global/config';
 
 jest.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
 }));
 
-/**
- * Since we are mocking the check permissions, this is needed
- */
 const waitForSinglePreflightToFinish = async (): Promise<void> =>
 	await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_TIME_MS));
-
-function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
-	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
-	return {
-		data: payload.map((txn, i) => ({
-			relation: txn.relation,
-			object: txn.object,
-			authorized: authorizedByIndex[i] ?? false,
-		})),
-		status: 'success',
-	};
-}
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -354,6 +335,129 @@ describe('AppProvider when authz/check fails', () => {
 				expect(result.current.userFetchError).toBeTruthy();
 			},
 			{ timeout: 2000 },
+		);
+	});
+});
+
+describe('AppProvider no-auth preflight', () => {
+	beforeEach(() => {
+		queryClient.clear();
+	});
+
+	afterEach(() => {
+		setNoAuthMode(false);
+	});
+
+	it('sets noAuthMode singleton when impersonation is enabled', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: true } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(getIsNoAuthMode()).toBe(true);
+	});
+
+	it('leaves noAuthMode singleton false when impersonation is disabled', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: false } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(getIsNoAuthMode()).toBe(false);
+	});
+
+	it('clears stale auth tokens from localStorage and resets in-memory JWT state when impersonation is enabled', async () => {
+		setLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN, 'stale-access-token');
+		setLocalStorageApi(LOCALSTORAGE.REFRESH_AUTH_TOKEN, 'stale-refresh-token');
+		setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, 'old@example.com');
+		setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_NAME, 'Old Name');
+
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: true } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		// localStorage cleared
+		expect(localStorage.getItem(LOCALSTORAGE.AUTH_TOKEN)).toBeNull();
+		expect(localStorage.getItem(LOCALSTORAGE.REFRESH_AUTH_TOKEN)).toBeNull();
+		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_EMAIL)).toBeNull();
+		expect(localStorage.getItem(LOCALSTORAGE.LOGGED_IN_USER_NAME)).toBeNull();
+
+		// in-memory JWTs reset so stale tokens don't linger in context or React Query keys
+		expect(result.current.user.accessJwt).toBe('');
+		expect(result.current.user.refreshJwt).toBe('');
+	});
+
+	it('transitions isPreflightLoading from true to false once preflight resolves', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: false } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		expect(result.current.isPreflightLoading).toBe(true);
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
 		);
 	});
 });

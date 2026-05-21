@@ -125,12 +125,12 @@ jest.mock('dayjs', () => {
 		tz: mockTzMethod,
 	}));
 	Object.keys(actualDayjs).forEach((key) => {
-		((mockDayjs as unknown) as Record<string, unknown>)[
-			key
-		] = (actualDayjs as Record<string, unknown>)[key];
+		(mockDayjs as unknown as Record<string, unknown>)[key] = (
+			actualDayjs as Record<string, unknown>
+		)[key];
 	});
-	((mockDayjs as unknown) as { extend: jest.Mock }).extend = jest.fn();
-	((mockDayjs as unknown) as { tz: { guess: jest.Mock } }).tz = {
+	(mockDayjs as unknown as { extend: jest.Mock }).extend = jest.fn();
+	(mockDayjs as unknown as { tz: { guess: jest.Mock } }).tz = {
 		guess: jest.fn(() => 'UTC'),
 	};
 	return mockDayjs;
@@ -211,7 +211,7 @@ const createMockQuery = (): Widgets['query'] => ({
 
 // Base mock data - transform publicDashboardResponse to match component's expected format
 const baseMockData: SuccessResponseV2<PublicDashboardDataProps> = {
-	data: (publicDashboardResponse.data as unknown) as PublicDashboardDataProps,
+	data: publicDashboardResponse.data as unknown as PublicDashboardDataProps,
 	httpStatusCode: StatusCodes.OK,
 };
 
@@ -430,7 +430,7 @@ describe('Public Dashboard Container', () => {
 			const mockData = createMockData({
 				publicDashboard: {
 					timeRangeEnabled: true,
-					defaultTimeRange: (undefined as unknown) as string,
+					defaultTimeRange: undefined as unknown as string,
 					publicPath: MOCK_PUBLIC_PATH,
 				},
 			});
@@ -696,7 +696,7 @@ describe('Public Dashboard Container', () => {
 		it('should handle undefined dashboard data', () => {
 			const mockData: SuccessResponseV2<PublicDashboardDataProps> = {
 				data: {
-					dashboard: (undefined as unknown) as PublicDashboardDataProps['dashboard'],
+					dashboard: undefined as unknown as PublicDashboardDataProps['dashboard'],
 					publicDashboard: {
 						timeRangeEnabled: false,
 						defaultTimeRange: DEFAULT_TIME_RANGE,
@@ -729,7 +729,7 @@ describe('Public Dashboard Container', () => {
 								query: createMockQuery(),
 							},
 						],
-						layout: (undefined as unknown) as Layout[],
+						layout: undefined as unknown as Layout[],
 						panelMap: {},
 						variables: {},
 					},

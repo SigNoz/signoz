@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -49,11 +50,11 @@ func NewAuditEventFromHTTPRequest(
 	statusCode int,
 	traceID oteltrace.TraceID,
 	spanID oteltrace.SpanID,
-	action Action,
+	action coretypes.Verb,
 	actionCategory ActionCategory,
 	claims authtypes.Claims,
 	resourceID string,
-	resourceKind string,
+	resourceKind coretypes.Kind,
 	errorType string,
 	errorCode string,
 ) AuditEvent {
@@ -88,7 +89,7 @@ func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, s
 	groups := make(map[resourceKey][]int)
 	order := make([]resourceKey, 0)
 	for i, event := range events {
-		key := resourceKey{kind: event.ResourceAttributes.ResourceKind, id: event.ResourceAttributes.ResourceID}
+		key := resourceKey{kind: event.ResourceAttributes.ResourceKind.String(), id: event.ResourceAttributes.ResourceID}
 		if _, exists := groups[key]; !exists {
 			order = append(order, key)
 		}

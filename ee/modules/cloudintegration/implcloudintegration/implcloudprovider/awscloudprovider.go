@@ -18,6 +18,7 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 	return &awscloudprovider{serviceDefinitions: defStore}, nil
 }
 
+// TODO: move URL construction logic to cloudintegrationtypes and add unit tests for it.
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.AWS.DeploymentRegion)
 	u, _ := url.Parse(baseURL)

@@ -41,26 +41,9 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
         />
       </span>
     </button>
-    <span
-      aria-label="holder"
-      class="anticon anticon-holder"
-      role="img"
+    <svg
       style="font-size: 1rem; cursor: move;"
-    >
-      <svg
-        aria-hidden="true"
-        data-icon="holder"
-        fill="currentColor"
-        focusable="false"
-        height="1em"
-        viewBox="64 64 896 896"
-        width="1em"
-      >
-        <path
-          d="M300 276.5a56 56 0 1056-97 56 56 0 00-56 97zm0 284a56 56 0 1056-97 56 56 0 00-56 97zM640 228a56 56 0 10112 0 56 56 0 00-112 0zm0 284a56 56 0 10112 0 56 56 0 00-112 0zM300 844.5a56 56 0 1056-97 56 56 0 00-56 97zM640 796a56 56 0 10112 0 56 56 0 00-112 0z"
-        />
-      </svg>
-    </span>
+    />
   </div>
 </DocumentFragment>
 `;

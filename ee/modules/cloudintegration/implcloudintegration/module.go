@@ -429,9 +429,13 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		stats["cloudintegration.aws.connectedaccounts.count"] = awsAccountsCount
 	}
 
-	// NOTE: not adding stats for services for now.
+	// get connected accounts for Azure
+	azureAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cloudintegrationtypes.CloudProviderTypeAzure)
+	if err == nil {
+		stats["cloudintegration.azure.connectedaccounts.count"] = azureAccountsCount
+	}
 
-	// TODO: add more cloud providers when supported
+	// NOTE: not adding stats for services for now.
 
 	return stats, nil
 }

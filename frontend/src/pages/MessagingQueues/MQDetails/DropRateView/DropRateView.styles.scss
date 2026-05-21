@@ -28,16 +28,3 @@
 	width: 200px;
 	margin: 6px;
 }
-
-.lightMode {
-	.evaluation-time-selector {
-		.eval-title {
-			color: var(--l2-background);
-		}
-
-		.ant-selector {
-			background-color: var(--l2-background);
-			border: 1px solid var(--l2-background);
-		}
-	}
-}

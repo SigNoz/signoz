@@ -6,6 +6,7 @@
  * Adds custom matchers from the react testing library to all tests
  */
 import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/extend-expect';
 import 'jest-styled-components';
 
 import { server } from './src/mocks-server/server';
@@ -28,6 +29,18 @@ if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
 }
 
+if (typeof window.IntersectionObserver === 'undefined') {
+	class IntersectionObserverMock {
+		observe(): void {}
+		unobserve(): void {}
+		disconnect(): void {}
+		takeRecords(): IntersectionObserverEntry[] {
+			return [];
+		}
+	}
+	(window as any).IntersectionObserver = IntersectionObserverMock;
+}
+
 // Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
 // These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
 // jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),
@@ -42,13 +55,13 @@ window.getComputedStyle = function (
 	} catch {
 		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
 		// see the element as visible and without animations.
-		return ({
+		return {
 			display: '',
 			visibility: '',
 			opacity: '1',
 			animationName: 'none',
 			getPropertyValue: () => '',
-		} as unknown) as CSSStyleDeclaration;
+		} as unknown as CSSStyleDeclaration;
 	}
 };
 

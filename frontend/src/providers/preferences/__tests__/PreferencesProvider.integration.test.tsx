@@ -126,7 +126,7 @@ describe('PreferencesProvider integration', () => {
 			const stored = getLocalStorageJSON<LogsLocalOptions>(
 				LOCALSTORAGE.LOGS_LIST_OPTIONS,
 			);
-			expect(stored?.selectColumns).toEqual([
+			expect(stored?.selectColumns).toStrictEqual([
 				defaultLogsSelectedColumns[0] as TelemetryFieldKey,
 			]);
 		});
@@ -291,7 +291,7 @@ describe('PreferencesProvider integration', () => {
 			const stored = getLocalStorageJSON<TracesLocalOptions>(
 				LOCALSTORAGE.TRACES_LIST_OPTIONS,
 			);
-			expect(stored?.selectColumns).toEqual([
+			expect(stored?.selectColumns).toStrictEqual([
 				defaultTraceSelectedColumns[0] as TelemetryFieldKey,
 			]);
 		});

@@ -40,8 +40,10 @@ export interface CustomTagProps {
 	onClose: () => void;
 }
 
-export interface CustomMultiSelectProps
-	extends Omit<SelectProps<string[] | string>, 'options'> {
+export interface CustomMultiSelectProps extends Omit<
+	SelectProps<string[] | string>,
+	'options'
+> {
 	placeholder?: string;
 	className?: string;
 	loading?: boolean;

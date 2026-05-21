@@ -25,9 +25,11 @@ import {
 	Table,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
@@ -71,7 +73,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -83,6 +85,8 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
@@ -98,6 +102,7 @@ import {
 	filterDashboards,
 } from './utils';
 
+import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -112,10 +117,8 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
-	const {
-		dashboardsListQueryParams,
-		updateDashboardsListQueryParams,
-	} = useDashboardsListQueryParams();
+	const { dashboardsListQueryParams, updateDashboardsListQueryParams } =
+		useDashboardsListQueryParams();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
@@ -127,25 +130,20 @@ function DashboardsList(): JSX.Element {
 		user.role,
 	);
 
-	const [
-		showNewDashboardTemplatesModal,
-		setShowNewDashboardTemplatesModal,
-	] = useState(false);
+	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
+		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
-	const [
-		isImportJSONModalVisible,
-		setIsImportJSONModalVisible,
-	] = useState<boolean>(false);
+	const [isImportJSONModalVisible, setIsImportJSONModalVisible] =
+		useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
-		false,
-	);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] =
+		useState<boolean>(false);
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
-		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		const dashboardDynamicColumnsString = getLocalStorageKey('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
 			createdAt: true,
 			createdBy: true,
@@ -159,7 +157,7 @@ function DashboardsList(): JSX.Element {
 				);
 
 				if (isEmpty(tempDashboardDynamicColumns)) {
-					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+					setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 				} else {
 					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
 				}
@@ -167,7 +165,7 @@ function DashboardsList(): JSX.Element {
 				console.error(error);
 			}
 		} else {
-			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 		}
 
 		return dashboardDynamicColumns;
@@ -181,7 +179,7 @@ function DashboardsList(): JSX.Element {
 		visibleColumns: DashboardDynamicColumns,
 	): void {
 		try {
-			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(visibleColumns));
 		} catch (error) {
 			console.error(error);
 		}
@@ -438,64 +436,60 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Expand size={12} />}
-													onClick={onClickHandler}
-												>
-													View
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														window.open(getLink(), '_blank');
-													}}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Link2 size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(`${window.location.origin}${getLink()}`);
-													}}
-												>
-													Copy Link
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<FileJson size={12} />}
-													onClick={handleJsonExport}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
+										<div className={styles.actionContent}>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Expand size={12} />}
+												onClick={onClickHandler}
+											>
+												View
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<SquareArrowOutUpRight size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													openInNewTab(getLink());
+												}}
+											>
+												Open in New Tab
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Link2 size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													setCopy(getAbsoluteUrl(getLink()));
+												}}
+											>
+												Copy Link
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<FileJson size={12} />}
+												onClick={handleJsonExport}
+											>
+												Export JSON
+											</Button>
+											<DeleteButton
+												name={dashboard.name}
+												id={dashboard.id}
+												isLocked={dashboard.isLocked}
+												createdBy={dashboard.createdBy}
+											/>
 										</div>
 									}
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger="click"
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"

@@ -1,0 +1,107 @@
+{
+  "id": "storageaccountsblob",
+  "title": "Storage Accounts Blob Storage",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_availability_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_blobcapacity_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_blobcount_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_blobprovisionedsize_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_containercount_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_egress_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_indexcapacity_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ingress_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successe2elatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successserverlatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_transactions_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Storage",
+      "resourceType": "storageAccounts/blobServices",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Blob Storage Overview",
+        "description": "Overview of Blob Storage",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

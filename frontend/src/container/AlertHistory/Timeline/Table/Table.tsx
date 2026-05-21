@@ -18,14 +18,8 @@ import './Table.styles.scss';
 function TimelineTable(): JSX.Element {
 	const [filters, setFilters] = useState<TagFilter>(initialFilters);
 
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsTimelineTable({ filters });
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsTimelineTable({ filters });
 
 	const { timelineData, totalItems, labels } = useMemo(() => {
 		const response = data?.payload?.data;

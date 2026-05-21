@@ -105,6 +105,7 @@ export function prepareBarPanelConfig({
 			colorMapping: widget.customLegendColors ?? {},
 			isDarkMode,
 			stepInterval: currentStepInterval,
+			metric: series.metric,
 		});
 	});
 

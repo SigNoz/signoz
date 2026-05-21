@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Typography } from 'antd';
+import { ChevronDown, Globe } from '@signozhq/icons';
+import { Button, Dropdown } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import { Globe } from 'lucide-react';
 
 import { menuItems } from './config';
 
@@ -47,7 +47,7 @@ function TimePreference({
 						{selectedTime.name}
 					</Typography.Text>
 				</div>
-				<DownOutlined />
+				<ChevronDown size="md" />
 			</Button>
 		</Dropdown>
 	);

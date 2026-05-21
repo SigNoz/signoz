@@ -100,27 +100,6 @@
 	max-width: 500px;
 }
 
-.lightMode {
-	.variable-item {
-		.variable-name {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-			color: var(--bg-robin-300);
-		}
-
-		.variable-value {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-			color: var(--l1-foreground);
-
-			&:hover,
-			&:focus-within {
-				outline: 1px solid var(--bg-robin-400);
-			}
-		}
-	}
-}
-
 .cycle-error-alert {
 	margin-bottom: 12px;
 	padding: 4px 12px;

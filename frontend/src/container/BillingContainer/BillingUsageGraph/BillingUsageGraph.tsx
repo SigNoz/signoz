@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Card, Flex, Typography } from 'antd';
+import { Card, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -82,9 +83,10 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const { startTime, endTime } = useMemo(() => calculateStartEndTime(data), [
-		data,
-	]);
+	const { startTime, endTime } = useMemo(
+		() => calculateStartEndTime(data),
+		[data],
+	);
 
 	const getGraphSeries = (color: string, label: string): any => ({
 		drawStyle: 'bars',
@@ -207,7 +209,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 					<Typography.Text className="total-spent-title">
 						TOTAL SPENT
 					</Typography.Text>
-					<Typography.Text color={Color.BG_VANILLA_100} className="total-spent">
+					<Typography.Text className="total-spent">
 						${numberFormatter.format(billAmount)}
 					</Typography.Text>
 				</Flex>

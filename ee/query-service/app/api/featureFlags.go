@@ -71,6 +71,24 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
+	bodyJSONQuery := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseJSONBody.String()),
+		Active:     bodyJSONQuery,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	fineGrainedAuthz := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseFineGrainedAuthz, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
+		Active:     fineGrainedAuthz,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {

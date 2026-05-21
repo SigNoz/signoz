@@ -81,7 +81,7 @@ describe('onUpdateVariableNode', () => {
 
 		onUpdateVariableNode('deployment', graph, topologicalOrder, callback);
 
-		expect(visited).toEqual(['deployment', 'namespace', 'service', 'pod']);
+		expect(visited).toStrictEqual(['deployment', 'namespace', 'service', 'pod']);
 	});
 
 	it('should call callback starting from a middle node', () => {
@@ -92,7 +92,7 @@ describe('onUpdateVariableNode', () => {
 
 		onUpdateVariableNode('namespace', graph, topologicalOrder, callback);
 
-		expect(visited).toEqual(['namespace', 'service', 'pod']);
+		expect(visited).toStrictEqual(['namespace', 'service', 'pod']);
 	});
 
 	it('should only call callback for the leaf node when updating leaf', () => {
@@ -103,7 +103,7 @@ describe('onUpdateVariableNode', () => {
 
 		onUpdateVariableNode('pod', graph, topologicalOrder, callback);
 
-		expect(visited).toEqual(['pod']);
+		expect(visited).toStrictEqual(['pod']);
 	});
 
 	it('should handle CUSTOM variable not in topologicalOrder by updating its children', () => {
@@ -116,7 +116,7 @@ describe('onUpdateVariableNode', () => {
 		onUpdateVariableNode('customVar', graph, topologicalOrder, callback);
 
 		// Should process namespace and its descendants (service, pod)
-		expect(visited).toEqual(['namespace', 'service', 'pod']);
+		expect(visited).toStrictEqual(['namespace', 'service', 'pod']);
 	});
 
 	it('should handle node not in graph gracefully', () => {
@@ -128,7 +128,7 @@ describe('onUpdateVariableNode', () => {
 		onUpdateVariableNode('unknownNode', graph, topologicalOrder, callback);
 
 		// Should not call callback for any node since unknownNode has no children
-		expect(visited).toEqual([]);
+		expect(visited).toStrictEqual([]);
 	});
 
 	it('should handle empty graph', () => {
@@ -140,7 +140,7 @@ describe('onUpdateVariableNode', () => {
 		onUpdateVariableNode('deployment', {}, topologicalOrder, callback);
 
 		// deployment is in topologicalOrder, so callback is called for it
-		expect(visited).toEqual(['deployment']);
+		expect(visited).toStrictEqual(['deployment']);
 	});
 
 	it('should handle empty topologicalOrder', () => {
@@ -151,7 +151,7 @@ describe('onUpdateVariableNode', () => {
 
 		onUpdateVariableNode('deployment', graph, [], callback);
 
-		expect(visited).toEqual([]);
+		expect(visited).toStrictEqual([]);
 	});
 
 	it('should handle CUSTOM variable with multiple children', () => {
@@ -173,7 +173,7 @@ describe('onUpdateVariableNode', () => {
 		);
 
 		// Should process namespace, service, and pod (descendants)
-		expect(visited).toEqual(['namespace', 'service', 'pod']);
+		expect(visited).toStrictEqual(['namespace', 'service', 'pod']);
 	});
 });
 
@@ -200,11 +200,15 @@ function makeDynamicVar(
 
 describe('mergeUniqueStrings', () => {
 	it('should merge two arrays and deduplicate', () => {
-		expect(mergeUniqueStrings(['a', 'b'], ['b', 'c'])).toEqual(['a', 'b', 'c']);
+		expect(mergeUniqueStrings(['a', 'b'], ['b', 'c'])).toStrictEqual([
+			'a',
+			'b',
+			'c',
+		]);
 	});
 
 	it('should convert numbers and booleans to strings', () => {
-		expect(mergeUniqueStrings([1, true, 'hello'], [2, false])).toEqual([
+		expect(mergeUniqueStrings([1, true, 'hello'], [2, false])).toStrictEqual([
 			'1',
 			'true',
 			'hello',
@@ -214,15 +218,15 @@ describe('mergeUniqueStrings', () => {
 	});
 
 	it('should deduplicate when number and its string form both appear', () => {
-		expect(mergeUniqueStrings([42], ['42'])).toEqual(['42']);
+		expect(mergeUniqueStrings([42], ['42'])).toStrictEqual(['42']);
 	});
 
 	it('should handle a single array', () => {
-		expect(mergeUniqueStrings(['x', 'y', 'x'])).toEqual(['x', 'y']);
+		expect(mergeUniqueStrings(['x', 'y', 'x'])).toStrictEqual(['x', 'y']);
 	});
 
 	it('should handle three or more arrays', () => {
-		expect(mergeUniqueStrings(['a'], ['b'], ['c'], ['a', 'c'])).toEqual([
+		expect(mergeUniqueStrings(['a'], ['b'], ['c'], ['a', 'c'])).toStrictEqual([
 			'a',
 			'b',
 			'c',
@@ -230,15 +234,19 @@ describe('mergeUniqueStrings', () => {
 	});
 
 	it('should return empty array when no arrays are provided', () => {
-		expect(mergeUniqueStrings()).toEqual([]);
+		expect(mergeUniqueStrings()).toStrictEqual([]);
 	});
 
 	it('should return empty array when all input arrays are empty', () => {
-		expect(mergeUniqueStrings([], [], [])).toEqual([]);
+		expect(mergeUniqueStrings([], [], [])).toStrictEqual([]);
 	});
 
 	it('should preserve order of first occurrence', () => {
-		expect(mergeUniqueStrings(['c', 'a'], ['b', 'a'])).toEqual(['c', 'a', 'b']);
+		expect(mergeUniqueStrings(['c', 'a'], ['b', 'a'])).toStrictEqual([
+			'c',
+			'a',
+			'b',
+		]);
 	});
 });
 

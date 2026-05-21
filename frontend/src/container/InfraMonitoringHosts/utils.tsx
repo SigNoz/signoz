@@ -1,12 +1,13 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from '@signozhq/icons';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -24,7 +25,7 @@ export function HostnameCell({
 	}
 	return (
 		<div className="hostname-cell-missing">
-			<Typography.Text type="secondary" className="hostname-cell-placeholder">
+			<Typography.Text color="muted" className="hostname-cell-placeholder">
 				-
 			</Typography.Text>
 			<Tooltip

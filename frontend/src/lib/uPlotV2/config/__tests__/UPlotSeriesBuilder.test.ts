@@ -123,7 +123,7 @@ describe('UPlotSeriesBuilder', () => {
 	});
 
 	it('passes through a custom pathBuilder when provided', () => {
-		const customPaths = (jest.fn() as unknown) as uPlot.Series.PathBuilder;
+		const customPaths = jest.fn() as unknown as uPlot.Series.PathBuilder;
 
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
@@ -226,7 +226,7 @@ describe('UPlotSeriesBuilder', () => {
 
 		const config = builder.getConfig();
 
-		expect(config.dash).toEqual([10, 10]);
+		expect(config.dash).toStrictEqual([10, 10]);
 		expect(config.cap).toBe('round');
 	});
 

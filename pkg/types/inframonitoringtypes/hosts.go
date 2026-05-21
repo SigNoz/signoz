@@ -18,16 +18,16 @@ type Hosts struct {
 }
 
 type HostRecord struct {
-	HostName          string                 `json:"hostName" required:"true"`
-	Status            HostStatus             `json:"status" required:"true"`
-	ActiveHostCount   int                    `json:"activeHostCount" required:"true"`
-	InactiveHostCount int                    `json:"inactiveHostCount" required:"true"`
-	CPU               float64                `json:"cpu" required:"true"`
-	Memory            float64                `json:"memory" required:"true"`
-	Wait              float64                `json:"wait" required:"true"`
-	Load15            float64                `json:"load15" required:"true"`
-	DiskUsage         float64                `json:"diskUsage" required:"true"`
-	Meta              map[string]interface{} `json:"meta" required:"true"`
+	HostName          string            `json:"hostName" required:"true"`
+	Status            HostStatus        `json:"status" required:"true"`
+	ActiveHostCount   int               `json:"activeHostCount" required:"true"`
+	InactiveHostCount int               `json:"inactiveHostCount" required:"true"`
+	CPU               float64           `json:"cpu" required:"true"`
+	Memory            float64           `json:"memory" required:"true"`
+	Wait              float64           `json:"wait" required:"true"`
+	Load15            float64           `json:"load15" required:"true"`
+	DiskUsage         float64           `json:"diskUsage" required:"true"`
+	Meta              map[string]string `json:"meta" required:"true"`
 }
 
 type RequiredMetricsCheck struct {
@@ -49,7 +49,7 @@ type HostFilter struct {
 	FilterByStatus HostStatus `json:"filterByStatus"`
 }
 
-// Validate ensures HostsListRequest contains acceptable values.
+// Validate ensures PostableHosts contains acceptable values.
 func (req *PostableHosts) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
@@ -99,6 +99,9 @@ func (req *PostableHosts) Validate() error {
 		}
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
+		}
+		if req.OrderBy.Key.Name == HostNameAttrKey && len(req.GroupBy) > 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by '%s' is only allowed when groupBy is empty", HostNameAttrKey)
 		}
 	}
 

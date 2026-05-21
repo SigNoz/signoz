@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Switch, Typography } from 'antd';
+import { Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	FillMode,
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { Paintbrush } from 'lucide-react';
+import { Paintbrush } from '@signozhq/icons';
 
 import DisconnectValuesSelector from '../../components/DisconnectValuesSelector/DisconnectValuesSelector';
 import FillModeSelector from '../../components/FillModeSelector/FillModeSelector';

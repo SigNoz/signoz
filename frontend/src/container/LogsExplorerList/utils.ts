@@ -63,8 +63,7 @@ export const getEmptyLogsListConfig = (
 		},
 		{
 			text: 'Correlate traces and logs',
-			url:
-				'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
+			url: 'https://signoz.io/docs/traces-management/guides/correlate-traces-and-logs/',
 		},
 	],
 	clearFiltersButtonText: 'Clear filters from Trace to view other logs',

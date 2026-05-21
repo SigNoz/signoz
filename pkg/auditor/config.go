@@ -25,6 +25,8 @@ type Config struct {
 	FlushInterval time.Duration `mapstructure:"flush_interval"`
 
 	OTLPHTTP OTLPHTTPConfig `mapstructure:"otlphttp"`
+
+	File FileConfig `mapstructure:"file"`
 }
 
 // OTLPHTTPConfig holds configuration for the OTLP HTTP exporter provider.
@@ -44,6 +46,12 @@ type OTLPHTTPConfig struct {
 
 	// Retry configures exponential backoff retry policy for failed exports.
 	Retry RetryConfig `mapstructure:"retry"`
+}
+
+type FileConfig struct {
+	// Path is the absolute path to the audit log file. The file is opened with
+	// O_APPEND|O_CREATE|O_WRONLY; existing contents are preserved across runs.
+	Path string `mapstructure:"path"`
 }
 
 // RetryConfig configures exponential backoff for the OTLP HTTP exporter.
@@ -108,6 +116,12 @@ func (c Config) Validate() error {
 	if c.Provider == "otlphttp" {
 		if c.OTLPHTTP.Endpoint == nil {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::otlphttp::endpoint must be set when provider is otlphttp")
+		}
+	}
+
+	if c.Provider == "file" {
+		if c.File.Path == "" {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::file::path must be set when provider is file")
 		}
 	}
 

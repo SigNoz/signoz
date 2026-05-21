@@ -44,9 +44,80 @@ export interface IGlobalTimeStoreActions {
 	) => void;
 
 	/**
-	 * Get the current min/max time values parsed from selectedTime.
-	 * For durations, computes fresh values based on Date.now().
-	 * For custom ranges, extracts the stored values.
+	 * Get the current min/max time values.
+	 * - Custom time ranges: returns exact parsed values
+	 * - isRefreshEnabled true: computes 5s-rounded values and updates store
+	 * - isRefreshEnabled false: returns lastComputedMinMax
 	 */
-	getMinMaxTime: (selectedItem?: GlobalTimeSelectedTime) => ParsedTimeRange;
+	getMinMaxTime: () => ParsedTimeRange;
 }
+
+export interface GlobalTimeProviderOptions {
+	/**
+	 * Optional name for the store instance.
+	 * Used to scope query keys - only queries with this store's prefix
+	 * will be tracked/invalidated by this store's hooks.
+	 */
+	name?: string;
+	/** Initialize from parent/global time */
+	inheritGlobalTime?: boolean;
+	/** Initial time if not inheriting */
+	initialTime?: GlobalTimeSelectedTime;
+	/** URL sync configuration. When false/omitted, no URL sync. */
+	enableUrlParams?:
+		| boolean
+		| {
+				relativeTimeKey?: string;
+				startTimeKey?: string;
+				endTimeKey?: string;
+		  };
+	removeQueryParamsOnUnmount?: boolean;
+	localStoragePersistKey?: string;
+	refreshInterval?: number;
+}
+
+export interface GlobalTimeState {
+	/**
+	 * Optional name for the store instance.
+	 * Used to scope query keys for auto-refresh queries.
+	 * Unnamed stores use the default prefix without a name.
+	 */
+	name?: string;
+	selectedTime: GlobalTimeSelectedTime;
+	refreshInterval: number;
+	isRefreshEnabled: boolean;
+	lastRefreshTimestamp: number;
+	lastComputedMinMax: ParsedTimeRange;
+}
+
+export interface GlobalTimeActions {
+	setSelectedTime: (
+		time: GlobalTimeSelectedTime,
+		refreshInterval?: number,
+	) => void;
+	setRefreshInterval: (interval: number) => void;
+	getMinMaxTime: () => ParsedTimeRange;
+	/**
+	 * Compute fresh rounded min/max values, store them, and update refresh timestamp.
+	 * Call this before invalidating queries to ensure all queries use the same time values.
+	 *
+	 * @returns The newly computed ParsedTimeRange
+	 */
+	computeAndStoreMinMax: () => ParsedTimeRange;
+	/**
+	 * Update the refresh timestamp to current time.
+	 * Called by QueryCache listener when auto-refresh queries complete.
+	 */
+	updateRefreshTimestamp: () => void;
+	/**
+	 * Build query key for auto-refresh queries scoped to this store.
+	 * Named stores: ['AUTO_REFRESH_QUERY', name, ...parts, selectedTime]
+	 * Unnamed stores: ['AUTO_REFRESH_QUERY', ...parts, selectedTime]
+	 */
+	getAutoRefreshQueryKey: (
+		selectedTime: GlobalTimeSelectedTime,
+		...queryParts: unknown[]
+	) => unknown[];
+}
+
+export type GlobalTimeStore = GlobalTimeState & GlobalTimeActions;

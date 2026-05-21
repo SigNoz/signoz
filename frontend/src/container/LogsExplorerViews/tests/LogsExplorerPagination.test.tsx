@@ -39,24 +39,26 @@ jest.mock('store/actions', () => {
 
 	return {
 		...originalModule,
-		UpdateTimeInterval: (
-			interval: any,
-			dateTimeRange: [number, number] = [0, 0],
-		): ((dispatch: any) => void) => (): void => {
-			// Get the original min and max times
-			const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
-				interval,
-				dateTimeRange,
-			);
+		UpdateTimeInterval:
+			(
+				interval: any,
+				dateTimeRange: [number, number] = [0, 0],
+			): ((dispatch: any) => void) =>
+			(): void => {
+				// Get the original min and max times
+				const { maxTime: originalMaxTime, minTime: originalMinTime } = GetMinMax(
+					interval,
+					dateTimeRange,
+				);
 
-			// Add 5 minutes to both times to ensure they are different
-			const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
-			const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
-			const minTime = originalMinTime + fiveMinutesInNanoseconds;
+				// Add 5 minutes to both times to ensure they are different
+				const fiveMinutesInNanoseconds = 5 * 60 * 1000 * 1000000;
+				const maxTime = originalMaxTime + fiveMinutesInNanoseconds;
+				const minTime = originalMinTime + fiveMinutesInNanoseconds;
 
-			// Update the mock state
-			mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
-		},
+				// Update the mock state
+				mockGlobalTimeState = { minTime, maxTime, selectedTime: interval };
+			},
 	};
 });
 
@@ -188,7 +190,7 @@ export const verifyPayload = ({
 	const queryA = payload.compositeQuery.queries?.find(
 		(q) => q.spec?.name === 'A',
 	);
-	const queryData = (queryA?.spec as unknown) as IBuilderQuery;
+	const queryData = queryA?.spec as unknown as IBuilderQuery;
 	expect(queryData).toBeDefined();
 	// Assert that the offset in the payload matches the expected offset
 	expect(queryData.offset).toBe(expectedOffset);
@@ -253,7 +255,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 			expect(
 				screen.queryByText('pending_data_placeholder'),
 			).not.toBeInTheDocument();
-			expect(capturedPayloads.length).toBe(1);
+			expect(capturedPayloads).toHaveLength(1);
 		});
 
 		// Verify the payload of the first call, expecting offset 0
@@ -283,7 +285,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		// Verify the second page request was made
 		// Wait for the second API call to be captured after the scroll
 		await waitFor(() => {
-			expect(capturedPayloads.length).toBe(2);
+			expect(capturedPayloads).toHaveLength(2);
 		});
 
 		// Store the time range from the first payload, which should be consistent in subsequent requests
@@ -322,7 +324,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		// Verify the third page request was made
 		// Wait for the third API call to be captured
 		await waitFor(() => {
-			expect(capturedPayloads.length).toBe(3);
+			expect(capturedPayloads).toHaveLength(3);
 		});
 		const thirdPayload = capturedPayloads[2];
 		// Verify the payload of the third call, expecting offset 200 and consistent time range
@@ -524,13 +526,13 @@ describe('Logs Explorer -> stage and run query', () => {
 		const secondPayload = capturedPayloads[capturedPayloads.length - 1];
 
 		// Verify that the timestamps have changed due to UpdateTimeInterval
-		expect(secondPayload.start).not.toEqual(initialStart);
-		expect(secondPayload.end).not.toEqual(initialEnd);
+		expect(secondPayload.start).not.toStrictEqual(initialStart);
+		expect(secondPayload.end).not.toStrictEqual(initialEnd);
 
 		// The timestamps should be different (the exact difference depends on the mock implementation)
 		// Note: The timestamps might go backwards if UpdateTimeInterval is not called properly
-		expect(secondPayload.start).not.toEqual(initialStart);
-		expect(secondPayload.end).not.toEqual(initialEnd);
+		expect(secondPayload.start).not.toStrictEqual(initialStart);
+		expect(secondPayload.end).not.toStrictEqual(initialEnd);
 
 		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);

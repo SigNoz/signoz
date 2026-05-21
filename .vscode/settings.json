@@ -1,6 +1,8 @@
 {
   "oxc.typeAware": true,
   "oxc.tsConfigPath": "./frontend/tsconfig.json",
+  "oxc.configPath": "./frontend/.oxlintrc.json",
+  "oxc.fmt.configPath": "./frontend/.oxfmtrc.json",
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.codeActionsOnSave": {
@@ -19,4 +21,3 @@
   "python-envs.defaultEnvManager": "ms-python.python:system",
   "python-envs.pythonProjects": []
 }
-

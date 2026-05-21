@@ -34,7 +34,7 @@ function OnNoPermissionsFallback(response: {
 					<br />
 					Object: <span>{object}</span>
 					<br />
-					Ask your SigNoz administrator to grant access.
+					Please ask your SigNoz administrator to grant access.
 				</p>
 			</div>
 		</div>

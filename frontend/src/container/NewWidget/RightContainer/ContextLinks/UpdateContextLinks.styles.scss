@@ -68,25 +68,3 @@
 		border-top: 1px solid var(--l1-border);
 	}
 }
-
-.lightMode {
-	.context-link-form-container {
-		.url-parameters-section {
-			.parameter-row {
-				.delete-parameter-btn {
-					color: var(--l1-border);
-
-					&:hover {
-						color: var(--danger-background) !important;
-						border-color: var(--danger-background) !important;
-						background-color: var(--bg-cherry-100);
-					}
-				}
-			}
-		}
-
-		.context-link-footer {
-			border-top-color: var(--l1-border);
-		}
-	}
-}

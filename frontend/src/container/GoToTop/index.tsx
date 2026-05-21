@@ -1,9 +1,9 @@
-import { ArrowUpOutlined } from '@ant-design/icons';
 import { FloatButton } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useScrollToTop from 'hooks/useScrollToTop';
+import { ArrowUp } from '@signozhq/icons';
 
 function GoToTop(): JSX.Element | null {
 	const { isVisible, scrollToTop } = useScrollToTop();
@@ -20,7 +20,7 @@ function GoToTop(): JSX.Element | null {
 				onClick={scrollToTop}
 				shape="circle"
 				type="primary"
-				icon={<ArrowUpOutlined />}
+				icon={<ArrowUp size="md" />}
 			/>
 		);
 	}

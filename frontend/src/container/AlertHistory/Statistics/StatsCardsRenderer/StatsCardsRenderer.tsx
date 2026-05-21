@@ -28,14 +28,8 @@ type StatsCardsRendererProps = {
 function StatsCardsRenderer({
 	setTotalCurrentTriggers,
 }: StatsCardsRendererProps): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsStats();
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsStats();
 
 	useEffect(() => {
 		if (data?.payload?.data?.totalCurrentTriggers !== undefined) {

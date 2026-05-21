@@ -36,20 +36,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.histogram-settings__bucket-config {
-		.histogram-settings__merge-label {
-			color: var(--l2-background);
-		}
-
-		.histogram-settings__bucket-input {
-			border: 1px solid var(--l1-border);
-			background: var(--l2-background);
-
-			.ant-input {
-				background: var(--l2-background);
-			}
-		}
-	}
-}

@@ -249,57 +249,6 @@
 	}
 }
 
-.lightMode {
-	.query-aggregation-container {
-		.aggregation-container {
-			.query-aggregation-select-container {
-				.query-aggregation-select-editor {
-					.cm-editor {
-						.cm-tooltip-autocomplete {
-							background: var(--l1-background) !important;
-							border: 1px solid var(--l1-border) !important;
-							box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-							backdrop-filter: none;
-
-							ul {
-								li {
-									&:hover,
-									&[aria-selected='true'] {
-										background: var(--l3-background) !important;
-									}
-								}
-							}
-						}
-
-						.cm-line {
-							::-moz-selection {
-								background: var(--l2-background) !important;
-								opacity: 0.5 !important;
-							}
-
-							::selection {
-								background: var(--l1-background) !important;
-								opacity: 0.5 !important;
-							}
-
-							.cm-function {
-								color: var(--primary-background) !important;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	.query-aggregation-error-popover {
-		.ant-popover-inner {
-			background-color: var(--l1-background);
-			border: none;
-			box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-		}
-	}
-}
-
 .query-aggregation-error-popover {
 	.ant-popover-inner {
 		background-color: var(--l1-border);

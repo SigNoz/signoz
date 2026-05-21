@@ -18,6 +18,7 @@ var _ prometheus.Prometheus = (*Provider)(nil)
 type Provider struct {
 	queryable storage.SampleAndChunkQueryable
 	engine    *prometheus.Engine
+	parser    prometheus.Parser
 }
 
 var stCallback = func() (int64, error) {
@@ -36,6 +37,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	return &Provider{
 		engine:    engine,
+		parser:    prometheus.NewParser(),
 		queryable: queryable,
 	}
 }
@@ -46,6 +48,10 @@ func (provider *Provider) Engine() *prometheus.Engine {
 
 func (provider *Provider) Storage() storage.Queryable {
 	return provider.queryable
+}
+
+func (provider *Provider) Parser() prometheus.Parser {
+	return provider.parser
 }
 
 func (provider *Provider) Close() error {

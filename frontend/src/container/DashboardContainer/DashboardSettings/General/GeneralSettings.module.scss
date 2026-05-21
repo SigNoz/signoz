@@ -1,0 +1,227 @@
+.overviewContent {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.overviewSettings {
+	border-radius: 3px;
+	border: 1px solid var(--l1-border);
+	padding: 16px !important;
+}
+
+.crossPanelSyncGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.crossPanelSyncSectionTitle {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.crossPanelSyncSectionHeader {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	align-self: flex-start;
+}
+
+.crossPanelSyncInfoIcon {
+	cursor: help;
+	color: var(--l3-foreground);
+}
+
+.crossPanelSyncTooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 300px;
+}
+
+.crossPanelSyncTooltipTitle {
+	font-size: 14px;
+}
+
+.crossPanelSyncTooltipDescription {
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.crossPanelSyncTooltipDocLink {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--primary-background);
+	font-size: 12px;
+	margin-top: 4px;
+}
+
+.crossPanelSyncRow {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+
+	& + & {
+		padding-top: 16px;
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.crossPanelSyncInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.crossPanelSyncTitle {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px;
+}
+
+.crossPanelSyncDescription {
+	color: var(--l3-foreground);
+	font-family: Inter;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 20px;
+}
+
+.nameIconInput {
+	display: flex;
+}
+
+.dashboardImageInput {
+	:global(.ant-select-selector) {
+		display: flex;
+		width: 32px;
+		height: 32px;
+		padding: 6px;
+		justify-content: center;
+		align-items: center;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--l1-border) !important;
+		background: var(--l3-background) !important;
+
+		:global(.ant-select-selection-item) {
+			display: flex;
+			align-items: center;
+		}
+	}
+
+	&:global(.ant-select-dropdown) {
+		padding: 0px !important;
+	}
+
+	:global(.ant-select-item) {
+		padding: 0px;
+		align-items: center;
+		justify-content: center;
+
+		:global(.ant-select-item-option-content) {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+}
+
+.listItemImage {
+	height: 16px;
+	width: 16px;
+}
+
+.dashboardNameInput {
+	border-radius: 0px 2px 2px 0px;
+	border: 1px solid var(--l1-border);
+	background: var(--l3-background);
+}
+
+.dashboardName {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	margin-bottom: 0.5rem;
+}
+
+.descriptionTextArea {
+	padding: 6px 6px 6px 8px;
+	border-radius: 2px;
+	border: 1px solid var(--l1-border);
+	background: var(--l3-background);
+}
+
+.overviewSettingsFooter {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: -webkit-fill-available;
+	padding: 12px 16px 12px 0px;
+	position: fixed;
+	bottom: 0;
+	height: 32px;
+	border-top: 1px solid var(--l1-border);
+	background: var(--l2-background);
+}
+
+.unsaved {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.unsavedDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50px;
+	background: var(--primary-background);
+	box-shadow: 0px 0px 6px 0px
+		color-mix(in srgb, var(--primary-background) 40%, transparent);
+}
+
+.unsavedChanges {
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 24px;
+	letter-spacing: -0.07px;
+}
+
+.footerActionBtns {
+	display: flex;
+	gap: 8px;
+}
+
+.discardBtn {
+	margin: '16px 0';
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.saveBtn {
+	margin: 0px !important;
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 24px;
+}

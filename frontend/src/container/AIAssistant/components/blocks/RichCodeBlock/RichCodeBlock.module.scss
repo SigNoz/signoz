@@ -1,0 +1,33 @@
+@use '../../../_scrollbar' as *;
+
+.codeBlock {
+	position: relative;
+	background: var(--l3-background);
+	border: 1px solid color-mix(in srgb, var(--l1-foreground) 8%, transparent);
+	border-radius: 4px;
+	overflow: hidden;
+	margin: 8px 0;
+
+	// Themed horizontal scrollbar for long lines — uses the same slate
+	// tokens as the rest of the AI Assistant chrome and stays hidden until
+	// hover to keep the block visually quiet at rest.
+	pre {
+		@include scrollbar();
+	}
+}
+
+.copyBtn {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	z-index: 1;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+// Reveal on hover or when the button itself takes focus, so the affordance
+// stays out of the way during normal reading.
+.codeBlock:hover .copyBtn,
+.codeBlock:focus-within .copyBtn {
+	opacity: 1;
+}

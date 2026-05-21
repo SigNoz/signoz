@@ -23,7 +23,11 @@ pytest_plugins = [
     "fixtures.notification_channel",
     "fixtures.alerts",
     "fixtures.cloudintegrations",
+    "fixtures.jsontypes",
     "fixtures.seeder",
+    "fixtures.serviceaccount",
+    "fixtures.role",
+    "fixtures.seed_golden_dataset",
 ]
 
 
@@ -59,6 +63,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="sqlite mode",
     )
     parser.addoption(
+        "--sqlite-transaction-mode",
+        action="store",
+        default="deferred",
+        help="sqlite transaction mode",
+    )
+    parser.addoption(
         "--postgres-version",
         action="store",
         default="15",
@@ -79,6 +89,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.144.2",
+        default="v0.144.3",
         help="schema migrator version",
     )

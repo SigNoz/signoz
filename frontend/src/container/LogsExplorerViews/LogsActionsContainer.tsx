@@ -1,11 +1,12 @@
-import { Switch, Typography } from 'antd';
+import { Switch } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import QueryStatus from './QueryStatus';

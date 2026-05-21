@@ -87,12 +87,9 @@ function Application(): JSX.Element {
 
 	const dispatch = useDispatch();
 	const handleGraphClick = useCallback(
-		(type: string): OnClickPluginOpts['onClick'] => (
-			xValue,
-			yValue,
-			mouseX,
-			mouseY,
-		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		(type: string): OnClickPluginOpts['onClick'] =>
+			(xValue, yValue, mouseX, mouseY): Promise<void> =>
+				onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
@@ -238,36 +235,37 @@ function Application(): JSX.Element {
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
-		): ((e: React.MouseEvent) => void) => (e: React.MouseEvent): void => {
-			const endTime = secondsToMilliseconds(timestamp);
-			const startTime = secondsToMilliseconds(timestamp - stepInterval);
+		): ((e: React.MouseEvent) => void) =>
+			(e: React.MouseEvent): void => {
+				const endTime = secondsToMilliseconds(timestamp);
+				const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
-			const urlParams = new URLSearchParams(search);
-			urlParams.set(QueryParams.startTime, startTime.toString());
-			urlParams.set(QueryParams.endTime, endTime.toString());
-			urlParams.delete(QueryParams.relativeTime);
-			const avialableParams = routeConfig[ROUTES.TRACE];
-			const queryString = getQueryString(avialableParams, urlParams);
+				const urlParams = new URLSearchParams(search);
+				urlParams.set(QueryParams.startTime, startTime.toString());
+				urlParams.set(QueryParams.endTime, endTime.toString());
+				urlParams.delete(QueryParams.relativeTime);
+				const avialableParams = routeConfig[ROUTES.TRACE];
+				const queryString = getQueryString(avialableParams, urlParams);
 
-			const JSONCompositeQuery = encodeURIComponent(
-				JSON.stringify(apmToTraceQuery),
-			);
+				const JSONCompositeQuery = encodeURIComponent(
+					JSON.stringify(apmToTraceQuery),
+				);
 
-			const newPath = generateExplorerPath(
-				isViewLogsClicked,
-				urlParams,
-				servicename,
-				selectedTraceTags,
-				JSONCompositeQuery,
-				queryString,
-			);
+				const newPath = generateExplorerPath(
+					isViewLogsClicked,
+					urlParams,
+					servicename,
+					selectedTraceTags,
+					JSONCompositeQuery,
+					queryString,
+				);
 
-			if (isModifierKeyPressed(e)) {
-				openInNewTab(newPath);
-			} else {
-				history.push(newPath);
-			}
-		},
+				if (isModifierKeyPressed(e)) {
+					openInNewTab(newPath);
+				} else {
+					history.push(newPath);
+				}
+			},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],
 	);

@@ -1,6 +1,7 @@
-import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { SquareMinus, SquarePlus } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Typography } from 'antd';
+import { Col } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import styled, { css } from 'styled-components';
 
 const IconCss = css`
@@ -8,11 +9,11 @@ const IconCss = css`
 	transition: all 0.2s ease;
 `;
 
-export const StyledIconOpen = styled(PlusSquareOutlined)`
+export const StyledIconOpen = styled(SquarePlus)`
 	${IconCss}
 `;
 
-export const StyledIconClose = styled(MinusSquareOutlined)`
+export const StyledIconClose = styled(SquareMinus)`
 	${IconCss}
 `;
 

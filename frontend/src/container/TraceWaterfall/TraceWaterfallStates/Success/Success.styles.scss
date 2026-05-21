@@ -309,7 +309,11 @@
 					top: 40%;
 					font-variant-numeric: lining-nums tabular-nums stacked-fractions
 						slashed-zero;
-					font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+					font-feature-settings:
+						'case' on,
+						'cpsp' on,
+						'dlig' on,
+						'salt' on;
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -408,63 +412,5 @@
 		border: 1px solid var(--l1-border);
 		background: var(--l1-border);
 		box-shadow: none;
-	}
-}
-
-.lightMode {
-	.success-content {
-		.waterfall-table {
-			.div-td {
-				.span-overview {
-					.span-overview-content {
-						background-color: var(--l2-background);
-
-						.first-row {
-							.collapse-uncollapse-button {
-								border: 1px solid var(--l3-background);
-								background: var(--l3-background);
-
-								.children-count {
-									color: var(--l2-foreground);
-								}
-							}
-
-							.span-name {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.second-row {
-							.service-name {
-								color: var(--l2-foreground);
-							}
-						}
-					}
-				}
-
-				.interested-span {
-					border-radius: 4px;
-					background: var(--l3-background);
-				}
-			}
-
-			.div-td + .div-td {
-				border-left: 1px solid var(--l1-border);
-			}
-
-			.div-th + .div-th {
-				border-left: 1px solid var(--l1-border);
-			}
-
-			.div-thead {
-				background-color: var(--l2-background) !important;
-			}
-		}
-	}
-	.span-dets {
-		.related-logs {
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-		}
 	}
 }

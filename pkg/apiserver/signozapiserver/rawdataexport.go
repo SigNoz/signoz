@@ -12,7 +12,7 @@ import (
 
 func (provider *provider) addRawDataExportRoutes(router *mux.Router) error {
 
-	if err := router.Handle("/api/v1/export_raw_data", handler.New(provider.authZ.ViewAccess(provider.rawDataExportHandler.ExportRawData), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/export_raw_data", handler.New(provider.authzMiddleware.ViewAccess(provider.rawDataExportHandler.ExportRawData), handler.OpenAPIDef{
 		ID:                  "HandleExportRawDataPOST",
 		Tags:                []string{"logs", "traces"},
 		Summary:             "Export raw data",

@@ -1,3 +1,5 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import getLabelName from 'lib/getLabelName';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -100,7 +102,7 @@ export const saveLegendEntriesToLocalStorage = ({
 
 	try {
 		existingEntries = JSON.parse(
-			localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) || '[]',
+			getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) || '[]',
 		);
 	} catch (error) {
 		console.error('Error parsing LEGEND_GRAPH from local storage', error);
@@ -115,7 +117,7 @@ export const saveLegendEntriesToLocalStorage = ({
 	}
 
 	try {
-		localStorage.setItem(
+		setLocalStorageKey(
 			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 			JSON.stringify(existingEntries),
 		);

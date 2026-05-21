@@ -139,9 +139,9 @@ export function insertLargeGapNullsIntoAlignedData(
 			seriesIndex < seriesValues.length;
 			seriesIndex += 1
 		) {
-			newSeries[seriesIndex][writeIndex] = (seriesValues[
-				seriesIndex
-			] as SeriesArray)[i];
+			newSeries[seriesIndex][writeIndex] = (
+				seriesValues[seriesIndex] as SeriesArray
+			)[i];
 		}
 		writeIndex += 1;
 

@@ -9,7 +9,9 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { Button, Callout, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { toast } from '@signozhq/ui/sonner';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -46,6 +48,7 @@ function DomainUpdateToast({
 					className="custom-domain-toast-visit-btn"
 					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
+						// oxlint-disable-next-line signoz/no-raw-absolute-path
 						window.open(url, '_blank', 'noopener,noreferrer');
 					}}
 				>
@@ -74,10 +77,8 @@ export default function CustomDomainSettings(): JSX.Element {
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
 	const [hosts, setHosts] = useState<ZeustypesHostDTO[] | null>(null);
 
-	const [
-		updateDomainError,
-		setUpdateDomainError,
-	] = useState<AxiosError<RenderErrorResponseDTO> | null>(null);
+	const [updateDomainError, setUpdateDomainError] =
+		useState<AxiosError<RenderErrorResponseDTO> | null>(null);
 
 	const [customDomainSubdomain, setCustomDomainSubdomain] = useState<
 		string | undefined
@@ -90,10 +91,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		refetch: refetchHosts,
 	} = useGetHosts();
 
-	const {
-		mutate: updateSubDomain,
-		isLoading: isLoadingUpdateCustomDomain,
-	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateSubDomain, isLoading: isLoadingUpdateCustomDomain } =
+		usePutHost<AxiosError<RenderErrorResponseDTO>>();
 
 	const stripProtocol = (url: string): string => url?.split('://')[1] ?? url;
 
@@ -137,7 +136,7 @@ export default function CustomDomainSettings(): JSX.Element {
 			{
 				onSuccess: () => {
 					setIsPollingEnabled(true);
-					refetchHosts();
+					void refetchHosts();
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
 					const newUrl = `https://${subdomain}.${dnsSuffix}`;
@@ -180,11 +179,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
-				<Skeleton
-					active
-					title={{ width: '40%' }}
-					paragraph={{ rows: 1, width: '60%' }}
-				/>
+				<Skeleton active paragraph={{ rows: 1, width: '60%' }} />
 			</div>
 		);
 	}
@@ -207,6 +202,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					>
 						<Dropdown
 							trigger={['click']}
+							disabled={isFetchingHosts}
 							dropdownRender={(): JSX.Element => (
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
@@ -242,12 +238,7 @@ export default function CustomDomainSettings(): JSX.Element {
 								</div>
 							)}
 						>
-							<Button
-								className="workspace-url-trigger"
-								disabled={isFetchingHosts}
-								variant="link"
-								color="none"
-							>
+							<Button variant="link" color="none">
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
 								<ChevronDown size={12} />

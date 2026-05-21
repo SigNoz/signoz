@@ -353,34 +353,34 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * Get legend items with visibility state restored from localStorage if available
 	 */
 	getLegendItems(): Record<number, LegendItem> {
-		const {
-			visibleStoredLabels,
-			hiddenStoredLabels,
-			hasActivePreference,
-		} = this.getVisibilityResolutionState();
+		const { visibleStoredLabels, hiddenStoredLabels, hasActivePreference } =
+			this.getVisibilityResolutionState();
 
-		return this.series.reduce((acc, s: UPlotSeriesBuilder, index: number) => {
-			const seriesConfig = s.getConfig();
-			const label = seriesConfig.label ?? '';
-			// +1 because uPlot series 0 is x-axis/time; data series are at 1, 2, ... (also matches stored visibility[0]=time, visibility[1]=first data, ...)
-			const seriesIndex = index + 1;
-			const show = resolveSeriesVisibility({
-				seriesShow: seriesConfig.show,
-				seriesLabel: label,
-				visibleStoredLabels,
-				hiddenStoredLabels,
-				hasActivePreference,
-			});
+		return this.series.reduce(
+			(acc, s: UPlotSeriesBuilder, index: number) => {
+				const seriesConfig = s.getConfig();
+				const label = seriesConfig.label ?? '';
+				// +1 because uPlot series 0 is x-axis/time; data series are at 1, 2, ... (also matches stored visibility[0]=time, visibility[1]=first data, ...)
+				const seriesIndex = index + 1;
+				const show = resolveSeriesVisibility({
+					seriesShow: seriesConfig.show,
+					seriesLabel: label,
+					visibleStoredLabels,
+					hiddenStoredLabels,
+					hasActivePreference,
+				});
 
-			acc[seriesIndex] = {
-				seriesIndex,
-				color: seriesConfig.stroke,
-				label,
-				show,
-			};
+				acc[seriesIndex] = {
+					seriesIndex,
+					color: seriesConfig.stroke,
+					label,
+					show,
+				};
 
-			return acc;
-		}, {} as Record<number, LegendItem>);
+				return acc;
+			},
+			{} as Record<number, LegendItem>,
+		);
 	}
 
 	/**
@@ -406,7 +406,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 									stepInterval: this.stepInterval ?? 0,
 								});
 								return width * STEP_INTERVAL_MULTIPLIER;
-						  }
+							}
 						: DEFAULT_HOVER_PROXIMITY_VALUE,
 				},
 			};
@@ -423,11 +423,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			...DEFAULT_PLOT_CONFIG,
 		};
 
-		const {
-			visibleStoredLabels,
-			hiddenStoredLabels,
-			hasActivePreference,
-		} = this.getVisibilityResolutionState();
+		const { visibleStoredLabels, hiddenStoredLabels, hasActivePreference } =
+			this.getVisibilityResolutionState();
 
 		config.series = [
 			{ value: (): string => '', label: 'Timestamp' }, // Base series for timestamp

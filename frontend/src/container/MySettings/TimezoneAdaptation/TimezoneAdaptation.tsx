@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { Delete } from 'lucide-react';
+import { Delete } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import './TimezoneAdaptation.styles.scss';

@@ -88,24 +88,19 @@ const logsQueryServerRequest = (): void =>
 	);
 
 describe('Logs Explorer Tests', () => {
-	test('Logs Explorer default view test without data', async () => {
-		const {
-			getByRole,
-			queryByText,
-			getByTestId,
-			queryByTestId,
-			container,
-		} = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>
-			</MemoryRouter>,
-		);
+	it('Logs Explorer default view test without data', async () => {
+		const { getByRole, queryByText, getByTestId, queryByTestId, container } =
+			render(
+				<MemoryRouter
+					initialEntries={[
+						'/logs-explorer/?panelType=list&selectedExplorerView=list',
+					]}
+				>
+					<PreferenceContextProvider>
+						<LogsExplorer />
+					</PreferenceContextProvider>
+				</MemoryRouter>,
+			);
 
 		// by default is hidden, toggle the chart and check it's visibility
 		const histogramToggle = getByRole('switch');
@@ -136,7 +131,7 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	// update this test properly
-	test.skip('Logs Explorer Page should render with data', async () => {
+	it.skip('Logs Explorer Page should render with data', async () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
@@ -171,7 +166,7 @@ describe('Logs Explorer Tests', () => {
 		);
 	});
 
-	test('Multiple Current Queries', async () => {
+	it('Multiple Current Queries', async () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryAllByText } = render(
@@ -240,10 +235,10 @@ describe('Logs Explorer Tests', () => {
 		const queries = queryAllByText(
 			"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 		);
-		expect(queries.length).toBe(1);
+		expect(queries).toHaveLength(1);
 	});
 
-	test('frequency chart visibility and switch toggle', async () => {
+	it('frequency chart visibility and switch toggle', async () => {
 		const { getByRole, queryByText } = render(
 			<MemoryRouter
 				initialEntries={[

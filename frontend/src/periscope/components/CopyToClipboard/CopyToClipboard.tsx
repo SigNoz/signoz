@@ -3,7 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { CircleCheck, Link2 } from 'lucide-react';
+import { CircleCheck, Link2 } from '@signozhq/icons';
 
 import './CopyToClipboard.styles.scss';
 

@@ -48,7 +48,7 @@ describe('useResourceAttribute config', () => {
 				dotNotationFilters,
 			);
 			expect(result).toHaveLength(3);
-			expect(result).toEqual(dotNotationFilters);
+			expect(result).toStrictEqual(dotNotationFilters);
 		});
 
 		it('should keep underscore-notation filters on the Service Map route', () => {
@@ -57,21 +57,21 @@ describe('useResourceAttribute config', () => {
 				underscoreNotationFilters,
 			);
 			expect(result).toHaveLength(3);
-			expect(result).toEqual(underscoreNotationFilters);
+			expect(result).toStrictEqual(underscoreNotationFilters);
 		});
 
 		it('should filter out non-whitelisted keys on the Service Map route', () => {
 			const allFilters = [...dotNotationFilters, ...nonWhitelistedFilters];
 			const result = mappingWithRoutesAndKeys(ROUTES.SERVICE_MAP, allFilters);
 			expect(result).toHaveLength(3);
-			expect(result).toEqual(dotNotationFilters);
+			expect(result).toStrictEqual(dotNotationFilters);
 		});
 
 		it('should return all filters on non-Service Map routes', () => {
 			const allFilters = [...dotNotationFilters, ...nonWhitelistedFilters];
 			const result = mappingWithRoutesAndKeys('/services', allFilters);
 			expect(result).toHaveLength(5);
-			expect(result).toEqual(allFilters);
+			expect(result).toStrictEqual(allFilters);
 		});
 	});
 });

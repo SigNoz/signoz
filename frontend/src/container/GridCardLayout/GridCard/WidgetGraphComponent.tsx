@@ -8,7 +8,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Skeleton, Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -81,10 +82,8 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const [
-		currentGraphRef,
-		setCurrentGraphRef,
-	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
+	const [currentGraphRef, setCurrentGraphRef] =
+		useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
 		if (!lineChartRef.current) {
@@ -101,12 +100,8 @@ function WidgetGraphComponent({
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 
-	const {
-		setLayouts,
-		dashboardData,
-		setDashboardData,
-		setColumnWidths,
-	} = useDashboardStore();
+	const { setLayouts, dashboardData, setDashboardData, setColumnWidths } =
+		useDashboardStore();
 
 	const onColumnWidthsChange = useCallback(
 		(widths: Record<string, number>) => {
@@ -264,12 +259,11 @@ function WidgetGraphComponent({
 		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data?.payload?.data?.result,
-				name: widget.id,
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: queryResponse.data?.payload?.data?.result,
+					name: widget.id,
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 		safeNavigate({
@@ -404,7 +398,7 @@ function WidgetGraphComponent({
 
 			{queryResponse.error && customErrorMessage && (
 				<div className="error-message-container">
-					<Typography.Text type="warning">{customErrorMessage}</Typography.Text>
+					<Typography.Text color="warning">{customErrorMessage}</Typography.Text>
 				</div>
 			)}
 

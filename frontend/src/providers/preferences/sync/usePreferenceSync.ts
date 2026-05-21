@@ -30,10 +30,8 @@ export function usePreferenceSync({
 		mode === PreferenceMode.SAVED_VIEW,
 	);
 
-	const [
-		savedViewPreferences,
-		setSavedViewPreferences,
-	] = useState<Preferences | null>(null);
+	const [savedViewPreferences, setSavedViewPreferences] =
+		useState<Preferences | null>(null);
 
 	const updateExtraDataSelectColumns = (
 		columns: TelemetryFieldKey[],

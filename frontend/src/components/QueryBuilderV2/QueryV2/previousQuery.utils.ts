@@ -1,10 +1,13 @@
+import getSessionStorageApi from 'api/browser/sessionstorage/get';
+import removeSessionStorageApi from 'api/browser/sessionstorage/remove';
+import setSessionStorageApi from 'api/browser/sessionstorage/set';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export const PREVIOUS_QUERY_KEY = 'previousQuery';
 
 function getPreviousQueryFromStore(): Record<string, IBuilderQuery> {
 	try {
-		const raw = sessionStorage.getItem(PREVIOUS_QUERY_KEY);
+		const raw = getSessionStorageApi(PREVIOUS_QUERY_KEY);
 		if (!raw) {
 			return {};
 		}
@@ -17,7 +20,7 @@ function getPreviousQueryFromStore(): Record<string, IBuilderQuery> {
 
 function writePreviousQueryToStore(store: Record<string, IBuilderQuery>): void {
 	try {
-		sessionStorage.setItem(PREVIOUS_QUERY_KEY, JSON.stringify(store));
+		setSessionStorageApi(PREVIOUS_QUERY_KEY, JSON.stringify(store));
 	} catch {
 		// ignore quota or serialization errors
 	}
@@ -63,7 +66,7 @@ export const removeKeyFromPreviousQuery = (key: string): void => {
 
 export const clearPreviousQuery = (): void => {
 	try {
-		sessionStorage.removeItem(PREVIOUS_QUERY_KEY);
+		removeSessionStorageApi(PREVIOUS_QUERY_KEY);
 	} catch {
 		// no-op
 	}

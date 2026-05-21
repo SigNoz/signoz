@@ -16,8 +16,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
-	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -25,6 +26,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -38,7 +41,8 @@ type provider struct {
 	config                  apiserver.Config
 	settings                factory.ScopedProviderSettings
 	router                  *mux.Router
-	authZ                   *middleware.AuthZ
+	authzMiddleware         *middleware.AuthZ
+	authzService            authz.AuthZ
 	orgHandler              organization.Handler
 	userHandler             user.Handler
 	sessionHandler          session.Handler
@@ -61,13 +65,16 @@ type provider struct {
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
+	spanMapperHandler       spanmapper.Handler
 	alertmanagerHandler     alertmanager.Handler
+	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
+	llmPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewFactory(
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -90,7 +97,10 @@ func NewFactory(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -99,7 +109,7 @@ func NewFactory(
 			providerSettings,
 			config,
 			orgGetter,
-			authz,
+			authzService,
 			orgHandler,
 			userHandler,
 			sessionHandler,
@@ -122,7 +132,10 @@ func NewFactory(
 			factoryHandler,
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
+			spanMapperHandler,
 			alertmanagerHandler,
+			llmPricingRuleHandler,
+			traceDetailHandler,
 			rulerHandler,
 		)
 	})
@@ -133,7 +146,7 @@ func newProvider(
 	providerSettings factory.ProviderSettings,
 	config apiserver.Config,
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -156,7 +169,10 @@ func newProvider(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -168,6 +184,7 @@ func newProvider(
 		router:                  router,
 		orgHandler:              orgHandler,
 		userHandler:             userHandler,
+		authzService:            authzService,
 		sessionHandler:          sessionHandler,
 		authDomainHandler:       authDomainHandler,
 		preferenceHandler:       preferenceHandler,
@@ -188,11 +205,14 @@ func newProvider(
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
+		spanMapperHandler:       spanMapperHandler,
 		alertmanagerHandler:     alertmanagerHandler,
+		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
+		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
@@ -294,7 +314,19 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addSpanMapperRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addAlertmanagerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addTraceDetailRoutes(router); err != nil {
 		return err
 	}
 
@@ -306,14 +338,18 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 }
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
-	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
-	}
+	return newScopedSecuritySchemes([]string{role.String()})
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
+	}
+}
+
+func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
 	}
 }

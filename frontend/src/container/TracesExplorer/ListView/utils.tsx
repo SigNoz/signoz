@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Tag, Typography } from 'antd';
+import { Tag } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -65,11 +66,11 @@ export const getListColumns = (
 						? formatTimezoneAdjustedTimestamp(
 								value,
 								DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						  )
+							)
 						: formatTimezoneAdjustedTimestamp(
 								value / 1e6,
 								DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						  );
+							);
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 						<Typography.Text>{date}</Typography.Text>

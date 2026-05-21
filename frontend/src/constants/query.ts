@@ -56,4 +56,5 @@ export enum QueryParams {
 	showClassicCreateAlertsPage = 'showClassicCreateAlertsPage',
 	isTestAlert = 'isTestAlert',
 	yAxisUnit = 'yAxisUnit',
+	ruleName = 'ruleName',
 }
