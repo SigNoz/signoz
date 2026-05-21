@@ -1,3 +1,5 @@
+import { alignTimeScaleMaxSeconds } from 'lib/uPlotV2/utils/scale';
+
 function getFallbackMinMaxTimeStamp(): {
 	fallbackMin: number;
 	fallbackMax: number;
@@ -21,6 +23,7 @@ function getFallbackMinMaxTimeStamp(): {
 export const getXAxisScale = (
 	minTimeScale: number,
 	maxTimeScale: number,
+	stepIntervalSeconds = 60,
 ): {
 	time: boolean;
 	auto: boolean;
@@ -36,18 +39,7 @@ export const getXAxisScale = (
 		maxTime = fallbackMax;
 	}
 
-	// As API response is adjusted to return values for  T - 1 min (end timestamp) due to which graph would not have the current timestamp data, we see the empty space in the graph for smaller timeframe. To accommodate this, we will be plotting the graph from (startTime  ->  endTime - 1 min).
-
-	const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
-	const currentDate = new Date(oneMinuteAgoTimestamp);
-
-	// Set seconds and milliseconds to zero
-	currentDate.setSeconds(0);
-	currentDate.setMilliseconds(0);
-
-	// Get the Unix timestamp in seconds
-	const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
-	maxTime = unixTimestampSeconds;
+	maxTime = alignTimeScaleMaxSeconds(maxTime, stepIntervalSeconds);
 
 	return { time: true, auto: false, range: [minTime, maxTime] };
 };

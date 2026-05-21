@@ -16,6 +16,7 @@ import { AlignedData } from 'uplot';
 import { PanelMode } from '../types';
 import { fillMissingXAxisTimestamps, getXAxisTimestamps } from '../utils';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
+import { resolveBarChartStepInterval } from '../utils/stepInterval';
 
 export function prepareBarPanelData(
 	apiResponse: MetricRangePayloadProps,
@@ -54,7 +55,12 @@ export function prepareBarPanelConfig({
 		'data.newResult.meta.stepIntervals',
 		{},
 	);
-	const minStepInterval = Math.min(...Object.values(stepIntervals));
+	const seriesList = apiResponse?.data?.result ?? [];
+	const barStepInterval = resolveBarChartStepInterval({
+		metaStepIntervals: stepIntervals,
+		seriesList,
+		builderStepInterval: widget?.query?.builder?.queryData?.[0]?.stepInterval,
+	});
 
 	const builder = buildBaseConfig({
 		id: widget.id,
@@ -72,7 +78,7 @@ export function prepareBarPanelConfig({
 		panelType: PANEL_TYPES.BAR,
 		minTimeScale,
 		maxTimeScale,
-		stepInterval: minStepInterval,
+		stepInterval: barStepInterval,
 	});
 
 	if (!(apiResponse && apiResponse?.data?.result)) {
@@ -96,7 +102,8 @@ export function prepareBarPanelConfig({
 			? getLegend(series, currentQuery, baseLabelName)
 			: baseLabelName;
 
-		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+		const currentStepInterval =
+			get(stepIntervals, series.queryName, undefined) ?? barStepInterval;
 
 		builder.addSeries({
 			scaleKey: 'y',

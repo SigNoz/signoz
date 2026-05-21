@@ -86,6 +86,7 @@ export enum DistributionType {
 export interface ScaleProps {
 	scaleKey: string;
 	time?: boolean;
+	stepInterval?: number;
 	min?: number;
 	max?: number;
 	softMin?: number;

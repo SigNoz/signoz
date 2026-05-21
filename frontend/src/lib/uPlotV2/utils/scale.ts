@@ -377,3 +377,19 @@ export function getFallbackMinMaxTimeStamp(): {
 		fallbackMax: currentUnixTimestamp,
 	};
 }
+
+/**
+ * Aligns the chart max time to the last complete step bucket so the right edge
+ * does not show an empty interval (legacy behavior used a fixed 60s step).
+ */
+export function alignTimeScaleMaxSeconds(
+	maxTimeSeconds: number,
+	stepIntervalSeconds: number,
+): number {
+	const stepSeconds = stepIntervalSeconds > 0 ? stepIntervalSeconds : 60;
+	const stepMs = stepSeconds * 1000;
+	const adjustedMs = maxTimeSeconds * 1000 - stepMs;
+	const alignedMs = Math.floor(adjustedMs / stepMs) * stepMs;
+
+	return Math.floor(alignedMs / 1000);
+}
