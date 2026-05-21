@@ -11,7 +11,6 @@ const mockUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 const noPermissions = {
 	isLoading: false,
 	isFetching: false,
-	error: null,
 	permissions: null,
 	refetchPermissions: jest.fn(),
 };
