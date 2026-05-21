@@ -17,7 +17,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-//go:embed 086_cloud_integration_dashboards
+//go:embed 086_migrate_ci_dashboards
 var cloudIntegrationDashboardFiles embed.FS
 
 var (
@@ -229,7 +229,7 @@ func (m *migrateCloudIntegrationDashboards) Down(context.Context, *bun.DB) error
 func (m *migrateCloudIntegrationDashboards) loadDashboardDefs() (map[string]map[string]map[string]json.RawMessage, error) {
 	result := make(map[string]map[string]map[string]json.RawMessage)
 
-	err := fs.WalkDir(cloudIntegrationDashboardFiles, "086_cloud_integration_dashboards", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(cloudIntegrationDashboardFiles, "086_migrate_ci_dashboards", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -238,7 +238,7 @@ func (m *migrateCloudIntegrationDashboards) loadDashboardDefs() (map[string]map[
 		}
 
 		// path: 086_cloud_integration_dashboards/{provider}/{service}/{file}.json
-		rel := strings.TrimPrefix(path, "086_cloud_integration_dashboards/")
+		rel := strings.TrimPrefix(path, "086_migrate_ci_dashboards/")
 		parts := strings.SplitN(rel, "/", 3)
 		if len(parts) != 3 {
 			return nil

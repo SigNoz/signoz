@@ -370,3 +370,177 @@ def test_update_service_account_removed(
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
+
+
+def test_enable_metrics_provisions_dashboards(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Enabling metrics provisions dashboards visible in both GetService and the dashboards list."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    put_response = requests.put(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": False}}}},
+        timeout=10,
+    )
+    assert put_response.status_code == HTTPStatus.NO_CONTENT, (
+        f"Expected 204, got {put_response.status_code}: {put_response.text}"
+    )
+
+    # Assertion 1: GetService returns provisioned dashboard UUIDs
+    get_svc_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert get_svc_response.status_code == HTTPStatus.OK, (
+        f"Expected 200, got {get_svc_response.status_code}: {get_svc_response.text}"
+    )
+
+    data = get_svc_response.json()["data"]
+    svc = data["cloudIntegrationService"]
+    assert svc is not None, "cloudIntegrationService should be non-null after enabling metrics"
+    assert svc["config"]["aws"]["metrics"]["enabled"] is True
+
+    dashboards_in_service = data["assets"]["dashboards"]
+    assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, (
+        "assets.dashboards should be non-empty after enabling metrics"
+    )
+    provisioned_ids = set()
+    for dash in dashboards_in_service:
+        assert "id" in dash, f"Dashboard entry missing 'id': {dash}"
+        try:
+            uuid.UUID(dash["id"])
+        except ValueError as err:
+            raise AssertionError(f"Dashboard id '{dash['id']}' is not a UUID — dashboard was not provisioned") from err
+        provisioned_ids.add(dash["id"])
+
+    # Assertion 2: Dashboards listing API includes the provisioned dashboards
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK, (
+        f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
+    )
+
+    all_dashboards = list_response.json()["data"]
+    integration_dashboards = [d for d in all_dashboards if d.get("source") == "integration"]
+    assert len(integration_dashboards) > 0, (
+        "Dashboards list should contain at least one integration dashboard after enabling metrics"
+    )
+
+    listed_ids = {d["id"] for d in integration_dashboards}
+    assert provisioned_ids & listed_ids, (
+        f"None of the provisioned dashboard IDs {provisioned_ids} appear in the dashboards list {listed_ids}"
+    )
+
+    for d in integration_dashboards:
+        if d["id"] in provisioned_ids:
+            assert d.get("locked") is True, (
+                f"Integration dashboard {d['id']} should be locked=true"
+            )
+
+
+def test_disable_metrics_deprovisions_dashboards(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Disabling metrics removes provisioned dashboards from both GetService and the dashboards list."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    endpoint = signoz.self.host_configs["8080"].get(
+        f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
+    )
+
+    # Enable metrics to provision dashboards first
+    enable_response = requests.put(
+        endpoint,
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": False}}}},
+        timeout=10,
+    )
+    assert enable_response.status_code == HTTPStatus.NO_CONTENT, (
+        f"Enable failed: {enable_response.status_code}: {enable_response.text}"
+    )
+
+    # Capture the provisioned dashboard IDs before disabling
+    get_svc_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert get_svc_response.status_code == HTTPStatus.OK
+    provisioned_ids = {d["id"] for d in get_svc_response.json()["data"]["assets"]["dashboards"]}
+    assert len(provisioned_ids) > 0, "Expected dashboards to be provisioned after enabling metrics"
+
+    # Disable metrics
+    disable_response = requests.put(
+        endpoint,
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": False}, "logs": {"enabled": False}}}},
+        timeout=10,
+    )
+    assert disable_response.status_code == HTTPStatus.NO_CONTENT, (
+        f"Disable failed: {disable_response.status_code}: {disable_response.text}"
+    )
+
+    # Assertion 1: GetService no longer returns UUID dashboard IDs
+    get_svc_after = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert get_svc_after.status_code == HTTPStatus.OK
+    dashboards_after = get_svc_after.json()["data"]["assets"]["dashboards"]
+    for dash in dashboards_after:
+        try:
+            uuid.UUID(dash.get("id", ""))
+            raise AssertionError(f"Dashboard '{dash['id']}' still has a provisioned UUID after disabling metrics")
+        except ValueError:
+            pass  # expected — ID is not a UUID, meaning the dashboard was deprovisioned
+
+    # Assertion 2: Dashboards listing API no longer contains the provisioned dashboard IDs
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK, (
+        f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
+    )
+
+    listed_ids = {d["id"] for d in list_response.json()["data"]}
+    assert not provisioned_ids & listed_ids, (
+        f"Provisioned dashboard IDs {provisioned_ids & listed_ids} still appear in dashboards list after disabling metrics"
+    )
