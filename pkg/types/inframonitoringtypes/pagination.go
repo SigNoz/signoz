@@ -17,8 +17,10 @@ func PaginateMetadataByName(
 	offset, limit int,
 	sortByMetaKey string,
 ) []map[string]string {
+
+	pageGroups := make([]map[string]string, 0)
 	if offset >= len(metadataMap) {
-		return nil
+		return pageGroups
 	}
 	type entry struct{ compositeKey, sortVal string }
 	entries := make([]entry, 0, len(metadataMap))
@@ -41,7 +43,6 @@ func PaginateMetadataByName(
 
 	end := min(offset+limit, len(entries))
 
-	pageGroups := make([]map[string]string, 0, end-offset)
 	for _, e := range entries[offset:end] {
 		attrs := metadataMap[e.compositeKey]
 		labels := make(map[string]string, len(groupBy))

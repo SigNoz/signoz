@@ -43,7 +43,7 @@ func TestPaginateMetadataByName(t *testing.T) {
 			offset:        5,
 			limit:         10,
 			sortByMetaKey: "host.name",
-			want:          nil,
+			wantNotNil:    true,
 		},
 		{
 			name:          "offset_way_past_len",
@@ -53,7 +53,7 @@ func TestPaginateMetadataByName(t *testing.T) {
 			offset:        100,
 			limit:         10,
 			sortByMetaKey: "host.name",
-			want:          nil,
+			wantNotNil:    true,
 		},
 		{
 			name:          "offset_plus_limit_exceeds_len",
@@ -102,7 +102,7 @@ func TestPaginateMetadataByName(t *testing.T) {
 			offset:        0,
 			limit:         10,
 			sortByMetaKey: "host.name",
-			want:          nil,
+			wantNotNil:    true,
 		},
 		{
 			name:          "exact_page",
@@ -155,7 +155,7 @@ func TestPaginateMetadataByName(t *testing.T) {
 			offset:        0,
 			limit:         10,
 			sortByMetaKey: "host.name",
-			want:          nil,
+			wantNotNil:    true,
 		},
 		{
 			name: "nil_groupBy",
