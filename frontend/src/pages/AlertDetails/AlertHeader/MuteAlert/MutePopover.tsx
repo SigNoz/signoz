@@ -198,7 +198,7 @@ function MutePopover(props: MutePopoverProps): JSX.Element {
 		<Popover
 			open={open}
 			onOpenChange={onOpenChange}
-			trigger="click"
+			trigger={[]}
 			placement="bottomRight"
 			arrow={false}
 			destroyTooltipOnHide
