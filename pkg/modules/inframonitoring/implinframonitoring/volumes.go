@@ -23,7 +23,7 @@ func buildVolumeRecords(
 	records := make([]inframonitoringtypes.VolumeRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		pvcName := labels[persistentVolumeClaimNameAttrKey]
+		pvcName := labels[inframonitoringtypes.PersistentVolumeClaimNameAttrKey]
 
 		record := inframonitoringtypes.VolumeRecord{ // initialize with default values
 			PersistentVolumeClaimName: pvcName,
@@ -75,6 +75,9 @@ func (m *module) getTopVolumeGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.PersistentVolumeClaimNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PersistentVolumeClaimNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToVolumesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
