@@ -314,7 +314,12 @@ function WidgetHeader({
 							/>
 						)}
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
-							<DropdownMenuSimple menu={menu} side="bottom" align="end">
+							<DropdownMenuSimple
+								menu={menu}
+								side="bottom"
+								align="end"
+								className="widget-header-dropdown"
+							>
 								<Button
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
