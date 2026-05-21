@@ -322,7 +322,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType]);
+	}, [formData, recurrenceType, timezone]);
 
 	return (
 		<Modal
