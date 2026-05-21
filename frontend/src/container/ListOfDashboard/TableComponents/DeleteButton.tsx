@@ -15,7 +15,7 @@ import { USER_ROLES } from 'types/roles';
 import styles from '../DashboardActions.module.scss';
 import { Data } from '../DashboardsList';
 
-interface DeleteButtonProps {
+interface UseDeleteDashboardDialogArgs {
 	createdBy: string;
 	name: string;
 	id: string;
@@ -23,26 +23,30 @@ interface DeleteButtonProps {
 	routeToListPage?: boolean;
 }
 
-export function DeleteButton({
+interface UseDeleteDashboardDialogResult {
+	openConfirmation: () => void;
+	isDisabled: boolean;
+	tooltipContent: string;
+	contextHolder: React.ReactElement;
+}
+
+export function useDeleteDashboardDialog({
 	createdBy,
 	name,
 	id,
 	isLocked,
-	routeToListPage,
-}: DeleteButtonProps): JSX.Element {
+	routeToListPage = false,
+}: UseDeleteDashboardDialogArgs): UseDeleteDashboardDialogResult {
 	const [modal, contextHolder] = Modal.useModal();
 	const { user } = useAppContext();
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
-
 	const { notifications } = useNotifications();
-
 	const { t } = useTranslation(['dashboard']);
-
 	const deleteDashboardMutation = useDeleteDashboard(id);
 
-	const openConfirmationDialog = useCallback((): void => {
+	const openConfirmation = useCallback((): void => {
 		const { destroy } = modal.confirm({
 			title: (
 				<Typography.Title level={5}>
@@ -95,23 +99,47 @@ export function DeleteButton({
 		routeToListPage,
 	]);
 
-	const getDeleteTooltipContent = (): string => {
-		if (isLocked) {
-			if (user.role === USER_ROLES.ADMIN || isAuthor) {
-				return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
-			}
-
-			return t('dashboard:locked_dashboard_delete_tooltip_editor');
+	let tooltipContent = '';
+	if (isLocked) {
+		if (user.role === USER_ROLES.ADMIN || isAuthor) {
+			tooltipContent = t('dashboard:locked_dashboard_delete_tooltip_admin_author');
+		} else {
+			tooltipContent = t('dashboard:locked_dashboard_delete_tooltip_editor');
 		}
-
-		return '';
-	};
+	}
 
 	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
 
+	return { openConfirmation, isDisabled, tooltipContent, contextHolder };
+}
+
+interface DeleteButtonProps {
+	createdBy: string;
+	name: string;
+	id: string;
+	isLocked: boolean;
+	routeToListPage?: boolean;
+}
+
+export function DeleteButton({
+	createdBy,
+	name,
+	id,
+	isLocked,
+	routeToListPage,
+}: DeleteButtonProps): JSX.Element {
+	const { openConfirmation, isDisabled, tooltipContent, contextHolder } =
+		useDeleteDashboardDialog({
+			createdBy,
+			name,
+			id,
+			isLocked,
+			routeToListPage,
+		});
+
 	return (
 		<>
-			<Tooltip placement="left" title={getDeleteTooltipContent()}>
+			<Tooltip placement="left" title={tooltipContent}>
 				<Button
 					type="text"
 					className={styles.deleteBtn}
@@ -121,7 +149,7 @@ export function DeleteButton({
 						e.preventDefault();
 						e.stopPropagation();
 						if (!isLocked) {
-							openConfirmationDialog();
+							openConfirmation();
 						}
 					}}
 				>

@@ -37,10 +37,6 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
-import {
-	downloadObjectAsJson,
-	sanitizeDashboardData,
-} from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
@@ -60,19 +56,14 @@ import {
 	Check,
 	Clock4,
 	Ellipsis,
-	EllipsisVertical,
-	Expand,
 	ExternalLink,
-	FileJson,
 	Github,
 	HdmiPort,
 	LayoutGrid,
-	Link2,
 	Plus,
 	Radius,
 	RotateCw,
 	Search,
-	SquareArrowOutUpRight,
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -85,8 +76,6 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
-import { getAbsoluteUrl } from 'utils/basePath';
-import { openInNewTab } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
@@ -94,7 +83,7 @@ import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import ImportJSON from './ImportJSON';
 import { RequestDashboardBtn } from './RequestDashboardBtn';
-import { DeleteButton } from './TableComponents/DeleteButton';
+import { DashboardRowActions } from './TableComponents/DashboardRowActions';
 import {
 	DashboardDynamicColumns,
 	DynamicColumns,
@@ -377,15 +366,6 @@ function DashboardsList(): JSX.Element {
 					});
 				};
 
-				const handleJsonExport = (event: React.MouseEvent<HTMLElement>): void => {
-					event.stopPropagation();
-					event.preventDefault();
-					downloadObjectAsJson(
-						sanitizeDashboardData({ ...dashboard, title: dashboard.name }),
-						dashboard.name,
-					);
-				};
-
 				return (
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
@@ -430,80 +410,11 @@ function DashboardsList(): JSX.Element {
 							</div>
 
 							{action && (
-								<Popover
-									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													className="action-btn"
-													onClick={onClickHandler}
-													variant="ghost"
-													color="secondary"
-													prefix={<Expand size={12} />}
-												>
-													View
-												</Button>
-												<Button
-													className="action-btn"
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														openInNewTab(getLink());
-													}}
-													variant="ghost"
-													color="secondary"
-													prefix={<SquareArrowOutUpRight size={12} />}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													className="action-btn"
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(getAbsoluteUrl(getLink()));
-													}}
-													variant="ghost"
-													color="secondary"
-													prefix={<Link2 size={12} />}
-												>
-													Copy Link
-												</Button>
-												<Button
-													className="action-btn"
-													onClick={handleJsonExport}
-													variant="ghost"
-													color="secondary"
-													prefix={<FileJson size={12} />}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
-										</div>
-									}
-									placement="bottomRight"
-									arrow={false}
-									rootClassName="dashboard-actions"
-									trigger="click"
-								>
-									<EllipsisVertical
-										className="dashboard-action-icon"
-										size={14}
-										data-testid="dashboard-action-icon"
-										onClick={(e): void => {
-											e.stopPropagation();
-											e.preventDefault();
-										}}
-									/>
-								</Popover>
+								<DashboardRowActions
+									dashboard={dashboard}
+									setCopy={setCopy}
+									safeNavigate={(linkTo): void => safeNavigate(linkTo)}
+								/>
 							)}
 						</div>
 						<div className="dashboard-details">
