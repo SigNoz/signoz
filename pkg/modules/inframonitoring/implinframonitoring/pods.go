@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
@@ -206,15 +205,9 @@ func (m *module) getPerGroupPodPhaseCounts(
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
-	// Resolve tables. Same convention as hosts (distributed names from helpers).
-	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
-		uint64(start), uint64(end), nil,
-	)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(start), uint64(end),
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
-	)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	flooredStart, flooredEnd, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
@@ -231,8 +224,8 @@ func (m *module) getPerGroupPodPhaseCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", podPhaseMetricName),
-		timeSeriesFPs.GE("unix_milli", adjustedStart),
-		timeSeriesFPs.L("unix_milli", adjustedEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
+		timeSeriesFPs.LE("unix_milli", flooredEnd),
 	)
 	if mergedFilterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
@@ -264,12 +257,12 @@ func (m *module) getPerGroupPodPhaseCounts(
 	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
 	latestPhasePerPod.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, samplesTable,
+		telemetrymetrics.DBName, distributedSamplesTable,
 	))
 	latestPhasePerPod.Where(
 		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
-		latestPhasePerPod.GE("samples.unix_milli", start),
-		latestPhasePerPod.L("samples.unix_milli", end),
+		latestPhasePerPod.GE("samples.unix_milli", flooredStart),
+		latestPhasePerPod.L("samples.unix_milli", flooredEnd),
 		"tsfp.pod_uid != ''",
 	)
 	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)

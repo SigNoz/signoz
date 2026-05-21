@@ -307,23 +307,62 @@ func parseFullQueryResponse(
 	return result
 }
 
-// buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
-// from the samples table for the given metric names andtime range.
-func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, startMs, endMs int64) *sqlbuilder.SelectBuilder {
-	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(startMs), uint64(endMs),
-		metrictypes.UnspecifiedType,
-		metrictypes.TimeAggregationUnspecified,
-		nil,
+// alignedMetricWindow returns step-floored time bounds and the metric tables
+// to use for the given window. The floor matches what the QB v5 metric
+// querier does internally (see querybuilder.AdjustedMetricTimeRange).
+// Every CH-query-building function in this module must use these bounds for
+// both TS and samples WHERE clauses so its pod/host/etc. agrees
+// with the querier's; otherwise pagination math (paginateWithBackfill) can
+// produce records as expected from querier math.
+//   - flooredStart:    start - (start % step*1000)
+//   - flooredEnd:      end   - (end   % min(step, 60)*1000)
+//   - tsAdjustedStart: additionally week/day/6hr/1hr aligned per
+//     WhichTSTableToUse (the bucket-start of the TS table that gets picked).
+func alignedMetricWindow(startMs, endMs int64) (
+	flooredStartMS uint64,
+	flooredEndMs uint64,
+	tsAdjustedStartMs uint64,
+	distributedTSTable string,
+	localTSTable string,
+	distributedSamplesTable string,
+	localSamplesTable string,
+) {
+	flooredStartMS = uint64(startMs)
+	flooredEndMs = uint64(endMs)
+	stepSecs := querybuilder.RecommendedStepIntervalForMetric(flooredStartMS, flooredEndMs)
+	if stepSecs > 0 {
+		flooredStartMS = flooredStartMS - (flooredStartMS % (stepSecs * 1000))
+		adjustStep := stepSecs
+		if adjustStep > 60 {
+			adjustStep = 60
+		}
+		flooredEndMs = flooredEndMs - (flooredEndMs % (adjustStep * 1000))
+	}
+
+	tsAdjustedStartMs, _, distributedTSTable, localTSTable = telemetrymetrics.WhichTSTableToUse(
+		flooredStartMS, flooredEndMs, nil,
 	)
-	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
+
+	distributedSamplesTable = telemetrymetrics.WhichSamplesTableToUse(
+		flooredStartMS, flooredEndMs,
+		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
+	)
+	localSamplesTable = strings.TrimPrefix(distributedSamplesTable, "distributed_")
+
+	return
+}
+
+// buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
+// from the samples table for the given metric names and time range.
+// Bounds must already be step-floored by the caller via alignedMetricWindow.
+func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, samplesTable string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	fpSB := sqlbuilder.NewSelectBuilder()
 	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localSamplesTable))
+	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	fpSB.Where(
 		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
-		fpSB.GE("unix_milli", startMs),
-		fpSB.L("unix_milli", endMs),
+		fpSB.GE("unix_milli", flooredStart),
+		fpSB.L("unix_milli", flooredEnd),
 	)
 	return fpSB
 }
@@ -454,12 +493,12 @@ func (m *module) getMetadata(
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "groupBy must not be empty")
 	}
 
-	// Pick the optimal timeseries table based on time range; also get adjusted start.
-	adjustedStart, adjustedEnd, distributedTableName, _ := telemetrymetrics.WhichTSTableToUse(
-		uint64(startMs), uint64(endMs), nil,
-	)
+	// Step-floor the window and pick the right tables — matches the bounds the
+	// QB v5 metric querier uses, so metadataMap covers the same universe the
+	// ranking sees (see alignedMetricWindow doc).
+	flooredStart, flooredEnd, tsAdjustedStart, distributedTableName, _, _, localSamplesTable := alignedMetricWindow(startMs, endMs)
 
-	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, startMs, endMs)
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, flooredStart, flooredEnd)
 
 	// Flatten groupBy keys to string names for SQL expressions and result scanning.
 	groupByCols := make([]string, len(groupBy))
@@ -494,8 +533,8 @@ func (m *module) getMetadata(
 	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
 	innerSB.Where(
 		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
-		innerSB.GE("unix_milli", adjustedStart),
-		innerSB.L("unix_milli", adjustedEnd),
+		innerSB.GE("unix_milli", tsAdjustedStart),
+		innerSB.LE("unix_milli", flooredEnd),
 		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
 	)
 
