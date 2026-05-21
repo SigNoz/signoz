@@ -2123,3 +2123,116 @@ def test_traces_list_filter_by_trace_id(
     past_rows = _query(past_start_ms, past_end_ms)
 
     assert len(past_rows) == 0, f"Expected 0 spans for trace_id filter outside time window, got {len(past_rows)}"
+
+
+def test_traces_aggregation_filter_by_trace_id(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """
+    Tests that the trace_id time-range optimization also applies to
+    non-window-list (time_series / aggregation) traces queries:
+    1. Wide query window containing the trace returns the correct count.
+    2. Query window outside the trace's time range short-circuits to empty.
+    3. Filter referencing a trace_id with no row in trace_summary
+       short-circuits to empty (trace_summary is authoritative for traces).
+    """
+    target_trace_id = TraceIdGenerator.trace_id()
+    target_root_span_id = TraceIdGenerator.span_id()
+    target_child_span_id = TraceIdGenerator.span_id()
+    missing_trace_id = TraceIdGenerator.trace_id()
+
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    common_resources = {
+        "deployment.environment": "production",
+        "service.name": "traces-agg-filter-service",
+        "cloud.provider": "integration",
+    }
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=10),
+                duration=timedelta(seconds=5),
+                trace_id=target_trace_id,
+                span_id=target_root_span_id,
+                parent_span_id="",
+                name="root-span",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources=common_resources,
+                attributes={"http.request.method": "GET"},
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=9),
+                duration=timedelta(seconds=1),
+                trace_id=target_trace_id,
+                span_id=target_child_span_id,
+                parent_span_id=target_root_span_id,
+                name="child-span",
+                kind=TracesKind.SPAN_KIND_CLIENT,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources=common_resources,
+                attributes={},
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    def _count(start_ms: int, end_ms: int, trace_id: str) -> float:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type="time_series",
+            queries=[
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "stepInterval": 60,
+                        "disabled": False,
+                        "filter": {"expression": f"trace_id = '{trace_id}'"},
+                        "having": {"expression": ""},
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                }
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert response.json()["status"] == "success"
+        results = response.json()["data"]["data"]["results"]
+        assert len(results) == 1
+        aggregations = results[0].get("aggregations") or []
+        if not aggregations:
+            return 0
+        series = aggregations[0].get("series") or []
+        if not series:
+            return 0
+        return sum(v["value"] for v in series[0]["values"])
+
+    now_ms = int(now.timestamp() * 1000)
+
+    # --- Test 1: wide window (>1 h) containing the trace returns both spans ---
+    wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
+    wide_count = _count(wide_start_ms, now_ms, target_trace_id)
+    assert wide_count == 2, f"Expected count=2 for trace_id aggregation (wide window), got {wide_count}"
+
+    # --- Test 2: window outside the trace short-circuits to empty ---
+    past_start_ms = int((now - timedelta(hours=6)).timestamp() * 1000)
+    past_end_ms = int((now - timedelta(hours=2)).timestamp() * 1000)
+    past_count = _count(past_start_ms, past_end_ms, target_trace_id)
+    assert past_count == 0, f"Expected count=0 for trace_id aggregation outside time window, got {past_count}"
+
+    # --- Test 3: trace_id with no entry in trace_summary short-circuits ---
+    missing_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    missing_count = _count(missing_start_ms, now_ms, missing_trace_id)
+    assert missing_count == 0, f"Expected count=0 for trace_id absent from trace_summary, got {missing_count}"
