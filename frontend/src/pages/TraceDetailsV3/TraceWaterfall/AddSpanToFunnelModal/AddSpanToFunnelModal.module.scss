@@ -1,0 +1,230 @@
+// Container — applied to the `.ant-modal` element via SignozModal's className
+// prop. Ant Modal portals into document.body, but the className still lives on
+// the modal root, so descendant overrides work via `:global` nesting.
+.container {
+	:global(.ant-modal-content),
+	:global(.ant-modal-header) {
+		background: var(--l1-background);
+	}
+
+	:global(.ant-modal-header) {
+		border-bottom: none;
+
+		:global(.ant-modal-title) {
+			color: var(--l1-foreground);
+		}
+	}
+
+	:global(.ant-modal-body) {
+		padding: 14px 16px !important;
+		padding-bottom: 0 !important;
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	:global(.ant-modal-footer) {
+		margin-top: 0;
+		background: var(--l2-background);
+		border-top: 1px solid var(--l2-border);
+		padding: 16px !important;
+
+		.saveButton {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			color: var(--l1-foreground);
+			font-size: 12px;
+			font-weight: 500;
+			line-height: 24px;
+			width: 135px;
+
+			:global(.ant-btn-icon) {
+				display: flex;
+			}
+
+			&:disabled {
+				color: var(--l2-foreground);
+
+				:global(.ant-btn-icon svg) {
+					stroke: var(--l2-foreground);
+				}
+			}
+		}
+
+		.discardButton {
+			background: var(--l3-background);
+		}
+
+		:global(.ant-btn) {
+			border-radius: 2px;
+			padding: 4px 8px;
+			margin: 0 !important;
+			border: none;
+			box-shadow: none;
+		}
+	}
+}
+
+// Inner content wrapper (sibling of modal chrome)
+.root {
+	// Funnel-detail view overrides — only when the inner wrapper has
+	// `.isDetails` applied alongside `.root`.
+	&.isDetails {
+		:global(.traces-funnel-details) {
+			height: unset;
+
+			:global(.traces-funnel-details__steps-config) {
+				width: unset;
+				border: none;
+			}
+
+			:global(.funnel-step-wrapper) {
+				gap: 15px;
+			}
+
+			:global(.steps-content) {
+				max-height: 500px;
+			}
+		}
+	}
+
+	:global(.funnel-item) {
+		padding: 8px 8px 12px 16px;
+
+		&,
+		&:first-child {
+			border-radius: 6px;
+		}
+
+		:global(.funnel-item__header) {
+			line-height: 20px;
+		}
+
+		:global(.funnel-item__details) {
+			line-height: 18px;
+		}
+	}
+}
+
+.loadingSpinner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 400px;
+}
+
+.search {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 14px;
+	align-items: center;
+}
+
+.searchInput {
+	flex: 1;
+	padding: 6px 8px;
+	background: var(--l3-background);
+
+	:global(.ant-input-prefix) {
+		height: 18px;
+		margin-inline-end: 6px;
+
+		svg {
+			opacity: 0.4;
+		}
+	}
+
+	&,
+	input {
+		font-size: 14px;
+		line-height: 18px;
+		letter-spacing: -0.07px;
+		font-weight: 400;
+		background: var(--l3-background);
+	}
+
+	input::placeholder {
+		color: var(--l2-foreground);
+		opacity: 0.6;
+	}
+}
+
+.createButton {
+	width: 153px;
+	padding: 4px 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	flex-shrink: 0;
+	border-radius: 2px;
+	background: var(--l3-background);
+	border: none;
+	box-shadow: none;
+	color: var(--l2-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.list {
+	max-height: 400px;
+	overflow-y: scroll;
+
+	:global(.funnels-empty__content) {
+		padding: 0;
+	}
+
+	:global(.funnels-list) {
+		gap: 8px;
+
+		:global(.funnel-item) {
+			padding: 8px 16px 12px;
+
+			:global(.funnel-item__details) {
+				margin-top: 8px;
+			}
+		}
+	}
+}
+
+.spinner {
+	height: 400px;
+}
+
+.backButton {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--l2-foreground);
+	font-size: 14px;
+	line-height: 20px;
+	margin-bottom: 14px;
+}
+
+.detailsView {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+
+	:global(.funnel-configuration__steps) {
+		padding: 0;
+
+		:global(.funnel-step__content .filters__service-and-span .ant-select) {
+			width: 170px;
+		}
+
+		:global(.funnel-step__footer .error) {
+			width: 25%;
+		}
+
+		:global(.inter-step-config) {
+			width: calc(100% - 104px);
+		}
+	}
+
+	:global(.funnel-item__actions-popover) {
+		display: none;
+	}
+}

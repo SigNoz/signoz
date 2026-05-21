@@ -1,5 +1,7 @@
 import { Checkbox, Input, Select, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
@@ -8,7 +10,7 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
 
-import './SpanPercentile.styles.scss';
+import styles from './SpanPercentilePanel.module.scss';
 
 const DEFAULT_RESOURCE_ATTRIBUTES = {
 	serviceName: 'service.name',
@@ -53,46 +55,46 @@ function SpanPercentilePanel({
 	}
 
 	return (
-		<div className="span-percentile-panel">
-			<div className="span-percentile-panel__header">
-				<Typography.Text
-					className="span-percentile-panel__header-text"
+		<div className={styles.root}>
+			<div className={styles.header}>
+				<Button
+					variant="link"
+					color="secondary"
 					onClick={toggleOpen}
+					prefix={<ChevronDown size={16} />}
 				>
-					<ChevronDown size={16} /> Span Percentile
-				</Typography.Text>
+					Span Percentile
+				</Button>
 
-				{showResourceAttributesSelector ? (
-					<Check
-						size={16}
-						className="cursor-pointer span-percentile-panel__header-icon"
-						onClick={(): void => setShowResourceAttributesSelector(false)}
-					/>
-				) : (
-					<Plus
-						size={16}
-						className="cursor-pointer span-percentile-panel__header-icon"
-						onClick={(): void => setShowResourceAttributesSelector(true)}
-					/>
-				)}
+				<Button
+					variant="link"
+					color="secondary"
+					size="icon"
+					onClick={(): void =>
+						setShowResourceAttributesSelector(!showResourceAttributesSelector)
+					}
+					prefix={
+						showResourceAttributesSelector ? <Check size={16} /> : <Plus size={16} />
+					}
+				/>
 			</div>
 
 			{showResourceAttributesSelector && (
 				<div
-					className="span-percentile-panel__resource-selector"
+					className={styles.resourceSelector}
 					ref={resourceAttributesSelectorRef}
 				>
-					<div className="span-percentile-panel__resource-selector-header">
+					<div className={styles.resourceSelectorHeader}>
 						<Input
 							placeholder="Search resource attributes"
-							className="span-percentile-panel__resource-selector-input"
+							className={styles.resourceSelectorInput}
 							value={resourceAttributesSearchQuery}
 							onChange={(e): void =>
 								setResourceAttributesSearchQuery(e.target.value as string)
 							}
 						/>
 					</div>
-					<div className="span-percentile-panel__resource-selector-items">
+					<div className={styles.resourceSelectorItems}>
 						{spanResourceAttributes
 							.filter((attr) =>
 								attr.key
@@ -100,10 +102,7 @@ function SpanPercentilePanel({
 									.includes(resourceAttributesSearchQuery.toLowerCase()),
 							)
 							.map((attr) => (
-								<div
-									className="span-percentile-panel__resource-selector-item"
-									key={attr.key}
-								>
+								<div className={styles.resourceSelectorItem} key={attr.key}>
 									<Checkbox
 										checked={attr.isSelected}
 										onChange={(e): void => {
@@ -118,9 +117,7 @@ function SpanPercentilePanel({
 											attr.key === DEFAULT_RESOURCE_ATTRIBUTES.name
 										}
 									>
-										<div className="span-percentile-panel__resource-selector-item-value">
-											{attr.key}
-										</div>
+										<div className={styles.resourceSelectorItemValue}>{attr.key}</div>
 									</Checkbox>
 								</div>
 							))}
@@ -128,15 +125,15 @@ function SpanPercentilePanel({
 				</div>
 			)}
 
-			<div className="span-percentile-panel__content">
-				<Typography.Text className="span-percentile-panel__content-title">
+			<div className={styles.content}>
+				<Typography.Text className={styles.contentTitle}>
 					This span duration is{' '}
 					{!loading && spanPercentileData ? (
-						<span className="span-percentile-panel__content-highlight">
+						<span className={styles.contentHighlight}>
 							p{Math.floor(spanPercentileData.percentile || 0)}
 						</span>
 					) : (
-						<span className="span-percentile-panel__content-loader">
+						<span className={styles.contentLoader}>
 							<Loader size={12} className="animate-spin" />
 						</span>
 					)}{' '}
@@ -144,11 +141,11 @@ function SpanPercentilePanel({
 					hour(s) since the span start time.
 				</Typography.Text>
 
-				<div className="span-percentile-panel__timerange">
+				<div className={styles.timerange}>
 					<Select
 						labelInValue
 						placeholder="Select timerange"
-						className="span-percentile-panel__timerange-select"
+						className={styles.timerangeSelect}
 						getPopupContainer={(trigger): HTMLElement =>
 							trigger.parentElement || document.body
 						}
@@ -167,45 +164,45 @@ function SpanPercentilePanel({
 					/>
 				</div>
 
-				<div className="span-percentile-panel__table">
-					<div className="span-percentile-panel__table-header">
-						<Typography.Text className="span-percentile-panel__table-header-text">
+				<div>
+					<div className={styles.tableHeader}>
+						<Typography.Text className={styles.tableHeaderText}>
 							Percentile
 						</Typography.Text>
-						<Typography.Text className="span-percentile-panel__table-header-text">
+						<Typography.Text className={styles.tableHeaderText}>
 							Duration
 						</Typography.Text>
 					</div>
 
-					<div className="span-percentile-panel__table-rows">
+					<div className={styles.tableRows}>
 						{isLoadingData || isFetchingData ? (
 							<Skeleton
 								active
 								paragraph={{ rows: 3 }}
-								className="span-percentile-panel__table-skeleton"
+								className={styles.tableSkeleton}
 							/>
 						) : (
 							<>
 								{Object.entries(spanPercentileData?.percentiles || {}).map(
 									([pKey, pDuration]) => (
-										<div className="span-percentile-panel__table-row" key={pKey}>
-											<Typography.Text className="span-percentile-panel__table-row-key">
+										<div className={styles.tableRow} key={pKey}>
+											<Typography.Text className={styles.tableRowKey}>
 												{pKey}
 											</Typography.Text>
-											<div className="span-percentile-panel__table-row-dash" />
-											<Typography.Text className="span-percentile-panel__table-row-value">
+											<div className={styles.tableRowDash} />
+											<Typography.Text className={styles.tableRowValue}>
 												{getYAxisFormattedValue(`${pDuration / 1000000}`, 'ms')}
 											</Typography.Text>
 										</div>
 									),
 								)}
 
-								<div className="span-percentile-panel__table-row span-percentile-panel__table-row--current">
-									<Typography.Text className="span-percentile-panel__table-row-key">
+								<div className={cx(styles.tableRow, styles.isCurrent)}>
+									<Typography.Text className={styles.tableRowKey}>
 										p{Math.floor(spanPercentileData?.percentile || 0)}
 									</Typography.Text>
-									<div className="span-percentile-panel__table-row-dash" />
-									<Typography.Text className="span-percentile-panel__table-row-value">
+									<div className={styles.tableRowDash} />
+									<Typography.Text className={styles.tableRowValue}>
 										(this span){' '}
 										{getYAxisFormattedValue(
 											`${selectedSpan.duration_nano / 1000000}`,

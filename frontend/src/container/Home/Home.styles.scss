@@ -39,6 +39,10 @@
 	}
 
 	.home-header-right {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
 		.welcome-checklist-btn {
 			color: var(--l1-foreground);
 

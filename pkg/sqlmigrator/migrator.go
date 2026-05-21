@@ -68,6 +68,28 @@ func (migrator *migrator) Migrate(ctx context.Context) error {
 	return nil
 }
 
+func (migrator *migrator) Check(ctx context.Context) error {
+	migrator.settings.Logger().InfoContext(ctx, "checking sqlstore migrations", slog.String("dialect", migrator.dialect))
+
+	migrations, err := migrator.migrator.MigrationsWithStatus(ctx)
+	if err != nil {
+		return err
+	}
+
+	unapplied := migrations.Unapplied()
+	if len(unapplied) == 0 {
+		migrator.settings.Logger().InfoContext(ctx, "no pending migrations (database is up to date)", slog.String("dialect", migrator.dialect))
+		return nil
+	}
+
+	names := make([]string, 0, len(unapplied))
+	for _, migration := range unapplied {
+		names = append(names, migration.Name)
+	}
+
+	return errors.Newf(errors.TypeNotFound, ErrCodePendingSQLMigrations, "%d pending migration(s): %v", len(unapplied), names)
+}
+
 func (migrator *migrator) Rollback(ctx context.Context) error {
 	if err := migrator.Lock(ctx); err != nil {
 		return err

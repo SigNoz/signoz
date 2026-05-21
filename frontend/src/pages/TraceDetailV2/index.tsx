@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Compass, Cone, TowerControl } from '@signozhq/icons';
@@ -24,6 +25,17 @@ function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
 				items={items}
 				animated
 				className="trace-module"
+				tabBarExtraContent={{
+					right: (
+						<div className="trace-detail-header-actions">
+							<HeaderRightSection
+								enableShare
+								enableFeedback
+								enableAnnouncements={false}
+							/>
+						</div>
+					),
+				}}
 				onTabClick={(activeKey): void => {
 					if (activeKey === 'saved-views') {
 						history.push(ROUTES.TRACES_SAVE_VIEWS);

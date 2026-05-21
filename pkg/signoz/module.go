@@ -45,6 +45,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -88,6 +89,7 @@ type Modules struct {
 	TraceDetail      tracedetail.Module
 	SpanMapper       spanmapper.Module
 	LLMPricingRule   llmpricingrule.Module
+	Tag              tag.Module
 }
 
 func NewModules(
@@ -113,6 +115,7 @@ func NewModules(
 	cloudIntegrationModule cloudintegration.Module,
 	retentionGetter retention.Getter,
 	fl flagger.Flagger,
+	tagModule tag.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -145,5 +148,6 @@ func NewModules(
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
 		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
+		Tag:              tagModule,
 	}
 }

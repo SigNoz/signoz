@@ -2,7 +2,9 @@
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
 	DASHED_BORDER_LINE_DASH,
@@ -66,14 +68,47 @@ export function getFlamegraphRowMetrics(
 	};
 }
 
+/**
+ * Resolve the displayed service.name for a flamegraph span. Used by tooltips
+ * (service identity, independent of the active colour-by field). Prefers
+ * `resource['service.name']` with legacy top-level `serviceName` fallback.
+ */
+export function getFlamegraphServiceName(
+	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+): string {
+	return getSpanAttribute(span, 'service.name') || span.serviceName || '';
+}
+
+/**
+ * Resolve the value used to bucket a flamegraph span by colour for the given
+ * field. Prefers `resource[field.name]` (new contract from `selectFields`).
+ * For `service.name`, falls back to the legacy top-level `serviceName` when
+ * resource is empty (backward-compat with backends that haven't shipped
+ * `selectFields` yet). For other fields, falls back to `'unknown'`.
+ */
+export function getFlamegraphSpanGroupValue(
+	span: Pick<FlamegraphSpan, 'serviceName' | 'resource' | 'attributes'>,
+	field: TelemetryFieldKey,
+): string {
+	const fromAttribute = getSpanAttribute(span, field.name);
+	if (fromAttribute) {
+		return fromAttribute;
+	}
+	if (field.name === 'service.name') {
+		return span.serviceName || 'unknown';
+	}
+	return 'unknown';
+}
+
 interface GetSpanColorArgs {
 	span: FlamegraphSpan;
 	isDarkMode: boolean;
+	groupValue: string;
 }
 
 export function getSpanColor(args: GetSpanColorArgs): string {
-	const { span, isDarkMode } = args;
-	let color = generateColor(span.serviceName, themeColors.traceDetailColorsV3);
+	const { span, isDarkMode, groupValue } = args;
+	let color = generateColor(groupValue, themeColors.traceDetailColorsV3);
 
 	if (span.hasError) {
 		color = isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)';
@@ -211,7 +246,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 	// Alpha is applied to bar + events only; label is drawn after restoring alpha to 1
 	// so text stays readable against the faded bar.
 	if (shouldDim) {
-		ctx.globalAlpha = 0.4;
+		ctx.globalAlpha = 0.15;
 	}
 
 	ctx.beginPath();

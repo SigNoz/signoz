@@ -1208,7 +1208,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 						isComplete: !!(
 							currentPair.key &&
 							currentPair.operator &&
-							currentPair.value
+							(currentPair.value || isNonValueOperator(currentPair.operator))
 						),
 					} as IQueryPair);
 				}
@@ -1369,7 +1369,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					isComplete: !!(
 						currentPair.key &&
 						currentPair.operator &&
-						currentPair.value
+						(currentPair.value || isNonValueOperator(currentPair.operator))
 					),
 				} as IQueryPair);
 
@@ -1414,7 +1414,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				isComplete: !!(
 					currentPair.key &&
 					currentPair.operator &&
-					currentPair.value
+					(currentPair.value || isNonValueOperator(currentPair.operator))
 				),
 			} as IQueryPair);
 		}

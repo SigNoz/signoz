@@ -218,7 +218,7 @@ function SpanLogs({
 					<Virtuoso
 						className="span-logs-virtuoso"
 						key="span-logs-virtuoso"
-						style={logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}}
+						style={{ height: '100%' }}
 						data={logs}
 						totalCount={logs.length}
 						itemContent={getItemContent}

@@ -169,7 +169,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusAccepted, nil)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {

@@ -15,6 +15,7 @@ const useGetTraceV3 = (props: GetTraceV3PayloadProps): UseTraceV3 =>
 			props.traceId,
 			props.selectedSpanId,
 			props.isSelectedSpanIDUnCollapsed,
+			props.aggregations,
 		],
 		enabled: !!props.traceId,
 		keepPreviousData: true,

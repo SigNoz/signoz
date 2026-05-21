@@ -39,8 +39,12 @@ export interface PrettyViewAction {
 	label: React.ReactNode;
 	icon?: React.ReactNode;
 	onClick: (context: FieldContext) => void;
-	/** If provided, action is hidden when this returns true for the field key */
-	shouldHide?: (key: string) => boolean;
+	/**
+	 * If provided, action is hidden when this returns true. Receives the leaf
+	 * key plus the full path so callers can hide based on ancestor segments
+	 * (e.g. anything under `events.*`).
+	 */
+	shouldHide?: (key: string, fieldKeyPath: (string | number)[]) => boolean;
 }
 
 export interface VisibleActionsConfig {
@@ -56,6 +60,13 @@ export interface PrettyViewProps {
 	searchable?: boolean;
 	showPinned?: boolean;
 	drawerKey?: string;
+	/**
+	 * Controlled list of pinned key paths (each entry is `JSON.stringify(path)`).
+	 * When provided, PrettyView delegates persistence to the caller via
+	 * `onPinnedFieldsChange` and skips its own localStorage I/O.
+	 */
+	pinnedFieldsValue?: string[];
+	onPinnedFieldsChange?: (next: string[]) => void;
 }
 
 function PrettyView({
@@ -65,6 +76,8 @@ function PrettyView({
 	searchable = true,
 	showPinned = false,
 	drawerKey = 'default',
+	pinnedFieldsValue,
+	onPinnedFieldsChange,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -75,7 +88,10 @@ function PrettyView({
 		pinnedEntries,
 		pinnedData,
 		displayKeyToForwardPath,
-	} = usePinnedFields(data, drawerKey);
+	} = usePinnedFields(data, drawerKey, {
+		value: pinnedFieldsValue,
+		onChange: onPinnedFieldsChange,
+	});
 
 	const filteredPinnedData = useMemo(() => {
 		const trimmed = searchQuery.trim();
@@ -164,7 +180,7 @@ function PrettyView({
 				const visibleCustomActions = actions.filter(
 					(action) =>
 						isActionVisible(action.key, context.isNested) &&
-						!(action.shouldHide && action.shouldHide(leafKey)),
+						!(action.shouldHide && action.shouldHide(leafKey, context.fieldKeyPath)),
 				);
 				visibleCustomActions.forEach((action) => {
 					items.push({

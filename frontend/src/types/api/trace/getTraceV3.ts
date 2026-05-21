@@ -1,9 +1,26 @@
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+
+export type WaterfallAggregationType =
+	| 'span_count'
+	| 'execution_time_percentage'
+	| 'duration';
+
+export interface WaterfallAggregationRequest {
+	field: TelemetryFieldKey;
+	aggregation: WaterfallAggregationType;
+}
+
+export interface WaterfallAggregationResponse extends WaterfallAggregationRequest {
+	value: Record<string, number>;
+}
+
 export interface GetTraceV3PayloadProps {
 	traceId: string;
 	selectedSpanId: string;
 	uncollapsedSpans: string[];
 	isSelectedSpanIDUnCollapsed: boolean;
 	limit?: number; // Optional limit for number of spans to fetch, default can be set in API
+	aggregations?: WaterfallAggregationRequest[];
 }
 
 export interface TraceDetailV3URLProps {
@@ -81,5 +98,5 @@ export interface GetTraceV3SuccessResponse {
 	totalErrorSpansCount: number;
 	rootServiceName: string;
 	rootServiceEntryPoint: string;
-	serviceNameToTotalDurationMap: Record<string, number>;
+	aggregations?: WaterfallAggregationResponse[];
 }

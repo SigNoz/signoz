@@ -8,6 +8,7 @@ import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -18,9 +19,15 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import {
+	metricsAddFilterAction,
+	metricsRunQueryAction,
+	metricsSaveViewAction,
+} from 'pages/MetricsExplorer/aiActions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -51,9 +58,12 @@ function Explorer(): JSX.Element {
 		updateAllQueriesOperators,
 		currentQuery,
 		handleSetConfig,
+		handleSetQueryData,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
@@ -211,6 +221,41 @@ function Explorer(): JSX.Element {
 		},
 		[handleSetConfig, handleExplorerTabChange],
 	);
+
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
+	const aiActions = useMemo(
+		() =>
+			isAIAssistantEnabled
+				? [
+						metricsRunQueryAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						metricsAddFilterAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						metricsSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+					]
+				: [],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			handleSetQueryData,
+			redirectWithQueryBuilderData,
+		],
+	);
+	usePageActions('metrics-explorer', aiActions);
+	// ───────────────────────────────────────────────────────────────────────────
 
 	const handleExport = useCallback(
 		(

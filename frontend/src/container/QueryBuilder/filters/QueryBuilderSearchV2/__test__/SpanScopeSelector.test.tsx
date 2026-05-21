@@ -20,12 +20,16 @@ import SpanScopeSelector from '../SpanScopeSelector';
 
 const mockRedirectWithQueryBuilderData = jest.fn();
 
+const SCOPE_KEYS = ['isRoot', 'isEntryPoint'];
+const isScopeFilter = (filter: TagFilterItem): boolean =>
+	SCOPE_KEYS.includes(filter.key?.key ?? '') && String(filter.value) === 'true';
+
 // Helper to create filter items
 const createSpanScopeFilter = (key: string): TagFilterItem => ({
 	id: 'span-filter',
 	key: {
 		key,
-		type: 'spanSearchScope',
+		type: '',
 	},
 	op: '=',
 	value: 'true',
@@ -143,7 +147,6 @@ describe('SpanScopeSelector', () => {
 				expect.objectContaining({
 					key: expect.objectContaining({
 						key: expectedKey,
-						type: 'spanSearchScope',
 					}),
 					op: '=',
 					value: 'true',
@@ -162,11 +165,7 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
 			const updatedQuery = mockRedirectWithQueryBuilderData.mock.calls[0][0];
 			const filters = updatedQuery.builder.queryData[0].filters.items;
-			expect(filters).not.toContainEqual(
-				expect.objectContaining({
-					key: expect.objectContaining({ type: 'spanSearchScope' }),
-				}),
-			);
+			expect(filters.some(isScopeFilter)).toBe(false);
 		});
 
 		it('should add isRoot filter when selecting ROOT_SPANS', async () => {
@@ -206,6 +205,27 @@ describe('SpanScopeSelector', () => {
 				await expect(screen.findByText(expectedText)).resolves.toBeInTheDocument();
 			},
 		);
+
+		// Round-trip from filter.expression can deserialize the value as a boolean
+		// `true` (unquoted in the expression) instead of the string `'true'` produced
+		// by the dropdown. The dropdown must still recognize that as the scope filter.
+		it.each([
+			['Root Spans', 'isRoot'],
+			['Entrypoint Spans', 'isEntryPoint'],
+		])(
+			'should initialize with %s selected when %s = true (boolean value)',
+			async (expectedText, filterKey) => {
+				const booleanScopeFilter: TagFilterItem = {
+					id: 'span-filter',
+					key: { key: filterKey, type: '' },
+					op: '=',
+					value: true as unknown as string,
+				};
+				const queryWithFilter = createQueryWithFilters([booleanScopeFilter]);
+				renderWithContext(queryWithFilter, undefined, defaultQueryBuilderQuery);
+				await expect(screen.findByText(expectedText)).resolves.toBeInTheDocument();
+			},
+		);
 	});
 
 	describe('when onChange and query props are provided', () => {
@@ -233,9 +253,7 @@ describe('SpanScopeSelector', () => {
 				expect(items).toContainEqual(nonScopeItem);
 			});
 
-			const scopeFiltersInPayload = items.filter(
-				(filter) => filter.key?.type === 'spanSearchScope',
-			);
+			const scopeFiltersInPayload = items.filter(isScopeFilter);
 
 			if (expectedScopeKey) {
 				expect(scopeFiltersInPayload).toHaveLength(1);
@@ -434,9 +452,7 @@ describe('SpanScopeSelector', () => {
 				items: [],
 			};
 			// Count non-scope filters
-			const nonScopeFilters = items.filter(
-				(filter) => filter.key?.type !== 'spanSearchScope',
-			);
+			const nonScopeFilters = items.filter((filter) => !isScopeFilter(filter));
 			expect(nonScopeFilters).toHaveLength(1);
 
 			expect(nonScopeFilters).toContainEqual(

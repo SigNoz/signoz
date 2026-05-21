@@ -596,6 +596,7 @@ function CustomTimePicker({
 				>
 					<Input
 						ref={inputRef}
+						autoComplete="off"
 						className={cx(
 							'timeSelection-input',
 							inputStatus === CustomTimePickerInputStatus.ERROR ? 'error' : '',

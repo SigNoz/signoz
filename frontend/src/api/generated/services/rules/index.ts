@@ -110,9 +110,7 @@ export function useListRules<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -135,7 +133,7 @@ export const invalidateListRules = async (
  * @summary Create alert rule
  */
 export const createRule = (
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	ruletypesPostableRuleDTO?: BodyType<RuletypesPostableRuleDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateRule201>({
@@ -154,13 +152,13 @@ export const getCreateRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
 		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRule>>,
 	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
+	{ data?: BodyType<RuletypesPostableRuleDTO> },
 	TContext
 > => {
 	const mutationKey = ['createRule'];
@@ -174,7 +172,7 @@ export const getCreateRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRule>>,
-		{ data: BodyType<RuletypesPostableRuleDTO> }
+		{ data?: BodyType<RuletypesPostableRuleDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -187,7 +185,9 @@ export const getCreateRuleMutationOptions = <
 export type CreateRuleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createRule>>
 >;
-export type CreateRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type CreateRuleMutationBody =
+	| BodyType<RuletypesPostableRuleDTO>
+	| undefined;
 export type CreateRuleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -200,27 +200,29 @@ export const useCreateRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
 		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRule>>,
 	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
+	{ data?: BodyType<RuletypesPostableRuleDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateRuleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateRuleMutationOptions(options));
 };
 /**
  * This endpoint deletes an alert rule by ID
  * @summary Delete alert rule
  */
-export const deleteRuleByID = ({ id }: DeleteRuleByIDPathParameters) => {
+export const deleteRuleByID = (
+	{ id }: DeleteRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/rules/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -286,9 +288,7 @@ export const useDeleteRuleByID = <
 	{ pathParams: DeleteRuleByIDPathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteRuleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteRuleByIDMutationOptions(options));
 };
 /**
  * This endpoint returns an alert rule by ID
@@ -370,9 +370,7 @@ export function useGetRuleByID<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -397,13 +395,15 @@ export const invalidateGetRuleByID = async (
  */
 export const patchRuleByID = (
 	{ id }: PatchRuleByIDPathParameters,
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	ruletypesPostableRuleDTO?: BodyType<RuletypesPostableRuleDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<PatchRuleByID200>({
 		url: `/api/v2/rules/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostableRuleDTO,
+		signal,
 	});
 };
 
@@ -416,7 +416,7 @@ export const getPatchRuleByIDMutationOptions = <
 		TError,
 		{
 			pathParams: PatchRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		},
 		TContext
 	>;
@@ -425,7 +425,7 @@ export const getPatchRuleByIDMutationOptions = <
 	TError,
 	{
 		pathParams: PatchRuleByIDPathParameters;
-		data: BodyType<RuletypesPostableRuleDTO>;
+		data?: BodyType<RuletypesPostableRuleDTO>;
 	},
 	TContext
 > => {
@@ -442,7 +442,7 @@ export const getPatchRuleByIDMutationOptions = <
 		Awaited<ReturnType<typeof patchRuleByID>>,
 		{
 			pathParams: PatchRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -456,7 +456,9 @@ export const getPatchRuleByIDMutationOptions = <
 export type PatchRuleByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchRuleByID>>
 >;
-export type PatchRuleByIDMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type PatchRuleByIDMutationBody =
+	| BodyType<RuletypesPostableRuleDTO>
+	| undefined;
 export type PatchRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -471,7 +473,7 @@ export const usePatchRuleByID = <
 		TError,
 		{
 			pathParams: PatchRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		},
 		TContext
 	>;
@@ -480,13 +482,11 @@ export const usePatchRuleByID = <
 	TError,
 	{
 		pathParams: PatchRuleByIDPathParameters;
-		data: BodyType<RuletypesPostableRuleDTO>;
+		data?: BodyType<RuletypesPostableRuleDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchRuleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchRuleByIDMutationOptions(options));
 };
 /**
  * This endpoint updates an alert rule by ID
@@ -494,13 +494,15 @@ export const usePatchRuleByID = <
  */
 export const updateRuleByID = (
 	{ id }: UpdateRuleByIDPathParameters,
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	ruletypesPostableRuleDTO?: BodyType<RuletypesPostableRuleDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/rules/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostableRuleDTO,
+		signal,
 	});
 };
 
@@ -513,7 +515,7 @@ export const getUpdateRuleByIDMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		},
 		TContext
 	>;
@@ -522,7 +524,7 @@ export const getUpdateRuleByIDMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateRuleByIDPathParameters;
-		data: BodyType<RuletypesPostableRuleDTO>;
+		data?: BodyType<RuletypesPostableRuleDTO>;
 	},
 	TContext
 > => {
@@ -539,7 +541,7 @@ export const getUpdateRuleByIDMutationOptions = <
 		Awaited<ReturnType<typeof updateRuleByID>>,
 		{
 			pathParams: UpdateRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -553,7 +555,9 @@ export const getUpdateRuleByIDMutationOptions = <
 export type UpdateRuleByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateRuleByID>>
 >;
-export type UpdateRuleByIDMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type UpdateRuleByIDMutationBody =
+	| BodyType<RuletypesPostableRuleDTO>
+	| undefined;
 export type UpdateRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -568,7 +572,7 @@ export const useUpdateRuleByID = <
 		TError,
 		{
 			pathParams: UpdateRuleByIDPathParameters;
-			data: BodyType<RuletypesPostableRuleDTO>;
+			data?: BodyType<RuletypesPostableRuleDTO>;
 		},
 		TContext
 	>;
@@ -577,13 +581,11 @@ export const useUpdateRuleByID = <
 	TError,
 	{
 		pathParams: UpdateRuleByIDPathParameters;
-		data: BodyType<RuletypesPostableRuleDTO>;
+		data?: BodyType<RuletypesPostableRuleDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateRuleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateRuleByIDMutationOptions(options));
 };
 /**
  * Returns distinct label keys from rule history entries for the selected range.
@@ -681,9 +683,7 @@ export function useGetRuleHistoryFilterKeys<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -800,9 +800,7 @@ export function useGetRuleHistoryFilterValues<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -919,9 +917,7 @@ export function useGetRuleHistoryOverallStatus<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1036,9 +1032,7 @@ export function useGetRuleHistoryStats<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1154,9 +1148,7 @@ export function useGetRuleHistoryTimeline<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1273,9 +1265,7 @@ export function useGetRuleHistoryTopContributors<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -1300,7 +1290,7 @@ export const invalidateGetRuleHistoryTopContributors = async (
  * @summary Test alert rule
  */
 export const testRule = (
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	ruletypesPostableRuleDTO?: BodyType<RuletypesPostableRuleDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<TestRule200>({
@@ -1319,13 +1309,13 @@ export const getTestRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,
 		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof testRule>>,
 	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
+	{ data?: BodyType<RuletypesPostableRuleDTO> },
 	TContext
 > => {
 	const mutationKey = ['testRule'];
@@ -1339,7 +1329,7 @@ export const getTestRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof testRule>>,
-		{ data: BodyType<RuletypesPostableRuleDTO> }
+		{ data?: BodyType<RuletypesPostableRuleDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1352,7 +1342,9 @@ export const getTestRuleMutationOptions = <
 export type TestRuleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof testRule>>
 >;
-export type TestRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type TestRuleMutationBody =
+	| BodyType<RuletypesPostableRuleDTO>
+	| undefined;
 export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1365,16 +1357,14 @@ export const useTestRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,
 		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof testRule>>,
 	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
+	{ data?: BodyType<RuletypesPostableRuleDTO> },
 	TContext
 > => {
-	const mutationOptions = getTestRuleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getTestRuleMutationOptions(options));
 };

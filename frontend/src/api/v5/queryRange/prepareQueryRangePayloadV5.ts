@@ -181,7 +181,12 @@ function createBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
-		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
+		// V4 uses having as array, V5 uses having as object with expression field
+		// If having is an array (V4 format), treat it as undefined for V5
+		having:
+			isEmpty(queryData.having) || Array.isArray(queryData.having)
+				? undefined
+				: (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
 			: queryData.functions.map((func: QueryFunction): QueryFunction => {
@@ -409,7 +414,10 @@ function createTraceOperatorBaseSpec(
 					)
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
-		having: isEmpty(having) ? undefined : (having as Having),
+		// V4 uses having as array, V5 uses having as object with expression field
+		// If having is an array (V4 format), treat it as undefined for V5
+		having:
+			isEmpty(having) || Array.isArray(having) ? undefined : (having as Having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
 			: nonEmptySelectColumns?.map(
@@ -437,11 +445,16 @@ export function convertTraceOperatorToV5(
 				panelType,
 			);
 
-			// Skip aggregation for raw request type
+			// Skip aggregation for raw request type. Force dataSource to traces so
+			// createAggregation never takes the metrics branch (which would emit a
+			// metricName field the backend rejects for trace operators).
 			const aggregations =
 				requestType === 'raw'
 					? undefined
-					: createAggregation(traceOperatorData, panelType);
+					: createAggregation(
+							{ ...traceOperatorData, dataSource: DataSource.TRACES },
+							panelType,
+						);
 
 			const spec: QueryEnvelope['spec'] = {
 				name: queryName,

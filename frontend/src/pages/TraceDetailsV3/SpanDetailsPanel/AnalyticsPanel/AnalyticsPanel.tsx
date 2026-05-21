@@ -5,21 +5,23 @@ import {
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
+import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
-import './AnalyticsPanel.styles.scss';
+import { useTraceStore } from '../../stores/traceStore';
+import {
+	AGGREGATIONS,
+	getAggregationMap as findAggregationMap,
+} from '../../utils/aggregations';
+
+import styles from './AnalyticsPanel.module.scss';
 
 interface AnalyticsPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
-	serviceExecTime?: Record<string, number>;
-	traceStartTime?: number;
-	traceEndTime?: number;
-	// TODO: Re-enable when backend provides per-service span counts
-	// spans?: Span[];
 }
 
 const PANEL_WIDTH = 350;
@@ -30,41 +32,53 @@ const PANEL_MARGIN_BOTTOM = 50;
 function AnalyticsPanel({
 	isOpen,
 	onClose,
-	serviceExecTime = {},
-	traceStartTime = 0,
-	traceEndTime = 0,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const spread = traceEndTime - traceStartTime;
+	const aggregations = useTraceStore((s) => s.aggregations);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+
+	const execTimePct = useMemo(
+		() =>
+			findAggregationMap(
+				aggregations,
+				AGGREGATIONS.EXEC_TIME_PCT,
+				colorByFieldName,
+			),
+		[aggregations, colorByFieldName],
+	);
+
+	const spanCounts = useMemo(
+		() =>
+			findAggregationMap(aggregations, AGGREGATIONS.SPAN_COUNT, colorByFieldName),
+		[aggregations, colorByFieldName],
+	);
 
 	const execTimeRows = useMemo(() => {
-		if (spread <= 0) {
+		if (!execTimePct) {
 			return [];
 		}
-		return Object.entries(serviceExecTime)
-			.map(([service, duration]) => ({
-				service,
-				percentage: (duration * 100) / spread,
-				color: generateColor(service, themeColors.traceDetailColorsV3),
+		return Object.entries(execTimePct)
+			.map(([group, percentage]) => ({
+				group,
+				percentage,
+				color: generateColor(group, themeColors.traceDetailColorsV3),
 			}))
 			.sort((a, b) => b.percentage - a.percentage);
-	}, [serviceExecTime, spread]);
+	}, [execTimePct]);
 
-	// const spanCountRows = useMemo(() => {
-	// 	const counts: Record<string, number> = {};
-	// 	for (const span of spans) {
-	// 		const name = span.serviceName || 'unknown';
-	// 		counts[name] = (counts[name] || 0) + 1;
-	// 	}
-	// 	return Object.entries(counts)
-	// 		.map(([service, count]) => ({
-	// 			service,
-	// 			count,
-	// 			color: generateColor(service, themeColors.traceDetailColorsV3),
-	// 		}))
-	// 		.sort((a, b) => b.count - a.count);
-	// }, [spans]);
-
-	// const maxSpanCount = spanCountRows[0]?.count || 1;
+	const spanCountRows = useMemo(() => {
+		if (!spanCounts) {
+			return [];
+		}
+		const max = Math.max(...Object.values(spanCounts), 1);
+		return Object.entries(spanCounts)
+			.map(([group, count]) => ({
+				group,
+				count,
+				max,
+				color: generateColor(group, themeColors.traceDetailColorsV3),
+			}))
+			.sort((a, b) => b.count - a.count);
+	}, [spanCounts]);
 
 	if (!isOpen) {
 		return null;
@@ -73,7 +87,6 @@ function AnalyticsPanel({
 	return (
 		<FloatingPanel
 			isOpen
-			className="analytics-panel"
 			width={PANEL_WIDTH}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 			defaultPosition={{
@@ -97,46 +110,41 @@ function AnalyticsPanel({
 				className="floating-panel__drag-handle"
 			/>
 
-			<div className="analytics-panel__body">
+			<div className={styles.body}>
 				<TabsRoot defaultValue="exec-time">
 					<TabsList variant="secondary">
 						<TabsTrigger value="exec-time" variant="secondary">
 							% exec time
 						</TabsTrigger>
-						{/* TODO: Enable when backend provides per-service span counts
 						<TabsTrigger value="spans" variant="secondary">
 							Spans
 						</TabsTrigger>
-						*/}
 					</TabsList>
 
-					<div className="analytics-panel__tabs-scroll">
+					<div className={styles.tabsScroll}>
 						<TabsContent value="exec-time">
-							<div className="analytics-panel__list">
+							<div className={styles.list}>
 								{execTimeRows.map((row) => (
 									<>
 										<div
-											key={`${row.service}-dot`}
-											className="analytics-panel__dot"
+											key={`${row.group}-dot`}
+											className={styles.dot}
 											style={{ backgroundColor: row.color }}
 										/>
-										<span
-											key={`${row.service}-name`}
-											className="analytics-panel__service-name"
-										>
-											{row.service}
+										<span key={`${row.group}-name`} className={styles.serviceName}>
+											{row.group}
 										</span>
-										<div key={`${row.service}-bar`} className="analytics-panel__bar-cell">
-											<div className="analytics-panel__bar">
+										<div key={`${row.group}-bar`} className={styles.barCell}>
+											<div className={styles.bar}>
 												<div
-													className="analytics-panel__bar-fill"
+													className={styles.barFill}
 													style={{
 														width: `${Math.min(row.percentage, 100)}%`,
 														backgroundColor: row.color,
 													}}
 												/>
 											</div>
-											<span className="analytics-panel__value analytics-panel__value--wide">
+											<span className={cx(styles.value, styles.valueWide)}>
 												{row.percentage.toFixed(2)}%
 											</span>
 										</div>
@@ -145,33 +153,29 @@ function AnalyticsPanel({
 							</div>
 						</TabsContent>
 
-						{/* TODO: Enable when backend provides per-service span counts
 						<TabsContent value="spans">
-							<div className="analytics-panel__list">
+							<div className={styles.list}>
 								{spanCountRows.map((row) => (
 									<>
 										<div
-											key={`${row.service}-dot`}
-											className="analytics-panel__dot"
+											key={`${row.group}-dot`}
+											className={styles.dot}
 											style={{ backgroundColor: row.color }}
 										/>
-										<span
-											key={`${row.service}-name`}
-											className="analytics-panel__service-name"
-										>
-											{row.service}
+										<span key={`${row.group}-name`} className={styles.serviceName}>
+											{row.group}
 										</span>
-										<div key={`${row.service}-bar`} className="analytics-panel__bar-cell">
-											<div className="analytics-panel__bar">
+										<div key={`${row.group}-bar`} className={styles.barCell}>
+											<div className={styles.bar}>
 												<div
-													className="analytics-panel__bar-fill"
+													className={styles.barFill}
 													style={{
-														width: `${(row.count / maxSpanCount) * 100}%`,
+														width: `${(row.count / row.max) * 100}%`,
 														backgroundColor: row.color,
 													}}
 												/>
 											</div>
-											<span className="analytics-panel__value analytics-panel__value--narrow">
+											<span className={cx(styles.value, styles.valueNarrow)}>
 												{row.count}
 											</span>
 										</div>
@@ -179,7 +183,6 @@ function AnalyticsPanel({
 								))}
 							</div>
 						</TabsContent>
-						*/}
 					</div>
 				</TabsRoot>
 			</div>

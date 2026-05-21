@@ -431,6 +431,31 @@ export const OPERATORS = {
 	NOTILIKE: 'NOT_ILIKE',
 };
 
+/**
+ * Maps short-form InfraMonitoring operators to long-form display labels.
+ * InfraMonitoring backend uses short forms (NIN), UI displays long forms (NOT_IN).
+ */
+export const INFRA_SHORT_TO_LONG_OPERATOR_MAP: Record<string, string> = {
+	NIN: 'NOT_IN',
+	NLIKE: 'NOT_LIKE',
+	NOTILIKE: 'NOT_ILIKE',
+	NREGEX: 'NOT_REGEX',
+	NEXISTS: 'NOT_EXISTS',
+	NCONTAINS: 'NOT_CONTAINS',
+};
+
+/**
+ * Maps long-form operators to short-form for InfraMonitoring API.
+ */
+export const INFRA_LONG_TO_SHORT_OPERATOR_MAP: Record<string, string> = {
+	NOT_IN: 'NIN',
+	NOT_LIKE: 'NLIKE',
+	NOT_ILIKE: 'NOTILIKE',
+	NOT_REGEX: 'NREGEX',
+	NOT_EXISTS: 'NEXISTS',
+	NOT_CONTAINS: 'NCONTAINS',
+};
+
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 	string: [
 		OPERATORS['='],
