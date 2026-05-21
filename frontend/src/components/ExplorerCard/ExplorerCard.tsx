@@ -234,11 +234,7 @@ function ExplorerCard({
 								<Share2 onClick={onCopyUrlHandler} size="md" />
 								{viewKey && (
 									<DropdownMenuSimple menu={moreOptionMenu}>
-										<Button
-											type="text"
-											size="small"
-											icon={<Ellipsis size="md" />}
-										/>
+										<Button type="text" size="small" icon={<Ellipsis size="md" />} />
 									</DropdownMenuSimple>
 								)}
 							</Space>
