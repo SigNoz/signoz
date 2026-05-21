@@ -16,6 +16,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -35,6 +36,7 @@ var (
 
 type querier struct {
 	logger                   *slog.Logger
+	fl                       flagger.Flagger
 	telemetryStore           telemetrystore.TelemetryStore
 	metadataStore            telemetrytypes.MetadataStore
 	promEngine               prometheus.Prometheus
@@ -62,10 +64,12 @@ func New(
 	meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation],
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
+	flagger flagger.Flagger,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	return &querier{
 		logger:                   querierSettings.Logger(),
+		fl:                       flagger,
 		telemetryStore:           telemetryStore,
 		metadataStore:            metadataStore,
 		promEngine:               promEngine,
@@ -684,7 +688,7 @@ func (q *querier) run(
 	}
 
 	gomaps.Copy(results, preseededResults)
-	processedResults, err := q.postProcessResults(ctx, results, req)
+	processedResults, err := q.postProcessResults(ctx, orgID, results, req)
 	if err != nil {
 		return nil, err
 	}
