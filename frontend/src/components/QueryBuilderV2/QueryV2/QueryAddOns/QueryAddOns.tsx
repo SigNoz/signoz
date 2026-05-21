@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Tooltip } from 'antd';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -515,10 +515,11 @@ function QueryAddOns({
 				</div>
 			)}
 
-			<ToggleGroup
+			<ToggleGroupSimple
 				type="multiple"
+				className="add-ons-tabs"
 				value={selectedViews.map((view) => view.key)}
-				onChange={(newKeys): void => {
+				onChange={(newKeys: string[]): void => {
 					const oldKeys = selectedViews.map((view) => view.key);
 					const toggledKey =
 						newKeys.find((k) => !oldKeys.includes(k)) ??
@@ -531,36 +532,31 @@ function QueryAddOns({
 						handleOptionClick(clickedAddOn);
 					}
 				}}
-			>
-				{addOns.map((addOn) => (
-					<Tooltip
-						key={addOn.key}
-						title={
-							<TooltipContent
-								label={addOn.label}
-								description={addOn.description}
-								docLink={addOn.docLink}
-							/>
-						}
-						placement="top"
-						mouseEnterDelay={0.5}
-					>
-						<ToggleGroupItem
-							key={addOn.key}
-							className={
-								selectedViews.find((view) => view.key === addOn.key)
-									? 'selected-view tab'
-									: 'tab'
+				items={addOns.map((addOn) => ({
+					value: addOn.key,
+					label: (
+						<Tooltip
+							title={
+								<TooltipContent
+									label={addOn.label}
+									description={addOn.description}
+									docLink={addOn.docLink}
+								/>
 							}
-							value={addOn.key}
-							data-testid={`query-add-on-${addOn.key}`}
+							placement="top"
+							mouseEnterDelay={0.5}
 						>
-							{addOn.icon}
-							{addOn.label}
-						</ToggleGroupItem>
-					</Tooltip>
-				))}
-			</ToggleGroup>
+							<span
+								className="add-on-tab-title"
+								data-testid={`query-add-on-${addOn.key}`}
+							>
+								{addOn.icon}
+								{addOn.label}
+							</span>
+						</Tooltip>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

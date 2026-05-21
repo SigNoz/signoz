@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 
 import './SignozRadioGroup.styles.scss';
 
@@ -24,26 +24,22 @@ function SignozRadioGroup({
 	disabled = false,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
-		<ToggleGroup
+		<ToggleGroupSimple
 			type="single"
 			value={value}
 			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
 			disabled={disabled}
-		>
-			{options.map((option) => (
-				<ToggleGroupItem
-					key={option.value}
-					value={option.value}
-					className={value === option.value ? 'selected_view tab' : 'tab'}
-				>
+			items={options.map((option) => ({
+				value: option.value,
+				label: (
 					<div className="view-title-container">
 						{option.icon && <div className="icon-container">{option.icon}</div>}
 						{option.label}
 					</div>
-				</ToggleGroupItem>
-			))}
-		</ToggleGroup>
+				),
+			}))}
+		/>
 	);
 }
 

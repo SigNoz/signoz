@@ -5,7 +5,7 @@ import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Divider, Drawer, Tooltip } from 'antd';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -452,57 +452,50 @@ function LogDetailInner({
 				</div>
 
 				<div className="tabs-and-search">
-					<ToggleGroup
+					<ToggleGroupSimple
 						type="single"
 						className="views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
-					>
-						<ToggleGroupItem
-							className={
-								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.OVERVIEW}
-						>
-							<div className="view-title">
-								<Table size={14} />
-								Overview
-							</div>
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							className={
-								selectedView === VIEW_TYPES.JSON ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.JSON}
-						>
-							<div className="view-title">
-								<Braces size={14} />
-								JSON
-							</div>
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							className={
-								selectedView === VIEW_TYPES.CONTEXT ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.CONTEXT}
-						>
-							<div className="view-title">
-								<TextSelect size={14} />
-								Context
-							</div>
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							className={
-								selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.INFRAMETRICS}
-						>
-							<div className="view-title">
-								<Histogram size="md" />
-								Metrics
-							</div>
-						</ToggleGroupItem>
-					</ToggleGroup>
+						items={[
+							{
+								value: VIEW_TYPES.OVERVIEW,
+								label: (
+									<div className="view-title">
+										<Table size={14} />
+										Overview
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.JSON,
+								label: (
+									<div className="view-title">
+										<Braces size={14} />
+										JSON
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.CONTEXT,
+								label: (
+									<div className="view-title">
+										<TextSelect size={14} />
+										Context
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.INFRAMETRICS,
+								label: (
+									<div className="view-title">
+										<Histogram size="md" />
+										Metrics
+									</div>
+								),
+							},
+						]}
+					/>
 
 					<div className="log-detail-drawer__actions">
 						{selectedView === VIEW_TYPES.CONTEXT && (

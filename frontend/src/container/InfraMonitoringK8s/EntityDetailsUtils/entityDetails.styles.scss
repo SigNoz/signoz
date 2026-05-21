@@ -156,23 +156,23 @@
 				font-weight: var(--font-weight-normal);
 			}
 
-			.tab {
+			> button {
 				border: 1px solid var(--l1-border);
 				width: 114px;
-			}
 
-			.tab::before {
-				background: var(--l1-border);
-			}
+				&::before {
+					background: var(--l1-border);
+				}
 
-			.selected_view {
-				background: var(--l1-border);
-				color: var(--l1-foreground);
-				border: 1px solid var(--l1-border);
-			}
+				&[data-state='on'] {
+					background: var(--l1-border);
+					color: var(--l1-foreground);
+					border: 1px solid var(--l1-border);
 
-			.selected_view::before {
-				background: var(--l1-border);
+					&::before {
+						background: var(--l1-border);
+					}
+				}
 			}
 		}
 

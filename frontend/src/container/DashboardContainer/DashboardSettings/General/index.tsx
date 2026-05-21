@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Col, Input, Select, Space, Tooltip } from 'antd';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
@@ -214,23 +214,18 @@ function GeneralDashboardSettings(): JSX.Element {
 							Sync crosshair and tooltip across all the dashboard panels
 						</Typography.Text>
 					</div>
-					<ToggleGroup
+					<ToggleGroupSimple
 						type="single"
 						value={cursorSyncMode}
-						onChange={(value): void => {
+						onChange={(value: string): void => {
 							setCursorSyncMode(value as DashboardCursorSync);
 						}}
-					>
-						<ToggleGroupItem value={DashboardCursorSync.None}>
-							No Sync
-						</ToggleGroupItem>
-						<ToggleGroupItem value={DashboardCursorSync.Crosshair}>
-							Crosshair
-						</ToggleGroupItem>
-						<ToggleGroupItem value={DashboardCursorSync.Tooltip}>
-							Tooltip
-						</ToggleGroupItem>
-					</ToggleGroup>
+						items={[
+							{ value: DashboardCursorSync.None, label: 'No Sync' },
+							{ value: DashboardCursorSync.Crosshair, label: 'Crosshair' },
+							{ value: DashboardCursorSync.Tooltip, label: 'Tooltip' },
+						]}
+					/>
 				</div>
 				{cursorSyncMode === DashboardCursorSync.Tooltip && (
 					<div className={styles.crossPanelSyncRow}>
@@ -243,22 +238,21 @@ function GeneralDashboardSettings(): JSX.Element {
 								matching ones highlighted
 							</Typography.Text>
 						</div>
-						<ToggleGroup
+						<ToggleGroupSimple
 							type="single"
 							value={syncTooltipFilterMode}
-							onChange={(value): void => {
+							onChange={(value: string): void => {
 								logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
 									path: getAbsoluteUrl(window.location.pathname),
 									mode: value,
 								});
 								setSyncTooltipFilterMode(value as SyncTooltipFilterMode);
 							}}
-						>
-							<ToggleGroupItem value={SyncTooltipFilterMode.All}>All</ToggleGroupItem>
-							<ToggleGroupItem value={SyncTooltipFilterMode.Filtered}>
-								Filtered
-							</ToggleGroupItem>
-						</ToggleGroup>
+							items={[
+								{ value: SyncTooltipFilterMode.All, label: 'All' },
+								{ value: SyncTooltipFilterMode.Filtered, label: 'Filtered' },
+							]}
+						/>
 					</div>
 				)}
 			</Col>

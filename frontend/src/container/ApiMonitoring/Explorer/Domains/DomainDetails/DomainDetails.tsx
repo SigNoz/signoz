@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer } from 'antd';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -224,39 +224,17 @@ function DomainDetails({
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
-						<ToggleGroup
+						<ToggleGroupSimple
 							type="single"
 							onChange={handleTabChange}
 							value={selectedView}
 							size="lg"
-						>
-							<ToggleGroupItem
-								className={
-									selectedView === VIEW_TYPES.ALL_ENDPOINTS ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.ALL_ENDPOINTS}
-							>
-								All Endpoints
-							</ToggleGroupItem>
-							<ToggleGroupItem
-								className={
-									selectedView === VIEW_TYPES.ENDPOINT_STATS
-										? 'tab selected_view'
-										: 'tab'
-								}
-								value={VIEW_TYPES.ENDPOINT_STATS}
-							>
-								Endpoint(s) Stats
-							</ToggleGroupItem>
-							<ToggleGroupItem
-								className={
-									selectedView === VIEW_TYPES.TOP_ERRORS ? 'tab selected_view' : 'tab'
-								}
-								value={VIEW_TYPES.TOP_ERRORS}
-							>
-								Top 10 Errors
-							</ToggleGroupItem>
-						</ToggleGroup>
+							items={[
+								{ value: VIEW_TYPES.ALL_ENDPOINTS, label: 'All Endpoints' },
+								{ value: VIEW_TYPES.ENDPOINT_STATS, label: 'Endpoint(s) Stats' },
+								{ value: VIEW_TYPES.TOP_ERRORS, label: 'Top 10 Errors' },
+							]}
+						/>
 					</div>
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
 						<AllEndPoints

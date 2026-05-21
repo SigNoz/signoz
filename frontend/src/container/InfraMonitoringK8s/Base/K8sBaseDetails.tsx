@@ -9,7 +9,7 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Tooltip } from 'antd';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
@@ -520,103 +520,101 @@ export default function K8sBaseDetails<T>({
 
 					{!hideDetailViewTabs && (
 						<div className="views-tabs-container">
-							<ToggleGroup
+							<ToggleGroupSimple
 								type="single"
 								className="views-tabs"
 								onChange={handleTabChange}
 								value={selectedView}
-							>
-								{tabVisibility.showMetrics && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.METRICS}
-									>
-										<div className="view-title">
-											<BarChart size={14} />
-											Metrics
-										</div>
-									</ToggleGroupItem>
-								)}
-								{tabVisibility.showLogs && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.LOGS}
-									>
-										<div className="view-title">
-											<ScrollText size={14} />
-											Logs
-										</div>
-									</ToggleGroupItem>
-								)}
-								{tabVisibility.showTraces && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.TRACES}
-									>
-										<div className="view-title">
-											<DraftingCompass size={14} />
-											Traces
-										</div>
-									</ToggleGroupItem>
-								)}
-								{tabVisibility.showEvents && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.EVENTS}
-									>
-										<div className="view-title">
-											<ChevronsLeftRight size={14} />
-											Events
-										</div>
-									</ToggleGroupItem>
-								)}
-								{tabVisibility.showContainers && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.CONTAINERS}
-									>
-										<div className="view-title">
-											<Package2 size={14} />
-											Containers
-										</div>
-									</ToggleGroupItem>
-								)}
-								{tabVisibility.showProcesses && (
-									<ToggleGroupItem
-										className={
-											selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.PROCESSES}
-									>
-										<div className="view-title">
-											<ChevronsLeftRight size={14} />
-											Processes
-										</div>
-									</ToggleGroupItem>
-								)}
-								{customTabs?.map((tab) => (
-									<ToggleGroupItem
-										key={tab.key}
-										className={selectedView === tab.key ? 'selected_view tab' : 'tab'}
-										value={tab.key}
-									>
-										<div className="view-title">
-											{tab.icon}
-											{tab.label}
-										</div>
-									</ToggleGroupItem>
-								))}
-							</ToggleGroup>
+								items={[
+									...(tabVisibility.showMetrics
+										? [
+												{
+													value: VIEW_TYPES.METRICS,
+													label: (
+														<div className="view-title">
+															<BarChart size={14} />
+															Metrics
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showLogs
+										? [
+												{
+													value: VIEW_TYPES.LOGS,
+													label: (
+														<div className="view-title">
+															<ScrollText size={14} />
+															Logs
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showTraces
+										? [
+												{
+													value: VIEW_TYPES.TRACES,
+													label: (
+														<div className="view-title">
+															<DraftingCompass size={14} />
+															Traces
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showEvents
+										? [
+												{
+													value: VIEW_TYPES.EVENTS,
+													label: (
+														<div className="view-title">
+															<ChevronsLeftRight size={14} />
+															Events
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showContainers
+										? [
+												{
+													value: VIEW_TYPES.CONTAINERS,
+													label: (
+														<div className="view-title">
+															<Package2 size={14} />
+															Containers
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showProcesses
+										? [
+												{
+													value: VIEW_TYPES.PROCESSES,
+													label: (
+														<div className="view-title">
+															<ChevronsLeftRight size={14} />
+															Processes
+														</div>
+													),
+												},
+											]
+										: []),
+									...(customTabs?.map((tab) => ({
+										value: tab.key,
+										label: (
+											<div className="view-title">
+												{tab.icon}
+												{tab.label}
+											</div>
+										),
+									})) ?? []),
+								]}
+							/>
 
 							{selectedView === VIEW_TYPES.LOGS && (
 								<Tooltip title="Go to Logs Explorer" placement="left">

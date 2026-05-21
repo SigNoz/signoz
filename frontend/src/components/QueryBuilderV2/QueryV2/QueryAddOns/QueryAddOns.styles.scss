@@ -25,7 +25,7 @@
 			color: var(--l2-foreground);
 		}
 
-		.tab {
+		> button {
 			border: 1px solid var(--l1-border);
 			border-left: none;
 			min-width: 120px;
@@ -35,21 +35,21 @@
 			&:first-child {
 				border-left: 1px solid var(--l1-border);
 			}
-		}
 
-		.tab::before {
-			background: var(--l1-border);
-		}
+			&::before {
+				background: var(--l1-border);
+			}
 
-		.selected-view {
-			color: var(--text-robin-500);
-			border: 1px solid var(--l1-border);
+			&[data-state='on'] {
+				color: var(--text-robin-500);
+				border: 1px solid var(--l1-border);
 
-			display: none;
-		}
+				display: none;
 
-		.selected-view::before {
-			background: var(--l1-border);
+				&::before {
+					background: var(--l1-border);
+				}
+			}
 		}
 	}
 

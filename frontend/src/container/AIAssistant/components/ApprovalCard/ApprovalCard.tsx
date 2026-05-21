@@ -10,7 +10,7 @@ import {
 	DialogSubtitle,
 	DialogTitle,
 } from '@signozhq/ui/dialog';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
@@ -129,38 +129,43 @@ export default function ApprovalCard({
 					<div className={styles.diffModalBody}>
 						<p className={styles.diffModalSummary}>{approval.summary}</p>
 						<div className={styles.diffToolbarRow}>
-							<ToggleGroup
+							<ToggleGroupSimple
 								type="single"
 								size="sm"
 								value={viewMode}
-								onChange={(next): void => {
+								onChange={(next: string): void => {
 									// Radix `single` group can emit '' when the active item
 									// is clicked again — preserve the current mode.
 									if (next === 'split' || next === 'unified') {
 										setViewMode(next);
 									}
 								}}
-							>
-								<ToggleGroupItem value="split" aria-label="Split view">
-									<Columns2 size={12} />
-								</ToggleGroupItem>
-								<ToggleGroupItem value="unified" aria-label="Unified view">
-									<List size={12} />
-								</ToggleGroupItem>
-							</ToggleGroup>
-							<ToggleGroup
+								items={[
+									{
+										value: 'split',
+										'aria-label': 'Split view',
+										label: <Columns2 size={12} />,
+									},
+									{
+										value: 'unified',
+										'aria-label': 'Unified view',
+										label: <List size={12} />,
+									},
+								]}
+							/>
+							<ToggleGroupSimple
 								type="multiple"
 								size="sm"
 								value={wrapText ? ['wrap'] : []}
-								onChange={(next): void => setWrapText(next.includes('wrap'))}
-							>
-								<ToggleGroupItem
-									value="wrap"
-									aria-label={wrapText ? 'Disable text wrap' : 'Wrap long lines'}
-								>
-									<WrapText size={12} />
-								</ToggleGroupItem>
-							</ToggleGroup>
+								onChange={(next: string[]): void => setWrapText(next.includes('wrap'))}
+								items={[
+									{
+										value: 'wrap',
+										'aria-label': wrapText ? 'Disable text wrap' : 'Wrap long lines',
+										label: <WrapText size={12} />,
+									},
+								]}
+							/>
 						</div>
 						{approval.diff && (
 							<DiffView

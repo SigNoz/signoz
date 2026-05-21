@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
@@ -35,28 +35,25 @@ function ProducerLatencyTabs({
 	const history = useHistory();
 
 	return (
-		<ToggleGroup
+		<ToggleGroupSimple
 			type="single"
-			onChange={(value): void => {
+			onChange={(value: string): void => {
 				setConfigDetail(urlQuery, location, history, {});
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}
 			className="mq-details-options"
-		>
-			<ToggleGroupItem
-				value={ProducerLatencyOptions.Producers}
-				key={ProducerLatencyOptions.Producers}
-			>
-				{ProducerLatencyOptions.Producers}
-			</ToggleGroupItem>
-			<ToggleGroupItem
-				value={ProducerLatencyOptions.Consumers}
-				key={ProducerLatencyOptions.Consumers}
-			>
-				{ProducerLatencyOptions.Consumers}
-			</ToggleGroupItem>
-		</ToggleGroup>
+			items={[
+				{
+					value: ProducerLatencyOptions.Producers,
+					label: ProducerLatencyOptions.Producers,
+				},
+				{
+					value: ProducerLatencyOptions.Consumers,
+					label: ProducerLatencyOptions.Consumers,
+				},
+			]}
+		/>
 	);
 }
 
