@@ -1,0 +1,84 @@
+{
+	"title": "detail-chart-data-suite",
+	"description": "Single Time Series panel querying `signoz_calls_total` (in the bootstrap golden seed) with no variable substitution. Used by chart-data assertion tests to verify the panel renders data without inline seeding.",
+	"tags": [],
+	"widgets": [
+		{
+			"bucketCount": 30,
+			"bucketWidth": 0,
+			"columnUnits": {},
+			"description": "",
+			"fillSpans": false,
+			"id": "11111111-1111-4111-8111-111111111111",
+			"isStacked": false,
+			"mergeAllActiveQueries": false,
+			"nullZeroValues": "zero",
+			"opacity": "1",
+			"panelTypes": "graph",
+			"query": {
+				"builder": {
+					"queryData": [
+						{
+							"aggregateAttribute": {
+								"dataType": "float64",
+								"id": "signoz_calls_total--float64--Sum--true",
+								"isColumn": true,
+								"isJSON": false,
+								"key": "signoz_calls_total",
+								"type": "Sum"
+							},
+							"aggregateOperator": "sum_rate",
+							"dataSource": "metrics",
+							"disabled": false,
+							"expression": "A",
+							"filters": { "items": [], "op": "AND" },
+							"functions": [],
+							"groupBy": [],
+							"having": [],
+							"legend": "rps",
+							"limit": null,
+							"orderBy": [],
+							"queryName": "A",
+							"reduceTo": "avg",
+							"spaceAggregation": "sum",
+							"stepInterval": 60,
+							"timeAggregation": "rate"
+						}
+					],
+					"queryFormulas": []
+				},
+				"clickhouse_sql": [
+					{ "disabled": false, "legend": "", "name": "A", "query": "" }
+				],
+				"id": "22222222-2222-4222-8222-222222222222",
+				"promql": [
+					{ "disabled": false, "legend": "", "name": "A", "query": "" }
+				],
+				"queryType": "builder"
+			},
+			"selectedLogFields": [
+				{ "dataType": "string", "name": "body", "type": "" },
+				{ "dataType": "string", "name": "timestamp", "type": "" }
+			],
+			"selectedTracesFields": [],
+			"softMax": null,
+			"softMin": null,
+			"stackedBarChart": false,
+			"thresholds": [],
+			"timePreferance": "GLOBAL_TIME",
+			"title": "E2E Metric RPS",
+			"yAxisUnit": "none"
+		}
+	],
+	"layout": [
+		{
+			"i": "11111111-1111-4111-8111-111111111111",
+			"x": 0,
+			"y": 0,
+			"w": 12,
+			"h": 6
+		}
+	],
+	"variables": {},
+	"version": "v4"
+}

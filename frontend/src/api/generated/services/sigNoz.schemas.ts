@@ -2999,6 +2999,11 @@ export interface CoretypesPatchableObjectsDTO {
 	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -3022,6 +3027,7 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3482,9 +3488,9 @@ export interface InframonitoringtypesClustersDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesClusterRecordDTO[] | null;
+	records: InframonitoringtypesClusterRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3560,9 +3566,9 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesDaemonSetRecordDTO[] | null;
+	records: InframonitoringtypesDaemonSetRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3638,9 +3644,9 @@ export interface InframonitoringtypesDeploymentsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesDeploymentRecordDTO[] | null;
+	records: InframonitoringtypesDeploymentRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3724,9 +3730,9 @@ export interface InframonitoringtypesHostsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesHostRecordDTO[] | null;
+	records: InframonitoringtypesHostRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3810,9 +3816,9 @@ export interface InframonitoringtypesJobsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesJobRecordDTO[] | null;
+	records: InframonitoringtypesJobRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3860,9 +3866,9 @@ export interface InframonitoringtypesNamespacesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesNamespaceRecordDTO[] | null;
+	records: InframonitoringtypesNamespaceRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3927,9 +3933,9 @@ export interface InframonitoringtypesNodesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesNodeRecordDTO[] | null;
+	records: InframonitoringtypesNodeRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4011,9 +4017,9 @@ export interface InframonitoringtypesPodsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesPodRecordDTO[] | null;
+	records: InframonitoringtypesPodRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4431,9 +4437,9 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesStatefulSetRecordDTO[] | null;
+	records: InframonitoringtypesStatefulSetRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4500,9 +4506,9 @@ export interface InframonitoringtypesVolumesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesVolumeRecordDTO[] | null;
+	records: InframonitoringtypesVolumeRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer

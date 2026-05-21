@@ -101,6 +101,7 @@ export function getAppContextMockState(
 		userPreferences: null,
 		hostsData: null,
 		isLoggedIn: false,
+		isPreflightLoading: false,
 		org: null,
 		isFetchingUser: false,
 		isFetchingActiveLicense: false,

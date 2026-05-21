@@ -2342,6 +2342,8 @@ components:
           type: boolean
         org_id:
           type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
         updatedAt:
           format: date-time
           type: string
@@ -2370,6 +2372,12 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
+      type: object
+    DashboardtypesSource:
+      enum:
+      - user
+      - system
+      - integration
       type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
@@ -2681,7 +2689,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2751,7 +2758,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2821,7 +2827,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDeploymentRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2900,7 +2905,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesHostRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2976,7 +2980,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesJobRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3024,7 +3027,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNamespaceRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3102,7 +3104,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNodeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3201,7 +3202,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3546,7 +3546,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesStatefulSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3607,7 +3606,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesVolumeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
