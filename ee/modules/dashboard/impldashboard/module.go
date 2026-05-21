@@ -237,12 +237,8 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
 }
 
-func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.ResetSystemDashboard(ctx, orgID, source, updatedBy)
-}
-
-func (module *module) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
-	return module.pkgDashboardModule.SetDefaultConfig(ctx, orgID)
+func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.ResetSystemDashboard(ctx, orgID, updatedBy)
 }
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {

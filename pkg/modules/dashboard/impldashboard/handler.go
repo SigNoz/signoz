@@ -185,7 +185,7 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-// ResetSystemDashboard only resets system dashboard (source != "") to default values.
+// ResetSystemDashboard resets the org's system dashboard to its default.
 func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -202,13 +202,7 @@ func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	source := mux.Vars(r)["source"]
-	if source == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "source path parameter is required"))
-		return
-	}
-
-	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, dashboardtypes.Source(source), claims.Email)
+	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, claims.Email)
 	if err != nil {
 		render.Error(rw, err)
 		return

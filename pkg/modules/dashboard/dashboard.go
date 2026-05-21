@@ -41,11 +41,8 @@ type Module interface {
 	List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error)
-
-	// ResetSystemDashboard puts back default value for the system dashboard keyed by source.
-	ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error)
 	
-	SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
+	ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error)
 
 	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 

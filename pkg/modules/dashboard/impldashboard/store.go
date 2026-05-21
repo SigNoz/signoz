@@ -63,7 +63,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-func (store *store) GetBySource(ctx context.Context, orgID valuer.UUID, source string) (*dashboardtypes.StorableDashboard, error) {
+func (store *store) GetSystemDashboard(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.StorableDashboard, error) {
 	storableDashboard := new(dashboardtypes.StorableDashboard)
 	err := store.
 		sqlstore.
@@ -71,12 +71,12 @@ func (store *store) GetBySource(ctx context.Context, orgID valuer.UUID, source s
 		NewSelect().
 		Model(storableDashboard).
 		Where("org_id = ?", orgID).
-		Where("source = ?", source).
+		Where("source = ?", dashboardtypes.SourceSystem.StringValue()).
+		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "system dashboard with source %s doesn't exist", source)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "system dashboard doesn't exist")
 	}
-
 	return storableDashboard, nil
 }
 
@@ -141,7 +141,6 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardty
 		NewSelect().
 		Model(&storableDashboards).
 		Where("org_id = ?", orgID).
-		Where("source = ?", "").
 		Scan(ctx)
 	if err != nil {
 		return nil, err

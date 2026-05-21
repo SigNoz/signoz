@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -15,11 +14,10 @@ type setter struct {
 	store        types.OrganizationStore
 	alertmanager alertmanager.Alertmanager
 	quickfilter  quickfilter.Module
-	dashboard    dashboard.Module
 }
 
-func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, dashboard dashboard.Module) organization.Setter {
-	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, dashboard: dashboard}
+func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module) organization.Setter {
+	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter}
 }
 
 func (module *setter) Create(ctx context.Context, organization *types.Organization, createManagedRoles func(context.Context, valuer.UUID) error) error {
@@ -32,10 +30,6 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 	}
 
 	if err := module.quickfilter.SetDefaultConfig(ctx, organization.ID); err != nil {
-		return err
-	}
-
-	if err := module.dashboard.SetDefaultConfig(ctx, organization.ID); err != nil {
 		return err
 	}
 
