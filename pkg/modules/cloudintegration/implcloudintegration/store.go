@@ -187,6 +187,41 @@ func (store *store) ListServices(ctx context.Context, cloudIntegrationID valuer.
 	return services, nil
 }
 
+func (store *store) ListSharedServices(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, cloudIntegrationID valuer.UUID) (map[cloudintegrationtypes.ServiceID][]*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+	// Subquery: service types that belong to the given account
+	ownTypes := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service").
+		ColumnExpr("type").
+		Where("cloud_integration_id = ?", cloudIntegrationID)
+
+	var services []*cloudintegrationtypes.StorableCloudIntegrationService
+	err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service AS cis").
+		ColumnExpr("cis.*").
+		Join("JOIN cloud_integration AS ci ON ci.id = cis.cloud_integration_id").
+		Where("ci.org_id = ?", orgID).
+		Where("ci.provider = ?", provider).
+		Where("ci.removed_at IS NULL").
+		Where("ci.account_id IS NOT NULL").
+		Where("ci.last_agent_report IS NOT NULL").
+		Where("cis.cloud_integration_id != ?", cloudIntegrationID).
+		Where("cis.type IN (?)", ownTypes).
+		Scan(ctx, &services)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[cloudintegrationtypes.ServiceID][]*cloudintegrationtypes.StorableCloudIntegrationService)
+	for _, svc := range services {
+		result[svc.Type] = append(result[svc.Type], svc)
+	}
+	return result, nil
+}
+
 func (store *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := store.
 		store.

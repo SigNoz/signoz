@@ -263,7 +263,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 			return err
 		}
 
-		allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+		sharedServices, err := module.store.ListSharedServices(ctx, orgID, provider, accountID)
 		if err != nil {
 			return err
 		}
@@ -277,11 +277,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 				continue
 			}
 
-			shared, err := module.isServiceSharedInAccounts(ctx, provider, accountID, svc.Type, allAccounts)
-			if err != nil {
-				return err
-			}
-			if shared {
+			if isServiceSharedWithMetricsEnabled(provider, sharedServices[svc.Type]) {
 				continue
 			}
 
@@ -449,11 +445,11 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, crea
 			return module.provisionDashboards(ctx, orgID, createdBy, creator, provider, integrationService, serviceDefinition)
 		}
 
-		shared, err := module.isServiceShared(ctx, orgID, provider, integrationService.CloudIntegrationID, integrationService.Type)
+		sharedServices, err := module.store.ListSharedServices(ctx, orgID, provider, integrationService.CloudIntegrationID)
 		if err != nil {
 			return err
 		}
-		if shared {
+		if isServiceSharedWithMetricsEnabled(provider, sharedServices[integrationService.Type]) {
 			return nil
 		}
 
@@ -564,6 +560,7 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 }
 
 // deprovisionDashboards deletes all dashboard and integration_dashboard rows for the given service.
+// make sure to call this within a transaction
 func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID) error {
 	slugPrefix := cloudintegrationtypes.IntegrationDashboardSlugPrefix(provider, serviceID)
 	rows, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
@@ -587,38 +584,20 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 	return nil
 }
 
-func (module *module) isServiceShared(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (bool, error) {
-	allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
-	if err != nil {
-		return false, err
-	}
-	return module.isServiceSharedInAccounts(ctx, provider, excludeAccountID, serviceID, allAccounts)
-}
-
-// isServiceSharedInAccounts returns true if any account other than excludeAccountID
-// has the given service with metrics enabled.
-func (module *module) isServiceSharedInAccounts(ctx context.Context, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, accounts []*cloudintegrationtypes.StorableCloudIntegration) (bool, error) {
-	for _, account := range accounts {
-		if account.ID == excludeAccountID {
+// isServiceSharedWithMetricsEnabled returns true if any of the provided services has metrics enabled.
+// It is used to determine whether dashboards for a service type should be deprovisioned when
+// an account is disconnected or a service is updated.
+func isServiceSharedWithMetricsEnabled(provider cloudintegrationtypes.CloudProviderType, services []*cloudintegrationtypes.StorableCloudIntegrationService) bool {
+	for _, svc := range services {
+		cfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, svc.Config)
+		if err != nil {
 			continue
 		}
-
-		otherSvc, err := module.store.GetServiceByServiceID(ctx, account.ID, serviceID)
-		if err != nil {
-			if errors.Ast(err, errors.TypeNotFound) {
-				continue
-			}
-			return false, err
-		}
-		otherCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, otherSvc.Config)
-		if err != nil {
-			return false, err
-		}
-		if otherCfg.IsMetricsEnabled(provider) {
-			return true, nil
+		if cfg.IsMetricsEnabled(provider) {
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 // enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID,

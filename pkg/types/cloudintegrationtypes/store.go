@@ -39,6 +39,12 @@ type Store interface {
 	// ListServices returns all the cloud integration services for the given cloud integration id
 	ListServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
 
+	// ListSharedServices returns a map of service type to services from other connected accounts
+	// that share that service type with the given cloudIntegrationID.
+	// Only service types present in the given account are included.
+	// The caller is responsible for any further filtering (e.g. metrics-enabled checks).
+	ListSharedServices(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, cloudIntegrationID valuer.UUID) (map[ServiceID][]*StorableCloudIntegrationService, error)
+
 	// CreateService creates a new cloud integration service
 	CreateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
