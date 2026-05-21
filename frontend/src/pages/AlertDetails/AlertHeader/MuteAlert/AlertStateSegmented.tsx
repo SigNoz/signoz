@@ -21,6 +21,7 @@ const AlertStateSegmented = forwardRef<
 	const { state, onActive, onMute, onDisable, disabled } = props;
 
 	const isMuted = state === 'muted';
+	const isDisabled = state === 'disabled';
 
 	return (
 		<div
@@ -56,7 +57,9 @@ const AlertStateSegmented = forwardRef<
 					'alert-state-segmented__pill--active-muted': state === 'muted',
 				})}
 				onClick={onMute}
-				disabled={disabled}
+				// Muting a disabled rule wouldn't change observable behavior, so the
+				// Mute pill is non-interactive while disabled.
+				disabled={disabled || isDisabled}
 			>
 				{state === 'muted' && (
 					<BellOff size={12} className="alert-state-segmented__icon" />
