@@ -13,7 +13,6 @@ interface DisabledBannerProps {
 
 function DisabledBanner({ rule }: DisabledBannerProps): JSX.Element {
 	const updatedAt = rule.updatedAt ? dayjs(rule.updatedAt) : null;
-	const updatedBy = rule.updatedBy;
 
 	return (
 		<div className="state-banner state-banner--disabled" role="status">
@@ -29,14 +28,6 @@ function DisabledBanner({ rule }: DisabledBannerProps): JSX.Element {
 				</div>
 				<div className="state-banner__meta">
 					<span>Evaluation paused — no fires will be recorded.</span>
-					{updatedBy && (
-						<>
-							{' · '}
-							<span>
-								Disabled by <strong>{updatedBy}</strong>
-							</span>
-						</>
-					)}
 					{updatedAt && (
 						<>
 							{' · '}

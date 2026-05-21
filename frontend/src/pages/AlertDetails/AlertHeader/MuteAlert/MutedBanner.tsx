@@ -75,7 +75,6 @@ function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
 	}, [endTime, indefinite]);
 
 	const reason = activeMute.description || activeMute.name;
-	const muteBy = activeMute.createdBy;
 
 	return (
 		<div className="state-banner state-banner--muted" role="status">
@@ -100,14 +99,6 @@ function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
 							{' · '}
 							<span>
 								Name: <strong>{reason}</strong>
-							</span>
-						</>
-					)}
-					{muteBy && (
-						<>
-							{' · '}
-							<span>
-								Muted by <strong>{muteBy}</strong>
 							</span>
 						</>
 					)}
