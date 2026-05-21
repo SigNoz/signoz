@@ -329,14 +329,6 @@ func parseFullQueryResponse(
 // alignedMetricWindow returns step-floored time bounds and the metric tables
 // to use for the given window. The floor matches what the QB v5 metric
 // querier does internally (see querybuilder.AdjustedMetricTimeRange).
-// Every CH-query-building function in this module must use these bounds for
-// both TS and samples WHERE clauses so its pod/host/etc. agrees
-// with the querier's; otherwise pagination math (paginateWithBackfill) can
-// produce records as expected from querier math.
-//   - flooredStart:    start - (start % step*1000)
-//   - flooredEnd:      end   - (end   % min(step, 60)*1000)
-//   - tsAdjustedStart: additionally week/day/6hr/1hr aligned per
-//     WhichTSTableToUse (the bucket-start of the TS table that gets picked).
 func alignedMetricWindow(startMs, endMs int64) (
 	flooredStartMS uint64,
 	flooredEndMs uint64,
