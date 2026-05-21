@@ -122,18 +122,19 @@ function AlertActionButtons({
 				<Divider type="vertical" />
 
 				<DropdownMenuSimple menu={{ items: menuItems }}>
-					<Tooltip title="More options">
-						<Button
-							type="text"
-							className="dropdown-icon"
-							icon={
-								<Ellipsis
-									size={16}
-									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-								/>
-							}
-						/>
-					</Tooltip>
+					<span className="dropdown-trigger-wrapper">
+						<Tooltip title="More options">
+							<Button
+								type="text"
+								icon={
+									<Ellipsis
+										size={16}
+										color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
+									/>
+								}
+							/>
+						</Tooltip>
+					</span>
 				</DropdownMenuSimple>
 			</div>
 
