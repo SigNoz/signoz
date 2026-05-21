@@ -15,6 +15,8 @@
 
 const BANNED_COMPONENTS = {
 	Typography: 'Use @signozhq/ui Typography instead of antd Typography.',
+	Dropdown:
+		'Use @signozhq/ui DropdownMenuSimple (or the composable DropdownMenu primitives) from @signozhq/ui/dropdown-menu instead of antd Dropdown.',
 };
 
 export default {
