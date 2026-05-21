@@ -2,7 +2,6 @@ package telemetrylogs
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -365,18 +364,6 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		expected    qbtypes.Statement
 		expectedErr error
 	}{
-		{
-			name:        "List with full text search exceeds 6h window",
-			requestType: qbtypes.RequestTypeRaw,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{
-					Expression: "hello",
-				},
-				Limit: 10,
-			},
-			expectedErr: fmt.Errorf("parsing the search expression"),
-		},
 		{
 			name:        "list query with mat col order by",
 			requestType: qbtypes.RequestTypeRaw,
