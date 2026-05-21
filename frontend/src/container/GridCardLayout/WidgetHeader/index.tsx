@@ -189,18 +189,8 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.CreateAlerts,
 				icon: <Bell size="md" />,
-				label: (
-					<span
-						style={{
-							display: 'flex',
-							alignItems: 'baseline',
-							justifyContent: 'space-between',
-						}}
-					>
-						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
-						<SquareArrowOutUpRight size={10} />
-					</span>
-				),
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				rightIcon: <SquareArrowOutUpRight size="lg" />,
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},

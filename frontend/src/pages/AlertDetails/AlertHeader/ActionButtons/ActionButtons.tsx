@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Switch, Tooltip } from 'antd';
+import { Button, Divider, Switch, Tooltip } from 'antd';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
@@ -123,11 +123,15 @@ function AlertActionButtons({
 
 				<DropdownMenuSimple menu={{ items: menuItems }}>
 					<Tooltip title="More options">
-						<Ellipsis
-							size={16}
-							color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-							cursor="pointer"
+						<Button
+							type="text"
 							className="dropdown-icon"
+							icon={
+								<Ellipsis
+									size={16}
+									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
+								/>
+							}
 						/>
 					</Tooltip>
 				</DropdownMenuSimple>
