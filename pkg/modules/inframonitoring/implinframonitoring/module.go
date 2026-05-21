@@ -231,7 +231,7 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -314,19 +314,12 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
-	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req, pageGroups)
+	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -409,14 +402,7 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -498,27 +484,14 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		return nil, err
 	}
 
-	// Reuse the nodes condition-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostableNodes. With default groupBy
-	// [k8s.cluster.name], counts are bucketed per cluster; with a custom groupBy,
-	// they aggregate across clusters in that group.
-	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, &inframonitoringtypes.PostableNodes{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// With default groupBy [k8s.cluster.name], counts are bucketed per cluster;
+	// with a custom groupBy, they aggregate across clusters in that group.
+	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
 
-	// Same pattern for pod phase counts via PostablePods shim.
-	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -689,14 +662,7 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -784,16 +750,9 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods. Pods owned by a StatefulSet carry
-	// k8s.statefulset.name as a resource attribute, so default-groupBy gives
-	// per-statefulset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// Pods owned by a StatefulSet carry k8s.statefulset.name as a resource attribute,
+	// so default-groupBy gives per-statefulset phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -881,16 +840,9 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods. Pods owned by a Job carry
-	// k8s.job.name as a resource attribute, so default-groupBy gives
-	// per-job phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// Pods owned by a Job carry k8s.job.name as a resource attribute, so default-groupBy
+	// gives per-job phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -978,16 +930,9 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 		return nil, err
 	}
 
-	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
-	// Start/End/Filter/GroupBy from PostablePods. Pods owned by a DaemonSet carry
-	// k8s.daemonset.name as a resource attribute, so default-groupBy gives
-	// per-daemonset phase counts automatically.
-	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
-		Start:   req.Start,
-		End:     req.End,
-		Filter:  req.Filter,
-		GroupBy: req.GroupBy,
-	}, pageGroups)
+	// Pods owned by a DaemonSet carry k8s.daemonset.name as a resource attribute,
+	// so default-groupBy gives per-daemonset phase counts automatically.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
 	if err != nil {
 		return nil, err
 	}
