@@ -145,7 +145,6 @@ export function mockUseAuthZGrantAll(
 	return {
 		isLoading: false,
 		isFetching: false,
-		error: null,
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: true }]),
 		) as UseAuthZResult['permissions'],
@@ -160,7 +159,6 @@ export function mockUseAuthZDenyAll(
 	return {
 		isLoading: false,
 		isFetching: false,
-		error: null,
 		permissions: Object.fromEntries(
 			permissions.map((p) => [p, { isGranted: false }]),
 		) as UseAuthZResult['permissions'],

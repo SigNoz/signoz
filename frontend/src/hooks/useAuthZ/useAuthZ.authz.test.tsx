@@ -48,7 +48,6 @@ describe('useAuthZ', () => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
-		expect(result.current.error).toBeNull();
 		expect(result.current.permissions).toStrictEqual(expectedResponse);
 	});
 
@@ -69,7 +68,6 @@ describe('useAuthZ', () => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
-		expect(result.current.error).not.toBeNull();
 		expect(result.current.permissions).toBeNull();
 	});
 
@@ -191,7 +189,6 @@ describe('useAuthZ', () => {
 		});
 
 		expect(result.current.isLoading).toBe(false);
-		expect(result.current.error).toBeNull();
 		expect(result.current.permissions).toStrictEqual({});
 	});
 
