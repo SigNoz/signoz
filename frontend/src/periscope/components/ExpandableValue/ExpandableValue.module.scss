@@ -3,6 +3,10 @@
 	min-width: 0;
 	max-width: 100%;
 	overflow: hidden;
+
+	[data-truncated='true'] {
+		pointer-events: none;
+	}
 }
 
 .tooltipContent {
