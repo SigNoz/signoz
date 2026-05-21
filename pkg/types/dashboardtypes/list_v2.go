@@ -108,12 +108,13 @@ type DashboardListRow struct {
 func NewListableDashboardV2(rows []*DashboardListRow, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, hasMore bool) (*ListableDashboardV2, error) {
 	dashboards := make([]*gettableDashboardWithPin, len(rows))
 	for i, r := range rows {
-		v2, err := NewDashboardV2FromStorable(r.Dashboard, r.Public, tagsByEntity[r.Dashboard.ID])
+		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
 		if err != nil {
 			return nil, err
 		}
+
 		dashboards[i] = &gettableDashboardWithPin{
-			GettableDashboardV2: *NewGettableDashboardV2FromDashboardV2(v2),
+			GettableDashboardV2: v2.ToGettableDashboardV2(),
 			Pinned:              r.Pinned,
 		}
 	}
