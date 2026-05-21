@@ -53,7 +53,7 @@ import {
 	Time,
 	TimeRange,
 } from './types';
-import { getCurrentSearchParams } from './utils/getCurrentSearchParams';
+import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 
@@ -90,7 +90,7 @@ function DateTimeSelection({
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const currentSearchParams = getCurrentSearchParams();
+	const currentSearchParams = getUnstableCurrentSearchParams();
 	const searchStartTime = currentSearchParams.get('startTime');
 	const searchEndTime = currentSearchParams.get('endTime');
 	const relativeTimeFromUrl = currentSearchParams.get(QueryParams.relativeTime);
@@ -323,7 +323,7 @@ function DateTimeSelection({
 				return;
 			}
 
-			const urlQuery = getCurrentSearchParams();
+			const urlQuery = getUnstableCurrentSearchParams();
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
 
@@ -413,7 +413,7 @@ function DateTimeSelection({
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
-				const urlQuery = getCurrentSearchParams();
+				const urlQuery = getUnstableCurrentSearchParams();
 				urlQuery.set(
 					QueryParams.startTime,
 					startTime?.toDate().getTime().toString(),
@@ -441,7 +441,7 @@ function DateTimeSelection({
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
 
-		const urlQuery = getCurrentSearchParams();
+		const urlQuery = getUnstableCurrentSearchParams();
 		urlQuery.delete('startTime');
 		urlQuery.delete('endTime');
 
@@ -601,7 +601,7 @@ function DateTimeSelection({
 				currentRoute === ROUTES.ALERT_HISTORY)
 		) {
 			updateTimeInterval(defaultRelativeTime);
-			const urlQuery = getCurrentSearchParams();
+			const urlQuery = getUnstableCurrentSearchParams();
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -625,7 +625,7 @@ function DateTimeSelection({
 			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 		}
 
-		const urlQuery = getCurrentSearchParams();
+		const urlQuery = getUnstableCurrentSearchParams();
 		if (updatedTime !== 'custom') {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');

@@ -5,7 +5,7 @@ import DateTimeSelection from '../index';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
-} from '../utils/getCurrentSearchParams';
+} from '../utils/getUnstableCurrentSearchParams';
 import { queryClient, TestWrapper } from './testUtils';
 
 const mockSafeNavigate = jest.fn();

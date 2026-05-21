@@ -24,7 +24,7 @@ import DateTimeSelection from '../index';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
-} from '../utils/getCurrentSearchParams';
+} from '../utils/getUnstableCurrentSearchParams';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
