@@ -100,7 +100,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
 	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
 	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, sinceUnixMilli)
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, inframonitoringtypes.HostNameAttrKey, sinceUnixMilli)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 	// When host.name is not in groupBy, we need to run an additional query to get the counts per group for the current page,
 	// using the same filter expression as the main query (including user filters + page groups IN clause).
 	hostCounts := make(map[string]groupHostStatusCounts)
-	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
+	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.HostNameAttrKey)
 	if !isHostNameInGroupBy {
 		hostCounts, err = m.getPerGroupHostStatusCounts(ctx, req, hostsTableMetricNamesList, pageGroups, sinceUnixMilli)
 		if err != nil {
@@ -324,7 +324,7 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		return nil, err
 	}
 
-	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, nodeNameAttrKey)
+	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, inframonitoringtypes.NodeNameAttrKey)
 	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
 	resp.Warning = queryResp.Warning
 
