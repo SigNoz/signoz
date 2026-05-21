@@ -8,7 +8,7 @@ import {
 	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
-import { useNotifications } from 'hooks/useNotifications';
+import { toast } from '@signozhq/ui/sonner';
 import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -23,7 +23,6 @@ function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
 	const { t } = useTranslation(['routes', 'settings', 'common']);
 
-	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 
@@ -64,11 +63,7 @@ function UserInfo(): JSX.Element {
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
 			});
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
+			toast.success(t('success', { ns: 'common' }));
 			hideResetPasswordModal();
 			setIsLoading(false);
 		} catch (error) {
@@ -107,11 +102,7 @@ function UserInfo(): JSX.Element {
 			setIsLoading(true);
 			await updateMyUser({ data: { displayName: changedName } });
 
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
+			toast.success(t('success', { ns: 'common' }));
 			updateUser({
 				...user,
 				displayName: changedName,
@@ -119,10 +110,11 @@ function UserInfo(): JSX.Element {
 			setIsLoading(false);
 			hideUpdateNameModal();
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			try {
+				ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+			} catch (apiError) {
+				showErrorModal(apiError as APIError);
+			}
 		}
 		setIsLoading(false);
 	};

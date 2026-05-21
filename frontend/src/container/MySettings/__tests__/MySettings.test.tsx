@@ -9,6 +9,7 @@ import {
 	within,
 } from 'tests/test-utils';
 import APIError from 'types/api/error';
+import { toast } from '@signozhq/ui/sonner';
 
 const toggleThemeFunction = jest.fn();
 const logEventFunction = jest.fn();
@@ -16,6 +17,14 @@ const copyToClipboardFn = jest.fn();
 const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
 const showErrorModalFn = jest.fn();
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
+	toast: {
+		success: jest.fn(),
+		error: jest.fn(),
+	},
+}));
 
 jest.mock('react-use', () => ({
 	__esModule: true,
@@ -163,11 +172,7 @@ describe('MySettings Flows', () => {
 
 			fireEvent.click(modalUpdateNameButton);
 
-			await waitFor(() =>
-				expect(successNotification).toHaveBeenCalledWith({
-					message: 'success',
-				}),
-			);
+			await waitFor(() => expect(toast.success).toHaveBeenCalledWith('success'));
 		});
 	});
 
