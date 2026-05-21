@@ -45,6 +45,7 @@ import { isModifierKeyPressed } from 'utils/app';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
+import MutedBadge from './TableComponents/MutedBadge';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -276,12 +277,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
 				(a.state ? a.state.charCodeAt(0) : 1000),
-			render: (value, record): JSX.Element => (
-				<Status
-					status={value}
-					muteEndTime={record.id ? muteEndByRuleId[record.id] : undefined}
-				/>
-			),
+			render: (value): JSX.Element => <Status status={value} />,
 			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},
 		{
@@ -302,7 +298,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onEditHandler(record, { newTab: isModifierKeyPressed(e) });
 				};
 
-				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;
+				const muteEndTime = record.id ? muteEndByRuleId[record.id] : undefined;
+
+				return (
+					<span className="alert-list-name-cell">
+						<Typography.Link onClick={onClickHandler}>{value}</Typography.Link>
+						<MutedBadge muteEndTime={muteEndTime} />
+					</span>
+				);
 			},
 			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},
