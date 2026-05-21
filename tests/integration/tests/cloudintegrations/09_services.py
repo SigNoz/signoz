@@ -3,7 +3,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import requests
-from sqlalchemy import sql
+from sqlalchemy import bindparam, sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
@@ -424,8 +424,8 @@ def test_enable_metrics_provisions_dashboards(
     with signoz.sqlstore.conn.connect() as conn:
         rows = (
             conn.execute(
-                sql.text("SELECT id FROM dashboard WHERE id IN :ids"),
-                {"ids": tuple(provisioned_ids)},
+                sql.text("SELECT id FROM dashboard WHERE id IN :ids").bindparams(bindparam("ids", expanding=True)),
+                {"ids": list(provisioned_ids)},
             )
             .mappings()
             .fetchall()
