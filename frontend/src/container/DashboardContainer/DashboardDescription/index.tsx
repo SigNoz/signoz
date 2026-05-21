@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -14,15 +14,18 @@ import {
 	LockKeyhole,
 	PenLine,
 	Plus,
+	Trash2,
 	X,
 } from '@signozhq/icons';
-import { Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Card, Input, Modal, Tag, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
+import { useDeleteDashboardDialog } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
@@ -90,12 +93,16 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
 
-	const selectedData = dashboardData
-		? {
-				...dashboardData.data,
-				uuid: dashboardData.id,
-			}
-		: ({} as DashboardData);
+	const selectedData = useMemo(
+		() =>
+			dashboardData
+				? {
+						...dashboardData.data,
+						uuid: dashboardData.id,
+					}
+				: ({} as DashboardData),
+		[dashboardData],
+	);
 	const { dashboardVariables } = useDashboardVariables();
 
 	const {
@@ -113,8 +120,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] =
-		useState<boolean>(false);
 
 	const [isRenameDashboardOpen, setIsRenameDashboardOpen] =
 		useState<boolean>(false);
@@ -155,10 +160,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setIsPanelTypeSelectionModalOpen]);
 
-	const handleLockDashboardToggle = (): void => {
-		setIsDashbordSettingsOpen(false);
+	const handleLockDashboardToggle = useCallback((): void => {
 		handleDashboardLockToggle(!isDashboardLocked);
-	};
+	}, [handleDashboardLockToggle, isDashboardLocked]);
 
 	const onNameChangeHandler = (): void => {
 		if (!dashboardData) {
@@ -191,6 +195,124 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [state, setCopy] = useCopyToClipboard();
 
 	const { t } = useTranslation(['dashboard', 'common']);
+
+	const {
+		openConfirmation: openDeleteConfirmation,
+		isDisabled: isDeleteDisabled,
+		tooltipContent: deleteTooltipContent,
+		contextHolder: deleteContextHolder,
+	} = useDeleteDashboardDialog({
+		createdBy: dashboardData?.createdBy || '',
+		name: dashboardData?.data.title || '',
+		id: String(dashboardData?.id) || '',
+		isLocked: isDashboardLocked,
+		routeToListPage: true,
+	});
+
+	const isIntegrationDashboard = dashboardData?.createdBy === 'integration';
+
+	const dashboardMenuItems: MenuItem[] = useMemo(() => {
+		const items: MenuItem[] = [];
+
+		if (isAuthor || user.role === USER_ROLES.ADMIN) {
+			items.push({
+				key: 'lock-unlock-dashboard',
+				icon: <LockKeyhole size={14} />,
+				label: isIntegrationDashboard ? (
+					<Tooltip title="Dashboards created by integrations cannot be unlocked">
+						<span>{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}</span>
+					</Tooltip>
+				) : (
+					<span>{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}</span>
+				),
+				disabled: isIntegrationDashboard,
+				onClick: handleLockDashboardToggle,
+			});
+		}
+
+		if (!isDashboardLocked && editDashboard) {
+			items.push({
+				key: 'rename-dashboard',
+				icon: <PenLine size={14} />,
+				label: 'Rename',
+				onClick: () => setIsRenameDashboardOpen(true),
+			});
+		}
+
+		items.push({
+			key: 'fullscreen',
+			icon: <Fullscreen size={14} />,
+			label: 'Full screen',
+			onClick: () => {
+				handle.enter();
+			},
+		});
+
+		items.push({ type: 'divider', key: 'sep-1' });
+
+		if (!isDashboardLocked && addPanelPermission) {
+			items.push({
+				key: 'new-section',
+				icon: <FolderKanban size={14} />,
+				label: 'New section',
+				onClick: () => setIsPanelNameModalOpen(true),
+			});
+		}
+
+		items.push({
+			key: 'export-json',
+			icon: <FileJson size={14} />,
+			label: 'Export JSON',
+			onClick: () => {
+				downloadObjectAsJson(
+					sanitizeDashboardData(selectedData),
+					selectedData.title,
+				);
+			},
+		});
+
+		items.push({
+			key: 'copy-json',
+			icon: <ClipboardCopy size={14} />,
+			label: 'Copy as JSON',
+			onClick: () => {
+				setCopy(JSON.stringify(sanitizeDashboardData(selectedData), null, 2));
+			},
+		});
+
+		items.push({ type: 'divider', key: 'sep-2' });
+
+		items.push({
+			key: 'delete-dashboard',
+			icon: <Trash2 size={14} />,
+			label: deleteTooltipContent ? (
+				<Tooltip placement="left" title={deleteTooltipContent}>
+					<span>Delete Dashboard</span>
+				</Tooltip>
+			) : (
+				<span>Delete Dashboard</span>
+			),
+			danger: true,
+			disabled: isDeleteDisabled,
+			onClick: openDeleteConfirmation,
+		});
+
+		return items;
+	}, [
+		isAuthor,
+		user.role,
+		isIntegrationDashboard,
+		isDashboardLocked,
+		editDashboard,
+		addPanelPermission,
+		handleLockDashboardToggle,
+		handle,
+		selectedData,
+		setCopy,
+		deleteTooltipContent,
+		isDeleteDisabled,
+		openDeleteConfirmation,
+	]);
 
 	// used to set the initial value for the updatedTitle
 	// the context value is sometimes not available during the initial render
@@ -360,114 +482,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				</div>
 				<div className="right-section">
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
-					<Popover
-						open={isDashboardSettingsOpen}
-						arrow={false}
-						onOpenChange={(visible): void => setIsDashbordSettingsOpen(visible)}
-						rootClassName="dashboard-settings"
-						content={
-							<div className="menu-content">
-								<section className="section-1">
-									{(isAuthor || user.role === USER_ROLES.ADMIN) && (
-										<Tooltip
-											title={
-												dashboardData?.createdBy === 'integration' &&
-												'Dashboards created by integrations cannot be unlocked'
-											}
-										>
-											<Button
-												disabled={dashboardData?.createdBy === 'integration'}
-												onClick={handleLockDashboardToggle}
-												data-testid="lock-unlock-dashboard"
-												variant="ghost"
-												color="secondary"
-												prefix={<LockKeyhole size={14} />}
-											>
-												{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-											</Button>
-										</Tooltip>
-									)}
-
-									{!isDashboardLocked && editDashboard && (
-										<Button
-											onClick={(): void => {
-												setIsRenameDashboardOpen(true);
-												setIsDashbordSettingsOpen(false);
-											}}
-											variant="ghost"
-											color="secondary"
-											prefix={<PenLine size={14} />}
-										>
-											Rename
-										</Button>
-									)}
-
-									<Button
-										onClick={handle.enter}
-										variant="ghost"
-										color="secondary"
-										prefix={<Fullscreen size={14} />}
-									>
-										Full screen
-									</Button>
-								</section>
-								<section className="section-2">
-									{!isDashboardLocked && addPanelPermission && (
-										<Button
-											onClick={(): void => {
-												setIsPanelNameModalOpen(true);
-												setIsDashbordSettingsOpen(false);
-											}}
-											variant="ghost"
-											color="secondary"
-											prefix={<FolderKanban size={14} />}
-										>
-											New section
-										</Button>
-									)}
-
-									<Button
-										onClick={(): void => {
-											downloadObjectAsJson(
-												sanitizeDashboardData(selectedData),
-												selectedData.title,
-											);
-											setIsDashbordSettingsOpen(false);
-										}}
-										variant="ghost"
-										color="secondary"
-										prefix={<FileJson size={14} />}
-									>
-										Export JSON
-									</Button>
-									<Button
-										onClick={(): void => {
-											setCopy(
-												JSON.stringify(sanitizeDashboardData(selectedData), null, 2),
-											);
-											setIsDashbordSettingsOpen(false);
-										}}
-										variant="ghost"
-										color="secondary"
-										prefix={<ClipboardCopy size={14} />}
-									>
-										Copy as JSON
-									</Button>
-								</section>
-								<section className="delete-dashboard">
-									<DeleteButton
-										createdBy={dashboardData?.createdBy || ''}
-										name={dashboardData?.data.title || ''}
-										id={String(dashboardData?.id) || ''}
-										isLocked={isDashboardLocked}
-										routeToListPage
-									/>
-								</section>
-							</div>
-						}
-						trigger="click"
-						placement="bottomRight"
-					>
+					<Dropdown menu={{ items: dashboardMenuItems }} align="end">
 						<Button
 							className="icons"
 							data-testid="options"
@@ -476,7 +491,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							size="icon"
 							prefix={<Ellipsis size={14} />}
 						/>
-					</Popover>
+					</Dropdown>
+					{deleteContextHolder}
 					{!isDashboardLocked && editDashboard && (
 						<>
 							<Button
