@@ -4616,6 +4616,44 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	updatedBy?: string;
 }
 
+export interface DashboardtypesGettableDashboardWithPinDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	data?: DashboardtypesGettableDashboardV2DataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	locked?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type boolean
+	 */
+	pinned?: boolean;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
@@ -4672,6 +4710,17 @@ export interface DashboardtypesJSONPatchOperationDTO {
 export type DashboardtypesJSONPatchDocumentDTO =
 	| DashboardtypesJSONPatchOperationDTO[]
 	| null;
+
+export interface DashboardtypesListableDashboardV2DTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards?: DashboardtypesGettableDashboardWithPinDTO[] | null;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+}
 
 export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
@@ -9437,6 +9486,14 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardsV2200 = {
+	data: DashboardtypesListableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
@@ -9482,6 +9539,12 @@ export type UnlockDashboardV2PathParameters = {
 	id: string;
 };
 export type LockDashboardV2PathParameters = {
+	id: string;
+};
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
 	id: string;
 };
 export type GetFeatures200 = {
