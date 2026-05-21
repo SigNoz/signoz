@@ -21,6 +21,7 @@ import type {
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
+	DashboardtypesJSONPatchDocumentDTO,
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
@@ -34,6 +35,8 @@ import type {
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
 	LockDashboardV2PathParameters,
+	PatchDashboardV2200,
+	PatchDashboardV2PathParameters,
 	RenderErrorResponseDTO,
 	UnlockDashboardV2PathParameters,
 	UpdateDashboardV2200,
@@ -821,6 +824,105 @@ export const invalidateGetDashboardV2 = async (
 	return queryClient;
 };
 
+/**
+ * This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Locked dashboards are rejected.
+ * @summary Patch dashboard (v2)
+ */
+export const patchDashboardV2 = (
+	{ id }: PatchDashboardV2PathParameters,
+	dashboardtypesJSONPatchDocumentDTONull?: BodyType<DashboardtypesJSONPatchDocumentDTO | null> | null,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<PatchDashboardV2200>({
+		url: `/api/v2/dashboards/${id}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesJSONPatchDocumentDTONull,
+		signal,
+	});
+};
+
+export const getPatchDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		TError,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof patchDashboardV2>>,
+	TError,
+	{
+		pathParams: PatchDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+	},
+	TContext
+> => {
+	const mutationKey = ['patchDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return patchDashboardV2(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PatchDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchDashboardV2>>
+>;
+export type PatchDashboardV2MutationBody =
+	| BodyType<DashboardtypesJSONPatchDocumentDTO | null>
+	| undefined;
+export type PatchDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Patch dashboard (v2)
+ */
+export const usePatchDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchDashboardV2>>,
+		TError,
+		{
+			pathParams: PatchDashboardV2PathParameters;
+			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof patchDashboardV2>>,
+	TError,
+	{
+		pathParams: PatchDashboardV2PathParameters;
+		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+	},
+	TContext
+> => {
+	return useMutation(getPatchDashboardV2MutationOptions(options));
+};
 /**
  * This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.
  * @summary Update dashboard (v2)

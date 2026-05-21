@@ -3,6 +3,7 @@ package impldashboard
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -89,6 +90,56 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	}
 
 	return existing, nil
+}
+
+func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
+	if err := existing.CanUpdate(); err != nil {
+		return nil, err
+	}
+
+	updateable, err := patch.Apply(existing)
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
+		if err != nil {
+			return err
+		}
+
+		err = existing.Update(*updateable, updatedBy, resolvedTags)
+		if err != nil {
+			return err
+		}
+
+		storable, err := existing.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+
+		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
+// CreatePublicV2 is not supported in the community build.
+func (module *module) CreatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
+}
+
+// UpdatePublicV2 is not supported in the community build.
+func (module *module) UpdatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {

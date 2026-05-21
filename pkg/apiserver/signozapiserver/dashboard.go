@@ -65,6 +65,29 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.PatchV2), handler.OpenAPIDef{
+		ID:          "PatchDashboardV2",
+		Tags:        []string{"dashboard"},
+		Summary:     "Patch dashboard (v2)",
+		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Locked dashboards are rejected.",
+		Request:     new(dashboardtypes.JSONPatchDocument),
+		// Strictly per RFC 6902 the content type is `application/json-patch+json`,
+		// but our OpenAPI generator only reflects schemas for content types it
+		// understands (application/json, form-urlencoded, multipart) — anything
+		// else degrades to `type: string`. Declaring application/json here keeps
+		// the array-of-ops schema visible to spec consumers; the runtime decoder
+		// parses JSON regardless of the request's actual Content-Type header.
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPatch).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}/lock", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.LockV2), handler.OpenAPIDef{
 		ID:                  "LockDashboardV2",
 		Tags:                []string{"dashboard"},

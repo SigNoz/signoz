@@ -2645,6 +2645,42 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
+    DashboardtypesJSONPatchDocument:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
+    DashboardtypesJSONPatchOperation:
+      properties:
+        from:
+          description: Source JSON Pointer for move/copy ops; ignored for other ops.
+          type: string
+        op:
+          enum:
+          - add
+          - remove
+          - replace
+          - move
+          - copy
+          - test
+          type: string
+        path:
+          description: JSON Pointer (RFC 6901) into the dashboard's postable shape
+            — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0,
+            /tags/-.
+          type: string
+        value:
+          description: 'Value to add/replace/test against. The expected type depends
+            on the path. Common shapes (see referenced schemas for the exact field
+            set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable;
+            /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /data/display/name and other leaf string fields take
+            a string. Required for add/replace/test; ignored for remove/move/copy.'
+      required:
+      - op
+      - path
+      type: object
     DashboardtypesLayout:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
@@ -12781,6 +12817,66 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get dashboard (v2)
+      tags:
+      - dashboard
+    patch:
+      deprecated: false
+      description: This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+        The patch is applied against the postable view of the dashboard (metadata,
+        data, tags), so individual panels, queries, variables, layouts, or tags can
+        be updated without re-sending the rest of the dashboard. Locked dashboards
+        are rejected.
+      operationId: PatchDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesJSONPatchDocument'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch dashboard (v2)
       tags:
       - dashboard
     put:

@@ -184,3 +184,45 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusOK, dashboard.ToGettableDashboardV2())
 }
+
+func (handler *handler) PatchV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := dashboardtypes.PatchableDashboardV2{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.PatchV2(ctx, orgID, dashboardID, claims.Email, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard.ToGettableDashboardV2())
+}
