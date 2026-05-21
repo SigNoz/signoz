@@ -13,7 +13,7 @@ import { Plus, Trash2 } from '@signozhq/icons';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
 import { getBaseUrl } from 'utils/basePath';
 
-import VariablesDropdown from './VariablesDropdown';
+import VariablesPopover from './VariablesPopover';
 
 import './UpdateContextLinks.styles.scss';
 
@@ -71,7 +71,7 @@ function UpdateContextLinks({
 		customVariables: fieldVariables,
 	});
 
-	// Transform variables into the format expected by VariablesDropdown
+	// Transform variables into the format expected by VariablesPopover
 	const transformedVariables = useMemo(
 		() => transformContextVariables(variables),
 		[variables],
@@ -224,7 +224,7 @@ function UpdateContextLinks({
 							},
 						]}
 					>
-						<VariablesDropdown
+						<VariablesPopover
 							onVariableSelect={handleVariableSelect}
 							variables={transformedVariables}
 						>
@@ -252,7 +252,7 @@ function UpdateContextLinks({
 									/>
 								</div>
 							)}
-						</VariablesDropdown>
+						</VariablesPopover>
 					</Form.Item>
 
 					{/* Remove the separate variables section */}
@@ -282,7 +282,7 @@ function UpdateContextLinks({
 										/>
 									</Col>
 									<Col span={16}>
-										<VariablesDropdown
+										<VariablesPopover
 											onVariableSelect={(variableName, cursorPosition): void =>
 												handleParamVariableSelect(index, variableName, cursorPosition)
 											}
@@ -311,7 +311,7 @@ function UpdateContextLinks({
 													}
 												/>
 											)}
-										</VariablesDropdown>
+										</VariablesPopover>
 									</Col>
 									<Col span={2}>
 										<Button
