@@ -587,8 +587,6 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 	return nil
 }
 
-// isServiceShared fetches connected accounts and delegates to isServiceSharedInAccounts.
-// Use this when the caller doesn't already have the connected accounts list.
 func (module *module) isServiceShared(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (bool, error) {
 	allAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
 	if err != nil {
@@ -597,9 +595,8 @@ func (module *module) isServiceShared(ctx context.Context, orgID valuer.UUID, pr
 	return module.isServiceSharedInAccounts(ctx, provider, excludeAccountID, serviceID, allAccounts)
 }
 
-// isServiceSharedInAccounts returns true if any account in the provided list other than
-// excludeAccountID has the given service with metrics enabled. Use this when the caller
-// already holds the account list to avoid a redundant query per service.
+// isServiceSharedInAccounts returns true if any account other than excludeAccountID
+// has the given service with metrics enabled.
 func (module *module) isServiceSharedInAccounts(ctx context.Context, provider cloudintegrationtypes.CloudProviderType, excludeAccountID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, accounts []*cloudintegrationtypes.StorableCloudIntegration) (bool, error) {
 	for _, account := range accounts {
 		if account.ID == excludeAccountID {
