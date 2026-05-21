@@ -80,10 +80,10 @@ function UserInfo(): JSX.Element {
 		currentPassword === updatePassword;
 
 	const onSaveHandler = async (): Promise<void> => {
-		logEvent('Account Settings: Name Updated', {
+		void logEvent('Account Settings: Name Updated', {
 			name: changedName,
 		});
-		logEvent(
+		void logEvent(
 			'Account Settings: Name Updated',
 			{
 				name: changedName,
