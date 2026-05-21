@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { Button, Flex, Input } from 'antd';
@@ -7,6 +7,7 @@ import { Plus } from '@signozhq/icons';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useListDowntimeSchedules } from 'api/generated/services/downtimeschedules';
 import { createRule } from 'api/generated/services/rules';
 import type {
 	ListRules200,
@@ -15,6 +16,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
+import { findActiveMuteForRule } from 'pages/AlertDetails/AlertHeader/MuteAlert/useActiveMute';
 import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
@@ -72,6 +74,25 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		const filteredData = filterAlerts(allAlertRules, value);
 		return filteredData || [];
 	});
+
+	const { data: downtimeData } = useListDowntimeSchedules(undefined, {
+		query: { refetchOnWindowFocus: false },
+	});
+
+	const muteEndByRuleId = useMemo<Record<string, string | undefined>>(() => {
+		const schedules = downtimeData?.data ?? [];
+		const map: Record<string, string | undefined> = {};
+		for (const rule of data) {
+			if (!rule.id) {
+				continue;
+			}
+			const mute = findActiveMuteForRule(schedules, rule.id);
+			if (mute) {
+				map[rule.id] = mute.effectiveEndTime;
+			}
+		}
+		return map;
+	}, [downtimeData, data]);
 
 	// Type asuring
 	const sortingOrder: 'ascend' | 'descend' | null =
@@ -255,7 +276,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
 				(a.state ? a.state.charCodeAt(0) : 1000),
-			render: (value): JSX.Element => <Status status={value} />,
+			render: (value, record): JSX.Element => (
+				<Status
+					status={value}
+					muteEndTime={record.id ? muteEndByRuleId[record.id] : undefined}
+				/>
+			),
 			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},
 		{
