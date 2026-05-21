@@ -1,5 +1,4 @@
 import type {
-	CoretypesResourceRefDTO,
 	CoretypesObjectGroupDTO,
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -8,11 +7,7 @@ import type {
 	PermissionConfig,
 	ResourceDefinition,
 } from '../PermissionSidePanel/PermissionSidePanel.types';
-
-type AuthzResources = {
-	resources: CoretypesResourceRefDTO[];
-	relations: Record<string, string[]>;
-};
+import type { AuthzResources } from '../utils';
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
 import {
 	buildConfig,
@@ -41,12 +36,14 @@ jest.mock('../RoleDetails/constants', () => {
 
 const dashboardResource: AuthzResources['resources'][number] = {
 	kind: 'dashboard',
-	type: 'metaresource' as CoretypesTypeDTO,
+	type: 'metaresource',
+	allowedVerbs: ['create', 'read', 'update', 'delete', 'list'],
 };
 
 const alertResource: AuthzResources['resources'][number] = {
 	kind: 'alert',
-	type: 'metaresource' as CoretypesTypeDTO,
+	type: 'metaresource',
+	allowedVerbs: ['create', 'read', 'update', 'delete', 'list'],
 };
 
 const baseAuthzResources: AuthzResources = {
@@ -55,6 +52,16 @@ const baseAuthzResources: AuthzResources = {
 		create: ['metaresource'],
 		read: ['metaresource'],
 	},
+};
+
+// API payload resource refs — only kind+type, no allowedVerbs (matches CoretypesResourceRefDTO shape)
+const dashboardResourceRef = {
+	kind: 'dashboard',
+	type: 'metaresource' as CoretypesTypeDTO,
+};
+const alertResourceRef = {
+	kind: 'alert',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
 const resourceDefs: ResourceDefinition[] = [
@@ -107,7 +114,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.additions).toStrictEqual([
-			{ resource: dashboardResource, selectors: [ID_B] },
+			{ resource: dashboardResourceRef, selectors: [ID_B] },
 		]);
 		expect(result.deletions).toBeNull();
 	});
@@ -142,7 +149,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.deletions).toStrictEqual([
-			{ resource: dashboardResource, selectors: [ID_B] },
+			{ resource: dashboardResourceRef, selectors: [ID_B] },
 		]);
 		expect(result.additions).toBeNull();
 	});
@@ -207,10 +214,10 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.deletions).toStrictEqual([
-			{ resource: dashboardResource, selectors: ['*'] },
+			{ resource: dashboardResourceRef, selectors: ['*'] },
 		]);
 		expect(result.additions).toStrictEqual([
-			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
+			{ resource: dashboardResourceRef, selectors: [ID_A, ID_B] },
 		]);
 	});
 
@@ -241,7 +248,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.deletions).toStrictEqual([
-			{ resource: dashboardResource, selectors: ['*'] },
+			{ resource: dashboardResourceRef, selectors: ['*'] },
 		]);
 		expect(result.additions).toBeNull();
 	});
@@ -264,7 +271,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.deletions).toStrictEqual([
-			{ resource: dashboardResource, selectors: ['*'] },
+			{ resource: dashboardResourceRef, selectors: ['*'] },
 		]);
 		expect(result.additions).toBeNull();
 	});
@@ -287,7 +294,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.additions).toStrictEqual([
-			{ resource: dashboardResource, selectors: ['*'] },
+			{ resource: dashboardResourceRef, selectors: ['*'] },
 		]);
 		expect(result.deletions).toBeNull();
 	});
@@ -313,7 +320,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.deletions).toStrictEqual([
-			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
+			{ resource: dashboardResourceRef, selectors: [ID_A, ID_B] },
 		]);
 		expect(result.additions).toBeNull();
 	});
@@ -339,7 +346,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.additions).toStrictEqual([
-			{ resource: dashboardResource, selectors: [ID_A] },
+			{ resource: dashboardResourceRef, selectors: [ID_A] },
 		]);
 		expect(result.deletions).toBeNull();
 	});
@@ -385,7 +392,7 @@ describe('buildPatchPayload', () => {
 		});
 
 		expect(result.additions).toStrictEqual([
-			{ resource: alertResource, selectors: [ID_B] },
+			{ resource: alertResourceRef, selectors: [ID_B] },
 		]);
 		expect(result.deletions).toBeNull();
 	});
@@ -394,7 +401,7 @@ describe('buildPatchPayload', () => {
 describe('objectsToPermissionConfig', () => {
 	it('maps a wildcard selector to ALL scope', () => {
 		const objects: CoretypesObjectGroupDTO[] = [
-			{ resource: dashboardResource, selectors: ['*'] },
+			{ resource: dashboardResourceRef, selectors: ['*'] },
 		];
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
@@ -407,7 +414,7 @@ describe('objectsToPermissionConfig', () => {
 
 	it('maps specific selectors to ONLY_SELECTED scope with the IDs', () => {
 		const objects: CoretypesObjectGroupDTO[] = [
-			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
+			{ resource: dashboardResourceRef, selectors: [ID_A, ID_B] },
 		];
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
@@ -565,5 +572,42 @@ describe('deriveResourcesForRelation', () => {
 		expect(
 			deriveResourcesForRelation(baseAuthzResources, 'nonexistent'),
 		).toHaveLength(0);
+	});
+
+	describe('allowedVerbs filtering', () => {
+		it('excludes resources whose allowedVerbs does not include the relation', () => {
+			const authz: AuthzResources = {
+				resources: [
+					{
+						kind: 'dashboard',
+						type: 'metaresource',
+						allowedVerbs: ['create', 'read', 'update', 'delete', 'list'],
+					},
+					{
+						kind: 'alert',
+						type: 'metaresource',
+						allowedVerbs: ['create', 'read', 'update', 'delete', 'list', 'attach'],
+					},
+				],
+				relations: { attach: ['metaresource'] },
+			};
+
+			const result = deriveResourcesForRelation(authz, 'attach');
+
+			expect(result).toHaveLength(1);
+			expect(result[0].id).toBe('metaresource:alert');
+		});
+
+		it('requires both type-relation match and allowedVerbs — neither condition alone is sufficient', () => {
+			const authz: AuthzResources = {
+				resources: [
+					{ kind: 'dashboard', type: 'metaresource', allowedVerbs: ['read'] },
+					{ kind: 'role', type: 'role', allowedVerbs: ['create'] },
+				],
+				relations: { create: ['metaresource'] },
+			};
+
+			expect(deriveResourcesForRelation(authz, 'create')).toHaveLength(0);
+		});
 	});
 });

@@ -29,6 +29,10 @@ func (cacheable *CacheableA) Clone() cachetypes.Cacheable {
 	}
 }
 
+func (cacheable *CacheableA) Cost() int64 {
+	return int64(len(cacheable.Key)) + 16
+}
+
 func (cacheable *CacheableA) MarshalBinary() ([]byte, error) {
 	return json.Marshal(cacheable)
 }
