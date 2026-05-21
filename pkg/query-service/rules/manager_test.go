@@ -59,11 +59,9 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 				SqlStoreHook: func(store sqlstore.SQLStore) {
 					mockStore := store.(*sqlstoretest.Provider)
-					// Mock the organizations query that SendAlerts makes
-					// Bun generates: SELECT id FROM organizations LIMIT 1 (or SELECT "id" FROM "organizations" LIMIT 1)
-					orgRows := mockStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
-					// Match bun's generated query pattern - bun may quote identifiers
-					mockStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
+					// Mock org existence check - Bun's Exists() wraps in SELECT EXISTS(...)
+					orgRows := mockStore.Mock().NewRows([]string{"exists"}).AddRow(true)
+					mockStore.Mock().ExpectQuery("SELECT EXISTS(.+)").WillReturnRows(orgRows)
 				},
 				TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
 					mockStore := store.(*telemetrystoretest.Provider)
@@ -171,9 +169,9 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				},
 				SqlStoreHook: func(store sqlstore.SQLStore) {
 					mockStore := store.(*sqlstoretest.Provider)
-					// Mock the organizations query that SendAlerts makes
-					orgRows := mockStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
-					mockStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
+					// Mock org existence check - Bun's Exists() wraps in SELECT EXISTS(...)
+					orgRows := mockStore.Mock().NewRows([]string{"exists"}).AddRow(true)
+					mockStore.Mock().ExpectQuery("SELECT EXISTS(.+)").WillReturnRows(orgRows)
 				},
 				TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
 					mockStore := store.(*telemetrystoretest.Provider)
@@ -284,4 +282,82 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			promProvider.Close()
 		})
 	}
+}
+
+func TestManager_TestNotification_OrgNotFound(t *testing.T) {
+	target := 10.0
+	recovery := 5.0
+	rule := ThresholdRuleAtLeastOnceValueAbove(target, &recovery)
+
+	ruleBytes, err := json.Marshal(rule)
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+
+	triggeredTestAlerts := []map[*alertmanagertypes.PostableAlert][]string{}
+
+	mgr := NewTestManager(t, &TestManagerOptions{
+		AlertmanagerHook: func(am alertmanager.Alertmanager) {
+			mockAM := am.(*alertmanagermock.MockAlertmanager)
+			mockAM.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			// TestAlert should NOT be called when org doesn't exist
+			mockAM.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
+			}).Return(nil).Maybe()
+		},
+		SqlStoreHook: func(store sqlstore.SQLStore) {
+			mockStore := store.(*sqlstoretest.Provider)
+			// Mock org existence check returning false - org does not exist
+			orgRows := mockStore.Mock().NewRows([]string{"exists"}).AddRow(false)
+			mockStore.Mock().ExpectQuery("SELECT EXISTS(.+)").WillReturnRows(orgRows)
+		},
+		TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
+			mockStore := store.(*telemetrystoretest.Provider)
+			cols := make([]cmock.ColumnType, 0)
+			cols = append(cols, cmock.ColumnType{Name: "value", Type: "Float64"})
+			cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
+			cols = append(cols, cmock.ColumnType{Name: "ts", Type: "DateTime"})
+
+			// Return data that would trigger alert if org existed
+			alertDataRows := cmock.NewRows(cols, [][]any{
+				{15.0, "test", time.Now()},
+			})
+
+			mock := mockStore.Mock()
+			metadataCols := []cmock.ColumnType{
+				{Name: "metric_name", Type: "String"},
+				{Name: "temporality", Type: "String"},
+				{Name: "type", Type: "String"},
+				{Name: "is_monotonic", Type: "Bool"},
+			}
+			metadataRows := cmock.NewRows(metadataCols, [][]any{
+				{"probe_success", metrictypes.Unspecified, metrictypes.GaugeType, false},
+			})
+			mock.ExpectQuery("*distributed_time_series_v4*").WithArgs(nil, nil, nil).WillReturnRows(metadataRows)
+			emptyMetadataRows := cmock.NewRows(metadataCols, [][]any{})
+			mock.ExpectQuery("*meter*").WithArgs(nil).WillReturnRows(emptyMetadataRows)
+
+			evalTime := time.Now().UTC()
+			evalWindow := 5 * time.Minute
+			evalDelay := time.Duration(0)
+			queryArgs := GenerateMetricQueryCHArgs(
+				evalTime,
+				evalWindow,
+				evalDelay,
+				"probe_success",
+				metrictypes.Unspecified,
+			)
+
+			mock.ExpectQuery("*WITH __temporal_aggregation_cte*").
+				WithArgs(queryArgs...).
+				WillReturnRows(alertDataRows)
+		},
+	})
+
+	count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+	require.Nil(t, err)
+	// Alerts are found during evaluation, but not sent because org doesn't exist
+	assert.Equal(t, 1, count, "1 alert found by Eval")
+	// No alerts should be triggered when org doesn't exist
+	assert.Empty(t, triggeredTestAlerts, "no alerts sent because org doesn't exist")
 }

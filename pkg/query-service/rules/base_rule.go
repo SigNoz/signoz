@@ -341,17 +341,18 @@ func (r *BaseRule) ActiveAlerts() []*ruletypes.Alert {
 }
 
 func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	var orgID string
-	err := r.
-		sqlstore.
-		BunDB().
-		NewSelect().
+	orgID := r.OrgID().StringValue()
+
+	exists, err := r.sqlstore.BunDB().NewSelect().
 		Table("organizations").
-		ColumnExpr("id").
-		Limit(1).
-		Scan(ctx, &orgID)
+		Where("id = ?", orgID).
+		Exists(ctx)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "failed to get org ids", errors.Attr(err))
+		r.logger.ErrorContext(ctx, "failed to check org existence, skipping alert", "org_id", orgID, errors.Attr(err))
+		return
+	}
+	if !exists {
+		r.logger.WarnContext(ctx, "org does not exist, skipping alert", "org_id", orgID)
 		return
 	}
 
