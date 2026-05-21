@@ -6388,7 +6388,8 @@ const onboardingConfigWithLinks = [
 			'opentelemetry aspnet',
 		],
 		id: 'aspnet-core-metrics',
-		link: '/docs/metrics-management/send-metrics/applications/opentelemetry-aspnetcore/',
+		link:
+			'/docs/metrics-management/send-metrics/applications/opentelemetry-aspnetcore/',
 	},
 	{
 		dataSource: 'istio-metrics',
