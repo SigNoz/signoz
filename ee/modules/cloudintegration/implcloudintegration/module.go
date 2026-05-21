@@ -560,7 +560,7 @@ func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID
 }
 
 // deprovisionDashboards deletes all dashboard and integration_dashboard rows for the given service.
-// make sure to call this within a transaction
+// make sure to call this within a transaction.
 func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID) error {
 	slugPrefix := cloudintegrationtypes.IntegrationDashboardSlugPrefix(provider, serviceID)
 	rows, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
