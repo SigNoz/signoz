@@ -10,7 +10,7 @@ import (
 
 type StatefulSets struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []StatefulSetRecord    `json:"records" required:"true"`
+	Records                []StatefulSetRecord    `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`

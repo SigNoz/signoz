@@ -10,7 +10,7 @@ import (
 
 type Clusters struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []ClusterRecord        `json:"records" required:"true"`
+	Records                []ClusterRecord        `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
