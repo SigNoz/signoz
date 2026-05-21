@@ -388,29 +388,20 @@ def test_enable_metrics_provisions_dashboards(
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     put_response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": False}}}},
         timeout=10,
     )
-    assert put_response.status_code == HTTPStatus.NO_CONTENT, (
-        f"Expected 204, got {put_response.status_code}: {put_response.text}"
-    )
+    assert put_response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {put_response.status_code}: {put_response.text}"
 
     # Assertion 1: GetService returns provisioned dashboard UUIDs
     get_svc_response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
-            f"?cloud_integration_id={account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
-    assert get_svc_response.status_code == HTTPStatus.OK, (
-        f"Expected 200, got {get_svc_response.status_code}: {get_svc_response.text}"
-    )
+    assert get_svc_response.status_code == HTTPStatus.OK, f"Expected 200, got {get_svc_response.status_code}: {get_svc_response.text}"
 
     data = get_svc_response.json()["data"]
     svc = data["cloudIntegrationService"]
@@ -418,9 +409,7 @@ def test_enable_metrics_provisions_dashboards(
     assert svc["config"]["aws"]["metrics"]["enabled"] is True
 
     dashboards_in_service = data["assets"]["dashboards"]
-    assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, (
-        "assets.dashboards should be non-empty after enabling metrics"
-    )
+    assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, "assets.dashboards should be non-empty after enabling metrics"
     provisioned_ids = set()
     for dash in dashboards_in_service:
         assert "id" in dash, f"Dashboard entry missing 'id': {dash}"
@@ -436,26 +425,18 @@ def test_enable_metrics_provisions_dashboards(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
-    assert list_response.status_code == HTTPStatus.OK, (
-        f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
-    )
+    assert list_response.status_code == HTTPStatus.OK, f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
 
     all_dashboards = list_response.json()["data"]
     integration_dashboards = [d for d in all_dashboards if d.get("source") == "integration"]
-    assert len(integration_dashboards) > 0, (
-        "Dashboards list should contain at least one integration dashboard after enabling metrics"
-    )
+    assert len(integration_dashboards) > 0, "Dashboards list should contain at least one integration dashboard after enabling metrics"
 
     listed_ids = {d["id"] for d in integration_dashboards}
-    assert provisioned_ids & listed_ids, (
-        f"None of the provisioned dashboard IDs {provisioned_ids} appear in the dashboards list {listed_ids}"
-    )
+    assert provisioned_ids & listed_ids, f"None of the provisioned dashboard IDs {provisioned_ids} appear in the dashboards list {listed_ids}"
 
     for d in integration_dashboards:
         if d["id"] in provisioned_ids:
-            assert d.get("locked") is True, (
-                f"Integration dashboard {d['id']} should be locked=true"
-            )
+            assert d.get("locked") is True, f"Integration dashboard {d['id']} should be locked=true"
 
 
 def test_disable_metrics_deprovisions_dashboards(
@@ -473,9 +454,7 @@ def test_disable_metrics_deprovisions_dashboards(
     checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
-    endpoint = signoz.self.host_configs["8080"].get(
-        f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
-    )
+    endpoint = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}")
 
     # Enable metrics to provision dashboards first
     enable_response = requests.put(
@@ -484,16 +463,11 @@ def test_disable_metrics_deprovisions_dashboards(
         json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": False}}}},
         timeout=10,
     )
-    assert enable_response.status_code == HTTPStatus.NO_CONTENT, (
-        f"Enable failed: {enable_response.status_code}: {enable_response.text}"
-    )
+    assert enable_response.status_code == HTTPStatus.NO_CONTENT, f"Enable failed: {enable_response.status_code}: {enable_response.text}"
 
     # Capture the provisioned dashboard IDs before disabling
     get_svc_response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
-            f"?cloud_integration_id={account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -508,16 +482,11 @@ def test_disable_metrics_deprovisions_dashboards(
         json={"config": {"aws": {"metrics": {"enabled": False}, "logs": {"enabled": False}}}},
         timeout=10,
     )
-    assert disable_response.status_code == HTTPStatus.NO_CONTENT, (
-        f"Disable failed: {disable_response.status_code}: {disable_response.text}"
-    )
+    assert disable_response.status_code == HTTPStatus.NO_CONTENT, f"Disable failed: {disable_response.status_code}: {disable_response.text}"
 
     # Assertion 1: GetService no longer returns UUID dashboard IDs
     get_svc_after = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
-            f"?cloud_integration_id={account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}?cloud_integration_id={account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -536,11 +505,7 @@ def test_disable_metrics_deprovisions_dashboards(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
-    assert list_response.status_code == HTTPStatus.OK, (
-        f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
-    )
+    assert list_response.status_code == HTTPStatus.OK, f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
 
     listed_ids = {d["id"] for d in list_response.json()["data"]}
-    assert not provisioned_ids & listed_ids, (
-        f"Provisioned dashboard IDs {provisioned_ids & listed_ids} still appear in dashboards list after disabling metrics"
-    )
+    assert not provisioned_ids & listed_ids, f"Provisioned dashboard IDs {provisioned_ids & listed_ids} still appear in dashboards list after disabling metrics"
