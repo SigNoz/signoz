@@ -1,10 +1,11 @@
 package valuer
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var agoUnitSeconds = map[string]float64{
@@ -29,14 +30,14 @@ func ParseTimeShiftSeconds(value any) (float64, error) {
 	case string:
 		return parseTimeShiftSecondsFromString(v)
 	default:
-		return 0, fmt.Errorf("unsupported type %T for time shift", value)
+		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported type %T for time shift", value)
 	}
 }
 
 func parseTimeShiftSecondsFromString(s string) (float64, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return 0, fmt.Errorf("empty time shift value")
+		return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "empty time shift value")
 	}
 
 	// Raw number: "3600", "-300", "86400.5"
@@ -62,10 +63,10 @@ func parseTimeShiftSecondsFromString(s string) (float64, error) {
 	if d, err := time.ParseDuration(s); err == nil {
 		secs := d.Seconds()
 		if secs > 0 && secs < 1 {
-			return 0, fmt.Errorf("time shift must be at least 1 second, got %q", s)
+			return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "time shift must be at least 1 second, got %q", s)
 		}
 		return secs, nil
 	}
 
-	return 0, fmt.Errorf("invalid time shift value %q: expected seconds, a duration like \"5m\", or a phrase like \"1 hour ago\"", s)
+	return 0, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid time shift value %q: expected seconds, a duration like \"5m\", or a phrase like \"1 hour ago\"", s)
 }
