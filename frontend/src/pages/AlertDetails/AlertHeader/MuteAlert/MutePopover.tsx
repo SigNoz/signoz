@@ -96,16 +96,23 @@ function MutePopover(props: MutePopoverProps): JSX.Element {
 			return undefined;
 		}
 
+		// Drop focus so the trigger button doesn't show a :focus-visible
+		// outline after the popover closes via Escape / outside click.
+		const closeAndBlur = (): void => {
+			(document.activeElement as HTMLElement | null)?.blur();
+			onOpenChange(false);
+		};
+
 		const handleMouseDown = (e: MouseEvent): void => {
 			const target = e.target as HTMLElement | null;
 			if (target?.closest('.mute-popover-overlay')) {
 				return;
 			}
-			onOpenChange(false);
+			closeAndBlur();
 		};
 		const handleKey = (e: KeyboardEvent): void => {
 			if (e.key === 'Escape') {
-				onOpenChange(false);
+				closeAndBlur();
 			}
 		};
 
