@@ -1,0 +1,34 @@
+.menuItem {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.templatesItem {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+.primaryButton {
+	padding: 5.937px 11.875px;
+}
+
+.textButton {
+	display: flex;
+	width: 153px;
+	align-items: center;
+	height: 32px;
+	padding: 5.937px 11.875px;
+	justify-content: center;
+	gap: 5.937px;
+	border-radius: 1.484px;
+	background: var(--primary-background);
+	color: var(--l1-foreground);
+}
+
+:global(.createDashboardMenuOverlay) {
+	width: 200px;
+}
