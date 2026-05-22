@@ -182,7 +182,7 @@ func paginateWithBackfill(
 	sort.Strings(metadataOnlyKeys)
 
 	totalMetric := len(metricGroups)
-	totalAll := totalMetric + len(metadataOnlyKeys)
+	totalAll := len(metadataMap)
 
 	end := offset + limit
 	if end > totalAll {
