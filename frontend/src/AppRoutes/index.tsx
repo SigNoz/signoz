@@ -35,6 +35,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
+import { bootSettings } from 'utils/bootData';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -293,7 +294,7 @@ function App(): JSX.Element {
 				(isCloudUser || isEnterpriseSelfHostedUser)
 			) {
 				const email = user.email || '';
-				const secret = process.env.PYLON_IDENTITY_SECRET || '';
+				const secret = bootSettings.pylon.identSecret ?? '';
 				let emailHash = '';
 
 				if (email && secret) {
@@ -302,7 +303,7 @@ function App(): JSX.Element {
 
 				window.pylon = {
 					chat_settings: {
-						app_id: process.env.PYLON_APP_ID,
+						app_id: bootSettings.pylon.appId,
 						email: user.email,
 						name: user.displayName || user.email,
 						email_hash: emailHash,
@@ -332,8 +333,8 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (process.env.POSTHOG_KEY) {
-				posthog.init(process.env.POSTHOG_KEY, {
+			if (bootSettings.posthog.key) {
+				posthog.init(bootSettings.posthog.key, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
@@ -341,8 +342,8 @@ function App(): JSX.Element {
 
 			if (!isSentryInitialized) {
 				Sentry.init({
-					dsn: process.env.SENTRY_DSN,
-					tunnel: process.env.TUNNEL_URL,
+					dsn: bootSettings.sentry.dsn,
+					tunnel: bootSettings.sentry.tunnelUrl,
 					environment: 'production',
 					integrations: [
 						Sentry.browserTracingIntegration(),

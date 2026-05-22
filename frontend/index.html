@@ -94,12 +94,15 @@
 				}
 			})();
 		</script>
+		<script>
+			window.signozBootData = { settings: [[.BootSettings]] };
+		</script>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
 
 		<script>
-			var PYLON_APP_ID = '<%- PYLON_APP_ID %>';
-			if (PYLON_APP_ID) {
+			var pylonAppId = (window.signozBootData?.settings?.pylon || {}).appId || '';
+			if (pylonAppId) {
 				(function () {
 					var e = window;
 					var t = document;
@@ -115,10 +118,7 @@
 						var e = t.createElement('script');
 						e.setAttribute('type', 'text/javascript');
 						e.setAttribute('async', 'true');
-						e.setAttribute(
-							'src',
-							'https://widget.usepylon.com/widget/' + PYLON_APP_ID,
-						);
+						e.setAttribute('src', 'https://widget.usepylon.com/widget/' + pylonAppId);
 						var n = t.getElementsByTagName('script')[0];
 						n.parentNode.insertBefore(e, n);
 					};
@@ -130,16 +130,15 @@
 				})();
 			}
 		</script>
-		<script type="text/javascript">
-			window.AppcuesSettings = { enableURLDetection: true };
-		</script>
 		<script>
-			var APPCUES_APP_ID = '<%- APPCUES_APP_ID %>';
-			if (APPCUES_APP_ID) {
+			var appcuesAppId =
+				(window.signozBootData?.settings?.appcues || {}).appId || '';
+			if (appcuesAppId) {
+				window.AppcuesSettings = { enableURLDetection: true };
 				(function (d, t) {
 					var a = d.createElement(t);
 					a.async = 1;
-					a.src = '//fast.appcues.com/' + APPCUES_APP_ID + '.js';
+					a.src = '//fast.appcues.com/' + appcuesAppId + '.js';
 					var s = d.getElementsByTagName(t)[0];
 					s.parentNode.insertBefore(a, s);
 				})(document, 'script');
