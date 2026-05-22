@@ -56,6 +56,9 @@ func NewThresholdRule(
 }
 
 func (r *ThresholdRule) hostFromSource() string {
+	if host := r.ExternalURLHost(); host != "" {
+		return host
+	}
 	parsedURL, err := url.Parse(r.source)
 	if err != nil {
 		return ""

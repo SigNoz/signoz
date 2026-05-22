@@ -39,6 +39,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -63,6 +64,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -87,6 +89,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			return task, err
@@ -146,6 +149,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -167,6 +171,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -186,6 +191,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			slog.Error("failed to prepare a new anomaly rule for test", "name", alertname, errors.Attr(err))

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -79,6 +80,11 @@ type ManagerOptions struct {
 	Cache       cache.Cache
 
 	EvalDelay valuer.TextDuration
+
+	// ExternalURL is the alertmanager external URL.
+	// Rules use it as the host for generator URLs and related logs/traces
+	// links in alert notifications.
+	ExternalURL *url.URL
 
 	RuleStateHistoryModule rulestatehistory.Module
 
@@ -155,6 +161,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			return task, err
@@ -178,6 +185,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
+			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			return task, err

@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"testing"
 	"time"
 
@@ -719,6 +720,79 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				_, exists := expectedCounts[key]
 				require.True(t, exists, "unexpected series found with labels: %s", key)
 			}
+		})
+	}
+}
+
+func TestBaseRule_ExternalURLHost(t *testing.T) {
+	mustParse := func(raw string) *url.URL {
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		return u
+	}
+
+	tests := []struct {
+		name        string
+		externalURL *url.URL
+		want        string
+	}{
+		{name: "nil URL falls back", externalURL: nil, want: ""},
+		{name: "default value treated as unconfigured", externalURL: mustParse("http://localhost:8080"), want: ""},
+		{name: "default with trailing slash treated as unconfigured", externalURL: mustParse("http://localhost:8080/"), want: ""},
+		{name: "configured https host", externalURL: mustParse("https://signoz.example.com"), want: "https://signoz.example.com"},
+		{name: "configured host with port", externalURL: mustParse("http://signoz.internal:3301"), want: "http://signoz.internal:3301"},
+		{name: "configured host with trailing slash is trimmed", externalURL: mustParse("https://signoz.example.com/"), want: "https://signoz.example.com"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &BaseRule{externalURL: tc.externalURL}
+			require.Equal(t, tc.want, r.ExternalURLHost())
+		})
+	}
+}
+
+func TestBaseRule_GeneratorURL(t *testing.T) {
+	mustParse := func(raw string) *url.URL {
+		u, err := url.Parse(raw)
+		require.NoError(t, err)
+		return u
+	}
+
+	tests := []struct {
+		name        string
+		ruleID      string
+		source      string
+		externalURL *url.URL
+		want        string
+	}{
+		{
+			name:        "external URL set takes precedence over frontend source",
+			ruleID:      "abc",
+			source:      "http://localhost:3301/alerts/new?compositeQuery=foo",
+			externalURL: mustParse("https://signoz.example.com"),
+			want:        "https://signoz.example.com/alerts/edit?ruleId=abc",
+		},
+		{
+			name:        "external URL default falls back to source",
+			ruleID:      "abc",
+			source:      "http://localhost:3301/alerts/new?compositeQuery=foo",
+			externalURL: mustParse("http://localhost:8080"),
+			want:        "http://localhost:3301/alerts/edit?ruleId=abc",
+		},
+		{
+			name:        "no external URL uses source",
+			ruleID:      "abc",
+			source:      "http://localhost:3301/alerts/new?compositeQuery=foo",
+			externalURL: nil,
+			want:        "http://localhost:3301/alerts/edit?ruleId=abc",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := &BaseRule{id: tc.ruleID, source: tc.source, externalURL: tc.externalURL}
+			require.Equal(t, tc.want, r.GeneratorURL())
 		})
 	}
 }

@@ -54,6 +54,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -75,6 +76,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
