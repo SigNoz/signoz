@@ -329,6 +329,8 @@ func parseFullQueryResponse(
 // alignedMetricWindow returns step-floored time bounds and the metric tables
 // to use for the given window. The floor matches what the QB v5 metric
 // querier does internally (see querybuilder.AdjustedMetricTimeRange).
+// Please use the flooredStartMs with samples table and tsAdjustedStartMs with ts tables.
+// Both can use the same flooredEndMs.
 func alignedMetricWindow(startMs, endMs int64) (
 	flooredStartMS uint64,
 	flooredEndMs uint64,
@@ -341,6 +343,7 @@ func alignedMetricWindow(startMs, endMs int64) (
 	flooredStartMS = uint64(startMs)
 	flooredEndMs = uint64(endMs)
 	stepSecs := querybuilder.RecommendedStepIntervalForMetric(flooredStartMS, flooredEndMs)
+	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange
 	if stepSecs > 0 {
 		flooredStartMS = flooredStartMS - (flooredStartMS % (stepSecs * 1000))
 		adjustStep := stepSecs
