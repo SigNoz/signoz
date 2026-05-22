@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TableColumnType as ColumnType, Tooltip } from 'antd';
+import { TableColumnType as ColumnType, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import { Badge } from '@signozhq/ui/badge';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
@@ -258,10 +259,9 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
-					status="active"
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
 						if (errorRatePercent >= 90) {
@@ -1019,14 +1019,13 @@ export const getEndPointsColumnsConfig = (
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
 					(
 						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
 					).toFixed(1),
 				)}
 				strokeLinecap="butt"
-				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) {
@@ -2511,10 +2510,9 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
 				<Progress
-					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
+					showInfo
 					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
@@ -3019,14 +3017,13 @@ export const getAllEndpointsWidgetData = (
 		),
 		F1: (errorRate: any): ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
 					(
 						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
 					).toFixed(2),
 				)}
 				strokeLinecap="butt"
-				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number(
 						(
