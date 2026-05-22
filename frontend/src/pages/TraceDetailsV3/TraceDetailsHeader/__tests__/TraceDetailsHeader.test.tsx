@@ -37,17 +37,11 @@ describe('TraceDetailsHeader – back button', () => {
 		mockHasInAppHistory.mockReset();
 	});
 
-	it('renders the back button', () => {
-		mockHasInAppHistory.mockReturnValue(false);
-		render(<TraceDetailsHeader {...baseProps} />);
-		expect(screen.getByRole('button')).toBeInTheDocument();
-	});
-
 	it('calls history.goBack() when there is in-app SPA history', () => {
 		mockHasInAppHistory.mockReturnValue(true);
 		render(<TraceDetailsHeader {...baseProps} />);
 
-		fireEvent.click(screen.getByRole('button'));
+		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
 		expect(mockGoBack).toHaveBeenCalledTimes(1);
 		expect(mockPush).not.toHaveBeenCalled();
@@ -57,11 +51,10 @@ describe('TraceDetailsHeader – back button', () => {
 		mockHasInAppHistory.mockReturnValue(false);
 		render(<TraceDetailsHeader {...baseProps} />);
 
-		fireEvent.click(screen.getByRole('button'));
+		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
 		expect(mockPush).toHaveBeenCalledTimes(1);
 		expect(mockPush).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
-		expect(mockPush).toHaveBeenCalledWith('/traces-explorer');
 		expect(mockGoBack).not.toHaveBeenCalled();
 	});
 });

@@ -124,6 +124,7 @@ function TraceDetailsHeader({
 							size="md"
 							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
+							aria-label="Back"
 						>
 							<ArrowLeft size={14} />
 						</Button>
