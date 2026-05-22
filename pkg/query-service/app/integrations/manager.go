@@ -285,12 +285,13 @@ func (m *Manager) provisionDashboards(
 	integrationID string,
 	integration *IntegrationDetails,
 ) error {
+	bareIntegrationID := strings.TrimPrefix(integrationID, "builtin-")
 	for _, dd := range integration.Assets.Dashboards {
-		dashName, _ := dd["id"].(string)
-		if dashName == "" {
+		dashID, _ := dd["id"].(string)
+		if dashID == "" {
 			continue
 		}
-		slug := integrationtypes.InstalledIntegrationDashboardSlug(integrationID, dashName)
+		slug := integrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
 
 		existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
 		if err == nil && existing != nil {
@@ -315,6 +316,7 @@ func (m *Manager) deprovisionDashboards(
 	orgID valuer.UUID,
 	integrationID string,
 ) error {
+	integrationID = strings.TrimPrefix(integrationID, "builtin-")
 	slugPrefix := integrationtypes.InstalledIntegrationDashboardSlugPrefix(integrationID)
 	rows, err := m.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), slugPrefix)
 	if err != nil {

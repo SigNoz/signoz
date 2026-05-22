@@ -1,6 +1,6 @@
 {
     "description": "Overview of ElastiCache CloudWatch metrics. Provides both host-level metrics (for example, CPU usage) and redis engine metrics",
-    "id": "elasticache-redis-overview",
+    "id": "overview",
     "layout": [
         {
             "h": 5,

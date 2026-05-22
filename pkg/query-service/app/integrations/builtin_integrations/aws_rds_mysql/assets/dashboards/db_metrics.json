@@ -1,6 +1,6 @@
 {
     "description": "",
-    "id": "aws_rds_mysql_db_metrics",
+    "id": "db_metrics",
     "layout": [
         {
             "h": 1,

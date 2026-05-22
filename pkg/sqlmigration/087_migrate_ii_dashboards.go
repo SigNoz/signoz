@@ -17,7 +17,12 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-//go:embed 087_migrate_installed_integration_dashboards
+var (
+	installedIntegrationProvider = valuer.NewString("installed_integration")
+	installedIntegrationSource   = valuer.NewString("integration")
+)
+
+//go:embed 087_migrate_ii_dashboards
 var installedIntegrationDashboardFiles embed.FS
 
 type migrateInstalledIntegrationDashboards struct {
@@ -50,7 +55,7 @@ type installedIntDashboardRow struct {
 	Source    string    `bun:"source,type:text"`
 }
 
-type installedIntDashboardLinkRow struct {
+type installedIntIntegrationDashboardRow struct {
 	bun.BaseModel `bun:"table:integration_dashboard"`
 
 	ID          string    `bun:"id,pk,type:text"`
@@ -63,7 +68,7 @@ type installedIntDashboardLinkRow struct {
 
 func NewMigrateInstalledIntegrationDashboardsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("migrate_installed_integration_dashboards"),
+		factory.MustNewName("migrate_ii_dashboards"), // migrate_installed_integration_dashboards is too long for allowed length.
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 			return &migrateInstalledIntegrationDashboards{sqlstore: sqlstore}, nil
 		},
@@ -101,13 +106,16 @@ func (m *migrateInstalledIntegrationDashboards) Up(ctx context.Context, db *bun.
 		}
 		seen[key] = struct{}{}
 
-		defs, ok := dashboardDefs[inst.Type]
+		// Types are stored with a "builtin-" prefix (e.g. "builtin-redis") but
+		// the dashboard def dirs are named without it (e.g. "redis").
+		bareType := strings.TrimPrefix(inst.Type, "builtin-")
+		defs, ok := dashboardDefs[bareType]
 		if !ok {
 			continue
 		}
 
-		for dashName, dashboardJSON := range defs {
-			slug := fmt.Sprintf("%s-%s", inst.Type, dashName)
+		for dashID, dashboardJSON := range defs {
+			slug := fmt.Sprintf("%s-%s", bareType, dashID)
 
 			count, err := tx.NewSelect().
 				TableExpr("integration_dashboard AS id").
@@ -123,30 +131,30 @@ func (m *migrateInstalledIntegrationDashboards) Up(ctx context.Context, db *bun.
 				continue
 			}
 
-			dashID := valuer.GenerateUUID().StringValue()
+			dashboardID := valuer.GenerateUUID().StringValue()
 
-			dashRow := &installedIntDashboardRow{
-				ID:        dashID,
+			dashboardRow := &installedIntDashboardRow{
+				ID:        dashboardID,
 				CreatedAt: now,
 				UpdatedAt: now,
 				Data:      string(dashboardJSON),
 				Locked:    true,
 				OrgID:     inst.OrgID,
-				Source:    "integration",
+				Source:    installedIntegrationSource.StringValue(),
 			}
-			if _, err := tx.NewInsert().Model(dashRow).Exec(ctx); err != nil {
+			if _, err := tx.NewInsert().Model(dashboardRow).Exec(ctx); err != nil {
 				return err
 			}
 
-			intRow := &installedIntDashboardLinkRow{
+			integrationDashboardRow := &installedIntIntegrationDashboardRow{
 				ID:          valuer.GenerateUUID().StringValue(),
-				DashboardID: dashID,
-				Provider:    "installed_integration",
+				DashboardID: dashboardID,
+				Provider:    installedIntegrationProvider.StringValue(),
 				Slug:        slug,
 				CreatedAt:   now,
 				UpdatedAt:   now,
 			}
-			if _, err := tx.NewInsert().Model(intRow).Exec(ctx); err != nil {
+			if _, err := tx.NewInsert().Model(integrationDashboardRow).Exec(ctx); err != nil {
 				return err
 			}
 		}
@@ -159,12 +167,11 @@ func (m *migrateInstalledIntegrationDashboards) Down(context.Context, *bun.DB) e
 	return nil
 }
 
-// loadDashboardDefs returns map[integrationID]map[dashName]rawJSON.
-// Only non-_dot dashboard files are loaded (the standard variants).
+// loadDashboardDefs returns map[integrationID]map[dashID]rawJSON.
 func (m *migrateInstalledIntegrationDashboards) loadDashboardDefs() (map[string]map[string]json.RawMessage, error) {
 	result := make(map[string]map[string]json.RawMessage)
 
-	err := fs.WalkDir(installedIntegrationDashboardFiles, "087_migrate_installed_integration_dashboards", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(installedIntegrationDashboardFiles, "087_migrate_ii_dashboards", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -172,24 +179,32 @@ func (m *migrateInstalledIntegrationDashboards) loadDashboardDefs() (map[string]
 			return nil
 		}
 
-		// path: 087_migrate_installed_integration_dashboards/{integrationID}/{dashName}.json
-		rel := strings.TrimPrefix(path, "087_migrate_installed_integration_dashboards/")
+		// path: 087_migrate_ii_dashboards/{integrationID}/{dashID}.json
+		rel := strings.TrimPrefix(path, "087_migrate_ii_dashboards/")
 		parts := strings.SplitN(rel, "/", 2)
 		if len(parts) != 2 {
 			return nil
 		}
 		integrationID := parts[0]
-		dashName := strings.TrimSuffix(parts[1], ".json")
 
 		data, err := installedIntegrationDashboardFiles.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
+		var top map[string]json.RawMessage
+		if err := json.Unmarshal(data, &top); err != nil {
+			return fmt.Errorf("failed to parse dashboard JSON %s: %w", path, err)
+		}
+		var dashID string
+		if err := json.Unmarshal(top["id"], &dashID); err != nil || dashID == "" {
+			return fmt.Errorf("missing or invalid id field in %s", path)
+		}
+
 		if result[integrationID] == nil {
 			result[integrationID] = make(map[string]json.RawMessage)
 		}
-		result[integrationID][dashName] = json.RawMessage(data)
+		result[integrationID][dashID] = json.RawMessage(data)
 		return nil
 	})
 

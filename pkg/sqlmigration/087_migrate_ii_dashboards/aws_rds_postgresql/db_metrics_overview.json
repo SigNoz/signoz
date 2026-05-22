@@ -1,6 +1,6 @@
 {
     "description": "This dashboard provides a high-level overview of your PostgreSQL databases. It includes replication, locks, and throughput etc...",
-    "id": "postgres_overview_metrics",
+    "id": "db_metrics_overview",
     "layout": [
         {
             "h": 1,

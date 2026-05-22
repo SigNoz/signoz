@@ -1,6 +1,6 @@
 {
     "description": "This dashboard provides a high-level overview of your Clickhouse Server hosts.",
-    "id": "clickhouse-overview",
+    "id": "overview",
     "layout": [
         {
             "h": 3,

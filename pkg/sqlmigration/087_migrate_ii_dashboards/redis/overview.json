@@ -1,6 +1,6 @@
 {
     "description": "This dashboard shows the Redis instance overview. It includes latency, hit/miss rate, connections, and memory information.\n",
-    "id": "redis-overview",
+    "id": "overview",
     "layout": [
         {
             "h": 3,
