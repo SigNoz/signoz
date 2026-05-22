@@ -1,4 +1,4 @@
-import { Progress } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import TanStackTable from 'components/TanStackTableView';
 import {
 	getMemoryProgressColor,
@@ -53,7 +53,6 @@ export function EntityProgressBar({
 			<Progress
 				percent={percentage}
 				strokeLinecap="butt"
-				size="small"
 				status="normal"
 				strokeColor={getStrokeColor(type, value)}
 				className={styles.progressBar}
