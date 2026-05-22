@@ -91,8 +91,8 @@ function DateTimeSelection({
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const currentSearchParams = getUnstableCurrentSearchParams();
-	const searchStartTime = currentSearchParams.get('startTime');
-	const searchEndTime = currentSearchParams.get('endTime');
+	const searchStartTime = currentSearchParams.get(QueryParams.startTime);
+	const searchEndTime = currentSearchParams.get(QueryParams.endTime);
 	const relativeTimeFromUrl = currentSearchParams.get(QueryParams.relativeTime);
 	const hasTimeParamsInUrl =
 		(searchStartTime && searchEndTime) || relativeTimeFromUrl;
@@ -324,8 +324,8 @@ function DateTimeSelection({
 			}
 
 			const urlQuery = getUnstableCurrentSearchParams();
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 
 			urlQuery.set(QueryParams.relativeTime, value);
 			// Remove Hidden Filters from URL query parameters on time change
@@ -442,8 +442,8 @@ function DateTimeSelection({
 		updateLocalStorageForRoutes(dateTimeStr);
 
 		const urlQuery = getUnstableCurrentSearchParams();
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		urlQuery.delete(QueryParams.startTime);
+		urlQuery.delete(QueryParams.endTime);
 
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
@@ -627,8 +627,8 @@ function DateTimeSelection({
 
 		const urlQuery = getUnstableCurrentSearchParams();
 		if (updatedTime !== 'custom') {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
