@@ -22,6 +22,14 @@ type InstalledIntegrationsRepo interface {
 	) (*integrationtypes.InstalledIntegration, *model.ApiError)
 
 	delete(ctx context.Context, orgId string, integrationType string) *model.ApiError
+
+	createIntegrationDashboard(ctx context.Context, row *integrationtypes.StorableIntegrationDashboard) error
+
+	getIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) (*integrationtypes.StorableIntegrationDashboard, error)
+
+	listIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID string, slugPrefix string) ([]*integrationtypes.StorableIntegrationDashboard, error)
+
+	deleteIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) error
 }
 
 type AvailableIntegrationsRepo interface {

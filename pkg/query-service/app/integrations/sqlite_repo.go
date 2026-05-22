@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -128,4 +129,68 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	}
 
 	return nil
+}
+
+func (r *InstalledIntegrationsSqliteRepo) createIntegrationDashboard(
+	ctx context.Context, row *integrationtypes.StorableIntegrationDashboard,
+) error {
+	_, err := r.store.BunDBCtx(ctx).NewInsert().Model(row).Exec(ctx)
+	return err
+}
+
+func (r *InstalledIntegrationsSqliteRepo) getIntegrationDashboardBySlug(
+	ctx context.Context, orgID string, slug string,
+) (*integrationtypes.StorableIntegrationDashboard, error) {
+	row := new(integrationtypes.StorableIntegrationDashboard)
+	err := r.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(row).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("storable_integration_dashboard.slug = ?", slug).
+		Scan(ctx)
+	if err != nil {
+		return nil, r.store.WrapNotFoundErrf(err, errors.CodeNotFound, "integration dashboard with slug %s not found", slug)
+	}
+	return row, nil
+}
+
+func (r *InstalledIntegrationsSqliteRepo) listIntegrationDashboardsBySlugPrefix(
+	ctx context.Context, orgID string, slugPrefix string,
+) ([]*integrationtypes.StorableIntegrationDashboard, error) {
+	var rows []*integrationtypes.StorableIntegrationDashboard
+	err := r.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(&rows).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("storable_integration_dashboard.slug LIKE ?", slugPrefix+"%").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *InstalledIntegrationsSqliteRepo) deleteIntegrationDashboardBySlug(
+	ctx context.Context, orgID string, slug string,
+) error {
+	cte := r.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("integration_dashboard AS id_inner").
+		ColumnExpr("id_inner.id").
+		Join("JOIN dashboard AS d ON id_inner.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("id_inner.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("id_inner.slug = ?", slug)
+
+	_, err := r.store.BunDBCtx(ctx).
+		NewDelete().
+		Model(new(integrationtypes.StorableIntegrationDashboard)).
+		With("target", cte).
+		Where("id IN (SELECT id FROM target)").
+		Exec(ctx)
+	return err
 }

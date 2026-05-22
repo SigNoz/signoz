@@ -86,7 +86,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	// initiate opamp
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	integrationsController, err := integrations.NewController(signoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,

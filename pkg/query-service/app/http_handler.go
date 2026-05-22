@@ -1110,27 +1110,15 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard := new(dashboardtypes.Dashboard)
-
-	if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
-		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
-		if apiErr != nil {
-			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-			return
-		}
-		dashboard = integrationDashboard
-	} else {
-		dashboardID, err := valuer.NewUUID(id)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		sqlDashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		dashboard = sqlDashboard
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
 	}
 
 	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
@@ -1158,21 +1146,10 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboards := make([]*dashboardtypes.Dashboard, 0)
-	sqlDashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
+	dashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
 	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
 		render.Error(rw, err)
 		return
-	}
-	if sqlDashboards != nil {
-		dashboards = append(dashboards, sqlDashboards...)
-	}
-
-	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
-	if apiErr != nil {
-		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", errors.Attr(apiErr))
-	} else {
-		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
 	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
@@ -3263,7 +3240,7 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	}
 
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), claims.OrgID, &req,
+		r.Context(), claims.OrgID, &req, claims.Email, valuer.MustNewUUID(claims.IdentityID()),
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
