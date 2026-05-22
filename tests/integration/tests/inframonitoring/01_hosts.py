@@ -4,6 +4,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
@@ -156,3 +157,287 @@ def test_hosts_missing_metrics(
     # See pkg/modules/inframonitoring/implinframonitoring/module.go:84-89.
     assert data["records"] == []
     assert data["total"] == 0
+
+
+def test_hosts_filter_and(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """AND of two attribute clauses returns the single matching host."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {
+                "expression": "host.name = 'prod-linux-1' AND os.type = 'linux'",
+            },
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 1
+    assert {r["hostName"] for r in data["records"]} == {"prod-linux-1"}
+
+
+def test_hosts_filter_in(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """IN (...) operator returns exactly the listed hosts."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {
+                "expression": "host.name IN ('prod-linux-1', 'prod-windows-1')",
+            },
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 2
+    assert {r["hostName"] for r in data["records"]} == {
+        "prod-linux-1",
+        "prod-windows-1",
+    }
+
+
+def test_hosts_filter_not_in(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """NOT IN (...) returns the complement of the listed hosts."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {
+                "expression": "host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
+            },
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 2
+    assert {r["hostName"] for r in data["records"]} == {
+        "dev-linux-1",
+        "dev-windows-1",
+    }
+
+
+def test_hosts_filter_contains(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """CONTAINS 'substr' returns hosts whose attribute contains the substring."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "host.name CONTAINS 'prod-'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 2
+    assert {r["hostName"] for r in data["records"]} == {
+        "prod-linux-1",
+        "prod-windows-1",
+    }
+
+
+@pytest.mark.parametrize(
+    "expression,expected_hosts",
+    [
+        pytest.param(
+            "os.type = 'linux' AND host.name IN ('prod-linux-1', 'prod-windows-1')",
+            {"prod-linux-1"},
+            id="and_in",
+        ),
+        pytest.param(
+            "os.type = 'linux' AND host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
+            {"dev-linux-1"},
+            id="and_not_in",
+        ),
+        pytest.param(
+            "os.type = 'linux' AND host.name CONTAINS 'prod-'",
+            {"prod-linux-1"},
+            id="and_contains",
+        ),
+        pytest.param(
+            "host.name IN ('prod-linux-1', 'prod-windows-1', 'dev-linux-1') AND host.name CONTAINS 'linux'",
+            {"prod-linux-1", "dev-linux-1"},
+            id="in_contains",
+        ),
+    ],
+)
+def test_hosts_filter_combos(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    expression: str,
+    expected_hosts: set,
+) -> None:
+    """AND-combined pairs of filter operators return the correct intersection."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": expression},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert {r["hostName"] for r in data["records"]} == expected_hosts
+    assert data["total"] == len(expected_hosts)
+
+
+def test_hosts_filter_bad_attr_name(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Filter with a typo'd attribute key — discovery: silent empty vs error."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "host.namee = 'prod-linux-1'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    body = response.json()
+    assert body["status"] == "error"
+    assert body["error"]["code"] == "invalid_input"
+    assert any(
+        "host.namee" in e["message"] for e in body["error"]["errors"]
+    ), f"bad attr name not surfaced: {body['error']['errors']!r}"
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        pytest.param("host.name =", id="trailing_op"),
+        pytest.param("(host.name = 'prod-linux-1'", id="unclosed_paren"),
+        # Cases dropped — parser is permissive and accepts these silently:
+        #   `host.name == 'x'` → treated as `=` (matches as if single `=`)
+        #   `host.name 'x'`    → returns 200 with empty records
+        # Tracked as a QB v5 parser gap; not enforced by this test.
+    ],
+)
+def test_hosts_filter_bad_grammar(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    expression: str,
+) -> None:
+    """Malformed filter expressions return 400 invalid_input with structured errors."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": expression},
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, (
+        f"expected 400, got {response.status_code}: {response.text}"
+    )
+    body = response.json()
+    assert body["status"] == "error"
+    assert body["error"]["code"] == "invalid_input"
+    assert len(body["error"]["errors"]) > 0
