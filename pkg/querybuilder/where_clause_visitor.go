@@ -383,12 +383,21 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 	// this is used to skip the resource filtering on main table if
 	// the query may use the resources table sub-query filter
+	// Optimization: only skip NON-materialized resource fields.
+	// Materialized resource fields can be filtered directly on the main table
+	// using their materialized columns (e.g., `resource_string_service$$name`)
+	// which have BLOOM FILTER INDEXES and avoid expensive JSON extraction.
 	if v.skipResourceFilter {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldContext != telemetrytypes.FieldContextResource {
+				// Keep non-resource keys
+				filteredKeys = append(filteredKeys, key)
+			} else if key.Materialized {
+				// Keep materialized resource keys - they can use fast main table columns
 				filteredKeys = append(filteredKeys, key)
 			}
+			// Skip non-materialized resource keys - they go through resource CTE
 		}
 		keys = filteredKeys
 		if len(keys) == 0 {
