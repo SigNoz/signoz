@@ -192,7 +192,7 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 	if m.Scope != "" && len(lset) != 0 {
 		result, err := EvalScopeExpression(m.Scope, lset)
 		if err != nil {
-			slog.Default().Error("scope expression evaluation failed; alert passes through",
+			slog.Default().ErrorContext(context.Background(), "scope expression evaluation failed; alert passes through",
 				slog.String("maintenance_id", m.ID.StringValue()),
 				slog.String("scope", m.Scope),
 				slog.Any("error", err),
