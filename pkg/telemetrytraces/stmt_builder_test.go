@@ -410,6 +410,34 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "scope.version filter only (no scope field in group by)",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.version = '1.0.0'",
+				},
+				Limit: 10,
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String IS NOT NULL) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String IS NOT NULL) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY ts, `service.name`",
+				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10, "1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
 	}
 
 	fm := NewFieldMapper()
@@ -808,6 +836,32 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
+		},
+		{
+			name:        "List query with scope filter only (no scope in select or group by)",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.version": {
+					{
+						Name:          "scope.version",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.version = '1.0.0'",
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String IS NOT NULL) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
 		},
 	}
 
