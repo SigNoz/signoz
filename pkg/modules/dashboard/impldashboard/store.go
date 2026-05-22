@@ -122,10 +122,10 @@ func (store *store) ListV2(
 	orgID valuer.UUID,
 	userID valuer.UUID,
 	params *dashboardtypes.ListDashboardsV2Params,
-) ([]*dashboardtypes.DashboardListRow, bool, error) {
+) ([]*dashboardtypes.DashboardListRow, bool, int64, error) {
 	compiled, err := listfilter.Compile(params.Query, store.sqlstore.Formatter())
 	if err != nil {
-		return nil, false, err
+		return nil, false, 0, err
 	}
 	type listedRow struct {
 		*dashboardtypes.StorableDashboard `bun:",extend"`
@@ -158,8 +158,22 @@ func (store *store) ListV2(
 
 	sortExpr, err := store.sortExprForListV2(params.Sort)
 	if err != nil {
-		return nil, false, err
+		return nil, false, 0, err
 	}
+
+	countQ := store.sqlstore.
+		BunDB().
+		NewSelect().
+		Model((*dashboardtypes.StorableDashboard)(nil)).
+		Where("dashboard.org_id = ?", orgID)
+	if compiled != nil {
+		countQ = countQ.Where(compiled.SQL, compiled.Args...)
+	}
+	total, err := countQ.Count(ctx)
+	if err != nil {
+		return nil, false, 0, err
+	}
+
 	q = q.
 		OrderExpr("is_pinned DESC").
 		OrderExpr(sortExpr + " " + strings.ToUpper(string(params.Order))).
@@ -167,7 +181,7 @@ func (store *store) ListV2(
 		Offset(params.Offset)
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, false, err
+		return nil, false, 0, err
 	}
 
 	hasMore := len(rows) > params.Limit
@@ -192,7 +206,7 @@ func (store *store) ListV2(
 		}
 		out[i] = row
 	}
-	return out, hasMore, nil
+	return out, hasMore, int64(total), nil
 }
 
 // sortExprForListV2 maps a sort enum to the SQL expression to plug into

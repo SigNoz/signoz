@@ -44,7 +44,7 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 // and limit+1/hasMore detection), batch-fetches tags for the returned
 // dashboard ids, and hands off to the type-side constructor for assembly.
 func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
-	rows, hasMore, err := module.store.ListV2(ctx, orgID, userID, params)
+	rows, hasMore, total, err := module.store.ListV2(ctx, orgID, userID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(rows, tagsByDashboard, hasMore)
+	return dashboardtypes.NewListableDashboardV2(rows, tagsByDashboard, hasMore, total)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {

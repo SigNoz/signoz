@@ -4713,13 +4713,18 @@ export type DashboardtypesJSONPatchDocumentDTO =
 
 export interface DashboardtypesListableDashboardV2DTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	dashboards?: DashboardtypesGettableDashboardWithPinDTO[] | null;
+	dashboards: DashboardtypesGettableDashboardWithPinDTO[];
 	/**
 	 * @type boolean
 	 */
-	hasMore?: boolean;
+	hasMore: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
 }
 
 export enum DashboardtypesPanelPluginKindDTO {

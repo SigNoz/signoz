@@ -43,7 +43,8 @@ type Store interface {
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error
 
 	// bool return is hasMore — the store fetches Limit+1 to detect it.
-	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*DashboardListRow, bool, error)
+	// int64 return is the total count of rows matching the filter (ignoring limit/offset).
+	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*DashboardListRow, bool, int64, error)
 
 	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
 	PinForUser(ctx context.Context, pd *PinnedDashboard) error
