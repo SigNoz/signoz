@@ -121,14 +121,14 @@ function AuthDomain(): JSX.Element {
 			},
 			{
 				title: 'Enforce SSO',
-				dataIndex: 'ssoEnabled',
+				dataIndex: ['config', 'ssoEnabled'],
 				key: 'ssoEnabled',
 				width: 80,
 				render: (
 					value: boolean,
 					record: AuthtypesGettableAuthDomainDTO,
 				): JSX.Element => (
-					<SSOEnforcementToggle isDefaultChecked={value} record={record} />
+					<SSOEnforcementToggle isDefaultChecked={!!value} record={record} />
 				),
 			},
 			{
