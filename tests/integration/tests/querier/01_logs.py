@@ -2427,8 +2427,6 @@ def test_logs_list_filter_by_trace_id(
                             {"key": {"name": "timestamp"}, "direction": "desc"},
                             {"key": {"name": "id"}, "direction": "desc"},
                         ],
-                        "having": {"expression": ""},
-                        "aggregations": [{"expression": "count()"}],
                     },
                 }
             ],

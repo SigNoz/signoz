@@ -2201,7 +2201,6 @@ def test_traces_aggregation_filter_by_trace_id(
                         "stepInterval": 60,
                         "disabled": False,
                         "filter": {"expression": f"trace_id = '{trace_id}'"},
-                        "having": {"expression": ""},
                         "aggregations": [{"expression": "count()"}],
                     },
                 }
