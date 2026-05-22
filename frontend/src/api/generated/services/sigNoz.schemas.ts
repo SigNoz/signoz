@@ -9486,6 +9486,34 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	sort?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	order?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
 export type ListDashboardsV2200 = {
 	data: DashboardtypesListableDashboardV2DTO;
 	/**

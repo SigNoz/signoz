@@ -35,6 +35,7 @@ import type {
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
 	ListDashboardsV2200,
+	ListDashboardsV2Params,
 	LockDashboardV2PathParameters,
 	PatchDashboardV2200,
 	PatchDashboardV2PathParameters,
@@ -647,35 +648,44 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
  * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.
  * @summary List dashboards (v2)
  */
-export const listDashboardsV2 = (signal?: AbortSignal) => {
+export const listDashboardsV2 = (
+	params?: ListDashboardsV2Params,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<ListDashboardsV2200>({
 		url: `/api/v2/dashboards`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getListDashboardsV2QueryKey = () => {
-	return [`/api/v2/dashboards`] as const;
+export const getListDashboardsV2QueryKey = (
+	params?: ListDashboardsV2Params,
+) => {
+	return [`/api/v2/dashboards`, ...(params ? [params] : [])] as const;
 };
 
 export const getListDashboardsV2QueryOptions = <
 	TData = Awaited<ReturnType<typeof listDashboardsV2>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listDashboardsV2>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: ListDashboardsV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListDashboardsV2QueryKey();
+	const queryKey = queryOptions?.queryKey ?? getListDashboardsV2QueryKey(params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof listDashboardsV2>>> = ({
 		signal,
-	}) => listDashboardsV2(signal);
+	}) => listDashboardsV2(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof listDashboardsV2>>,
@@ -696,14 +706,17 @@ export type ListDashboardsV2QueryError = ErrorType<RenderErrorResponseDTO>;
 export function useListDashboardsV2<
 	TData = Awaited<ReturnType<typeof listDashboardsV2>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listDashboardsV2>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListDashboardsV2QueryOptions(options);
+>(
+	params?: ListDashboardsV2Params,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDashboardsV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDashboardsV2QueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -717,10 +730,11 @@ export function useListDashboardsV2<
  */
 export const invalidateListDashboardsV2 = async (
 	queryClient: QueryClient,
+	params?: ListDashboardsV2Params,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListDashboardsV2QueryKey() },
+		{ queryKey: getListDashboardsV2QueryKey(params) },
 		options,
 	);
 

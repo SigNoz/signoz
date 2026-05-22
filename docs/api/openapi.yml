@@ -12757,6 +12757,27 @@ paths:
         order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned
         dashboards float to the top of each page.
       operationId: ListDashboardsV2
+      parameters:
+      - in: query
+        name: query
+        schema:
+          type: string
+      - in: query
+        name: sort
+        schema:
+          type: string
+      - in: query
+        name: order
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: offset
+        schema:
+          type: integer
       responses:
         "200":
           content:
