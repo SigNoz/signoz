@@ -18,6 +18,11 @@ interface DockOption {
 
 const DOCK_OPTIONS: DockOption[] = [
 	{
+		value: SpanDetailVariant.DIALOG,
+		icon: <Dock size={14} />,
+		tooltip: 'Open as floating panel',
+	},
+	{
 		value: SpanDetailVariant.DOCKED,
 		icon: <PanelBottom size={14} />,
 		tooltip: 'Dock at the bottom',
@@ -26,11 +31,6 @@ const DOCK_OPTIONS: DockOption[] = [
 		value: SpanDetailVariant.DOCKED_RIGHT,
 		icon: <PanelRight size={14} />,
 		tooltip: 'Dock on the right',
-	},
-	{
-		value: SpanDetailVariant.DIALOG,
-		icon: <Dock size={14} />,
-		tooltip: 'Open as floating panel',
 	},
 ];
 
