@@ -52,7 +52,7 @@ function loadExportMap() {
 function buildExportMap() {
 	const map = new Map();
 	const root = findSignozUiRoot();
-	if (!root) {return map;}
+	if (!root) return map;
 
 	let pkg;
 	try {
@@ -65,7 +65,7 @@ function buildExportMap() {
 	for (const key of subpathKeys) {
 		const subpath = key.replace(/^\.\//, '');
 		const entry = join(root, 'dist', subpath, 'index.d.ts');
-		if (!existsSync(entry)) {continue;}
+		if (!existsSync(entry)) continue;
 
 		const names = new Set();
 		collectExportedNames(entry, names, new Set());
@@ -73,7 +73,7 @@ function buildExportMap() {
 		// names re-exported across multiple subpaths (e.g. `ToggleColor` is
 		// declared in `toggle` and re-exported from `toggle-group`).
 		for (const name of names) {
-			if (!map.has(name)) {map.set(name, subpath);}
+			if (!map.has(name)) map.set(name, subpath);
 		}
 	}
 
@@ -84,15 +84,15 @@ function findSignozUiRoot() {
 	let dir = PLUGIN_DIR;
 	while (true) {
 		const candidate = join(dir, 'node_modules', '@signozhq', 'ui');
-		if (existsSync(join(candidate, 'package.json'))) {return candidate;}
+		if (existsSync(join(candidate, 'package.json'))) return candidate;
 		const parent = dirname(dir);
-		if (parent === dir) {return null;}
+		if (parent === dir) return null;
 		dir = parent;
 	}
 }
 
 function collectExportedNames(filepath, out, visited) {
-	if (visited.has(filepath) || !existsSync(filepath)) {return;}
+	if (visited.has(filepath) || !existsSync(filepath)) return;
 	visited.add(filepath);
 
 	let content;
@@ -113,11 +113,11 @@ function collectExportedNames(filepath, out, visited) {
 	for (const m of content.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}/g)) {
 		for (const item of m[1].split(',')) {
 			const cleaned = item.trim().replace(/^type\s+/, '');
-			if (!cleaned) {continue;}
+			if (!cleaned) continue;
 			const idMatch = cleaned.match(
 				/^([A-Za-z_$][A-Za-z0-9_$]*)(?:\s+as\s+([A-Za-z_$][A-Za-z0-9_$]*))?$/,
 			);
-			if (idMatch) {out.add(idMatch[2] || idMatch[1]);}
+			if (idMatch) out.add(idMatch[2] || idMatch[1]);
 		}
 	}
 
@@ -133,19 +133,19 @@ function resolveRelativeDts(fromFile, spec) {
 	const base = dirname(fromFile);
 	const stripped = spec.replace(/\.(js|mjs|cjs)$/, '');
 	const sibling = join(base, `${stripped}.d.ts`);
-	if (existsSync(sibling)) {return sibling;}
+	if (existsSync(sibling)) return sibling;
 	const indexed = join(base, stripped, 'index.d.ts');
-	if (existsSync(indexed)) {return indexed;}
+	if (existsSync(indexed)) return indexed;
 	return sibling;
 }
 
 function buildReplacement(node, map) {
 	const specifiers = node.specifiers || [];
-	if (specifiers.length === 0) {return null;}
+	if (specifiers.length === 0) return null;
 
 	for (const spec of specifiers) {
-		if (spec.type !== 'ImportSpecifier') {return null;}
-		if (spec.imported?.type !== 'Identifier') {return null;}
+		if (spec.type !== 'ImportSpecifier') return null;
+		if (spec.imported?.type !== 'Identifier') return null;
 	}
 
 	const quote = node.source.raw?.[0] === '"' ? '"' : "'";
@@ -156,15 +156,15 @@ function buildReplacement(node, map) {
 	for (const spec of specifiers) {
 		const importedName = spec.imported.name;
 		const subpath = map.get(importedName);
-		if (!subpath) {return null;}
+		if (!subpath) return null;
 
 		const localName = spec.local.name;
 		const inlineType = !topLevelType && spec.importKind === 'type';
 		let text = inlineType ? 'type ' : '';
 		text += importedName;
-		if (localName !== importedName) {text += ` as ${localName}`;}
+		if (localName !== importedName) text += ` as ${localName}`;
 
-		if (!groups.has(subpath)) {groups.set(subpath, []);}
+		if (!groups.has(subpath)) groups.set(subpath, []);
 		groups.get(subpath).push(text);
 	}
 
