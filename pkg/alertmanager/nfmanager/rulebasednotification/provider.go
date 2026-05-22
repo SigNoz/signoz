@@ -3,7 +3,6 @@ package rulebasednotification
 import (
 	"context"
 	"log/slog"
-	"strings"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -238,17 +237,11 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 // convertLabelSetToEnv delegates to alertmanagertypes.ConvertLabelSetToEnv and
 // logs when a key is a prefix of another (e.g. "foo" alongside "foo.bar").
 func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.LabelSet) map[string]interface{} {
-outer:
-	for lk := range labelSet {
-		prefix := string(lk) + "."
-		for lk2 := range labelSet {
-			if strings.HasPrefix(string(lk2), prefix) {
-				r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", slog.Any("labels", labelSet))
-				break outer
-			}
-		}
+	env, conflict := alertmanagertypes.ConvertLabelSetToEnv(labelSet)
+	if conflict {
+		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", slog.Any("labels", labelSet))
 	}
-	return alertmanagertypes.ConvertLabelSetToEnv(labelSet)
+	return env
 }
 
 func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {

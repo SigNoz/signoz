@@ -112,9 +112,10 @@ func TestEvalScopeExpression(t *testing.T) {
 
 func TestConvertLabelSetToEnv(t *testing.T) {
 	cases := []struct {
-		name     string
-		lset     model.LabelSet
-		expected map[string]interface{}
+		name         string
+		lset         model.LabelSet
+		expected     map[string]interface{}
+		wantConflict bool
 	}{
 		{
 			name:     "simple keys",
@@ -136,6 +137,7 @@ func TestConvertLabelSetToEnv(t *testing.T) {
 					"bar": map[string]interface{}{"baz": "deep"},
 				},
 			},
+			wantConflict: true,
 		},
 		{
 			name: "nested structure wins over plain key",
@@ -143,14 +145,18 @@ func TestConvertLabelSetToEnv(t *testing.T) {
 			expected: map[string]interface{}{
 				"foo": map[string]interface{}{"bar": "value"},
 			},
+			wantConflict: true,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := ConvertLabelSetToEnv(c.lset)
+			got, gotConflict := ConvertLabelSetToEnv(c.lset)
 			if !reflect.DeepEqual(got, c.expected) {
-				t.Errorf("ConvertLabelSetToEnv() = %v, want %v", got, c.expected)
+				t.Errorf("ConvertLabelSetToEnv() map = %v, want %v", got, c.expected)
+			}
+			if gotConflict != c.wantConflict {
+				t.Errorf("ConvertLabelSetToEnv() conflict = %v, want %v", gotConflict, c.wantConflict)
 			}
 		})
 	}
