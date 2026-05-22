@@ -1,3 +1,9 @@
+import {
+	fillMissingXAxisTimestamps,
+	getXAxisTimestamps,
+} from 'container/DashboardContainer/visualization/panels/utils';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
 /**
  * Checks if a value is invalid for plotting
  *
@@ -248,3 +254,21 @@ export function applySpanGapsToAlignedData(
 
 	return [newX, ...transformedSeries] as uPlot.AlignedData;
 }
+
+/** * Transforms raw API response into aligned data format expected by uPlot.
+ *
+ * The API response contains multiple series of time-value pairs, each with its
+ * own set of timestamps. uPlot requires a single shared x-axis (timestamps)
+ * and separate y-value arrays for each series, aligned by index. This function
+ * extracts the unique sorted timestamps across all series and fills in missing
+ * values with null to maintain alignment.
+ */
+export const prepareChartData = (
+	apiResponse: MetricRangePayloadProps,
+): uPlot.AlignedData => {
+	const seriesList = apiResponse?.data?.result || [];
+	const timestampArr = getXAxisTimestamps(seriesList);
+	const yAxisValuesArr = fillMissingXAxisTimestamps(timestampArr, seriesList);
+
+	return [timestampArr, ...yAxisValuesArr];
+};

@@ -31,7 +31,6 @@ import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
@@ -43,7 +42,6 @@ import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import uPlot from 'uplot';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -54,9 +52,11 @@ import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
 import './ChartPreview.styles.scss';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 // Height reserved for the `.chart-preview-header` strip rendered above the chart.
 const CHART_PREVIEW_HEADER_HEIGHT = 48;
+const CHART_PREVIEW_CONTAINER_PADDING = 16;
 
 export interface ChartPreviewProps {
 	query: Query | null;
@@ -272,7 +272,12 @@ function ChartPreview({
 		[thresholds, t, optionName, yAxisUnit],
 	);
 
-	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+	const chartData = useMemo(() => {
+		if (!queryResponse?.data?.payload) {
+			return [];
+		}
+		return prepareChartData(queryResponse?.data?.payload);
+	}, [queryResponse?.data?.payload]);
 
 	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
 
@@ -291,7 +296,9 @@ function ChartPreview({
 
 	const isWarning = !isEmpty(queryResponse.data?.warning);
 
-	const chartWidth = containerDimensions?.width ?? 0;
+	const chartWidth = containerDimensions?.width
+		? containerDimensions.width - CHART_PREVIEW_CONTAINER_PADDING
+		: 0;
 	const chartHeight = containerDimensions?.height
 		? containerDimensions.height - CHART_PREVIEW_HEADER_HEIGHT
 		: 0;
@@ -324,7 +331,7 @@ function ChartPreview({
 							alertId={alertDef?.id}
 							query={query || currentQuery}
 							apiResponse={queryResponse.data?.payload}
-							data={chartData as uPlot.AlignedData}
+							data={chartData}
 							thresholds={resolvedThresholds}
 							yAxisUnit={yAxisUnit}
 							legendPosition={legendPosition}
