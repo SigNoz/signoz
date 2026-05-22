@@ -1217,7 +1217,8 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages,
         },
-        # FTS — String bare keyword
+        # FTS — String bare keyword (implicit search across all log fields, case-insensitive)
+        # Both text_log and json_log match via their body_v2 message and service.name="payment-service".
         {
             "name": "msg.fts_quoted",
             "requestType": "raw",
@@ -1225,13 +1226,42 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
-        # FTS — bare keyword
+        # FTS — bare keyword (same fan-out as quoted FTS)
         {
             "name": "msg.fts_quoted_without_quotes",
             "requestType": "raw",
             "expression": "Payment",
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
+        },
+        # ── search() explicit function ──────────────────────────────────────
+        # search("Payment") is equivalent to the bare-text '"Payment"' FTS:
+        # both fan out a case-insensitive match across severity_text, trace_id,
+        # span_id, body JSON values, attribute values, and resource values.
+        {
+            "name": "msg.search_quoted",
+            "requestType": "raw",
+            "expression": 'search("Payment")',
+            "aggregation": "count()",
+            "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages and r.json().get("data", {}).get("warning") is not None,
+        },
+        # search(Payment) — unquoted keyword, identical to search("Payment").
+        {
+            "name": "msg.search_unquoted",
+            "requestType": "raw",
+            "expression": "search(Payment)",
+            "aggregation": "count()",
+            "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages and r.json().get("data", {}).get("warning") is not None,
+        },
+        # NOT search("Payment") — inverted FTS: logs that do NOT have "payment"
+        # in any field are returned.  control_log (db-service) and no_msg_log
+        # (metrics-service) have no "payment" anywhere → 2 results.
+        {
+            "name": "msg.not_search",
+            "requestType": "raw",
+            "expression": 'NOT search("Payment")',
+            "aggregation": "count()",
+            "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" not in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
         # = operator via body.message — tests exact match path
         {
