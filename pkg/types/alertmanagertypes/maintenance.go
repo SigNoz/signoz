@@ -3,7 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
-	"strings"
+	"log/slog"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -190,7 +190,16 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 	// lset is empty when called from IsActive (no instance labels available);
 	// skip expression filtering in that case.
 	if m.Scope != "" && len(lset) != 0 {
-		if !evalScopeExpression(m.Scope, lset) {
+		result, err := EvalScopeExpression(m.Scope, lset)
+		if err != nil {
+			slog.Default().Error("scope expression evaluation failed; alert passes through",
+				slog.String("maintenance_id", m.ID.StringValue()),
+				slog.String("scope", m.Scope),
+				slog.Any("error", err),
+			)
+			return false
+		}
+		if !result {
 			return false
 		}
 	}
@@ -247,59 +256,6 @@ func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
 	}
 
 	return false
-}
-
-// ConvertLabelSetToEnv converts a label set into a map suitable for use as an
-// expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
-// nested maps so that expr can resolve them without panicking. When a dotted
-// path conflicts with a plain key, the nested structure takes precedence.
-func ConvertLabelSetToEnv(lset model.LabelSet) map[string]any {
-	env := map[string]any{}
-	for lk, lv := range lset {
-		key := strings.TrimSpace(string(lk))
-		value := string(lv)
-		if strings.Contains(key, ".") {
-			parts := strings.Split(key, ".")
-			current := env
-			for i, raw := range parts {
-				part := strings.TrimSpace(raw)
-				if i == len(parts)-1 {
-					if _, isMap := current[part].(map[string]any); !isMap {
-						current[part] = value
-					}
-					break
-				}
-				if nextMap, ok := current[part].(map[string]any); ok {
-					current = nextMap
-				} else {
-					newMap := map[string]any{}
-					current[part] = newMap
-					current = newMap
-				}
-			}
-			continue
-		}
-		if _, isMap := env[key].(map[string]any); !isMap {
-			env[key] = value
-		}
-	}
-	return env
-}
-
-// evalScopeExpression compiles and runs the expression against the provided labels.
-// Returns false on any error (safety-first: don't suppress on a bad expression).
-func evalScopeExpression(expression string, lset model.LabelSet) bool {
-	env := ConvertLabelSetToEnv(lset)
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
-	if err != nil {
-		return false
-	}
-	output, err := expr.Run(program, env)
-	if err != nil {
-		return false
-	}
-	result, ok := output.(bool)
-	return ok && result
 }
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)

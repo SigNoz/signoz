@@ -1,7 +1,6 @@
 package alertmanagertypes
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
@@ -705,7 +704,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope matches labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -713,7 +712,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope does not match labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -721,7 +720,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - both conditions match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" && service == "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "api"},
@@ -729,7 +728,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - one condition does not match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" && service == "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "worker"},
@@ -737,7 +736,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - first alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -745,7 +744,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - second alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -753,7 +752,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - neither alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production" || env == "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "development"},
@@ -761,7 +760,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope references label absent from lset",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"service": "api"},
@@ -785,7 +784,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list and scope matches - should skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -793,7 +792,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID not in list and scope matches - ruleID gate prevents skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-2"}, Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -801,7 +800,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list but scope does not match - should not skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1"}, Scope: `env == "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -814,103 +813,6 @@ func TestShouldSkip_Scope(t *testing.T) {
 			got := c.maintenance.ShouldSkip(c.ruleID, c.ts, c.lset)
 			if got != c.skip {
 				t.Errorf("ShouldSkip() = %v, want %v", got, c.skip)
-			}
-		})
-	}
-}
-
-func TestEvalScopeExpression(t *testing.T) {
-	cases := []struct {
-		name       string
-		expression string
-		lset       model.LabelSet
-		want       bool
-	}{
-		{
-			name:       "equality match",
-			expression: `env == "production"`,
-			lset:       model.LabelSet{"env": "production"},
-			want:       true,
-		},
-		{
-			name:       "equality no match",
-			expression: `env == "production"`,
-			lset:       model.LabelSet{"env": "staging"},
-			want:       false,
-		},
-		{
-			name:       "inequality match",
-			expression: `env != "production"`,
-			lset:       model.LabelSet{"env": "staging"},
-			want:       true,
-		},
-		{
-			name:       "AND - both match",
-			expression: `env == "production" && service == "api"`,
-			lset:       model.LabelSet{"env": "production", "service": "api"},
-			want:       true,
-		},
-		{
-			name:       "AND - partial match",
-			expression: `env == "production" && service == "api"`,
-			lset:       model.LabelSet{"env": "production", "service": "worker"},
-			want:       false,
-		},
-		{
-			name:       "OR - first matches",
-			expression: `env == "production" || env == "staging"`,
-			lset:       model.LabelSet{"env": "production"},
-			want:       true,
-		},
-		{
-			name:       "OR - second matches",
-			expression: `env == "production" || env == "staging"`,
-			lset:       model.LabelSet{"env": "staging"},
-			want:       true,
-		},
-		{
-			name:       "OR - none match",
-			expression: `env == "production" || env == "staging"`,
-			lset:       model.LabelSet{"env": "development"},
-			want:       false,
-		},
-		{
-			name:       "undefined label returns false",
-			expression: `env == "production"`,
-			lset:       model.LabelSet{"service": "api"},
-			want:       false,
-		},
-		{
-			name:       "in list - present",
-			expression: `env in ["production", "staging"]`,
-			lset:       model.LabelSet{"env": "production"},
-			want:       true,
-		},
-		{
-			name:       "in list - absent",
-			expression: `env in ["production", "staging"]`,
-			lset:       model.LabelSet{"env": "development"},
-			want:       false,
-		},
-		{
-			name:       "invalid expression returns false",
-			expression: `env ==`,
-			lset:       model.LabelSet{"env": "production"},
-			want:       false,
-		},
-		{
-			name:       "non-bool expression returns false",
-			expression: `env`,
-			lset:       model.LabelSet{"env": "production"},
-			want:       false,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			got := evalScopeExpression(c.expression, c.lset)
-			if got != c.want {
-				t.Errorf("evalScopeExpression(%q, %v) = %v, want %v", c.expression, c.lset, got, c.want)
 			}
 		})
 	}
@@ -929,11 +831,11 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "empty scope", scope: "", wantErr: false},
-		{name: "simple equality", scope: `env == "production"`, wantErr: false},
-		{name: "AND expression", scope: `env == "production" && service == "api"`, wantErr: false},
-		{name: "OR expression", scope: `env == "production" || env == "staging"`, wantErr: false},
+		{name: "simple equality", scope: `env = "production"`, wantErr: false},
+		{name: "AND expression", scope: `env = "production" AND service = "api"`, wantErr: false},
+		{name: "OR expression", scope: `env = "production" OR env = "staging"`, wantErr: false},
 		{name: "in expression", scope: `env in ["production", "staging"]`, wantErr: false},
-		{name: "incomplete expression", scope: `env ==`, wantErr: true},
+		{name: "incomplete expression", scope: `env =`, wantErr: true},
 		{name: "non-bool expression", scope: `"just a string"`, wantErr: true},
 	}
 
@@ -952,48 +854,3 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 	}
 }
 
-func TestConvertLabelSetToEnv(t *testing.T) {
-	cases := []struct {
-		name     string
-		lset     model.LabelSet
-		expected map[string]interface{}
-	}{
-		{
-			name: "simple keys",
-			lset: model.LabelSet{"key1": "value1", "key2": "value2"},
-			expected: map[string]interface{}{"key1": "value1", "key2": "value2"},
-		},
-		{
-			name: "dotted keys become nested maps",
-			lset: model.LabelSet{"foo.bar": "value1", "foo.baz": "value2"},
-			expected: map[string]interface{}{
-				"foo": map[string]interface{}{"bar": "value1", "baz": "value2"},
-			},
-		},
-		{
-			name: "deeper dotted key wins over shallow dotted key",
-			lset: model.LabelSet{"foo.bar.baz": "deep", "foo.bar": "shallow"},
-			expected: map[string]interface{}{
-				"foo": map[string]interface{}{
-					"bar": map[string]interface{}{"baz": "deep"},
-				},
-			},
-		},
-		{
-			name: "nested structure wins over plain key",
-			lset: model.LabelSet{"foo.bar": "value", "foo": "ignored"},
-			expected: map[string]interface{}{
-				"foo": map[string]interface{}{"bar": "value"},
-			},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			got := ConvertLabelSetToEnv(c.lset)
-			if !reflect.DeepEqual(got, c.expected) {
-				t.Errorf("ConvertLabelSetToEnv() = %v, want %v", got, c.expected)
-			}
-		})
-	}
-}
