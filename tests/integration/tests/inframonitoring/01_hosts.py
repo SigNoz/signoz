@@ -441,3 +441,60 @@ def test_hosts_filter_bad_grammar(
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
     assert len(body["error"]["errors"]) > 0
+
+
+@pytest.mark.parametrize(
+    "status,expected_hosts",
+    [
+        pytest.param("active", {"active-h1"}, id="active"),
+        pytest.param("inactive", {"inactive-h1"}, id="inactive"),
+        pytest.param(None, {"active-h1", "inactive-h1"}, id="unset"),
+    ],
+)
+def test_hosts_filter_by_status(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    status,
+    expected_hosts: set,
+) -> None:
+    """filterByStatus subsets hosts and per-record activeHostCount/inactiveHostCount
+    track each host's status. Omitting filterByStatus returns all hosts.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_status.jsonl"),
+            base_time=now - timedelta(minutes=24),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body = {
+        "start": int((now - timedelta(minutes=30)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if status is not None:
+        body["filter"] = {"filterByStatus": status}
+
+    response = _post(signoz, token, body)
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+
+    assert {r["hostName"] for r in data["records"]} == expected_hosts
+    assert data["total"] == len(expected_hosts)
+
+    if status is not None:
+        for r in data["records"]:
+            assert r["status"] == status
+
+    for r in data["records"]:
+        if r["status"] == "active":
+            assert r["activeHostCount"] == 1
+            assert r["inactiveHostCount"] == 0
+        else:
+            assert r["status"] == "inactive"
+            assert r["activeHostCount"] == 0
+            assert r["inactiveHostCount"] == 1
