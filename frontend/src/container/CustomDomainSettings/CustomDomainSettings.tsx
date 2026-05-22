@@ -207,11 +207,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="link"
-									color="none"
-									disabled={isFetchingHosts}
-								>
+								<Button variant="link" color="none" disabled={isFetchingHosts}>
 									<Link2 size={12} />
 									<span>{stripProtocol(activeHost?.url ?? '')}</span>
 									<ChevronDown size={12} />

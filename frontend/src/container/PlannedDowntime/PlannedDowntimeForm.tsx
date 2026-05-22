@@ -311,7 +311,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	// oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+		// oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
 	}, [formData, recurrenceType, timezone]);
 
 	const endTimeText = useMemo((): string => {
