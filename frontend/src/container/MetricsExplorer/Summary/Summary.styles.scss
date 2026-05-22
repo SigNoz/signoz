@@ -142,11 +142,6 @@
 				}
 			}
 
-			.progress-container {
-				--progress-height: 8px;
-				--progress-border-radius: 4px;
-			}
-
 			.ant-table-tbody > tr:hover > td {
 				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
 			}

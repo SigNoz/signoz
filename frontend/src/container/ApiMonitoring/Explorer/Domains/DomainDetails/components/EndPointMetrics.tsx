@@ -84,7 +84,6 @@ function EndPointMetrics({
 										status="active"
 										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
 										strokeLinecap="butt"
-										size="small"
 										showInfo
 										strokeColor={((): string => {
 											const errorRatePercent = Number(

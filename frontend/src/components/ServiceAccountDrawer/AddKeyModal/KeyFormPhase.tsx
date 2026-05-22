@@ -127,11 +127,11 @@ function KeyFormPhase({
 					>
 						<Button
 							type="submit"
-							form={FORM_ID}
 							variant="solid"
 							color="primary"
 							loading={isSubmitting}
 							disabled={!isValid}
+							{...({ form: FORM_ID } as Record<string, string>)}
 						>
 							Create Key
 						</Button>

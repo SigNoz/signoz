@@ -59,7 +59,6 @@ function ProgressRender(item: string | number): JSX.Element {
 			<Progress
 				percent={percent}
 				strokeLinecap="butt"
-				size="small"
 				showInfo
 				strokeColor={((): string => {
 					const cpuPercent = percent;

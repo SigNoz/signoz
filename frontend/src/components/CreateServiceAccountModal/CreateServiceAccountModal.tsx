@@ -137,11 +137,11 @@ function CreateServiceAccountModal(): JSX.Element {
 				<AuthZTooltip checks={[SACreatePermission]}>
 					<Button
 						type="submit"
-						form="create-sa-form"
 						variant="solid"
 						color="primary"
 						loading={isSubmitting}
 						disabled={!isValid}
+						{...({ form: 'create-sa-form' } as Record<string, string>)}
 					>
 						Create Service Account
 					</Button>

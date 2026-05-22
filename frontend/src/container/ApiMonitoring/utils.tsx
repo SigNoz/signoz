@@ -261,7 +261,6 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 					status="active"
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
 					showInfo
 					strokeColor={((): string => {
 						const errorRatePercent = Number((errorRateValue as number).toFixed(2));
@@ -1031,7 +1030,6 @@ export const getEndPointsColumnsConfig = (
 					).toFixed(1),
 				)}
 				strokeLinecap="butt"
-				size="small"
 				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
@@ -2520,7 +2518,6 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
-					size="small"
 					showInfo
 					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
@@ -3033,7 +3030,6 @@ export const getAllEndpointsWidgetData = (
 					).toFixed(2),
 				)}
 				strokeLinecap="butt"
-				size="small"
 				showInfo
 				strokeColor={((): string => {
 					const errorRatePercent = Number(

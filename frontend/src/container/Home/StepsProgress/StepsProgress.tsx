@@ -15,9 +15,7 @@ function StepsProgress({
 
 	const totalChecklistItems = checklistItems.length;
 
-	const progress = Math.round(
-		(completedChecklistItems.length / totalChecklistItems) * 100,
-	);
+	const progress = (completedChecklistItems.length / totalChecklistItems) * 100;
 
 	return (
 		<div className="steps-progress-container">

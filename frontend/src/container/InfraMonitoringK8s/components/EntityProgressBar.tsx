@@ -53,7 +53,6 @@ export function EntityProgressBar({
 			<Progress
 				percent={percentage}
 				strokeLinecap="butt"
-				size="small"
 				status="normal"
 				strokeColor={getStrokeColor(type, value)}
 				className={styles.progressBar}

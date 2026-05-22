@@ -142,7 +142,6 @@ function DomainMetrics({
 											Number(formattedDomainMetricsData.errorRate).toFixed(2),
 										)}
 										strokeLinecap="butt"
-										size="small"
 										showInfo
 										strokeColor={((): string => {
 											const errorRatePercent = Number(
