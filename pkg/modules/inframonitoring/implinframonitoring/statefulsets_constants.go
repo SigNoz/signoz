@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	statefulSetNameAttrKey     = "k8s.statefulset.name"
-	statefulSetsBaseFilterExpr = "k8s.statefulset.name != ''"
-)
+const statefulSetsBaseFilterExpr = "k8s.statefulset.name != ''"
 
 var statefulSetNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          statefulSetNameAttrKey,
+		Name:          inframonitoringtypes.StatefulSetNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

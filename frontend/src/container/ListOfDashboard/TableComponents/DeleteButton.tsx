@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { CircleAlert, Trash2 } from '@signozhq/icons';
-import { Flex, Modal, Tooltip } from 'antd';
+import { Button, Modal, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -12,10 +12,8 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import styles from '../DashboardActions.module.scss';
 import { Data } from '../DashboardsList';
-import { TableLinkText } from './styles';
-
-import './DeleteButton.styles.scss';
 
 interface DeleteButtonProps {
 	createdBy: string;
@@ -85,7 +83,7 @@ export function DeleteButton({
 				},
 			},
 			centered: true,
-			className: 'delete-modal',
+			className: styles.deleteModal,
 		});
 	}, [
 		modal,
@@ -109,10 +107,16 @@ export function DeleteButton({
 		return '';
 	};
 
+	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
+
 	return (
 		<>
 			<Tooltip placement="left" title={getDeleteTooltipContent()}>
-				<TableLinkText
+				<Button
+					type="text"
+					className={styles.deleteBtn}
+					icon={<Trash2 size={12} />}
+					disabled={isDisabled}
 					onClick={(e): void => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -120,13 +124,9 @@ export function DeleteButton({
 							openConfirmationDialog();
 						}
 					}}
-					className="delete-btn"
-					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<Flex align="center" justify="center" gap={4}>
-						<Trash2 size={14} /> Delete dashboard
-					</Flex>
-				</TableLinkText>
+					Delete Dashboard
+				</Button>
 			</Tooltip>
 
 			{contextHolder}

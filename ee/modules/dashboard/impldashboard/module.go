@@ -49,6 +49,14 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
+	}
+
 	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
@@ -129,12 +137,24 @@ func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
+	}
+
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 }
 
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
+		return err
+	}
+
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 
@@ -166,6 +186,14 @@ func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashb
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	dashboard, err := module.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
 	}
 
 	err = module.store.DeletePublic(ctx, dashboardID.StringValue())

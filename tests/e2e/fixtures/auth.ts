@@ -79,6 +79,17 @@ export const test = base.extend<{
 		const storageState = await storageFor(browser, user);
 		const ctx = await browser.newContext({ storageState });
 		const page = await ctx.newPage();
+		// Opt-in CPU throttling to reproduce GitHub-Linux-runner conditions on
+		// developer machines. Set `STRESS=1` (typically with `CI=1` to also get
+		// 2 workers + 2 retries) before running the suite — see CI-HARDENING.md.
+		// The rate is the CPU slowdown multiplier; 4× matches the 2 vCPU runner.
+		const throttleRate = Number(process.env.STRESS_CPU_RATE ?? '4');
+		if (process.env.STRESS === '1') {
+			const client = await ctx.newCDPSession(page);
+			await client.send('Emulation.setCPUThrottlingRate', {
+				rate: throttleRate,
+			});
+		}
 		await use(page);
 		await ctx.close();
 	},
