@@ -75,7 +75,7 @@ function AuthDomain(): JSX.Element {
 			{
 				onSuccess: () => {
 					toast.success('Domain deleted successfully');
-					refetchAuthDomainListResponse();
+					void refetchAuthDomainListResponse();
 					hideDeleteModal();
 				},
 				onError: (error) => {

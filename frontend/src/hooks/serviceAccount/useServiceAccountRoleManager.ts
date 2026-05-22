@@ -31,10 +31,14 @@ interface UseServiceAccountRoleManagerResult {
 
 export function useServiceAccountRoleManager(
 	accountId: string,
+	options?: { enabled?: boolean },
 ): UseServiceAccountRoleManagerResult {
 	const queryClient = useQueryClient();
 
-	const { data, isLoading } = useGetServiceAccountRoles({ id: accountId });
+	const { data, isLoading } = useGetServiceAccountRoles(
+		{ id: accountId },
+		{ query: { enabled: options?.enabled ?? true } },
+	);
 
 	const currentRoles = useMemo<AuthtypesRoleDTO[]>(
 		() => data?.data ?? [],

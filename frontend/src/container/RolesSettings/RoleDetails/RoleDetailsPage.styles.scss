@@ -9,8 +9,9 @@
 
 	.role-details-header {
 		display: flex;
-		flex-direction: column;
-		gap: 0;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
 	}
 
 	.role-details-title {
@@ -26,44 +27,6 @@
 		cursor: default !important;
 		pointer-events: none;
 		opacity: 0.55;
-	}
-
-	.role-details-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.role-details-tab {
-		gap: 4px;
-		padding: 0 16px;
-		height: 32px;
-		border-radius: 0;
-		font-size: 12px;
-		overflow: hidden;
-		font-weight: 400;
-		line-height: 18px;
-		letter-spacing: -0.06px;
-
-		&[data-state='on'] {
-			border-radius: 2px 0 0 2px;
-		}
-	}
-
-	.role-details-tab-count {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 20px;
-		padding: 0 6px;
-		border-radius: 50px;
-		background: var(--secondary);
-		font-size: 12px;
-		font-weight: 400;
-		line-height: 20px;
-		color: var(--foreground);
-		letter-spacing: -0.06px;
-		text-transform: uppercase;
 	}
 
 	.role-details-actions {
@@ -153,6 +116,17 @@
 		border-bottom: 2px dotted var(--l1-border);
 		height: 7px;
 		margin: 0;
+	}
+
+	.role-details-permissions-learn-more {
+		color: var(--primary);
+		font-size: var(--font-size-xs);
+		text-decoration: none;
+		white-space: nowrap;
+
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.role-details-permission-list {
@@ -279,30 +253,6 @@
 
 	.role-details-skeleton {
 		padding: 16px 0;
-	}
-}
-
-.role-details-delete-action-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	min-width: 32px;
-	border: none;
-	border-radius: 2px;
-	background: transparent;
-	color: var(--destructive);
-	opacity: 0.6;
-	padding: 0;
-	transition:
-		background-color 0.2s,
-		opacity 0.2s;
-	box-shadow: none;
-
-	&:hover {
-		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-		opacity: 0.9;
 	}
 }
 

@@ -5,6 +5,9 @@ import { Input } from '@signozhq/ui/input';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Plus, Search } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents } from '../../events';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
 import { useVariant } from '../../VariantContext';
@@ -136,6 +139,17 @@ export default function ConversationsList({
 
 	const handleSelect = (id: string): void => {
 		const conv = conversations[id];
+		// Skip re-selecting the currently active thread — Notion-style click on
+		// the highlighted row in the history list shouldn't inflate the funnel.
+		const isReselectingActive = id === activeConversationId;
+		if (conv?.threadId && !isReselectingActive) {
+			void logEvent(AIAssistantEvents.ThreadOpenedFromHistory, {
+				threadId: conv.threadId,
+				threadAgeDays: Math.floor(
+					(Date.now() - conv.createdAt) / (24 * 60 * 60 * 1000),
+				),
+			});
+		}
 		if (conv?.threadId) {
 			// Always load from backend — refreshes messages and reconnects
 			// to active execution if the thread is still busy.
