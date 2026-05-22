@@ -2307,8 +2307,8 @@ def test_logs_list_filter_by_trace_id(
     Tests that filtering logs by trace_id uses the trace_summary lookup to
     narrow the query window before scanning the logs table:
     1. Returns the matching log (narrow window, single bucket).
-    2. Does not return duplicate logs when the query window spans multiple
-       exponential buckets (>1 h).
+    2. Does not return duplicate logs when the query window should span multiple
+       exponential buckets (>1 h). But is clamped to the timerange of trace.
     3. Returns no results when the query window does not contain the trace.
     4. Logs carrying a trace_id whose trace is NOT in trace_summary (e.g.
        traces disabled) are still returned — the lookup miss must not
@@ -2447,7 +2447,7 @@ def test_logs_list_filter_by_trace_id(
     assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
     assert narrow_rows[0]["data"]["span_id"] == target_root_span_id
 
-    # --- Test 2: wide window (>1 h, triggers multiple exponential buckets) ---
+    # --- Test 2: wide window (>1 h, camp to the timerange from trace_summary) ---
     # Should still return exactly one log — no duplicates from multi-bucket scan.
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
     wide_rows = _query(wide_start_ms, now_ms, target_trace_id)
