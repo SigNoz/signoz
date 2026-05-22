@@ -6,6 +6,8 @@ import { Ellipsis } from '@signozhq/icons';
 
 import { useTraceStore } from '../stores/traceStore';
 
+import styles from './TraceOptionsMenu.module.scss';
+
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
 	onToggleTraceDetails: () => void;
@@ -82,7 +84,11 @@ function TraceOptionsMenu({
 	]);
 
 	return (
-		<Dropdown menu={{ items: menuItems }} align="start">
+		<Dropdown
+			menu={{ items: menuItems }}
+			align="start"
+			className={styles.traceOptionsDropdown}
+		>
 			<Button
 				variant="ghost"
 				size="icon"

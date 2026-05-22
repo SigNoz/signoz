@@ -31,6 +31,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		isFullViewMode,
 		onToggleModelHandler,
 		groupByPerQuery,
+		enableDrillDown = false,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -60,6 +61,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	} = usePanelContextMenu({
 		widget,
 		queryResponse,
+		enableDrillDown,
 	});
 
 	const chartData = useMemo(() => {

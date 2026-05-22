@@ -2689,7 +2689,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2759,7 +2758,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2829,7 +2827,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDeploymentRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2908,7 +2905,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesHostRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2984,7 +2980,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesJobRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3032,7 +3027,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNamespaceRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3110,7 +3104,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNodeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3209,7 +3202,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3554,7 +3546,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesStatefulSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3615,7 +3606,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesVolumeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
