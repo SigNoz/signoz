@@ -24,7 +24,6 @@
 		}
 
 		&--vertical {
-			bottom: 0;
 			left: 0;
 			right: 0;
 			height: 1px;
@@ -32,11 +31,26 @@
 		}
 
 		&--horizontal {
-			right: 0;
 			top: 0;
 			bottom: 0;
 			width: 1px;
 			cursor: col-resize;
+		}
+
+		&--vertical-end {
+			bottom: 0;
+		}
+
+		&--vertical-start {
+			top: 0;
+		}
+
+		&--horizontal-end {
+			right: 0;
+		}
+
+		&--horizontal-start {
+			left: 0;
 		}
 	}
 }
