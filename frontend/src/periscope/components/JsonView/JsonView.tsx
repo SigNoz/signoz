@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -72,9 +72,8 @@ function JsonView({ data, height = '575px' }: JsonViewProps): JSX.Element {
 				<div className="json-view__wrap-toggle">
 					<Typography.Text>Wrap text</Typography.Text>
 					<Switch
-						checked={isWrapWord}
+						value={isWrapWord}
 						onChange={(checked): void => setIsWrapWord(checked)}
-						size="small"
 					/>
 				</div>
 			</div>
