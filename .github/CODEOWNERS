@@ -118,6 +118,9 @@ go.mod @therealpandey
 
 /tests/integration/ @therealpandey
 
+# e2e tests
+/tests/e2e/ @AshwinBhatkal
+
 # Flagger Owners
 
 /pkg/flagger/ @therealpandey
@@ -162,3 +165,7 @@ go.mod @therealpandey
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
+
+## Dashboard V2
+/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
