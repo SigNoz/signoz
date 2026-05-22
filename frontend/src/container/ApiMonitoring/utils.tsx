@@ -258,7 +258,6 @@ export const columnsConfig: ColumnType<APIDomainsRowData>[] = [
 				errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate;
 			return (
 				<Progress
-					status="active"
 					percent={Number((errorRateValue as number).toFixed(2))}
 					strokeLinecap="butt"
 					showInfo
@@ -1023,7 +1022,6 @@ export const getEndPointsColumnsConfig = (
 		className: `column`,
 		render: (errorRate: number | string): React.ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
 					(
 						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
@@ -2515,7 +2513,6 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
 				<Progress
-					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
 					showInfo
@@ -3023,7 +3020,6 @@ export const getAllEndpointsWidgetData = (
 		),
 		F1: (errorRate: any): ReactNode => (
 			<Progress
-				status="active"
 				percent={Number(
 					(
 						(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number

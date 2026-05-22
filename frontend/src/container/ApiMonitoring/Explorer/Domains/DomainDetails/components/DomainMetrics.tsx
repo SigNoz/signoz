@@ -137,7 +137,6 @@ function DomainMetrics({
 							<Tooltip title={formattedDomainMetricsData.errorRate}>
 								{formattedDomainMetricsData.errorRate !== '-' ? (
 									<Progress
-										status="active"
 										percent={Number(
 											Number(formattedDomainMetricsData.errorRate).toFixed(2),
 										)}

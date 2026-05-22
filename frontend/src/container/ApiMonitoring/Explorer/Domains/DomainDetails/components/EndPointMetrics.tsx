@@ -81,7 +81,6 @@ function EndPointMetrics({
 							<Tooltip title={metricsData?.errorRate}>
 								{metricsData?.errorRate !== '-' ? (
 									<Progress
-										status="active"
 										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
 										strokeLinecap="butt"
 										showInfo
