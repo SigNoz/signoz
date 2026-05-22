@@ -854,3 +854,38 @@ def test_hosts_validation_errors(
     assert err_substr.lower() in error["message"].lower(), (
         f"expected substring {err_substr!r} not found in: {error['message']!r}"
     )
+
+
+@pytest.mark.parametrize(
+    "auth_state,expected_status",
+    [
+        pytest.param("none", HTTPStatus.UNAUTHORIZED, id="no_token"),
+        pytest.param("admin", HTTPStatus.OK, id="admin_token"),
+    ],
+)
+def test_hosts_auth(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    auth_state: str,
+    expected_status: int,
+) -> None:
+    """Auth required: no Authorization header -> 401; admin Bearer -> 200."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    body = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    headers: dict = {}
+    if auth_state == "admin":
+        token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+        headers["authorization"] = f"Bearer {token}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers=headers,
+        json=body,
+        timeout=5,
+    )
+    assert response.status_code == expected_status, response.text
