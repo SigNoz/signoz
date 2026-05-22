@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"reflect"
 	"time"
 
@@ -53,20 +52,6 @@ func NewThresholdRule(
 		BaseRule: baseRule,
 		querier:  querier,
 	}, nil
-}
-
-func (r *ThresholdRule) hostFromSource() string {
-	if host := r.ExternalURLHost(); host != "" {
-		return host
-	}
-	parsedURL, err := url.Parse(r.source)
-	if err != nil {
-		return ""
-	}
-	if parsedURL.Port() != "" {
-		return fmt.Sprintf("%s://%s:%s", parsedURL.Scheme, parsedURL.Hostname(), parsedURL.Port())
-	}
-	return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Hostname())
 }
 
 func (r *ThresholdRule) Type() ruletypes.RuleType {
@@ -353,15 +338,15 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		switch r.typ {
 		case ruletypes.AlertTypeTraces:
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			if link != "" && r.ExternalURLHost() != "" {
+				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/traces-explorer?%s", r.ExternalURLHost(), link)))
+				annotations = append(annotations, ruletypes.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.ExternalURLHost(), link)})
 			}
 		case ruletypes.AlertTypeLogs:
 			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			if link != "" && r.ExternalURLHost() != "" {
+				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.ExternalURLHost(), link)))
+				annotations = append(annotations, ruletypes.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.ExternalURLHost(), link)})
 			}
 		}
 

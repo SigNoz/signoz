@@ -20,19 +20,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// defaultAlertmanagerExternalURL mirrors the default in
-// [github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver.NewConfig].
-// When the resolved external URL matches this default it means the operator
-// has not set SIGNOZ_ALERTMANAGER_SIGNOZ_EXTERNAL__URL, in which case we fall
-// back to the URL captured from the frontend at rule-creation time.
-const defaultAlertmanagerExternalURL = "http://localhost:8080"
-
 // BaseRule contains common fields and methods for all rule types
 type BaseRule struct {
 	id             string
 	name           string
 	orgID          valuer.UUID
-	source         string
 	externalURL    *url.URL
 	handledRestart bool
 
@@ -169,7 +161,6 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts .
 		id:                id,
 		orgID:             orgID,
 		name:              p.AlertName,
-		source:            p.Source,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        p.EvalWindow,
@@ -258,26 +249,17 @@ func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	if host := r.ExternalURLHost(); host != "" {
-		return fmt.Sprintf("%s/alerts/edit?ruleId=%s", host, r.ID())
-	}
-	return ruletypes.PrepareRuleGeneratorURL(r.ID(), r.source)
+	return fmt.Sprintf("%s/alerts/edit?ruleId=%s", r.ExternalURLHost(), r.ID())
 }
 
 // ExternalURLHost returns the configured alertmanager external URL.
-// It returns "" when the URL is unset or still matches the default, so that
-// callers can fall back to the URL captured from the frontend.
 // It is used as the host portion of rule-related URLs (generator URL and
 // related logs/traces links) in alert notifications.
 func (r *BaseRule) ExternalURLHost() string {
 	if r.externalURL == nil {
 		return ""
 	}
-	s := strings.TrimRight(r.externalURL.String(), "/")
-	if s == "" || s == defaultAlertmanagerExternalURL {
-		return ""
-	}
-	return s
+	return strings.TrimRight(r.externalURL.String(), "/")
 }
 
 func (r *BaseRule) SelectedQuery(ctx context.Context) string {
