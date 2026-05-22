@@ -100,13 +100,38 @@ function HostMetricsDetails({
 	);
 	const isDarkMode = useIsDarkMode();
 
-	const initialFilters = useMemo(() => {
-		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
-		const queryKey =
-			urlView === VIEW_TYPES.LOGS
-				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
-				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
-		const filters = getFiltersFromParams(searchParams, queryKey);
+	const initialLogFilters = useMemo(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+		);
+		if (filters) {
+			return filters;
+		}
+
+		return {
+			op: 'AND',
+			items: [
+				{
+					id: uuidv4(),
+					key: {
+						key: 'hostname',
+						dataType: DataTypes.String,
+						type: '',
+						id: 'hostname--string----false',
+					},
+					op: '=',
+					value: host?.hostName || '',
+				},
+			],
+		};
+	}, [host?.hostName, searchParams]);
+
+	const initialTracesFilters = useMemo(() => {
+		const filters = getFiltersFromParams(
+			searchParams,
+			INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+		);
 		if (filters) {
 			return filters;
 		}
@@ -130,11 +155,11 @@ function HostMetricsDetails({
 	}, [host?.hostName, searchParams]);
 
 	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
+		initialLogFilters,
 	);
 
 	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
+		initialTracesFilters,
 	);
 
 	useEffect(() => {
@@ -147,9 +172,9 @@ function HostMetricsDetails({
 	}, [host]);
 
 	useEffect(() => {
-		setLogFilters(initialFilters);
-		setTracesFilters(initialFilters);
-	}, [initialFilters]);
+		setLogFilters(initialLogFilters);
+		setTracesFilters(initialTracesFilters);
+	}, [initialLogFilters, initialTracesFilters]);
 
 	useEffect(() => {
 		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
@@ -214,13 +239,13 @@ function HostMetricsDetails({
 		(value: IBuilderQuery['filters'], view: VIEWS) => {
 			setLogFilters((prevFilters) => {
 				const hostNameFilter = prevFilters?.items?.find(
-					(item) => item.key?.key === 'host.name',
+					(item) => item.key?.key === 'hostname',
 				);
 				const paginationFilter = value?.items?.find(
 					(item) => item.key?.key === 'id',
 				);
 				const newFilters = value?.items?.filter(
-					(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
+					(item) => item.key?.key !== 'id' && item.key?.key !== 'hostname',
 				);
 
 				if (newFilters && newFilters?.length > 0) {

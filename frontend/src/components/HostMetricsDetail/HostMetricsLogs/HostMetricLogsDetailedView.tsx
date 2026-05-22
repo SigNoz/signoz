@@ -53,7 +53,7 @@ function HostMetricLogsDetailedView({
 						},
 						filters: {
 							items:
-								logFilters?.items?.filter((item) => item.key?.key !== 'host.name') ||
+								logFilters?.items?.filter((item) => item.key?.key !== 'hostname') ||
 								[],
 							op: 'AND',
 						},

@@ -56,7 +56,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 	} = useHandleLogsPagination({
 		timeRange,
 		filters,
-		excludeFilterKeys: ['host.name'],
+		excludeFilterKeys: ['hostname'],
 		basePayload,
 	});
 
