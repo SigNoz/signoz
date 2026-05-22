@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Switch, Tooltip } from 'antd';
+import { Button, Divider, Tooltip } from 'antd';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
@@ -115,11 +116,7 @@ function AlertActionButtons({
 			<div className="alert-action-buttons">
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
-						<Switch
-							size="small"
-							onChange={toggleAlertRule}
-							checked={!isAlertRuleDisabled}
-						/>
+						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
 					)}
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />

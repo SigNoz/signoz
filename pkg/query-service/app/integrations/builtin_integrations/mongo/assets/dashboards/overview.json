@@ -80,9 +80,9 @@
             "id": "a2c21714-a814-4d31-9b56-7367c3208801",
             "modificationUUID": "448e675a-4531-45b1-b434-a9ee809470d6",
             "multiSelect": true,
-            "name": "host_name",
+            "name": "host.name",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mongodb_memory_usage'\nGROUP BY host_name",
+            "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mongodb_memory_usage'\nGROUP BY `host.name`",
             "selectedValue": [
                 "Srikanths-MacBook-Pro.local"
             ],
@@ -108,7 +108,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_operation_count",
+                                    "metricName": "mongodb.operation.count",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -119,7 +119,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -183,7 +183,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_operation_time",
+                                    "metricName": "mongodb.operation.time",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -194,7 +194,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -258,7 +258,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_cache_operations",
+                                    "metricName": "mongodb.cache.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -269,7 +269,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
@@ -333,7 +333,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_operation_latency_time",
+                                    "metricName": "mongodb.operation.latency.time",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "max",
                                     "temporality": null,
@@ -344,7 +344,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(operation = 'read' AND host_name IN $host_name)"
+                                "expression": "(operation = 'read' AND host.name IN $host.name)"
                             },
                             "groupBy": [],
                             "having": {
@@ -399,7 +399,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_operation_latency_time",
+                                    "metricName": "mongodb.operation.latency.time",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "max",
                                     "temporality": null,
@@ -410,7 +410,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND operation = 'write')"
+                                "expression": "(host.name IN $host.name AND operation = 'write')"
                             },
                             "groupBy": [],
                             "having": {
@@ -465,7 +465,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_operation_latency_time",
+                                    "metricName": "mongodb.operation.latency.time",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "max",
                                     "temporality": null,
@@ -476,7 +476,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "(host_name IN $host_name AND operation = 'command')"
+                                "expression": "(host.name IN $host.name AND operation = 'command')"
                             },
                             "groupBy": [],
                             "having": {
@@ -531,7 +531,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_network_io_receive",
+                                    "metricName": "mongodb.network.io.receive",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -542,22 +542,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Bytes received :: {{host_name}}",
+                            "legend": "Bytes received :: {{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -566,7 +566,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mongodb_network_io_transmit",
+                                    "metricName": "mongodb.network.io.transmit",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -577,22 +577,22 @@
                             "disabled": false,
                             "expression": "B",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Bytes transmitted :: {{host_name}}",
+                            "legend": "Bytes transmitted :: {{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "B",

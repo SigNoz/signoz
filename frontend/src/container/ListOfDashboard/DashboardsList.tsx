@@ -20,11 +20,11 @@ import {
 	Modal,
 	Popover,
 	Skeleton,
-	Switch,
 	Table,
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -964,8 +964,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked
+									value
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -984,9 +983,8 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
 									disabled
-									checked
+									value
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1004,8 +1002,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedAt}
+									value={visibleColumns.updatedAt}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1023,8 +1020,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedBy}
+									value={visibleColumns.updatedBy}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
