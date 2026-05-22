@@ -142,7 +142,7 @@ func parseAndSortGroups(
 
 // filterMetricGroupsByMetadata drops any ranked group whose compositeKey is
 // not present in metadataMap. Keeps metricGroups a strict subset of the
-// metadatamap ( which ideally should be the case anyway, but this is a sanity check)
+// metadatamap ( which ideally should be the case anyway, but this is a sanity check).
 func filterMetricGroupsByMetadata(
 	metricGroups []rankedGroup,
 	metadataMap map[string]map[string]string,
