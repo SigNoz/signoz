@@ -18,6 +18,17 @@ const getLabelName = (
 
 		const results = variables.map((variable) => metric[variable]);
 
+		// Fall back to query name if any `{{var}}` references a label that
+		// isn't on this series — avoids rendering "undefined" in the legend.
+		const hasMissingVariable = variables.some(
+			(variable, index) =>
+				legends.includes(`{{${variable}}}`) &&
+				(results[index] === undefined || results[index] === null),
+		);
+		if (hasMissingVariable) {
+			return query;
+		}
+
 		let endResult = legends;
 
 		variables.forEach((e, index) => {
