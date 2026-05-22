@@ -25,20 +25,26 @@ func (m *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any
 		Where("org_id = ?", orgID).
 		Where("element_type = ?", elementType)
 
-	var count int
+	var result struct {
+		Total   int `bun:"total"`
+		Enabled int `bun:"enabled_count"`
+	}
 	err := m.sqlStore.BunDB().NewSelect().
 		TableExpr("agent_config_element AS e").
 		Join("JOIN agent_config_version AS v ON v.id = e.version_id").
+		Join("JOIN pipelines AS p ON p.id = e.element_id").
 		Where("v.org_id = ?", orgID).
 		Where("v.element_type = ?", elementType).
 		Where("v.version = (?)", subq).
-		ColumnExpr("COUNT(*) AS count").
-		Scan(ctx, &count)
+		ColumnExpr("COUNT(*) AS total").
+		ColumnExpr("SUM(CASE WHEN p.enabled THEN 1 ELSE 0 END) AS enabled_count").
+		Scan(ctx, &result)
 	if err != nil {
 		return nil, err
 	}
 
 	return map[string]any{
-		"logs_pipeline.count": count,
+		"logs_pipeline.count.total":   result.Total,
+		"logs_pipeline.count.enabled": result.Enabled,
 	}, nil
 }
