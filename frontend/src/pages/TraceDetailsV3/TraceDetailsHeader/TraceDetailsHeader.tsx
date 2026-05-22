@@ -16,7 +16,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
-import history from 'lib/history';
+import history, { hasInAppHistory } from 'lib/history';
 import {
 	ArrowLeft,
 	CalendarClock,
@@ -96,13 +96,7 @@ function TraceDetailsHeader({
 	}, [traceID]);
 
 	const handlePreviousBtnClick = useCallback((): void => {
-		const isSpaNavigate =
-			document.referrer &&
-			// oxlint-disable-next-line signoz/no-raw-absolute-path
-			new URL(document.referrer).origin === window.location.origin;
-		const hasBackHistory = window.history.length > 1;
-
-		if (isSpaNavigate && hasBackHistory) {
+		if (hasInAppHistory()) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
