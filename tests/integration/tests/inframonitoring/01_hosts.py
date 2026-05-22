@@ -498,3 +498,125 @@ def test_hosts_filter_by_status(
             assert r["status"] == "inactive"
             assert r["activeHostCount"] == 0
             assert r["inactiveHostCount"] == 1
+
+
+def test_hosts_groupby_hostname(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Explicit groupBy=[host.name] returns one record per distinct host."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [
+                {
+                    "name": "host.name",
+                    "fieldDataType": "string",
+                    "fieldContext": "resource",
+                },
+            ],
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 4
+    assert {r["hostName"] for r in data["records"]} == {
+        "prod-linux-1",
+        "prod-windows-1",
+        "dev-linux-1",
+        "dev-windows-1",
+    }
+    for r in data["records"]:
+        assert r["activeHostCount"] + r["inactiveHostCount"] == 1
+
+
+def test_hosts_groupby_os_type(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """groupBy=[os.type] aggregates active/inactive counts and metric values per os.type."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_groupby_os_type.jsonl"),
+            base_time=now - timedelta(minutes=24),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=30)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [
+                {
+                    "name": "os.type",
+                    "fieldDataType": "string",
+                    "fieldContext": "resource",
+                },
+            ],
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["total"] == 2
+
+    by_os = {r["meta"]["os.type"]: r for r in data["records"]}
+    assert set(by_os.keys()) == {"linux", "windows"}
+
+    # Per-group active/inactive counts. Seed had linux: 2 active + 1 inactive,
+    # windows: 1 active + 2 inactive.
+    assert by_os["linux"]["activeHostCount"] == 2
+    assert by_os["linux"]["inactiveHostCount"] == 1
+    assert by_os["windows"]["activeHostCount"] == 1
+    assert by_os["windows"]["inactiveHostCount"] == 2
+
+    # When host.name is NOT in groupBy: per-record hostName is empty.
+    for r in data["records"]:
+        assert r["hostName"] == ""
+
+    # Aggregated metric values per os.type group. Values differ between groups
+    # because active hosts (last sample step-floored out) and inactive hosts
+    # (all 3 samples averaged) contribute slightly different per-host
+    # contributions to the space-aggregated formula.
+    expected = {
+        "linux": {
+            "cpu": 0.3333333333333333,
+            "memory": 0.25892857142857145,
+            "wait": 0,
+            "load15": 2.15,
+            "diskUsage": 0.5071428571428571,
+        },
+        "windows": {
+            "cpu": 0.33333333333333337,
+            "memory": 0.2609375,
+            "wait": 0,
+            "load15": 2.47,
+            "diskUsage": 0.50875,
+        },
+    }
+    for os_type, rec in by_os.items():
+        for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
+            assert compare_values(rec[field], expected[os_type][field], 1e-9), (
+                f"{os_type}.{field}: got {rec[field]}, expected {expected[os_type][field]}"
+            )
