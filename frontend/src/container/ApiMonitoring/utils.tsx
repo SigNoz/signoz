@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
+import { Progress, TableColumnType as ColumnType, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -972,13 +973,9 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Tag
-									key={value}
-									color={Color.BG_SLATE_100}
-									className="endpoint-group-tag-item"
-								>
+								<Badge key={value} color="vanilla" className="endpoint-group-tag-item">
 									{value === '' ? '<no-value>' : value}
-								</Tag>
+								</Badge>
 							))
 						: endPointName}
 				</div>

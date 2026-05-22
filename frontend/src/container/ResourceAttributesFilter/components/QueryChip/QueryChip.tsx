@@ -1,3 +1,4 @@
+import { X } from '@signozhq/icons';
 import {
 	convertMetricKeyToTrace,
 	getResourceDeploymentKeys,
@@ -20,13 +21,19 @@ function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 
 	return (
 		<QueryChipContainer>
-			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
-			<QueryChipItem>{queryData.operator}</QueryChipItem>
-			<QueryChipItem
-				closable={queryData.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled)}
-				onClose={onCloseHandler}
-			>
+			<QueryChipItem color="vanilla">
+				{convertMetricKeyToTrace(queryData.tagKey)}
+			</QueryChipItem>
+			<QueryChipItem color="vanilla">{queryData.operator}</QueryChipItem>
+			<QueryChipItem color="vanilla">
 				{queryData.tagValue.join(', ')}
+				{queryData.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled) && (
+					<X
+						size={12}
+						style={{ cursor: 'pointer', marginInlineStart: 4 }}
+						onClick={onCloseHandler}
+					/>
+				)}
 			</QueryChipItem>
 		</QueryChipContainer>
 	);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Radio, RadioChangeEvent, Tag } from 'antd';
+import { Radio, RadioChangeEvent } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -64,9 +65,7 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Tag bordered={false} color="geekblue">
-						Beta
-					</Tag>
+					<Badge color="robin">Beta</Badge>
 				</div>
 			),
 			value: 'light',

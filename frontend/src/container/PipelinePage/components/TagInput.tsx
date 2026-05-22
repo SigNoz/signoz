@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleX } from '@signozhq/icons';
-import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
+import { CircleAlert, CircleX, X } from '@signozhq/icons';
+import { Button, Input, InputRef, message, Modal, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 import { tagInputStyle } from '../PipelineListsView/config';
 import { TagInputWrapper } from './styles';
@@ -90,12 +91,7 @@ function TagInput({
 		}
 		const isLongTag = tag.length > 20;
 		const tagElem = (
-			<Tag
-				key={tag}
-				closable
-				style={{ userSelect: 'none' }}
-				onClose={handleClose(tag)}
-			>
+			<Badge key={tag} color="vanilla" style={{ userSelect: 'none' }}>
 				<span
 					onDoubleClick={(e): void => {
 						setEditInputIndex(index);
@@ -105,7 +101,12 @@ function TagInput({
 				>
 					{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 				</span>
-			</Tag>
+				<X
+					size={12}
+					style={{ cursor: 'pointer', marginInlineStart: 4 }}
+					onClick={handleClose(tag)}
+				/>
+			</Badge>
 		);
 		return isLongTag ? (
 			<Tooltip title={tag} key={tag}>

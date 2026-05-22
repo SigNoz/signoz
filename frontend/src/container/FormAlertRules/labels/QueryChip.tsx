@@ -1,3 +1,4 @@
+import { X } from '@signozhq/icons';
 import { QueryChipContainer, QueryChipItem } from './styles';
 import { ILabelRecord } from './types';
 
@@ -13,11 +14,15 @@ export default function QueryChip({
 	const { key, value } = queryData;
 	return (
 		<QueryChipContainer>
-			<QueryChipItem
-				closable={key !== 'severity' && key !== 'description'}
-				onClose={(): void => onRemove(key)}
-			>
+			<QueryChipItem color="vanilla">
 				{key}: {value}
+				{key !== 'severity' && key !== 'description' && (
+					<X
+						size={12}
+						style={{ cursor: 'pointer', marginInlineStart: 4 }}
+						onClick={(): void => onRemove(key)}
+					/>
+				)}
 			</QueryChipItem>
 		</QueryChipContainer>
 	);

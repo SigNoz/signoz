@@ -1,7 +1,8 @@
 import React, { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
+import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
@@ -15,7 +16,7 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
+import { CalendarClock, PenLine, Trash2, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -48,10 +49,10 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
 				const isLongTag = (tag?.label as string)?.length > 20;
 				const tagElem = (
-					<Tag
+					<Badge
 						key={tag.value}
-						onClose={(): void => handleClose?.(tag?.value)}
-						closable={closable}
+						color={index % 2 ? 'sakura' : 'robin'}
+						variant="outline"
 						className={cx(
 							{ 'red-tag': index % 2 },
 							{ 'non-closable-tag': !closable },
@@ -62,7 +63,14 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 								? `${(tag?.label as string | null)?.slice(0, 20)}...`
 								: tag?.label}
 						</span>
-					</Tag>
+						{closable && (
+							<X
+								size={12}
+								style={{ cursor: 'pointer', marginInlineStart: 4 }}
+								onClick={(): void => handleClose?.(tag?.value)}
+							/>
+						)}
+					</Badge>
 				);
 				return isLongTag ? (
 					<Tooltip title={tag?.label} key={tag?.value}>
@@ -93,7 +101,7 @@ function HeaderComponent({
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
 				<Typography>{name}</Typography>
-				<Tag>{duration}</Tag>
+				<Badge color="vanilla">{duration}</Badge>
 			</Flex>
 
 			{isCrudEnabled && (
@@ -155,9 +163,7 @@ export function CollapseListContent({
 				created_by_name ? (
 					<Flex gap={8}>
 						<Typography>{created_by_name}</Typography>
-						{created_by_email && (
-							<Tag style={{ borderRadius: 20 }}>{created_by_email}</Tag>
-						)}
+						{created_by_email && <Badge color="vanilla">{created_by_email}</Badge>}
 					</Flex>
 				) : (
 					'-'

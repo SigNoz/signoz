@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
-import { Button, Flex, Tag } from 'antd';
+import { Button, Flex } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import Input from 'components/Input';
 
 import './Tags.styles.scss';
@@ -46,14 +47,14 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 	return (
 		<div className="tags-container">
 			{tags.map<React.ReactNode>((tag) => (
-				<Tag
-					key={tag}
-					closable
-					style={{ userSelect: 'none' }}
-					onClose={(): void => handleClose(tag)}
-				>
+				<Badge key={tag} color="vanilla" style={{ userSelect: 'none' }}>
 					<span>{tag}</span>
-				</Tag>
+					<X
+						size={12}
+						style={{ cursor: 'pointer', marginInlineStart: 4 }}
+						onClick={(): void => handleClose(tag)}
+					/>
+				</Badge>
 			))}
 
 			{inputVisible && (

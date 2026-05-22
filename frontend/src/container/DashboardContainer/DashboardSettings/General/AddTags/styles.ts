@@ -1,4 +1,5 @@
-import { Col, Tag } from 'antd';
+import { Col } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
 export const TagsContainer = styled.div`
@@ -8,7 +9,7 @@ export const TagsContainer = styled.div`
 	gap: 6px;
 `;
 
-export const NewTagContainer = styled(Tag)`
+export const NewTagContainer = styled(Badge)`
 	&&& {
 		display: flex;
 		justify-content: space-between;

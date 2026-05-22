@@ -31,7 +31,7 @@ const PUBLIC_DIR_SEGMENTS = ['/Icons/', '/Images/', '/Logos/', '/svgs/'];
 
 function collectBinaryStringParts(node) {
 	if (node.type === 'Literal' && typeof node.value === 'string')
-		return [node.value];
+		{return [node.value];}
 	if (node.type === 'BinaryExpression' && node.operator === '+') {
 		return [
 			...collectBinaryStringParts(node.left),
@@ -83,8 +83,8 @@ export default {
 					return;
 				}
 				const value = node.value;
-				if (typeof value !== 'string') return;
-				if (isExternalUrl(value)) return;
+				if (typeof value !== 'string') {return;}
+				if (isExternalUrl(value)) {return;}
 
 				if (isAbsolutePath(value) && containsAssetExtension(value)) {
 					context.report({
@@ -114,7 +114,7 @@ export default {
 				}
 
 				const urlPath = extractUrlPath(value);
-				if (urlPath && isExternalUrl(urlPath)) return;
+				if (urlPath && isExternalUrl(urlPath)) {return;}
 				if (urlPath && isAbsolutePath(urlPath) && containsAssetExtension(urlPath)) {
 					context.report({
 						node,
@@ -150,10 +150,10 @@ export default {
 
 			TemplateLiteral(node) {
 				const quasis = node.quasis;
-				if (!quasis || quasis.length === 0) return;
+				if (!quasis || quasis.length === 0) {return;}
 
 				const firstQuasi = quasis[0].value.raw;
-				if (isExternalUrl(firstQuasi)) return;
+				if (isExternalUrl(firstQuasi)) {return;}
 
 				const hasAssetExt = quasis.some((q) => containsAssetExtension(q.value.raw));
 
@@ -196,7 +196,7 @@ export default {
 					}
 
 					const urlPath = extractUrlPath(firstQuasi);
-					if (urlPath && isExternalUrl(urlPath)) return;
+					if (urlPath && isExternalUrl(urlPath)) {return;}
 					if (urlPath && isAbsolutePath(urlPath) && hasAssetExtension(urlPath)) {
 						context.report({
 							node,
@@ -238,17 +238,17 @@ export default {
 			},
 
 			BinaryExpression(node) {
-				if (node.operator !== '+') return;
+				if (node.operator !== '+') {return;}
 
 				const parts = collectBinaryStringParts(node);
 				const prefixParts = [];
 				for (const part of parts) {
-					if (part === null) break;
+					if (part === null) {break;}
 					prefixParts.push(part);
 				}
 				const staticPrefix = prefixParts.join('');
 
-				if (isExternalUrl(staticPrefix)) return;
+				if (isExternalUrl(staticPrefix)) {return;}
 
 				const hasExt = parts.some(
 					(part) => part !== null && containsAssetExtension(part),
@@ -282,8 +282,8 @@ export default {
 
 			ImportDeclaration(node) {
 				const src = node.source.value;
-				if (typeof src !== 'string') return;
-				if (!hasAssetExtension(src)) return;
+				if (typeof src !== 'string') {return;}
+				if (!hasAssetExtension(src)) {return;}
 
 				if (isAbsolutePath(src)) {
 					context.report({ node, messageId: 'absoluteImport' });
@@ -306,9 +306,9 @@ export default {
 
 			ImportExpression(node) {
 				const src = node.source;
-				if (!src || src.type !== 'Literal' || typeof src.value !== 'string') return;
+				if (!src || src.type !== 'Literal' || typeof src.value !== 'string') {return;}
 				const value = src.value;
-				if (!hasAssetExtension(value)) return;
+				if (!hasAssetExtension(value)) {return;}
 
 				if (isAbsolutePath(value)) {
 					context.report({ node, messageId: 'absoluteImport' });

@@ -1,3 +1,5 @@
+import { X } from '@signozhq/icons';
+
 import { HavingFilterTagProps } from './HavingFilterTag.interfaces';
 import { StyledTag, StyledText } from './HavingFilterTag.styled';
 
@@ -12,10 +14,17 @@ export function HavingFilterTag({
 	};
 
 	return (
-		<StyledTag closable={closable} onClose={onClose}>
+		<StyledTag color="vanilla">
 			<span role="button" tabIndex={0} onClick={handleClick}>
 				<StyledText>{value}</StyledText>
 			</span>
+			{closable && (
+				<X
+					size={12}
+					style={{ cursor: 'pointer', marginInlineStart: 4 }}
+					onClick={onClose}
+				/>
+			)}
 		</StyledTag>
 	);
 }

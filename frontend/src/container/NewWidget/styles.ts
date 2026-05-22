@@ -1,4 +1,4 @@
-import { Tag as AntDTag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -20,6 +20,6 @@ export const PanelContainer = styled.div`
 	overflow-y: auto;
 `;
 
-export const Tag = styled(AntDTag)`
+export const Tag = styled(Badge)`
 	margin: 0;
 `;

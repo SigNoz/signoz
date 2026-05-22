@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Select, Spin, Tag, Tooltip } from 'antd';
+import { Button, Select, Spin, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import {
@@ -37,6 +38,7 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
+	X,
 } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
@@ -199,7 +201,7 @@ function QueryBuilderSearch({
 		const isDisabled = !!searchValue;
 
 		return (
-			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
+			<Badge color="vanilla">
 				<Tooltip title={chipValue}>
 					<TypographyText
 						$isInNin={isInNin}
@@ -213,7 +215,14 @@ function QueryBuilderSearch({
 						{chipValue}
 					</TypographyText>
 				</Tooltip>
-			</Tag>
+				{!searchValue && closable && (
+					<X
+						size={12}
+						style={{ cursor: 'pointer', marginInlineStart: 4 }}
+						onClick={onCloseHandler}
+					/>
+				)}
+			</Badge>
 		);
 	};
 

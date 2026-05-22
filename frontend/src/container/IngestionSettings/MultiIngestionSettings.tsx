@@ -18,7 +18,6 @@ import {
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
-	Tag,
 	Tooltip,
 } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
@@ -1055,7 +1054,10 @@ function MultiIngestionSettings(): JSX.Element {
 													<div className="ingestion-key-tags">
 														{APIKey.tags.map((tag, index) => (
 															// eslint-disable-next-line react/no-array-index-key
-															<Tag key={`${tag}-${index}`}> {tag} </Tag>
+															<Badge key={`${tag}-${index}`} color="vanilla">
+																{' '}
+																{tag}{' '}
+															</Badge>
 														))}
 													</div>
 												</div>

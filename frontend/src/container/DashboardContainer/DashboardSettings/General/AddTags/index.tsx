@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
+import { X } from '@signozhq/icons';
 import { Col, Tooltip } from 'antd';
 import Input from 'components/Input';
 
@@ -60,12 +61,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer
-						closable
-						key={tag}
-						onClose={(): void => handleClose(tag)}
-						className="tag-container"
-					>
+					<NewTagContainer key={tag} color="vanilla" className="tag-container">
 						<span
 							onDoubleClick={(e): void => {
 								setEditInputIndex(index);
@@ -75,6 +71,11 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 						>
 							{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 						</span>
+						<X
+							size={12}
+							style={{ cursor: 'pointer', marginInlineStart: 4 }}
+							onClick={(): void => handleClose(tag)}
+						/>
 					</NewTagContainer>
 				);
 
