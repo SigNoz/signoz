@@ -44,7 +44,7 @@ func (m *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any
 	}
 
 	return map[string]any{
-		"logs_pipeline.count.total":   result.Total,
-		"logs_pipeline.count.enabled": result.Enabled,
+		"logs_pipeline.total.count":   result.Total,
+		"logs_pipeline.enabled.count": result.Enabled,
 	}, nil
 }
