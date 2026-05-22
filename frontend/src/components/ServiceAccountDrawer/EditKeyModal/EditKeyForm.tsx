@@ -190,11 +190,11 @@ function EditKeyForm({
 					>
 						<Button
 							type="submit"
+							form={FORM_ID}
 							variant="solid"
 							color="primary"
 							loading={isSaving}
 							disabled={!isDirty}
-							{...({ form: FORM_ID } as Record<string, string>)}
 						>
 							Save Changes
 						</Button>

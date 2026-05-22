@@ -223,23 +223,23 @@ function PrettyView({
 			return (
 				<span className="pretty-view__value-row">
 					<span>{content}</span>
-					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-					<span onClick={(e: React.MouseEvent): void => e.stopPropagation()}>
-						<Dropdown
-							menu={{ items: menuItems }}
-							align="start"
-							className="pretty-view-actions-dropdown"
+					<Dropdown
+						menu={{ items: menuItems }}
+						align="start"
+						className="pretty-view-actions-dropdown"
+						// Stop click bubbling so item clicks don't reach clickable ancestors
+						// of the trigger through the React tree.
+						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
+					>
+						<span
+							className="pretty-view__actions"
+							onClick={(e): void => e.stopPropagation()}
+							role="button"
+							tabIndex={0}
 						>
-							<span
-								className="pretty-view__actions"
-								onClick={(e): void => e.stopPropagation()}
-								role="button"
-								tabIndex={0}
-							>
-								<Ellipsis size={12} />
-							</span>
-						</Dropdown>
-					</span>
+							<Ellipsis size={12} />
+						</span>
+					</Dropdown>
 				</span>
 			);
 		},
