@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { LayoutGrid } from '@signozhq/icons';
 
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
-import List from './components/List';
+import DashboardsList from './components/DashboardsList';
 
 import styles from './DashboardsListPageV2.module.scss';
 
@@ -33,7 +33,7 @@ function DashboardsListPageV2(): JSX.Element {
 					enableFeedback
 				/>
 			</div>
-			<List />
+			<DashboardsList />
 		</div>
 	);
 }
