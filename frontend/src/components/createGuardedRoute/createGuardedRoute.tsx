@@ -9,13 +9,10 @@ import { parsePermission } from 'hooks/useAuthZ/utils';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
 
-import ErrorBoundaryFallback from '../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import AppLoading from '../AppLoading/AppLoading';
 import { GuardAuthZ } from '../GuardAuthZ/GuardAuthZ';
 
 import './createGuardedRoute.styles.scss';
-
-const onErrorFallback = (): JSX.Element => <ErrorBoundaryFallback />;
 
 function OnNoPermissionsFallback(response: {
 	requiredPermissionName: BrandedPermission;
@@ -63,7 +60,6 @@ export function createGuardedRoute<P extends object, R extends AuthZRelation>(
 				relation={relation}
 				object={resolvedObject}
 				fallbackOnLoading={<AppLoading />}
-				fallbackOnError={onErrorFallback}
 				fallbackOnNoPermissions={(response): ReactElement => (
 					<OnNoPermissionsFallback {...response} />
 				)}

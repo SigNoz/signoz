@@ -10,7 +10,7 @@ import (
 
 type Pods struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []PodRecord            `json:"records" required:"true"`
+	Records                []PodRecord            `json:"records" required:"true" nullable:"false"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
@@ -97,6 +97,9 @@ func (req *PostablePods) Validate() error {
 		}
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by direction: %s", req.OrderBy.Direction)
+		}
+		if req.OrderBy.Key.Name == PodNameAttrKey && len(req.GroupBy) > 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "order by '%s' is only allowed when groupBy is empty", PodNameAttrKey)
 		}
 	}
 
