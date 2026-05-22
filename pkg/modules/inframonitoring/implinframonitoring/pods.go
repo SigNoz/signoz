@@ -95,14 +95,16 @@ func buildPodRecords(
 			}
 		}
 
-		if attrs, ok := metadataMap[compositeKey]; ok && isPodUIDInGroupBy {
-			// the condition above ensures we deduce age only if pod uid is in group by because if
-			// it's not in group by then we might have multiple pod uids in the same group and hence then podAge wont make sense
-			if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
-				if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
-					startTimeMs := t.UnixMilli()
-					if startTimeMs > 0 {
-						record.PodAge = reqEnd - startTimeMs
+		if attrs, ok := metadataMap[compositeKey]; ok {
+			// podAge only makes sense when pod uid is in groupBy. Otherwise the
+			// group can contain multiple pods with different start times.
+			if isPodUIDInGroupBy {
+				if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
+					if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
+						startTimeMs := t.UnixMilli()
+						if startTimeMs > 0 {
+							record.PodAge = reqEnd - startTimeMs
+						}
 					}
 				}
 			}
