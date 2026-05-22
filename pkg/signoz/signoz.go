@@ -497,6 +497,7 @@ func New(
 		modules.AuthDomain,
 		serviceAccount,
 		cloudIntegrationModule,
+		modules.LogsPipeline,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
