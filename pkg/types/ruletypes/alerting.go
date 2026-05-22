@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strings"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -203,15 +202,6 @@ func PrepareRuleGeneratorURL(ruleID string, source string) string {
 	parsedSource, err := url.Parse(source)
 	if err != nil {
 		return ""
-	}
-	// since we capture window.location when a new rule is created
-	// we end up with rulesource host:port/alerts/new. in this case
-	// we want to replace new with rule id parameter
-
-	hasNew := strings.LastIndex(source, "new")
-	if hasNew > -1 {
-		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", source[0:hasNew], ruleID)
-		return ruleURL
 	}
 
 	// The source contains the encoded query, start and end time
