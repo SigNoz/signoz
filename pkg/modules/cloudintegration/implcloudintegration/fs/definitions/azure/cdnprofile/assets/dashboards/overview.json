@@ -313,7 +313,6 @@
                   "metricName": "azure_totallatency_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -322,35 +321,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f001-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f001-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f001-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f001-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -430,7 +400,6 @@
                   "metricName": "azure_originlatency_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -439,35 +408,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f002-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f002-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f002-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f002-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -547,7 +487,6 @@
                   "metricName": "azure_averagewebsocketconnectionduration_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -556,35 +495,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f003-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f003-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f003-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f003-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -669,7 +579,6 @@
                   "metricName": "azure_originhealthpercentage_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -678,35 +587,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f004-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f004-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f004-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f004-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -791,7 +671,6 @@
                   "metricName": "azure_bytehitratio_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -800,35 +679,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f005-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f005-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f005-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f005-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -908,7 +758,6 @@
                   "metricName": "azure_percentage4xx_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -917,35 +766,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f006-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f006-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f006-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f006-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1025,7 +845,6 @@
                   "metricName": "azure_percentage5xx_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1034,35 +853,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "f007-name",
-                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
-                    "op": "IN",
-                    "value": "$cdnprofile"
-                  },
-                  {
-                    "id": "f007-sub",
-                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "f007-rg",
-                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "f007-type",
-                    "key": { "id": "type", "key": "type", "type": "" },
-                    "op": "=",
-                    "value": "Microsoft.Cdn/profiles"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1127,15 +917,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_requestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_requestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f008-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f008-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f008-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f008-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1168,15 +952,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_originrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_originrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f009-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f009-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f009-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f009-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1209,15 +987,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_requestsize_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_requestsize_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f010-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f010-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f010-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f010-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1250,15 +1022,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_responsesize_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_responsesize_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f011-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f011-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f011-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f011-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1291,15 +1057,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_activewebsocketconnections_total", "reduceTo": "max", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "max" }],
+            "aggregations": [{ "metricName": "azure_activewebsocketconnections_total", "reduceTo": "max", "spaceAggregation": "sum", "timeAggregation": "max" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f012-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f012-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f012-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f012-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1332,15 +1092,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_websocketconnections_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_websocketconnections_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f013-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f013-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f013-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f013-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1373,15 +1127,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_webapplicationfirewallrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_webapplicationfirewallrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f014-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f014-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f014-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f014-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1414,15 +1162,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_webapplicationfirewallcaptcharequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_webapplicationfirewallcaptcharequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f015-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f015-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f015-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f015-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],
@@ -1455,15 +1197,9 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_webapplicationfirewalljsrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_webapplicationfirewalljsrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "timeAggregation": "sum" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
-            "filters": { "items": [
-              { "id": "f016-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
-              { "id": "f016-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
-              { "id": "f016-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
-              { "id": "f016-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
-            ], "op": "AND" },
             "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
             "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
           }],

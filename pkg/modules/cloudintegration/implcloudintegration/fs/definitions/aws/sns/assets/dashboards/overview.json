@@ -92,7 +92,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -111,63 +111,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_SNS_NumberOfMessagesPublished_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_SNS_NumberOfMessagesPublished_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_SNS_NumberOfMessagesPublished_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "8fd51b53",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TopicName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TopicName",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Topic"
-                    ]
-                  },
-                  {
-                    "id": "b18187c3",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "eebe4578",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(TopicName IN $Topic AND cloud.region = $Region AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -180,15 +136,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{TopicName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -291,63 +246,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_SNS_PublishSize_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_SNS_PublishSize_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_SNS_PublishSize_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "1aa0d1a9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TopicName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TopicName",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Topic"
-                    ]
-                  },
-                  {
-                    "id": "62255cff",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "17c7153e",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(TopicName IN $Topic AND cloud.region = $Region AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -360,15 +271,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{TopicName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -471,63 +381,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_SNS_NumberOfNotificationsDelivered_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_SNS_NumberOfNotificationsDelivered_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_SNS_NumberOfNotificationsDelivered_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "c96a4ac0",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TopicName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TopicName",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Topic"
-                    ]
-                  },
-                  {
-                    "id": "8ca86829",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "8a444f66",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(TopicName IN $Topic AND cloud.region = $Region AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -540,15 +406,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{TopicName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -651,63 +516,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_SNS_NumberOfNotificationsFailed_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_SNS_NumberOfNotificationsFailed_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_SNS_NumberOfNotificationsFailed_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "6175f3d5",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TopicName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TopicName",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Topic"
-                    ]
-                  },
-                  {
-                    "id": "e2084931",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "0b05209a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(TopicName IN $Topic AND cloud.region = $Region AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -720,15 +541,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{TopicName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []

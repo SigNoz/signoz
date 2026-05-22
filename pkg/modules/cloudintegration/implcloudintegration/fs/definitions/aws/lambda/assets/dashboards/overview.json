@@ -103,7 +103,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -121,70 +121,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_Invocations_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_Invocations_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_Invocations_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "49d33567",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b9dfa1c9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "86defeb5",
-                    "key": {
-                      "dataType": "",
-                      "isColumn": false,
-                      "key": "FunctionName",
-                      "type": ""
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "f89a10c4",
-                    "key": {
-                      "dataType": "",
-                      "isColumn": false,
-                      "key": "Resource",
-                      "type": ""
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -213,15 +162,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -323,74 +271,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_Duration_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_Duration_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_Duration_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "af05252d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "983efea5",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "88eb3092",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "a35c6406",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -419,15 +312,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -529,74 +421,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_Errors_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_Errors_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_Errors_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "c67262c9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "c5ccbbf4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "c1b278d1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "a45d80e1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -625,15 +462,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -735,74 +571,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_Throttles_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_Throttles_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_Throttles_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "6c956b7d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "5fef840b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "6f892a9a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "ce91320c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -831,15 +612,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -941,74 +721,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_AsyncEventsReceived_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_AsyncEventsReceived_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_AsyncEventsReceived_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "f4c6246b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "5b7a75a1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "4e1ba051",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "5848f496",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1037,15 +762,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1147,74 +871,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_AsyncEventAge_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_AsyncEventAge_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_AsyncEventAge_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "1aee3626",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "11631fda",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "c5ea0a17",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "1952b27e",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1243,15 +912,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1353,74 +1021,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Lambda_AsyncEventsDropped_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Lambda_AsyncEventsDropped_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Lambda_AsyncEventsDropped_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "a8c65389",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "2ab205c8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "22d3c9b6",
-                    "key": {
-                      "dataType": "string",
-                      "id": "FunctionName--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "FunctionName",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "1e7060a6",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Resource--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Resource",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1449,15 +1062,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{FunctionName}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []

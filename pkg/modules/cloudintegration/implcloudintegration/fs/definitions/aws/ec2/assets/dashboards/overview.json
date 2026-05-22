@@ -94,7 +94,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -112,61 +112,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_CPUUtilization_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_CPUUtilization_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_CPUUtilization_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "d302d50d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "e6c54e87",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "7907211a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -195,15 +153,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -305,61 +262,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_CPUCreditUsage_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_CPUCreditUsage_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_CPUCreditUsage_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "30ded0dc",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "c935f6ec",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "d092fef8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -388,15 +303,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -498,61 +412,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_EBSReadBytes_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_EBSReadBytes_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_EBSReadBytes_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "a5fbfa4a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "87071f13",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "c84a88c4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -581,72 +453,29 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}} - Reads",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             },
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_EBSWriteBytes_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_EBSWriteBytes_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_EBSWriteBytes_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "B",
-              "filters": {
-                "items": [
-                  {
-                    "id": "4d10ca4b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "fc2db932",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "a3fd74c0",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -675,15 +504,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}} - Writes",
               "limit": null,
               "orderBy": [],
               "queryName": "B",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -785,61 +613,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_EBSReadOps_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_EBSReadOps_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_EBSReadOps_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "85d84806",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "f2074606",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "134c7ca9",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -868,72 +654,29 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}} - Reads",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             },
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_EBSWriteOps_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_EBSWriteOps_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_EBSWriteOps_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "B",
-              "filters": {
-                "items": [
-                  {
-                    "id": "47e0c00f",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "0a157dfe",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "a7d1e8df",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -962,15 +705,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}} - Writes",
               "limit": null,
               "orderBy": [],
               "queryName": "B",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1072,61 +814,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_NetworkIn_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_NetworkIn_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_NetworkIn_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "12d6748d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "df3a8da1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "81ec53f4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1155,15 +855,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1265,61 +964,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_EC2_NetworkOut_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_EC2_NetworkOut_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_EC2_NetworkOut_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "d301aaa7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "service.instance.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "service.instance.id",
-                      "type": "tag"
-                    },
-                    "op": "!=",
-                    "value": ""
-                  },
-                  {
-                    "id": "e8afaa3b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "d67487ab",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(service.instance.id != '' AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1348,15 +1005,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{service.instance.id}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []

@@ -94,7 +94,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -112,61 +112,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_KafkaDataLogsDiskUsed_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_KafkaDataLogsDiskUsed_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_KafkaDataLogsDiskUsed_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "be8452fb",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Broker_ID--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Broker_ID",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "8b658843",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "9cbc21ee",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(Broker_ID EXISTS AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -187,15 +145,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -297,61 +254,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_CpuUser_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_CpuUser_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_CpuUser_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "03054a63",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Broker_ID--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Broker_ID",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "754c3c99",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "09ad3a79",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(Broker_ID EXISTS AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -372,15 +287,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -482,61 +396,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_CpuSystem_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_CpuSystem_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_CpuSystem_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "1c4feb03",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Broker_ID--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Broker_ID",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "3e5db1d7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "9e9bf94c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(Broker_ID EXISTS AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -557,15 +429,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -667,61 +538,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_NetworkTxPackets_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_NetworkTxPackets_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_NetworkTxPackets_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "df3f9941",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Broker_ID--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Broker_ID",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "2233f9a5",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "52bd69d4",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(Broker_ID EXISTS AND cloud.region = $Region AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -742,15 +571,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -852,61 +680,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_NetworkRxPackets_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_NetworkRxPackets_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_NetworkRxPackets_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "a00425be",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "726d60d7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "Broker_ID--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "Broker_ID",
-                      "type": "tag"
-                    },
-                    "op": "exists",
-                    "value": ""
-                  },
-                  {
-                    "id": "02adea69",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.region = $Region AND Broker_ID EXISTS AND cloud.account.id = $Account)"
               },
               "functions": [],
               "groupBy": [
@@ -927,15 +713,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "Broker {{Broker_ID}} ({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1037,48 +822,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_Kafka_SumOffsetLag_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_Kafka_SumOffsetLag_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_Kafka_SumOffsetLag_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "0626eebd",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b633d867",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1091,15 +847,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "({{Cluster_Name}})",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []

@@ -122,7 +122,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -140,74 +140,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_TargetResponseTime_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_TargetResponseTime_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_TargetResponseTime_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "b282d9f1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "71837c70",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "5bfcc581",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TargetGroup--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TargetGroup",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "a9e33e08",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND TargetGroup NOT EXISTS AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -236,15 +181,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -346,74 +290,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_RequestCount_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_RequestCount_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_RequestCount_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "448b551a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "a8821216",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "f5a62c5a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "25e8abc8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TargetGroup--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TargetGroup",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND AvailabilityZone NOT EXISTS AND TargetGroup NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -442,15 +331,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -552,74 +440,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_HTTPCode_Target_5XX_Count_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "702a8765",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "32985f2d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "e4cf3d8b",
-                    "key": {
-                      "dataType": "string",
-                      "id": "TargetGroup--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "TargetGroup",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "234c77fd",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND TargetGroup NOT EXISTS AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -648,15 +481,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -758,61 +590,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_HTTPCode_ELB_5XX_Count_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "5807a1e3",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "0dd63d0c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "31ccfbae",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -841,15 +631,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -951,61 +740,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_ActiveConnectionCount_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_ActiveConnectionCount_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_ActiveConnectionCount_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "72c256c0",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b433c2a1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "8f5e7de0",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1034,15 +781,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1144,70 +890,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_TargetConnectionErrorCount_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_TargetConnectionErrorCount_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_TargetConnectionErrorCount_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "9226a37c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "c3ff0c8f",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "e3317bc2",
-                    "key": {
-                      "dataType": "",
-                      "isColumn": false,
-                      "key": "TargetGroup",
-                      "type": ""
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  },
-                  {
-                    "id": "4e5c2324",
-                    "key": {
-                      "dataType": "",
-                      "isColumn": false,
-                      "key": "AvailabilityZone",
-                      "type": ""
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND TargetGroup NOT EXISTS AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1236,15 +931,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1346,48 +1040,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_ConsumedLCUs_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_ConsumedLCUs_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_ConsumedLCUs_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "20627274",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "cd861e27",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1416,15 +1081,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1526,61 +1190,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_ProcessedBytes_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_ProcessedBytes_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "sum",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_ProcessedBytes_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "timeAggregation": "sum"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "7d4a3494",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "3c307858",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  },
-                  {
-                    "id": "fbca8724",
-                    "key": {
-                      "dataType": "string",
-                      "id": "AvailabilityZone--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "AvailabilityZone",
-                      "type": "tag"
-                    },
-                    "op": "nexists",
-                    "value": ""
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND AvailabilityZone NOT EXISTS)"
               },
               "functions": [],
               "groupBy": [
@@ -1609,15 +1231,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "sum"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1719,48 +1340,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ApplicationELB_PeakLCUs_sum--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ApplicationELB_PeakLCUs_sum",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ApplicationELB_PeakLCUs_sum",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "a416e862",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "ed7d0a39",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1789,15 +1381,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{LoadBalancer}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
