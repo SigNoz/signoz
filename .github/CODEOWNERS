@@ -162,3 +162,10 @@ go.mod @therealpandey
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
+
+## Dashboard Revamp
+/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
+
+# e2e tests
+/tests/e2e/ @AshwinBhatkal
