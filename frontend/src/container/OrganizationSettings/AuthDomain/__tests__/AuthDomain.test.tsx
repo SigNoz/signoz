@@ -17,27 +17,6 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-jest.mock('@signozhq/ui/switch', () => ({
-	...jest.requireActual('@signozhq/ui/switch'),
-	Switch: ({
-		value,
-		onChange,
-		disabled,
-	}: {
-		value: boolean;
-		onChange: (checked: boolean) => void;
-		disabled?: boolean;
-	}): JSX.Element => (
-		<button
-			type="button"
-			role="switch"
-			aria-checked={value}
-			disabled={disabled}
-			onClick={(): void => onChange(!value)}
-		/>
-	),
-}));
-
 describe('AuthDomain', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
