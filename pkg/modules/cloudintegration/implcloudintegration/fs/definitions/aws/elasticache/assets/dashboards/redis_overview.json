@@ -182,7 +182,7 @@
       "type": "QUERY"
     }
   },
-  "version": "v4",
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -201,63 +201,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_DatabaseMemoryUsagePercentage_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_DatabaseMemoryUsagePercentage_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_DatabaseMemoryUsagePercentage_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "1de28cd7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "a2e662bc",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b7391c4e",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -270,15 +226,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -381,63 +336,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_DatabaseCapacityUsagePercentage_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_DatabaseCapacityUsagePercentage_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_DatabaseCapacityUsagePercentage_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "42feb786",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "0c3a5e7a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "de00d7b3",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -450,15 +361,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -561,63 +471,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_CacheHitRate_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_CacheHitRate_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_CacheHitRate_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "6e9c7a26",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "7087d8df",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "26bd4c51",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -630,15 +496,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -741,63 +606,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_MemoryFragmentationRatio_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_MemoryFragmentationRatio_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_MemoryFragmentationRatio_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "21a13195",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "63918715",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "647e4dbe",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -810,15 +631,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -921,63 +741,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_SwapUsage_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_SwapUsage_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_SwapUsage_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "8c18e738",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "72e562a1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "26891e8d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -990,15 +766,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1101,63 +876,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_FreeableMemory_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_FreeableMemory_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_FreeableMemory_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "0820e027",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "c6612aef",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b863daa8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1170,15 +901,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1281,63 +1011,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_NetworkBytesIn_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_NetworkBytesIn_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_NetworkBytesIn_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "314b2895",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "05806d0e",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "edfe2e2c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1350,15 +1036,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1461,63 +1146,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_NetworkBytesOut_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_NetworkBytesOut_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_NetworkBytesOut_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "f2089c33",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "088c9b4a",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "1a86c392",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1530,15 +1171,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1641,61 +1281,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_CurrConnections_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_CurrConnections_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_CurrConnections_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "5ebba9ac",
-                    "key": {
-                      "dataType": "",
-                      "isColumn": false,
-                      "key": "CacheClusterId",
-                      "type": ""
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "10a254a8",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "310ce219",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1708,15 +1306,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1819,63 +1416,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_ReplicationLag_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_ReplicationLag_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_ReplicationLag_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "b5ed26b7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "a3ab9c6c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "cfd6d4ee",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -1888,15 +1441,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -1999,63 +1551,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_Evictions_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_Evictions_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_Evictions_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "e591ace7",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "0e7a0149",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "1440550c",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(CacheClusterId IN $Cluster AND cloud.account.id = $Account AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -2068,15 +1576,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -2179,63 +1686,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_CPUUtilization_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_CPUUtilization_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_CPUUtilization_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "43ef42eb",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "ce680e7d",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "4cc11182",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND CacheClusterId IN $Cluster AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -2248,15 +1711,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -2359,63 +1821,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_EngineCPUUtilization_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_EngineCPUUtilization_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_EngineCPUUtilization_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "87b3e146",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "b0f9df50",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "07a5a0d1",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND CacheClusterId IN $Cluster AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -2428,15 +1846,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []
@@ -2539,63 +1956,19 @@
         "builder": {
           "queryData": [
             {
-              "aggregateAttribute": {
-                "dataType": "float64",
-                "id": "aws_ElastiCache_CurrConnections_max--float64--Gauge--true",
-                "isColumn": true,
-                "isJSON": false,
-                "key": "aws_ElastiCache_CurrConnections_max",
-                "type": "Gauge"
-              },
-              "aggregateOperator": "max",
+              "aggregations": [
+                {
+                  "metricName": "aws_ElastiCache_CurrConnections_max",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "timeAggregation": "max"
+                }
+              ],
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
-              "filters": {
-                "items": [
-                  {
-                    "id": "6764e117",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.account.id--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.account.id",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Account"
-                  },
-                  {
-                    "id": "4764b9eb",
-                    "key": {
-                      "dataType": "string",
-                      "id": "CacheClusterId--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "CacheClusterId",
-                      "type": "tag"
-                    },
-                    "op": "in",
-                    "value": [
-                      "$Cluster"
-                    ]
-                  },
-                  {
-                    "id": "a1c90d55",
-                    "key": {
-                      "dataType": "string",
-                      "id": "cloud.region--string--tag--false",
-                      "isColumn": false,
-                      "isJSON": false,
-                      "key": "cloud.region",
-                      "type": "tag"
-                    },
-                    "op": "=",
-                    "value": "$Region"
-                  }
-                ],
-                "op": "AND"
+              "filter": {
+                "expression": "(cloud.account.id = $Account AND CacheClusterId IN $Cluster AND cloud.region = $Region)"
               },
               "functions": [],
               "groupBy": [
@@ -2608,15 +1981,14 @@
                   "type": "tag"
                 }
               ],
-              "having": [],
+              "having": {
+                "expression": ""
+              },
               "legend": "{{CacheClusterId}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "max",
-              "stepInterval": 60,
-              "timeAggregation": "max"
+              "stepInterval": 60
             }
           ],
           "queryFormulas": []

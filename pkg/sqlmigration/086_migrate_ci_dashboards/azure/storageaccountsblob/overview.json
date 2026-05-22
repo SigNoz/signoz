@@ -272,7 +272,6 @@
                   "metricName": "azure_blobcapacity_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -281,52 +280,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "e4fcdf44-7f3a-498a-a940-7e51c0ee0207",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "35a98ed2-e48d-4eb5-80e2-53452199c5a9",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "8c85d60a-985b-474d-b92a-0303fa02ba7d",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -465,7 +418,6 @@
                   "metricName": "azure_blobcount_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -474,52 +426,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "d14f31c6-ad28-43cc-91a3-f7c18231c7e6",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "246f20e4-558c-4a69-9488-6fc3b0824264",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "a2a4fa45-7b95-4bd8-8737-1109215c489d",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -658,7 +564,6 @@
                   "metricName": "azure_containercount_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -667,52 +572,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "08a10d11-770a-4518-9eed-1cede51180cc",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "7a1fe360-f53f-486a-9581-8f975aa9dfd8",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "3864e736-3761-4b6b-8715-5dba6f9eae53",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -863,7 +722,6 @@
                   "metricName": "azure_availability_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "min",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -872,52 +730,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "2e256002-761e-46da-ab9a-8dc0f33ac187",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "cb12f76b-e16e-4d92-aa88-d1bccf1fe9c0",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "fb865049-0636-4851-9da5-3c61ddff26a2",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1056,7 +868,6 @@
                   "metricName": "azure_egress_average",
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1065,52 +876,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "9716a7c9-ed42-4921-bad8-c5fb6b68fef2",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "2a7a68bf-9033-4494-b5c7-e82af92423e2",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "c9ea764d-b6af-4e93-b097-093ff562cc8e",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1247,7 +1012,6 @@
                   "metricName": "azure_ingress_average",
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1256,52 +1020,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "c5bb4e0b-f88a-4041-85f7-cbc07b5073bc",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "2b3de77d-2fde-465d-ba7e-9d7be8b6853a",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "adf659d5-6609-4720-98d0-4129321b63f7",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1438,7 +1156,6 @@
                   "metricName": "azure_successe2elatency_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1447,52 +1164,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "725192d6-cdfa-466f-87b3-960980c26bc4",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "301cb143-a872-4b17-b335-cb638d8d7022",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "22b7d4ca-56b5-4bfc-b123-0f4988a961d0",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1629,7 +1300,6 @@
                   "metricName": "azure_successserverlatency_average",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1638,52 +1308,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "cccb9c11-9e54-40e3-9b75-21a753f0651a",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "32b7a033-1da0-43da-83cf-0beb7fb6eb5d",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "77d3f853-9720-46a6-ac71-405ccd2d16e1",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
@@ -1820,7 +1444,6 @@
                   "metricName": "azure_transactions_total",
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
-                  "temporality": "",
                   "timeAggregation": "sum"
                 }
               ],
@@ -1829,52 +1452,6 @@
               "expression": "A",
               "filter": {
                 "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
-              },
-              "filters": {
-                "items": [
-                  {
-                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
-                    "key": {
-                      "dataType": "string",
-                      "id": "name--string--",
-                      "key": "name",
-                      "type": ""
-                    },
-                    "op": "IN",
-                    "value": "$storageaccount"
-                  },
-                  {
-                    "id": "bbef20d9-4b62-49a2-b522-079f814406ca",
-                    "key": {
-                      "id": "azuremonitor.subscription_id",
-                      "key": "azuremonitor.subscription_id",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$azuremonitor.subscription_id"
-                  },
-                  {
-                    "id": "ffbdf757-11b8-45d1-8190-50b4ec067839",
-                    "key": {
-                      "id": "resource_group",
-                      "key": "resource_group",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "$resource_group"
-                  },
-                  {
-                    "id": "65021cbd-add8-44c3-b5a3-16e1c582ccbb",
-                    "key": {
-                      "id": "type",
-                      "key": "type",
-                      "type": ""
-                    },
-                    "op": "=",
-                    "value": "Microsoft.Storage/storageAccounts/blobServices"
-                  }
-                ],
-                "op": "AND"
               },
               "functions": [],
               "groupBy": [
