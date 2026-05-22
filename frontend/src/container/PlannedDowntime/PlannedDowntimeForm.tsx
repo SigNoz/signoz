@@ -311,7 +311,6 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-		// oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
 	}, [formData, recurrenceType, timezone]);
 
 	const endTimeText = useMemo((): string => {
@@ -323,7 +322,6 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-		// oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
 	}, [formData, recurrenceType, timezone]);
 
 	return (
