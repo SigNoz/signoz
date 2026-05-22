@@ -6,9 +6,9 @@ import {
 	Form,
 	MenuProps,
 	Space,
-	Switch,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
@@ -201,8 +201,7 @@ function FunnelStep({
 					<div className="error">
 						<Switch
 							className="error__switch"
-							size="small"
-							checked={stepData.has_errors}
+							value={stepData.has_errors}
 							disabled={!hasEditPermission}
 							onChange={(): void =>
 								onStepChange(index, { has_errors: !stepData.has_errors })

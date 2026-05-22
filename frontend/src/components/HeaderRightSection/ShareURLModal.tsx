@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Switch } from 'antd';
+import { Button } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
@@ -125,9 +126,8 @@ function ShareURLModal(): JSX.Element {
 								<Info size={14} color={Color.BG_AMBER_600} />
 							)}
 							<Switch
-								checked={enableAbsoluteTime}
+								value={enableAbsoluteTime}
 								disabled={!isValidateRelativeTime}
-								size="small"
 								onChange={(): void => {
 									setEnableAbsoluteTime((prev) => !prev);
 								}}
