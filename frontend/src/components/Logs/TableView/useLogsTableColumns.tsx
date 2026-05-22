@@ -66,6 +66,8 @@ export function useLogsTableColumns({
 					id: 'timestamp',
 					header: 'Timestamp',
 					accessorFn: (log): unknown => log.timestamp,
+					canBeHidden: false,
+					enableRemove: false,
 					width: { default: 170, min: 170 },
 					cell: ({ value }): ReactElement => {
 						const ts = value as string | number;
@@ -89,6 +91,7 @@ export function useLogsTableColumns({
 					header: 'Body',
 					accessorFn: (log): string => log.body,
 					canBeHidden: false,
+					enableRemove: false,
 					width: { default: '100%', min: 300 },
 					cell: ({ value, isActive }): ReactElement => (
 						<TanStackTable.Text

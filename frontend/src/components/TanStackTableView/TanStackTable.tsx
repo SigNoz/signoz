@@ -308,9 +308,7 @@ function TanStackTableInner<TData>(
 	});
 
 	const hasSingleColumn = useMemo(
-		() =>
-			effectiveColumns.filter((c) => !c.pin && c.enableRemove !== false).length <=
-			1,
+		() => effectiveColumns.filter((c) => !c.pin).length <= 1,
 		[effectiveColumns],
 	);
 
