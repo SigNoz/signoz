@@ -667,3 +667,190 @@ def test_hosts_pagination_sync(
     assert seen_totals == {K}
     assert len(seen_hosts) == K
     assert set(seen_hosts) == {f"page-h{i}" for i in range(1, K + 1)}
+
+
+def test_hosts_offset_beyond_total(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Offset beyond total returns empty records; total still reflects dataset size."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_pagination.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    K = 7
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 3,
+            "offset": K + 5,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["records"] == []
+    assert data["total"] == K
+
+
+def test_hosts_total_invariant_across_orderby(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Total stays K across all orderBy column x direction combinations.
+    Hosts have staggered timestamps (simulating real-world emit drift)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_orderby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    K = 5
+
+    # orderBy keys use snake_case (inframonitoringtypes/hosts_constants.go:26-30).
+    # Note: response uses camelCase (diskUsage) but request uses disk_usage.
+    for column in ("cpu", "memory", "wait", "load15", "disk_usage"):
+        for direction in ("asc", "desc"):
+            response = _post(
+                signoz,
+                token,
+                {
+                    "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                    "end": int(now.timestamp() * 1000),
+                    "limit": 50,
+                    "orderBy": {
+                        "key": {"name": column},
+                        "direction": direction,
+                    },
+                },
+            )
+            ctx = f"orderBy={column} {direction}"
+            assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
+            data = response.json()["data"]
+            assert data["total"] == K, f"{ctx}: total={data['total']}"
+            assert len(data["records"]) == K, (
+                f"{ctx}: len(records)={len(data['records'])}"
+            )
+
+
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_hosts_orderby_correctness(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    direction: str,
+) -> None:
+    """Records sorted by cpu in the requested direction."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_pagination.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": "cpu"}, "direction": direction},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    cpu_values = [r["cpu"] for r in data["records"]]
+    expected = sorted(cpu_values, reverse=(direction == "desc"))
+    assert cpu_values == expected, f"cpu {direction} not sorted; got {cpu_values}"
+
+
+@pytest.mark.parametrize(
+    "payload_override,err_substr",
+    [
+        pytest.param({"start": 0}, "start must be greater than 0", id="start_zero"),
+        pytest.param({"start": -1}, "start must be greater than 0", id="start_negative"),
+        pytest.param({"end": 0}, "end must be greater than 0", id="end_zero"),
+        pytest.param({"end": -1}, "end must be greater than 0", id="end_negative"),
+        pytest.param({"_use_end_eq_start": True}, "must be less than end", id="start_equals_end"),
+        pytest.param({"_use_start_gt_end": True}, "must be less than end", id="start_greater_than_end"),
+        pytest.param({"limit": 0}, "limit must be between", id="limit_zero"),
+        pytest.param({"limit": 5001}, "limit must be between", id="limit_too_large"),
+        pytest.param({"offset": -1}, "offset cannot be negative", id="offset_negative"),
+        pytest.param(
+            {"filter": {"filterByStatus": "bogus"}},
+            "invalid filter by status",
+            id="filter_by_status_invalid",
+        ),
+        pytest.param(
+            {"orderBy": {"key": {"name": "bogus_col"}, "direction": "desc"}},
+            "invalid order by key",
+            id="orderby_invalid_key",
+        ),
+        pytest.param(
+            {"orderBy": {"key": {"name": "cpu"}, "direction": "up"}},
+            "invalid order by direction",
+            id="orderby_invalid_direction",
+        ),
+        pytest.param(
+            {
+                "orderBy": {"key": {"name": "host.name"}, "direction": "desc"},
+                "groupBy": [
+                    {
+                        "name": "host.name",
+                        "fieldDataType": "string",
+                        "fieldContext": "resource",
+                    }
+                ],
+            },
+            "is only allowed when groupBy is empty",
+            id="orderby_hostname_with_groupby",
+        ),
+    ],
+)
+def test_hosts_validation_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    payload_override: dict,
+    err_substr: str,
+) -> None:
+    """All PostableHosts.Validate() rules reject with 400 + descriptive error.
+    See pkg/types/inframonitoringtypes/hosts.go:53-108."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if payload_override.pop("_use_end_eq_start", False):
+        body["end"] = body["start"]
+    if payload_override.pop("_use_start_gt_end", False):
+        body["start"] = body["end"] + 1
+    body.update(payload_override)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(signoz, token, body)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    error = response.json()["error"]
+    assert error["code"] == "invalid_input"
+    assert err_substr.lower() in error["message"].lower(), (
+        f"expected substring {err_substr!r} not found in: {error['message']!r}"
+    )
