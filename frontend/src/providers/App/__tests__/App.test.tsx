@@ -298,9 +298,32 @@ describe('AppProvider when authz/check fails', () => {
 	beforeEach(() => {
 		queryClient.clear();
 		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: {
+							id: 'u-1',
+							displayName: 'Test User',
+							email: 'test@signoz.io',
+							orgId: 'org-1',
+							isRoot: false,
+							status: 'active',
+						},
+					}),
+				),
+			),
+			rest.get(MY_ORG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'org-1', displayName: 'Org' } }),
+				),
+			),
+		);
 	});
 
-	it('sets userFetchError when authz/check returns 500 (same as user fetch error)', async () => {
+	it('does not set userFetchError when authz/check returns 500 (authz errors are ignored)', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_, res, ctx) =>
 				res(ctx.status(500), ctx.json({ error: 'Internal Server Error' })),
@@ -314,13 +337,13 @@ describe('AppProvider when authz/check fails', () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.userFetchError).toBeTruthy();
+				expect(result.current.userFetchError).toBeFalsy();
 			},
 			{ timeout: 2000 },
 		);
 	});
 
-	it('sets userFetchError when authz/check fails with network error (same as user fetch error)', async () => {
+	it('does not set userFetchError when authz/check fails with network error (authz errors are ignored)', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_, res) => res.networkError('Network error')),
 		);
@@ -332,7 +355,7 @@ describe('AppProvider when authz/check fails', () => {
 
 		await waitFor(
 			() => {
-				expect(result.current.userFetchError).toBeTruthy();
+				expect(result.current.userFetchError).toBeFalsy();
 			},
 			{ timeout: 2000 },
 		);

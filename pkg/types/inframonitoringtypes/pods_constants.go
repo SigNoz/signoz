@@ -36,6 +36,8 @@ const (
 	PodPhaseNumUnknown   = 5
 )
 
+const PodNameAttrKey = "k8s.pod.name"
+
 const (
 	PodsOrderByCPU           = "cpu"
 	PodsOrderByCPURequest    = "cpu_request"
@@ -52,4 +54,5 @@ var PodsValidOrderByKeys = []string{
 	PodsOrderByMemory,
 	PodsOrderByMemoryRequest,
 	PodsOrderByMemoryLimit,
+	PodNameAttrKey,
 }
