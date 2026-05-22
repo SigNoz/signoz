@@ -41,7 +41,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			Expression:     `ruleId == "high-cpu-usage" && severity == "critical"`,
+			Expression:     `ruleId = "high-cpu-usage" AND severity = "critical"`,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Name:           "high-cpu-usage",
 			Description:    "High CPU critical alerts to webhook",
@@ -53,7 +53,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			Expression:     `ruleId == "high-cpu-usage" && severity == "warning"`,
+			Expression:     `ruleId = "high-cpu-usage" AND severity = "warning"`,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Name:           "high-cpu-usage",
 			Description:    "High CPU warning alerts to webhook",
@@ -102,9 +102,9 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	maintenanceStore := alertmanagertypestest.NewMockMaintenanceStore(t)
 	maintenanceStore.On("ListPlannedMaintenance", mock.Anything, orgID).Return(
 		[]*alertmanagertypes.PlannedMaintenance{
-			{ID: mwRuleIDAndScope, Schedule: activeSchedule, RuleIDs: []string{"high-cpu-usage"}, Scope: `severity == "critical"`},
+			{ID: mwRuleIDAndScope, Schedule: activeSchedule, RuleIDs: []string{"high-cpu-usage"}, Scope: `severity = "critical"`},
 			{ID: mwRuleIDOnly, Schedule: activeSchedule, RuleIDs: []string{"high-cpu-usage"}},
-			{ID: mwScopeOnly, Schedule: activeSchedule, Scope: `severity == "critical"`},
+			{ID: mwScopeOnly, Schedule: activeSchedule, Scope: `severity = "critical"`},
 		}, nil,
 	)
 
