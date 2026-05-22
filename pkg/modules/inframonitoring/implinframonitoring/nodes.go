@@ -190,7 +190,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
 	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
-	flooredStart, flooredEnd, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
 	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
@@ -208,8 +208,8 @@ func (m *module) getPerGroupNodeConditionCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", nodeConditionMetricName),
-		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
-		timeSeriesFPs.LE("unix_milli", flooredEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStartMs),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
@@ -246,8 +246,8 @@ func (m *module) getPerGroupNodeConditionCounts(
 	))
 	latestConditionPerNode.Where(
 		latestConditionPerNode.E("samples.metric_name", nodeConditionMetricName),
-		latestConditionPerNode.GE("samples.unix_milli", flooredStart),
-		latestConditionPerNode.L("samples.unix_milli", flooredEnd),
+		latestConditionPerNode.GE("samples.unix_milli", samplesStartMs),
+		latestConditionPerNode.L("samples.unix_milli", flooredEndMs),
 		"tsfp.node_name != ''",
 	)
 	latestConditionPerNode.GroupBy(latestConditionPerNodeGroupBy...)

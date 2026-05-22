@@ -311,10 +311,10 @@ func parseFullQueryResponse(
 // alignedMetricWindow returns step-floored time bounds and the metric tables
 // to use for the given window. The floor matches what the QB v5 metric
 // querier does internally (see querybuilder.AdjustedMetricTimeRange).
-// Please use the flooredStartMs with samples table and tsAdjustedStartMs with ts tables.
+// Please use the samplesAdjustedStartMs with samples table and tsAdjustedStartMs with ts tables.
 // Both can use the same flooredEndMs.
 func alignedMetricWindow(startMs, endMs int64) (
-	flooredStartMS uint64,
+	samplesAdjustedStartMs uint64,
 	flooredEndMs uint64,
 	tsAdjustedStartMs uint64,
 	distributedTSTable string,
@@ -322,12 +322,12 @@ func alignedMetricWindow(startMs, endMs int64) (
 	distributedSamplesTable string,
 	localSamplesTable string,
 ) {
-	flooredStartMS = uint64(startMs)
+	samplesAdjustedStartMs = uint64(startMs)
 	flooredEndMs = uint64(endMs)
-	stepSecs := querybuilder.RecommendedStepIntervalForMetric(flooredStartMS, flooredEndMs)
+	stepSecs := querybuilder.RecommendedStepIntervalForMetric(samplesAdjustedStartMs, flooredEndMs)
 	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange
 	if stepSecs > 0 {
-		flooredStartMS = flooredStartMS - (flooredStartMS % (stepSecs * 1000))
+		samplesAdjustedStartMs = samplesAdjustedStartMs - (samplesAdjustedStartMs % (stepSecs * 1000))
 		adjustStep := stepSecs
 		if adjustStep > 60 {
 			adjustStep = 60
@@ -336,11 +336,11 @@ func alignedMetricWindow(startMs, endMs int64) (
 	}
 
 	tsAdjustedStartMs, _, distributedTSTable, localTSTable = telemetrymetrics.WhichTSTableToUse(
-		flooredStartMS, flooredEndMs, nil,
+		samplesAdjustedStartMs, flooredEndMs, nil,
 	)
 
 	distributedSamplesTable = telemetrymetrics.WhichSamplesTableToUse(
-		flooredStartMS, flooredEndMs,
+		samplesAdjustedStartMs, flooredEndMs,
 		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
 	)
 	localSamplesTable = strings.TrimPrefix(distributedSamplesTable, "distributed_")
@@ -492,9 +492,9 @@ func (m *module) getMetadata(
 	// Step-floor the window and pick the right tables — matches the bounds the
 	// QB v5 metric querier uses, so metadataMap covers the same universe the
 	// ranking sees (see alignedMetricWindow doc).
-	flooredStart, flooredEnd, tsAdjustedStart, distributedTableName, _, _, localSamplesTable := alignedMetricWindow(startMs, endMs)
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, distributedTableName, _, _, localSamplesTable := alignedMetricWindow(startMs, endMs)
 
-	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, flooredStart, flooredEnd)
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
 
 	// Flatten groupBy keys to string names for SQL expressions and result scanning.
 	groupByCols := make([]string, len(groupBy))
@@ -529,8 +529,8 @@ func (m *module) getMetadata(
 	innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
 	innerSB.Where(
 		innerSB.In("metric_name", sqlbuilder.List(metricNames)),
-		innerSB.GE("unix_milli", tsAdjustedStart),
-		innerSB.LE("unix_milli", flooredEnd),
+		innerSB.GE("unix_milli", tsAdjustedStartMs),
+		innerSB.LE("unix_milli", flooredEndMs),
 		fmt.Sprintf("fingerprint IN (%s)", innerSB.Var(fpSB)),
 	)
 

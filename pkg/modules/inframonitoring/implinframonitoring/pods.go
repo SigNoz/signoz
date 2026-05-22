@@ -209,7 +209,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
 	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
-	flooredStart, flooredEnd, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
 	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
@@ -228,7 +228,7 @@ func (m *module) getPerGroupPodPhaseCounts(
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", podPhaseMetricName),
 		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
-		timeSeriesFPs.LE("unix_milli", flooredEnd),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
@@ -264,8 +264,8 @@ func (m *module) getPerGroupPodPhaseCounts(
 	))
 	latestPhasePerPod.Where(
 		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
-		latestPhasePerPod.GE("samples.unix_milli", flooredStart),
-		latestPhasePerPod.L("samples.unix_milli", flooredEnd),
+		latestPhasePerPod.GE("samples.unix_milli", samplesStartMs),
+		latestPhasePerPod.L("samples.unix_milli", flooredEndMs),
 		"tsfp.pod_uid != ''",
 	)
 	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)
