@@ -153,3 +153,18 @@
 
 	border-radius: 3px;
 }
+
+// Disable default fade so the JS-driven clip-path ripple isn't crossfaded.
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+	z-index: 1;
+}
+
+::view-transition-new(root) {
+	z-index: 2;
+}

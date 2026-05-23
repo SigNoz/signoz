@@ -15,6 +15,11 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
 import LicenseSection from './LicenseSection';
+import {
+	canAnimateThemeRipple,
+	getRippleOrigin,
+	runThemeRipple,
+} from './themeRipple';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 
@@ -88,22 +93,35 @@ function MySettings(): JSX.Element {
 		return isDarkMode ? 'dark' : 'light';
 	});
 
-	const handleThemeChange = ({ target: { value } }: RadioChangeEvent): void => {
-		logEvent('Account Settings: Theme Changed', {
-			theme: value,
-		});
-		setTheme(value);
+	const handleThemeChange = (event: RadioChangeEvent): void => {
+		const { value } = event.target;
+		logEvent('Account Settings: Theme Changed', { theme: value });
 
-		if (value === 'auto') {
-			setAutoSwitch(true);
-		} else {
+		const willFlipDarkMode =
+			value !== 'auto' && (value === 'dark') !== isDarkMode;
+
+		const applyChange = (): void => {
+			setTheme(value);
+			if (value === 'auto') {
+				setAutoSwitch(true);
+				return;
+			}
 			setAutoSwitch(false);
-			// Only toggle if the current theme is different from the target
-			const targetIsDark = value === 'dark';
-			if (targetIsDark !== isDarkMode) {
+			if (willFlipDarkMode) {
 				toggleTheme();
 			}
+		};
+
+		// Only ripple on a real dark↔light flip, and only when the browser
+		// supports View Transitions and the user hasn't opted out of motion.
+		if (!willFlipDarkMode || !canAnimateThemeRipple()) {
+			applyChange();
+			return;
 		}
+
+		const clickedTarget = event.nativeEvent?.target as HTMLElement | null;
+		const clickedButton = clickedTarget?.closest('.ant-radio-button-wrapper');
+		runThemeRipple(getRippleOrigin(clickedButton), applyChange);
 	};
 
 	useEffect(() => {
@@ -143,7 +161,7 @@ function MySettings(): JSX.Element {
 				value: checked,
 			},
 			{
-				onError: (error) => {
+				onError: (error: unknown) => {
 					// Revert the state if the API call fails
 					setSideNavPinned(!checked);
 					updateUserPreferenceInContext({
