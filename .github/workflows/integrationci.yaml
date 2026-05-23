@@ -43,6 +43,7 @@ jobs:
           - cloudintegrations
           - dashboard
           - ingestionkeys
+          - inframonitoring
           - logspipelines
           - passwordauthn
           - preference
