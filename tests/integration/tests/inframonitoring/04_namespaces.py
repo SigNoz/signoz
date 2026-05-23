@@ -137,10 +137,7 @@ def test_namespaces_value_accuracy(
     for record in data["records"]:
         exp = exp_by_name[record["namespaceName"]]
         for field in ("namespaceCPU", "namespaceMemory"):
-            assert compare_values(record[field], exp[field], 1e-6), (
-                f"{record['namespaceName']}.{field}: "
-                f"got {record[field]}, expected {exp[field]}"
-            )
+            assert compare_values(record[field], exp[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
@@ -172,9 +169,7 @@ def test_namespaces_missing_metrics(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
 
-    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (
-        REQUIRED_METRICS - {"k8s.pod.cpu.usage"}
-    )
+    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
     assert data["records"] == []
     assert data["total"] == 0
 
@@ -276,7 +271,10 @@ def test_namespaces_filter_not_in(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
     assert {r["namespaceName"] for r in data["records"]} == {
-        "web-b-prod", "web-b-dev", "api-b-prod", "api-b-dev",
+        "web-b-prod",
+        "web-b-dev",
+        "api-b-prod",
+        "api-b-dev",
     }
 
 
@@ -309,7 +307,10 @@ def test_namespaces_filter_contains(
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
     assert {r["namespaceName"] for r in data["records"]} == {
-        "web-a-prod", "web-a-dev", "web-b-prod", "web-b-dev",
+        "web-a-prod",
+        "web-a-dev",
+        "web-b-prod",
+        "web-b-dev",
     }
 
 
@@ -402,9 +403,7 @@ def test_namespaces_filter_bad_attr_name(
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
-    assert any(
-        "k8s.namespace.namee" in e["message"] for e in body["error"]["errors"]
-    ), f"bad attr name not surfaced: {body['error']['errors']!r}"
+    assert any("k8s.namespace.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
 
 
 @pytest.mark.parametrize(
@@ -441,9 +440,7 @@ def test_namespaces_filter_bad_grammar(
             "filter": {"expression": expression},
         },
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, (
-        f"expected 400, got {response.status_code}: {response.text}"
-    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
@@ -576,9 +573,7 @@ def test_namespaces_pagination_sync(
         data = response.json()["data"]
         seen_totals.add(data["total"])
         expected_len = min(limit, K - offset)
-        assert len(data["records"]) == expected_len, (
-            f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
-        )
+        assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
         seen_names.extend(r["namespaceName"] for r in data["records"])
 
     assert seen_totals == {K}
@@ -654,9 +649,7 @@ def test_namespaces_total_invariant_across_orderby(
             assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
             data = response.json()["data"]
             assert data["total"] == K, f"{ctx}: total={data['total']}"
-            assert len(data["records"]) == K, (
-                f"{ctx}: len(records)={len(data['records'])}"
-            )
+            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
 
 @pytest.mark.parametrize("direction", ["asc", "desc"])
@@ -794,9 +787,7 @@ def test_namespaces_validation_errors(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
-    assert err_substr.lower() in error["message"].lower(), (
-        f"expected substring {err_substr!r} not found in: {error['message']!r}"
-    )
+    assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
 
 
 @pytest.mark.parametrize(
