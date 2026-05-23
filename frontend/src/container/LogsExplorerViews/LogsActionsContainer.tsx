@@ -1,4 +1,4 @@
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
@@ -69,9 +69,8 @@ function LogsActionsContainer({
 						<div className="frequency-chart-view-controller">
 							<Typography>Frequency chart</Typography>
 							<Switch
-								size="small"
-								checked={showFrequencyChart}
-								defaultChecked
+								value={showFrequencyChart}
+								defaultValue
 								onChange={handleToggleFrequencyChart}
 							/>
 						</div>
