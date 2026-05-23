@@ -113,10 +113,7 @@ def test_hosts_value_accuracy(
     for record in data["records"]:
         exp = exp_by_host[record["hostName"]]
         for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
-            assert compare_values(record[field], exp[field], 1e-9), (
-                f"{record['hostName']}.{field}: "
-                f"got {record[field]}, expected {exp[field]}"
-            )
+            assert compare_values(record[field], exp[field], 1e-9), f"{record['hostName']}.{field}: got {record[field]}, expected {exp[field]}"
 
 
 def test_hosts_missing_metrics(
@@ -391,9 +388,7 @@ def test_hosts_filter_bad_attr_name(
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
-    assert any(
-        "host.namee" in e["message"] for e in body["error"]["errors"]
-    ), f"bad attr name not surfaced: {body['error']['errors']!r}"
+    assert any("host.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
 
 
 @pytest.mark.parametrize(
@@ -434,9 +429,7 @@ def test_hosts_filter_bad_grammar(
             "filter": {"expression": expression},
         },
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, (
-        f"expected 400, got {response.status_code}: {response.text}"
-    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
@@ -617,9 +610,7 @@ def test_hosts_groupby_os_type(
     }
     for os_type, rec in by_os.items():
         for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
-            assert compare_values(rec[field], expected[os_type][field], 1e-9), (
-                f"{os_type}.{field}: got {rec[field]}, expected {expected[os_type][field]}"
-            )
+            assert compare_values(rec[field], expected[os_type][field], 1e-9), f"{os_type}.{field}: got {rec[field]}, expected {expected[os_type][field]}"
 
 
 def test_hosts_pagination_sync(
@@ -659,9 +650,7 @@ def test_hosts_pagination_sync(
         data = response.json()["data"]
         seen_totals.add(data["total"])
         expected_len = min(limit, K - offset)
-        assert len(data["records"]) == expected_len, (
-            f"offset={offset}: expected {expected_len} records, got {len(data['records'])}"
-        )
+        assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len} records, got {len(data['records'])}"
         seen_hosts.extend(r["hostName"] for r in data["records"])
 
     assert seen_totals == {K}
@@ -742,9 +731,7 @@ def test_hosts_total_invariant_across_orderby(
             assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
             data = response.json()["data"]
             assert data["total"] == K, f"{ctx}: total={data['total']}"
-            assert len(data["records"]) == K, (
-                f"{ctx}: len(records)={len(data['records'])}"
-            )
+            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
 
 @pytest.mark.parametrize("direction", ["asc", "desc"])
@@ -851,9 +838,7 @@ def test_hosts_validation_errors(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
-    assert err_substr.lower() in error["message"].lower(), (
-        f"expected substring {err_substr!r} not found in: {error['message']!r}"
-    )
+    assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
 
 
 @pytest.mark.parametrize(
