@@ -48,6 +48,9 @@ var errNoAuthUsernameConfigured = errors.NewInternalf(errors.CodeInternal, "no a
 
 // New returns a new Email notifier.
 func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
+	if c.Headers == nil {
+		c.Headers = make(map[string]string)
+	}
 	if _, ok := c.Headers["Subject"]; !ok {
 		c.Headers["Subject"] = config.DefaultEmailSubject
 	}
