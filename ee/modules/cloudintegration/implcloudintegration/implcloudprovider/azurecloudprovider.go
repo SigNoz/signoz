@@ -38,11 +38,6 @@ func (provider *azurecloudprovider) GetServiceDefinition(ctx context.Context, se
 		return nil, err
 	}
 
-	// override cloud integration dashboard id.
-	for index, dashboard := range serviceDef.Assets.Dashboards {
-		serviceDef.Assets.Dashboards[index].ID = cloudintegrationtypes.GetCloudIntegrationDashboardID(cloudintegrationtypes.CloudProviderTypeAzure, serviceID.StringValue(), dashboard.ID)
-	}
-
 	return serviceDef, nil
 }
 
