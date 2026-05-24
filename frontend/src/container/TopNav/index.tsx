@@ -5,22 +5,26 @@ import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
-import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
+import {
+	routesToDisableDateTimePicker,
+	routesToShowTopNav,
+} from './DateTimeSelectionV2/config';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
 
-	const isRouteToSkip = useMemo(
+	// Allowlist approach: only show TopNav on explicitly approved routes
+	const shouldShowTopNav = useMemo(
 		() =>
-			routesToSkip.some((route) =>
+			routesToShowTopNav.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
 	);
 
-	const isDisabled = useMemo(
+	const isDateTimePickerDisabled = useMemo(
 		() =>
-			routesToDisable.some((route) =>
+			routesToDisableDateTimePicker.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
@@ -38,24 +42,27 @@ function TopNav(): JSX.Element | null {
 		[location.pathname, location.search],
 	);
 
-	if (isSignUpPage || isDisabled || isRouteToSkip || isNewAlertsLandingPage) {
+	if (isSignUpPage || isNewAlertsLandingPage || !shouldShowTopNav) {
 		return null;
 	}
 
-	return !isRouteToSkip ? (
+	return (
 		<Row style={{ marginBottom: '1rem' }}>
 			<Col span={24} style={{ marginTop: '1rem' }}>
 				<Row justify="end">
 					<Space align="center" size={16} direction="horizontal">
 						<NewExplorerCTA />
 						<div>
-							<DateTimeSelector showAutoRefresh />
+							<DateTimeSelector
+								showAutoRefresh
+								disabled={isDateTimePickerDisabled}
+							/>
 						</div>
 					</Space>
 				</Row>
 			</Col>
 		</Row>
-	) : null;
+	);
 }
 
 export default TopNav;
