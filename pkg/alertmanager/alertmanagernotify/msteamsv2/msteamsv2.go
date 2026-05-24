@@ -55,7 +55,7 @@ type Content struct {
 	Type    string   `json:"type"`
 	Version string   `json:"version"`
 	Body    []Body   `json:"body"`
-	Msteams Msteams  `json:"msteams,omitempty"`
+	Msteams Msteams  `json:"msteams,omitzero"`
 	Actions []Action `json:"actions"`
 }
 
@@ -209,9 +209,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		// Default body is not a template — it's built per-alert below from
-		// labels/annotations as Adaptive Card FactSets, so leave it empty.
-		DefaultBodyTemplate: "",
+		DefaultBodyTemplate:  n.conf.Text,
 	}, alerts)
 	if err != nil {
 		return nil, err

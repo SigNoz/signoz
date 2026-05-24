@@ -39,11 +39,11 @@ type Notifier struct {
 	logger    *slog.Logger
 	client    *http.Client
 	retrier   *notify.Retrier
-	templater alertmanagertemplate.Templater
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new Webhook.
-func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, templater alertmanagertemplate.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err

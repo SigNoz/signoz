@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"gopkg.in/yaml.v2"
@@ -50,7 +51,7 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiverWithDefaults, nil
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, deps NotificationDeps, lSet model.LabelSet, alert ...*Alert) error {
+func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, emailTemplateStore emailtypes.TemplateStore, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -72,7 +73,7 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger, deps)
+	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger, templater, emailTemplateStore)
 	if err != nil {
 		return err
 	}

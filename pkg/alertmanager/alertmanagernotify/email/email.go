@@ -220,9 +220,9 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	if ok, mech := c.Extension("AUTH"); ok {
 		auth, err := n.auth(mech)
-		if err != nil && err != errNoAuthUsernameConfigured {
+		if err != nil && !errors.Is(err, errNoAuthUsernameConfigured) {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
-		} else if err == errNoAuthUsernameConfigured {
+		} else if errors.Is(err, errNoAuthUsernameConfigured) {
 			n.logger.DebugContext(ctx, "no auth username configured. Attempting to send email without authenticating")
 		}
 		if auth != nil {
@@ -266,11 +266,11 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		}
 	}
 
-	// Prepare the content for the email. customSubject, when non-empty, overrides
+	// Prepare the content for the email. subject, when non-empty, overrides
 	// the configured Subject header for this notification only. We deliberately
 	// do not mutate n.conf.Headers here: the config map is shared across
 	// concurrent notifications to the same receiver.
-	customSubject, htmlBody, err := n.prepareContent(ctx, as, data)
+	subject, htmlBody, err := n.prepareContent(ctx, as)
 	if err != nil {
 		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
@@ -293,8 +293,8 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	buffer := &bytes.Buffer{}
 	for header, t := range n.conf.Headers {
-		if header == "Subject" && customSubject != "" {
-			fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", customSubject))
+		if header == "Subject" {
+			fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", subject))
 			continue
 		}
 		value, err := n.tmpl.ExecuteTextString(t, data)
@@ -415,27 +415,19 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 // prepareContent returns a subject override (empty when the default config
 // Subject should be used) and the HTML body for the email. Callers must treat
 // the subject as local state and never write it back to n.conf.Headers.
-func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data *template.Data) (string, string, error) {
+func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (string, string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Headers["Subject"],
-		// The email body's default path uses the configured HTML template
-		// verbatim (n.conf.HTML below). Leave DefaultBodyTemplate empty so
-		// the templater produces a single empty default body we ignore.
-		DefaultBodyTemplate: "",
+		DefaultBodyTemplate:  n.conf.HTML,
 	}, alerts)
 	if err != nil {
 		return "", "", err
 	}
 
-	// subject == "" signals "use the configured Subject header"; Notify then
-	// runs it through the normal header template pipeline.
-	subject := ""
-	if customTitle != "" {
-		subject = result.Title
-	}
+	subject := result.Title
 
 	if !result.IsDefaultBody {
 		// Custom-body path: render each expanded markdown body to HTML, then
@@ -460,15 +452,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 		return subject, html, nil
 	}
 
-	// Default-body path: use the HTML config template if available.
-	if len(n.conf.HTML) > 0 {
-		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
-		if err != nil {
-			return "", "", errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
-		}
-		return subject, body, nil
-	}
-	return subject, "", nil
+	return subject, result.Body[0], nil
 }
 
 // renderLayout wraps result in the alert_email_notification HTML layout.

@@ -68,7 +68,7 @@ type Server struct {
 	muter               *MaintenanceMuter
 	marker              *types.MemMarker
 	tmpl                *template.Template
-	notificationDeps    alertmanagertypes.NotificationDeps
+	templater           alertmanagertypes.Templater
 	emailTemplateStore  emailtypes.TemplateStore
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
@@ -260,10 +260,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
 
-	server.notificationDeps = alertmanagertypes.NotificationDeps{
-		Templater:          alertmanagertemplate.New(server.tmpl, server.logger),
-		EmailTemplateStore: server.emailTemplateStore,
-	}
+	server.templater = alertmanagertemplate.New(server.tmpl, server.logger)
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -281,7 +278,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.notificationDeps)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.templater, server.emailTemplateStore)
 		if err != nil {
 			return err
 		}
@@ -358,7 +355,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.notificationDeps, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, server.emailTemplateStore, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -441,7 +438,8 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,
-					server.notificationDeps,
+					server.templater,
+					server.emailTemplateStore,
 					group.groupLabels,
 					group.alerts...,
 				)
