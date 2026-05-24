@@ -1,7 +1,95 @@
-.info-banner-wrapper {
-	margin: 8px 8px 16px 16px;
+.clickhouse-query-editor-wrapper {
+	position: relative;
 
-	a {
-		text-decoration: underline;
+	.clickhouse-fullscreen-btn {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 4px;
+		border: 1px solid var(--bg-slate-300, #e2e8f0);
+		border-radius: 4px;
+		background: var(--bg-vanilla-100, #ffffff);
+		color: var(--text-robin-500, #64748b);
+		cursor: pointer;
+		z-index: 1;
+		transition: background-color 0.15s ease, border-color 0.15s ease;
+		line-height: 1;
+
+		&:hover {
+			background: var(--bg-vanilla-200, #f1f5f9);
+			border-color: var(--bg-robin-500, #64748b);
+			color: var(--text-robin-800, #1e293b);
+		}
 	}
+}
+
+.clickhouse-fullscreen-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.6);
+	padding: 24px;
+}
+
+.clickhouse-fullscreen-container {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	max-width: 1400px;
+	background: var(--bg-vanilla-100, #ffffff);
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.clickhouse-fullscreen-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--bg-slate-300, #e2e8f0);
+	background: var(--bg-vanilla-200, #f8fafc);
+
+	.clickhouse-fullscreen-title {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-robin-800, #1e293b);
+	}
+
+	.clickhouse-fullscreen-close-btn {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
+		border: 1px solid var(--bg-slate-300, #e2e8f0);
+		border-radius: 4px;
+		background: var(--bg-vanilla-100, #ffffff);
+		color: var(--text-robin-500, #64748b);
+		cursor: pointer;
+		font-size: 13px;
+		font-weight: 500;
+		line-height: 1;
+		transition: background-color 0.15s ease, border-color 0.15s ease;
+
+		&:hover {
+			background: var(--bg-vanilla-200, #f1f5f9);
+			border-color: var(--bg-robin-500, #64748b);
+			color: var(--text-robin-800, #1e293b);
+		}
+	}
+}
+
+.clickhouse-fullscreen-editor {
+	flex: 1;
+	overflow: hidden;
 }
