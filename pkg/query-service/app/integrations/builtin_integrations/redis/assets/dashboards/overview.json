@@ -99,9 +99,9 @@
             "key": "94f19b3c-ad9f-4b47-a9b2-f312c09fa965",
             "modificationUUID": "4c5b0c03-9cbc-425b-8d8e-7152e5c39ba8",
             "multiSelect": true,
-            "name": "host_name",
+            "name": "host.name",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'redis_cpu_time'\nGROUP BY host_name",
+            "queryValue": "SELECT JSONExtractString(labels, 'host.name') AS  `host.name`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'redis.cpu.time'\nGROUP BY `host.name`",
             "selectedValue": [
                 "Srikanths-MacBook-Pro.local"
             ],
@@ -127,7 +127,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_keyspace_hits",
+                                    "metricName": "redis.keyspace.hits",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -138,7 +138,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [],
                             "having": {
@@ -193,7 +193,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_clients_blocked",
+                                    "metricName": "redis.clients.blocked",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -204,7 +204,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [],
                             "having": {
@@ -259,7 +259,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_db_keys",
+                                    "metricName": "redis.db.keys",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -322,7 +322,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_rdb_changes_since_last_save",
+                                    "metricName": "redis.rdb.changes_since_last_save",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -333,7 +333,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [],
                             "having": {
@@ -388,7 +388,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_commands",
+                                    "metricName": "redis.commands",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -399,7 +399,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [],
                             "having": {
@@ -454,7 +454,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_memory_used",
+                                    "metricName": "redis.memory.used",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -465,22 +465,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Used::{{host_name}}",
+                            "legend": "Used::{{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -489,7 +489,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_maxmemory",
+                                    "metricName": "redis.maxmemory",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "max",
                                     "temporality": null,
@@ -500,22 +500,22 @@
                             "disabled": false,
                             "expression": "B",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Max::{{host_name}}",
+                            "legend": "Max::{{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "B",
@@ -564,7 +564,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_memory_rss",
+                                    "metricName": "redis.memory.rss",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -575,22 +575,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Rss::{{host_name}}",
+                            "legend": "Rss::{{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -639,7 +639,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_memory_fragmentation_ratio",
+                                    "metricName": "redis.memory.fragmentation_ratio",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -650,22 +650,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Rss::{{host_name}}",
+                            "legend": "Rss::{{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -714,7 +714,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "redis_keys_evicted",
+                                    "metricName": "redis.keys.evicted",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -725,22 +725,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "host_name IN $host_name"
+                                "expression": "host.name IN $host.name"
                             },
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "host_name--string--tag--false",
+                                    "id": "host.name--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "host_name",
+                                    "key": "host.name",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "Rss::{{host_name}}",
+                            "legend": "Rss::{{host.name}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",

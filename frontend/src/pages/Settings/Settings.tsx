@@ -321,7 +321,7 @@ function SettingsPage(): JSX.Element {
 										isDisabled={false}
 										showIcon={false}
 										onClick={(event): void => {
-											logEvent('Settings V2: Menu clicked', {
+											void logEvent('Settings V2: Menu clicked', {
 												menuLabel: item.label,
 												menuRoute: item.key,
 											});

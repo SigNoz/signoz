@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	persistentVolumeClaimNameAttrKey = "k8s.persistentvolumeclaim.name"
-	volumesBaseFilterExpr            = "k8s.persistentvolumeclaim.name != ''"
-)
+const volumesBaseFilterExpr = "k8s.persistentvolumeclaim.name != ''"
 
 var pvcNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          persistentVolumeClaimNameAttrKey,
+		Name:          inframonitoringtypes.PersistentVolumeClaimNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},
