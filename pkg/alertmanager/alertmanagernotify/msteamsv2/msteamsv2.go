@@ -299,9 +299,6 @@ func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
 
 	annotationsFacts := []Fact{}
 	for k, v := range alert.Annotations {
-		// Skip private (`_`-prefixed) annotations — templating inputs,
-		// threshold metadata, related-link URLs — and "summary", which default
-		// channels surface as the attachment pretext rather than a fact row.
 		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
 			alertmanagertypes.IsPrivateAnnotation(string(k)) {
 			continue
