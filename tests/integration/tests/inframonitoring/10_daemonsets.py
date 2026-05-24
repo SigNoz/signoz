@@ -1,0 +1,953 @@
+"""Integration tests for v2 infra-monitoring daemonsets endpoint."""
+
+import json
+from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
+
+import pytest
+import requests
+
+from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
+from fixtures.metrics import Metrics
+from fixtures.querier import compare_values
+
+ENDPOINT = "/api/v2/infra_monitoring/daemonsets"
+
+# Required metrics for the v2 daemonsets endpoint
+# (pkg/modules/inframonitoring/implinframonitoring/daemonsets_constants.go:24-34).
+REQUIRED_METRICS = {
+    "k8s.pod.phase",
+    "k8s.pod.cpu.usage",
+    "k8s.pod.cpu_request_utilization",
+    "k8s.pod.cpu_limit_utilization",
+    "k8s.pod.memory.working_set",
+    "k8s.pod.memory_request_utilization",
+    "k8s.pod.memory_limit_utilization",
+    "k8s.daemonset.desired_scheduled_nodes",
+    "k8s.daemonset.current_scheduled_nodes",
+}
+
+
+def _post(signoz: types.SigNoz, token: str, body: dict) -> requests.Response:
+    return requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json=body,
+        timeout=5,
+    )
+
+
+def test_daemonsets_happy_path(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """2 daemonsets x 2 pods/DS on different nodes, all Running; assert response shape + counts."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_happy_path.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+
+    assert data["total"] == 2
+    assert len(data["records"]) == 2
+    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    assert data["endTimeBeforeRetention"] is False
+
+    assert {r["daemonSetName"] for r in data["records"]} == {"happy-ds-1", "happy-ds-2"}
+
+    for record in data["records"]:
+        for field in (
+            "daemonSetName",
+            "daemonSetCPU",
+            "daemonSetCPURequest",
+            "daemonSetCPULimit",
+            "daemonSetMemory",
+            "daemonSetMemoryRequest",
+            "daemonSetMemoryLimit",
+            "desiredNodes",
+            "currentNodes",
+            "podCountsByPhase",
+            "meta",
+        ):
+            assert field in record, f"missing {field} in {record!r}"
+
+        # ints (not floats) for node counts.
+        assert isinstance(record["desiredNodes"], int)
+        assert isinstance(record["currentNodes"], int)
+        assert record["desiredNodes"] == 2
+        assert record["currentNodes"] == 2
+
+        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
+            assert bucket in record["podCountsByPhase"]
+            assert isinstance(record["podCountsByPhase"][bucket], int)
+
+        assert record["podCountsByPhase"]["running"] == 2
+        for other in ("pending", "succeeded", "failed", "unknown"):
+            assert record["podCountsByPhase"][other] == 0
+
+        assert record["meta"].get("k8s.daemonset.name") == record["daemonSetName"]
+        assert "k8s.namespace.name" in record["meta"]
+        assert "k8s.cluster.name" in record["meta"]
+
+
+def test_daemonsets_value_accuracy(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Exact per-DS metric values + node counts + phase counts.
+
+    Locks in Sum vs Avg split across pod-level metrics
+    (daemonsets_constants.go:79-198): A/D = SpaceAggregationSum across pods;
+    B/C/E/F = SpaceAggregationAvg. Node counts (H/I) are latest-summed.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_value_accuracy.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    with open(
+        get_testdata_file_path("inframonitoring/daemonsets_value_accuracy_expected.json"),
+        encoding="utf-8",
+    ) as f:
+        expected = json.load(f)
+    exp_by_name = {r["daemonSetName"]: r for r in expected["records"]}
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert len(data["records"]) == len(expected["records"])
+
+    for record in data["records"]:
+        exp = exp_by_name[record["daemonSetName"]]
+        for field in (
+            "daemonSetCPU",
+            "daemonSetCPURequest",
+            "daemonSetCPULimit",
+            "daemonSetMemory",
+            "daemonSetMemoryRequest",
+            "daemonSetMemoryLimit",
+        ):
+            assert compare_values(record[field], exp[field], 1e-6), f"{record['daemonSetName']}.{field}: got {record[field]}, expected {exp[field]}"
+        assert record["desiredNodes"] == exp["desiredNodes"]
+        assert record["currentNodes"] == exp["currentNodes"]
+        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
+
+
+def test_daemonsets_missing_metrics(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Seed only k8s.pod.cpu.usage; assert other 8 required metrics flagged missing."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_missing_metrics.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+
+    assert set(data["requiredMetricsCheck"]["missingMetrics"]) == (REQUIRED_METRICS - {"k8s.pod.cpu.usage"})
+    assert data["records"] == []
+    assert data["total"] == 0
+
+
+def test_daemonsets_filter_and(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """AND of two attribute clauses returns only the matching daemonsets."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.namespace.name = 'ns-a' AND env = 'prod'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {r["daemonSetName"] for r in data["records"]} == {"logs-a-prod", "metrics-a-prod"}
+    assert data["total"] == 2
+
+
+def test_daemonsets_filter_in(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """IN (...) returns exactly the listed daemonsets."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.name IN ('logs-a-prod', 'metrics-b-dev')"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {r["daemonSetName"] for r in data["records"]} == {"logs-a-prod", "metrics-b-dev"}
+    assert data["total"] == 2
+
+
+def test_daemonsets_filter_not_in(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """NOT IN on the partition key (k8s.daemonset.name) returns the rest.
+    NOT IN on non-partition labels is unreliable in QB v5; covered indirectly
+    via the and_not_in combo. Same workaround as clusters/volumes/deployments/SS/jobs."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.name NOT IN ('logs-a-prod', 'logs-a-dev', 'metrics-a-prod', 'metrics-a-dev')"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {r["daemonSetName"] for r in data["records"]} == {
+        "logs-b-prod",
+        "logs-b-dev",
+        "metrics-b-prod",
+        "metrics-b-dev",
+    }
+
+
+def test_daemonsets_filter_contains(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """CONTAINS performs substring match on the attribute value."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.name CONTAINS 'logs'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {r["daemonSetName"] for r in data["records"]} == {
+        "logs-a-prod",
+        "logs-a-dev",
+        "logs-b-prod",
+        "logs-b-dev",
+    }
+
+
+@pytest.mark.parametrize(
+    "expression,expected",
+    [
+        pytest.param(
+            "k8s.namespace.name = 'ns-a' AND k8s.daemonset.name IN ('logs-a-prod', 'metrics-a-prod')",
+            {"logs-a-prod", "metrics-a-prod"},
+            id="and_in",
+        ),
+        pytest.param(
+            "k8s.namespace.name = 'ns-a' AND k8s.daemonset.name NOT IN ('logs-a-prod', 'logs-a-dev')",
+            {"metrics-a-prod", "metrics-a-dev"},
+            id="and_not_in",
+        ),
+        pytest.param(
+            "env = 'prod' AND k8s.daemonset.name CONTAINS 'logs'",
+            {"logs-a-prod", "logs-b-prod"},
+            id="and_contains",
+        ),
+        pytest.param(
+            "k8s.daemonset.name IN ('logs-a-prod', 'logs-b-prod', 'metrics-a-prod') AND k8s.daemonset.name CONTAINS 'logs'",
+            {"logs-a-prod", "logs-b-prod"},
+            id="in_contains",
+        ),
+    ],
+)
+def test_daemonsets_filter_combos(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    expression: str,
+    expected: set,
+) -> None:
+    """AND-combined pairs of filter operators return the correct intersection."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": expression},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {r["daemonSetName"] for r in data["records"]} == expected
+    assert data["total"] == len(expected)
+
+
+def test_daemonsets_filter_bad_attr_name(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Filter with a typo'd attribute key returns 400 invalid_input."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.namee = 'logs-a-prod'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    body = response.json()
+    assert body["status"] == "error"
+    assert body["error"]["code"] == "invalid_input"
+    assert any("k8s.daemonset.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        pytest.param("k8s.daemonset.name =", id="trailing_op"),
+        pytest.param("(k8s.daemonset.name = 'logs-a-prod'", id="unclosed_paren"),
+    ],
+)
+def test_daemonsets_filter_bad_grammar(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    expression: str,
+) -> None:
+    """Malformed filter expressions return 400 invalid_input."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_filter_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": expression},
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
+    body = response.json()
+    assert body["status"] == "error"
+    assert body["error"]["code"] == "invalid_input"
+    assert len(body["error"]["errors"]) > 0
+
+
+def test_daemonsets_pod_phase_aggregation(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """DaemonSet with mixed pod phases: 4 Running + 1 Pending + 2 Failed."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.name = 'pp-ds'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["daemonSetName"] == "pp-ds"
+    assert rec["podCountsByPhase"] == {
+        "pending": 1,
+        "running": 4,
+        "succeeded": 0,
+        "failed": 2,
+        "unknown": 0,
+    }
+
+
+def test_daemonsets_desired_current_counts(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """desired=5, current=3 from k8s.daemonset.* metrics; 2 Running pods seeded.
+    Models node-scheduling lag (DS targets 5 nodes, 3 currently scheduled,
+    pod metrics from 2 of them only). Distinguishes node counts from phase counts."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_desired_current.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.daemonset.name = 'dc-ds'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1
+    rec = data["records"][0]
+    assert rec["daemonSetName"] == "dc-ds"
+    assert isinstance(rec["desiredNodes"], int)
+    assert isinstance(rec["currentNodes"], int)
+    assert rec["desiredNodes"] == 5
+    assert rec["currentNodes"] == 3
+    assert rec["podCountsByPhase"]["running"] == 2
+
+
+def test_daemonsets_base_filter_drops_non_daemonset_pods(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Locks in daemonSetsBaseFilterExpr (daemonsets_constants.go:10, :63-69):
+    standalone pods (no k8s.daemonset.name), Deployment pods (k8s.deployment.name only),
+    and StatefulSet pods (k8s.statefulset.name only) are all dropped.
+    Only the real DS row appears, total=1, no empty-name group."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_non_ds_pods.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 1, f"expected only the real DS row; got {[r['daemonSetName'] for r in data['records']]}"
+    rec = data["records"][0]
+    assert rec["daemonSetName"] == "nd-ds"
+    assert all(r["daemonSetName"] != "" for r in data["records"])
+
+
+def test_daemonsets_groupby_namespace(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """groupBy=[k8s.namespace.name]: 2 records, daemonSetName cleared,
+    phase counts aggregate per namespace, meta surfaces k8s.namespace.name."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_groupby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [
+                {
+                    "name": "k8s.namespace.name",
+                    "fieldDataType": "string",
+                    "fieldContext": "resource",
+                }
+            ],
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["total"] == 2
+
+    namespaces_seen = set()
+    for rec in data["records"]:
+        # Per-row DS identity is cleared; only the groupBy field surfaces.
+        assert rec["daemonSetName"] == ""
+        # Each ns has 2 DS x 1 Running pod = 2 Running pods.
+        assert rec["podCountsByPhase"]["running"] == 2
+        for other in ("pending", "succeeded", "failed", "unknown"):
+            assert rec["podCountsByPhase"][other] == 0
+        assert "k8s.namespace.name" in rec["meta"], rec["meta"]
+        namespaces_seen.add(rec["meta"]["k8s.namespace.name"])
+    assert namespaces_seen == {"gb-ns-a", "gb-ns-b"}
+
+
+def test_daemonsets_pagination_sync(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Pagination invariants across 3 offset windows."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_pagination.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    K, limit = 7, 3
+    seen_names: list[str] = []
+    seen_totals: set[int] = set()
+
+    for offset in (0, 3, 6):
+        response = _post(
+            signoz,
+            token,
+            {
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": limit,
+                "offset": offset,
+                "filter": {"expression": "k8s.daemonset.name CONTAINS 'page-'"},
+            },
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        data = response.json()["data"]
+        seen_totals.add(data["total"])
+        expected_len = min(limit, K - offset)
+        assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
+        seen_names.extend(r["daemonSetName"] for r in data["records"])
+
+    assert seen_totals == {K}
+    assert len(seen_names) == K
+    assert set(seen_names) == {f"page-ds-{i}" for i in range(1, K + 1)}
+
+
+def test_daemonsets_offset_beyond_total(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Offset beyond total returns empty records; total still reflects dataset size."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_pagination.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    K = 7
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 3,
+            "offset": K + 5,
+            "filter": {"expression": "k8s.daemonset.name CONTAINS 'page-'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert data["records"] == []
+    assert data["total"] == K
+
+
+def test_daemonsets_total_invariant_across_orderby(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """Total stays K across all 8 orderBy metric columns x 2 directions = 16 calls."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_orderby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    K = 5
+
+    # orderBy keys per daemonsets_constants.go:5-14.
+    for column in (
+        "cpu",
+        "cpu_request",
+        "cpu_limit",
+        "memory",
+        "memory_request",
+        "memory_limit",
+        "desired_nodes",
+        "current_nodes",
+    ):
+        for direction in ("asc", "desc"):
+            response = _post(
+                signoz,
+                token,
+                {
+                    "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                    "end": int(now.timestamp() * 1000),
+                    "limit": 50,
+                    "orderBy": {"key": {"name": column}, "direction": direction},
+                    "filter": {"expression": "k8s.daemonset.name CONTAINS 'order-'"},
+                },
+            )
+            ctx = f"orderBy={column} {direction}"
+            assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
+            data = response.json()["data"]
+            assert data["total"] == K, f"{ctx}: total={data['total']}"
+            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
+
+
+@pytest.mark.parametrize(
+    "column,record_field",
+    [
+        pytest.param("cpu", "daemonSetCPU", id="cpu"),
+        pytest.param("cpu_request", "daemonSetCPURequest", id="cpu_request"),
+        pytest.param("cpu_limit", "daemonSetCPULimit", id="cpu_limit"),
+        pytest.param("memory", "daemonSetMemory", id="memory"),
+        pytest.param("memory_request", "daemonSetMemoryRequest", id="memory_request"),
+        pytest.param("memory_limit", "daemonSetMemoryLimit", id="memory_limit"),
+        pytest.param("desired_nodes", "desiredNodes", id="desired_nodes"),
+        pytest.param("current_nodes", "currentNodes", id="current_nodes"),
+    ],
+)
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_daemonsets_orderby_correctness(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    column: str,
+    record_field: str,
+    direction: str,
+) -> None:
+    """Records sorted by the chosen metric column in the requested direction.
+    Covers each entry in orderByToDaemonSetsQueryNames (daemonsets_constants.go:47-56)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_orderby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": column}, "direction": direction},
+            "filter": {"expression": "k8s.daemonset.name CONTAINS 'order-'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    values = [r[record_field] for r in data["records"]]
+    expected = sorted(values, reverse=(direction == "desc"))
+    assert values == expected, f"{column} {direction} not sorted; got {values}"
+
+
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_daemonsets_orderby_by_daemonset_name(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    direction: str,
+) -> None:
+    """orderBy=k8s.daemonset.name with empty groupBy returns DS sorted
+    alphabetically via the metadata-name branch (PaginateMetadataByName)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/daemonsets_orderby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": "k8s.daemonset.name"}, "direction": direction},
+            "filter": {"expression": "k8s.daemonset.name CONTAINS 'order-'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    names = [r["daemonSetName"] for r in data["records"]]
+    expected = sorted(names, reverse=(direction == "desc"))
+    assert names == expected, f"daemonset.name {direction} not sorted; got {names}"
+
+
+@pytest.mark.parametrize(
+    "payload_override,err_substr",
+    [
+        pytest.param({"start": 0}, "start must be greater than 0", id="start_zero"),
+        pytest.param({"start": -1}, "start must be greater than 0", id="start_negative"),
+        pytest.param({"end": 0}, "end must be greater than 0", id="end_zero"),
+        pytest.param({"end": -1}, "end must be greater than 0", id="end_negative"),
+        pytest.param({"_use_end_eq_start": True}, "must be less than end", id="start_equals_end"),
+        pytest.param({"_use_start_gt_end": True}, "must be less than end", id="start_greater_than_end"),
+        pytest.param({"limit": 0}, "limit must be between", id="limit_zero"),
+        pytest.param({"limit": 5001}, "limit must be between", id="limit_too_large"),
+        pytest.param({"offset": -1}, "offset cannot be negative", id="offset_negative"),
+        pytest.param(
+            {"orderBy": {"key": {"name": "bogus_col"}, "direction": "desc"}},
+            "invalid order by key",
+            id="orderby_invalid_key",
+        ),
+        pytest.param(
+            {"orderBy": {"key": {"name": "cpu"}, "direction": "up"}},
+            "invalid order by direction",
+            id="orderby_invalid_direction",
+        ),
+        pytest.param(
+            {
+                "orderBy": {"key": {"name": "k8s.daemonset.name"}, "direction": "desc"},
+                "groupBy": [
+                    {
+                        "name": "k8s.namespace.name",
+                        "fieldDataType": "string",
+                        "fieldContext": "resource",
+                    }
+                ],
+            },
+            "is only allowed when groupBy is empty",
+            id="orderby_dsname_with_groupby",
+        ),
+    ],
+)
+def test_daemonsets_validation_errors(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    payload_override: dict,
+    err_substr: str,
+) -> None:
+    """All PostableDaemonSets.Validate() rules reject with 400 + descriptive error.
+    See pkg/types/inframonitoringtypes/daemonsets.go:46-97."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    if payload_override.pop("_use_end_eq_start", False):
+        body["end"] = body["start"]
+    if payload_override.pop("_use_start_gt_end", False):
+        body["start"] = body["end"] + 1
+    body.update(payload_override)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(signoz, token, body)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    error = response.json()["error"]
+    assert error["code"] == "invalid_input"
+    assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
+
+
+@pytest.mark.parametrize(
+    "auth_state,expected_status",
+    [
+        pytest.param("none", HTTPStatus.UNAUTHORIZED, id="no_token"),
+        pytest.param("admin", HTTPStatus.OK, id="admin_token"),
+    ],
+)
+def test_daemonsets_auth(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    auth_state: str,
+    expected_status: int,
+) -> None:
+    """Auth required: no Authorization header -> 401; admin Bearer -> 200."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    body = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+    }
+    headers: dict = {}
+    if auth_state == "admin":
+        token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+        headers["authorization"] = f"Bearer {token}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers=headers,
+        json=body,
+        timeout=5,
+    )
+    assert response.status_code == expected_status, response.text
