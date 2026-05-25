@@ -26,6 +26,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
@@ -78,8 +79,8 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
             "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
         },
     )
-    assert response.status_code == HTTPStatus.OK, f"[{case['name']}] HTTP {response.status_code}: {response.text}"
-    assert case["validate"](response), f"[{case['name']}] validation failed: {response.json()}"
+    assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}: {response.text}"
+    assert case["validate"](response), f"validation failed: {response.json()}"
 
 
 # ============================================================================
@@ -120,11 +121,187 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
 # ============================================================================
 
 
+@pytest.mark.parametrize(
+    "case",
+    [
+        # ── Order-by: http.method DESC, NOT in selectFields ──────────────────────
+        # Guards against NOT_FOUND_COLUMN_IN_BLOCK: ordering by a column absent from
+        # the outer SELECT used to cause a ClickHouse query failure.
+        # returnSpansFrom="A" returns all T1 http.method spans: POST /checkout and api-proxy
+        # (both http.method="POST", services checkout-svc and proxy-svc), plus
+        # GET /catalog (http.method="GET") from T2.
+        # The two POST spans are tied so their relative order is undefined; catalog-svc
+        # (GET) is guaranteed to sort last.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'postgresql'",
+                "expression": "A -> B",
+                "return_spans_from": "A",
+                "select_fields": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
+                "validate": lambda r: (
+                    len(_rows(r)) == 3
+                    and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"}
+                    and _rows(r)[2]["data"]["service.name"] == "catalog-svc"
+                ),
+            },
+            id="ob.indirect.http_method_not_in_select",
+        ),
+        # ── Order-by: duration_nano DESC, core span field ─────────────────────────
+        # returnSpansFrom="A" includes api-proxy (3 s) in T1's result.
+        # Order: POST /checkout (5 s) > api-proxy (3 s) > GET /catalog (1 s).
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A => B",
+                "return_spans_from": "A",
+                "order": [{"key": {"name": "duration_nano", "fieldContext": "span"}, "direction": "desc"}],
+                "validate": lambda r: (
+                    len(_rows(r)) == 3
+                    and _rows(r)[0]["data"]["name"] == "POST /checkout"
+                    and _rows(r)[1]["data"]["name"] == "api-proxy"
+                    and _rows(r)[2]["data"]["name"] == "GET /catalog"
+                ),
+            },
+            id="ob.duration.duration_nano_desc",
+        ),
+        # ── Order-by: http.method DESC, IS in selectFields ────────────────────────
+        # http.method is selected so it appears in each result row.
+        # Both POST /checkout and api-proxy carry http.method="POST"; their relative
+        # order is undefined. GET /catalog ("GET") always sorts last.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A => B",
+                "return_spans_from": "A",
+                "select_fields": [{"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}],
+                "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
+                "validate": lambda r: (
+                    len(_rows(r)) == 3
+                    and _rows(r)[0]["data"]["http.method"] == "POST"
+                    and _rows(r)[1]["data"]["http.method"] == "POST"
+                    and _rows(r)[2]["data"]["http.method"] == "GET"
+                ),
+            },
+            id="ob.select.http_method_in_select",
+        ),
+        # ── A => B (direct child), returnSpansFrom="" ─────────────────────────────
+        # POST /checkout directly parents lookup-cart (redis); api-proxy has no redis child.
+        # T3 does not match (no redis descendant). Default returns only the satisfying A spans.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A => B",
+                "return_spans_from": "",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+            },
+            id="ex.direct_child.default",
+        ),
+        # ── A => B (direct child), returnSpansFrom="A" ────────────────────────────
+        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A => B",
+                "return_spans_from": "A",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            },
+            id="ex.direct_child.return_A",
+        ),
+        # ── A -> B (indirect descendant), returnSpansFrom="" ──────────────────────
+        # POST /checkout is an ancestor of check-inventory (postgresql) via lookup-cart.
+        # api-proxy has no postgresql descendants. T3 has no postgresql descendant.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'postgresql'",
+                "expression": "A -> B",
+                "return_spans_from": "",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+            },
+            id="ex.indirect_descendant.default",
+        ),
+        # ── A -> B (indirect descendant), returnSpansFrom="A" ────────────────────
+        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'postgresql'",
+                "expression": "A -> B",
+                "return_spans_from": "A",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            },
+            id="ex.indirect_descendant.return_A",
+        ),
+        # ── A && B (both present in same trace), returnSpansFrom="" ───────────────
+        # T1 and T2 match (each trace has http.method spans AND redis spans); T3 does not.
+        # A && B returns all A spans from matching traces — api-proxy is included
+        # because it shares T1's trace_id with POST /checkout.
+        # (return_A produces the same set by definition; no separate case needed.)
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A && B",
+                "return_spans_from": "",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            },
+            id="ex.and.default",
+        ),
+        # ── A || B (either present), returnSpansFrom="" ───────────────────────────
+        # T1, T2, T3 match via A (http.method spans); T4 matches via B (kafka span).
+        # Default returns UNION of all A and B spans from matching traces.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "messaging.system = 'kafka'",
+                "expression": "A || B",
+                "return_spans_from": "",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
+            },
+            id="ex.or.default",
+        ),
+        # ── A || B, returnSpansFrom="A" ───────────────────────────────────────────
+        # All four traces match; only A spans are returned.
+        # T4 has no http.method span, so it contributes nothing to A.
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "messaging.system = 'kafka'",
+                "expression": "A || B",
+                "return_spans_from": "A",
+                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
+            },
+            id="ex.or.return_A",
+        ),
+        # ── A NOT B (A present, B absent from trace), returnSpansFrom="" ─────────
+        # T1 and T2 do NOT match: their traces contain redis spans.
+        # T3 MATCHES: has http.method span but no redis span in its trace.
+        # T4 has no http.method span, so it cannot contribute an A span.
+        # (return_A produces the same set; no separate case needed.)
+        pytest.param(
+            {
+                "filter_a": "http.method EXISTS",
+                "filter_b": "db.system = 'redis'",
+                "expression": "A NOT B",
+                "return_spans_from": "",
+                "validate": lambda r: _names(r) == {"standalone-server"},
+            },
+            id="ex.not.default",
+        ),
+    ],
+)
 def test_trace_operator(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    case: dict,
 ) -> None:
     t1_trace_id = TraceIdGenerator.trace_id()
     t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — parents the chain
@@ -277,154 +454,4 @@ def test_trace_operator(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    cases = [
-        # ── Order-by: http.method DESC, NOT in selectFields ──────────────────────
-        # returnSpansFrom="A" returns all T1 http.method spans: POST /checkout and api-proxy
-        # (both http.method="POST", services checkout-svc and proxy-svc), plus
-        # GET /catalog (http.method="GET") from T2.
-        # The two POST spans are tied so their relative order is undefined; catalog-svc
-        # (GET) is guaranteed to sort last.
-        {
-            "name": "ob.indirect.http_method_not_in_select",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'postgresql'",
-            "expression": "A -> B",
-            "return_spans_from": "A",
-            "select_fields": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
-            "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-            "validate": lambda r: (
-                len(_rows(r)) == 3
-                and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"}
-                and _rows(r)[2]["data"]["service.name"] == "catalog-svc"
-            ),
-        },
-        # ── Order-by: duration_nano DESC, core span field ─────────────────────────
-        # returnSpansFrom="A" includes api-proxy (3 s) in T1's result.
-        # Order: POST /checkout (5 s) > api-proxy (3 s) > GET /catalog (1 s).
-        {
-            "name": "ob.duration.duration_nano_desc",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A => B",
-            "return_spans_from": "A",
-            "order": [{"key": {"name": "duration_nano", "fieldContext": "span"}, "direction": "desc"}],
-            "validate": lambda r: (
-                len(_rows(r)) == 3
-                and _rows(r)[0]["data"]["name"] == "POST /checkout"
-                and _rows(r)[1]["data"]["name"] == "api-proxy"
-                and _rows(r)[2]["data"]["name"] == "GET /catalog"
-            ),
-        },
-        # ── Order-by: http.method DESC, IS in selectFields ────────────────────────
-        # http.method is selected so it appears in each result row.
-        # Both POST /checkout and api-proxy carry http.method="POST"; their relative
-        # order is undefined. GET /catalog ("GET") always sorts last.
-        {
-            "name": "ob.select.http_method_in_select",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A => B",
-            "return_spans_from": "A",
-            "select_fields": [{"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}],
-            "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-            "validate": lambda r: (
-                len(_rows(r)) == 3
-                and _rows(r)[0]["data"]["http.method"] == "POST"
-                and _rows(r)[1]["data"]["http.method"] == "POST"
-                and _rows(r)[2]["data"]["http.method"] == "GET"
-            ),
-        },
-        # ── A => B (direct child), returnSpansFrom="" ─────────────────────────────
-        # POST /checkout directly parents lookup-cart (redis); api-proxy has no redis child.
-        # T3 does not match (no redis descendant). Default returns only the satisfying A spans.
-        {
-            "name": "ex.direct_child.default",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A => B",
-            "return_spans_from": "",
-            "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
-        },
-        # ── A => B (direct child), returnSpansFrom="A" ────────────────────────────
-        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
-        {
-            "name": "ex.direct_child.return_A",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A => B",
-            "return_spans_from": "A",
-            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
-        },
-        # ── A -> B (indirect descendant), returnSpansFrom="" ──────────────────────
-        # POST /checkout is an ancestor of check-inventory (postgresql) via lookup-cart.
-        # api-proxy has no postgresql descendants. T3 has no postgresql descendant.
-        {
-            "name": "ex.indirect_descendant.default",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'postgresql'",
-            "expression": "A -> B",
-            "return_spans_from": "",
-            "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
-        },
-        # ── A -> B (indirect descendant), returnSpansFrom="A" ────────────────────
-        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
-        {
-            "name": "ex.indirect_descendant.return_A",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'postgresql'",
-            "expression": "A -> B",
-            "return_spans_from": "A",
-            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
-        },
-        # ── A && B (both present in same trace), returnSpansFrom="" ───────────────
-        # T1 and T2 match (each trace has http.method spans AND redis spans); T3 does not.
-        # A && B returns all A spans from matching traces — api-proxy is included
-        # because it shares T1's trace_id with POST /checkout.
-        # (return_A produces the same set by definition; no separate case needed.)
-        {
-            "name": "ex.and.default",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A && B",
-            "return_spans_from": "",
-            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
-        },
-        # ── A || B (either present), returnSpansFrom="" ───────────────────────────
-        # T1, T2, T3 match via A (http.method spans); T4 matches via B (kafka span).
-        # Default returns UNION of all A and B spans from matching traces.
-        {
-            "name": "ex.or.default",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "messaging.system = 'kafka'",
-            "expression": "A || B",
-            "return_spans_from": "",
-            "validate": lambda r: len(_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
-        },
-        # ── A || B, returnSpansFrom="A" ───────────────────────────────────────────
-        # All four traces match; only A spans are returned.
-        # T4 has no http.method span, so it contributes nothing to A.
-        {
-            "name": "ex.or.return_A",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "messaging.system = 'kafka'",
-            "expression": "A || B",
-            "return_spans_from": "A",
-            "validate": lambda r: len(_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
-        },
-        # ── A NOT B (A present, B absent from trace), returnSpansFrom="" ─────────
-        # T1 and T2 do NOT match: their traces contain redis spans.
-        # T3 MATCHES: has http.method span but no redis span in its trace.
-        # T4 has no http.method span, so it cannot contribute an A span.
-        # (return_A produces the same set; no separate case needed.)
-        {
-            "name": "ex.not.default",
-            "filter_a": "http.method EXISTS",
-            "filter_b": "db.system = 'redis'",
-            "expression": "A NOT B",
-            "return_spans_from": "",
-            "validate": lambda r: len(_rows(r)) == 1 and _names(r) == {"standalone-server"},
-        },
-    ]
-
-    for case in cases:
-        _run_case(signoz, token, start_ms, end_ms, case)
+    _run_case(signoz, token, start_ms, end_ms, case)
