@@ -5686,12 +5686,6 @@ components:
           type: string
         rootServiceName:
           type: string
-        serviceNameToTotalDurationMap:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
         spans:
           items:
             $ref: '#/components/schemas/SpantypesWaterfallSpan'
