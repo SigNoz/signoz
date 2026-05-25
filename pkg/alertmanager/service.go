@@ -39,16 +39,18 @@ type Service struct {
 	serversMtx sync.RWMutex
 
 	notificationManager nfmanager.NotificationManager
+
+	maintenanceStore alertmanagertypes.MaintenanceStore
 }
 
 func New(
-	ctx context.Context,
 	settings factory.ScopedProviderSettings,
 	config alertmanagerserver.Config,
 	stateStore alertmanagertypes.StateStore,
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) *Service {
 	service := &Service{
 		config:              config,
@@ -59,6 +61,7 @@ func New(
 		servers:             make(map[string]*alertmanagerserver.Server),
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
+		maintenanceStore:    maintenanceStore,
 	}
 
 	return service
@@ -177,7 +180,10 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager)
+	server, err := alertmanagerserver.New(
+		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -59,6 +59,7 @@ function App(): JSX.Element {
 		isLoggedIn: isLoggedInState,
 		featureFlags,
 		org,
+		isPreflightLoading,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
@@ -385,6 +386,10 @@ function App(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
+
+	if (isPreflightLoading) {
+		return <Spinner tip="Loading..." />;
+	}
 
 	// if the user is in logged in state
 	if (isLoggedInState) {

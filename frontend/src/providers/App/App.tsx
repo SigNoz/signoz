@@ -13,8 +13,11 @@ import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useGetHosts } from 'api/generated/services/zeus';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
+import { clearAuthStorage } from 'utils/clearAuthStorage';
+import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -70,10 +73,47 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
+	const [isPreflightLoading, setIsPreflightLoading] = useState<boolean>(true);
 	const [org, setOrg] = useState<Organization[] | null>(null);
 	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
 
 	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
+
+	// Pre-flight: discover auth mode from public global config.
+	// On success: in impersonation mode → clear stale tokens, force isLoggedIn=true,
+	//             set noAuthMode singleton so the axios interceptor (outside React)
+	//             can skip the rotate-logout chain.
+	// On failure: fail-safe to normal auth flow (treat as not no-auth).
+	const { data: globalConfigData, isLoading: isFetchingGlobalConfig } =
+		useGetGlobalConfig({
+			query: {
+				retry: 2,
+				retryDelay: 1000,
+				refetchOnWindowFocus: false,
+				staleTime: Infinity,
+			},
+		});
+
+	useEffect(() => {
+		if (isFetchingGlobalConfig) {
+			return;
+		}
+
+		const impersonationEnabled =
+			globalConfigData?.data?.identN?.impersonation?.enabled === true;
+
+		if (impersonationEnabled) {
+			clearAuthStorage();
+			setDefaultUser(getUserDefaults());
+			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+			setNoAuthMode(true);
+			setIsLoggedIn(true);
+		} else {
+			setNoAuthMode(false);
+		}
+
+		setIsPreflightLoading(false);
+	}, [globalConfigData, isFetchingGlobalConfig]);
 
 	// fetcher for current user
 	// user will only be fetched if the user id and token is present
@@ -89,14 +129,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const {
 		permissions: permissionsResult,
 		isFetching: isFetchingPermissions,
-		error: errorOnPermissions,
 		refetchPermissions,
 	} = useAuthZ([IsAdminPermission, IsEditorPermission, IsViewerPermission], {
 		enabled: isLoggedIn,
 	});
 
 	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
-	const userFetchError = userFetchDataError || errorOnPermissions;
+	const userFetchError = userFetchDataError;
 
 	const userRole = useMemo(() => {
 		if (permissionsResult?.[IsAdminPermission]?.isGranted) {
@@ -366,6 +405,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	// global event listener for LOGOUT event to clean the app context state
 	useGlobalEventListener('LOGOUT', () => {
+		if (getIsNoAuthMode()) {
+			return;
+		} // logout is meaningless in no-auth; defensively no-op
 		setIsLoggedIn(false);
 		setDefaultUser(getUserDefaults());
 		setActiveLicense(null);
@@ -385,6 +427,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			orgPreferences,
 			hostsData,
 			isLoggedIn,
+			isPreflightLoading,
 			org,
 			isFetchingUser,
 			isFetchingActiveLicense,
@@ -425,6 +468,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isLoggedIn,
 			hostsData,
 			hostsFetchError,
+			isPreflightLoading,
 			org,
 			orgPreferences,
 			activeLicenseRefetch,
