@@ -14,12 +14,13 @@ import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
-import LicenseSection from './LicenseSection';
 import {
 	canAnimateThemeRipple,
 	getRippleOrigin,
 	runThemeRipple,
-} from './themeRipple';
+} from 'utils/themeRipple';
+
+import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
 import UserInfo from './UserInfo';
 

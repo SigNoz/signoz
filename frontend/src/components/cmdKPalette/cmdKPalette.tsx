@@ -10,8 +10,14 @@ import {
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
+import {
+	canAnimateThemeRipple,
+	getRippleOrigin,
+	runThemeRipple,
+} from 'utils/themeRipple';
 
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
@@ -66,12 +72,31 @@ export function CmdKPalette({
 
 	function handleThemeChange(value: string): void {
 		logEvent('Account Settings: Theme Changed', { theme: value });
-		if (value === 'auto') {
-			setAutoSwitch(true);
-		} else {
-			setAutoSwitch(false);
-			setTheme(value);
+
+		const currentIsDark = theme === THEME_MODE.DARK;
+		const targetIsDark = value === THEME_MODE.DARK;
+		const willFlipDarkMode =
+			value !== THEME_MODE.SYSTEM && targetIsDark !== currentIsDark;
+
+		const applyChange = (): void => {
+			if (value === THEME_MODE.SYSTEM) {
+				setAutoSwitch(true);
+			} else {
+				setAutoSwitch(false);
+				setTheme(value);
+			}
+			setOpen(false);
+		};
+
+		if (!willFlipDarkMode || !canAnimateThemeRipple()) {
+			applyChange();
+			return;
 		}
+
+		const activeItem = document.querySelector<HTMLElement>(
+			'[cmdk-item][data-selected="true"]',
+		);
+		runThemeRipple(getRippleOrigin(activeItem), applyChange);
 	}
 
 	function onClickHandler(key: string): void {
