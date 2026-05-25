@@ -95,7 +95,7 @@ func newProvider(
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
-	startDelay := jitter(provider.config.MaxStartJitter)
+	startDelay := jitter(provider.config.ResolvedMaxStartJitter())
 	provider.settings.Logger().InfoContext(ctx, "scheduling first meter collect", slog.Duration("delay", startDelay))
 
 	timer := time.NewTimer(startDelay)
@@ -107,7 +107,7 @@ func (provider *Provider) Start(ctx context.Context) error {
 			return nil
 		case <-timer.C:
 			provider.collect(ctx)
-			next := provider.config.Interval - jitter(provider.config.MaxTickJitter)
+			next := provider.config.Interval - jitter(provider.config.ResolvedMaxTickJitter())
 			timer.Reset(next)
 			provider.settings.Logger().InfoContext(ctx, "scheduled next meter collect", slog.Duration("delay", next))
 		}
