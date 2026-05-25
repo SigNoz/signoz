@@ -32,9 +32,6 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 		return nil, err
 	}
 
-	templater := deps.Templater
-	emailStore := deps.EmailTemplateStore
-
 	var (
 		errs         types.MultiError
 		integrations []notify.Integration

@@ -27,7 +27,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 )
 
 // This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
@@ -209,12 +208,6 @@ func New(
 	server.muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
 	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
-	emailTemplateStore, storeErr := filetemplatestore.NewStore(ctx, srvConfig.EmailTemplatesDirectory, emailtypes.Templates, server.logger)
-	if storeErr != nil {
-		server.logger.ErrorContext(ctx, "failed to create alert email template store, using empty store", errors.Attr(storeErr))
-		emailTemplateStore = filetemplatestore.NewEmptyStore()
-	}
-	server.emailTemplateStore = emailTemplateStore
 
 	return server, nil
 }
