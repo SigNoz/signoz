@@ -58,7 +58,7 @@ test.afterAll(async ({ browser }) => {
 	const page = await ctx.newPage();
 	try {
 		const token = await authToken(page);
-		for (const id of [...seedIds]) {
+		for (const id of seedIds) {
 			await deleteDashboardViaApi(ctx.request, id, token);
 			seedIds.delete(id);
 		}
@@ -228,7 +228,7 @@ test.describe('Dashboard Create Flow', () => {
 			if (route.request().method() === 'POST') {
 				postFired = true;
 			}
-			route.continue();
+			void route.continue();
 		});
 
 		await dialog.locator('input[type="file"]').setInputFiles({
@@ -268,7 +268,7 @@ test.describe('Dashboard Create Flow', () => {
 			if (route.request().method() === 'POST') {
 				postFired = true;
 			}
-			route.continue();
+			void route.continue();
 		});
 
 		await dialog.getByRole('button', { name: 'Import and Next' }).click();
@@ -478,7 +478,7 @@ test.describe('Dashboard Create Flow', () => {
 		await page.goto(`/dashboard/${id}`);
 
 		// 1. Settings drawer: rename + description + tag.
-		let drawer = await openDashboardSettingsDrawer(page);
+		const drawer = await openDashboardSettingsDrawer(page);
 		await drawer.getByTestId('dashboard-name').clear();
 		await drawer.getByTestId('dashboard-name').fill('create-flow-tc13-roundtrip');
 		await drawer.getByTestId('dashboard-desc').fill('round trip description');
