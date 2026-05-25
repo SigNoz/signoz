@@ -68,10 +68,6 @@ export default function ClarificationForm({
 	);
 
 	const handleSubmit = async (): Promise<void> => {
-		// Defensive guard for direct handler invocation. The disabled Submit
-		// button already gates the pointer / keyboard activation path, but
-		// re-checking here keeps validity authoritative inside this function
-		// in case a future caller wires `onClick` to anything else.
 		if (!isFormValid) {
 			return;
 		}

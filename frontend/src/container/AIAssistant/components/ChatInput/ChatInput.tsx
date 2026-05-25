@@ -329,6 +329,74 @@ export default function ChatInput({
 		[mentionRange, selectedContexts, text],
 	);
 
+	const focusCategory = useCallback((category: ContextCategory) => {
+		setActiveContextCategory(category);
+		setPickerSearchQuery('');
+		categoryTabRefs.current.get(category)?.focus();
+	}, []);
+
+	const handleCategoryKeyDown = useCallback(
+		(
+			e: React.KeyboardEvent<HTMLButtonElement>,
+			category: ContextCategory,
+		): void => {
+			const total = CONTEXT_CATEGORIES.length;
+			const idx = CONTEXT_CATEGORIES.indexOf(category);
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[(idx + 1) % total]);
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[(idx - 1 + total) % total]);
+			} else if (e.key === 'Home') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[0]);
+			} else if (e.key === 'End') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[total - 1]);
+			} else if (e.key === 'ArrowRight') {
+				// Cross from tablist into entity panel.
+				e.preventDefault();
+				entityRefs.current[0]?.focus();
+			}
+		},
+		[focusCategory],
+	);
+
+	const handleEntityKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>, index: number): void => {
+			const count = entityRefs.current.length;
+			if (count === 0) {
+				return;
+			}
+			const focusAt = (i: number): void => {
+				e.preventDefault();
+				entityRefs.current[i]?.focus();
+			};
+			switch (e.key) {
+				case 'ArrowDown':
+					focusAt((index + 1) % count);
+					break;
+				case 'ArrowUp':
+					focusAt((index - 1 + count) % count);
+					break;
+				case 'Home':
+					focusAt(0);
+					break;
+				case 'End':
+					focusAt(count - 1);
+					break;
+				case 'ArrowLeft':
+					// Cross back to tablist.
+					e.preventDefault();
+					categoryTabRefs.current.get(activeContextCategory)?.focus();
+					break;
+				default:
+			}
+		},
+		[activeContextCategory],
+	);
+
 	// Focus the textarea when this component mounts (panel/modal open)
 	useEffect(() => {
 		textareaRef.current?.focus();
@@ -932,12 +1000,15 @@ export default function ChatInput({
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										const isActive = activeContextCategory === category;
 										return (
-											<button
+											<Button
 												key={category}
 												ref={(el): void => {
 													categoryTabRefs.current.set(category, el);
 												}}
 												type="button"
+												variant="ghost"
+												color="secondary"
+												size="sm"
 												role="tab"
 												id={`ai-context-tab-${category}`}
 												// Single stable panel id shared by every tab: only the
@@ -958,47 +1029,11 @@ export default function ChatInput({
 													setActiveContextCategory(category);
 													setPickerSearchQuery('');
 												}}
-												onKeyDown={(e): void => {
-													if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-														e.preventDefault();
-														const idx = CONTEXT_CATEGORIES.indexOf(category);
-														const nextIdx =
-															e.key === 'ArrowDown'
-																? (idx + 1) % CONTEXT_CATEGORIES.length
-																: (idx - 1 + CONTEXT_CATEGORIES.length) %
-																	CONTEXT_CATEGORIES.length;
-														const next = CONTEXT_CATEGORIES[nextIdx];
-														setActiveContextCategory(next);
-														setPickerSearchQuery('');
-														// Move DOM focus to the new tab so the next arrow
-														// keypress fires from its closure, not the prior
-														// tab's. Without this, the roving-tabindex pattern
-														// stalls and arrows can't reach the third tab.
-														categoryTabRefs.current.get(next)?.focus();
-													} else if (e.key === 'Home') {
-														e.preventDefault();
-														const first = CONTEXT_CATEGORIES[0];
-														setActiveContextCategory(first);
-														setPickerSearchQuery('');
-														categoryTabRefs.current.get(first)?.focus();
-													} else if (e.key === 'End') {
-														e.preventDefault();
-														const last = CONTEXT_CATEGORIES[CONTEXT_CATEGORIES.length - 1];
-														setActiveContextCategory(last);
-														setPickerSearchQuery('');
-														categoryTabRefs.current.get(last)?.focus();
-													} else if (e.key === 'ArrowRight') {
-														// Cross from the tablist into the panel: focus the
-														// first entity so the user can pick a context with
-														// ArrowDown / Enter without reaching for the mouse.
-														e.preventDefault();
-														entityRefs.current[0]?.focus();
-													}
-												}}
+												onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
+												prefix={<CategoryIcon size={13} />}
 											>
-												<CategoryIcon size={13} />
 												<span>{category}</span>
-											</button>
+											</Button>
 										);
 									})}
 								</div>
@@ -1046,12 +1081,15 @@ export default function ChatInput({
 												);
 
 												return (
-													<button
+													<Button
 														key={option.id}
 														ref={(el): void => {
 															entityRefs.current[index] = el;
 														}}
 														type="button"
+														variant="ghost"
+														color="secondary"
+														size="sm"
 														aria-pressed={isSelected}
 														className={cx(styles.contextPopoverEntityItem, {
 															[styles.selected]: isSelected,
@@ -1063,33 +1101,12 @@ export default function ChatInput({
 																option.value,
 															)
 														}
-														onKeyDown={(e): void => {
-															const count = filteredContextOptions.length;
-															if (e.key === 'ArrowDown') {
-																e.preventDefault();
-																entityRefs.current[(index + 1) % count]?.focus();
-															} else if (e.key === 'ArrowUp') {
-																e.preventDefault();
-																entityRefs.current[(index - 1 + count) % count]?.focus();
-															} else if (e.key === 'Home') {
-																e.preventDefault();
-																entityRefs.current[0]?.focus();
-															} else if (e.key === 'End') {
-																e.preventDefault();
-																entityRefs.current[count - 1]?.focus();
-															} else if (e.key === 'ArrowLeft') {
-																// Cross back to the tablist: focus the active
-																// tab so the user can move categories without
-																// reaching for Shift+Tab.
-																e.preventDefault();
-																categoryTabRefs.current.get(activeContextCategory)?.focus();
-															}
-														}}
+														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
 													>
 														<span className={styles.contextPopoverEntityItemText}>
 															{option.value}
 														</span>
-													</button>
+													</Button>
 												);
 											})
 										)}
@@ -1110,14 +1127,16 @@ export default function ChatInput({
 								aria-label="Recording voice input"
 							>
 								<TooltipSimple title="Discard recording">
-									<button
+									<Button
 										type="button"
+										variant="ghost"
+										size="icon"
+										color="secondary"
 										className={cx(styles.micDiscard, styles.secondary)}
 										onClick={handleDiscard}
 										aria-label="Discard recording"
-									>
-										<X size={12} />
-									</button>
+										prefix={<X size={12} />}
+									/>
 								</TooltipSimple>
 								<span className={styles.micWaves} aria-hidden="true">
 									<span />
@@ -1130,14 +1149,16 @@ export default function ChatInput({
 									<span />
 								</span>
 								<TooltipSimple title="Stop and send">
-									<button
+									<Button
 										type="button"
+										variant="ghost"
+										size="icon"
+										color="destructive"
 										className={cx(styles.micStop, styles.destructive)}
 										onClick={handleStopAndSend}
 										aria-label="Stop and send"
-									>
-										<Square size={9} fill="currentColor" strokeWidth={0} />
-									</button>
+										prefix={<Square size={9} fill="currentColor" strokeWidth={0} />}
+									/>
 								</TooltipSimple>
 							</div>
 						) : (
@@ -1149,9 +1170,8 @@ export default function ChatInput({
 									disabled={disabled}
 									aria-label="Start voice input"
 									className={styles.micBtn}
-								>
-									<Mic size={14} />
-								</Button>
+									prefix={<Mic size={14} />}
+								/>
 							</TooltipSimple>
 						))}
 
@@ -1163,9 +1183,8 @@ export default function ChatInput({
 								color="destructive"
 								onClick={onCancel}
 								aria-label="Stop generating"
-							>
-								<Square size={10} fill="currentColor" strokeWidth={0} />
-							</Button>
+								prefix={<Square size={10} fill="currentColor" strokeWidth={0} />}
+							/>
 						</TooltipSimple>
 					) : (
 						<TooltipSimple title="Send message">
@@ -1176,9 +1195,8 @@ export default function ChatInput({
 								onClick={isListening ? handleStopAndSend : handleSend}
 								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
 								aria-label="Send message"
-							>
-								<Send size={14} />
-							</Button>
+								prefix={<Send size={14} />}
+							/>
 						</TooltipSimple>
 					)}
 				</div>

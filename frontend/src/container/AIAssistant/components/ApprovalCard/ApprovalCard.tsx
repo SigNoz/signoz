@@ -108,9 +108,8 @@ export default function ApprovalCard({
 								color="secondary"
 								onClick={(): void => setDiffExpanded(true)}
 								aria-label="Expand diff"
-							>
-								<Maximize2 size={12} />
-							</Button>
+								prefix={<Maximize2 size={12} />}
+							/>
 						</TooltipSimple>
 					</div>
 					<DiffView diff={approval.diff} />
@@ -121,6 +120,8 @@ export default function ApprovalCard({
 				<DialogContent
 					className={styles.diffDialog}
 					style={{ width: '80vw', maxWidth: '80vw', height: '70vh' }}
+					// Skip auto-focus — otherwise the first Copy button opens its tooltip on dialog open.
+					onOpenAutoFocus={(e): void => e.preventDefault()}
 				>
 					<DialogHeader>
 						<DialogTitle>Approval diff</DialogTitle>
@@ -136,8 +137,7 @@ export default function ApprovalCard({
 								size="sm"
 								value={viewMode}
 								onChange={(next): void => {
-									// Radix `single` group can emit '' when the active item
-									// is clicked again — preserve the current mode.
+									// Radix `single` group can emit '' when the active item is clicked again.
 									if (next === 'split' || next === 'unified') {
 										setViewMode(next);
 									}
