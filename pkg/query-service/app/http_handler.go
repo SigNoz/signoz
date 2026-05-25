@@ -63,7 +63,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
@@ -1113,20 +1112,7 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	dashboard := new(dashboardtypes.Dashboard)
 
-	if _, _, _, err := cloudintegrationtypes.ParseCloudIntegrationDashboardID(id); err == nil {
-		cloudIntegrationDashboard, err := aH.Signoz.Modules.CloudIntegration.GetDashboardByID(ctx, orgID, id)
-		if err != nil && !errorsV2.Ast(err, errorsV2.TypeLicenseUnavailable) {
-			render.Error(rw, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-			return
-		}
-
-		if cloudIntegrationDashboard == nil {
-			render.Error(rw, errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "dashboard not found"))
-			return
-		}
-
-		dashboard = cloudIntegrationDashboard
-	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
+	if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
 		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
 		if apiErr != nil {
 			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
@@ -1187,15 +1173,6 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", errors.Attr(apiErr))
 	} else {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
-	}
-
-	cloudIntegrationDashboards, err := aH.Signoz.Modules.CloudIntegration.ListDashboards(ctx, orgID)
-	if err != nil {
-		if !errors.Ast(err, errorsV2.TypeLicenseUnavailable) {
-			aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(err))
-		}
-	} else {
-		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}
 
 	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
@@ -1788,6 +1765,15 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
 		Active:     fineGrainedAuthz,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	useDashboardV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseDashboardV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
+		Active:     useDashboardV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

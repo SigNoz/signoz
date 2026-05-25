@@ -21,3 +21,9 @@ type SpanMapperStore interface {
 	UpdateMapper(ctx context.Context, mapper *SpanMapper) error
 	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
 }
+
+// TraceStore defines the data access interface for trace detail queries.
+type TraceStore interface {
+	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
+	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
+}
