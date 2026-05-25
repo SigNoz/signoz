@@ -116,17 +116,28 @@ jest.mock('hooks/useNotifications', (): unknown => ({
 }));
 
 // mock theme hook
-jest.mock('hooks/useDarkMode', (): unknown => ({
-	useThemeMode: (): {
+jest.mock('hooks/useDarkMode', (): unknown => {
+	const useThemeModeMock = (): {
 		setAutoSwitch: jest.Mock;
 		setTheme: jest.Mock;
+		toggleTheme: jest.Mock;
 		theme: string;
+		autoSwitch: boolean;
 	} => ({
 		setAutoSwitch: jest.fn(),
 		setTheme: jest.fn(),
+		toggleTheme: jest.fn(),
 		theme: 'dark',
-	}),
-}));
+		autoSwitch: false,
+	});
+	return {
+		__esModule: true,
+		default: useThemeModeMock,
+		useThemeMode: useThemeModeMock,
+		useIsDarkMode: (): boolean => true,
+		useSystemTheme: (): 'dark' | 'light' => 'dark',
+	};
+});
 
 // mock updateUserPreference API and react-query mutation
 jest.mock('api/v1/user/preferences/name/update', (): jest.Mock => jest.fn());

@@ -10,13 +10,9 @@ import {
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
 import { useThemeMode } from 'hooks/useDarkMode';
-import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
-import {
-	canAnimateThemeTransition,
-	runThemeTransition,
-} from 'utils/themeTransition';
 
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
@@ -41,7 +37,8 @@ export function CmdKPalette({
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
 
-	const { setAutoSwitch, setTheme, theme } = useThemeMode();
+	const { theme } = useThemeMode();
+	const selectTheme = useThemeSelection();
 
 	// toggle palette with ⌘/Ctrl+K
 	function handleGlobalCmdK(
@@ -71,28 +68,10 @@ export function CmdKPalette({
 
 	function handleThemeChange(value: string): void {
 		logEvent('Account Settings: Theme Changed', { theme: value });
-
-		const currentIsDark = theme === THEME_MODE.DARK;
-		const targetIsDark = value === THEME_MODE.DARK;
-		const willFlipDarkMode =
-			value !== THEME_MODE.SYSTEM && targetIsDark !== currentIsDark;
-
-		const applyChange = (): void => {
-			if (value === THEME_MODE.SYSTEM) {
-				setAutoSwitch(true);
-			} else {
-				setAutoSwitch(false);
-				setTheme(value);
-			}
-			setOpen(false);
-		};
-
-		if (!willFlipDarkMode || !canAnimateThemeTransition()) {
-			applyChange();
-			return;
-		}
-
-		runThemeTransition(applyChange);
+		// Close the palette inside the same flushSync batch as the theme change
+		// so its dismissal is part of the captured "new" frame of the wipe;
+		// otherwise the dialog would be visible in both snapshots and flicker.
+		selectTheme(value, () => setOpen(false));
 	}
 
 	function onClickHandler(key: string): void {

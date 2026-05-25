@@ -3,7 +3,15 @@ import { flushSync } from 'react-dom';
 const WIPE_DURATION_MS = 400;
 const WIPE_EASING = 'ease-out';
 
-type ViewTransition = { ready: Promise<void> };
+// Toggled on <html> for the duration of the wipe so the CSS overrides
+// (animation: none on ::view-transition-{old,new}(root)) don't leak into
+// any future, unrelated view transitions in the app.
+export const THEME_WIPE_ACTIVE_CLASS = 'theme-wipe-active';
+
+type ViewTransition = {
+	ready: Promise<void>;
+	finished: Promise<void>;
+};
 type DocumentWithVT = Document & {
 	startViewTransition?: (callback: () => void) => ViewTransition;
 };
@@ -27,6 +35,9 @@ export function runThemeTransition(applyChange: () => void): void {
 		return;
 	}
 
+	const root = document.documentElement;
+	root.classList.add(THEME_WIPE_ACTIVE_CLASS);
+
 	const transition = doc.startViewTransition(() => {
 		flushSync(applyChange);
 	});
@@ -36,7 +47,7 @@ export function runThemeTransition(applyChange: () => void): void {
 
 	transition.ready
 		.then(() =>
-			document.documentElement.animate(
+			root.animate(
 				{ clipPath: [from, to] },
 				{
 					duration: WIPE_DURATION_MS,
@@ -46,6 +57,11 @@ export function runThemeTransition(applyChange: () => void): void {
 			),
 		)
 		.catch(() => {
-			// Transition cancelled — applyChange has already run, so nothing to do.
+			// Transition cancelled — applyChange has already run.
 		});
+
+	const cleanup = (): void => {
+		root.classList.remove(THEME_WIPE_ACTIVE_CLASS);
+	};
+	transition.finished.then(cleanup).catch(cleanup);
 }

@@ -12,6 +12,8 @@ import APIError from 'types/api/error';
 import { toast } from '@signozhq/ui/sonner';
 
 const toggleThemeFunction = jest.fn();
+const setThemeFunction = jest.fn();
+const setAutoSwitchFunction = jest.fn();
 const logEventFunction = jest.fn();
 const copyToClipboardFn = jest.fn();
 const editUserFn = jest.fn();
@@ -56,9 +58,11 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: jest.fn(() => true),
 	useSystemTheme: jest.fn(() => 'dark'),
 	default: jest.fn(() => ({
+		theme: 'dark',
+		setTheme: setThemeFunction,
 		toggleTheme: toggleThemeFunction,
 		autoSwitch: false,
-		setAutoSwitch: jest.fn(),
+		setAutoSwitch: setAutoSwitchFunction,
 	})),
 }));
 
@@ -134,7 +138,8 @@ describe('MySettings Flows', () => {
 			fireEvent.click(lightOption);
 
 			await waitFor(() => {
-				expect(toggleThemeFunction).toHaveBeenCalled();
+				expect(setAutoSwitchFunction).toHaveBeenCalledWith(false);
+				expect(setThemeFunction).toHaveBeenCalledWith('light');
 				expect(logEventFunction).toHaveBeenCalledWith(
 					'Account Settings: Theme Changed',
 					{

@@ -8,16 +8,13 @@ import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
+import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
-
-import {
-	canAnimateThemeTransition,
-	runThemeTransition,
-} from 'utils/themeTransition';
 
 import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
@@ -28,9 +25,10 @@ import './MySettings.styles.scss';
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
-	const { toggleTheme, autoSwitch, setAutoSwitch } = useThemeMode();
+	const { autoSwitch } = useThemeMode();
 	const systemTheme = useSystemTheme();
 	const { notifications } = useNotifications();
+	const selectTheme = useThemeSelection();
 
 	const [sideNavPinned, setSideNavPinned] = useState(false);
 
@@ -63,7 +61,7 @@ function MySettings(): JSX.Element {
 					<Moon data-testid="dark-theme-icon" size={12} /> Dark{' '}
 				</div>
 			),
-			value: 'dark',
+			value: THEME_MODE.DARK,
 		},
 		{
 			label: (
@@ -74,7 +72,7 @@ function MySettings(): JSX.Element {
 					</Tag>
 				</div>
 			),
-			value: 'light',
+			value: THEME_MODE.LIGHT,
 		},
 		{
 			label: (
@@ -82,57 +80,29 @@ function MySettings(): JSX.Element {
 					<MonitorCog size={12} data-testid="auto-theme-icon" /> System{' '}
 				</div>
 			),
-			value: 'auto',
+			value: THEME_MODE.SYSTEM,
 		},
 	];
 
 	const [theme, setTheme] = useState(() => {
 		if (autoSwitch) {
-			return 'auto';
+			return THEME_MODE.SYSTEM;
 		}
-		return isDarkMode ? 'dark' : 'light';
+		return isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT;
 	});
 
 	const handleThemeChange = (event: RadioChangeEvent): void => {
 		const { value } = event.target;
 		logEvent('Account Settings: Theme Changed', { theme: value });
-
-		const willFlipDarkMode =
-			value !== 'auto' && (value === 'dark') !== isDarkMode;
-
-		const applyChange = (): void => {
-			setTheme(value);
-			if (value === 'auto') {
-				setAutoSwitch(true);
-				return;
-			}
-			setAutoSwitch(false);
-			if (willFlipDarkMode) {
-				toggleTheme();
-			}
-		};
-
-		// Only animate on a real dark↔light flip, and only when the browser
-		// supports View Transitions and the user hasn't opted out of motion.
-		if (!willFlipDarkMode || !canAnimateThemeTransition()) {
-			applyChange();
-			return;
-		}
-
-		runThemeTransition(applyChange);
+		selectTheme(value);
 	};
 
 	useEffect(() => {
 		if (autoSwitch) {
-			setTheme('auto');
+			setTheme(THEME_MODE.SYSTEM);
 			return;
 		}
-
-		if (isDarkMode) {
-			setTheme('dark');
-		} else {
-			setTheme('light');
-		}
+		setTheme(isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT);
 	}, [autoSwitch, isDarkMode]);
 
 	const handleSideNavPinnedChange = (checked: boolean): void => {
@@ -159,7 +129,7 @@ function MySettings(): JSX.Element {
 				value: checked,
 			},
 			{
-				onError: (error: unknown) => {
+				onError: (error) => {
 					// Revert the state if the API call fails
 					setSideNavPinned(!checked);
 					updateUserPreferenceInContext({
