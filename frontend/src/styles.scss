@@ -825,4 +825,7 @@ body.ai-assistant-panel-open {
 // overrides
 :root {
 	--input-focus-outline-width: 0;
+	// component library variable overrides
+	--tab-list-primary-gap: 12px;
+	// --tab-content-padding: 0px;
 }

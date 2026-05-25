@@ -22,21 +22,6 @@ $dark-theme: 'darkMode';
 
 	&__tabs {
 		margin-top: 148px;
-
-		.ant-tabs {
-			&-nav {
-				&::before {
-					border-color: var(--l1-border);
-
-					.#{$light-theme} & {
-						border-color: var(--l1-border);
-					}
-				}
-			}
-			&-nav-wrap {
-				justify-content: center;
-			}
-		}
 	}
 
 	&__modal {

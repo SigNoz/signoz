@@ -12,8 +12,6 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
 
-import './Pipelines.styles.scss';
-
 const pipelineRefetchInterval = (
 	pipelineResponse: SuccessResponse<Pipeline> | undefined,
 ): number | false => {
@@ -82,7 +80,7 @@ function Pipelines(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<Tabs className="pipeline-tabs" defaultValue="pipelines" items={tabItems} />
+			<Tabs defaultValue="pipelines" items={tabItems} />
 		</Sentry.ErrorBoundary>
 	);
 }
