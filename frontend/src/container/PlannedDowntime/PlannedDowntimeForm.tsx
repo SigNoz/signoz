@@ -498,7 +498,7 @@ export function PlannedDowntimeForm(
 								]}
 							>
 								<Select
-									placeholder="Search for alerts rules or groups..."
+									placeholder="Search for alert rules or groups..."
 									mode="multiple"
 									status={isError ? 'error' : undefined}
 									loading={isLoading}
