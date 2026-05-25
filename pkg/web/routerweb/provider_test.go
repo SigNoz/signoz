@@ -205,6 +205,23 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 	}
 }
 
+func TestServeTemplateWithoutSettings(t *testing.T) {
+	t.Parallel()
+
+	base := startServer(t, web.Config{
+		Index:     "no_settings_template.html",
+		Directory: "testdata",
+		Settings: web.Settings{
+			Posthog: web.Posthog{Enabled: true},
+		},
+	}, global.Config{})
+
+	// Settings are configured but the template doesn't reference [[.Settings]],
+	// so they should not appear in the output.
+	expected := `<html><head><base href="/" /></head><body>No settings here</body></html>`
+	assert.Equal(t, expected, strings.TrimSuffix(httpGet(t, base+"/"), "\n"))
+}
+
 func TestServeStaticFilesUnchanged(t *testing.T) {
 	t.Parallel()
 
