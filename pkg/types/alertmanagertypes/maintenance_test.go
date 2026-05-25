@@ -669,7 +669,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 	}
 
 	for idx, c := range cases {
-		result := c.maintenance.ShouldSkip(c.name, c.ts, model.LabelSet{})
+		result, err := c.maintenance.ShouldSkip(c.name, c.ts, model.LabelSet{})
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 		if result != c.skip {
 			t.Errorf("skip %v, got %v, case:%d - %s", c.skip, result, idx, c.name)
 		}
@@ -810,7 +813,10 @@ func TestShouldSkip_Scope(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := c.maintenance.ShouldSkip(c.ruleID, c.ts, c.lset)
+			got, err := c.maintenance.ShouldSkip(c.ruleID, c.ts, c.lset)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			if got != c.skip {
 				t.Errorf("ShouldSkip() = %v, want %v", got, c.skip)
 			}
@@ -853,4 +859,3 @@ func TestPostablePlannedMaintenance_ValidateScope(t *testing.T) {
 		})
 	}
 }
-

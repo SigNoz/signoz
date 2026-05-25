@@ -3,7 +3,6 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -169,7 +168,7 @@ func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
 		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
 }
 
-func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) bool {
+func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) (bool, error) {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if len(m.RuleIDs) > 0 {
@@ -186,35 +185,27 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 	}
 
 	if !found {
-		return false
+		return false, nil
 	}
 
-	if !m.isScheduleActive(now) {
-		return false
+	if !m.IsActive(now) {
+		return false, nil
 	}
 
-	// lset is empty when called from IsActive (no instance labels available);
-	// skip expression filtering in that case.
-	if m.Scope != "" && len(lset) != 0 {
+	if m.Scope != "" {
 		result, err := EvalScopeExpression(m.Scope, lset)
 		if err != nil {
-			slog.Default().ErrorContext(context.Background(), "scope expression evaluation failed; alert passes through",
-				slog.String("maintenance_id", m.ID.StringValue()),
-				slog.String("scope", m.Scope),
-				slog.Any("error", err),
-			)
-			return false
+			return false, err
 		}
 		if !result {
-			return false
+			return false, nil
 		}
 	}
-
-	return true
+	return true, nil
 }
 
-// isScheduleActive reports whether now falls inside the maintenance window's schedule.
-func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
+// IsActive reports whether [now] falls inside the maintenance window's schedule.
+func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
@@ -343,14 +334,6 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 		}
 	}
 	return currentTime.Sub(candidate) <= rec.Duration.Duration()
-}
-
-func (m *PlannedMaintenance) IsActive(now time.Time) bool {
-	ruleID := "maintenance"
-	if len(m.RuleIDs) > 0 {
-		ruleID = (m.RuleIDs)[0]
-	}
-	return m.ShouldSkip(ruleID, now, nil)
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
