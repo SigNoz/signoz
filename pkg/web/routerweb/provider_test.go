@@ -118,9 +118,9 @@ func TestServeTemplatedIndex(t *testing.T) {
 			webConfig: web.Config{
 				Index:     "valid_template.html",
 				Directory: "testdata",
-				Settings: web.Settings{
-					Posthog: web.Posthog{Enabled: true},
-					Appcues: web.Appcues{Enabled: true},
+				Settings: web.SettingsConfig{
+					Posthog: web.PosthogConfig{Enabled: true},
+					Appcues: web.AppcuesConfig{Enabled: true},
 				},
 			},
 			expected: expectedHTML("/", web.Settings{
