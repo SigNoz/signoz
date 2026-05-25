@@ -21,10 +21,6 @@ type QueryResultProps = {
 	total: number;
 	onPrev: () => void;
 	onNext: () => void;
-	// When true, render count + ↑↓ for navigation and a trailing divider
-	// (sits before a sibling action button like the Clear X). When false,
-	// only the status content is rendered — used in collapsed view where
-	// there's no navigation and no Clear button to separate from.
 	showNavigation?: boolean;
 };
 

@@ -97,16 +97,10 @@ function Filters({
 	const [filteredSpanIds, setFilteredSpanIds] = useState<string[]>([]);
 	const [currentSearchedIndex, setCurrentSearchedIndex] = useState<number>(0);
 	const expressionRef = useRef<string>('');
-	// Wraps both the input AND the result-nav cluster. onBlur fires only when
-	// focus leaves this whole region — clicking ↑↓ or the Clear X stays
-	// inside the ref, so we don't re-fire a failing query on the way to
-	// navigating / clearing.
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const runQuery = useCallback(
 		(value: string): void => {
-			// oxlint-disable-next-line no-console
-			console.log('Running query with expression:', value);
 			const items = convertExpressionToFilters(value);
 			setFilters({ items, op: 'AND' });
 			// Clear results when expression produces no filters
@@ -150,8 +144,6 @@ function Filters({
 		runQuery(expressionRef.current);
 	}, [runQuery]);
 
-	// Clear filter — reset expression + filters + results in one shot.
-	// Wired to the X button in the result-nav cluster.
 	const handleClear = useCallback((): void => {
 		setExpression('');
 		expressionRef.current = '';
