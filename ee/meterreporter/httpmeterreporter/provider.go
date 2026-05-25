@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -94,19 +95,30 @@ func newProvider(
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
-	provider.collect(ctx)
+	startDelay := jitter(provider.config.MaxStartJitter)
+	provider.settings.Logger().InfoContext(ctx, "scheduling first meter collect", slog.Duration("delay", startDelay))
 
-	ticker := time.NewTicker(provider.config.Interval)
-	defer ticker.Stop()
+	timer := time.NewTimer(startDelay)
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-provider.stopC:
 			return nil
-		case <-ticker.C:
+		case <-timer.C:
 			provider.collect(ctx)
+			next := provider.config.Interval - jitter(provider.config.MaxTickJitter)
+			timer.Reset(next)
 		}
 	}
+}
+
+// jitter returns a uniform random duration in [0, max). Returns 0 if max <= 0.
+func jitter(max time.Duration) time.Duration {
+	if max <= 0 {
+		return 0
+	}
+	return time.Duration(rand.Int64N(int64(max)))
 }
 
 func (provider *Provider) collect(ctx context.Context) {
