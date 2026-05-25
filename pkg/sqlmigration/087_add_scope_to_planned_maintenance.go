@@ -66,32 +66,5 @@ func (migration *addScopeToPlannedMaintenance) Up(ctx context.Context, db *bun.D
 }
 
 func (migration *addScopeToPlannedMaintenance) Down(ctx context.Context, db *bun.DB) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
-	table, _, err := migration.sqlschema.GetTable(ctx, "planned_maintenance")
-	if err != nil {
-		return err
-	}
-
-	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("scope"),
-		DataType: sqlschema.DataTypeText,
-		Nullable: true,
-	}
-
-	sqls := migration.sqlschema.Operator().DropColumn(table, column)
-	for _, sql := range sqls {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
+	return nil
 }
