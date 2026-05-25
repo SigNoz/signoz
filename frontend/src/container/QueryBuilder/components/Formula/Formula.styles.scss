@@ -9,10 +9,6 @@
 	justify-content: space-between;
 	gap: 16px;
 
-	// Order By's .ant-select is 36px; align the signoz Input (default 2rem)
-	// and its label so the two grid cells share the same row height.
-	// box-sizing: border-box keeps the label's 1px top/bottom borders
-	// from adding to its stretched height.
 	.input-with-label {
 		.label {
 			box-sizing: border-box;

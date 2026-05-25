@@ -10,7 +10,6 @@
 			--input-background: var(--l2-background);
 			--input-hover-background: var(--l2-background);
 			--input-focus-background: var(--l2-background);
-			// Match the brightness of the checkbox value text (e.g. "GET /api/cart?...").
 			&::placeholder {
 				color: var(--l3-foreground);
 			}

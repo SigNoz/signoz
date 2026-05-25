@@ -293,9 +293,6 @@
 			font-size: 12px !important;
 		}
 
-		// Row height is driven by the close-btn / cm-content (both 38px).
-		// Align the inner select / signoz input to the same height so the
-		// label can stretch flush against the input/close-btn borders.
 		$add-on-row-height: 38px;
 
 		.periscope-input-with-label {
