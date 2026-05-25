@@ -19,41 +19,17 @@ type Config struct {
 }
 
 type Settings struct {
-	Sentry Sentry `mapstructure:"sentry" json:"sentry"`
+	Posthog Posthog `mapstructure:"posthog"`
 
-	Posthog Posthog `mapstructure:"posthog" json:"posthog"`
-
-	Pylon Pylon `mapstructure:"pylon" json:"pylon"`
-
-	Appcues Appcues `mapstructure:"appcues" json:"appcues"`
-}
-
-type Sentry struct {
-	Enabled bool `mapstructure:"enabled" json:"enabled"`
-
-	DSN string `mapstructure:"dsn" json:"dsn,omitempty"`
-
-	TunnelURL string `mapstructure:"tunnel_url" json:"tunnelURL,omitempty"`
+	Appcues Appcues `mapstructure:"appcues"`
 }
 
 type Posthog struct {
-	Enabled bool `mapstructure:"enabled" json:"enabled"`
-
-	Key string `mapstructure:"key" json:"key,omitempty"`
-}
-
-type Pylon struct {
-	Enabled bool `mapstructure:"enabled" json:"enabled"`
-
-	AppID string `mapstructure:"app_id" json:"appID,omitempty"`
-
-	IdentSecret string `mapstructure:"ident_secret" json:"identSecret,omitempty"`
+	Enabled bool `mapstructure:"enabled"`
 }
 
 type Appcues struct {
-	Enabled bool `mapstructure:"enabled" json:"enabled"`
-
-	AppID string `mapstructure:"app_id" json:"appID,omitempty"`
+	Enabled bool `mapstructure:"enabled"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -66,13 +42,7 @@ func newConfig() factory.Config {
 		Index:     "index.html",
 		Directory: "/etc/signoz/web",
 		Settings: Settings{
-			Sentry: Sentry{
-				Enabled: false,
-			},
 			Posthog: Posthog{
-				Enabled: false,
-			},
-			Pylon: Pylon{
 				Enabled: false,
 			},
 			Appcues: Appcues{

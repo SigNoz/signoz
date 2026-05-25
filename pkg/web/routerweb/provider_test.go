@@ -119,17 +119,13 @@ func TestServeTemplatedIndex(t *testing.T) {
 				Index:     "valid_template.html",
 				Directory: "testdata",
 				Settings: web.Settings{
-					Sentry:  web.Sentry{Enabled: true, DSN: "https://sentry.example.com/1", TunnelURL: "https://tunnel.example.com"},
-					Posthog: web.Posthog{Enabled: true, Key: "phc_test123"},
-					Pylon:   web.Pylon{Enabled: true, AppID: "pylon-app-id", IdentSecret: "pylon-secret"},
-					Appcues: web.Appcues{Enabled: true, AppID: "appcues-app-id"},
+					Posthog: web.Posthog{Enabled: true},
+					Appcues: web.Appcues{Enabled: true},
 				},
 			},
 			expected: expectedHTML("/", web.Settings{
-				Sentry:  web.Sentry{Enabled: true, DSN: "https://sentry.example.com/1", TunnelURL: "https://tunnel.example.com"},
-				Posthog: web.Posthog{Enabled: true, Key: "phc_test123"},
-				Pylon:   web.Pylon{Enabled: true, AppID: "pylon-app-id", IdentSecret: "pylon-secret"},
-				Appcues: web.Appcues{Enabled: true, AppID: "appcues-app-id"},
+				Posthog: web.Posthog{Enabled: true},
+				Appcues: web.Appcues{Enabled: true},
 			}),
 		},
 	}
