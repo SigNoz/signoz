@@ -4623,23 +4623,40 @@ export interface DashboardtypesGettableDashboardWithPinDTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: DashboardtypesGettableDashboardV2DataDTO;
 	/**
 	 * @type string
 	 */
 	id: string;
 	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
 	 * @type boolean
 	 */
-	locked?: boolean;
+	locked: boolean;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
 	/**
 	 * @type boolean
 	 */
 	pinned?: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4713,6 +4730,11 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 * @type array
 	 */
 	dashboards: DashboardtypesGettableDashboardWithPinDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
 }
 
 export enum DashboardtypesPanelPluginKindDTO {

@@ -2619,16 +2619,29 @@ components:
           type: string
         createdBy:
           type: string
-        data:
-          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Data'
         id:
+          type: string
+        image:
           type: string
         locked:
           type: boolean
+        name:
+          type: string
         orgId:
           type: string
         pinned:
           type: boolean
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
         updatedAt:
           format: date-time
           type: string
@@ -2636,6 +2649,13 @@ components:
           type: string
       required:
       - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
       type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
@@ -2784,8 +2804,12 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesGettableDashboardWithPin'
           type: array
+        total:
+          format: int64
+          type: integer
       required:
       - dashboards
+      - total
       type: object
     DashboardtypesNumberPanelSpec:
       properties:

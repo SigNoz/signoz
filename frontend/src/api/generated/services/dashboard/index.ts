@@ -742,7 +742,7 @@ export const invalidateListDashboardsV2 = async (
 };
 
 /**
- * This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.
+ * This endpoint creates a dashboard in the v2 format that follows Perses spec.
  * @summary Create dashboard (v2)
  */
 export const createDashboardV2 = (
