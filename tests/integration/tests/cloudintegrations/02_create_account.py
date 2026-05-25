@@ -10,7 +10,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-def test_apply_license( 
+def test_apply_license(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
