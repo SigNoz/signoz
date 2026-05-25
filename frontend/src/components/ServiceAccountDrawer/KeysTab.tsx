@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Skeleton, Table } from 'antd';
+import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
@@ -110,28 +110,34 @@ function buildColumns({
 				onClick: (e): void => e.stopPropagation(),
 				style: { cursor: 'default' },
 			}),
-			render: (_, record): JSX.Element => (
-				<AuthZTooltip
-					checks={[
-						buildAPIKeyDeletePermission(record.id),
-						buildSADetachPermission(accountId),
-					]}
-					enabled={!isDisabled && !!accountId}
-				>
-					<Button
-						variant="ghost"
-						size="sm"
-						color="destructive"
-						disabled={isDisabled}
-						onClick={(): void => {
-							onRevokeClick(record.id);
-						}}
-						className="keys-tab__revoke-btn"
+			render: (_, record): JSX.Element => {
+				const tooltipTitle = isDisabled ? 'Service account disabled' : 'Revoke Key';
+				return (
+					<AuthZTooltip
+						checks={[
+							buildAPIKeyDeletePermission(record.id),
+							buildSADetachPermission(accountId),
+						]}
+						enabled={!isDisabled && !!accountId}
 					>
-						<X size={12} />
-					</Button>
-				</AuthZTooltip>
-			),
+						<Tooltip title={tooltipTitle}>
+							<Button
+								variant="ghost"
+								size="sm"
+								color="destructive"
+								disabled={isDisabled}
+								onClick={(e): void => {
+									e.stopPropagation();
+									onRevokeClick(record.id);
+								}}
+								className="keys-tab__revoke-btn"
+							>
+								<X size={12} />
+							</Button>
+						</Tooltip>
+					</AuthZTooltip>
+				);
+			},
 		},
 	];
 }

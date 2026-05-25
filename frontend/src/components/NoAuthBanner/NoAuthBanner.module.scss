@@ -1,0 +1,13 @@
+.banner {
+	height: var(--spacing-20);
+
+	a {
+		color: var(--callout-warning-title);
+		text-decoration: underline;
+
+		&:hover {
+			color: var(--callout-warning-title);
+			opacity: 0.8;
+		}
+	}
+}

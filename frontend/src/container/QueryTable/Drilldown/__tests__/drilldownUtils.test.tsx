@@ -169,9 +169,10 @@ describe('drilldownUtils', () => {
 
 			// Verify transformations were applied
 			if (filterExpression) {
-				// Rule 2: operation → name
-				expect(filterExpression).toContain(`name = 'GET'`);
+				// `operation` rewrites to `name` via source-side pass, then `name`
+				// is dropped by the logs target-side pass (logs has no span-name).
 				expect(filterExpression).not.toContain(`operation = 'GET'`);
+				expect(filterExpression).not.toContain(`name = 'GET'`);
 
 				// Rule 3: span.kind → kind
 				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
@@ -262,8 +263,9 @@ describe('drilldownUtils', () => {
 			const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
 			if (filterExpression) {
-				// All transformations should be applied
-				expect(filterExpression).toContain(`name = 'POST'`);
+				// `operation` rewrites to `name` then drops for logs target.
+				expect(filterExpression).not.toContain(`operation = 'POST'`);
+				expect(filterExpression).not.toContain(`name = 'POST'`);
 				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindClient}'`);
 				expect(filterExpression).toContain(`status_code_string = 'Error'`);
 				expect(filterExpression).toContain(`http.status_code = 500`);
@@ -410,8 +412,9 @@ describe('drilldownUtils', () => {
 			const filterExpression = result?.builder.queryData[0]?.filter?.expression;
 
 			if (filterExpression) {
-				// Transformed attributes
-				expect(filterExpression).toContain(`name = 'GET'`);
+				// `operation` rewrites to `name` then drops for logs target.
+				expect(filterExpression).not.toContain(`operation = 'GET'`);
+				expect(filterExpression).not.toContain(`name = 'GET'`);
 				expect(filterExpression).toContain(`${spanKindKey} = '${spanKindServer}'`);
 
 				// Preserved non-metric attributes
@@ -497,6 +500,191 @@ describe('drilldownUtils', () => {
 				expect(expr).not.toContain(`kind = '2'`);
 				expect(expr).not.toContain(`status_code_string = 'Ok'`);
 			});
+		});
+	});
+
+	describe('getViewQuery target-aware sanitisation (serviceName / name)', () => {
+		const makeQuery = (
+			expression: string,
+			dataSource: 'traces' | 'logs' | 'metrics' = 'traces',
+		): Query => ({
+			id: 'src-query',
+			queryType: 'builder' as any,
+			builder: {
+				queryData: [
+					{
+						queryName: 'src',
+						dataSource: dataSource as any,
+						aggregations: [{ metricName: 'non_apm_metric' }] as any,
+						groupBy: [],
+						expression: '',
+						disabled: false,
+						functions: [],
+						legend: '',
+						having: [],
+						limit: null,
+						stepInterval: undefined,
+						orderBy: [],
+						filter: { expression },
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			promql: [],
+			clickhouse_sql: [],
+		});
+
+		it('rewrites serviceName -> service.name when drilling to logs', () => {
+			const result = getViewQuery(
+				makeQuery(`serviceName = 'svc'`),
+				[],
+				'view_logs',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`service.name = 'svc'`);
+			expect(expr).not.toContain('serviceName');
+		});
+
+		it('rewrites serviceName -> service.name when drilling to traces', () => {
+			const result = getViewQuery(
+				makeQuery(`serviceName = 'svc'`),
+				[],
+				'view_traces',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`service.name = 'svc'`);
+			expect(expr).not.toContain('serviceName');
+		});
+
+		it('drops `name` clause when drilling to logs', () => {
+			const result = getViewQuery(
+				makeQuery(`name = 'GET /api'`),
+				[],
+				'view_logs',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).not.toContain(`name = 'GET /api'`);
+		});
+
+		it('keeps `name` clause when drilling to traces', () => {
+			const result = getViewQuery(
+				makeQuery(`name = 'GET /api'`),
+				[],
+				'view_traces',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`name = 'GET /api'`);
+		});
+
+		it('combined: drilling to logs rewrites serviceName and drops name', () => {
+			const result = getViewQuery(
+				makeQuery(`serviceName = 'svc' AND name = 'GET /api'`),
+				[],
+				'view_logs',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`service.name = 'svc'`);
+			expect(expr).not.toContain('serviceName');
+			expect(expr).not.toContain(`name = 'GET /api'`);
+		});
+
+		it('combined: drilling to traces rewrites serviceName and keeps name', () => {
+			const result = getViewQuery(
+				makeQuery(`serviceName = 'svc' AND name = 'GET /api'`),
+				[],
+				'view_traces',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`service.name = 'svc'`);
+			expect(expr).toContain(`name = 'GET /api'`);
+			expect(expr).not.toContain('serviceName');
+		});
+
+		it('metric-APM source -> traces target preserves existing operation -> name rewrite', () => {
+			const metricsQuery: Query = {
+				id: 'apm-metrics',
+				queryType: 'builder' as any,
+				builder: {
+					queryData: [
+						{
+							queryName: 'm',
+							dataSource: 'metrics' as any,
+							aggregations: [{ metricName: 'signoz_calls_total' }] as any,
+							groupBy: [],
+							expression: '',
+							disabled: false,
+							functions: [],
+							legend: '',
+							having: [],
+							limit: null,
+							stepInterval: undefined,
+							orderBy: [],
+							filter: { expression: `operation = 'GET'` },
+						},
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				promql: [],
+				clickhouse_sql: [],
+			};
+			const result = getViewQuery(metricsQuery, [], 'view_traces', 'm');
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain(`name = 'GET'`);
+			expect(expr).not.toContain(`operation = 'GET'`);
+		});
+
+		it('metric-APM source -> logs target: operation rewrites to name, then dropped', () => {
+			const metricsQuery: Query = {
+				id: 'apm-metrics',
+				queryType: 'builder' as any,
+				builder: {
+					queryData: [
+						{
+							queryName: 'm',
+							dataSource: 'metrics' as any,
+							aggregations: [{ metricName: 'signoz_calls_total' }] as any,
+							groupBy: [],
+							expression: '',
+							disabled: false,
+							functions: [],
+							legend: '',
+							having: [],
+							limit: null,
+							stepInterval: undefined,
+							orderBy: [],
+							filter: { expression: `operation = 'GET'` },
+						},
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				promql: [],
+				clickhouse_sql: [],
+			};
+			const result = getViewQuery(metricsQuery, [], 'view_logs', 'm');
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).not.toContain(`operation = 'GET'`);
+			expect(expr).not.toContain(`name = 'GET'`);
+		});
+
+		it('drilling to metrics does not apply target-side sanitisation', () => {
+			const result = getViewQuery(
+				makeQuery(`serviceName = 'svc' AND name = 'GET /api'`),
+				[],
+				'view_metrics',
+				'src',
+			);
+			const expr = result?.builder.queryData[0]?.filter?.expression || '';
+			expect(expr).toContain('serviceName');
+			expect(expr).toContain(`name = 'GET /api'`);
 		});
 	});
 });
