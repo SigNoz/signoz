@@ -11,7 +11,7 @@ var (
 	FeatureUseMeterReporter    = featuretypes.MustNewName("use_meter_reporter")
 	FeatureUseJSONBody         = featuretypes.MustNewName("use_json_body")
 	FeatureUseFineGrainedAuthz = featuretypes.MustNewName("use_fine_grained_authz")
-	FeatureDashboardV2         = featuretypes.MustNewName("dashboard_v2")
+	FeatureUseDashboardV2      = featuretypes.MustNewName("use_dashboard_v2")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -81,7 +81,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureDashboardV2,
+			Name:           FeatureUseDashboardV2,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether dashboard v2 is enabled",
