@@ -293,6 +293,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 		actions.unshift({
 			id: 'ai-assistant',
 			name: 'Open AI Assistant',
+			shortcut: ['cmd+j'],
 			keywords: 'ai assistant chat ask sparkles copilot',
 			section: 'AI Assistant',
 			icon: <Sparkles size={14} />,

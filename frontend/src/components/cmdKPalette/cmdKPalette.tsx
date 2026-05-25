@@ -15,7 +15,10 @@ import {
 	AIAssistantOpenSource,
 } from 'container/AIAssistant/events';
 import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
-import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
+import {
+	openAIAssistantModal,
+	useAIAssistantStore,
+} from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import history from 'lib/history';
@@ -47,6 +50,9 @@ export function CmdKPalette({
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();
 	const location = useLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const startNewConversation = useAIAssistantStore(
+		(s) => s.startNewConversation,
+	);
 
 	// toggle palette with ⌘/Ctrl+K
 	function handleGlobalCmdK(
@@ -93,7 +99,8 @@ export function CmdKPalette({
 			source: AIAssistantOpenSource.Cmdk,
 			currentPage: normalizePage(location.pathname),
 		});
-		openAIAssistant();
+		startNewConversation();
+		openAIAssistantModal();
 	};
 
 	const actions = createShortcutActions({
