@@ -30,6 +30,7 @@ const (
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
 	DSLKeyPublic      DSLKey = "public"
+	DSLKeySource      DSLKey = "source"
 )
 
 // reservedDSLKeys are dashboard column-level filter names in the list-query DSL.
@@ -43,6 +44,7 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
 	DSLKeyPublic:      {},
+	DSLKeySource:      {},
 }
 
 type DashboardV2 struct {

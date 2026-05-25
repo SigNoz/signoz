@@ -146,13 +146,14 @@ func (store *store) ListV2(
 		BunDB().
 		NewSelect().
 		Model(&rows).
-		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
+		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.source, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
 		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
 		ColumnExpr("COUNT(*) OVER () AS total").
 		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
 		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = dashboard.id", userID).
 		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
-		Where("dashboard.org_id = ?", orgID)
+		Where("dashboard.org_id = ?", orgID).
+		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
 	if compiled != nil {
 		q = q.Where(compiled.SQL, compiled.Args...)
