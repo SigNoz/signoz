@@ -23,8 +23,8 @@ test.describe.configure({ mode: 'serial' });
 // ─── Suite-level seed registry ────────────────────────────────────────────────
 //
 // Every dashboard created by any test is registered here; one afterAll tears
-// them all down. Tests that don't create anything (TC-04, TC-05, TC-06) need
-// no cleanup entry.
+// them all down. Tests that don't create anything (TC-04, TC-05) need no
+// cleanup entry.
 const seedIds = new Set<string>();
 const BASE_FIXTURE_TITLE = 'create-flow-base-fixture';
 
@@ -68,53 +68,9 @@ test.afterAll(async ({ browser }) => {
 });
 
 test.describe('Dashboard Create Flow', () => {
-	// ─── 1. Create Dashboard (blank) ─────────────────────────────────────────
-
-	test('TC-01 blank create lands on onboarding state with correct default title', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-
-		const postResponse = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'POST' && /\/api\/v1\/dashboards/.test(r.url()),
-		);
-		await page.getByTestId('new-dashboard-cta').click();
-		await page.getByTestId('create-dashboard-menu-cta').click();
-		const res = await postResponse;
-
-		await page.waitForURL(/\/dashboard\/[0-9a-f-]+/);
-
-		expect(res.status()).toBeGreaterThanOrEqual(200);
-		expect(res.status()).toBeLessThan(300);
-
-		// Request contract: UI must POST the default title + uploadedGrafana=false.
-		// Catches regressions where the menu CTA silently changes the create payload.
-		const reqBody = res.request().postDataJSON() as {
-			title?: string;
-			uploadedGrafana?: boolean;
-		};
-		expect(reqBody.title).toBe('Sample Title');
-		expect(reqBody.uploadedGrafana).toBe(false);
-
-		const body = (await res.json()) as {
-			data: { data: { title: string }; id: string };
-		};
-		expect(body.data.data.title).toBe('Sample Title');
-
-		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
-		// DashboardDescription always renders dashboard-title even on blank dashboards.
-		await expect(page.getByTestId('dashboard-title')).toHaveText('Sample Title');
-		await expect(page.getByText('Welcome to your new dashboard')).toBeVisible();
-		await expect(page.getByText('Configure your new dashboard')).toBeVisible();
-		await expect(page.getByTestId('show-drawer').first()).toBeVisible();
-		await expect(page.getByTestId('add-panel')).toBeVisible();
-
-		// Register the UI-created dashboard for cleanup.
-		const id = body.data.id;
-		expect(id, 'POST response must include a dashboard id').toBeTruthy();
-		seedIds.add(id);
-	});
+	// ─── 1. Rename via toolbar ───────────────────────────────────────────────
+	// Blank-create coverage lives in list.spec.ts (TC-16); this file picks up
+	// at the rename step.
 
 	test('TC-02 rename via toolbar options popover persists to the toolbar title', async ({
 		authedPage: page,
@@ -281,61 +237,9 @@ test.describe('Dashboard Create Flow', () => {
 		expect(postFired, 'empty editor must not trigger POST').toBe(false);
 	});
 
-	// ─── 3. View Templates ────────────────────────────────────────────────────
-
-	test('TC-06 New Dashboard dropdown has the three expected entries, View templates is an external link', async ({
-		authedPage: page,
-	}) => {
-		// No dashboard is created — no cleanup entry needed.
-		// The assertion guards against silent additions or reorderings to the
-		// dropdown (adds, removals, label rename) AND the link being changed to
-		// an in-app modal or a different URL (the DashboardTemplatesModal exists
-		// in source but is never triggered from this menu item).
-		await gotoDashboardsList(page);
-		await page.getByTestId('new-dashboard-cta').click();
-
-		// All three CTAs must render, with the expected labels.
-		await expect(page.getByTestId('create-dashboard-menu-cta')).toHaveText(
-			/Create dashboard/i,
-		);
-		await expect(page.getByTestId('import-json-menu-cta')).toHaveText(
-			/Import JSON/i,
-		);
-
-		const link = page.getByTestId('view-templates-menu-cta');
-		await expect(link).toHaveText(/View templates/i);
-
-		await expect(link).toHaveAttribute(
-			'href',
-			/signoz\.io\/docs\/dashboards\/dashboard-templates/,
-		);
-		await expect(link).toHaveAttribute('target', '_blank');
-		await expect(link).toHaveAttribute('rel', /noopener/);
-	});
-
-	// ─── 4. Cancellation and Navigation Away ─────────────────────────────────
-
-	test('TC-07 browser Back from dashboard detail returns to list with URL preserved', async ({
-		authedPage: page,
-	}) => {
-		// `seed` registers the dashboard for afterAll cleanup; the id isn't
-		// needed because the test navigates via the list search query.
-		await seed(page, 'create-flow-tc07');
-
-		await page.goto(`/dashboard?search=create-flow-tc07`);
-		await page
-			.getByRole('heading', { name: 'Dashboards', level: 1 })
-			.waitFor({ state: 'visible' });
-
-		await page.getByAltText('dashboard-image').first().click();
-		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
-
-		await page.goBack();
-		await expect(page).toHaveURL(/search=create-flow-tc07/);
-		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(
-			'create-flow-tc07',
-		);
-	});
+	// ─── 3. Cancellation and Navigation Away ─────────────────────────────────
+	// View-templates dropdown coverage lives in list.spec.ts (TC-15); browser
+	// Back behaviour is covered by list.spec.ts (TC-24).
 
 	test('TC-08 navigating away with the settings drawer open does not crash', async ({
 		authedPage: page,
@@ -357,7 +261,7 @@ test.describe('Dashboard Create Flow', () => {
 		).toHaveCount(0);
 	});
 
-	// ─── 5. Add Panel — end-to-end per signal ────────────────────────────────
+	// ─── 4. Add Panel — end-to-end per signal ────────────────────────────────
 	//
 	// The New Panel modal + widget-editor entry point is covered in
 	// `details/35-add-panel.spec.ts`. The TCs below go further: configure a
@@ -410,62 +314,9 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByTestId('traces-timeseries')).toBeVisible();
 	});
 
-	// ─── 6. Destructive CRUD ─────────────────────────────────────────────────
-
-	test('TC-12 delete dashboard via list action menu removes it from the list', async ({
-		authedPage: page,
-	}) => {
-		// Seed with a unique title so the list filter resolves to exactly one row.
-		const targetTitle = 'create-flow-tc12-to-delete';
-		const id = await createDashboardViaApi(page, targetTitle);
-		// Intentionally not registered in seedIds — this test deletes it via UI.
-
-		await gotoDashboardsList(page);
-		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(targetTitle);
-		await expect(page.getByText(targetTitle).first()).toBeVisible();
-
-		// Open the row action menu (tooltip with action buttons).
-		const icon = page.getByTestId('dashboard-action-icon').first();
-		await icon.scrollIntoViewIfNeeded();
-		await icon.click();
-		const tooltip = page.getByRole('tooltip');
-		await tooltip.getByRole('button', { name: /Delete Dashboard/i }).click();
-
-		// Confirm modal: title contains the dashboard name + a danger "Delete" button.
-		const confirmModal = page
-			.getByRole('dialog')
-			.filter({ hasText: 'Are you sure you want to delete' });
-		await expect(confirmModal).toBeVisible();
-		await expect(confirmModal).toContainText(targetTitle);
-
-		const deleteResponse = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'DELETE' &&
-				new RegExp(`/api/v1/dashboards/${id}`).test(r.url()),
-		);
-		await confirmModal.getByRole('button', { name: /^Delete$/ }).click();
-		const delRes = await deleteResponse;
-		expect(delRes.status()).toBeGreaterThanOrEqual(200);
-		expect(delRes.status()).toBeLessThan(300);
-
-		// Row should disappear from the list. The search is still active, so the
-		// list shows its empty-search state with a "No dashboards found for X"
-		// message — assert that explicitly rather than the row's absence (the
-		// title also lives in the search input value and the empty-state message).
-		await expect(
-			page.getByText(`No dashboards found for ${targetTitle}`),
-		).toBeVisible();
-
-		// API confirms the row is gone — guards against an optimistic-update bug
-		// where the UI hides the row without the backend actually deleting it.
-		const token = await authToken(page);
-		const verifyRes = await page.request.get(`/api/v1/dashboards/${id}`, {
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		expect(verifyRes.status()).toBe(404);
-	});
-
-	// ─── 7. Full Round-Trip ──────────────────────────────────────────────────
+	// ─── 5. Full Round-Trip ──────────────────────────────────────────────────
+	//
+	// Delete-via-list coverage lives in list.spec.ts (TC-21).
 	//
 	// Catches cross-feature regressions: a settings save that nukes variables,
 	// a variable add that strips widgets, a panel save that overwrites tags, etc.
