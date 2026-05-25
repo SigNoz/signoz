@@ -5,16 +5,16 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
-	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 )
 
 type module struct {
-	store    tracedetailtypes.TraceStore
+	store    spantypes.TraceStore
 	settings factory.ScopedProviderSettings
 	config   tracedetail.Config
 }
 
-func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
+func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 	return &module{
 		config:   cfg,
@@ -23,7 +23,7 @@ func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.
 	}
 }
 
-func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedetailtypes.PostableWaterfall) (*tracedetailtypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
 	waterfallTrace, err := m.getTraceData(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -37,16 +37,16 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedet
 		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
 
-	aggregationResults := make([]tracedetailtypes.SpanAggregationResult, 0, len(req.Aggregations))
+	aggregationResults := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
 	for _, a := range req.Aggregations {
 		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
 	}
 
-	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.
-func (m *module) getTraceData(ctx context.Context, traceID string) (*tracedetailtypes.WaterfallTrace, error) {
+func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -58,9 +58,9 @@ func (m *module) getTraceData(ctx context.Context, traceID string) (*tracedetail
 	}
 
 	if len(spanItems) == 0 {
-		return nil, tracedetailtypes.ErrTraceNotFound
+		return nil, spantypes.ErrTraceNotFound
 	}
 
-	traceData := tracedetailtypes.NewWaterfallTraceFromSpans(spanItems)
+	traceData := spantypes.NewWaterfallTraceFromSpans(spanItems)
 	return traceData, nil
 }
