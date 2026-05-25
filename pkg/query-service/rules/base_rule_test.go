@@ -745,7 +745,11 @@ func TestBaseRule_ExternalURLHost(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := &BaseRule{externalURL: tc.externalURL}
+			p := createPostableRule(&ruletypes.AlertCompositeQuery{})
+			r, err := NewBaseRule("some-id", valuer.GenerateUUID(), &p, WithExternalURL(tc.externalURL))
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			require.Equal(t, tc.want, r.ExternalURLHost())
 		})
 	}
@@ -780,7 +784,11 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			r := &BaseRule{id: tc.ruleID, externalURL: tc.externalURL}
+			p := createPostableRule(&ruletypes.AlertCompositeQuery{})
+			r, err := NewBaseRule(tc.ruleID, valuer.GenerateUUID(), &p, WithExternalURL(tc.externalURL))
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
 			require.Equal(t, tc.want, r.GeneratorURL())
 		})
 	}

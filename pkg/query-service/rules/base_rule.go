@@ -25,7 +25,7 @@ type BaseRule struct {
 	id             string
 	name           string
 	orgID          valuer.UUID
-	externalURL    *url.URL
+	externalURL    string
 	handledRestart bool
 
 	// Type of the rule
@@ -143,7 +143,11 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 // WithExternalURL injects the alertmanager external URL
 func WithExternalURL(externalURL *url.URL) RuleOption {
 	return func(r *BaseRule) {
-		r.externalURL = externalURL
+		if externalURL == nil {
+			r.externalURL = ""
+		} else {
+			r.externalURL = strings.TrimRight(externalURL.String(), "/")
+		}
 	}
 }
 
@@ -256,10 +260,7 @@ func (r *BaseRule) GeneratorURL() string {
 // It is used as the host portion of rule-related URLs (generator URL and
 // related logs/traces links) in alert notifications.
 func (r *BaseRule) ExternalURLHost() string {
-	if r.externalURL == nil {
-		return ""
-	}
-	return strings.TrimRight(r.externalURL.String(), "/")
+	return r.externalURL
 }
 
 func (r *BaseRule) SelectedQuery(ctx context.Context) string {
