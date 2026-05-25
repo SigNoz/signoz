@@ -263,7 +263,7 @@ function External(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							domainName: selectedData?.address || '',
 							isError: true,
-							stepInterval: 300,
+							stepInterval,
 							safeNavigate,
 						})}
 					/>
@@ -306,7 +306,7 @@ function External(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							domainName: selectedData?.address,
 							isError: false,
-							stepInterval: 300,
+							stepInterval,
 							safeNavigate,
 						})}
 					/>
@@ -352,7 +352,7 @@ function External(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							domainName: selectedData?.address,
 							isError: false,
-							stepInterval: 300,
+							stepInterval,
 							safeNavigate,
 						})}
 					/>
@@ -395,7 +395,7 @@ function External(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							domainName: selectedData?.address,
 							isError: false,
-							stepInterval: 300,
+							stepInterval,
 							safeNavigate,
 						})}
 					/>

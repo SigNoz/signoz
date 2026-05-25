@@ -151,7 +151,7 @@ export function onViewAPIMonitoringPopupClick({
 	safeNavigate,
 }: OnViewAPIMonitoringPopupClickProps): (e?: React.MouseEvent) => void {
 	return (e?: React.MouseEvent): void => {
-		const endTime = timestamp + (stepInterval || 60);
+		const endTime = timestamp;
 		const startTime = timestamp - (stepInterval || 60);
 		const filters = {
 			items: [
