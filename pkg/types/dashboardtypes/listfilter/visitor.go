@@ -321,8 +321,8 @@ func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtype
 	return newFragment("pd.id IS NULL")
 }
 
-const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id " +
-	"WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id " +
+const tagSubqueryPrefix = "SELECT 1 FROM tag_relation tr JOIN tag t ON t.id = tr.tag_id " +
+	"WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id " +
 	"AND LOWER(t.key) = LOWER(?)"
 
 // emitTagComparison wraps the inner predicate in EXISTS (or NOT EXISTS for the

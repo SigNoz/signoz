@@ -168,9 +168,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team = 'pulse'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -181,9 +181,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `tag = 'database'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -194,9 +194,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team != 'pulse'`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -207,9 +207,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team IN ['pulse', 'events']`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -220,9 +220,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team NOT IN ['pulse', 'events']`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -233,9 +233,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team LIKE 'pulse%'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -246,9 +246,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team NOT LIKE 'staging%'`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -259,9 +259,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `database EXISTS`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -271,9 +271,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `database NOT EXISTS`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -283,9 +283,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `TEAM = 'pulse'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -358,9 +358,9 @@ func TestCompile_NOT(t *testing.T) {
 			expectedSQL: `
 				NOT (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
@@ -373,9 +373,9 @@ func TestCompile_NOT(t *testing.T) {
 			expectedSQL: `
 				NOT (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
@@ -394,17 +394,17 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			expectedSQL: `
 				json_extract("dashboard"."data", '$.data.display.name') LIKE ?
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)
 				AND dashboard.created_by = ?
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -415,16 +415,16 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			dslQueryToCompile: `team IN ['pulse', 'events'] AND database EXISTS`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"team", "pulse", "events", "database"},
@@ -435,9 +435,9 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			expectedSQL: `
 				(
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
@@ -445,9 +445,9 @@ func TestCompile_ComplexExamples(t *testing.T) {
 				)
 				AND (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)

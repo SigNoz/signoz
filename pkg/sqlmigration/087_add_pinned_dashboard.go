@@ -35,10 +35,6 @@ func (migration *addPinnedDashboard) Up(ctx context.Context, db *bun.DB) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Composite PK on (user_id, dashboard_id) prevents accidental double-pins
-	// for the same user/dashboard pair. Only org_id carries an FK — user_id and
-	// dashboard_id mirror tag_relations and skip FKs because cascade deletes
-	// are disabled at the platform level (see tags spec).
 	sqls := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "pinned_dashboard",
 		Columns: []*sqlschema.Column{

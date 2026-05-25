@@ -40,11 +40,8 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	return dashboard, nil
 }
 
-// ListV2 calls the store for the joined page (the store owns DSL compilation
-// and limit+1/hasMore detection), batch-fetches tags for the returned
-// dashboard ids, and hands off to the type-side constructor for assembly.
 func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
-	rows, _, err := module.store.ListV2(ctx, orgID, userID, params)
+	rows, total, err := module.store.ListV2(ctx, orgID, userID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +55,7 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(rows, tagsByDashboard)
+	return dashboardtypes.NewListableDashboardV2(rows, total, tagsByDashboard)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
