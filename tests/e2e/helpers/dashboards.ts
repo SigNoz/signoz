@@ -370,12 +370,32 @@ export async function findDashboardIdByTitle(
 	return body.data.find((d) => d.data.title === title)?.id;
 }
 
+/** Shape of a single persisted widget — only the fields these specs assert on. */
+export interface PersistedWidget {
+	id?: string;
+	title?: string;
+	description?: string;
+	panelTypes?: string;
+	timePreferance?: string;
+	yAxisUnit?: string;
+	decimalPrecision?: number;
+	thresholds?: Array<{
+		thresholdFormat?: string;
+		thresholdOperator?: string;
+		thresholdValue?: number;
+		thresholdColor?: string;
+		thresholdTableOptions?: string;
+	}>;
+	columnUnits?: Record<string, string>;
+	[key: string]: unknown;
+}
+
 /** Shape of the persisted dashboard payload returned by GET /api/v1/dashboards/<id>. */
 export interface DashboardData {
 	title: string;
 	description?: string;
 	tags?: string[];
-	widgets?: Array<{ id?: string; title?: string }>;
+	widgets?: PersistedWidget[];
 	variables?: Record<string, Record<string, unknown>>;
 	layout?: unknown[];
 }
@@ -607,13 +627,10 @@ export async function openWidgetEditor(
 }
 
 /**
- * Click "Save Changes" in the widget editor, confirm via the OK button on the
- * resulting modal, await the dashboard PUT response, and wait for navigation
- * back to `/dashboard/<id>`. Throws if the PUT response is not 2xx.
- *
- * The confirmation modal title varies between "Save Widget" and "Unsaved
- * Changes" depending on whether the query was modified — don't assert title,
- * just OK the topmost dialog.
+ * Click "Save Changes" in the widget editor, await the dashboard PUT response,
+ * and wait for navigation back to `/dashboard/<id>`. Throws if the PUT
+ * response is not 2xx. NewWidget's save handler calls the mutation and
+ * navigates on success — there is no confirmation modal in this flow.
  */
 export async function saveWidgetEdit(page: Page): Promise<void> {
 	const putResponse = page.waitForResponse(
@@ -621,9 +638,6 @@ export async function saveWidgetEdit(page: Page): Promise<void> {
 			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
 	);
 	await page.getByTestId('new-widget-save').click();
-	const confirmModal = page.getByRole('dialog').last();
-	await confirmModal.waitFor({ state: 'visible' });
-	await confirmModal.getByRole('button', { name: /^OK$/i }).click();
 	const res = await putResponse;
 	if (!res.ok()) {
 		throw new Error(

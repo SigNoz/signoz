@@ -8,6 +8,7 @@ import {
 	configureAndSavePanel,
 	createDashboardViaApi,
 	deleteDashboardViaApi,
+	fetchDashboardData,
 	findDashboardIdByTitle,
 	openWidgetEditor,
 	saveWidgetEdit,
@@ -61,6 +62,16 @@ async function gotoFixtureDashboard(page: Page): Promise<void> {
 	await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
 }
 
+/** Fetch the persisted fixture dashboard's first widget. */
+async function fetchFixtureWidget(page: Page) {
+	const id = await findDashboardIdByTitle(page, FIXTURE_DASHBOARD_TITLE);
+	expect(id, `${FIXTURE_DASHBOARD_TITLE} not found`).toBeTruthy();
+	const dashboard = await fetchDashboardData(page, id!);
+	const widget = dashboard.widgets?.[0];
+	expect(widget, 'fixture dashboard must have at least one widget').toBeTruthy();
+	return widget!;
+}
+
 test.describe('List Panel Controls', () => {
 	test('TC-01 panel name persists and is reflected in the widget header', async ({
 		authedPage: page,
@@ -71,6 +82,9 @@ test.describe('List Panel Controls', () => {
 		await page.getByTestId('panel-name-input').fill('list-controls-renamed');
 		await saveWidgetEdit(page);
 		await expect(page.getByTestId('list-controls-renamed').first()).toBeVisible();
+
+		// Server-side check.
+		expect((await fetchFixtureWidget(page)).title).toBe('list-controls-renamed');
 
 		await openWidgetEditor(page, 'list-controls-renamed');
 		await expect(page.getByTestId('panel-name-input')).toHaveValue(
@@ -100,6 +114,8 @@ test.describe('List Panel Controls', () => {
 				.first(),
 		).toBeVisible();
 
+		expect((await fetchFixtureWidget(page)).description).toBe('E2E list description');
+
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page.getByTestId('panel-description-input')).toHaveValue(
 			'E2E list description',
@@ -128,6 +144,9 @@ test.describe('List Panel Controls', () => {
 				.first(),
 		).toBeVisible();
 		await expect(page.locator('.ant-table-thead').first()).toBeVisible();
+
+		// Server-side: panelTypes is 'table'.
+		expect((await fetchFixtureWidget(page)).panelTypes).toBe('table');
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page).toHaveURL(/graphType=table/);
@@ -187,6 +206,50 @@ test.describe('List Panel Controls', () => {
 
 		await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
 		await expect(page.getByTestId(FIXTURE_PANEL_TITLE).first()).toBeVisible();
+
+		// Settle before asserting no PUT.
+		await page.waitForLoadState('networkidle');
 		expect(putFired).toBe(false);
+
+		// Server-side double-check: persisted title is still the fixture name.
+		expect((await fetchFixtureWidget(page)).title).toBe(FIXTURE_PANEL_TITLE);
+	});
+
+	// ─── Reload persistence ──────────────────────────────────────────────────
+
+	test('TC-06 panel state survives a hard dashboard reload', async ({
+		authedPage: page,
+	}) => {
+		// Save description + a non-default panel type, then hard-reload and
+		// re-verify the panel card rehydrates with the right state.
+		await gotoFixtureDashboard(page);
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+
+		await page
+			.getByTestId('panel-description-input')
+			.fill('reload persistence description');
+		await saveWidgetEdit(page);
+
+		await page.reload();
+		await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
+
+		// Description info icon must render after rehydration.
+		await expect(
+			page
+				.locator('.widget-header-container')
+				.filter({ hasText: FIXTURE_PANEL_TITLE })
+				.locator('.info-tooltip')
+				.first(),
+		).toBeVisible();
+
+		// Server-side check post-reload — confirms the load path read the same JSON.
+		const persisted = await fetchFixtureWidget(page);
+		expect(persisted.description).toBe('reload persistence description');
+		expect(persisted.panelTypes).toBe('list');
+
+		// Reset.
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+		await page.getByTestId('panel-description-input').fill('');
+		await saveWidgetEdit(page);
 	});
 });

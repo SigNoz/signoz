@@ -8,6 +8,7 @@ import {
 	configureAndSavePanel,
 	createDashboardViaApi,
 	deleteDashboardViaApi,
+	fetchDashboardData,
 	findDashboardIdByTitle,
 	openWidgetEditor,
 	saveWidgetEdit,
@@ -57,6 +58,20 @@ async function gotoFixtureDashboard(page: Page): Promise<void> {
 	expect(id, `${FIXTURE_DASHBOARD_TITLE} not found`).toBeTruthy();
 	await page.goto(`/dashboard/${id}`);
 	await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
+}
+
+/**
+ * Fetch the persisted fixture dashboard JSON and return the first widget.
+ * Use this after a save to confirm the PUT actually landed the expected
+ * shape on the backend — UI-only round-trips pass on optimistic-update bugs.
+ */
+async function fetchFixtureWidget(page: Page) {
+	const id = await findDashboardIdByTitle(page, FIXTURE_DASHBOARD_TITLE);
+	expect(id, `${FIXTURE_DASHBOARD_TITLE} not found`).toBeTruthy();
+	const dashboard = await fetchDashboardData(page, id!);
+	const widget = dashboard.widgets?.[0];
+	expect(widget, 'fixture dashboard must have at least one widget').toBeTruthy();
+	return widget!;
 }
 
 /**
@@ -139,6 +154,9 @@ test.describe('Table Panel Controls', () => {
 		await saveWidgetEdit(page);
 		await expect(page.getByTestId('table-controls-renamed').first()).toBeVisible();
 
+		// Server-side check — the PUT must carry the new title.
+		expect((await fetchFixtureWidget(page)).title).toBe('table-controls-renamed');
+
 		await openWidgetEditor(page, 'table-controls-renamed');
 		await expect(page.getByTestId('panel-name-input')).toHaveValue(
 			'table-controls-renamed',
@@ -167,6 +185,10 @@ test.describe('Table Panel Controls', () => {
 				.first(),
 		).toBeVisible();
 
+		expect((await fetchFixtureWidget(page)).description).toBe(
+			'E2E table description',
+		);
+
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page.getByTestId('panel-description-input')).toHaveValue(
 			'E2E table description',
@@ -188,6 +210,9 @@ test.describe('Table Panel Controls', () => {
 			.click();
 		await page.getByRole('menuitem', { name: /Last 15 min/i }).click();
 		await saveWidgetEdit(page);
+
+		// Server-side: persisted timePreferance enum, not just visible label.
+		expect((await fetchFixtureWidget(page)).timePreferance).toBe('LAST_15_MIN');
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(
@@ -217,8 +242,18 @@ test.describe('Table Panel Controls', () => {
 		await saveWidgetEdit(page);
 
 		// Cell text in the data column should now contain the `ms` suffix.
+		// Strict check: text must be a number with the unit, not just an empty
+		// cell that happens to substring-match "ms".
 		const cell = await getFirstDataCell(page);
-		await expect(cell).toContainText(/ms/);
+		await expect(cell).toHaveText(/^\s*[-+]?\d[\d,.eE+-]*\s*ms\s*$/);
+
+		// Server-side: columnUnits must record the unit code, not just the
+		// label. UI display can use a fancy label while the persisted enum drifts.
+		const persistedAfterUnit = await fetchFixtureWidget(page);
+		const columnUnitValues = Object.values(persistedAfterUnit.columnUnits ?? {});
+		expect(columnUnitValues, 'columnUnits must include the chosen unit').toContain(
+			'ms',
+		);
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		// Section starts collapsed again on re-open — expand before asserting.
@@ -261,10 +296,12 @@ test.describe('Table Panel Controls', () => {
 
 		await saveWidgetEdit(page);
 
+		// Strict: text must be an integer followed by " s", not empty / partial.
 		const cell = await getFirstDataCell(page);
-		await expect(cell).toContainText(/s/);
-		const text = (await cell.textContent()) ?? '';
-		expect(text.replace(/\s*s\s*$/, '')).not.toMatch(/\./);
+		await expect(cell).toHaveText(/^\s*[-+]?\d+\s*s\s*$/);
+
+		// Server-side: decimalPrecision must be 0 in the persisted widget.
+		expect((await fetchFixtureWidget(page)).decimalPrecision).toBe(0);
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		// Section starts collapsed again on re-open — expand before asserting.
@@ -320,32 +357,30 @@ test.describe('Table Panel Controls', () => {
 		await card.getByRole('button', { name: /save changes/i }).click();
 		await saveWidgetEdit(page);
 
-		// Find a data row and inspect its cells. Use tr.ant-table-row to skip
-		// fixed-header tbody rows that Ant Design inserts for sticky scroll.
-		// QueryTable wraps each cell in <div role="button">; the threshold
-		// styled <div> is nested inside it. Use div[style] to target the first
-		// <div> that actually carries an inline style — that is the threshold div.
-		// TODO: switch to `getByTestId('threshold-styled-cell')` once the frontend
-		// build deployed to the test stack picks up the testid added in
-		// GridTableComponent/index.tsx (the host also carries
-		// `data-threshold-format="Background|Text"` to discriminate variants).
+		// Inspect the threshold-styled cell directly. The testid host carries
+		// `data-threshold-format="Background"` so we can confirm the format too.
 		const row = page.locator('tr.ant-table-row').first();
 		await row.waitFor({ state: 'visible' });
-		const dataCellInner = row.locator('td').last().locator('div[style]').first();
-		const dataStyle = (await dataCellInner.getAttribute('style')) ?? '';
+		const styledCell = row.getByTestId('threshold-styled-cell').first();
+		await expect(styledCell).toBeVisible();
+		await expect(styledCell).toHaveAttribute('data-threshold-format', 'Background');
+		const dataStyle = (await styledCell.getAttribute('style')) ?? '';
 		expect(dataStyle).toMatch(/background-color:/);
 
-		// Reset — delete the threshold. Edit/delete buttons are display:none
-		// by default and revealed only on .threshold-card-container:hover.
+		// Server-side: thresholds[] must be persisted with format=Background.
+		const persistedThresholds = (await fetchFixtureWidget(page)).thresholds ?? [];
+		expect(persistedThresholds.length).toBe(1);
+		expect(persistedThresholds[0].thresholdFormat).toBe('Background');
+		expect(persistedThresholds[0].thresholdOperator).toBe('>=');
+
+		// Reset — delete the threshold via its testid.
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		// ThresholdsSection defaultOpen is based on threshold count at mount; may
 		// start collapsed due to async state loading — always expand before interacting.
 		await expandSection(page, 'Thresholds');
 		const firstCard = page.locator('.threshold-card-container').first();
 		await firstCard.hover();
-		// TODO: switch to `getByTestId('threshold-delete-btn')` once the stack
-		// frontend rebuild picks up the testid added in Threshold.tsx.
-		await firstCard.locator('button.delete-btn').click();
+		await firstCard.getByTestId('threshold-delete-btn').click();
 		await saveWidgetEdit(page);
 	});
 
@@ -369,23 +404,26 @@ test.describe('Table Panel Controls', () => {
 		await card.getByRole('button', { name: /save changes/i }).click();
 		await saveWidgetEdit(page);
 
-		// QueryTable wraps each cell in <div role="button">; the threshold styled
-		// <div> is nested inside. Use div[style] to find the threshold div directly.
-		// TODO: same testid migration as TC-06 once the frontend rebuild lands.
 		const row = page.locator('tr.ant-table-row').first();
 		await row.waitFor({ state: 'visible' });
-		const dataCellInner = row.locator('td').last().locator('div[style]').first();
-		const dataStyle = (await dataCellInner.getAttribute('style')) ?? '';
+		const styledCell = row.getByTestId('threshold-styled-cell').first();
+		await expect(styledCell).toBeVisible();
+		await expect(styledCell).toHaveAttribute('data-threshold-format', 'Text');
+		const dataStyle = (await styledCell.getAttribute('style')) ?? '';
 		expect(dataStyle).toMatch(/color:/);
 		expect(dataStyle).not.toMatch(/background-color:/);
+
+		// Server-side: thresholds[] must be persisted with format=Text.
+		const persistedThresholds = (await fetchFixtureWidget(page)).thresholds ?? [];
+		expect(persistedThresholds.length).toBe(1);
+		expect(persistedThresholds[0].thresholdFormat).toBe('Text');
 
 		// Reset
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expandSection(page, 'Thresholds');
 		const firstCard = page.locator('.threshold-card-container').first();
 		await firstCard.hover();
-		// TODO: switch to `getByTestId('threshold-delete-btn')` after frontend rebuild.
-		await firstCard.locator('button.delete-btn').click();
+		await firstCard.getByTestId('threshold-delete-btn').click();
 		await saveWidgetEdit(page);
 	});
 
@@ -429,6 +467,9 @@ test.describe('Table Panel Controls', () => {
 
 		await expect(page.getByTestId('value-graph-text').first()).toBeVisible();
 
+		// Server-side: persisted panelTypes is the PANEL_TYPES enum value 'value'.
+		expect((await fetchFixtureWidget(page)).panelTypes).toBe('value');
+
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page).toHaveURL(/graphType=value/);
 
@@ -465,6 +506,65 @@ test.describe('Table Panel Controls', () => {
 
 		await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
 		await expect(page.getByTestId(FIXTURE_PANEL_TITLE).first()).toBeVisible();
+
+		// Settle before asserting — a delayed PUT could otherwise sneak past.
+		await page.waitForLoadState('networkidle');
 		expect(putFired).toBe(false);
+
+		// Server-side double-check: persisted title is still the fixture name.
+		expect((await fetchFixtureWidget(page)).title).toBe(FIXTURE_PANEL_TITLE);
+	});
+
+	// ─── Reload persistence ──────────────────────────────────────────────────
+
+	test('TC-11 panel state survives a hard dashboard reload', async ({
+		authedPage: page,
+	}) => {
+		// Apply a combination of edits, save, then hard-reload the page and
+		// re-verify everything renders from the persisted JSON. Catches backend
+		// → frontend rehydration regressions that round-trips via close+reopen
+		// editor miss (re-opening the editor reuses the in-memory query state).
+		await gotoFixtureDashboard(page);
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+
+		await page
+			.getByTestId('panel-description-input')
+			.fill('reload persistence description');
+		await expandSection(page, 'Formatting & Units');
+		await selectColumnUnit(page, 'Milliseconds', 'Milliseconds (ms)');
+		await saveWidgetEdit(page);
+
+		// Hard reload — purges in-memory state, forces a fresh fetch.
+		await page.reload();
+		await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
+
+		// Cell value must still carry the unit after reload (proves the
+		// columnUnits + decimalPrecision + panelType rehydrated correctly).
+		const cell = await getFirstDataCell(page);
+		await expect(cell).toHaveText(/^\s*[-+]?\d[\d,.eE+-]*\s*ms\s*$/);
+
+		// Description info icon (the only header surface for description) must
+		// still render after rehydration.
+		await expect(
+			page
+				.locator('.widget-header-container')
+				.filter({ hasText: FIXTURE_PANEL_TITLE })
+				.locator('.info-tooltip')
+				.first(),
+		).toBeVisible();
+
+		// Reset: clear unit + description.
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+		await page.getByTestId('panel-description-input').fill('');
+		await expandSection(page, 'Formatting & Units');
+		await page
+			.locator('.column-unit-selector .y-axis-unit-selector-v2')
+			.first()
+			.hover();
+		await page
+			.locator('.column-unit-selector .y-axis-unit-selector-v2 .ant-select-clear')
+			.first()
+			.click();
+		await saveWidgetEdit(page);
 	});
 });

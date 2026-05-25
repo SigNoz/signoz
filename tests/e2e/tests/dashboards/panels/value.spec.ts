@@ -8,6 +8,7 @@ import {
 	configureAndSavePanel,
 	createDashboardViaApi,
 	deleteDashboardViaApi,
+	fetchDashboardData,
 	findDashboardIdByTitle,
 	openWidgetEditor,
 	saveWidgetEdit,
@@ -62,6 +63,16 @@ async function gotoFixtureDashboard(page: Page): Promise<void> {
 	expect(id, `${FIXTURE_DASHBOARD_TITLE} not found`).toBeTruthy();
 	await page.goto(`/dashboard/${id}`);
 	await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
+}
+
+/** Fetch the persisted fixture dashboard's first widget. */
+async function fetchFixtureWidget(page: Page) {
+	const id = await findDashboardIdByTitle(page, FIXTURE_DASHBOARD_TITLE);
+	expect(id, `${FIXTURE_DASHBOARD_TITLE} not found`).toBeTruthy();
+	const dashboard = await fetchDashboardData(page, id!);
+	const widget = dashboard.widgets?.[0];
+	expect(widget, 'fixture dashboard must have at least one widget').toBeTruthy();
+	return widget!;
 }
 
 /**
@@ -127,6 +138,9 @@ test.describe('Value Panel Controls', () => {
 
 		await expect(page.getByTestId('value-controls-renamed').first()).toBeVisible();
 
+		// Server-side check.
+		expect((await fetchFixtureWidget(page)).title).toBe('value-controls-renamed');
+
 		await openWidgetEditor(page, 'value-controls-renamed');
 		await expect(page.getByTestId('panel-name-input')).toHaveValue(
 			'value-controls-renamed',
@@ -156,6 +170,10 @@ test.describe('Value Panel Controls', () => {
 				.first(),
 		).toBeVisible();
 
+		expect((await fetchFixtureWidget(page)).description).toBe(
+			'E2E test description',
+		);
+
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page.getByTestId('panel-description-input')).toHaveValue(
 			'E2E test description',
@@ -182,6 +200,9 @@ test.describe('Value Panel Controls', () => {
 		).toContainText(/Last 15 min/i);
 
 		await saveWidgetEdit(page);
+
+		// Server-side: persisted timePreferance enum.
+		expect((await fetchFixtureWidget(page)).timePreferance).toBe('LAST_15_MIN');
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(
@@ -218,6 +239,10 @@ test.describe('Value Panel Controls', () => {
 		// Back on the dashboard the panel card should also render the suffix.
 		await expect(page.getByTestId('value-graph-suffix-unit').first()).toBeVisible();
 
+		// Server-side: yAxisUnit must hold the unit code (catches a label-only
+		// regression where the UI shows "Seconds" but persists nothing).
+		expect((await fetchFixtureWidget(page)).yAxisUnit).toBe('s');
+
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expandSection(page, 'Formatting & Units');
 		await expect(
@@ -249,17 +274,22 @@ test.describe('Value Panel Controls', () => {
 			.first()
 			.click();
 
-		// Live preview: the numeric text should no longer contain a decimal point.
-		await expect(page.getByTestId('value-graph-text').first()).not.toContainText(
-			/\./,
+		// Live preview: the numeric text must be a non-empty integer (no decimal).
+		await expect(page.getByTestId('value-graph-text').first()).toHaveText(
+			/^[-+]?\d+$/,
 		);
 
 		await saveWidgetEdit(page);
 
 		// Dashboard render: same assertion.
-		await expect(page.getByTestId('value-graph-text').first()).not.toContainText(
-			/\./,
+		await expect(page.getByTestId('value-graph-text').first()).toHaveText(
+			/^[-+]?\d+$/,
 		);
+
+		// Server-side: decimalPrecision is 0 and yAxisUnit is 's'.
+		const persistedDecimals = await fetchFixtureWidget(page);
+		expect(persistedDecimals.decimalPrecision).toBe(0);
+		expect(persistedDecimals.yAxisUnit).toBe('s');
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expandSection(page, 'Formatting & Units');
@@ -314,6 +344,12 @@ test.describe('Value Panel Controls', () => {
 		const inlineStyle = await valueText.getAttribute('style');
 		expect(inlineStyle).toMatch(/color:/);
 
+		// Server-side: thresholds[] persisted with format=Text.
+		const persistedThresholds = (await fetchFixtureWidget(page)).thresholds ?? [];
+		expect(persistedThresholds.length).toBe(1);
+		expect(persistedThresholds[0].thresholdFormat).toBe('Text');
+		expect(persistedThresholds[0].thresholdOperator).toBe('>=');
+
 		// Re-open editor and verify the threshold round-tripped.
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		// The ThresholdsSection defaultOpen is based on threshold count at mount
@@ -323,15 +359,10 @@ test.describe('Value Panel Controls', () => {
 			page.locator('.threshold-container').first(),
 		).toBeVisible();
 
-		// Reset — delete the threshold. The delete button is `display:none` by
-		// default and revealed only on `.threshold-card-container:hover`; hover
-		// the card so the CSS :hover rule activates, then click via testid.
+		// Reset — delete the threshold via testid.
 		const firstCard = page.locator('.threshold-card-container').first();
 		await firstCard.hover();
-		// TODO: switch to `getByTestId('threshold-delete-btn')` once the frontend
-		// build deployed to the test stack includes the new testid (added in
-		// Threshold.tsx). The class-based fallback is robust meanwhile.
-		await firstCard.locator('button.delete-btn').click();
+		await firstCard.getByTestId('threshold-delete-btn').click();
 		await saveWidgetEdit(page);
 	});
 
@@ -362,14 +393,16 @@ test.describe('Value Panel Controls', () => {
 		await thresholdCard.getByRole('button', { name: /save changes/i }).click();
 		await saveWidgetEdit(page);
 
-		// Dashboard render: .value-graph-container should now have an inline
-		// background-color style. TODO: switch to `getByTestId('value-graph-container')`
-		// once the frontend build deployed to the test stack picks up the testid
-		// added in ValueGraph/index.tsx.
-		const container = page.locator('.value-graph-container').first();
+		// Dashboard render: value-graph-container must carry an inline background.
+		const container = page.getByTestId('value-graph-container').first();
 		await expect(container).toBeVisible();
 		const inlineStyle = await container.getAttribute('style');
 		expect(inlineStyle).toMatch(/background-color:/);
+
+		// Server-side: thresholds[] persisted with format=Background.
+		const persistedThresholds = (await fetchFixtureWidget(page)).thresholds ?? [];
+		expect(persistedThresholds.length).toBe(1);
+		expect(persistedThresholds[0].thresholdFormat).toBe('Background');
 
 		// Reset
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
@@ -379,10 +412,7 @@ test.describe('Value Panel Controls', () => {
 		// Edit/delete buttons are display:none by default, revealed on :hover.
 		const firstCard = page.locator('.threshold-card-container').first();
 		await firstCard.hover();
-		// TODO: switch to `getByTestId('threshold-delete-btn')` once the frontend
-		// build deployed to the test stack includes the new testid (added in
-		// Threshold.tsx). The class-based fallback is robust meanwhile.
-		await firstCard.locator('button.delete-btn').click();
+		await firstCard.getByTestId('threshold-delete-btn').click();
 		await saveWidgetEdit(page);
 	});
 
@@ -409,6 +439,10 @@ test.describe('Value Panel Controls', () => {
 
 		// Suffix should be gone from the rendered panel.
 		await expect(page.getByTestId('value-graph-suffix-unit')).toHaveCount(0);
+
+		// Server-side: yAxisUnit must be cleared (empty / undefined).
+		const cleared = await fetchFixtureWidget(page);
+		expect(cleared.yAxisUnit ?? '').toBe('');
 	});
 
 	test('TC-09 panel type switch from Number to Time Series persists and re-renders', async ({
@@ -422,6 +456,9 @@ test.describe('Value Panel Controls', () => {
 		await expect(page.locator('section.fill-gaps')).toBeVisible();
 
 		await saveWidgetEdit(page);
+
+		// Server-side: panelTypes is 'graph' (PANEL_TYPES.TIME_SERIES).
+		expect((await fetchFixtureWidget(page)).panelTypes).toBe('graph');
 
 		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
 		await expect(page).toHaveURL(/graphType=graph/);
@@ -490,6 +527,53 @@ test.describe('Value Panel Controls', () => {
 
 		await page.waitForURL(/\/dashboard\/[0-9a-f-]+(?:\?|$)/);
 		await expect(page.getByTestId(FIXTURE_PANEL_TITLE).first()).toBeVisible();
+
+		// Settle before asserting no PUT.
+		await page.waitForLoadState('networkidle');
 		expect(putFired).toBe(false);
+
+		// Server-side double-check: persisted title is still the fixture name.
+		expect((await fetchFixtureWidget(page)).title).toBe(FIXTURE_PANEL_TITLE);
+	});
+
+	// ─── Reload persistence ──────────────────────────────────────────────────
+
+	test('TC-12 panel state survives a hard dashboard reload', async ({
+		authedPage: page,
+	}) => {
+		// Apply unit + description + decimal precision, save, hard-reload, and
+		// re-verify the panel renders correctly from the persisted JSON.
+		await gotoFixtureDashboard(page);
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+
+		await page
+			.getByTestId('panel-description-input')
+			.fill('reload persistence description');
+		await expandSection(page, 'Formatting & Units');
+		await selectYAxisUnit(page, 'Seconds', 'Seconds (s)');
+		await saveWidgetEdit(page);
+
+		await page.reload();
+		await page.getByTestId(FIXTURE_PANEL_TITLE).first().waitFor({ state: 'visible' });
+
+		// Suffix unit must render after rehydration.
+		await expect(page.getByTestId('value-graph-suffix-unit').first()).toBeVisible();
+
+		// Description info icon must render after rehydration.
+		await expect(
+			page
+				.locator('.widget-header-container')
+				.filter({ hasText: FIXTURE_PANEL_TITLE })
+				.locator('.info-tooltip')
+				.first(),
+		).toBeVisible();
+
+		// Reset.
+		await openWidgetEditor(page, FIXTURE_PANEL_TITLE);
+		await page.getByTestId('panel-description-input').fill('');
+		await expandSection(page, 'Formatting & Units');
+		await page.locator('.y-axis-unit-selector-v2').first().hover();
+		await page.locator('.y-axis-unit-selector-v2 .ant-select-clear').first().click();
+		await saveWidgetEdit(page);
 	});
 });
