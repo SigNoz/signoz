@@ -169,9 +169,12 @@
 		gap: 3px;
 		background: var(--l1-border);
 		border-radius: 20px;
-		box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
-			0px 66px 18px 0px rgba(0, 0, 0, 0.01), 0px 37px 22px 0px rgba(0, 0, 0, 0.03),
-			0px 17px 17px 0px rgba(0, 0, 0, 0.04), 0px 4px 9px 0px rgba(0, 0, 0, 0.04);
+		box-shadow:
+			0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+			0px 66px 18px 0px rgba(0, 0, 0, 0.01),
+			0px 37px 22px 0px rgba(0, 0, 0, 0.03),
+			0px 17px 17px 0px rgba(0, 0, 0, 0.04),
+			0px 4px 9px 0px rgba(0, 0, 0, 0.04);
 	}
 
 	&__scroll-hint-text {
@@ -181,31 +184,5 @@
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.06px;
-	}
-}
-
-.lightMode {
-	.warning-content {
-		&__warning-code {
-			color: var(--l2-foreground);
-		}
-		&__warning-message {
-			color: var(--l1-foreground);
-		}
-		&__message-item {
-			color: var(--l1-foreground);
-		}
-		&__message-badge {
-			&-label-text {
-				color: var(--l1-foreground);
-			}
-			.key-value-label__value {
-				color: var(--l1-foreground);
-			}
-		}
-		&__docs-button {
-			background: var(--l1-background);
-			color: var(--l2-foreground);
-		}
 	}
 }

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	endPointStatusCodeColumns,
 	getFormattedEndPointStatusCodeData,
@@ -16,13 +17,8 @@ function StatusCodeTable({
 }: {
 	endPointStatusCodeDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		refetch,
-	} = endPointStatusCodeDataQuery;
+	const { isLoading, isRefetching, isError, data, refetch } =
+		endPointStatusCodeDataQuery;
 
 	const statusCodeData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {

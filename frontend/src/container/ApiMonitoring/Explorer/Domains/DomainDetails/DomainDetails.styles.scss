@@ -141,12 +141,9 @@
 
 			.progress-container {
 				width: 158px;
-				.ant-progress {
-					margin: 0;
 
-					.ant-progress-text {
-						font-weight: 600;
-					}
+				span {
+					font-weight: 600;
 				}
 			}
 
@@ -343,7 +340,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -565,7 +564,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -835,7 +836,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 

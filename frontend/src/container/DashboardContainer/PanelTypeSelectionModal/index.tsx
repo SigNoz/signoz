@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import { Card, Modal, Typography } from 'antd';
+import { Card, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES, PANEL_TYPES_INITIAL_QUERY } from 'constants/queryBuilder';
@@ -13,10 +14,8 @@ import { PanelTypesWithData } from './menuItems';
 import './PanelTypeSelectionModal.styles.scss';
 
 function PanelTypeSelectionModal(): JSX.Element {
-	const {
-		isPanelTypeSelectionModalOpen,
-		setIsPanelTypeSelectionModalOpen,
-	} = usePanelTypeSelectionModalStore();
+	const { isPanelTypeSelectionModalOpen, setIsPanelTypeSelectionModalOpen } =
+		usePanelTypeSelectionModalStore();
 
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();

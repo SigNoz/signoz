@@ -323,7 +323,9 @@ describe('Quick Filters with custom filters', () => {
 		const settingsButton = icon.closest('button') ?? icon;
 		await user.click(settingsButton);
 
-		expect(await screen.findByText('Edit quick filters')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Edit quick filters'),
+		).resolves.toBeInTheDocument();
 
 		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
 		expect(addedSection).toContainElement(
@@ -454,7 +456,7 @@ describe('Quick Filters with custom filters', () => {
 		});
 
 		const requestBody = putHandler.mock.calls[0][0];
-		expect(requestBody.filters).toEqual(
+		expect(requestBody.filters).toStrictEqual(
 			expect.arrayContaining([
 				expect.not.objectContaining({ key: FILTER_OS_DESCRIPTION }),
 			]),
@@ -535,12 +537,16 @@ describe('Quick Filters refetch behavior', () => {
 		);
 
 		const { unmount } = render(<TestQuickFilters signal={SIGNAL} />);
-		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+		await expect(
+			screen.findByText(FILTER_SERVICE_NAME),
+		).resolves.toBeInTheDocument();
 
 		unmount();
 
 		render(<TestQuickFilters signal={SIGNAL} />);
-		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+		await expect(
+			screen.findByText(FILTER_SERVICE_NAME),
+		).resolves.toBeInTheDocument();
 
 		expect(getCalls).toBe(2);
 	});
@@ -578,7 +584,9 @@ describe('Quick Filters refetch behavior', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<TestQuickFilters signal={SIGNAL} />);
 
-		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+		await expect(
+			screen.findByText(FILTER_SERVICE_NAME),
+		).resolves.toBeInTheDocument();
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
 		const settingsButton = icon.closest('button') ?? icon;
@@ -628,7 +636,9 @@ describe('Quick Filters refetch behavior', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<TestQuickFilters signal={SIGNAL} />);
 
-		expect(await screen.findByText(FILTER_SERVICE_NAME)).toBeInTheDocument();
+		await expect(
+			screen.findByText(FILTER_SERVICE_NAME),
+		).resolves.toBeInTheDocument();
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
 		const settingsButton = icon.closest('button') ?? icon;
@@ -657,6 +667,8 @@ describe('Quick Filters refetch behavior', () => {
 
 		render(<TestQuickFilters signal={SIGNAL} config={[]} />);
 
-		expect(await screen.findByText('No filters found')).toBeInTheDocument();
+		await expect(
+			screen.findByText('No filters found'),
+		).resolves.toBeInTheDocument();
 	});
 });

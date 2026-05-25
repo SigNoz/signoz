@@ -4,10 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -27,7 +26,7 @@ type Module interface {
 	GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error)
 
 	// gets the selectors and org for the given public dashboard
-	GetPublicDashboardSelectorsAndOrg(context.Context, valuer.UUID, []*types.Organization) ([]authtypes.Selector, valuer.UUID, error)
+	GetPublicDashboardSelectorsAndOrg(context.Context, valuer.UUID, []*types.Organization) ([]coretypes.Selector, valuer.UUID, error)
 
 	// updates the public sharing config for a dashboard
 	UpdatePublic(context.Context, valuer.UUID, *dashboardtypes.PublicDashboard) error
@@ -35,7 +34,7 @@ type Module interface {
 	// deletes the public sharing config and disables public sharing for the dashboard
 	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error
 
-	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
@@ -47,11 +46,12 @@ type Module interface {
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
+	// DeleteUnsafe deletes a dashboard bypassing the guards. Intended for internal system callers.
+	DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 
 	statsreporter.StatsCollector
-
-	authz.RegisterTypeable
 }
 
 type Handler interface {

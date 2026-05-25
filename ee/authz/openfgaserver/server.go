@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -33,18 +34,18 @@ func (server *Server) Stop(ctx context.Context) error {
 	return server.pkgAuthzService.Stop(ctx)
 }
 
-func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
+func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
 	subject := ""
 	switch claims.Principal {
 	case authtypes.PrincipalUser:
-		user, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+		user, err := authtypes.NewSubject(coretypes.NewResourceUser(), claims.UserID, orgID, nil)
 		if err != nil {
 			return err
 		}
 
 		subject = user
 	case authtypes.PrincipalServiceAccount:
-		serviceAccount, err := authtypes.NewSubject(authtypes.TypeableServiceAccount, claims.ServiceAccountID, orgID, nil)
+		serviceAccount, err := authtypes.NewSubject(coretypes.NewResourceServiceAccount(), claims.ServiceAccountID, orgID, nil)
 		if err != nil {
 			return err
 		}
@@ -52,10 +53,7 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 		subject = serviceAccount
 	}
 
-	tupleSlice, err := typeable.Tuples(subject, relation, selectors, orgID)
-	if err != nil {
-		return err
-	}
+	tupleSlice := authtypes.NewTuples(typeable, subject, relation, selectors, orgID)
 
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
 	for idx, tuple := range tupleSlice {
@@ -76,16 +74,13 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
+func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
+	subject, err := authtypes.NewSubject(coretypes.NewResourceAnonymous(), coretypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
 
-	tupleSlice, err := typeable.Tuples(subject, relation, selectors, orgID)
-	if err != nil {
-		return err
-	}
+	tupleSlice := authtypes.NewTuples(typeable, subject, relation, selectors, orgID)
 
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
 	for idx, tuple := range tupleSlice {
@@ -110,10 +105,14 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	return server.pkgAuthzService.BatchCheck(ctx, tupleReq)
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
-	return server.pkgAuthzService.ListObjects(ctx, subject, relation, typeable)
+func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
+	return server.pkgAuthzService.ListObjects(ctx, subject, relation, objectType)
 }
 
 func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey, deletions []*openfgav1.TupleKey) error {
 	return server.pkgAuthzService.Write(ctx, additions, deletions)
+}
+
+func (server *Server) ReadTuples(ctx context.Context, tupleKey *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error) {
+	return server.pkgAuthzService.ReadTuples(ctx, tupleKey)
 }

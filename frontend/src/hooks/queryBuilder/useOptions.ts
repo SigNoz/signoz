@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { INFRA_SHORT_TO_LONG_OPERATOR_MAP } from 'constants/queryBuilder';
 import {
 	checkCommaInValue,
 	getTagToken,
@@ -25,6 +26,7 @@ export const useOptions = (
 	result: string[],
 	isFetching: boolean,
 	whereClauseConfig?: WhereClauseConfig,
+	isInfraMonitoring?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
@@ -85,14 +87,14 @@ export const useOptions = (
 							label: searchValue,
 							value: searchValue,
 						},
-				  ]
+					]
 				: [
 						{
 							label: searchValue,
 							value: searchValue,
 						},
 						...values,
-				  ];
+					];
 		},
 		[getKeyOpValue, result, variableAsValue],
 	);
@@ -105,12 +107,18 @@ export const useOptions = (
 			const filteredOperators = !isEmpty(partialOperator)
 				? operators?.filter((operator) =>
 						operator.startsWith(partialOperator?.toUpperCase()),
-				  )
+					)
 				: operators;
-			const operatorsOptions = filteredOperators?.map((operator) => ({
-				value: `${partialKey} ${operator} `,
-				label: `${partialKey} ${operator} `,
-			}));
+			const operatorsOptions = filteredOperators?.map((op) => {
+				const labelOp =
+					isInfraMonitoring && INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
+						? INFRA_SHORT_TO_LONG_OPERATOR_MAP[op]
+						: op;
+				return {
+					value: `${partialKey} ${op} `,
+					label: `${partialKey} ${labelOp} `,
+				};
+			});
 			if (whereClauseConfig) {
 				return [
 					{
@@ -122,7 +130,7 @@ export const useOptions = (
 			}
 			return operatorsOptions;
 		},
-		[operators, searchValue, whereClauseConfig],
+		[isInfraMonitoring, operators, searchValue, whereClauseConfig],
 	);
 
 	useEffect(() => {
@@ -136,7 +144,7 @@ export const useOptions = (
 							value: `${searchValue} `,
 						},
 						...getOptionsFromKeys(keys),
-				  ]
+					]
 				: getOptionsFromKeys(keys);
 		} else if (key && !operator) {
 			newOptions = getKeyOperatorOptions(key);

@@ -1,4 +1,11 @@
-import { TOOLTIP_OFFSET, TooltipLayoutInfo, TooltipViewState } from './types';
+import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
+
+import {
+	TOOLTIP_OFFSET,
+	TooltipClickData,
+	TooltipLayoutInfo,
+	TooltipViewState,
+} from './types';
 
 export function isPlotInViewport(
 	rect: uPlot.BBox,
@@ -157,4 +164,41 @@ export function createLayoutObserver(
 		}),
 	};
 	return layout;
+}
+
+/**
+ * Resolves a TooltipClickData snapshot from a MouseEvent (real or synthetic)
+ * and the current uPlot instance. Shared by the overlay click handler and the
+ * keyboard-pin handler (which synthesises an event from the cursor position).
+ */
+export function buildClickData(
+	event: MouseEvent,
+	plot: uPlot,
+): TooltipClickData {
+	const xValue = plot.posToVal(event.offsetX, 'x');
+	const yValue = plot.posToVal(event.offsetY, 'y');
+	const focusedSeries = getFocusedSeriesAtPosition(event, plot);
+
+	const dataIndex = plot.posToIdx(event.offsetX);
+	let clickedDataTimestamp = xValue;
+	const xSeriesData = plot.data[0];
+	if (
+		xSeriesData &&
+		dataIndex >= 0 &&
+		dataIndex < xSeriesData.length &&
+		xSeriesData[dataIndex] !== undefined
+	) {
+		clickedDataTimestamp = xSeriesData[dataIndex];
+	}
+
+	return {
+		xValue,
+		yValue,
+		focusedSeries,
+		clickedDataTimestamp,
+		mouseX: event.offsetX,
+		mouseY: event.offsetY,
+		absoluteMouseX: event.clientX,
+		absoluteMouseY: event.clientY,
+	};
 }

@@ -1,7 +1,7 @@
-import { Tag, Typography } from 'antd';
+import { Tag } from 'antd';
 import styled from 'styled-components';
 
-export const StyledText = styled(Typography.Text)`
+export const StyledText = styled.span`
 	cursor: pointer;
 `;
 

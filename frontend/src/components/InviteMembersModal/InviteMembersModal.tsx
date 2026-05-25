@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
-import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
-import {
-	Button,
-	Callout,
-	DialogFooter,
-	DialogWrapper,
-	Input,
-	toast,
-} from '@signozhq/ui';
+import { ChevronDown, Plus, Trash2, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
@@ -17,6 +14,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -191,7 +189,7 @@ function InviteMembersModal({
 					email: row.email.trim(),
 					name: '',
 					role: row.role as ROLES,
-					frontendBaseUrl: window.location.origin,
+					frontendBaseUrl: getBaseUrl(),
 				});
 			} else {
 				await inviteUsers({
@@ -199,7 +197,7 @@ function InviteMembersModal({
 						email: row.email.trim(),
 						name: '',
 						role: row.role,
-						frontendBaseUrl: window.location.origin,
+						frontendBaseUrl: getBaseUrl(),
 					})),
 				});
 			}
@@ -293,10 +291,8 @@ function InviteMembersModal({
 							type="error"
 							size="small"
 							showIcon
-							icon={<CircleAlert size={12} />}
-						>
-							{getValidationErrorMessage()}
-						</Callout>
+							title={getValidationErrorMessage()}
+						/>
 					</div>
 				)}
 			</div>

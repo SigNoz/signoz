@@ -4,9 +4,25 @@
 
 	.inspect-metrics-fallback {
 		display: flex;
-		align-items: center;
-		justify-content: center;
+		flex-direction: column;
+		gap: 32px;
 		height: 100%;
+
+		.inspect-metrics-fallback-header-placeholder {
+			// Reserve the same vertical space the GraphView header occupies
+			// (antd middle button height) so swapping chart ↔ fallback causes
+			// no layout shift.
+			height: 32px;
+			flex-shrink: 0;
+		}
+
+		.inspect-metrics-fallback-body {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 520px;
+		}
 	}
 
 	.inspect-metrics-title {

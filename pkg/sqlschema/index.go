@@ -232,4 +232,3 @@ func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 
 	return sql
 }
-

@@ -30,20 +30,21 @@ export const k8sVolumeGetSelectedItemFilters = (
 	],
 });
 
-export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sVolumesData>[] = [
-	{
-		label: 'PVC Name',
-		getValue: (p): string => p.persistentVolumeClaimName,
-	},
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-	{
-		label: 'Namespace Name',
-		getValue: (p): string => p.meta.k8s_namespace_name,
-	},
-];
+export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sVolumesData>[] =
+	[
+		{
+			label: 'PVC Name',
+			getValue: (p): string => p.persistentVolumeClaimName,
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+		{
+			label: 'Namespace Name',
+			getValue: (p): string => p.meta.k8s_namespace_name,
+		},
+	];
 
 export const k8sVolumeInitialFilters = [
 	QUERY_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,

@@ -2,7 +2,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircleFilled } from '@ant-design/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -25,7 +24,6 @@ import {
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { TriangleAlert } from 'lucide-react';
 import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -35,6 +33,7 @@ import { getTraceOperatorContextAtCursor } from './utils/traceOperatorContextUti
 import { getInvolvedQueriesInTraceOperator } from './utils/utils';
 
 import '../QuerySearch/QuerySearch.styles.scss';
+import { CircleCheck, TriangleAlert } from '@signozhq/icons';
 
 // Custom extension to stop events
 const stopEventsExtension = EditorView.domEventHandlers({
@@ -467,7 +466,7 @@ function TraceOperatorEditor({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (

@@ -8,6 +8,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -40,6 +41,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -97,6 +100,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const isPublicDashboard = currentRoute?.path === ROUTES.PUBLIC_DASHBOARD;
 	if (isPublicDashboard) {
 		return <>{children}</>;
+	}
+
+	if (pathname.startsWith('/ai-assistant/') && !isAIAssistantEnabled) {
+		return <Redirect to={ROUTES.HOME} />;
 	}
 
 	// Check for workspace access restriction (cloud only)

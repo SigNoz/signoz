@@ -2,10 +2,33 @@ import uPlot from 'uplot';
 
 import type { ExtendedSeries } from '../../config/types';
 import { syncCursorRegistry } from './syncCursorRegistry';
-import type { TooltipControllerState, TooltipSyncMetadata } from './types';
+import {
+	SyncTooltipFilterMode,
+	type TooltipControllerState,
+	type TooltipSyncMetadata,
+} from './types';
 
 /**
- * Returns the dimension keys present in both groupBy arrays.
+ * Flattens per-query groupBys into a deduped set of dimension keys.
+ * A panel's effective groupBy is the union across all of its queries.
+ */
+function collectGroupByKeys(
+	groupByPerQuery: TooltipSyncMetadata['groupByPerQuery'],
+): Set<string> {
+	const keys = new Set<string>();
+	if (!groupByPerQuery) {
+		return keys;
+	}
+	for (const groupBy of Object.values(groupByPerQuery)) {
+		for (const dim of groupBy) {
+			keys.add(dim.key);
+		}
+	}
+	return keys;
+}
+
+/**
+ * Returns the dimension keys present in both panels' groupBys.
  * An empty result means no overlap — series highlighting should not run.
  *
  *   exact    [A, B] vs [A, B]  → [A, B]   one match
@@ -14,19 +37,28 @@ import type { TooltipControllerState, TooltipSyncMetadata } from './types';
  *   partial  [A, B] vs [B, C]  → [B]
  */
 function getCommonGroupByKeys(
-	a: TooltipSyncMetadata['groupBy'],
-	b: TooltipSyncMetadata['groupBy'],
+	a: TooltipSyncMetadata['groupByPerQuery'],
+	b: TooltipSyncMetadata['groupByPerQuery'],
 ): string[] {
-	if (!Array.isArray(a) || a.length === 0 || !Array.isArray(b) || b.length === 0) {
+	const aKeys = collectGroupByKeys(a);
+	const bKeys = collectGroupByKeys(b);
+	if (aKeys.size === 0 || bKeys.size === 0) {
 		return [];
 	}
-	const bKeys = new Set(b.map((g) => g.key));
-	return a.filter((g) => bKeys.has(g.key)).map((g) => g.key);
+	const common: string[] = [];
+	aKeys.forEach((key) => {
+		if (bKeys.has(key)) {
+			common.push(key);
+		}
+	});
+	return common;
 }
 
 /**
- * Returns the 1-based indexes of every series whose metric matches
- * sourceMetric on all commonKeys.
+ * Returns the 1-based indexes of every visible series whose metric matches
+ * sourceMetric on all commonKeys. Hidden series (toggled off in the legend)
+ * are excluded so the synced tooltip is suppressed when no visible series
+ * would match.
  */
 function findMatchingSeriesIndexes(
 	series: uPlot.Series[],
@@ -34,7 +66,9 @@ function findMatchingSeriesIndexes(
 	commonKeys: string[],
 ): number[] {
 	return series.reduce<number[]>((acc, s, i) => {
-		if (i === 0) {return acc;}
+		if (i === 0 || s.show === false) {
+			return acc;
+		}
 		const metric = (s as ExtendedSeries).metric;
 		if (
 			metric != null &&
@@ -62,9 +96,23 @@ function applySourceSync({
 		focusedSeriesIndex != null
 			? (uPlotInstance.series[focusedSeriesIndex] as ExtendedSeries)
 			: null;
-	syncCursorRegistry.setActiveSeriesMetric(syncKey, focusedSeries?.metric ?? null);
+	syncCursorRegistry.setActiveSeriesMetric(
+		syncKey,
+		focusedSeries?.metric ?? null,
+	);
 }
 
+/**
+ * Computes receiver-side series filtering / highlighting for Tooltip sync.
+ *
+ * Returns the indexes that the tooltip render path should treat per
+ * `syncMetadata.filterMode`:
+ *   - Filtered (default): null = no filter, [] = no matches (suppress tooltip),
+ *      number[] = allowed indexes (show only these).
+ *   - All: null = no highlight (show all), number[] = highlight set (show all,
+ *      emphasize matching rows). Never returns [] in this mode so the synced
+ *      tooltip is not suppressed when matches are missing.
+ */
 function applyReceiverSync({
 	uPlotInstance,
 	yCrosshairEl,
@@ -79,20 +127,28 @@ function applyReceiverSync({
 	syncMetadata: TooltipSyncMetadata | undefined;
 	sourceMetadata: TooltipSyncMetadata | undefined;
 	commonKeys: string[];
-}): void {
+}): number[] | null {
 	yCrosshairEl.style.display =
 		sourceMetadata?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
 
+	const filterMode = syncMetadata?.filterMode ?? SyncTooltipFilterMode.Filtered;
+	const noMatchResult: number[] | null =
+		filterMode === SyncTooltipFilterMode.All ? null : [];
+
 	if (commonKeys.length === 0) {
-		return;
+		uPlotInstance.setSeries(null, { focus: false });
+		return noMatchResult;
 	}
 
-	const cursorLeft = uPlotInstance.cursor.left ?? -1;
-	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
-
-	if (cursorLeft < 0 || sourceSeriesMetric == null) {
+	if ((uPlotInstance.cursor.left ?? -1) < 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return;
+		return null;
+	}
+
+	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
+	if (sourceSeriesMetric == null) {
+		uPlotInstance.setSeries(null, { focus: false });
+		return noMatchResult;
 	}
 
 	const matchingIdxs = findMatchingSeriesIndexes(
@@ -103,14 +159,12 @@ function applyReceiverSync({
 
 	if (matchingIdxs.length === 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return;
+		return noMatchResult;
 	}
 
-	uPlotInstance.batch(() => {
-		for (const idx of matchingIdxs) {
-			uPlotInstance.setSeries(idx, { focus: true });
-		}
-	});
+	uPlotInstance.setSeries(matchingIdxs[0], { focus: true });
+
+	return matchingIdxs;
 }
 
 export function createSyncDisplayHook(
@@ -123,7 +177,7 @@ export function createSyncDisplayHook(
 
 	// groupBy on both panels is stable (set at config time). Recompute the
 	// intersection only when the source panel's groupBy reference changes.
-	let lastSourceGroupBy: TooltipSyncMetadata['groupBy'];
+	let lastSourceGroupBy: TooltipSyncMetadata['groupByPerQuery'];
 	let cachedCommonKeys: string[] = [];
 
 	return (u: uPlot): void => {
@@ -133,6 +187,7 @@ export function createSyncDisplayHook(
 		}
 
 		if (u.cursor.event != null) {
+			controller.syncedSeriesIndexes = null;
 			applySourceSync({
 				uPlotInstance: u,
 				syncKey,
@@ -147,15 +202,15 @@ export function createSyncDisplayHook(
 		// inside applyReceiverSync.
 		const sourceMetadata = syncCursorRegistry.getMetadata(syncKey);
 
-		if (sourceMetadata?.groupBy !== lastSourceGroupBy) {
-			lastSourceGroupBy = sourceMetadata?.groupBy;
+		if (sourceMetadata?.groupByPerQuery !== lastSourceGroupBy) {
+			lastSourceGroupBy = sourceMetadata?.groupByPerQuery;
 			cachedCommonKeys = getCommonGroupByKeys(
-				sourceMetadata?.groupBy,
-				syncMetadata?.groupBy,
+				sourceMetadata?.groupByPerQuery,
+				syncMetadata?.groupByPerQuery,
 			);
 		}
 
-		applyReceiverSync({
+		controller.syncedSeriesIndexes = applyReceiverSync({
 			uPlotInstance: u,
 			yCrosshairEl,
 			syncKey,

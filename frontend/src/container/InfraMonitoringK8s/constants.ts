@@ -800,5 +800,8 @@ export const INFRA_MONITORING_K8S_PARAMS_KEYS = {
 	EVENTS_FILTERS: 'eventsFilters',
 	HOSTS_FILTERS: 'hostsFilters',
 	CURRENT_PAGE: 'currentPage',
+	PAGE: 'page',
+	PAGE_SIZE: 'pageSize',
+	EXPANDED: 'expanded',
 	SELECTED_ITEM: 'selectedItem',
 };

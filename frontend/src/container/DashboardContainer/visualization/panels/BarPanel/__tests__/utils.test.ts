@@ -6,7 +6,8 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelMode } from '../../types';
-import { prepareBarPanelConfig, prepareBarPanelData } from '../utils';
+import { prepareBarPanelConfig } from '../utils';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
@@ -55,7 +56,7 @@ const createApiResponse = (
 	data: {
 		result,
 		resultType: 'matrix',
-		newResult: (null as unknown) as MetricRangePayloadV3,
+		newResult: null as unknown as MetricRangePayloadV3,
 	},
 });
 
@@ -67,7 +68,7 @@ const createWidget = (overrides: Partial<Widgets> = {}): Widgets =>
 		thresholds: [],
 		customLegendColors: {},
 		...overrides,
-	} as Widgets);
+	}) as Widgets;
 
 const defaultTimezone = {
 	name: 'UTC',
@@ -88,13 +89,13 @@ describe('BarPanel utils', () => {
 
 	describe('prepareBarPanelData', () => {
 		it('returns aligned data with timestamps and empty series when result is empty', () => {
-			const data = prepareBarPanelData(createApiResponse([]));
+			const data = prepareChartData(createApiResponse([]));
 			expect(data).toHaveLength(1);
-			expect(data[0]).toEqual([]);
+			expect(data[0]).toStrictEqual([]);
 		});
 
 		it('returns timestamps and one series of y values for single series', () => {
-			const data = prepareBarPanelData(
+			const data = prepareChartData(
 				createApiResponse([
 					{
 						metric: {},
@@ -108,12 +109,12 @@ describe('BarPanel utils', () => {
 				]),
 			);
 			expect(data).toHaveLength(2);
-			expect(data[0]).toEqual([1000, 2000]);
-			expect(data[1]).toEqual([10, 20]);
+			expect(data[0]).toStrictEqual([1000, 2000]);
+			expect(data[1]).toStrictEqual([10, 20]);
 		});
 
 		it('merges timestamps and fills missing values with null for multiple series', () => {
-			const data = prepareBarPanelData(
+			const data = prepareChartData(
 				createApiResponse([
 					{
 						metric: {},
@@ -133,9 +134,9 @@ describe('BarPanel utils', () => {
 					} as MetricRangePayloadProps['data']['result'][0],
 				]),
 			);
-			expect(data[0]).toEqual([1000, 2000, 3000]);
-			expect(data[1]).toEqual([1, null, 3]);
-			expect(data[2]).toEqual([10, 20, null]);
+			expect(data[0]).toStrictEqual([1000, 2000, 3000]);
+			expect(data[1]).toStrictEqual([1, null, 3]);
+			expect(data[2]).toStrictEqual([10, 20, null]);
 		});
 	});
 
@@ -206,7 +207,7 @@ describe('BarPanel utils', () => {
 			prepareBarPanelConfig({
 				...baseParams,
 				apiResponse,
-				currentQuery: (null as unknown) as Query,
+				currentQuery: null as unknown as Query,
 			});
 			expect(getLabelNameMock).toHaveBeenCalled();
 			expect(getLegendMock).not.toHaveBeenCalled();

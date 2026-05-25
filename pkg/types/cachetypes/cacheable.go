@@ -18,6 +18,10 @@ type Cloneable interface {
 	// Creates a deep copy of the Cacheable. This method is useful for memory caches to avoid the need for serialization/deserialization. It also prevents
 	// race conditions in the memory cache.
 	Clone() Cacheable
+	// Cost returns the weight of this entry for cost-based cache accounting
+	// and eviction. Typically derived from the approximate retained byte size,
+	// but the value represents cache cost, not literal bytes.
+	Cost() int64
 }
 
 func NewSha1CacheKey(val string) string {

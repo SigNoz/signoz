@@ -8,7 +8,8 @@ import {
 import EvaluationWindowPopover from '../EvaluationWindowPopover';
 import { createMockEvaluationWindowState } from './testUtils';
 
-const mockEvaluationWindow: EvaluationWindowState = createMockEvaluationWindowState();
+const mockEvaluationWindow: EvaluationWindowState =
+	createMockEvaluationWindowState();
 const mockSetEvaluationWindow = jest.fn();
 
 const EVALUATION_WINDOW_CONTENT_LIST_ITEM_CLASS =

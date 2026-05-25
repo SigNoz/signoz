@@ -373,8 +373,14 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 
 	// update or create service
 	if svc.CloudIntegrationService == nil {
-		cloudIntegrationService := cloudintegrationtypes.NewCloudIntegrationService(serviceID, cloudIntegrationID, req.Config)
-		err = handler.module.CreateService(ctx, orgID, cloudIntegrationService, provider)
+		var cloudIntegrationService *cloudintegrationtypes.CloudIntegrationService
+		cloudIntegrationService, err = cloudintegrationtypes.NewCloudIntegrationService(serviceID, cloudIntegrationID, provider, req.Config)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		err = handler.module.CreateService(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), cloudIntegrationService, provider)
 	} else {
 		err = svc.CloudIntegrationService.Update(provider, serviceID, req.Config)
 		if err != nil {
@@ -382,7 +388,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = handler.module.UpdateService(ctx, orgID, svc.CloudIntegrationService, provider)
+		err = handler.module.UpdateService(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), svc.CloudIntegrationService, provider)
 	}
 	if err != nil {
 		render.Error(rw, err)
@@ -434,3 +440,4 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAgentCheckIn(provider, resp))
 }
+

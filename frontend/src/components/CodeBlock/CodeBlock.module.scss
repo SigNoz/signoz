@@ -1,0 +1,22 @@
+.codeBlock {
+	position: relative;
+}
+
+.codeBlockSyntaxHighlighter {
+	background-color: var(--l2-background) !important;
+	border-radius: 4px !important;
+	border: 1px solid var(--l2-border) !important;
+	color: var(--l2-foreground) !important;
+
+	pre {
+		color: var(--l2-foreground) !important;
+		font-family: 'Geist Mono' !important;
+		font-size: 12px !important;
+	}
+
+	code {
+		color: var(--l1-foreground) !important;
+		font-family: 'Geist Mono' !important;
+		font-size: 12px !important;
+	}
+}

@@ -2,7 +2,7 @@ import { findMinMaxThresholdValues } from '../threshold';
 
 describe('findMinMaxThresholdValues', () => {
 	it('returns [null, null] when thresholds array is empty or missing', () => {
-		expect(findMinMaxThresholdValues([], 'ms')).toEqual([null, null]);
+		expect(findMinMaxThresholdValues([], 'ms')).toStrictEqual([null, null]);
 	});
 
 	it('returns min and max from thresholdValue when units are not provided', () => {

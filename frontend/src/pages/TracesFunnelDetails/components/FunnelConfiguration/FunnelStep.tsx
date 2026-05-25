@@ -6,15 +6,15 @@ import {
 	Form,
 	MenuProps,
 	Space,
-	Switch,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { ChevronDown, PencilLine } from 'lucide-react';
+import { ChevronDown, PencilLine } from '@signozhq/icons';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
@@ -36,16 +36,13 @@ function FunnelStep({
 	index,
 	stepsCount,
 }: FunnelStepProps): JSX.Element {
-	const {
-		handleStepChange: onStepChange,
-		handleStepRemoval: onStepRemove,
-	} = useFunnelContext();
+	const { handleStepChange: onStepChange, handleStepRemoval: onStepRemove } =
+		useFunnelContext();
 	const [form] = Form.useForm();
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState<boolean>(
-		false,
-	);
+	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] =
+		useState<boolean>(false);
 
 	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
 		(option) => ({
@@ -157,7 +154,7 @@ function FunnelStep({
 											hasEditPermission
 												? (v): void => {
 														onStepChange(index, { service_name: (v ?? '') as string });
-												  }
+													}
 												: undefined
 										}
 									/>
@@ -204,8 +201,7 @@ function FunnelStep({
 					<div className="error">
 						<Switch
 							className="error__switch"
-							size="small"
-							checked={stepData.has_errors}
+							value={stepData.has_errors}
 							disabled={!hasEditPermission}
 							onChange={(): void =>
 								onStepChange(index, { has_errors: !stepData.has_errors })

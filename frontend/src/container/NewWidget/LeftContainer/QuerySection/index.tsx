@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { QueryKey } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Typography } from 'antd';
+import { Button, Tabs } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -15,7 +15,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Atom, Terminal } from 'lucide-react';
+import { Atom, Terminal } from '@signozhq/icons';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -25,8 +25,8 @@ import PromQLQueryContainer from './QueryBuilder/promQL';
 import './QuerySection.styles.scss';
 function QuerySection({
 	selectedGraph,
-	queryRangeKey,
 	isLoadingQueries,
+	handleCancelQuery,
 	selectedWidget,
 	dashboardVersion,
 	dashboardId,
@@ -179,7 +179,7 @@ function QuerySection({
 							label="Stage & Run Query"
 							onStageRunQuery={handleRunQuery}
 							isLoadingQueries={isLoadingQueries}
-							queryRangeKey={queryRangeKey}
+							handleCancelQuery={handleCancelQuery}
 						/>
 					</span>
 				}
@@ -191,8 +191,8 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	queryRangeKey?: QueryKey;
-	isLoadingQueries?: boolean;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	selectedWidget: Widgets;
 	dashboardVersion?: string;
 	dashboardId?: string;

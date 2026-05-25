@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
+import { Check, Copy } from '@signozhq/icons';
 import cx from 'classnames';
 
 import './CodeCopyBtn.scss';
@@ -33,7 +33,7 @@ function CodeCopyBtn({
 	return (
 		<div className={cx('code-copy-btn', isSnippetCopied ? 'copied' : '')}>
 			<button type="button" onClick={handleClick}>
-				{!isSnippetCopied ? <CopyOutlined /> : <CheckOutlined />}
+				{!isSnippetCopied ? <Copy size="md" /> : <Check size="md" />}
 			</button>
 		</div>
 	);

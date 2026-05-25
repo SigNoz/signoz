@@ -9,10 +9,10 @@ describe('calculateWidthBasedOnStepInterval', () => {
 			.mockReturnValueOnce(100) // startPx for start
 			.mockReturnValueOnce(250); // endPx for start + stepInterval
 
-		const uPlotInstance = ({
+		const uPlotInstance = {
 			scales: { x: { min: 1000 } },
 			valToPos,
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const result = calculateWidthBasedOnStepInterval({
 			uPlotInstance,
@@ -27,10 +27,10 @@ describe('calculateWidthBasedOnStepInterval', () => {
 	it('returns absolute pixel width when endPx is less than startPx', () => {
 		const valToPos = jest.fn().mockReturnValueOnce(250).mockReturnValueOnce(100);
 
-		const uPlotInstance = ({
+		const uPlotInstance = {
 			scales: { x: { min: 0 } },
 			valToPos,
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const result = calculateWidthBasedOnStepInterval({
 			uPlotInstance,
@@ -41,10 +41,10 @@ describe('calculateWidthBasedOnStepInterval', () => {
 	});
 
 	it('returns 0 when xScale is undefined', () => {
-		const uPlotInstance = ({
+		const uPlotInstance = {
 			scales: { x: undefined },
 			valToPos: jest.fn(),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const result = calculateWidthBasedOnStepInterval({
 			uPlotInstance,
@@ -55,10 +55,10 @@ describe('calculateWidthBasedOnStepInterval', () => {
 	});
 
 	it('returns 0 when xScale.min is not a number', () => {
-		const uPlotInstance = ({
+		const uPlotInstance = {
 			scales: { x: { min: undefined } },
 			valToPos: jest.fn(),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const result = calculateWidthBasedOnStepInterval({
 			uPlotInstance,

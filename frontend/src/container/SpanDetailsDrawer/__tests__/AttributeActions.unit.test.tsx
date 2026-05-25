@@ -66,9 +66,7 @@ describe('AttributeActions (unit)', () => {
 			screen.getByRole('button', { name: 'Filter out value' }),
 		).toBeInTheDocument();
 		// more actions (ellipsis) button
-		expect(
-			document.querySelector('.lucide-ellipsis')?.closest('button'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('attribute-actions-more')).toBeInTheDocument();
 	});
 
 	it('applies "Filter for" and calls redirectWithQueryBuilderData with correct query', async () => {
@@ -186,9 +184,7 @@ describe('AttributeActions (unit)', () => {
 			queryBuilderOverrides: { currentQuery, redirectWithQueryBuilderData },
 		});
 
-		const ellipsisBtn = document
-			.querySelector('.lucide-ellipsis')
-			?.closest('button') as HTMLElement;
+		const ellipsisBtn = screen.getByTestId('attribute-actions-more');
 		expect(ellipsisBtn).toBeInTheDocument();
 
 		// hover to trigger Popover open via mock
@@ -233,9 +229,7 @@ describe('AttributeActions (unit)', () => {
 
 	it('hides copy options when showCopyOptions=false', async () => {
 		render(<AttributeActions record={record} showCopyOptions={false} />);
-		const ellipsisBtn = document
-			.querySelector('.lucide-ellipsis')
-			?.closest('button') as HTMLElement;
+		const ellipsisBtn = screen.getByTestId('attribute-actions-more');
 		fireEvent.mouseEnter(ellipsisBtn.parentElement as Element);
 
 		await waitFor(() =>

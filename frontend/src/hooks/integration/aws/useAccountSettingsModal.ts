@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';
@@ -45,9 +45,10 @@ export function useAccountSettingsModal({
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
 	const { mutate: updateAccount, isLoading } = useUpdateAccount();
-	const accountRegions = useMemo(() => account?.config?.regions || [], [
-		account?.config?.regions,
-	]);
+	const accountRegions = useMemo(
+		() => account?.config?.regions || [],
+		[account?.config?.regions],
+	);
 	const [isInitialRegionsSet, setIsInitialRegionsSet] = useState(false);
 
 	const [selectedRegions, setSelectedRegions] = useState<string[]>([]);

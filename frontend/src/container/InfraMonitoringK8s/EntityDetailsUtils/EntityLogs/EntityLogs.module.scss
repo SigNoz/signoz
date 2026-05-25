@@ -1,0 +1,109 @@
+.container {
+	margin-top: 1rem;
+}
+
+.filterContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: var(--spacing-6);
+	border-radius: var(--radius);
+	border: 1px solid var(--l1-border);
+
+	:global(.ant-select-selector) {
+		border-radius: 2px;
+		border: 1px solid var(--l1-border) !important;
+		background-color: var(--l3-background) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		:global(.ant-tag .ant-typography) {
+			font-size: 12px;
+		}
+	}
+}
+
+.filterContainerTime {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+}
+
+.filterQuerySearch {
+	flex: 1;
+}
+
+.logs {
+	border: 1px solid var(--border);
+	margin-top: 1rem;
+
+	:global(.virtuoso-list) {
+		overflow-y: hidden !important;
+
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+			height: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--primary);
+		}
+
+		&::-webkit-scrollbar-thumb:hover {
+			background: var(--primary);
+		}
+
+		:global(.ant-row) {
+			width: fit-content;
+		}
+	}
+
+	.skeletonContainer {
+		height: 100%;
+		padding: 16px;
+	}
+}
+
+.listContainer {
+	flex: 1;
+	height: calc(100vh - 312px) !important;
+	display: flex;
+	height: 100%;
+
+	:global(.raw-log-content) {
+		width: 100%;
+		text-wrap: inherit;
+		word-wrap: break-word;
+	}
+}
+
+.listCard {
+	width: 100%;
+	margin-top: 12px;
+
+	:global(.ant-card-body) {
+		padding: 0;
+		height: 100%;
+		width: 100%;
+	}
+}
+
+.logsLoadingSkeleton {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 8px 0;
+
+	:global(.ant-skeleton-input-sm) {
+		height: 18px;
+	}
+}

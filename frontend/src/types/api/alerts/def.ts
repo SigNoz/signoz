@@ -109,7 +109,8 @@ export type AlertRuleTimelineTableResponsePayload = {
 		labels: AlertLabelsProps['labels'];
 	};
 };
-type AlertState = 'firing' | 'normal' | 'no-data' | 'muted';
+
+type AlertState = 'firing' | 'normal' | 'nodata' | 'muted';
 
 export interface AlertRuleTimelineGraphResponse {
 	start: number;

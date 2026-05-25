@@ -6,9 +6,9 @@ export function dropHandler(monitor: DropTargetMonitor): { isOver: boolean } {
 	};
 }
 
-export function dragHandler(
-	monitor: DragSourceMonitor,
-): { isDragging: boolean } {
+export function dragHandler(monitor: DragSourceMonitor): {
+	isDragging: boolean;
+} {
 	return {
 		isDragging: monitor.isDragging(),
 	};

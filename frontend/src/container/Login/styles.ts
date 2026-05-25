@@ -10,10 +10,6 @@ export const Label = styled.label`
 	color: var(--l1-foreground);
 	margin-bottom: 12px;
 	display: block;
-
-	.lightMode & {
-		color: var(--text-ink-500);
-	}
 `;
 
 export const FormContainer = styled(Form)`
@@ -50,20 +46,10 @@ export const FormContainer = styled(Form)`
 		background: var(--l3-background) !important;
 		border-color: var(--l1-border) !important;
 		color: var(--l1-foreground) !important;
-
-		.lightMode & {
-			background: var(--bg-vanilla-200) !important;
-			border-color: var(--bg-vanilla-300) !important;
-			color: var(--text-ink-500) !important;
-		}
 	}
 
 	& .ant-input::placeholder {
 		color: var(--l3-foreground) !important;
-
-		.lightMode & {
-			color: var(--text-neutral-light-200) !important;
-		}
 	}
 
 	& .ant-input:focus,

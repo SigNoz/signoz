@@ -9,9 +9,8 @@ import './styles.scss';
 
 function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 	const last1HourInterval = RelativeDurationOptions[3].value;
-	const [previewTimeInterval, setPreviewTimeInterval] = useState(
-		last1HourInterval,
-	);
+	const [previewTimeInterval, setPreviewTimeInterval] =
+		useState(last1HourInterval);
 
 	const isEmptyFilter = (filter?.items?.length || 0) < 1;
 

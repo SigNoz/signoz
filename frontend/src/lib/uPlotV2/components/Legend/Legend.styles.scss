@@ -182,7 +182,9 @@
 		cursor: pointer;
 		border-radius: 4px;
 		opacity: 1;
-		transition: opacity 0.15s ease, color 0.15s ease;
+		transition:
+			opacity 0.15s ease,
+			color 0.15s ease;
 
 		&:hover {
 			color: var(--l1-foreground);
@@ -194,29 +196,6 @@
 		.legend-copy-button {
 			display: flex;
 			opacity: 1;
-		}
-	}
-}
-
-.lightMode {
-	.legend-container {
-		.legend-virtuoso-container {
-			&::-webkit-scrollbar-thumb {
-				background: var(--l2-foreground);
-			}
-		}
-	}
-
-	.legend-item {
-		&:hover {
-			background: rgba(0, 0, 0, 0.05);
-		}
-		.legend-copy-button {
-			color: var(--l2-background);
-
-			&:hover {
-				color: var(--l1-background);
-			}
 		}
 	}
 }

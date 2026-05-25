@@ -1,4 +1,6 @@
-import { Button, Flex, SelectProps, Switch, Typography } from 'antd';
+import { Button, Flex, SelectProps } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -9,11 +11,13 @@ import {
 	AlertThresholdOperator,
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
-import { ArrowRight } from 'lucide-react';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
@@ -387,7 +391,7 @@ export function NotificationChannelsNotFoundContent({
 							style={{ padding: '0 4px' }}
 							type="link"
 							onClick={(): void => {
-								window.open(ROUTES.CHANNELS_NEW, '_blank');
+								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
 						>
 							here.
@@ -408,6 +412,7 @@ export function RoutingPolicyBanner({
 	notificationSettings,
 	setNotificationSettings,
 }: RoutingPolicyBannerProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	return (
 		<div className="routing-policies-info-banner">
 			<Typography.Text>
@@ -415,8 +420,8 @@ export function RoutingPolicyBanner({
 			</Typography.Text>
 			<div className="routing-policies-info-banner-right">
 				<Switch
-					checked={notificationSettings.routingPolicies}
-					data-testid="routing-policies-switch"
+					value={notificationSettings.routingPolicies}
+					testId="routing-policies-switch"
 					onChange={(value): void => {
 						setNotificationSettings({
 							type: 'SET_ROUTING_POLICIES',
@@ -425,10 +430,10 @@ export function RoutingPolicyBanner({
 					}}
 				/>
 				<Button
-					href={ROUTING_POLICIES_ROUTE}
 					type="link"
 					className="view-routing-policies-button"
 					data-testid="view-routing-policies-button"
+					onClick={(): void => safeNavigate(ROUTING_POLICIES_ROUTE)}
 				>
 					View Routing Policies
 					<ArrowRight size={14} />

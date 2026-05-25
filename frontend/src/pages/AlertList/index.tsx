@@ -10,7 +10,7 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 
 import { AlertListSubTabs, AlertListTabs } from './types';

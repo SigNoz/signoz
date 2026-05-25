@@ -101,7 +101,7 @@ export const formatNumberIntoHumanReadableFormat = (
 			? `${value}${suffix}${addPlusSign ? '+' : ''}`
 			: `${value.toFixed(1).replace(/\.0$/, '')}${suffix}${
 					addPlusSign ? '+' : ''
-			  }`;
+				}`;
 	}
 
 	if (num >= 1_000_000_000) {

@@ -34,9 +34,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 	const isDarkMode = useIsDarkMode();
 
-	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
-		logs,
-	]);
+	const flattenLogData = useMemo(
+		() => logs.map((log) => FlatLogData(log)),
+		[logs],
+	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -115,11 +116,11 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 										? formatTimezoneAdjustedTimestamp(
 												field,
 												DATE_TIME_FORMATS.ISO_DATETIME_MS,
-										  )
+											)
 										: formatTimezoneAdjustedTimestamp(
 												field / 1e6,
 												DATE_TIME_FORMATS.ISO_DATETIME_MS,
-										  );
+											);
 								return {
 									children: (
 										<div className="table-timestamp">
@@ -129,7 +130,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								};
 							},
 						},
-				  ]
+					]
 				: []),
 			...(appendTo === 'center' ? fieldColumns : []),
 			...(fields.some((field) => field.name === 'body')
@@ -160,7 +161,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								),
 							}),
 						},
-				  ]
+					]
 				: []),
 			...(appendTo === 'end' ? fieldColumns : []),
 		];

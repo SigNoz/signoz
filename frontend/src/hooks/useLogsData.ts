@@ -123,7 +123,7 @@ export const useLogsData = ({
 							...(listQuery || initialQueryBuilderFormValues),
 							...paginateData,
 						},
-				  ];
+					];
 
 		const data: Query = {
 			...query,

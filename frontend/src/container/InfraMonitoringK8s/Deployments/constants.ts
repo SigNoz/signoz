@@ -30,20 +30,21 @@ export const k8sDeploymentGetSelectedItemFilters = (
 	],
 });
 
-export const k8sDeploymentDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDeploymentsData>[] = [
-	{
-		label: 'Deployment Name',
-		getValue: (p): string => p.meta.k8s_deployment_name,
-	},
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-	{
-		label: 'Namespace Name',
-		getValue: (p): string => p.meta.k8s_namespace_name,
-	},
-];
+export const k8sDeploymentDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDeploymentsData>[] =
+	[
+		{
+			label: 'Deployment Name',
+			getValue: (p): string => p.meta.k8s_deployment_name,
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+		{
+			label: 'Namespace Name',
+			getValue: (p): string => p.meta.k8s_namespace_name,
+		},
+	];
 
 export const k8sDeploymentInitialFilters = [
 	QUERY_KEYS.K8S_DEPLOYMENT_NAME,

@@ -101,7 +101,7 @@ export const getK8sNodesList = async (
 								[] as typeof props.filters.items,
 							),
 						},
-				  }
+					}
 				: props;
 
 		const response = await axios.post('/nodes/list', requestProps, {

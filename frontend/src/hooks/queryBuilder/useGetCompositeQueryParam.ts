@@ -29,8 +29,8 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 			// Convert old format to new format for each query in builder.queryData
 			if (parsedCompositeQuery?.builder?.queryData) {
-				parsedCompositeQuery.builder.queryData = parsedCompositeQuery.builder.queryData.map(
-					(query) => {
+				parsedCompositeQuery.builder.queryData =
+					parsedCompositeQuery.builder.queryData.map((query) => {
 						const existingExpression = query.filter?.expression || '';
 						const convertedQuery = { ...query };
 
@@ -61,8 +61,7 @@ export const useGetCompositeQueryParam = (): Query | null => {
 							convertedQuery.aggregations = convertedAggregation;
 						}
 						return convertedQuery;
-					},
-				);
+					});
 			}
 		} catch (e) {
 			parsedCompositeQuery = null;

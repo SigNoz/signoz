@@ -1,17 +1,10 @@
 import { useCallback } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Spin,
-	Table,
-	TablePaginationConfig,
-	TableProps,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Info, Loader } from '@signozhq/icons';
+import { Spin, Table, TablePaginationConfig, TableProps, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { Info } from 'lucide-react';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
@@ -32,35 +25,36 @@ function MetricsTable({
 	queryFilterExpression,
 	onFilterChange,
 }: MetricsTableProps): JSX.Element {
-	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
-		(
-			_pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<MetricsListItemRowData>
-				| SorterResult<MetricsListItemRowData>[],
-		): void => {
-			if ('field' in sorter && sorter.order) {
-				setOrderBy({
-					key: {
-						name: sorter.field as string,
-					},
-					direction:
-						sorter.order === 'ascend'
-							? Querybuildertypesv5OrderDirectionDTO.asc
-							: Querybuildertypesv5OrderDirectionDTO.desc,
-				});
-			} else {
-				setOrderBy({
-					key: {
-						name: 'samples',
-					},
-					direction: Querybuildertypesv5OrderDirectionDTO.desc,
-				});
-			}
-		},
-		[setOrderBy],
-	);
+	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] =
+		useCallback(
+			(
+				_pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<MetricsListItemRowData>
+					| SorterResult<MetricsListItemRowData>[],
+			): void => {
+				if ('field' in sorter && sorter.order) {
+					setOrderBy({
+						key: {
+							name: sorter.field as string,
+						},
+						direction:
+							sorter.order === 'ascend'
+								? Querybuildertypesv5OrderDirectionDTO.asc
+								: Querybuildertypesv5OrderDirectionDTO.desc,
+					});
+				} else {
+					setOrderBy({
+						key: {
+							name: 'samples',
+						},
+						direction: Querybuildertypesv5OrderDirectionDTO.desc,
+					});
+				}
+			},
+			[setOrderBy],
+		);
 
 	return (
 		<div className="metrics-table-container">
@@ -84,7 +78,7 @@ function MetricsTable({
 						indicator: (
 							<Spin
 								data-testid="metrics-table-loading-state"
-								indicator={<LoadingOutlined size={14} spin />}
+								indicator={<Loader size={14} className="animate-spin" />}
 							/>
 						),
 					}}

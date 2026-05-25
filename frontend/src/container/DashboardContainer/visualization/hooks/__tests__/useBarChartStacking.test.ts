@@ -7,7 +7,7 @@ import { useBarChartStacking } from '../useBarChartStacking';
 type MockConfig = { addHook: jest.Mock };
 
 function asConfig(c: MockConfig): UseBarChartStackingParams['config'] {
-	return (c as unknown) as UseBarChartStackingParams['config'];
+	return c as unknown as UseBarChartStackingParams['config'];
 }
 
 function createMockConfig(): {
@@ -74,7 +74,7 @@ function createMockConfig(): {
 }
 
 function createMockPlot(overrides: Partial<uPlot> = {}): uPlot {
-	return ({
+	return {
 		data: [
 			[0, 1, 2],
 			[1, 2, 3],
@@ -85,7 +85,7 @@ function createMockPlot(overrides: Partial<uPlot> = {}): uPlot {
 		addBand: jest.fn(),
 		setData: jest.fn(),
 		...overrides,
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 describe('useBarChartStacking', () => {
@@ -119,9 +119,9 @@ describe('useBarChartStacking', () => {
 			}),
 		);
 		// Still returns stacked data (computed in useMemo); no hooks registered
-		expect(result.current[0]).toEqual([0, 1]);
-		expect(result.current[1]).toEqual([5, 7]); // stacked
-		expect(result.current[2]).toEqual([4, 5]);
+		expect(result.current[0]).toStrictEqual([0, 1]);
+		expect(result.current[1]).toStrictEqual([5, 7]); // stacked
+		expect(result.current[2]).toStrictEqual([4, 5]);
 	});
 
 	it('returns stacked data when isStackedBarChart is true and multiple value series', () => {
@@ -138,10 +138,10 @@ describe('useBarChartStacking', () => {
 				config: null,
 			}),
 		);
-		expect(result.current[0]).toEqual([0, 1, 2]);
-		expect(result.current[1]).toEqual([12, 15, 18]); // s1+s2+s3
-		expect(result.current[2]).toEqual([11, 13, 15]); // s2+s3
-		expect(result.current[3]).toEqual([7, 8, 9]);
+		expect(result.current[0]).toStrictEqual([0, 1, 2]);
+		expect(result.current[1]).toStrictEqual([12, 15, 18]); // s1+s2+s3
+		expect(result.current[2]).toStrictEqual([11, 13, 15]); // s2+s3
+		expect(result.current[3]).toStrictEqual([7, 8, 9]);
 	});
 
 	it('returns data as-is when only one value series (no stacking needed)', () => {
@@ -156,7 +156,7 @@ describe('useBarChartStacking', () => {
 				config: null,
 			}),
 		);
-		expect(result.current).toEqual(data);
+		expect(result.current).toStrictEqual(data);
 	});
 
 	it('registers setData and setSeries hooks when isStackedBarChart and config provided', () => {

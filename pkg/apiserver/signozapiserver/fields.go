@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addFieldsRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/fields/keys", handler.New(provider.authZ.ViewAccess(provider.fieldsHandler.GetFieldsKeys), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/fields/keys", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetFieldsKeys), handler.OpenAPIDef{
 		ID:                  "GetFieldsKeys",
 		Tags:                []string{"fields"},
 		Summary:             "Get field keys",
@@ -28,7 +28,7 @@ func (provider *provider) addFieldsRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/fields/values", handler.New(provider.authZ.ViewAccess(provider.fieldsHandler.GetFieldsValues), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/fields/values", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetFieldsValues), handler.OpenAPIDef{
 		ID:                  "GetFieldsValues",
 		Tags:                []string{"fields"},
 		Summary:             "Get field values",

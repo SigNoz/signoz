@@ -9,4 +9,7 @@ export enum FeatureKeys {
 	ANOMALY_DETECTION = 'anomaly_detection',
 	ONBOARDING_V3 = 'onboarding_v3',
 	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
+	USE_JSON_BODY = 'use_json_body',
+	USE_FINE_GRAINED_AUTHZ = 'use_fine_grained_authz',
+	USE_DASHBOARD_V2 = 'use_dashboard_v2',
 }

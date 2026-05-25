@@ -12,10 +12,22 @@ import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 
 export const TOOLTIP_OFFSET = 10;
 
+// Default key that pins the tooltip while hovering over the chart.
+export const DEFAULT_PIN_TOOLTIP_KEY = 'p';
+
 export enum DashboardCursorSync {
-	Crosshair,
-	None,
-	Tooltip,
+	Crosshair = 'crosshair',
+	None = 'none',
+	Tooltip = 'tooltip',
+}
+
+/**
+ * Controls whether a synced tooltip filters series by groupBy intersection
+ * or shows every series with the matching ones highlighted.
+ */
+export enum SyncTooltipFilterMode {
+	Filtered = 'filtered',
+	All = 'all',
 }
 
 export interface TooltipViewState {
@@ -37,12 +49,17 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
-	groupBy?: BaseAutocompleteData[];
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
+	filterMode?: SyncTooltipFilterMode;
 }
 
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
+	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
+	onClick?: (clickData: TooltipClickData) => void;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	syncMetadata?: TooltipSyncMetadata;
@@ -90,6 +107,11 @@ export interface TooltipControllerState {
 	verticalOffset: number;
 	seriesIndexes: Array<number | null>;
 	focusedSeriesIndex: number | null;
+	/** Receiver-side series filtering for Tooltip sync mode.
+	 * null  = no filtering (source panel or no groupBy configured)
+	 * []    = no matching series found → hide the synced tooltip
+	 * [...] = only these 1-based series indexes should appear in the synced tooltip */
+	syncedSeriesIndexes: number[] | null;
 	cursorDrivenBySync: boolean;
 	plotWithinViewport: boolean;
 	windowWidth: number;

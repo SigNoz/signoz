@@ -41,13 +41,8 @@ function convertFormulasToV5(
 export function compositeQueryToQueryEnvelope(
 	compositeQuery: ICompositeMetricQuery,
 ): ICompositeMetricQuery {
-	const {
-		builderQueries,
-		promQueries,
-		chQueries,
-		panelType,
-		queryType,
-	} = compositeQuery;
+	const { builderQueries, promQueries, chQueries, panelType, queryType } =
+		compositeQuery;
 
 	const regularQueries: BuilderQueryDataResourse = {};
 	const formulaQueries: BuilderQueryDataResourse = {};

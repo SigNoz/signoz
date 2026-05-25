@@ -1,4 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -71,7 +73,7 @@ export const generateRGBAFromHex = (hex: string, opacity: number): string =>
 
 export const getExplorerToolBarVisibility = (dataSource: string): boolean => {
 	try {
-		const showExplorerToolbar = localStorage.getItem(
+		const showExplorerToolbar = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_EXPLORER_TOOLBAR,
 		);
 		if (showExplorerToolbar === null) {
@@ -84,7 +86,7 @@ export const getExplorerToolBarVisibility = (dataSource: string): boolean => {
 				[DataSource.TRACES]: true,
 				[DataSource.LOGS]: true,
 			};
-			localStorage.setItem(
+			setLocalStorageKey(
 				LOCALSTORAGE.SHOW_EXPLORER_TOOLBAR,
 				JSON.stringify(parsedShowExplorerToolbar),
 			);
@@ -103,13 +105,13 @@ export const setExplorerToolBarVisibility = (
 	dataSource: string,
 ): void => {
 	try {
-		const showExplorerToolbar = localStorage.getItem(
+		const showExplorerToolbar = getLocalStorageKey(
 			LOCALSTORAGE.SHOW_EXPLORER_TOOLBAR,
 		);
 		if (showExplorerToolbar) {
 			const parsedShowExplorerToolbar = JSON.parse(showExplorerToolbar);
 			parsedShowExplorerToolbar[dataSource] = value;
-			localStorage.setItem(
+			setLocalStorageKey(
 				LOCALSTORAGE.SHOW_EXPLORER_TOOLBAR,
 				JSON.stringify(parsedShowExplorerToolbar),
 			);

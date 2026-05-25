@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
 import DisconnectValuesModeToggle from './DisconnectValuesModeToggle';
@@ -27,7 +27,7 @@ export default function DisconnectValuesSelector({
 		return DisconnectedValuesMode.Never;
 	});
 	const [thresholdSeconds, setThresholdSeconds] = useState<number>(
-		typeof value === 'number' ? value : minValue ?? DEFAULT_THRESHOLD_SECONDS,
+		typeof value === 'number' ? value : (minValue ?? DEFAULT_THRESHOLD_SECONDS),
 	);
 
 	useEffect(() => {

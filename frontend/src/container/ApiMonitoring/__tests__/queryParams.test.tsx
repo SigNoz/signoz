@@ -19,7 +19,7 @@ describe('API Monitoring Query Params', () => {
 	describe('getApiMonitoringParams', () => {
 		it('returns default params when no query param exists', () => {
 			const search = '';
-			expect(getApiMonitoringParams(search)).toEqual(DEFAULT_PARAMS);
+			expect(getApiMonitoringParams(search)).toStrictEqual(DEFAULT_PARAMS);
 		});
 
 		it('parses URL query params correctly', () => {
@@ -52,7 +52,7 @@ describe('API Monitoring Query Params', () => {
 			urlParams.set('apiMonitoringParams', 'invalid-json');
 			const search = `?${urlParams.toString()}`;
 
-			expect(getApiMonitoringParams(search)).toEqual(DEFAULT_PARAMS);
+			expect(getApiMonitoringParams(search)).toStrictEqual(DEFAULT_PARAMS);
 		});
 	});
 

@@ -119,7 +119,7 @@ function HorizontalTimelineGraph({
 								count: transformedData.length - 1,
 								...TIMELINE_OPTIONS,
 							}),
-					  ]
+						]
 					: [],
 
 			tzDate: (timestamp: number): Date =>

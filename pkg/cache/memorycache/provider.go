@@ -64,7 +64,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 		o.ObserveInt64(telemetry.setsRejected, int64(metrics.SetsRejected()), metric.WithAttributes(attributes...))
 		o.ObserveInt64(telemetry.getsDropped, int64(metrics.GetsDropped()), metric.WithAttributes(attributes...))
 		o.ObserveInt64(telemetry.getsKept, int64(metrics.GetsKept()), metric.WithAttributes(attributes...))
-		o.ObserveInt64(telemetry.totalCost, int64(cc.MaxCost()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.costUsed, int64(metrics.CostAdded())-int64(metrics.CostEvicted()), metric.WithAttributes(attributes...))
+		o.ObserveInt64(telemetry.totalCost, cc.MaxCost(), metric.WithAttributes(attributes...))
 		return nil
 	},
 		telemetry.cacheRatio,
@@ -79,6 +80,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config cache.Co
 		telemetry.setsRejected,
 		telemetry.getsDropped,
 		telemetry.getsKept,
+		telemetry.costUsed,
 		telemetry.totalCost,
 	)
 	if err != nil {
@@ -112,11 +114,13 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	if cloneable, ok := data.(cachetypes.Cloneable); ok {
+		cost := max(cloneable.Cost(), 1)
+		// Clamp to a minimum of 1: ristretto treats cost 0 specially and we
+		// never want zero-size entries to bypass admission accounting.
 		span.SetAttributes(attribute.Bool("memory.cloneable", true))
-		span.SetAttributes(attribute.Int64("memory.cost", 1))
+		span.SetAttributes(attribute.Int64("memory.cost", cost))
 		toCache := cloneable.Clone()
-		// In case of contention we are choosing to evict the cloneable entries first hence cost is set to 1
-		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+		if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
 			return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 		}
 
@@ -125,15 +129,15 @@ func (provider *provider) Set(ctx context.Context, orgID valuer.UUID, cacheKey s
 	}
 
 	toCache, err := provider.marshalBinary(ctx, data)
-	cost := int64(len(toCache))
 	if err != nil {
 		return err
 	}
+	cost := max(int64(len(toCache)), 1)
 
 	span.SetAttributes(attribute.Bool("memory.cloneable", false))
 	span.SetAttributes(attribute.Int64("memory.cost", cost))
 
-	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, 1, ttl); !ok {
+	if ok := provider.cc.SetWithTTL(strings.Join([]string{orgID.StringValue(), cacheKey}, "::"), toCache, cost, ttl); !ok {
 		return errors.New(errors.TypeInternal, errors.CodeInternal, "error writing to cache")
 	}
 

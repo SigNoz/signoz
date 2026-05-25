@@ -336,7 +336,7 @@ describe('CustomMultiSelect Component', () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockGroupedOptions}
-					value={('__ALL__' as unknown) as string[]}
+					value={'__ALL__' as unknown as string[]}
 				/>,
 			);
 

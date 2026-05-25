@@ -63,7 +63,11 @@ describe('variableFetchStore', () => {
 			initializeVariableFetchStore(['a', 'b', 'c']);
 
 			const storeSnapshot = variableFetchStore.getSnapshot();
-			expect(storeSnapshot.states).toEqual({ a: 'idle', b: 'idle', c: 'idle' });
+			expect(storeSnapshot.states).toStrictEqual({
+				a: 'idle',
+				b: 'idle',
+				c: 'idle',
+			});
 		});
 
 		it('should preserve existing states for known variables', () => {
@@ -103,7 +107,7 @@ describe('variableFetchStore', () => {
 			initializeVariableFetchStore([]);
 
 			const storeSnapshot = variableFetchStore.getSnapshot();
-			expect(storeSnapshot.states).toEqual({});
+			expect(storeSnapshot.states).toStrictEqual({});
 		});
 	});
 

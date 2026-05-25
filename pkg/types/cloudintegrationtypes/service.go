@@ -2,8 +2,6 @@ package cloudintegrationtypes
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -21,8 +19,8 @@ type CloudIntegrationService struct {
 }
 
 type ServiceConfig struct {
-	// required till new providers are added
-	AWS *AWSServiceConfig `json:"aws" required:"true" nullable:"false"`
+	AWS   *AWSServiceConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureServiceConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -88,7 +86,8 @@ type DataCollected struct {
 // TelemetryCollectionStrategy is cloud provider specific configuration for signal collection,
 // this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
 type TelemetryCollectionStrategy struct {
-	AWS *AWSTelemetryCollectionStrategy `json:"aws" required:"true" nullable:"false"`
+	AWS   *AWSTelemetryCollectionStrategy   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureTelemetryCollectionStrategy `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // Assets represents the collection of dashboards.
@@ -122,7 +121,18 @@ type Dashboard struct {
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
-func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, config *ServiceConfig) *CloudIntegrationService {
+func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, provider CloudProviderType, config *ServiceConfig) (*CloudIntegrationService, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if config.AWS == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config is required for AWS service")
+		}
+	case CloudProviderTypeAzure:
+		if config.Azure == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "Azure config is required for Azure service")
+		}
+	}
+
 	return &CloudIntegrationService{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -134,7 +144,7 @@ func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.U
 		Type:               serviceID,
 		Config:             config,
 		CloudIntegrationID: cloudIntegrationID,
-	}
+	}, nil
 }
 
 func NewCloudIntegrationServiceFromStorable(stored *StorableCloudIntegrationService, config *ServiceConfig) *CloudIntegrationService {
@@ -191,6 +201,22 @@ func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*S
 		}
 
 		return &ServiceConfig{AWS: awsServiceConfig}, nil
+	case CloudProviderTypeAzure:
+		azureServiceConfig := new(AzureServiceConfig)
+
+		if storableServiceConfig.Azure.Logs != nil {
+			azureServiceConfig.Logs = &AzureServiceLogsConfig{
+				Enabled: storableServiceConfig.Azure.Logs.Enabled,
+			}
+		}
+
+		if storableServiceConfig.Azure.Metrics != nil {
+			azureServiceConfig.Metrics = &AzureServiceMetricsConfig{
+				Enabled: storableServiceConfig.Azure.Metrics.Enabled,
+			}
+		}
+
+		return &ServiceConfig{Azure: azureServiceConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -211,6 +237,10 @@ func (service *CloudIntegrationService) Update(provider CloudProviderType, servi
 		}
 
 		// other validations happen in newStorableServiceConfig
+	case CloudProviderTypeAzure:
+		if config.Azure == nil {
+			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "Azure config is required for Azure service")
+		}
 	default:
 		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -228,6 +258,10 @@ func (config *ServiceConfig) IsServiceEnabled(provider CloudProviderType) bool {
 		logsEnabled := config.AWS.Logs != nil && config.AWS.Logs.Enabled
 		metricsEnabled := config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
 		return logsEnabled || metricsEnabled
+	case CloudProviderTypeAzure:
+		logsEnabled := config.Azure.Logs != nil && config.Azure.Logs.Enabled
+		metricsEnabled := config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
+		return logsEnabled || metricsEnabled
 	default:
 		return false
 	}
@@ -239,6 +273,8 @@ func (config *ServiceConfig) IsMetricsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
+	case CloudProviderTypeAzure:
+		return config.Azure.Metrics != nil && config.Azure.Metrics.Enabled
 	default:
 		return false
 	}
@@ -249,6 +285,8 @@ func (config *ServiceConfig) IsLogsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
+	case CloudProviderTypeAzure:
+		return config.Azure.Logs != nil && config.Azure.Logs.Enabled
 	default:
 		return false
 	}
@@ -279,56 +317,18 @@ func (updatableService *UpdatableService) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UTILITIES
-
-// GetCloudIntegrationDashboardID returns the dashboard id for a cloud integration, given the cloud provider, service id, and dashboard id.
-// This is used to generate unique dashboard ids for cloud integration, and also to parse the dashboard id to get the cloud provider and service id when needed.
-func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcID, dashboardID string) string {
-	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider.StringValue(), svcID, dashboardID)
-}
-
-// ParseCloudIntegrationDashboardID parses a dashboard id generated by GetCloudIntegrationDashboardID
-// into its constituent parts (cloudProvider, serviceID, dashboardID).
-func ParseCloudIntegrationDashboardID(id string) (CloudProviderType, string, string, error) {
-	parts := strings.SplitN(id, "--", 4)
-	if len(parts) != 4 || parts[0] != "cloud-integration" {
-		return CloudProviderType{}, "", "", errors.New(errors.TypeNotFound, ErrCodeCloudIntegrationNotFound, "invalid cloud integration dashboard id")
+// IsServiceSharedWithMetricsEnabled returns true if any of the provided services has metrics enabled.
+// It is used to determine whether dashboards for a service type should be deprovisioned when
+// an account is disconnected or a service is updated.
+func IsServiceSharedWithMetricsEnabled(provider CloudProviderType, services []*StorableCloudIntegrationService) bool {
+	for _, svc := range services {
+		cfg, err := NewServiceConfigFromJSON(provider, svc.Config)
+		if err != nil {
+			continue
+		}
+		if cfg.IsMetricsEnabled(provider) {
+			return true
+		}
 	}
-	provider, err := NewCloudProvider(parts[1])
-	if err != nil {
-		return CloudProviderType{}, "", "", err
-	}
-	return provider, parts[2], parts[3], nil
+	return false
 }
-
-// GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition.
-func GetDashboardsFromAssets(
-	svcID string,
-	orgID valuer.UUID,
-	cloudProvider CloudProviderType,
-	createdAt time.Time,
-	assets Assets,
-) []*dashboardtypes.Dashboard {
-	dashboards := make([]*dashboardtypes.Dashboard, 0)
-
-	for _, d := range assets.Dashboards {
-		author := fmt.Sprintf("%s-integration", cloudProvider.StringValue())
-		dashboards = append(dashboards, &dashboardtypes.Dashboard{
-			ID:     d.ID,
-			Locked: true,
-			OrgID:  orgID,
-			Data:   d.Definition,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: createdAt,
-				UpdatedAt: createdAt,
-			},
-			UserAuditable: types.UserAuditable{
-				CreatedBy: author,
-				UpdatedBy: author,
-			},
-		})
-	}
-
-	return dashboards
-}
-

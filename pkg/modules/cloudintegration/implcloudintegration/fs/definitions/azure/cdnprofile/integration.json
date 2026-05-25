@@ -1,0 +1,185 @@
+{
+  "id": "cdnprofile",
+  "title": "CDN Profile",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_activewebsocketconnections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_averagewebsocketconnectionduration_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_backendhealthpercentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_backendrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_backendrequestlatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_billableresponsesize_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_bytehitratio_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originhealthpercentage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originlatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originshieldoriginrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originshieldratelimitrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originshieldrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_originshieldrequestsize_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage4xx_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_percentage5xx_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_requestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_requestsize_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_responsesize_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_totallatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_webapplicationfirewallrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_webapplicationfirewallcaptcharequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_webapplicationfirewalljsrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_websocketconnections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Cdn",
+      "resourceType": "profiles",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "CDN Profile Overview",
+        "description": "Overview of CDN Profile metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

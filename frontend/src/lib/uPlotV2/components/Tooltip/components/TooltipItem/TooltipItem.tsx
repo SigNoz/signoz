@@ -20,10 +20,7 @@ export default function TooltipItem({
 	return (
 		<div
 			className={Styles.uplotTooltipItem}
-			style={{
-				opacity: isItemActive ? 1 : 0.7,
-				fontWeight: isItemActive ? 700 : 400,
-			}}
+			data-is-active={isItemActive}
 			data-testid={containerTestId}
 		>
 			<div

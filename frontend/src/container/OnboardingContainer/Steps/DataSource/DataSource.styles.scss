@@ -70,12 +70,6 @@ div[class*='-setup-instructions-container'] {
 	gap: 8px;
 }
 
-.lightMode {
-	.dataSourceName {
-		color: var(--l1-border);
-	}
-}
-
 .supported-languages-container {
 	.disabled {
 		cursor: not-allowed;

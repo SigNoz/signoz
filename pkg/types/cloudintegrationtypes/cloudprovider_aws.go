@@ -23,6 +23,8 @@ type AWSAccountConfig struct {
 	Regions []string `json:"regions" required:"true" nullable:"false"`
 }
 
+type UpdatableAWSAccountConfig = AWSAccountConfig
+
 // OldAWSCollectionStrategy is the backward-compatible snake_case form of AWSCollectionStrategy,
 // used in the legacy integration_config response field for older agents.
 type OldAWSCollectionStrategy struct {

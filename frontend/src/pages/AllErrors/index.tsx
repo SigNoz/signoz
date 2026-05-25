@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { FilterOutlined } from '@ant-design/icons';
+import { Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -19,12 +20,22 @@ import history from 'lib/history';
 import { isNull } from 'lodash-es';
 
 import { routes } from './config';
+import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
 	const { handleRunQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
+
+	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
+	const setIsCancelled = useAllErrorsQueryState((s) => s.setIsCancelled);
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(['getAllErrors']);
+		queryClient.cancelQueries(['getErrorCounts']);
+		setIsCancelled(true);
+	}, [queryClient, setIsCancelled]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -70,14 +81,18 @@ function AllErrors(): JSX.Element {
 								!showFilters ? (
 									<Tooltip title="Show Filters">
 										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-											<FilterOutlined />
+											<Filter size="md" />
 										</Button>
 									</Tooltip>
 								) : undefined
 							}
 							rightActions={
 								<div className="right-toolbar-actions-container">
-									<RightToolbarActions onStageRunQuery={handleRunQuery} />
+									<RightToolbarActions
+										onStageRunQuery={handleRunQuery}
+										isLoadingQueries={isLoadingQueries}
+										handleCancelQuery={handleCancelQuery}
+									/>
 									<HeaderRightSection
 										enableAnnouncements={false}
 										enableShare

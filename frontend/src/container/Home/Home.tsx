@@ -2,16 +2,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
-import { Button, PersistedAnnouncementBanner } from '@signozhq/ui';
+import {
+	ClipboardList,
+	Compass,
+	Dot,
+	House,
+	Plus,
+	Wrench,
+} from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import NoAuthBanner from 'components/NoAuthBanner/NoAuthBanner';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -35,11 +44,9 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import crackerUrl from '@/assets/Icons/cracker.svg';
 import dashboardUrl from '@/assets/Icons/dashboard.svg';
-import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
 import wrenchUrl from '@/assets/Icons/wrench.svg';
 import allInOneUrl from '@/assets/Images/allInOne.svg';
 import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
-import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
 import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -70,9 +77,8 @@ export default function Home(): JSX.Element {
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -138,9 +144,8 @@ export default function Home(): JSX.Element {
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -193,7 +198,7 @@ export default function Home(): JSX.Element {
 	const { mutate: updateUserPreference } = useMutation(updateUserPreferenceAPI, {
 		onSuccess: () => {
 			setUpdatingUserPreferences(false);
-			refetchUserPreferences();
+			void refetchUserPreferences();
 		},
 		onError: () => {
 			setUpdatingUserPreferences(false);
@@ -201,7 +206,7 @@ export default function Home(): JSX.Element {
 	});
 
 	const handleWillDoThisLater = (): void => {
-		logEvent('Welcome Checklist: Will do this later clicked', {});
+		void logEvent('Welcome Checklist: Will do this later clicked', {});
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
@@ -268,28 +273,12 @@ export default function Home(): JSX.Element {
 	}, [metricsOnboardingData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		logEvent('Homepage: Visited', {});
+		void logEvent('Homepage: Visited', {});
 	}, []);
 
 	return (
 		<div className="home-container">
-			{user?.role === USER_ROLES.ADMIN && (
-				<PersistedAnnouncementBanner
-					type="info"
-					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					action={{
-						label: 'Go to Service Accounts',
-						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-					}}
-				>
-					<>
-						<strong>API keys</strong> have been deprecated in favour of{' '}
-						<strong>Service accounts</strong>. The existing API Keys have been
-						migrated to service accounts.
-					</>
-				</PersistedAnnouncementBanner>
-			)}
-
+			{getIsNoAuthMode() && <NoAuthBanner />}
 			<div className="sticky-header">
 				<Header
 					leftComponent={
@@ -299,6 +288,11 @@ export default function Home(): JSX.Element {
 					}
 					rightComponent={
 						<div className="home-header-right">
+							<HeaderRightSection
+								enableAnnouncements={false}
+								enableFeedback={false}
+								enableShare={false}
+							/>
 							{isWelcomeChecklistSkipped && (
 								<Popover
 									placement="bottomRight"
@@ -307,9 +301,9 @@ export default function Home(): JSX.Element {
 									autoAdjustOverflow
 									onOpenChange={(visible): void => {
 										if (visible) {
-											logEvent('Welcome Checklist: Expanded', {});
+											void logEvent('Welcome Checklist: Expanded', {});
 										} else {
-											logEvent('Welcome Checklist: Minimized', {});
+											void logEvent('Welcome Checklist: Minimized', {});
 										}
 									}}
 									content={renderWelcomeChecklistModal()}
@@ -319,17 +313,9 @@ export default function Home(): JSX.Element {
 									<Button
 										variant="solid"
 										color="secondary"
-										size="sm"
-										className="periscope-btn secondary welcome-checklist-btn"
+										prefix={<ClipboardList size={14} />}
 									>
-										<img
-											src={spinnerHalfBlueUrl}
-											alt="spinner-half-blue"
-											width={16}
-											height={16}
-											className="welcome-checklist-icon"
-										/>
-										&nbsp; Welcome checklist
+										Welcome checklist
 									</Button>
 								</Popover>
 							)}
@@ -348,10 +334,6 @@ export default function Home(): JSX.Element {
 						}
 						isLoading={isLogsLoading || isTracesLoading}
 					/>
-
-					<div className="divider">
-						<img src={dottedDividerUrl} alt="divider" />
-					</div>
 
 					<div className="active-ingestions-container">
 						{isLogsIngestionActive && (
@@ -374,7 +356,7 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											onClick={(e: React.MouseEvent): void => {
 												// eslint-disable-next-line sonarjs/no-duplicate-string
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
 												safeNavigate(ROUTES.LOGS_EXPLORER, {
@@ -383,7 +365,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
 													history.push(ROUTES.LOGS_EXPLORER);
@@ -417,7 +399,7 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(e: React.MouseEvent): void => {
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
 												safeNavigate(ROUTES.TRACES_EXPLORER, {
@@ -426,7 +408,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
 													history.push(ROUTES.TRACES_EXPLORER);
@@ -460,7 +442,7 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(e: React.MouseEvent): void => {
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
 												safeNavigate(ROUTES.METRICS_EXPLORER, {
@@ -469,7 +451,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
 													history.push(ROUTES.METRICS_EXPLORER);
@@ -517,7 +499,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
 													safeNavigate(ROUTES.LOGS_EXPLORER, {
@@ -534,7 +516,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
 													safeNavigate(ROUTES.TRACES_EXPLORER, {
@@ -551,7 +533,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
 													safeNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, {
@@ -590,7 +572,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
 													safeNavigate(ROUTES.ALL_DASHBOARD, {
@@ -635,7 +617,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
 													safeNavigate(ROUTES.ALERTS_NEW, {

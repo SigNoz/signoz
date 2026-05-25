@@ -32,13 +32,14 @@ export const k8sNodeGetSelectedItemFilters = (
 	};
 };
 
-export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNodeData>[] = [
-	{ label: 'Node Name', getValue: (p): string => p.meta.k8s_node_name },
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-];
+export const k8sNodeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNodeData>[] =
+	[
+		{ label: 'Node Name', getValue: (p): string => p.meta.k8s_node_name },
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+	];
 
 export const k8sNodeInitialFilters = [
 	QUERY_KEYS.K8S_NODE_NAME,

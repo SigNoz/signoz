@@ -22,18 +22,20 @@ describe('convertFiltersToExpression', () => {
 
 	it('should handle empty, null, and undefined inputs', () => {
 		// Test null and undefined
-		expect(convertFiltersToExpression(null as any)).toEqual({ expression: '' });
-		expect(convertFiltersToExpression(undefined as any)).toEqual({
+		expect(convertFiltersToExpression(null as any)).toStrictEqual({
+			expression: '',
+		});
+		expect(convertFiltersToExpression(undefined as any)).toStrictEqual({
 			expression: '',
 		});
 
 		// Test empty filters
-		expect(convertFiltersToExpression({ items: [], op: 'AND' })).toEqual({
+		expect(convertFiltersToExpression({ items: [], op: 'AND' })).toStrictEqual({
 			expression: '',
 		});
 		expect(
 			convertFiltersToExpression({ items: undefined, op: 'AND' } as any),
-		).toEqual({ expression: '' });
+		).toStrictEqual({ expression: '' });
 	});
 
 	it('should convert basic comparison operators with proper value formatting', () => {
@@ -92,7 +94,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service = 'api-gateway' AND status != 'error' AND duration > 100 AND count <= 50 AND is_active = true AND enabled = false AND count = 0 AND regex REGEXP '.*'",
 		});
@@ -124,7 +126,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"message = 'user\\'s data' AND description = '' AND path = '/api/v1/users'",
 		});
@@ -162,7 +164,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service in ['api-gateway', 'user-service', 'auth-service'] AND status in ['success'] AND tags in [] AND name in ['John\\'s', 'Mary\\'s', 'Bob']",
 		});
@@ -224,7 +226,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service NOT IN ['api-gateway', 'user-service'] AND message NOT LIKE 'error' AND path NOT REGEXP '/api/.*' AND service NOT IN ['api-gateway'] AND user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
@@ -268,7 +270,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"user_id exists AND user_id exists AND has(tags, 'production') AND hasAny(tags, ['production', 'staging']) AND hasAll(tags, ['production', 'monitoring'])",
 		});
@@ -312,7 +314,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service = 'api-gateway' AND status = 'success' AND service in ['api-gateway']",
 		});
@@ -362,7 +364,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service in ['api-gateway', 'user-service'] AND user_id exists AND has(tags, 'production') AND duration > 100 AND status NOT IN ['error', 'timeout'] AND method = 'POST'",
 		});
@@ -412,7 +414,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"count = 0 AND score > 100 AND limit >= 50 AND threshold < 1000 AND max_value <= 999 AND values in ['1', '2', '3', '4', '5']",
 		});
@@ -456,7 +458,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"is_active = true AND is_deleted = false AND email = 'user@example.com' AND description = 'Contains \"quotes\" and \\'apostrophes\\'' AND path = '/api/v1/users/123?filter=true'",
 		});
@@ -506,7 +508,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"has(tags, 'production') AND hasAny(labels, ['env:prod', 'service:api']) AND hasAll(metadata, ['version:1.0', 'team:backend']) AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in ['200', '201', '400', '500']",
 		});
@@ -544,7 +546,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
@@ -568,7 +570,7 @@ describe('convertFiltersToExpression', () => {
 			undefined,
 		);
 
-		expect(result.filters).toEqual(filters);
+		expect(result.filters).toStrictEqual(filters);
 		expect(result.filter.expression).toBe("service.name = 'test-service'");
 	});
 
@@ -583,7 +585,7 @@ describe('convertFiltersToExpression', () => {
 			undefined,
 		);
 
-		expect(result.filters).toEqual(filters);
+		expect(result.filters).toStrictEqual(filters);
 		expect(result.filter.expression).toBe('');
 	});
 
@@ -611,7 +613,7 @@ describe('convertFiltersToExpression', () => {
 		expect(result.filter).toBeDefined();
 		expect(result.filter.expression).toBe("service.name = 'updated-service'");
 		// Ensure parser can parse the existing query
-		expect(extractQueryPairs(existingQuery)).toEqual(
+		expect(extractQueryPairs(existingQuery)).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: 'service.name',
@@ -805,7 +807,7 @@ describe('convertAggregationToExpression', () => {
 			temporality: 'delta',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
 				timeAggregation: 'avg',
@@ -825,9 +827,11 @@ describe('convertAggregationToExpression', () => {
 			spaceAggregation: 'noop',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'count',
 				spaceAggregation: 'count',
 			},
@@ -841,9 +845,11 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: '',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'sum',
 				spaceAggregation: 'sum',
 			},
@@ -858,7 +864,7 @@ describe('convertAggregationToExpression', () => {
 			alias: 'trace_alias',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count(test_metric)',
 				alias: 'trace_alias',
@@ -874,7 +880,7 @@ describe('convertAggregationToExpression', () => {
 			alias: 'log_alias',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'avg(test_metric)',
 				alias: 'log_alias',
@@ -889,7 +895,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.TRACES,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
@@ -903,7 +909,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.LOGS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'sum(test_metric)',
 			},
@@ -917,9 +923,11 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'max',
 				spaceAggregation: 'max',
 			},
@@ -933,7 +941,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
 				timeAggregation: 'sum',
@@ -947,11 +955,11 @@ describe('convertAggregationToExpression', () => {
 	it('should handle undefined aggregateAttribute parameter with traces', () => {
 		const result = convertAggregationToExpression({
 			aggregateOperator: 'noop',
-			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			aggregateAttribute: undefined as unknown as BaseAutocompleteData,
 			dataSource: DataSource.TRACES,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
@@ -961,11 +969,11 @@ describe('convertAggregationToExpression', () => {
 	it('should handle undefined aggregateAttribute parameter with logs', () => {
 		const result = convertAggregationToExpression({
 			aggregateOperator: 'noop',
-			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			aggregateAttribute: undefined as unknown as BaseAutocompleteData,
 			dataSource: DataSource.LOGS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
@@ -1147,7 +1155,7 @@ describe('removeKeysFromExpression', () => {
 	});
 
 	describe('Real-world scenarios', () => {
-		it('should handle multiple variable instances of same key', () => {
+		it('should remove at most one variable expression per key', () => {
 			const expression =
 				"deployment.environment = $env1 deployment.environment = $env2 deployment.environment = 'default'";
 			const result = removeKeysFromExpression(
@@ -1156,9 +1164,11 @@ describe('removeKeysFromExpression', () => {
 				true,
 			);
 
-			// Should remove one occurence as this case in itself is invalid to have multiple variable expressions for the same key
+			// Should remove one occurrence — having multiple $-value clauses for the
+			// same key is invalid. The first is removed; subsequent $ clauses and
+			// literal-value clauses are preserved.
 			expect(result).toBe(
-				"deployment.environment = $env1 deployment.environment = 'default'",
+				"deployment.environment = $env2 AND deployment.environment = 'default'",
 			);
 		});
 
@@ -1189,6 +1199,186 @@ describe('removeKeysFromExpression', () => {
 			// Verify the result can be parsed by extractQueryPairs
 			const pairs = extractQueryPairs(result);
 			expect(pairs).toHaveLength(2);
+		});
+	});
+
+	describe('ANTLR-based removal — operator precedence (AND binds tighter than OR)', () => {
+		it('preserves OR when removing from a mixed AND/OR expression', () => {
+			// a AND b OR c — grammar parses as (a AND b) OR c
+			// removing b collapses the AND group to just a, OR is preserved
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' OR c = '3'", ['b']),
+			).toBe("a = '1' OR c = '3'");
+		});
+
+		it('preserves correct conjunctions in a four-term mixed expression', () => {
+			// a AND b OR c AND d — removing b collapses first AND group to a
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' OR c = '3' AND d = '4'", [
+					'b',
+				]),
+			).toBe("a = '1' OR c = '3' AND d = '4'");
+		});
+
+		it('preserves correct conjunctions when removing from a trailing AND group', () => {
+			// a OR b AND c OR d — removing c collapses second AND group to b
+			expect(
+				removeKeysFromExpression("a = '1' OR b = '2' AND c = '3' OR d = '4'", [
+					'c',
+				]),
+			).toBe("a = '1' OR b = '2' OR d = '4'");
+		});
+	});
+
+	describe('ANTLR-based removal — parenthesised expressions', () => {
+		it('removes last clause without leaving a dangling AND', () => {
+			const expression =
+				'(deployment.environment = $deployment.environment AND service.name = $service.name AND top_level_operation IN [$top_level_operation])';
+			expect(
+				removeKeysFromExpression(expression, ['top_level_operation'], true),
+			).toBe(
+				'(deployment.environment = $deployment.environment AND service.name = $service.name)',
+			);
+		});
+
+		it('removes first clause without leaving a dangling AND', () => {
+			expect(
+				removeKeysFromExpression(
+					'(deployment.environment = $deployment.environment AND service.name = $service.name)',
+					['deployment.environment'],
+					true,
+				),
+			).toBe('service.name = $service.name');
+		});
+
+		it('removes middle clause without disturbing surrounding AND', () => {
+			expect(
+				removeKeysFromExpression(
+					'(deployment.environment = $deployment.environment AND service.name = $service.name AND region = $region)',
+					['service.name'],
+					true,
+				),
+			).toBe(
+				'(deployment.environment = $deployment.environment AND region = $region)',
+			);
+		});
+
+		it('drops the empty paren group when its only child is removed', () => {
+			// (a) OR (b) — removing a must not leave () OR (b = '2')
+			// The remaining single-clause group has its redundant parens stripped too
+			expect(removeKeysFromExpression("(a = '1') OR (b = '2')", ['a'])).toBe(
+				"b = '2'",
+			);
+		});
+
+		it('handles OR inside parentheses without leaving dangling OR', () => {
+			expect(
+				removeKeysFromExpression(
+					'(service.name = $service.name OR operation = $operation)',
+					['operation'],
+					true,
+				),
+			).toBe('service.name = $service.name');
+		});
+	});
+
+	describe('ANTLR-based removal — BETWEEN, EXISTS, and other operators', () => {
+		it('removes a BETWEEN clause without treating its AND as a conjunction', () => {
+			// BETWEEN x AND y — the AND is part of the operator, not a conjunction
+			expect(
+				removeKeysFromExpression("a BETWEEN 1 AND 10 AND b = '2'", ['a']),
+			).toBe("b = '2'");
+		});
+
+		it('removes a NOT BETWEEN clause without treating its AND as a conjunction', () => {
+			expect(
+				removeKeysFromExpression("a NOT BETWEEN 1 AND 10 AND b = '2'", ['a']),
+			).toBe("b = '2'");
+		});
+
+		it('removes an EXISTS clause (no value token)', () => {
+			expect(removeKeysFromExpression("a = '1' AND b EXISTS", ['b'])).toBe(
+				"a = '1'",
+			);
+		});
+
+		it('removes a NOT EXISTS clause', () => {
+			expect(removeKeysFromExpression("a = '1' AND b NOT EXISTS", ['b'])).toBe(
+				"a = '1'",
+			);
+		});
+
+		it('removes an IN clause correctly', () => {
+			expect(
+				removeKeysFromExpression("service IN ['api', 'web'] AND status = 'ok'", [
+					'service',
+				]),
+			).toBe("status = 'ok'");
+		});
+
+		it('removes a NOT IN clause correctly', () => {
+			expect(
+				removeKeysFromExpression(
+					"service NOT IN ['api', 'web'] AND status = 'ok'",
+					['service'],
+				),
+			).toBe("status = 'ok'");
+		});
+
+		it('removes a CONTAINS clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message CONTAINS 'error' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+
+		it('removes a LIKE clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message LIKE '%error%' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+
+		it('removes a NOT LIKE clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message NOT LIKE '%error%' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+	});
+
+	describe('ANTLR-based removal — AND/OR precedence combinations', () => {
+		it('handles a AND b AND c OR d: removing b leaves a AND c OR d', () => {
+			// AND binds tighter than OR, so this parses as (a AND b AND c) OR d
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' AND c = '3' OR d = '4'", [
+					'b',
+				]),
+			).toBe("a = '1' AND c = '3' OR d = '4'");
+		});
+	});
+
+	describe('ANTLR-based removal — deeply nested expressions', () => {
+		const nestedExpr =
+			"((deployment.environment = $env1 OR deployment.environment = 'default') AND service.name = $svc1)";
+
+		it('removes service.name variable — outer and inner single-child parens both drop', () => {
+			// After removal: inner OR group keeps parens (2 items), outer group drops
+			// parens (1 item remains)
+			expect(removeKeysFromExpression(nestedExpr, ['service.name'], true)).toBe(
+				"(deployment.environment = $env1 OR deployment.environment = 'default')",
+			);
+		});
+
+		it('removes deployment.environment variable — inner OR collapses, outer parens kept', () => {
+			// Only the $env1 variable clause is removed; 'default' literal stays.
+			// Inner paren drops (single item left), outer paren stays (2 AND items remain).
+			expect(
+				removeKeysFromExpression(nestedExpr, ['deployment.environment'], true),
+			).toBe("(deployment.environment = 'default' AND service.name = $svc1)");
 		});
 	});
 });

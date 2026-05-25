@@ -1,19 +1,19 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
+import { Button, Flex, Form, Input, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { USER_ROLES } from 'types/roles';
@@ -24,7 +24,7 @@ import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
 import { PlannedDowntimeList } from './PlannedDowntimeList';
 import {
-	defautlInitialValues,
+	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 
@@ -33,7 +33,11 @@ import './PlannedDowntime.styles.scss';
 dayjs.locale('en');
 
 export function PlannedDowntime(): JSX.Element {
-	const { data: alertsData, isError, isLoading } = useListRules({
+	const {
+		data: alertsData,
+		isError,
+		isLoading,
+	} = useListRules({
 		query: { cacheTime: 0 },
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -43,9 +47,10 @@ export function PlannedDowntime(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
-	const [initialValues, setInitialValues] = useState<
-		Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>
-	>(defautlInitialValues);
+	const [initialValues, setInitialValues] =
+		useState<Partial<AlertmanagertypesPlannedMaintenanceDTO>>(
+			defaultInitialValues,
+		);
 
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
@@ -141,17 +146,19 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => {
-								setInitialValues({ ...defautlInitialValues, editMode: false });
+								setInitialValues(defaultInitialValues);
 								setIsOpen(true);
 								setEditMode(false);
 								form.resetFields();
 							}}
 							disabled={user?.role === USER_ROLES.VIEWER}
 						>
-							New downtime
+							<Flex align="center" gap={4}>
+								<Plus size={16} />
+								New downtime
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

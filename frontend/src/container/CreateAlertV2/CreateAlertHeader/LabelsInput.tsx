@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
+import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -133,9 +133,10 @@ function LabelsInput({
 							<button
 								type="button"
 								className="labels-input__remove-button"
+								aria-label={`Remove label ${key}`}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
-								<CloseOutlined />
+								<X size="md" />
 							</button>
 						</span>
 					))}
@@ -154,6 +155,7 @@ function LabelsInput({
 			) : (
 				<div className="labels-input__input-container">
 					<input
+						autoFocus
 						type="text"
 						value={inputState.isKeyInput ? inputState.key : inputState.value}
 						onChange={handleInputChange}
@@ -161,7 +163,6 @@ function LabelsInput({
 						onBlur={handleBlur}
 						className="labels-input__input"
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
-						autoFocus
 						data-testid="alert-add-label-input"
 					/>
 				</div>

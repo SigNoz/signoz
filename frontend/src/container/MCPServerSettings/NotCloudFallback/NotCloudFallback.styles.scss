@@ -1,0 +1,41 @@
+.not-cloud-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	min-height: 60vh;
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-6);
+		padding: var(--padding-6);
+		border: 1px dashed var(--l2-border);
+		border-radius: 8px;
+		background: var(--l2-background);
+		max-width: 50%;
+
+		.learn-more {
+			width: fit-content;
+			font-size: var(--font-size-xs);
+		}
+	}
+
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		font-size: var(--label-large-500-font-size);
+		font-weight: var(--label-large-500-font-weight);
+		color: var(--l1-foreground);
+		margin: 0;
+	}
+
+	&__body {
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		color: var(--foreground);
+		line-height: var(--paragraph-base-400-line-height);
+		margin: 0;
+	}
+}

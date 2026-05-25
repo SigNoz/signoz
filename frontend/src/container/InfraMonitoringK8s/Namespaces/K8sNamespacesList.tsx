@@ -19,9 +19,9 @@ import {
 	namespaceWidgetInfo,
 } from './constants';
 import {
-	k8sNamespacesColumns,
+	getK8sNamespaceItemKey,
+	getK8sNamespaceRowKey,
 	k8sNamespacesColumnsConfig,
-	k8sNamespacesRenderRowData,
 } from './table.config';
 
 function K8sNamespacesList({
@@ -91,10 +91,10 @@ function K8sNamespacesList({
 			<K8sBaseList<K8sNamespacesData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.NAMESPACES}
-				tableColumnsDefinitions={k8sNamespacesColumns}
 				tableColumns={k8sNamespacesColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sNamespacesRenderRowData}
+				getRowKey={getK8sNamespaceRowKey}
+				getItemKey={getK8sNamespaceItemKey}
 				eventCategory={InfraMonitoringEvents.Namespace}
 			/>
 

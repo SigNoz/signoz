@@ -91,6 +91,9 @@ type Getter interface {
 
 	// Gets all the user with role using role id in an org id
 	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
+
+	// OnBeforeRoleDelete checks if any users are assigned to the role and rejects deletion if so.
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
 }
 
 type Handler interface {
