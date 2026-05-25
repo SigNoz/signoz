@@ -170,7 +170,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -183,7 +183,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -196,7 +196,7 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -209,7 +209,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -222,7 +222,7 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -235,7 +235,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -248,7 +248,7 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -261,7 +261,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -273,7 +273,7 @@ func TestCompile_Tag(t *testing.T) {
 				NOT EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -285,7 +285,7 @@ func TestCompile_Tag(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -360,7 +360,7 @@ func TestCompile_NOT(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
@@ -375,7 +375,7 @@ func TestCompile_NOT(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
@@ -396,7 +396,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)
@@ -404,7 +404,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -417,14 +417,14 @@ func TestCompile_ComplexExamples(t *testing.T) {
 				EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"team", "pulse", "events", "database"},
@@ -437,7 +437,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
@@ -447,7 +447,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.kind = 'dashboard' AND tr.resource_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
