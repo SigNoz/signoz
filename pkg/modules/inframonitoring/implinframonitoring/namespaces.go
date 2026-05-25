@@ -24,7 +24,7 @@ func buildNamespaceRecords(
 	records := make([]inframonitoringtypes.NamespaceRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		namespaceName := labels[namespaceNameAttrKey]
+		namespaceName := labels[inframonitoringtypes.NamespaceNameAttrKey]
 
 		record := inframonitoringtypes.NamespaceRecord{ // initialize with default values
 			NamespaceName:   namespaceName,
@@ -70,6 +70,9 @@ func (m *module) getTopNamespaceGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.NamespaceNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NamespaceNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToNamespacesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 

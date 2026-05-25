@@ -341,10 +341,10 @@ describe('Stacking bar in new panel', () => {
 		const section = container.querySelector('.stack-chart');
 		expect(section).toBeInTheDocument();
 
-		// Verify switch is present and enabled (ant-switch-checked)
-		const switchBtn = section?.querySelector('.ant-switch');
+		// Verify switch is present and enabled
+		const switchBtn = section?.querySelector('[role="switch"]');
 		expect(switchBtn).toBeInTheDocument();
-		expect(switchBtn).toHaveClass('ant-switch-checked');
+		expect(switchBtn).toHaveAttribute('data-state', 'checked');
 
 		// Check that stack series is present and checked
 		checkStackSeriesState(container, true);

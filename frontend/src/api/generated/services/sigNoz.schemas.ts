@@ -134,6 +134,109 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	updatedBy?: string | null;
 }
 
+export enum AlertmanagertypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum AlertmanagertypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum AlertmanagertypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum AlertmanagertypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface AlertmanagertypesRecurrenceDTO {
+	/**
+	 * @type string
+	 */
+	duration: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	endTime?: string | null;
+	/**
+	 * @type array,null
+	 */
+	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
+	repeatType: AlertmanagertypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: string;
+}
+
+export interface AlertmanagertypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface AlertmanagertypesPlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: AlertmanagertypesMaintenanceKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+	status: AlertmanagertypesMaintenanceStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export interface ConfigAuthorizationDTO {
 	/**
 	 * @type string
@@ -1597,6 +1700,22 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	wechat_configs?: ConfigWechatConfigDTO[];
 };
 
+export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+}
+
 export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type array,null
@@ -2880,6 +2999,11 @@ export interface CoretypesPatchableObjectsDTO {
 	deletions: CoretypesObjectGroupDTO[] | null;
 }
 
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -2903,6 +3027,7 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3363,9 +3488,9 @@ export interface InframonitoringtypesClustersDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesClusterRecordDTO[] | null;
+	records: InframonitoringtypesClusterRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3441,9 +3566,9 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesDaemonSetRecordDTO[] | null;
+	records: InframonitoringtypesDaemonSetRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3519,9 +3644,9 @@ export interface InframonitoringtypesDeploymentsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesDeploymentRecordDTO[] | null;
+	records: InframonitoringtypesDeploymentRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3605,9 +3730,9 @@ export interface InframonitoringtypesHostsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesHostRecordDTO[] | null;
+	records: InframonitoringtypesHostRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3691,9 +3816,9 @@ export interface InframonitoringtypesJobsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesJobRecordDTO[] | null;
+	records: InframonitoringtypesJobRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3741,9 +3866,9 @@ export interface InframonitoringtypesNamespacesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesNamespaceRecordDTO[] | null;
+	records: InframonitoringtypesNamespaceRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3808,9 +3933,9 @@ export interface InframonitoringtypesNodesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesNodeRecordDTO[] | null;
+	records: InframonitoringtypesNodeRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3892,9 +4017,9 @@ export interface InframonitoringtypesPodsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesPodRecordDTO[] | null;
+	records: InframonitoringtypesPodRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4312,9 +4437,9 @@ export interface InframonitoringtypesStatefulSetsDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesStatefulSetRecordDTO[] | null;
+	records: InframonitoringtypesStatefulSetRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -4381,9 +4506,9 @@ export interface InframonitoringtypesVolumesDTO {
 	 */
 	endTimeBeforeRetention: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	records: InframonitoringtypesVolumeRecordDTO[] | null;
+	records: InframonitoringtypesVolumeRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -6116,15 +6241,6 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
-export enum RuletypesMaintenanceKindDTO {
-	fixed = 'fixed',
-	recurring = 'recurring',
-}
-export enum RuletypesMaintenanceStatusDTO {
-	active = 'active',
-	upcoming = 'upcoming',
-	expired = 'expired',
-}
 export interface RuletypesRenotifyDTO {
 	/**
 	 * @type array
@@ -6154,116 +6270,6 @@ export interface RuletypesNotificationSettingsDTO {
 	 * @type boolean
 	 */
 	usePolicy?: boolean;
-}
-
-export enum RuletypesRepeatOnDTO {
-	sunday = 'sunday',
-	monday = 'monday',
-	tuesday = 'tuesday',
-	wednesday = 'wednesday',
-	thursday = 'thursday',
-	friday = 'friday',
-	saturday = 'saturday',
-}
-export enum RuletypesRepeatTypeDTO {
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export interface RuletypesRecurrenceDTO {
-	/**
-	 * @type string
-	 */
-	duration: string;
-	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: string | null;
-	/**
-	 * @type array,null
-	 */
-	repeatOn?: RuletypesRepeatOnDTO[] | null;
-	repeatType: RuletypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: string;
-}
-
-export interface RuletypesScheduleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: string;
-	recurrence?: RuletypesRecurrenceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime?: string;
-	/**
-	 * @type string
-	 */
-	timezone: string;
-}
-
-export interface RuletypesPlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: RuletypesMaintenanceKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-	status: RuletypesMaintenanceStatusDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface RuletypesPostablePlannedMaintenanceDTO {
-	/**
-	 * @type array,null
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
 }
 
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
@@ -6649,6 +6655,28 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	name: string;
 }
 
+export type SpantypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface SpantypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: SpantypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
 export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
@@ -6715,6 +6743,219 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export enum SpantypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
+export type SpantypesSpanAggregationResultDTOValueAnyOf = {
+	[key: string]: number;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanAggregationResultDTOValue =
+	SpantypesSpanAggregationResultDTOValueAnyOf | null;
+
+export interface SpantypesSpanAggregationResultDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object,null
+	 */
+	value?: SpantypesSpanAggregationResultDTOValue;
+}
+
+export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOAttributes =
+	SpantypesWaterfallSpanDTOAttributesAnyOf | null;
+
+export type SpantypesWaterfallSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOResource =
+	SpantypesWaterfallSpanDTOResourceAnyOf | null;
+
+export interface SpantypesWaterfallSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array,null
+	 */
+	events?: SpantypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
+export interface SpantypesGettableWaterfallTraceDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
 	copy = 'copy',
@@ -6762,6 +7003,31 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface SpantypesSpanAggregationDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+export interface SpantypesPostableWaterfallDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
 }
 
 export interface SpantypesSpanMapperDTO {
@@ -6870,281 +7136,6 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	 */
 	complete: boolean;
 	values: TelemetrytypesTelemetryFieldValuesDTO;
-}
-
-export type TracedetailtypesEventDTOAttributeMap = { [key: string]: unknown };
-
-export interface TracedetailtypesEventDTO {
-	/**
-	 * @type object
-	 */
-	attributeMap?: TracedetailtypesEventDTOAttributeMap;
-	/**
-	 * @type boolean
-	 */
-	isError?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	timeUnixNano?: number;
-}
-
-export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf =
-	{ [key: string]: number };
-
-/**
- * @nullable
- */
-export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
-	TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf | null;
-
-export enum TracedetailtypesSpanAggregationTypeDTO {
-	span_count = 'span_count',
-	execution_time_percentage = 'execution_time_percentage',
-	duration = 'duration',
-}
-export type TracedetailtypesSpanAggregationResultDTOValueAnyOf = {
-	[key: string]: number;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesSpanAggregationResultDTOValue =
-	TracedetailtypesSpanAggregationResultDTOValueAnyOf | null;
-
-export interface TracedetailtypesSpanAggregationResultDTO {
-	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
-	/**
-	 * @type object,null
-	 */
-	value?: TracedetailtypesSpanAggregationResultDTOValue;
-}
-
-export type TracedetailtypesWaterfallSpanDTOAttributesAnyOf = {
-	[key: string]: unknown;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesWaterfallSpanDTOAttributes =
-	TracedetailtypesWaterfallSpanDTOAttributesAnyOf | null;
-
-export type TracedetailtypesWaterfallSpanDTOResourceAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesWaterfallSpanDTOResource =
-	TracedetailtypesWaterfallSpanDTOResourceAnyOf | null;
-
-export interface TracedetailtypesWaterfallSpanDTO {
-	/**
-	 * @type object,null
-	 */
-	attributes?: TracedetailtypesWaterfallSpanDTOAttributes;
-	/**
-	 * @type string
-	 */
-	db_name?: string;
-	/**
-	 * @type string
-	 */
-	db_operation?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	duration_nano?: number;
-	/**
-	 * @type array,null
-	 */
-	events?: TracedetailtypesEventDTO[] | null;
-	/**
-	 * @type string
-	 */
-	external_http_method?: string;
-	/**
-	 * @type string
-	 */
-	external_http_url?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	flags?: number;
-	/**
-	 * @type boolean
-	 */
-	has_children?: boolean;
-	/**
-	 * @type boolean
-	 */
-	has_error?: boolean;
-	/**
-	 * @type string
-	 */
-	http_host?: string;
-	/**
-	 * @type string
-	 */
-	http_method?: string;
-	/**
-	 * @type string
-	 */
-	http_url?: string;
-	/**
-	 * @type string
-	 */
-	is_remote?: string;
-	/**
-	 * @type string
-	 */
-	kind_string?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	level?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	parent_span_id?: string;
-	/**
-	 * @type object,null
-	 */
-	resource?: TracedetailtypesWaterfallSpanDTOResource;
-	/**
-	 * @type string
-	 */
-	response_status_code?: string;
-	/**
-	 * @type string
-	 */
-	span_id?: string;
-	/**
-	 * @type integer
-	 */
-	status_code?: number;
-	/**
-	 * @type string
-	 */
-	status_code_string?: string;
-	/**
-	 * @type string
-	 */
-	status_message?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	sub_tree_node_count?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	time_unix?: number;
-	/**
-	 * @type string
-	 */
-	trace_id?: string;
-	/**
-	 * @type string
-	 */
-	trace_state?: string;
-}
-
-export interface TracedetailtypesGettableWaterfallTraceDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: TracedetailtypesSpanAggregationResultDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	endTimestampMillis?: number;
-	/**
-	 * @type boolean
-	 */
-	hasMissingSpans?: boolean;
-	/**
-	 * @type boolean
-	 */
-	hasMore?: boolean;
-	/**
-	 * @type string
-	 */
-	rootServiceEntryPoint?: string;
-	/**
-	 * @type string
-	 */
-	rootServiceName?: string;
-	/**
-	 * @type object,null
-	 */
-	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
-	/**
-	 * @type array,null
-	 */
-	spans?: TracedetailtypesWaterfallSpanDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	startTimestampMillis?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	totalErrorSpansCount?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	totalSpansCount?: number;
-	/**
-	 * @type array,null
-	 */
-	uncollapsedSpans?: string[] | null;
-}
-
-export interface TracedetailtypesSpanAggregationDTO {
-	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
-}
-
-export interface TracedetailtypesPostableWaterfallDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: TracedetailtypesSpanAggregationDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	selectedSpanId?: string;
-	/**
-	 * @type array,null
-	 */
-	uncollapsedSpans?: string[] | null;
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -7793,7 +7784,7 @@ export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array
 	 */
-	data: RuletypesPlannedMaintenanceDTO[];
+	data: AlertmanagertypesPlannedMaintenanceDTO[];
 	/**
 	 * @type string
 	 */
@@ -7801,7 +7792,7 @@ export type ListDowntimeSchedules200 = {
 };
 
 export type CreateDowntimeSchedule201 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -7815,7 +7806,7 @@ export type GetDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
 export type GetDowntimeScheduleByID200 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -9226,7 +9217,7 @@ export type GetWaterfallPathParameters = {
 	traceID: string;
 };
 export type GetWaterfall200 = {
-	data: TracedetailtypesGettableWaterfallTraceDTO;
+	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */

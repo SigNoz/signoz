@@ -203,6 +203,57 @@ func TestPostablePods_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "orderBy name asc with empty groupBy is valid",
+			req: &PostablePods{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PodNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy name desc with empty groupBy is valid",
+			req: &PostablePods{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PodNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionDesc,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy name with non-empty groupBy is rejected",
+			req: &PostablePods{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "k8s.namespace.name"}},
+				},
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: PodNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
