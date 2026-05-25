@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -28,8 +28,8 @@ func NewInstalledIntegrationsSqliteRepo(store sqlstore.SQLStore) (
 func (r *InstalledIntegrationsSqliteRepo) list(
 	ctx context.Context,
 	orgId string,
-) ([]integrationtypes.InstalledIntegration, *model.ApiError) {
-	integrations := []integrationtypes.InstalledIntegration{}
+) ([]cloudintegrationtypes.InstalledIntegration, *model.ApiError) {
+	integrations := []cloudintegrationtypes.InstalledIntegration{}
 
 	err := r.store.BunDB().NewSelect().
 		Model(&integrations).
@@ -46,8 +46,8 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 
 func (r *InstalledIntegrationsSqliteRepo) get(
 	ctx context.Context, orgId string, integrationTypes []string,
-) (map[string]integrationtypes.InstalledIntegration, *model.ApiError) {
-	integrations := []integrationtypes.InstalledIntegration{}
+) (map[string]cloudintegrationtypes.InstalledIntegration, *model.ApiError) {
+	integrations := []cloudintegrationtypes.InstalledIntegration{}
 
 	typeValues := []interface{}{}
 	for _, integrationType := range integrationTypes {
@@ -64,7 +64,7 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 		))
 	}
 
-	result := map[string]integrationtypes.InstalledIntegration{}
+	result := map[string]cloudintegrationtypes.InstalledIntegration{}
 	for _, ii := range integrations {
 		result[ii.Type] = ii
 	}
@@ -76,10 +76,10 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 	ctx context.Context,
 	orgId string,
 	integrationType string,
-	config integrationtypes.InstalledIntegrationConfig,
-) (*integrationtypes.InstalledIntegration, *model.ApiError) {
+	config cloudintegrationtypes.InstalledIntegrationConfig,
+) (*cloudintegrationtypes.InstalledIntegration, *model.ApiError) {
 
-	integration := integrationtypes.InstalledIntegration{
+	integration := cloudintegrationtypes.InstalledIntegration{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
@@ -116,7 +116,7 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	ctx context.Context, orgId string, integrationType string,
 ) *model.ApiError {
 	_, dbErr := r.store.BunDB().NewDelete().
-		Model(&integrationtypes.InstalledIntegration{}).
+		Model(&cloudintegrationtypes.InstalledIntegration{}).
 		Where("type = ?", integrationType).
 		Where("org_id = ?", orgId).
 		Exec(ctx)
@@ -136,7 +136,7 @@ func (r *InstalledIntegrationsSqliteRepo) runInTx(ctx context.Context, fn func(c
 }
 
 func (r *InstalledIntegrationsSqliteRepo) createIntegrationDashboard(
-	ctx context.Context, row *integrationtypes.StorableIntegrationDashboard,
+	ctx context.Context, row *cloudintegrationtypes.StorableIntegrationDashboard,
 ) error {
 	_, err := r.store.BunDBCtx(ctx).NewInsert().Model(row).Exec(ctx)
 	return err
@@ -144,14 +144,14 @@ func (r *InstalledIntegrationsSqliteRepo) createIntegrationDashboard(
 
 func (r *InstalledIntegrationsSqliteRepo) getIntegrationDashboardBySlug(
 	ctx context.Context, orgID string, slug string,
-) (*integrationtypes.StorableIntegrationDashboard, error) {
-	row := new(integrationtypes.StorableIntegrationDashboard)
+) (*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	row := new(cloudintegrationtypes.StorableIntegrationDashboard)
 	err := r.store.BunDBCtx(ctx).
 		NewSelect().
 		Model(row).
 		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
 		Where("d.org_id = ?", orgID).
-		Where("storable_integration_dashboard.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("storable_integration_dashboard.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
 		Where("storable_integration_dashboard.slug = ?", slug).
 		Scan(ctx)
 	if err != nil {
@@ -162,14 +162,14 @@ func (r *InstalledIntegrationsSqliteRepo) getIntegrationDashboardBySlug(
 
 func (r *InstalledIntegrationsSqliteRepo) listIntegrationDashboardsBySlugPrefix(
 	ctx context.Context, orgID string, slugPrefix string,
-) ([]*integrationtypes.StorableIntegrationDashboard, error) {
-	var rows []*integrationtypes.StorableIntegrationDashboard
+) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	var rows []*cloudintegrationtypes.StorableIntegrationDashboard
 	err := r.store.BunDBCtx(ctx).
 		NewSelect().
 		Model(&rows).
 		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
 		Where("d.org_id = ?", orgID).
-		Where("storable_integration_dashboard.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("storable_integration_dashboard.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
 		Where("storable_integration_dashboard.slug LIKE ?", slugPrefix+"%").
 		Scan(ctx)
 	if err != nil {
@@ -187,12 +187,12 @@ func (r *InstalledIntegrationsSqliteRepo) deleteIntegrationDashboardBySlug(
 		ColumnExpr("id_inner.id").
 		Join("JOIN dashboard AS d ON id_inner.dashboard_id = d.id").
 		Where("d.org_id = ?", orgID).
-		Where("id_inner.provider = ?", integrationtypes.InstalledIntegrationProvider).
+		Where("id_inner.provider = ?", cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider).
 		Where("id_inner.slug = ?", slug)
 
 	_, err := r.store.BunDBCtx(ctx).
 		NewDelete().
-		Model(new(integrationtypes.StorableIntegrationDashboard)).
+		Model(new(cloudintegrationtypes.StorableIntegrationDashboard)).
 		With("target", cte).
 		Where("id IN (SELECT id FROM target)").
 		Exec(ctx)

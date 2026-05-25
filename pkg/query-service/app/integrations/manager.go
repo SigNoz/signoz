@@ -11,8 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -109,7 +109,7 @@ type IntegrationsListItem struct {
 
 type Integration struct {
 	IntegrationDetails
-	Installation *integrationtypes.InstalledIntegration `json:"installation"`
+	Installation *cloudintegrationtypes.InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
@@ -227,7 +227,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	orgId string,
 	integrationId string,
-	config integrationtypes.InstalledIntegrationConfig,
+	config cloudintegrationtypes.InstalledIntegrationConfig,
 	createdBy string,
 	creator valuer.UUID,
 ) (*IntegrationsListItem, *model.ApiError) {
@@ -312,7 +312,6 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	return gettablePipelines, nil
 }
 
-
 // Helpers.
 func (m *Manager) getIntegrationDetails(
 	ctx context.Context,
@@ -346,7 +345,7 @@ func (m *Manager) getInstalledIntegration(
 	ctx context.Context,
 	orgId string,
 	integrationId string,
-) (*integrationtypes.InstalledIntegration, *model.ApiError) {
+) (*cloudintegrationtypes.InstalledIntegration, *model.ApiError) {
 	iis, apiErr := m.installedIntegrationsRepo.get(
 		ctx, orgId, []string{integrationId},
 	)
@@ -374,7 +373,7 @@ func (m *Manager) getInstalledIntegrations(
 		return nil, apiErr
 	}
 
-	installedTypes := utils.MapSlice(installations, func(i integrationtypes.InstalledIntegration) string {
+	installedTypes := utils.MapSlice(installations, func(i cloudintegrationtypes.InstalledIntegration) string {
 		return i.Type
 	})
 	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, installedTypes)
@@ -414,7 +413,7 @@ func (m *Manager) provisionDashboards(
 			if dashID == "" {
 				continue
 			}
-			slug := integrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
+			slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
 
 			existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
 			if err == nil && existing != nil {
@@ -426,7 +425,7 @@ func (m *Manager) provisionDashboards(
 				return fmt.Errorf("could not create dashboard for slug %s: %w", slug, err)
 			}
 
-			row := integrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, slug)
+			row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
 			if err := m.installedIntegrationsRepo.createIntegrationDashboard(ctx, row); err != nil {
 				return fmt.Errorf("could not create integration_dashboard row for slug %s: %w", slug, err)
 			}
@@ -441,7 +440,7 @@ func (m *Manager) deprovisionDashboards(
 	integrationID string,
 ) error {
 	integrationID = strings.TrimPrefix(integrationID, "builtin-")
-	slugPrefix := integrationtypes.InstalledIntegrationDashboardSlugPrefix(integrationID)
+	slugPrefix := cloudintegrationtypes.InstalledIntegrationDashboardSlugPrefix(integrationID)
 	return m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
 		rows, err := m.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), slugPrefix)
 		if err != nil {
