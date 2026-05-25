@@ -1,4 +1,4 @@
-package tracedetailtypes
+package spantypes
 
 import (
 	"slices"
