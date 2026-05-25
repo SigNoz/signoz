@@ -243,6 +243,7 @@ export function getAppContextMock(
 		isFetchingOrgPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
+		isPreflightLoading: false,
 		showChangelogModal: false,
 		updateUser: jest.fn(),
 		updateOrg: jest.fn(),

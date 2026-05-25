@@ -164,24 +164,11 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.store.DeletePublic(ctx, id.String())
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return err
-		}
+	return module.delete(ctx, orgID, id)
+}
 
-		err = module.store.Delete(ctx, orgID, id)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (module *module) DeleteUnsafe(ctx context.Context, orgID, id valuer.UUID) error {
+	return module.delete(ctx, orgID, id)
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
@@ -223,8 +210,8 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, source, data)
 }
 
 func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
@@ -265,4 +252,13 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
+}
+
+func (module *module) delete(ctx context.Context, orgID, id valuer.UUID) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.store.Delete(ctx, orgID, id)
+	})
 }

@@ -4,12 +4,15 @@ import amazonMskUrl from '@/assets/Logos/amazon-msk.svg';
 import androidJavaMonitoringUrl from '@/assets/Logos/android-java-monitoring.svg';
 import androidKotlinMonitoringUrl from '@/assets/Logos/android-kotlin-monitoring.svg';
 import anthropicApiMonitoringUrl from '@/assets/Logos/anthropic-api-monitoring.svg';
+import apacheDruidUrl from '@/assets/Logos/apache-druid.svg';
 import apiGatewayUrl from '@/assets/Logos/api-gateway.svg';
 import argocdUrl from '@/assets/Logos/argocd.svg';
+import aspnetUrl from '@/assets/Logos/aspnet.svg';
 import autogenUrl from '@/assets/Logos/autogen.svg';
 import awsAlbUrl from '@/assets/Logos/aws-alb.svg';
 import azureAppServiceUrl from '@/assets/Logos/azure-app-service.svg';
 import azureBlobStorageUrl from '@/assets/Logos/azure-blob-storage.svg';
+import azureCdnFrontdoorUrl from '@/assets/Logos/azure-cdn-frontdoor.svg';
 import azureContainerAppsUrl from '@/assets/Logos/azure-container-apps.svg';
 import azureFunctionsUrl from '@/assets/Logos/azure-functions.svg';
 import azureMysqlUrl from '@/assets/Logos/azure-mysql.svg';
@@ -18,6 +21,7 @@ import azureSqlDatabaseMetricsUrl from '@/assets/Logos/azure-sql-database-metric
 import azureVmUrl from '@/assets/Logos/azure-vm.svg';
 import basetenUrl from '@/assets/Logos/baseten.svg';
 import celeryUrl from '@/assets/Logos/celery.svg';
+import certManagerUrl from '@/assets/Logos/cert-manager.svg';
 import claudeCodeUrl from '@/assets/Logos/claude-code.svg';
 import clickhouseUrl from '@/assets/Logos/clickhouse.svg';
 import cloudflareUrl from '@/assets/Logos/cloudflare.svg';
@@ -64,6 +68,7 @@ import goUrl from '@/assets/Logos/go.svg';
 import googleAdkUrl from '@/assets/Logos/google-adk.svg';
 import googleGeminiUrl from '@/assets/Logos/google-gemini.svg';
 import grafanaUrl from '@/assets/Logos/grafana.svg';
+import graphqlUrl from '@/assets/Logos/graphql.svg';
 import grokUrl from '@/assets/Logos/grok.svg';
 import groqUrl from '@/assets/Logos/groq.svg';
 import hasuraUrl from '@/assets/Logos/hasura.svg';
@@ -75,6 +80,7 @@ import httpUrl from '@/assets/Logos/http.svg';
 import httpMonitoringUrl from '@/assets/Logos/http-monitoring.svg';
 import huggingfaceUrl from '@/assets/Logos/huggingface.svg';
 import inkeepUrl from '@/assets/Logos/inkeep.svg';
+import istioUrl from '@/assets/Logos/istio.svg';
 import javaUrl from '@/assets/Logos/java.svg';
 import javaOthersUrl from '@/assets/Logos/java-others.svg';
 import javascriptUrl from '@/assets/Logos/javascript.svg';
@@ -121,6 +127,7 @@ import pythonUrl from '@/assets/Logos/python.svg';
 import quarkusUrl from '@/assets/Logos/quarkus.svg';
 import quickstartUrl from '@/assets/Logos/quickstart.svg';
 import qwenUrl from '@/assets/Logos/qwen.svg';
+import railwayUrl from '@/assets/Logos/railway.svg';
 import rdsUrl from '@/assets/Logos/rds.svg';
 import reactjsUrl from '@/assets/Logos/reactjs.svg';
 import redisUrl from '@/assets/Logos/redis.svg';
@@ -128,7 +135,9 @@ import renderUrl from '@/assets/Logos/render.svg';
 import rubyOnRailsUrl from '@/assets/Logos/ruby-on-rails.svg';
 import rustUrl from '@/assets/Logos/rust.svg';
 import s3Url from '@/assets/Logos/s3.svg';
+import scalaUrl from '@/assets/Logos/scala.svg';
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+import slogUrl from '@/assets/Logos/slog.svg';
 import slurmUrl from '@/assets/Logos/slurm.svg';
 import snowflakeUrl from '@/assets/Logos/snowflake.svg';
 import snsUrl from '@/assets/Logos/sns.svg';
@@ -3002,9 +3011,18 @@ const onboardingConfigWithLinks = [
 			'tracing',
 		],
 		question: {
-			desc: 'What telemetry data do you want to visualise ?',
+			desc: 'How would you like to set up Azure Blob Storage monitoring?',
 			type: 'select',
+			helpText:
+				'One Click uses Azure integration for automated setup. Manual setup uses OpenTelemetry for more control.',
 			options: [
+				{
+					key: 'azure-blob-storage-one-click',
+					label: 'One Click Azure',
+					imgUrl: azureBlobStorageUrl,
+					link: '/integrations/azure?service=storageaccountsblob',
+					internalRedirect: true,
+				},
 				{
 					key: 'logging',
 					label: 'Logs',
@@ -3019,6 +3037,32 @@ const onboardingConfigWithLinks = [
 				},
 			],
 		},
+	},
+	{
+		dataSource: 'azure-cdn-frontdoor',
+		label: 'Azure CDN / Front Door',
+		imgUrl: azureCdnFrontdoorUrl,
+		tags: ['Azure'],
+		module: 'dashboards',
+		relatedSearchKeywords: [
+			'azure',
+			'azure cdn',
+			'azure cdn frontdoor',
+			'azure cdn metrics',
+			'azure cdn monitoring',
+			'azure front door',
+			'azure frontdoor',
+			'cdn',
+			'cdn monitoring',
+			'cdn observability',
+			'content delivery network',
+			'front door',
+			'frontdoor',
+			'one click',
+		],
+		id: 'azure-cdn-frontdoor',
+		link: '/integrations/azure?service=cdnprofile',
+		internalRedirect: true,
 	},
 	{
 		dataSource: 'azure-mysql-flexible-server',
@@ -5614,17 +5658,22 @@ const onboardingConfigWithLinks = [
 		dataSource: 'fly-io',
 		label: 'Fly.io',
 		imgUrl: flyIoUrl,
-		tags: ['infrastructure monitoring', 'metrics'],
+		tags: ['infrastructure monitoring', 'metrics', 'logs'],
 		module: 'metrics',
 		relatedSearchKeywords: [
-			'fly.io',
-			'fly',
-			'metrics',
-			'infrastructure',
 			'cloud',
+			'fly',
+			'fly.io',
+			'fly.io logs',
+			'fly.io metrics',
+			'fly.io monitoring',
+			'fly.io observability',
+			'infrastructure',
+			'logs',
+			'metrics',
 			'monitoring',
 		],
-		link: '/docs/metrics-management/fly-metrics/',
+		link: '/docs/integrations/flyio/',
 	},
 	{
 		dataSource: 'envoy',
@@ -6245,6 +6294,195 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'render-metrics',
 		link: '/docs/metrics-management/render-metrics/',
+	},
+	{
+		dataSource: 'cert-manager',
+		label: 'Cert Manager',
+		imgUrl: certManagerUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'cert manager',
+			'cert-manager',
+			'certificate',
+			'certificate management',
+			'certificate monitoring',
+			'infrastructure',
+			'kubernetes',
+			'kubernetes certificates',
+			'metrics',
+			'monitoring',
+			'observability',
+			'ssl',
+			'tls',
+		],
+		id: 'cert-manager',
+		link: '/docs/infrastructure-monitoring/cert-manager/',
+	},
+	{
+		dataSource: 'graphql',
+		label: 'GraphQL',
+		imgUrl: graphqlUrl,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'api',
+			'graphql',
+			'graphql instrumentation',
+			'graphql monitoring',
+			'graphql observability',
+			'graphql tracing',
+			'javascript',
+			'monitoring',
+			'nodejs',
+			'observability',
+			'opentelemetry graphql',
+			'traces',
+			'tracing',
+		],
+		id: 'graphql',
+		link: '/docs/instrumentation/javascript/opentelemetry-graphql/',
+	},
+	{
+		dataSource: 'railway',
+		label: 'Railway',
+		imgUrl: railwayUrl,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'cloud',
+			'log forwarding',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+			'paas',
+			'railway',
+			'railway logs',
+			'railway monitoring',
+			'railway observability',
+		],
+		id: 'railway',
+		link: '/docs/integrations/outposts/railway/',
+	},
+	{
+		dataSource: 'aspnet-core-metrics',
+		label: 'ASP.NET Core Metrics',
+		imgUrl: aspnetUrl,
+		tags: ['metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'.net metrics',
+			'asp.net',
+			'asp.net core',
+			'asp.net core metrics',
+			'asp.net metrics',
+			'asp.net monitoring',
+			'asp.net observability',
+			'aspnet',
+			'aspnet core',
+			'dotnet metrics',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry aspnet',
+		],
+		id: 'aspnet-core-metrics',
+		link:
+			'/docs/metrics-management/send-metrics/applications/opentelemetry-aspnetcore/',
+	},
+	{
+		dataSource: 'istio-metrics',
+		label: 'Istio',
+		imgUrl: istioUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'infrastructure',
+			'istio',
+			'istio metrics',
+			'istio monitoring',
+			'istio observability',
+			'kubernetes',
+			'mesh',
+			'metrics',
+			'monitoring',
+			'observability',
+			'service mesh',
+		],
+		id: 'istio-metrics',
+		link: '/docs/metrics-management/istio-metrics/',
+	},
+	{
+		dataSource: 'slog',
+		label: 'log/slog',
+		imgUrl: slogUrl,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'go',
+			'go logging',
+			'go logs',
+			'golang',
+			'golang logging',
+			'log/slog',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+			'slog',
+			'slog instrumentation',
+			'slog logging',
+			'structured logging',
+		],
+		id: 'slog',
+		link: '/docs/logs-management/send-logs/slog-to-signoz/',
+	},
+	{
+		dataSource: 'scala',
+		label: 'Scala',
+		imgUrl: scalaUrl,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'instrumentation',
+			'jvm',
+			'monitoring',
+			'observability',
+			'opentelemetry scala',
+			'scala',
+			'scala instrumentation',
+			'scala monitoring',
+			'scala observability',
+			'scala tracing',
+			'traces',
+			'tracing',
+		],
+		id: 'scala',
+		link: '/docs/instrumentation/java/opentelemetry-scala/',
+	},
+	{
+		dataSource: 'apache-druid',
+		label: 'Apache Druid',
+		imgUrl: apacheDruidUrl,
+		tags: ['database'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'analytics',
+			'apache druid',
+			'database',
+			'druid',
+			'druid instrumentation',
+			'druid monitoring',
+			'druid observability',
+			'monitoring',
+			'observability',
+			'olap',
+			'opentelemetry druid',
+		],
+		id: 'apache-druid',
+		link: '/docs/integrations/opentelemetry-apache-druid/',
 	},
 ];
 export default onboardingConfigWithLinks;
