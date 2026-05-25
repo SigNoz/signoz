@@ -41,7 +41,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			Expression:     `ruleId == "high-cpu-usage" && severity == "critical"`,
+			Expression:     `ruleId = "high-cpu-usage" AND severity = "critical"`,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Name:           "high-cpu-usage",
 			Description:    "High CPU critical alerts to webhook",
@@ -53,7 +53,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
 			},
-			Expression:     `ruleId == "high-cpu-usage" && severity == "warning"`,
+			Expression:     `ruleId = "high-cpu-usage" AND severity = "warning"`,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Name:           "high-cpu-usage",
 			Description:    "High CPU warning alerts to webhook",
@@ -87,18 +87,25 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	err = notificationManager.SetNotificationConfig(orgID, "high-cpu-usage", &notifConfig)
 	require.NoError(t, err)
 
-	mwID := valuer.GenerateUUID()
+	activeSchedule := &alertmanagertypes.Schedule{
+		Timezone:  "UTC",
+		StartTime: time.Now().Add(-time.Hour),
+		EndTime:   time.Now().Add(time.Hour),
+	}
+	// mwRuleIDAndScope: only critical high-cpu-usage alerts.
+	mwRuleIDAndScope := valuer.GenerateUUID()
+	// mwRuleIDOnly: all high-cpu-usage alerts regardless of severity.
+	mwRuleIDOnly := valuer.GenerateUUID()
+	// mwScopeOnly: all critical alerts regardless of rule ID.
+	mwScopeOnly := valuer.GenerateUUID()
+
 	maintenanceStore := alertmanagertypestest.NewMockMaintenanceStore(t)
 	maintenanceStore.On("ListPlannedMaintenance", mock.Anything, orgID).Return(
-		[]*alertmanagertypes.PlannedMaintenance{{
-			ID: mwID,
-			Schedule: &alertmanagertypes.Schedule{
-				Timezone:  "UTC",
-				StartTime: time.Now().Add(-time.Hour),
-				EndTime:   time.Now().Add(time.Hour),
-			},
-			RuleIDs: []string{"high-cpu-usage"},
-		}}, nil,
+		[]*alertmanagertypes.PlannedMaintenance{
+			{ID: mwRuleIDAndScope, Schedule: activeSchedule, RuleIDs: []string{"high-cpu-usage"}, Scope: `severity = "critical"`},
+			{ID: mwRuleIDOnly, Schedule: activeSchedule, RuleIDs: []string{"high-cpu-usage"}},
+			{ID: mwScopeOnly, Schedule: activeSchedule, Scope: `severity = "critical"`},
+		}, nil,
 	)
 
 	srvCfg := NewConfig()
@@ -249,18 +256,42 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 		require.Equal(t, "{__receiver__=\"webhook\"}:{cluster=\"prod-cluster\", instance=\"server-03\", ruleId=\"high-cpu-usage\"}", alertGroups[2].GroupKey)
 	})
 
-	t.Run("verify_muting", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/alerts", nil)
-		require.NoError(t, err)
-		params, err := alertmanagertypes.NewGettableAlertsParams(req)
-		require.NoError(t, err)
-		alerts, err := server.GetAlerts(ctx, params)
-		require.NoError(t, err)
+	req, err := http.NewRequest(http.MethodGet, "/alerts", nil)
+	require.NoError(t, err)
+	params, err := alertmanagertypes.NewGettableAlertsParams(req)
+	require.NoError(t, err)
+	alerts, err := server.GetAlerts(ctx, params)
+	require.NoError(t, err)
+
+	t.Run("verify_muting_ruleid_and_scope", func(t *testing.T) {
+		// Window with ruleID + scope mutes only alerts matching both.
+		for _, alert := range alerts {
+			if alert.Labels["ruleId"] == "high-cpu-usage" && alert.Labels["severity"] == "critical" {
+				require.Contains(t, alert.Status.MutedBy, mwRuleIDAndScope.String())
+			} else {
+				require.NotContains(t, alert.Status.MutedBy, mwRuleIDAndScope.String())
+			}
+		}
+	})
+
+	t.Run("verify_muting_ruleid_only", func(t *testing.T) {
+		// Window with ruleID but no scope mutes all severities for that rule.
 		for _, alert := range alerts {
 			if alert.Labels["ruleId"] == "high-cpu-usage" {
-				require.Equal(t, []string{mwID.String()}, alert.Status.MutedBy)
+				require.Contains(t, alert.Status.MutedBy, mwRuleIDOnly.String())
 			} else {
-				require.Empty(t, alert.Status.MutedBy)
+				require.NotContains(t, alert.Status.MutedBy, mwRuleIDOnly.String())
+			}
+		}
+	})
+
+	t.Run("verify_muting_scope_only", func(t *testing.T) {
+		// Window with scope but no ruleIDs mutes all critical alerts regardless of rule.
+		for _, alert := range alerts {
+			if alert.Labels["severity"] == "critical" {
+				require.Contains(t, alert.Status.MutedBy, mwScopeOnly.String())
+			} else {
+				require.NotContains(t, alert.Status.MutedBy, mwScopeOnly.String())
 			}
 		}
 	})
