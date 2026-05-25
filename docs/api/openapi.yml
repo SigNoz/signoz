@@ -5109,6 +5109,23 @@ components:
       - start
       - end
       type: object
+    RuletypesActiveMuteInfo:
+      properties:
+        description:
+          type: string
+        effectiveEndTime:
+          format: date-time
+          nullable: true
+          type: string
+        effectiveStartTime:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+      type: object
     RuletypesAlertCompositeQuery:
       properties:
         panelType:
@@ -5359,6 +5376,8 @@ components:
       type: object
     RuletypesRule:
       properties:
+        activeMute:
+          $ref: '#/components/schemas/RuletypesActiveMuteInfo'
         alert:
           type: string
         alertType:

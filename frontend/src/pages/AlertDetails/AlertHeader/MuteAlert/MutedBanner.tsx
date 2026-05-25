@@ -48,7 +48,7 @@ interface MutedBannerProps {
 }
 
 function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
-	const endTime = activeMute.effectiveEndTime;
+	const endTime = activeMute.effectiveEndTime ?? undefined;
 	const indefinite = isIndefinite(endTime);
 	const [remaining, setRemaining] = useState<string | null>(
 		indefinite ? null : formatRemaining(endTime),

@@ -4,6 +4,10 @@ import {
 	createDowntimeSchedule,
 	getListDowntimeSchedulesQueryKey,
 } from 'api/generated/services/downtimeschedules';
+import {
+	getGetRuleByIDQueryKey,
+	getListRulesQueryKey,
+} from 'api/generated/services/rules';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	AlertmanagertypesPostablePlannedMaintenanceDTO,
@@ -48,6 +52,8 @@ export const useMuteAlertRule = ({
 		{
 			onSuccess: () => {
 				void queryClient.invalidateQueries(getListDowntimeSchedulesQueryKey());
+				void queryClient.invalidateQueries(getGetRuleByIDQueryKey({ id: ruleId }));
+				void queryClient.invalidateQueries(getListRulesQueryKey());
 				notifications.success({ message: 'Alert muted' });
 				onSuccess?.();
 			},

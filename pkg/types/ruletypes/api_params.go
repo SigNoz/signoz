@@ -642,23 +642,114 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// ActiveMuteInfo holds the currently active mute window for an alert rule.
+type ActiveMuteInfo struct {
+	ID                 string     `json:"id"`
+	Name               string     `json:"name"`
+	Description        string     `json:"description,omitempty"`
+	EffectiveStartTime *time.Time `json:"effectiveStartTime,omitempty"`
+	EffectiveEndTime   *time.Time `json:"effectiveEndTime,omitempty"`
+}
+
+// findActiveMuteForRule returns the active mute window for a rule, if any.
+// Scope expressions are intentionally skipped here because we operate at the
+// rule level (no alert labels available), matching the frontend's behaviour.
+func findActiveMuteForRule(ruleID string, schedules []*alertmanagertypes.PlannedMaintenance) *ActiveMuteInfo {
+	if len(schedules) == 0 || ruleID == "" {
+		return nil
+	}
+	now := time.Now()
+
+	type candidate struct {
+		m   *alertmanagertypes.PlannedMaintenance
+		end *time.Time
+	}
+
+	var candidates []candidate
+	for _, m := range schedules {
+		if m.Schedule == nil {
+			continue
+		}
+		// Empty RuleIDs means the window applies to all rules.
+		if len(m.RuleIDs) > 0 {
+			found := false
+			for _, id := range m.RuleIDs {
+				if id == ruleID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+		if !m.IsActive(now) {
+			continue
+		}
+		var end *time.Time
+		if m.Schedule.Recurrence != nil {
+			end = m.Schedule.Recurrence.EndTime
+		} else if !m.Schedule.EndTime.IsZero() {
+			t := m.Schedule.EndTime
+			end = &t
+		}
+		candidates = append(candidates, candidate{m: m, end: end})
+	}
+
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	// Sort by soonest end so the most specific window wins; nil (forever) sorts last.
+	slices.SortFunc(candidates, func(a, b candidate) int {
+		if a.end == nil && b.end == nil {
+			return 0
+		}
+		if a.end == nil {
+			return 1
+		}
+		if b.end == nil {
+			return -1
+		}
+		return a.end.Compare(*b.end)
+	})
+
+	w := candidates[0]
+	info := &ActiveMuteInfo{
+		ID:          w.m.ID.StringValue(),
+		Name:        w.m.Name,
+		Description: w.m.Description,
+	}
+	if w.m.Schedule.Recurrence != nil {
+		t := w.m.Schedule.Recurrence.StartTime
+		info.EffectiveStartTime = &t
+	} else if !w.m.Schedule.StartTime.IsZero() {
+		t := w.m.Schedule.StartTime
+		info.EffectiveStartTime = &t
+	}
+	info.EffectiveEndTime = w.end
+	return info
+}
+
 // Rule is the v2 API read model for an alerting rule. It aligns audit fields
 // with the canonical types.TimeAuditable / types.UserAuditable shape used by
 // PlannedMaintenance and other entities. v1 handlers keep serializing
 // GettableRule directly for back-compat with existing SDK / Terraform clients.
 type Rule struct {
-	Id    string     `json:"id" required:"true"`
-	State AlertState `json:"state" required:"true"`
+	Id         string          `json:"id" required:"true"`
+	State      AlertState      `json:"state" required:"true"`
+	ActiveMute *ActiveMuteInfo `json:"activeMute,omitempty"`
 	PostableRule
 	types.TimeAuditable
 	types.UserAuditable
 }
 
-func NewRule(g *GettableRule) *Rule {
+func NewRule(g *GettableRule, schedules []*alertmanagertypes.PlannedMaintenance) *Rule {
 	r := &Rule{
 		Id:           g.Id,
 		State:        g.State,
 		PostableRule: g.PostableRule,
+		ActiveMute:   findActiveMuteForRule(g.Id, schedules),
 	}
 	r.CreatedAt = g.CreatedAt
 	r.UpdatedAt = g.UpdatedAt
