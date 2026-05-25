@@ -37,8 +37,8 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, postableDashboard)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, source, postableDashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +72,25 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboard
 		return nil, err
 	}
 
-	return dashboardtypes.NewDashboardsFromStorableDashboards(storableDashboards), nil
+	// system dashboards are hidden from the listing endpoint but still gettable by id.
+	filtered := make([]*dashboardtypes.StorableDashboard, 0, len(storableDashboards))
+	for _, storable := range storableDashboards {
+		if storable.Source == dashboardtypes.SourceSystem {
+			continue
+		}
+		filtered = append(filtered, storable)
+	}
+
+	return dashboardtypes.NewDashboardsFromStorableDashboards(filtered), nil
 }
 
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatableDashboard dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error) {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := dashboard.ErrIfNotMutable(); err != nil {
 		return nil, err
 	}
 
@@ -105,6 +118,10 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
+	if err := dashboard.ErrIfNotLockable(); err != nil {
+		return err
+	}
+
 	err = dashboard.LockUnlock(lock, isAdmin, updatedBy)
 	if err != nil {
 		return err
@@ -128,6 +145,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
+		return err
+	}
+
 	if dashboard.Locked {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
@@ -138,6 +159,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return nil
+}
+
+func (module *module) DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.Delete(ctx, orgID, id)
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

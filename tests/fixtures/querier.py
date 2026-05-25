@@ -200,6 +200,8 @@ def build_formula_query(
     *,
     functions: list[dict] | None = None,
     disabled: bool = False,
+    order: list[dict] | None = None,
+    limit: int | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -208,6 +210,10 @@ def build_formula_query(
     }
     if functions:
         spec["functions"] = functions
+    if order:
+        spec["order"] = order
+    if limit is not None:
+        spec["limit"] = limit
     return {"type": "builder_formula", "spec": spec}
 
 

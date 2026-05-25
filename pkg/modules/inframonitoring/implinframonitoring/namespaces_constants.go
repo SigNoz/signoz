@@ -7,13 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	namespaceNameAttrKey = "k8s.namespace.name"
-)
-
 var namespaceNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          namespaceNameAttrKey,
+		Name:          inframonitoringtypes.NamespaceNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

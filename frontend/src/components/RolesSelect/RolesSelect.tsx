@@ -144,6 +144,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 				loading={loading}
 				notFoundContent={notFoundContent}
 				options={options}
+				optionFilterProp="label"
 				optionRender={(option): JSX.Element => (
 					<Checkbox
 						checked={value.includes(option.value as string)}
@@ -162,6 +163,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 	return (
 		<Select
 			id={id}
+			showSearch
 			value={value || undefined}
 			onChange={onChange}
 			placeholder={placeholder}
@@ -170,6 +172,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 			loading={loading}
 			notFoundContent={notFoundContent}
 			options={options}
+			optionFilterProp="label"
 			getPopupContainer={getPopupContainer}
 			disabled={disabled}
 		/>

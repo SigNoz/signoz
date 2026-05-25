@@ -1,9 +1,21 @@
 import { render, screen } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import TimezoneProvider from 'providers/Timezone';
 
 import Highlights from '../Highlights';
 import { formatTimestampToReadableDate } from '../utils';
 import { getMockMetricHighlightsData, MOCK_METRIC_NAME } from './testUtlls';
+
+function renderHighlights(metricName: string): ReturnType<typeof render> {
+	return render(
+		<TimezoneProvider>
+			<TooltipProvider>
+				<Highlights metricName={metricName} />
+			</TooltipProvider>
+		</TimezoneProvider>,
+	);
+}
 
 const useGetMetricHighlightsMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -16,7 +28,7 @@ describe('Highlights', () => {
 	});
 
 	it('should render all highlights data correctly', () => {
-		render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		renderHighlights(MOCK_METRIC_NAME);
 
 		const dataPoints = screen.getByTestId('metric-highlights-data-points');
 		const timeSeriesTotal = screen.getByTestId(
@@ -41,7 +53,7 @@ describe('Highlights', () => {
 			),
 		);
 
-		render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		renderHighlights(MOCK_METRIC_NAME);
 
 		expect(
 			screen.getByTestId('metric-highlights-error-state'),
@@ -58,7 +70,7 @@ describe('Highlights', () => {
 			),
 		);
 
-		render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		renderHighlights(MOCK_METRIC_NAME);
 
 		expect(screen.getByText('SAMPLES')).toBeInTheDocument();
 		expect(screen.getByText('TIME SERIES')).toBeInTheDocument();
