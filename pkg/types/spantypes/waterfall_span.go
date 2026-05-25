@@ -132,7 +132,7 @@ type StorableSpan struct {
 	ResponseStatusCode string             `ch:"response_status_code"`
 }
 
-// MinimalSpan with only the fields needed to build the parent-child tree
+// MinimalSpan with only the fields needed to build the parent-child tree.
 type MinimalSpan struct {
 	SpanID       string    `ch:"span_id"`
 	ParentSpanID string    `ch:"parent_span_id"`
@@ -319,6 +319,24 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 		Children:           make([]*WaterfallSpan, 0),
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
+	}
+}
+
+func EnrichSelectedSpans(window []*WaterfallSpan, fullSpans []StorableSpan) {
+	fullByID := make(map[string]*StorableSpan, len(fullSpans))
+	for i := range fullSpans {
+		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
+	}
+	for i, ws := range window {
+		full, ok := fullByID[ws.SpanID]
+		if !ok {
+			continue // synthesized MissingSpan — keep empty shell
+		}
+		newWS := full.ToWaterfallSpan()
+		newWS.Level = ws.Level
+		newWS.HasChildren = ws.HasChildren
+		newWS.SubTreeNodeCount = ws.SubTreeNodeCount
+		window[i] = newWS
 	}
 }
 

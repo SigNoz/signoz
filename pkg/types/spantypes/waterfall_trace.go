@@ -62,8 +62,8 @@ func NewWaterfallTrace(
 	}
 }
 
-// NewWaterfallTraceFromSpans constructs a trace tree from pre-converted WaterfallSpan nodes.
-// SpanID, ParentSpanID, TimeUnix, DurationNano, HasError, and ServiceName must be populated.
+// NewWaterfallTraceFromSpans requires WaterfallSpan nodes with only below fields:
+// SpanID, ParentSpanID, TimeUnix, DurationNano, HasError, and ServiceName.
 func NewWaterfallTraceFromSpans(nodes []*WaterfallSpan) *WaterfallTrace {
 	var (
 		startTime, endTime, totalErrorSpans uint64

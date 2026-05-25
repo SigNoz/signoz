@@ -23,9 +23,6 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	}
 }
 
-// GetWaterfall is the V3 waterfall — identical behavior to main branch.
-// Fetches all spans, builds the full in-memory tree, selects all-or-windowed
-// based on effectiveLimit, and returns in-memory aggregations.
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
 	waterfallTrace, err := m.getTraceData(ctx, traceID)
 	if err != nil {
@@ -107,7 +104,7 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
 }
 
-// getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans
+// getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
 func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall, summary *spantypes.TraceSummary, effectiveLimit uint) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary)
@@ -141,22 +138,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *
 		return nil, err
 	}
 
-	// Replace minimal WaterfallSpans with full ones, preserving tree metadata.
-	fullByID := make(map[string]*spantypes.StorableSpan, len(fullSpans))
-	for i := range fullSpans {
-		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
-	}
-	for i, ws := range selectedSpans {
-		full, ok := fullByID[ws.SpanID]
-		if !ok {
-			continue // synthesized MissingSpan — keep empty shell
-		}
-		newWS := full.ToWaterfallSpan()
-		newWS.Level = ws.Level
-		newWS.HasChildren = ws.HasChildren
-		newWS.SubTreeNodeCount = ws.SubTreeNodeCount
-		selectedSpans[i] = newWS
-	}
+	spantypes.EnrichSelectedSpans(selectedSpans, fullSpans)
 
 	return spantypes.NewGettableWaterfallTrace(
 		waterfallTrace, selectedSpans, uncollapsedSpans, false, nil,
