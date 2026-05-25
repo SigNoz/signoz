@@ -76,12 +76,17 @@ func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string,
 	if err := d.CanUpdate(); err != nil {
 		return err
 	}
-	d.Data.Metadata = updateable.Metadata.toDashboardV2Metadata(d.OrgID)
-	d.Data.Spec = updateable.Spec
+	if updateable.Name != d.Name {
+		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updateable.Name)
+	}
+	d.DashboardV2MetadataBase = updateable.DashboardV2MetadataBase
+	d.Tags = resolvedTags
+	d.Spec = updateable.Spec
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
 	return nil
 }
+
 func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
 	if d.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
@@ -135,13 +140,6 @@ func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID,
 		Name:                    postable.Name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
 		Spec:                    postable.Spec,
-	}
-}
-
-func (m DashboardV2Metadata) toPostableDashboardV2Metadata() PostableDashboardV2Metadata {
-	return PostableDashboardV2Metadata{
-		DashboardV2MetadataBase: m.DashboardV2MetadataBase,
-		Tags:                    tagtypes.NewPostableTagsFromTags(m.Tags),
 	}
 }
 
@@ -218,13 +216,6 @@ type GettableDashboardV2 struct {
 	Spec DashboardSpec           `json:"spec" required:"true"`
 }
 
-func (m DashboardV2Metadata) toGettableDashboardV2Metadata() GettableDashboardV2Metadata {
-	return GettableDashboardV2Metadata{
-		DashboardV2MetadataBase: m.DashboardV2MetadataBase,
-		Tags:                    tagtypes.NewGettableTagsFromTags(m.Tags),
-	}
-}
-
 func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 	return GettableDashboardV2{
 		Identifiable:            d.Identifiable,
@@ -272,8 +263,10 @@ type UpdateableDashboardV2 = PostableDashboardV2
 
 func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
 	return PostableDashboardV2{
-		Metadata: d.Data.Metadata.toPostableDashboardV2Metadata(),
-		Spec:     d.Data.Spec,
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
 	}
 }
 
