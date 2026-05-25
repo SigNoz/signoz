@@ -6743,15 +6743,6 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
-export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf =
-	{ [key: string]: number };
-
-/**
- * @nullable
- */
-export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
-	SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf | null;
-
 export enum SpantypesSpanAggregationTypeDTO {
 	span_count = 'span_count',
 	execution_time_percentage = 'execution_time_percentage',
@@ -6940,10 +6931,6 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @type string
 	 */
 	rootServiceName?: string;
-	/**
-	 * @type object,null
-	 */
-	serviceNameToTotalDurationMap?: SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
 	/**
 	 * @type array,null
 	 */
