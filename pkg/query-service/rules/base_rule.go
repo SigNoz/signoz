@@ -143,9 +143,7 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 // WithExternalURL injects the alertmanager external URL
 func WithExternalURL(externalURL *url.URL) RuleOption {
 	return func(r *BaseRule) {
-		if externalURL == nil {
-			r.externalURL = ""
-		} else {
+		if externalURL != nil {
 			r.externalURL = strings.TrimRight(externalURL.String(), "/")
 		}
 	}
@@ -253,7 +251,7 @@ func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	return fmt.Sprintf("%s/alerts/edit?ruleId=%s", r.ExternalURLHost(), r.ID())
+	return fmt.Sprintf("%s/alerts/overview?ruleId=%s", r.ExternalURLHost(), r.ID())
 }
 
 // ExternalURLHost returns the configured alertmanager external URL.

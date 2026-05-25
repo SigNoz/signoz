@@ -772,13 +772,13 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 			name:        "configured external URL",
 			ruleID:      "abc",
 			externalURL: mustParse("https://signoz.example.com"),
-			want:        "https://signoz.example.com/alerts/edit?ruleId=abc",
+			want:        "https://signoz.example.com/alerts/overview?ruleId=abc",
 		},
 		{
 			name:        "default external URL is used as-is",
 			ruleID:      "abc",
 			externalURL: mustParse("http://localhost:8080"),
-			want:        "http://localhost:8080/alerts/edit?ruleId=abc",
+			want:        "http://localhost:8080/alerts/overview?ruleId=abc",
 		},
 	}
 
