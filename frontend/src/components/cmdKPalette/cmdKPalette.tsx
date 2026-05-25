@@ -14,10 +14,9 @@ import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
 import {
-	canAnimateThemeRipple,
-	getRippleOrigin,
-	runThemeRipple,
-} from 'utils/themeRipple';
+	canAnimateThemeTransition,
+	runThemeTransition,
+} from 'utils/themeTransition';
 
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
@@ -88,15 +87,12 @@ export function CmdKPalette({
 			setOpen(false);
 		};
 
-		if (!willFlipDarkMode || !canAnimateThemeRipple()) {
+		if (!willFlipDarkMode || !canAnimateThemeTransition()) {
 			applyChange();
 			return;
 		}
 
-		const activeItem = document.querySelector<HTMLElement>(
-			'[cmdk-item][data-selected="true"]',
-		);
-		runThemeRipple(getRippleOrigin(activeItem), applyChange);
+		runThemeTransition(applyChange);
 	}
 
 	function onClickHandler(key: string): void {

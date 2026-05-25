@@ -15,10 +15,9 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
 import {
-	canAnimateThemeRipple,
-	getRippleOrigin,
-	runThemeRipple,
-} from 'utils/themeRipple';
+	canAnimateThemeTransition,
+	runThemeTransition,
+} from 'utils/themeTransition';
 
 import LicenseSection from './LicenseSection';
 import TimezoneAdaptation from './TimezoneAdaptation/TimezoneAdaptation';
@@ -113,16 +112,14 @@ function MySettings(): JSX.Element {
 			}
 		};
 
-		// Only ripple on a real dark↔light flip, and only when the browser
+		// Only animate on a real dark↔light flip, and only when the browser
 		// supports View Transitions and the user hasn't opted out of motion.
-		if (!willFlipDarkMode || !canAnimateThemeRipple()) {
+		if (!willFlipDarkMode || !canAnimateThemeTransition()) {
 			applyChange();
 			return;
 		}
 
-		const clickedTarget = event.nativeEvent?.target as HTMLElement | null;
-		const clickedButton = clickedTarget?.closest('.ant-radio-button-wrapper');
-		runThemeRipple(getRippleOrigin(clickedButton), applyChange);
+		runThemeTransition(applyChange);
 	};
 
 	useEffect(() => {
