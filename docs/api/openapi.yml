@@ -2608,15 +2608,6 @@ components:
         enabled:
           type: boolean
       type: object
-    GlobaltypesAppcues:
-      properties:
-        appID:
-          type: string
-        enabled:
-          type: boolean
-      required:
-      - enabled
-      type: object
     GlobaltypesConfig:
       properties:
         ai_assistant_url:
@@ -2631,8 +2622,6 @@ components:
         mcp_url:
           nullable: true
           type: string
-        web:
-          $ref: '#/components/schemas/GlobaltypesWebConfig'
       required:
       - external_url
       - ingestion_url
@@ -2653,64 +2642,10 @@ components:
         enabled:
           type: boolean
       type: object
-    GlobaltypesPosthog:
-      properties:
-        enabled:
-          type: boolean
-        key:
-          type: string
-      required:
-      - enabled
-      type: object
-    GlobaltypesPylon:
-      properties:
-        appID:
-          type: string
-        enabled:
-          type: boolean
-        identSecret:
-          type: string
-      required:
-      - enabled
-      type: object
-    GlobaltypesSentry:
-      properties:
-        dsn:
-          type: string
-        enabled:
-          type: boolean
-        tunnelURL:
-          type: string
-      required:
-      - enabled
-      type: object
-    GlobaltypesSettings:
-      properties:
-        appcues:
-          $ref: '#/components/schemas/GlobaltypesAppcues'
-        posthog:
-          $ref: '#/components/schemas/GlobaltypesPosthog'
-        pylon:
-          $ref: '#/components/schemas/GlobaltypesPylon'
-        sentry:
-          $ref: '#/components/schemas/GlobaltypesSentry'
-      required:
-      - sentry
-      - posthog
-      - pylon
-      - appcues
-      type: object
     GlobaltypesTokenizerConfig:
       properties:
         enabled:
           type: boolean
-      type: object
-    GlobaltypesWebConfig:
-      properties:
-        settings:
-          $ref: '#/components/schemas/GlobaltypesSettings'
-      required:
-      - settings
       type: object
     InframonitoringtypesClusterRecord:
       properties:
