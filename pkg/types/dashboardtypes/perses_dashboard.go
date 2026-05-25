@@ -371,6 +371,7 @@ func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 		OrgID:         d.OrgID,
 		Locked:        d.Locked,
 		Data:          data,
+		Source:        SourceUser,
 	}, nil
 }
 
