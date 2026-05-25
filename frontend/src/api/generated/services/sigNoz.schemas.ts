@@ -4562,26 +4562,6 @@ export interface TagtypesPostableTagDTO {
 	value: string;
 }
 
-export interface DashboardtypesGettableDashboardV2MetadataDTO {
-	/**
-	 * @type string
-	 */
-	image?: string;
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	/**
-	 * @type array,null
-	 */
-	tags: TagtypesPostableTagDTO[] | null;
-}
-
-export interface DashboardtypesGettableDashboardV2DataDTO {
-	metadata: DashboardtypesGettableDashboardV2MetadataDTO;
-	spec: DashboardtypesDashboardSpecDTO;
-}
-
 export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type string
@@ -4592,11 +4572,14 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data: DashboardtypesGettableDashboardV2DataDTO;
 	/**
 	 * @type string
 	 */
 	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
 	/**
 	 * @type boolean
 	 */
@@ -4604,8 +4587,21 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type string
 	 */
+	name: string;
+	/**
+	 * @type string
+	 */
 	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
 	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4646,7 +4642,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
-export interface DashboardtypesPostableDashboardV2MetadataDTO {
+export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type string
 	 */
@@ -4654,16 +4650,16 @@ export interface DashboardtypesPostableDashboardV2MetadataDTO {
 	/**
 	 * @type string
 	 */
+	name: string;
+	/**
+	 * @type string
+	 */
 	schemaVersion: string;
+	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
 	 */
 	tags?: TagtypesPostableTagDTO[] | null;
-}
-
-export interface DashboardtypesPostableDashboardV2DTO {
-	metadata: DashboardtypesPostableDashboardV2MetadataDTO;
-	spec: DashboardtypesDashboardSpecDTO;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {
