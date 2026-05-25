@@ -19,6 +19,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const traceOutsideRangeWarn = "Query %s references a trace_id that exists between %s and %s (UTC) but lies outside the selected time range; adjust the time range to see results"
+
 type builderQuery[T any] struct {
 	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
@@ -202,9 +204,14 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	fromMS, toMS := q.fromMS, q.toMS
 	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
 		var overlap bool
-		fromMS, toMS, overlap = q.narrowWindowByTraceID(ctx, fromMS, toMS)
+		var warning string
+		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
 		if !overlap {
-			return emptyResultFor(q.kind, q.spec.Name), nil
+			res := emptyResultFor(q.kind, q.spec.Name)
+			if warning != "" {
+				res.Warnings = []string{warning}
+			}
+			return res, nil
 		}
 	}
 
@@ -226,8 +233,10 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // narrowWindowByTraceID inspects the filter for trace_id predicates and clamps
 // [fromMS,toMS] to the time range stored in signoz_traces.distributed_trace_summary.
-// Returns the (possibly narrowed) window and overlap=false when the trace lies
-// completely outside the query window — callers should short-circuit in that case.
+// Returns the (possibly narrowed) window, overlap=false when the trace lies
+// completely outside the query window (callers should short-circuit), and a
+// warning string the caller should attach to the empty result when the trace
+// exists but is outside the selected window.
 //
 // When the trace_id is not present in trace_summary the behaviour differs by
 // signal:
@@ -236,37 +245,42 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 //   - logs: logs can carry a trace_id even when traces are not ingested at all
 //     (e.g. traces disabled). We must not short-circuit; instead leave the
 //     window untouched and let the query run.
-func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toMS uint64) (uint64, uint64, bool) {
+func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toMS uint64) (uint64, uint64, bool, string) {
 	if q.spec.Filter == nil || q.spec.Filter.Expression == "" {
-		return fromMS, toMS, true
+		return fromMS, toMS, true, ""
 	}
 
 	traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
 	if !found || len(traceIDs) == 0 {
-		return fromMS, toMS, true
+		return fromMS, toMS, true, ""
 	}
 
 	finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
-	traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
-	if !ok {
+	traceStart, traceEnd, isPresent, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+	if err != nil {
+		return fromMS, toMS, true, ""
+	}
+	if !isPresent {
 		if q.spec.Signal == telemetrytypes.SignalTraces {
 			q.logger.DebugContext(ctx, "trace_id not found in trace_summary; short-circuiting traces query to empty",
 				slog.Any("trace_ids", traceIDs))
-			return fromMS, toMS, false
+			return fromMS, toMS, false, ""
 		}
 		q.logger.DebugContext(ctx, "trace_id not found in trace_summary; leaving time range untouched for logs",
 			slog.Any("trace_ids", traceIDs))
-		return fromMS, toMS, true
+		return fromMS, toMS, true, ""
 	}
 
 	traceStartMS := uint64(traceStart) / 1_000_000
 	traceEndMS := uint64(traceEnd) / 1_000_000
 	if traceStartMS == 0 || traceEndMS == 0 {
-		return fromMS, toMS, true
+		return fromMS, toMS, true, ""
 	}
 
 	if traceStartMS > toMS || traceEndMS < fromMS {
-		return fromMS, toMS, false
+		traceStartUTC := time.UnixMilli(int64(traceStartMS)).UTC().Format(time.RFC3339)
+		traceEndUTC := time.UnixMilli(int64(traceEndMS)).UTC().Format(time.RFC3339)
+		return fromMS, toMS, false, fmt.Sprintf(traceOutsideRangeWarn, q.spec.Name, traceStartUTC, traceEndUTC)
 	}
 	if traceStartMS > fromMS {
 		fromMS = traceStartMS
@@ -279,7 +293,7 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 		slog.Any("trace_ids", traceIDs),
 		slog.Uint64("start", fromMS),
 		slog.Uint64("end", toMS))
-	return fromMS, toMS, true
+	return fromMS, toMS, true, ""
 }
 
 // emptyResultFor returns an empty result payload appropriate for the given kind.
@@ -399,9 +413,10 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	// (which carry trace_id and benefit from the same clamp before bucketing).
 	if q.spec.Signal == telemetrytypes.SignalTraces || q.spec.Signal == telemetrytypes.SignalLogs {
 		var overlap bool
-		fromMS, toMS, overlap = q.narrowWindowByTraceID(ctx, fromMS, toMS)
+		var warning string
+		fromMS, toMS, overlap, warning = q.narrowWindowByTraceID(ctx, fromMS, toMS)
 		if !overlap {
-			return &qbtypes.Result{
+			res := &qbtypes.Result{
 				Type: qbtypes.RequestTypeRaw,
 				Value: &qbtypes.RawData{
 					QueryName: q.spec.Name,
@@ -409,7 +424,11 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 				Stats: qbtypes.ExecStats{
 					DurationMS: uint64(time.Since(start).Milliseconds()),
 				},
-			}, nil
+			}
+			if warning != "" {
+				res.Warnings = []string{warning}
+			}
+			return res, nil
 		}
 	}
 

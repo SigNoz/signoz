@@ -2406,7 +2406,7 @@ def test_logs_list_filter_by_trace_id(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    def _query(start_ms: int, end_ms: int, trace_id: str) -> list:
+    def _query(start_ms: int, end_ms: int, trace_id: str) -> tuple[list, list[str]]:
         response = make_query_request(
             signoz,
             token,
@@ -2433,39 +2433,48 @@ def test_logs_list_filter_by_trace_id(
         )
         assert response.status_code == HTTPStatus.OK
         assert response.json()["status"] == "success"
-        return response.json()["data"]["data"]["results"][0]["rows"] or []
+        rows = response.json()["data"]["data"]["results"][0]["rows"] or []
+        warning = (response.json().get("data") or {}).get("warning") or {}
+        messages = [w.get("message", "") for w in (warning.get("warnings") or [])]
+        return rows, messages
+
+    outside_range_msg = "lies outside the selected time range"
 
     now_ms = int(now.timestamp() * 1000)
 
     # --- Test 1: narrow window (single bucket, <1 h) ---
     narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
-    narrow_rows = _query(narrow_start_ms, now_ms, target_trace_id)
+    narrow_rows, narrow_warnings = _query(narrow_start_ms, now_ms, target_trace_id)
 
     assert len(narrow_rows) == 1, f"Expected 1 log for trace_id filter (narrow window), got {len(narrow_rows)}"
     assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
     assert narrow_rows[0]["data"]["span_id"] == target_root_span_id
+    assert not any(outside_range_msg in m for m in narrow_warnings), f"Did not expect outside-range warning, got {narrow_warnings}"
 
     # --- Test 2: wide window (>1 h, camp to the timerange from trace_summary) ---
     # Should still return exactly one log — no duplicates from multi-bucket scan.
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
-    wide_rows = _query(wide_start_ms, now_ms, target_trace_id)
+    wide_rows, wide_warnings = _query(wide_start_ms, now_ms, target_trace_id)
 
     assert len(wide_rows) == 1, f"Expected 1 log for trace_id filter (wide window, multi-bucket), got {len(wide_rows)} — possible duplicate-log regression"
     assert wide_rows[0]["data"]["trace_id"] == target_trace_id
     assert wide_rows[0]["data"]["span_id"] == target_root_span_id
+    assert not any(outside_range_msg in m for m in wide_warnings), f"Did not expect outside-range warning, got {wide_warnings}"
 
-    # --- Test 3: window that does not contain the trace returns no results ---
+    # --- Test 3: window that does not contain the trace returns no results + warning ---
     past_start_ms = int((now - timedelta(hours=6)).timestamp() * 1000)
     past_end_ms = int((now - timedelta(hours=2)).timestamp() * 1000)
-    past_rows = _query(past_start_ms, past_end_ms, target_trace_id)
+    past_rows, past_warnings = _query(past_start_ms, past_end_ms, target_trace_id)
 
     assert len(past_rows) == 0, f"Expected 0 logs for trace_id filter outside time window, got {len(past_rows)}"
+    assert any(outside_range_msg in m for m in past_warnings), f"Expected outside-range warning, got warnings={past_warnings}"
 
-    # --- Test 4: trace_id not present in trace_summary still returns logs ---
-    orphan_rows = _query(narrow_start_ms, now_ms, orphan_trace_id)
+    # --- Test 4: trace_id not present in trace_summary still returns logs (no warning) ---
+    orphan_rows, orphan_warnings = _query(narrow_start_ms, now_ms, orphan_trace_id)
 
     assert len(orphan_rows) == 1, f"Expected 1 log for orphan trace_id (no trace_summary entry), got {len(orphan_rows)} — logs query may have been incorrectly short-circuited"
     assert orphan_rows[0]["data"]["trace_id"] == orphan_trace_id
+    assert not any(outside_range_msg in m for m in orphan_warnings), f"Did not expect outside-range warning for orphan trace_id, got {orphan_warnings}"
 
 
 def test_logs_aggregation_filter_by_trace_id(
@@ -2571,7 +2580,7 @@ def test_logs_aggregation_filter_by_trace_id(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    def _count(start_ms: int, end_ms: int, trace_id: str) -> float:
+    def _count(start_ms: int, end_ms: int, trace_id: str) -> tuple[float, list[str]]:
         response = make_query_request(
             signoz,
             token,
@@ -2597,28 +2606,35 @@ def test_logs_aggregation_filter_by_trace_id(
         assert response.json()["status"] == "success"
         results = response.json()["data"]["data"]["results"]
         assert len(results) == 1
+        warning = (response.json().get("data") or {}).get("warning") or {}
+        messages = [w.get("message", "") for w in (warning.get("warnings") or [])]
         aggregations = results[0].get("aggregations") or []
         if not aggregations:
-            return 0
+            return 0, messages
         series = aggregations[0].get("series") or []
         if not series:
-            return 0
-        return sum(v["value"] for v in series[0]["values"])
+            return 0, messages
+        return sum(v["value"] for v in series[0]["values"]), messages
+
+    outside_range_msg = "lies outside the selected time range"
 
     now_ms = int(now.timestamp() * 1000)
     narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
 
     # --- Test 1: wide window (>1 h) containing the trace returns 2 logs ---
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
-    wide_count = _count(wide_start_ms, now_ms, target_trace_id)
+    wide_count, wide_warnings = _count(wide_start_ms, now_ms, target_trace_id)
     assert wide_count == 2, f"Expected count=2 for trace_id aggregation (wide window), got {wide_count}"
+    assert not any(outside_range_msg in m for m in wide_warnings), f"Did not expect outside-range warning, got {wide_warnings}"
 
-    # --- Test 2: window outside the trace short-circuits to empty ---
+    # --- Test 2: window outside the trace short-circuits to empty + warning ---
     past_start_ms = int((now - timedelta(hours=6)).timestamp() * 1000)
     past_end_ms = int((now - timedelta(hours=2)).timestamp() * 1000)
-    past_count = _count(past_start_ms, past_end_ms, target_trace_id)
+    past_count, past_warnings = _count(past_start_ms, past_end_ms, target_trace_id)
     assert past_count == 0, f"Expected count=0 for trace_id aggregation outside time window, got {past_count}"
+    assert any(outside_range_msg in m for m in past_warnings), f"Expected outside-range warning, got warnings={past_warnings}"
 
-    # --- Test 3: trace_id not present in trace_summary still returns logs ---
-    orphan_count = _count(narrow_start_ms, now_ms, orphan_trace_id)
+    # --- Test 3: trace_id not present in trace_summary still returns logs (no warning) ---
+    orphan_count, orphan_warnings = _count(narrow_start_ms, now_ms, orphan_trace_id)
     assert orphan_count == 1, f"Expected count=1 for orphan trace_id aggregation, got {orphan_count} — query may have been incorrectly short-circuited"
+    assert not any(outside_range_msg in m for m in orphan_warnings), f"Did not expect outside-range warning for orphan trace_id, got {orphan_warnings}"
