@@ -129,6 +129,8 @@ components:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
         status:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceStatus'
         updatedAt:
@@ -272,6 +274,8 @@ components:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
       required:
       - name
       - schedule
@@ -5686,12 +5690,6 @@ components:
           type: string
         rootServiceName:
           type: string
-        serviceNameToTotalDurationMap:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
         spans:
           items:
             $ref: '#/components/schemas/SpantypesWaterfallSpan'
