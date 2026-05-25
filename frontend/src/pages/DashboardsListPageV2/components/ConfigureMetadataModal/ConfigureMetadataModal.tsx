@@ -167,8 +167,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked
+							value
 							disabled
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
@@ -187,8 +186,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked
+							value
 							disabled
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
@@ -207,8 +205,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked={draftColumns.updatedAt}
+							value={draftColumns.updatedAt}
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
 									...prev,
@@ -226,8 +223,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked={draftColumns.updatedBy}
+							value={draftColumns.updatedBy}
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
 									...prev,
