@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import { compose, Store } from 'redux';
-import type { SignozBootSettings } from 'utils/bootData';
+import type { WebSettings } from 'types/generated/webSettings';
 
 declare global {
 	interface Window {
@@ -8,7 +8,7 @@ declare global {
 		pylon: any;
 		Appcues: Record<string, any>;
 		__REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose;
-		signozBootData?: { settings?: Partial<SignozBootSettings> };
+		signozBootData?: { settings: WebSettings | null };
 	}
 }
 

@@ -333,7 +333,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (bootSettings.posthog.enabled !== false && process.env.POSTHOG_KEY) {
+			if (bootSettings.posthog.enabled && process.env.POSTHOG_KEY) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well

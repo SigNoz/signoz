@@ -1,11 +1,11 @@
-export interface SignozBootSettings {
-	posthog: { enabled?: boolean };
-	appcues: { enabled?: boolean };
-}
+import type { WebSettings } from 'types/generated/webSettings';
 
-const raw = window.signozBootData?.settings;
+const raw = window.signozBootData?.settings as
+	| Partial<WebSettings>
+	| null
+	| undefined;
 
-export const bootSettings: Readonly<SignozBootSettings> = {
-	posthog: raw?.posthog ?? {},
-	appcues: raw?.appcues ?? {},
+export const bootSettings: Readonly<WebSettings> = {
+	posthog: { enabled: raw?.posthog?.enabled ?? true },
+	appcues: { enabled: raw?.appcues?.enabled ?? true },
 };
