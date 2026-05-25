@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/perses/pkg/model/api/v1/common"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -114,13 +115,24 @@ func (p *PostableDashboardV2) Validate() error {
 	if p.SchemaVersion != SchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, p.SchemaVersion)
 	}
-	if strings.TrimSpace(p.Name) == "" {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name is required")
+	if err := validateDashboardName(p.Name); err != nil {
+		return err
 	}
 	if err := p.validateTags(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
+}
+
+// Matches https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names.
+func validateDashboardName(name string) error {
+	if name == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name is required")
+	}
+	if errs := validation.IsDNS1123Label(name); len(errs) > 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
+	}
+	return nil
 }
 
 func (p *PostableDashboardV2) validateTags() error {
