@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -186,6 +187,41 @@ func (store *store) ListServices(ctx context.Context, cloudIntegrationID valuer.
 	return services, nil
 }
 
+func (store *store) ListSharedServices(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, cloudIntegrationID valuer.UUID) (map[cloudintegrationtypes.ServiceID][]*cloudintegrationtypes.StorableCloudIntegrationService, error) {
+	// Subquery: service types that belong to the given account
+	ownTypes := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service").
+		ColumnExpr("type").
+		Where("cloud_integration_id = ?", cloudIntegrationID)
+
+	var services []*cloudintegrationtypes.StorableCloudIntegrationService
+	err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service AS cis").
+		ColumnExpr("cis.*").
+		Join("JOIN cloud_integration AS ci ON ci.id = cis.cloud_integration_id").
+		Where("ci.org_id = ?", orgID).
+		Where("ci.provider = ?", provider).
+		Where("ci.removed_at IS NULL").
+		Where("ci.account_id IS NOT NULL").
+		Where("ci.last_agent_report IS NOT NULL").
+		Where("cis.cloud_integration_id != ?", cloudIntegrationID).
+		Where("cis.type IN (?)", ownTypes).
+		Scan(ctx, &services)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[cloudintegrationtypes.ServiceID][]*cloudintegrationtypes.StorableCloudIntegrationService)
+	for _, svc := range services {
+		result[svc.Type] = append(result[svc.Type], svc)
+	}
+	return result, nil
+}
+
 func (store *store) CreateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := store.
 		store.
@@ -200,6 +236,24 @@ func (store *store) CreateService(ctx context.Context, service *cloudintegration
 	return nil
 }
 
+func (store *store) DeleteServicesByCloudIntegrationID(ctx context.Context, orgID, cloudIntegrationID valuer.UUID) error {
+	cte := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("cloud_integration_service AS cis_inner").
+		ColumnExpr("cis_inner.id").
+		Join("JOIN cloud_integration AS ci ON cis_inner.cloud_integration_id = ci.id").
+		Where("ci.org_id = ?", orgID).
+		Where("cis_inner.cloud_integration_id = ?", cloudIntegrationID)
+
+	_, err := store.store.BunDBCtx(ctx).
+		NewDelete().
+		Model(new(cloudintegrationtypes.StorableCloudIntegrationService)).
+		With("target", cte).
+		Where("id IN (SELECT id FROM target)").
+		Exec(ctx)
+	return err
+}
+
 func (store *store) UpdateService(ctx context.Context, service *cloudintegrationtypes.StorableCloudIntegrationService) error {
 	_, err := store.
 		store.
@@ -209,6 +263,62 @@ func (store *store) UpdateService(ctx context.Context, service *cloudintegration
 		WherePK().
 		Where("cloud_integration_id = ?", service.CloudIntegrationID).
 		Where("type = ?", service.Type).
+		Exec(ctx)
+	return err
+}
+
+func (store *store) CreateIntegrationDashboard(ctx context.Context, integrationDashboard *cloudintegrationtypes.StorableIntegrationDashboard) error {
+	_, err := store.store.BunDBCtx(ctx).NewInsert().Model(integrationDashboard).Exec(ctx)
+	return err
+}
+
+func (store *store) GetIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) (*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	integrationDashboard := new(cloudintegrationtypes.StorableIntegrationDashboard)
+	err := store.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(integrationDashboard).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", provider).
+		Where("storable_integration_dashboard.slug = ?", slug).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.store.WrapNotFoundErrf(err, errors.CodeNotFound, "integration dashboard with slug %s not found", slug)
+	}
+	return integrationDashboard, nil
+}
+
+func (store *store) ListIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slugPrefix string) ([]*cloudintegrationtypes.StorableIntegrationDashboard, error) {
+	var integrationDashboards []*cloudintegrationtypes.StorableIntegrationDashboard
+	err := store.store.BunDBCtx(ctx).
+		NewSelect().
+		Model(&integrationDashboards).
+		Join("JOIN dashboard AS d ON storable_integration_dashboard.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("storable_integration_dashboard.provider = ?", provider).
+		Where("storable_integration_dashboard.slug LIKE ?", slugPrefix+"%").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return integrationDashboards, nil
+}
+
+func (store *store) DeleteIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.IntegrationDashboardProviderType, slug string) error {
+	cte := store.store.BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("integration_dashboard AS id_inner").
+		ColumnExpr("id_inner.id").
+		Join("JOIN dashboard AS d ON id_inner.dashboard_id = d.id").
+		Where("d.org_id = ?", orgID).
+		Where("id_inner.provider = ?", provider).
+		Where("id_inner.slug = ?", slug)
+
+	_, err := store.store.BunDBCtx(ctx).
+		NewDelete().
+		Model(new(cloudintegrationtypes.StorableIntegrationDashboard)).
+		With("target", cte).
+		Where("id IN (SELECT id FROM target)").
 		Exec(ctx)
 	return err
 }

@@ -60,6 +60,14 @@ web:
   index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
+  # Settings exposed to the web.
+  settings:
+    posthog:
+      # Whether to enable PostHog in web.
+      enabled: true
+    appcues:
+      # Whether to enable Appcues in web.
+      enabled: true
 
 ##################### Cache #####################
 cache:
