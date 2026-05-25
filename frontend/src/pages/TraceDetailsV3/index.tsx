@@ -430,8 +430,7 @@ function TraceDetailsV3(): JSX.Element {
 
 							{showRightDock && (
 								<ResizableBox
-									direction="horizontal"
-									handlePosition="start"
+									handle="left"
 									defaultWidth={rightDockWidth}
 									minWidth={RIGHT_DOCK_MIN}
 									maxWidth={RIGHT_DOCK_MAX}

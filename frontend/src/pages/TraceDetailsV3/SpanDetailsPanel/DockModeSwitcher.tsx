@@ -40,10 +40,6 @@ interface DockModeSwitcherProps {
 	tooltipClassName?: string;
 }
 
-// Icon-segmented control for picking the Span Details panel dock mode.
-// The inner <span> wrap is load-bearing: TooltipTrigger asChild clones its
-// child and merges its own data-state, which would otherwise clobber
-// ToggleGroupItem's data-state="on"/"off" active styling.
 function DockModeSwitcher({
 	value,
 	onChange,

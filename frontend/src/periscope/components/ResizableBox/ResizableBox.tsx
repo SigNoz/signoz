@@ -2,13 +2,15 @@ import { useCallback, useRef, useState } from 'react';
 
 import './ResizableBox.styles.scss';
 
+export type ResizableBoxHandle = 'top' | 'right' | 'bottom' | 'left';
+
 export interface ResizableBoxProps {
 	children: React.ReactNode;
-	direction?: 'vertical' | 'horizontal';
-	// Which edge the resize handle sits on. 'end' = bottom (vertical) or right
-	// (horizontal); 'start' = top or left. Dragging the start handle towards the
-	// content shrinks it; away grows it.
-	handlePosition?: 'start' | 'end';
+	// Which edge the resize handle sits on. The edge determines the axis:
+	// 'top'/'bottom' → vertical resize (height), 'left'/'right' → horizontal
+	// resize (width). Dragging the handle away from the content grows the box;
+	// dragging it toward the content shrinks it.
+	handle?: ResizableBoxHandle;
 	defaultHeight?: number;
 	minHeight?: number;
 	maxHeight?: number;
@@ -22,8 +24,7 @@ export interface ResizableBoxProps {
 
 function ResizableBox({
 	children,
-	direction = 'vertical',
-	handlePosition = 'end',
+	handle = 'bottom',
 	defaultHeight = 200,
 	minHeight = 50,
 	maxHeight = Infinity,
@@ -34,8 +35,8 @@ function ResizableBox({
 	disabled = false,
 	className,
 }: ResizableBoxProps): JSX.Element {
-	const isHorizontal = direction === 'horizontal';
-	const isStartHandle = handlePosition === 'start';
+	const isHorizontal = handle === 'left' || handle === 'right';
+	const isStartHandle = handle === 'top' || handle === 'left';
 	const [size, setSize] = useState(isHorizontal ? defaultWidth : defaultHeight);
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -87,11 +88,7 @@ function ResizableBox({
 		: isHorizontal
 			? { width: size }
 			: { height: size };
-	const handleClass = [
-		'resizable-box__handle',
-		`resizable-box__handle--${direction}`,
-		`resizable-box__handle--${direction}-${handlePosition}`,
-	].join(' ');
+	const handleClass = `resizable-box__handle resizable-box__handle--${handle}`;
 
 	return (
 		<div

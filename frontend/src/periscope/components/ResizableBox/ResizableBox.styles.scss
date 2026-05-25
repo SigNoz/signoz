@@ -23,34 +23,36 @@
 			background: var(--primary);
 		}
 
-		&--vertical {
+		&--top,
+		&--bottom {
 			left: 0;
 			right: 0;
 			height: 1px;
 			cursor: row-resize;
 		}
 
-		&--horizontal {
+		&--left,
+		&--right {
 			top: 0;
 			bottom: 0;
 			width: 1px;
 			cursor: col-resize;
 		}
 
-		&--vertical-end {
-			bottom: 0;
-		}
-
-		&--vertical-start {
+		&--top {
 			top: 0;
 		}
 
-		&--horizontal-end {
-			right: 0;
+		&--bottom {
+			bottom: 0;
 		}
 
-		&--horizontal-start {
+		&--left {
 			left: 0;
+		}
+
+		&--right {
+			right: 0;
 		}
 	}
 }
