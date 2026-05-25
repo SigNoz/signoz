@@ -111,5 +111,5 @@ jobs:
         run: cd frontend && pnpm install
       - name: generate-web-settings
         run: |
-          cd frontend && pnpm generate:settings:web
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated web settings types. Run pnpm generate:settings:web in frontend/ locally and commit."; exit 1)
+          cd frontend && pnpm generate:config:web-settings
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated web settings types. Run pnpm generate:config:web-settings in frontend/ locally and commit."; exit 1)

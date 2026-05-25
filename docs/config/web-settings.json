@@ -5,7 +5,7 @@
   ],
   "additionalProperties": false,
   "definitions": {
-    "WebAppcues": {
+    "Appcues": {
       "required": [
         "enabled"
       ],
@@ -17,7 +17,7 @@
       },
       "type": "object"
     },
-    "WebPosthog": {
+    "Posthog": {
       "required": [
         "enabled"
       ],
@@ -32,10 +32,10 @@
   },
   "properties": {
     "appcues": {
-      "$ref": "#/definitions/WebAppcues"
+      "$ref": "#/definitions/Appcues"
     },
     "posthog": {
-      "$ref": "#/definitions/WebPosthog"
+      "$ref": "#/definitions/Posthog"
     }
   },
   "type": "object"

@@ -1,12 +1,12 @@
-/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM docs/settings/web.json */
+/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM docs/config/web-settings.json */
 
-export interface Web {
-	appcues: WebAppcues;
-	posthog: WebPosthog;
+export interface WebSettings {
+	appcues: Appcues;
+	posthog: Posthog;
 }
-export interface WebAppcues {
+export interface Appcues {
 	enabled: boolean;
 }
-export interface WebPosthog {
+export interface Posthog {
 	enabled: boolean;
 }

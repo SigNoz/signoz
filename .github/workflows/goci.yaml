@@ -138,5 +138,5 @@ jobs:
           go-version: "1.24"
       - name: generate-web-settings
         run: |
-          go run cmd/enterprise/*.go generate settings web
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run cmd/enterprise/*.go generate settings web locally and commit."; exit 1)
+          go run cmd/enterprise/*.go generate config web-settings
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in web settings schema. Run go run cmd/enterprise/*.go generate config web-settings locally and commit."; exit 1)

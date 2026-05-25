@@ -4,32 +4,33 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/spf13/cobra"
 	"github.com/swaggest/jsonschema-go"
 )
 
-const webSettingsSchemaPath = "docs/settings/web.json"
+const webSettingsSchemaPath = "docs/config/web-settings.json"
 
-func registerGenerateSettings(parentCmd *cobra.Command) {
-	settingsCmd := &cobra.Command{
-		Use:   "settings",
-		Short: "Generate JSON Schema for settings",
+func registerGenerateConfig(parentCmd *cobra.Command) {
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Generate JSON Schema for config",
 	}
 
-	settingsCmd.AddCommand(&cobra.Command{
-		Use:   "web",
+	configCmd.AddCommand(&cobra.Command{
+		Use:   "web-settings",
 		Short: "Generate JSON Schema for web settings",
 		RunE: func(currCmd *cobra.Command, args []string) error {
-			return runGenerateWebSettings()
+			return generateWebSettings()
 		},
 	})
 
-	parentCmd.AddCommand(settingsCmd)
+	parentCmd.AddCommand(configCmd)
 }
 
-func runGenerateWebSettings() error {
+func generateWebSettings() error {
 	falseVal := false
 	noAdditional := jsonschema.SchemaOrBool{TypeBoolean: &falseVal}
 
@@ -40,6 +41,9 @@ func runGenerateWebSettings() error {
 				params.Schema.AdditionalProperties = &noAdditional
 			}
 			return false, nil
+		}),
+		jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
+			return strings.TrimPrefix(defaultDefName, "Web")
 		}),
 	)
 
