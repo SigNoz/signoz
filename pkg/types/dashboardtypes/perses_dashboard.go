@@ -52,10 +52,14 @@ type DashboardV2 struct {
 
 	OrgID  valuer.UUID     `json:"orgId"`
 	Locked bool            `json:"locked"`
+	Source Source          `json:"source"`
 	Data   DashboardV2Data `json:"data"`
 }
 
 func (d *DashboardV2) CanUpdate() error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
 	if d.Locked {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
 	}
@@ -73,6 +77,12 @@ func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string,
 	return nil
 }
 func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+	}
 	if d.CreatedBy != updatedBy && !isAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
@@ -113,7 +123,7 @@ type PostableDashboardV2 struct {
 	Spec     DashboardSpec               `json:"spec"`
 }
 
-func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string) *DashboardV2 {
+func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
 	now := time.Now()
 
 	return &DashboardV2{
@@ -121,7 +131,8 @@ func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID,
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
 		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
 		OrgID:         orgID,
-		Locked:        false,
+		Locked:        source == SourceIntegration,
+		Source:        source,
 		Data: DashboardV2Data{
 			Metadata: postable.Metadata.toDashboardV2Metadata(orgID),
 			Spec:     postable.Spec,
@@ -196,6 +207,7 @@ type GettableDashboardV2 struct {
 
 	OrgID  valuer.UUID             `json:"orgId"`
 	Locked bool                    `json:"locked"`
+	Source Source                  `json:"source"`
 	Data   GettableDashboardV2Data `json:"data"`
 }
 
@@ -223,6 +235,7 @@ func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 		UserAuditable: d.UserAuditable,
 		OrgID:         d.OrgID,
 		Locked:        d.Locked,
+		Source:        d.Source,
 		Data:          d.Data.toGettableDashboardData(),
 	}
 }
@@ -371,6 +384,7 @@ func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 		OrgID:         d.OrgID,
 		Locked:        d.Locked,
 		Data:          data,
+		Source:        d.Source,
 	}, nil
 }
 
@@ -393,6 +407,7 @@ func (storable StorableDashboard) ToDashboardV2(tags []*tagtypes.Tag) (*Dashboar
 		UserAuditable: storable.UserAuditable,
 		OrgID:         storable.OrgID,
 		Locked:        storable.Locked,
+		Source:        storable.Source,
 		Data:          stored.toDashboardV2Data(tags),
 	}, nil
 }
