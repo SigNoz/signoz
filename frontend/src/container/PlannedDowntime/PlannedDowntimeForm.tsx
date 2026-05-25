@@ -311,7 +311,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	const endTimeText = useMemo((): string => {
 		const endTime = formData.endTime;
@@ -322,7 +322,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	return (
 		<Modal
