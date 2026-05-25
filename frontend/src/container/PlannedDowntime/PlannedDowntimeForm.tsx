@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check } from '@signozhq/icons';
+import { Check, Info } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
@@ -11,6 +11,7 @@ import {
 	Select,
 	SelectProps,
 	Spin,
+	Tooltip,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -78,6 +79,7 @@ interface PlannedDowntimeFormData {
 	alertRules: DefaultOptionType[];
 	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
+	scope?: string;
 }
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
@@ -144,6 +146,7 @@ export function PlannedDowntimeForm(
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
+				scope: values.scope,
 				schedule: {
 					startTime: values.startTime?.format(),
 					endTime: values.endTime?.format(),
@@ -278,6 +281,7 @@ export function PlannedDowntimeForm(
 				duration: getDurationInfo(schedule?.recurrence?.duration)?.value ?? '',
 			} as AlertmanagertypesRecurrenceDTO,
 			timezone: schedule?.timezone as string,
+			scope: initialValues.scope || '',
 		};
 	}, [initialValues, alertOptions]);
 
@@ -311,7 +315,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	const endTimeText = useMemo((): string => {
 		const endTime = formData.endTime;
@@ -322,7 +326,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, timezone]);
+	}, [formData, recurrenceType]);
 
 	return (
 		<Modal
@@ -488,6 +492,36 @@ export function PlannedDowntimeForm(
 						</Select>
 					</Form.Item>
 				</div>
+				<Form.Item
+					label={
+						<span>
+							Scope&nbsp;
+							<Tooltip
+								mouseLeaveDelay={0.3}
+								title={
+									<span>
+										Scope the planned downtime by alert labels.{' '}
+										<a
+											href="https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Learn more
+										</a>
+									</span>
+								}
+							>
+								<Info size={13} />
+							</Tooltip>
+						</span>
+					}
+					name="scope"
+				>
+					<Input.TextArea
+						placeholder='e.g. env = "prod" AND region = "us-east-1"'
+						autoSize={{ minRows: 2, maxRows: 4 }}
+					/>
+				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
 						<Button
