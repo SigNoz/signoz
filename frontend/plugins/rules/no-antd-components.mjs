@@ -20,6 +20,7 @@ const BANNED_COMPONENTS = {
 	Dropdown:
 		'Use @signozhq/ui DropdownMenuSimple (or the composable DropdownMenu primitives) from @signozhq/ui/dropdown-menu instead of antd Dropdown.',
 	Badge: 'Use @signozhq/ui/badge instead of antd Badge.',
+	Progress: 'Use @signozhq/ui/progress instead of antd Progress.',
 };
 
 export default {
