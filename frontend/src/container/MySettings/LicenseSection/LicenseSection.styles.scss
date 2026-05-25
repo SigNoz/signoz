@@ -57,28 +57,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.license-section {
-		.license-section-header {
-			.license-section-title {
-				color: var(--l1-foreground);
-			}
-		}
-
-		.license-section-content {
-			.license-section-content-item {
-				border: 1px solid var(--l1-border);
-				background: var(--l1-background);
-
-				.license-section-content-item-title-action {
-					color: var(--l1-foreground);
-				}
-
-				.license-section-content-item-description {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-}

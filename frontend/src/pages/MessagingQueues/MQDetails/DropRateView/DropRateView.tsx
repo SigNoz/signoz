@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
@@ -19,6 +20,7 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { openInNewTab } from 'utils/navigation';
 
 import {
 	convertToMilliseconds,
@@ -93,7 +95,7 @@ export function getColumns(
 											key={item}
 											className="traceid-text"
 											onClick={(): void => {
-												window.open(`${ROUTES.TRACE}/${item}`, '_blank');
+												openInNewTab(`${ROUTES.TRACE}/${item}`);
 												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
 													item,
 												});
@@ -102,12 +104,12 @@ export function getColumns(
 											{item}
 										</Typography.Text>
 										{shouldShowMore && (
-											<Typography
+											<Typography.Text
 												onClick={(): void => handleShowMore(index)}
 												className="remaing-count"
 											>
 												+ {remainingCount} more
-											</Typography>
+											</Typography.Text>
 										)}
 									</div>
 								);
@@ -123,7 +125,7 @@ export function getColumns(
 						onClick={(e): void => {
 							e.preventDefault();
 							e.stopPropagation();
-							window.open(`/services/${encodeURIComponent(text)}`, '_blank');
+							openInNewTab(`/services/${encodeURIComponent(text)}`);
 						}}
 					>
 						{text}
@@ -183,9 +185,10 @@ function DropRateView(): JSX.Element {
 		[tableData],
 	);
 
-	const evaluationTime = useMemo(() => convertToMilliseconds(interval), [
-		interval,
-	]);
+	const evaluationTime = useMemo(
+		() => convertToMilliseconds(interval),
+		[interval],
+	);
 	const tableApiPayload: MessagingQueueServicePayload = useMemo(
 		() => ({
 			start: minTime,

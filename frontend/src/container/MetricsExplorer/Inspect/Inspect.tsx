@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
+import { Button, Drawer, Empty, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -10,7 +11,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -35,20 +36,14 @@ function Inspect({
 	onClose,
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [currentMetricName, setCurrentMetricName] = useState<string>(
-		defaultMetricName,
-	);
-	const [appliedMetricName, setAppliedMetricName] = useState<string>(
-		defaultMetricName,
-	);
-	const [
-		popoverOptions,
-		setPopoverOptions,
-	] = useState<GraphPopoverOptions | null>(null);
-	const [
-		expandedViewOptions,
-		setExpandedViewOptions,
-	] = useState<GraphPopoverOptions | null>(null);
+	const [currentMetricName, setCurrentMetricName] =
+		useState<string>(defaultMetricName);
+	const [appliedMetricName, setAppliedMetricName] =
+		useState<string>(defaultMetricName);
+	const [popoverOptions, setPopoverOptions] =
+		useState<GraphPopoverOptions | null>(null);
+	const [expandedViewOptions, setExpandedViewOptions] =
+		useState<GraphPopoverOptions | null>(null);
 	const [showExpandedView, setShowExpandedView] = useState(false);
 
 	const { data: metricDetailsData } = useGetMetricMetadata(
@@ -144,13 +139,15 @@ function Inspect({
 		[dispatchMetricInspectionOptions],
 	);
 
-	const selectedMetricType = useMemo(() => metricDetailsData?.data?.type, [
-		metricDetailsData,
-	]);
+	const selectedMetricType = useMemo(
+		() => metricDetailsData?.data?.type,
+		[metricDetailsData],
+	);
 
-	const selectedMetricUnit = useMemo(() => metricDetailsData?.data?.unit, [
-		metricDetailsData,
-	]);
+	const selectedMetricUnit = useMemo(
+		() => metricDetailsData?.data?.unit,
+		[metricDetailsData],
+	);
 
 	const aggregateAttribute = useMemo(
 		() => ({

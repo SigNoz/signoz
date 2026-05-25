@@ -15,8 +15,8 @@ import {
 	Skeleton,
 	Space,
 	Tabs,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -24,11 +24,12 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { CircleArrowRight } from 'lucide-react';
+import { CircleArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -43,12 +44,8 @@ import {
 import './WorkspaceLocked.styles.scss';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const {
-		user,
-		isFetchingActiveLicense,
-		trialInfo,
-		activeLicense,
-	} = useAppContext();
+	const { user, isFetchingActiveLicense, trialInfo, activeLicense } =
+		useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 	const { safeNavigate } = useSafeNavigate();
@@ -115,7 +112,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [updateCreditCard]);
 
@@ -337,7 +334,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										<Typography.Title level={2}>
 											<div className="workspace-locked__title">Upgrade to Continue</div>
 										</Typography.Title>
-										<Typography.Paragraph className="workspace-locked__details">
+										<Typography.Text className="workspace-locked__details">
 											{t('upgradeNow')}
 											<br />
 											{t('yourDataIsSafe')}{' '}
@@ -345,7 +342,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>

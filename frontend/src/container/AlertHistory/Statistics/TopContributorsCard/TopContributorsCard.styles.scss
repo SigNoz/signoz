@@ -45,6 +45,10 @@
 	.contributors-row {
 		height: 80px;
 	}
+	.top-contributors-progress {
+		--progress-background: transparent;
+	}
+
 	&__content {
 		.ant-table {
 			&-cell {
@@ -156,10 +160,4 @@
 
 .view-all-drawer {
 	border-radius: 4px;
-}
-
-.lightMode {
-	.ant-table {
-		background: inherit;
-	}
 }

@@ -250,17 +250,20 @@ type EvaluationEnvelope struct {
 
 // evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.
 type evaluationRolling struct {
-	Kind EvaluationKind `json:"kind" description:"The kind of evaluation."`
-	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification."`
+	Kind EvaluationKind `json:"kind" description:"The kind of evaluation." required:"true"`
+	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification." required:"true"`
 }
 
 // evaluationCumulative is the OpenAPI schema for an EvaluationEnvelope with kind=cumulative.
 type evaluationCumulative struct {
-	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation."`
-	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification."`
+	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation." required:"true"`
+	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification." required:"true"`
 }
 
-var _ jsonschema.OneOfExposer = EvaluationEnvelope{}
+var (
+	_ jsonschema.OneOfExposer = EvaluationEnvelope{}
+	_ jsonschema.Preparer     = EvaluationEnvelope{}
+)
 
 // JSONSchemaOneOf returns the oneOf variants for the EvaluationEnvelope discriminated union.
 // Each variant represents a different evaluation kind with its corresponding spec schema.
@@ -269,6 +272,22 @@ func (EvaluationEnvelope) JSONSchemaOneOf() []any {
 		evaluationRolling{},
 		evaluationCumulative{},
 	}
+}
+
+func (EvaluationEnvelope) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			"rolling":    "#/components/schemas/RuletypesEvaluationRolling",
+			"cumulative": "#/components/schemas/RuletypesEvaluationCumulative",
+		},
+	}
+
+	return nil
 }
 
 func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {

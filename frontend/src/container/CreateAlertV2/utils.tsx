@@ -55,9 +55,10 @@ export function getColorForThreshold(thresholdLabel: string): string {
 	return getRandomColor();
 }
 
-export function parseGoTime(
-	input: string,
-): { time: number; unit: UniversalYAxisUnit } {
+export function parseGoTime(input: string): {
+	time: number;
+	unit: UniversalYAxisUnit;
+} {
 	const regex = /(\d+)([hms])/g;
 	const matches = [...input.matchAll(regex)];
 
@@ -349,9 +350,8 @@ export function getCreateAlertLocalStateFromAlertDef(
 
 	const evaluationWindowState = getEvaluationWindowStateFromAlertDef(alertDef);
 
-	const notificationSettingsState = getNotificationSettingsStateFromAlertDef(
-		alertDef,
-	);
+	const notificationSettingsState =
+		getNotificationSettingsStateFromAlertDef(alertDef);
 
 	return {
 		basic: basicAlertState,

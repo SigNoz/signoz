@@ -37,23 +37,24 @@ function LogsExplorerChart({
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
-		(element, index, allLabels) => ({
-			data: element,
-			backgroundColor: isLogsExplorerViews
-				? getColorsForSeverityLabels(allLabels[index], index)
-				: colors[index % colors.length] || themeColors.red,
-			borderColor: isLogsExplorerViews
-				? getColorsForSeverityLabels(allLabels[index], index)
-				: colors[index % colors.length] || themeColors.red,
-			...(isLabelEnabled
-				? {
-						label: allLabels[index],
-				  }
-				: {}),
-		}),
-		[isLabelEnabled, isLogsExplorerViews],
-	);
+	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] =
+		useCallback(
+			(element, index, allLabels) => ({
+				data: element,
+				backgroundColor: isLogsExplorerViews
+					? getColorsForSeverityLabels(allLabels[index], index)
+					: colors[index % colors.length] || themeColors.red,
+				borderColor: isLogsExplorerViews
+					? getColorsForSeverityLabels(allLabels[index], index)
+					: colors[index % colors.length] || themeColors.red,
+				...(isLabelEnabled
+					? {
+							label: allLabels[index],
+						}
+					: {}),
+			}),
+			[isLabelEnabled, isLogsExplorerViews],
+		);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {

@@ -1,10 +1,12 @@
-import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './CreateEdit.styles.scss';
+import { Key, SolidGoogle } from '@signozhq/icons';
 
 interface AuthNProvider {
-	key: string;
+	key: AuthtypesAuthNProviderDTO;
 	title: string;
 	description: string;
 	icon: JSX.Element;
@@ -14,27 +16,27 @@ interface AuthNProvider {
 function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 	return [
 		{
-			key: 'google_auth',
+			key: AuthtypesAuthNProviderDTO.google_auth,
 			title: 'Google Apps Authentication',
 			description: 'Let members sign-in with a Google workspace account',
-			icon: <GoogleSquareFilled style={{ fontSize: '37px' }} />,
+			icon: <SolidGoogle size={37} />,
 			enabled: true,
 		},
 		{
-			key: 'saml',
+			key: AuthtypesAuthNProviderDTO.saml,
 			title: 'SAML Authentication',
 			description:
 				'Azure, Active Directory, Okta or your custom SAML 2.0 solution',
-			icon: <KeyOutlined style={{ fontSize: '37px' }} />,
+			icon: <Key size={37} />,
 			enabled: samlEnabled,
 		},
 
 		{
-			key: 'oidc',
+			key: AuthtypesAuthNProviderDTO.oidc,
 			title: 'OIDC Authentication',
 			description:
 				'Authenticate using OpenID Connect providers like Azure, Active Directory, Okta, or other OIDC compliant solutions',
-			icon: <KeyOutlined style={{ fontSize: '37px' }} />,
+			icon: <Key size={37} />,
 			enabled: samlEnabled,
 		},
 	];
@@ -44,7 +46,9 @@ function AuthnProviderSelector({
 	setAuthnProvider,
 	samlEnabled,
 }: {
-	setAuthnProvider: React.Dispatch<React.SetStateAction<string>>;
+	setAuthnProvider: React.Dispatch<
+		React.SetStateAction<AuthtypesAuthNProviderDTO | ''>
+	>;
 	samlEnabled: boolean;
 }): JSX.Element {
 	const authnProviders = getAuthNProviders(samlEnabled);
@@ -54,10 +58,10 @@ function AuthnProviderSelector({
 				<Typography.Title level={4}>
 					Configure Authentication Method
 				</Typography.Title>
-				<Typography.Paragraph italic>
+				<Typography.Text italic>
 					SigNoz supports the following single sign-on services (SSO). Get started
 					with setting your project’s SSO below
-				</Typography.Paragraph>
+				</Typography.Text>
 			</section>
 			<section className="selector">
 				{authnProviders.map((provider) => {
@@ -67,9 +71,9 @@ function AuthnProviderSelector({
 								<span className="icon">{provider.icon}</span>
 								<div className="title-description">
 									<Typography.Text className="title">{provider.title}</Typography.Text>
-									<Typography.Paragraph className="description">
+									<Typography.Text className="description">
 										{provider.description}
-									</Typography.Paragraph>
+									</Typography.Text>
 								</div>
 								<Button
 									onClick={(): void => setAuthnProvider(provider.key)}

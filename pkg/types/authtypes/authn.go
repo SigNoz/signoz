@@ -156,6 +156,15 @@ func (typ *Identity) ToClaims() Claims {
 	}
 }
 
+func (AuthNProvider) Enum() []any {
+	return []any{
+		AuthNProviderGoogleAuth,
+		AuthNProviderSAML,
+		AuthNProviderEmailPassword,
+		AuthNProviderOIDC,
+	}
+}
+
 type AuthNStore interface {
 	// Get user and factor password by email and orgID.
 	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, []*UserRole, error)

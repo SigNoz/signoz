@@ -29,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
@@ -41,19 +40,24 @@ import (
 
 const (
 	Integration = "email"
+
+	// alertEmailLayoutTemplate is the name of the HTML layout template that
+	// wraps the rendered alert bodies. It is loaded into the notification
+	// template (n.tmpl) from the alertmanager templates config and lives at
+	// templates/alertmanager/email.gotmpl.
+	alertEmailLayoutTemplate = "email.signoz.html"
 )
 
 // Email implements a Notifier for email notifications.
 type Email struct {
-	conf          *config.EmailConfig
-	tmpl          *template.Template
-	logger        *slog.Logger
-	hostname      string
-	templater     alertmanagertypes.Templater
-	templateStore emailtypes.TemplateStore
+	conf      *config.EmailConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	hostname  string
+	templater alertmanagertypes.Templater
 }
 
-// layoutData is the value passed to the alert_email_notification layout
+// layoutData is the value passed to the email.signoz.html layout
 // template. It embeds NotificationTemplateData so templates can reference
 // `.Alert.Status`, `.Alert.TotalFiring`, `.Alert.TotalResolved`,
 // `.NotificationTemplateData.ExternalURL`, etc. alongside the rendered
@@ -66,9 +70,9 @@ type layoutData struct {
 
 var errNoAuthUsernameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
 
-// New returns a new Email notifier. templateStore may be nil; in that case
-// custom-body alerts fall back to plain <div>-wrapped HTML.
-func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, templateStore emailtypes.TemplateStore) *Email {
+// New returns a new Email notifier. When the email.signoz.html layout is
+// not defined in t, custom-body alerts fall back to plain <div>-wrapped HTML.
+func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) *Email {
 	if _, ok := c.Headers["Subject"]; !ok {
 		c.Headers["Subject"] = config.DefaultEmailSubject
 	}
@@ -84,7 +88,7 @@ func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater 
 	if err != nil {
 		h = "localhost.localdomain"
 	}
-	return &Email{conf: c, tmpl: t, logger: l, hostname: h, templater: templater, templateStore: templateStore}
+	return &Email{conf: c, tmpl: t, logger: l, hostname: h, templater: templater}
 }
 
 // auth resolves a string of authentication mechanisms.
@@ -220,9 +224,9 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	if ok, mech := c.Extension("AUTH"); ok {
 		auth, err := n.auth(mech)
-		if err != nil && err != errNoAuthUsernameConfigured {
+		if err != nil && !errors.Is(err, errNoAuthUsernameConfigured) {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
-		} else if err == errNoAuthUsernameConfigured {
+		} else if errors.Is(err, errNoAuthUsernameConfigured) {
 			n.logger.DebugContext(ctx, "no auth username configured. Attempting to send email without authenticating")
 		}
 		if auth != nil {
@@ -266,11 +270,11 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		}
 	}
 
-	// Prepare the content for the email. customSubject, when non-empty, overrides
+	// Prepare the content for the email. subject, when non-empty, overrides
 	// the configured Subject header for this notification only. We deliberately
 	// do not mutate n.conf.Headers here: the config map is shared across
 	// concurrent notifications to the same receiver.
-	customSubject, htmlBody, err := n.prepareContent(ctx, as, data)
+	subject, htmlBody, err := n.prepareContent(ctx, as)
 	if err != nil {
 		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
@@ -293,8 +297,8 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 	buffer := &bytes.Buffer{}
 	for header, t := range n.conf.Headers {
-		if header == "Subject" && customSubject != "" {
-			fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", customSubject))
+		if header == "Subject" {
+			fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", subject))
 			continue
 		}
 		value, err := n.tmpl.ExecuteTextString(t, data)
@@ -415,32 +419,24 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 // prepareContent returns a subject override (empty when the default config
 // Subject should be used) and the HTML body for the email. Callers must treat
 // the subject as local state and never write it back to n.conf.Headers.
-func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data *template.Data) (string, string, error) {
+func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (string, string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Headers["Subject"],
-		// The email body's default path uses the configured HTML template
-		// verbatim (n.conf.HTML below). Leave DefaultBodyTemplate empty so
-		// the templater produces a single empty default body we ignore.
-		DefaultBodyTemplate: "",
+		DefaultBodyTemplate:  n.conf.HTML,
 	}, alerts)
 	if err != nil {
 		return "", "", err
 	}
 
-	// subject == "" signals "use the configured Subject header"; Notify then
-	// runs it through the normal header template pipeline.
-	subject := ""
-	if customTitle != "" {
-		subject = result.Title
-	}
+	subject := result.Title
 
 	if !result.IsDefaultBody {
 		// Custom-body path: render each expanded markdown body to HTML, then
-		// wrap the whole thing in the alert_email_notification layout (or fall
-		// back to plain <div> wrapping when the template store is absent).
+		// wrap the whole thing in the email.signoz.html layout (or fall
+		// back to plain <div> wrapping when the layout template is not loaded).
 		for i, body := range result.Body {
 			if body == "" {
 				continue
@@ -452,7 +448,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 			result.Body[i] = rendered
 		}
 		appendRelatedLinkButtons(alerts, result.Body)
-		html, err := n.renderLayout(ctx, result)
+		html, err := n.renderLayout(result)
 		if err != nil {
 			n.logger.WarnContext(ctx, "custom email template rendering failed, falling back to plain <div> wrap", errors.Attr(err))
 			return subject, wrapBodiesAsDivs(result.Body), nil
@@ -460,28 +456,14 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert, data 
 		return subject, html, nil
 	}
 
-	// Default-body path: use the HTML config template if available.
-	if len(n.conf.HTML) > 0 {
-		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
-		if err != nil {
-			return "", "", errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
-		}
-		return subject, body, nil
-	}
-	return subject, "", nil
+	return subject, result.Body[0], nil
 }
 
-// renderLayout wraps result in the alert_email_notification HTML layout.
-// Returns an error when the store has no such template (e.g. in tests using
-// an empty store) so prepareContent can fall back to plain <div> wrapping.
-func (n *Email) renderLayout(ctx context.Context, result *alertmanagertypes.ExpandResult) (string, error) {
-	if n.templateStore == nil {
-		return "", errors.NewInternalf(errors.CodeInternal, "no email template store configured")
-	}
-	layout, err := n.templateStore.Get(ctx, emailtypes.TemplateNameAlertEmailNotification)
-	if err != nil {
-		return "", err
-	}
+// renderLayout wraps result in the email.signoz.html HTML layout loaded
+// into n.tmpl from the alertmanager templates config. Returns an error when the
+// layout template is not defined (e.g. in tests where no templates are loaded)
+// so prepareContent can fall back to plain <div> wrapping.
+func (n *Email) renderLayout(result *alertmanagertypes.ExpandResult) (string, error) {
 	bodies := make([]htmltemplate.HTML, 0, len(result.Body))
 	for _, b := range result.Body {
 		bodies = append(bodies, htmltemplate.HTML(b))
@@ -490,11 +472,11 @@ func (n *Email) renderLayout(ctx context.Context, result *alertmanagertypes.Expa
 	if result.NotificationData != nil {
 		data.NotificationTemplateData = *result.NotificationData
 	}
-	var buf bytes.Buffer
-	if err := layout.Execute(&buf, data); err != nil {
+	html, err := n.tmpl.ExecuteHTMLString(`{{ template "`+alertEmailLayoutTemplate+`" . }}`, data)
+	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to render email layout")
 	}
-	return buf.String(), nil
+	return html, nil
 }
 
 // appendRelatedLinkButtons appends "View Related Logs/Traces" buttons to each

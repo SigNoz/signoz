@@ -19,9 +19,8 @@ function ApDexApplication({
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { notifications } = useNotifications();
 
-	const { data, isLoading, error, isRefetching } = useGetApDexSettings(
-		servicename,
-	);
+	const { data, isLoading, error, isRefetching } =
+		useGetApDexSettings(servicename);
 
 	useEffect(() => {
 		if (error) {

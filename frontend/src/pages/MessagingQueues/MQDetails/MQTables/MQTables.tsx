@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Skeleton, Table, Typography } from 'antd';
+import { Skeleton, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	MessagingQueueServicePayload,
@@ -52,7 +53,7 @@ export function getColumns(
 		? [
 				...(data?.result?.[0]?.table?.columns || []),
 				{ name: 'byte_rate', queryName: 'byte_rate' },
-		  ]
+			]
 		: data?.result?.[0]?.table?.columns;
 
 	const columns: {
@@ -81,7 +82,7 @@ export function getColumns(
 									e.preventDefault();
 									e.stopPropagation();
 									const path = `/services/${encodeURIComponent(text)}`;
-									if (isModifierKeyPressed(e)) {
+									if (isModifierKeyPressed(e as React.MouseEvent)) {
 										openInNewTab(path);
 									} else {
 										history.push(path);
@@ -93,7 +94,7 @@ export function getColumns(
 						) : (
 							<Typography.Text>{text}</Typography.Text>
 						),
-			  }),
+				}),
 	}));
 
 	return columns;
@@ -168,9 +169,10 @@ function MessagingQueuesTable({
 
 	const configDetailQueryData: {
 		[key: string]: string;
-	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
-		configDetails,
-	]);
+	} = useMemo(
+		() => (configDetails ? JSON.parse(configDetails) : {}),
+		[configDetails],
+	);
 
 	const paginationConfig = useMemo(
 		() =>
@@ -197,22 +199,24 @@ function MessagingQueuesTable({
 		[type, selectedView, tableApiPayload],
 	);
 
-	const { mutate: getViewDetails, isLoading, error, isError } = useMutation(
-		tableApi,
-		{
-			onSuccess: (data) => {
-				if (data.payload) {
-					setColumns(getColumns(data?.payload, history, isProducerOverview));
-					setTableData(
-						isProducerOverview
-							? getTableDataForProducerLatencyOverview(data?.payload)
-							: getTableData(data?.payload),
-					);
-				}
-			},
-			onError: handleConsumerDetailsOnError,
+	const {
+		mutate: getViewDetails,
+		isLoading,
+		error,
+		isError,
+	} = useMutation(tableApi, {
+		onSuccess: (data) => {
+			if (data.payload) {
+				setColumns(getColumns(data?.payload, history, isProducerOverview));
+				setTableData(
+					isProducerOverview
+						? getTableDataForProducerLatencyOverview(data?.payload)
+						: getTableData(data?.payload),
+				);
+			}
 		},
-	);
+		onError: handleConsumerDetailsOnError,
+	});
 
 	useEffect(
 		() => {
@@ -263,10 +267,10 @@ function MessagingQueuesTable({
 		selectedView === MessagingQueuesViewType.consumerLag.value
 			? `${timelineQueryData?.group || ''} ${timelineQueryData?.topic || ''} ${
 					timelineQueryData?.partition || ''
-			  }`
+				}`
 			: `${configDetailQueryData?.service_name || ''} ${
 					configDetailQueryData?.topic || ''
-			  } ${configDetailQueryData?.partition || ''}`;
+				} ${configDetailQueryData?.partition || ''}`;
 
 	const prevTableDataRef = useRef<string>();
 
@@ -343,7 +347,7 @@ function MessagingQueuesTable({
 							type !== 'Detail'
 								? {
 										onClick: (): void => onRowClick(record),
-								  }
+									}
 								: {}
 						}
 						rowClassName={(record): any =>

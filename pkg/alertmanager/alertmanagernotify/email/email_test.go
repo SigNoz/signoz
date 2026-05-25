@@ -19,10 +19,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/emersion/go-smtp"
 	commoncfg "github.com/prometheus/common/config"
@@ -51,13 +49,6 @@ const (
 // testTemplater returns a Templater bound to tmpl with a discard logger.
 func testTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
-}
-
-// testEmptyStore returns an email template store with no templates. When the
-// email notifier tries to render the alert_email_notification layout against
-// this, the Get call fails and prepareContent falls back to plain <div> wrap.
-func testEmptyStore() emailtypes.TemplateStore {
-	return filetemplatestore.NewEmptyStore()
 }
 
 // email represents an email returned by the MailDev REST API.
@@ -180,7 +171,7 @@ func notifyEmailWithContext(ctx context.Context, t *testing.T, cfg *config.Email
 		return nil, false, err
 	}
 
-	email := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+	email := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 	retry, err := email.Notify(ctx, firingAlert)
 	if err != nil {
@@ -724,7 +715,7 @@ func TestEmailRejected(t *testing.T) {
 	tmpl, firingAlert, err := prepare(cfg)
 	require.NoError(t, err)
 
-	e := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+	e := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
@@ -1049,7 +1040,7 @@ func TestEmailImplicitTLS(t *testing.T) {
 }
 
 func TestPrepareContent(t *testing.T) {
-	t.Run("custom template", func(t *testing.T) {
+	t.Run("default title template; custom body template", func(t *testing.T) {
 		tmpl, err := template.FromGlobs([]string{})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
@@ -1078,16 +1069,16 @@ func TestPrepareContent(t *testing.T) {
 		alerts := []*types.Alert{a1, a2}
 
 		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "subj"}}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		ctx := context.Background()
-		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
-		_, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
+		require.Equal(t, "subj", subject)
 		require.Equal(t, "<div><p>line one</p>\n</div><div><p>line two</p>\n</div>", htmlBody)
 	})
 
-	t.Run("default template with HTML and custom title template", func(t *testing.T) {
+	t.Run("custom title template; default body HTML template", func(t *testing.T) {
 		tmpl, err := template.FromGlobs([]string{})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
@@ -1107,14 +1098,12 @@ func TestPrepareContent(t *testing.T) {
 			Headers: map[string]string{},
 			HTML:    "Status: {{ .Status }}",
 		}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		ctx := context.Background()
-		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
-		subject, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
 		require.Equal(t, "Status: firing", htmlBody)
-		// custom title supplied → prepareContent returns a subject override.
 		require.Equal(t, "fixed from firing", subject)
 	})
 
@@ -1123,7 +1112,7 @@ func TestPrepareContent(t *testing.T) {
 		tmpl, err := template.FromGlobs([]string{})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		firingAlert := &types.Alert{
 			Alert: model.Alert{
@@ -1134,14 +1123,48 @@ func TestPrepareContent(t *testing.T) {
 		}
 		alerts := []*types.Alert{firingAlert}
 		ctx := context.Background()
-		data := notify.GetTemplateData(ctx, tmpl, alerts, n.logger)
-		subject, htmlBody, err := n.prepareContent(ctx, alerts, data)
+		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
 		require.Equal(t, "", htmlBody)
-		// No custom title annotation → empty subject signals "use the configured
-		// Subject header", which Notify then runs through the normal header
-		// template pipeline.
-		require.Equal(t, "", subject)
+		require.Equal(t, "the email subject", subject)
+	})
+
+	t.Run("custom title template; custom body template", func(t *testing.T) {
+		// Load the email.signoz.html layout into the notification template
+		// the same way the alertmanager server does via the templates config.
+		tmpl, err := template.FromGlobs([]string{"../../../../templates/alertmanager/*.gotmpl"})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+
+		firingAlert := &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					model.LabelName("instance"): model.LabelValue("two"),
+				},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationTitleTemplate): model.LabelValue("fixed from $alert.status"),
+					model.LabelName(ruletypes.AnnotationBodyTemplate):  model.LabelValue("line $labels.instance"),
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}
+		alerts := []*types.Alert{firingAlert}
+		cfg := &config.EmailConfig{
+			Headers: map[string]string{"Subject": "subject"},
+			HTML:    "Well, what are you?",
+		}
+
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
+
+		ctx := context.Background()
+		subject, htmlBody, err := n.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.Contains(t, htmlBody, "<!DOCTYPE html>")
+		require.Contains(t, htmlBody, "<p>line two</p>")
+		require.NotContains(t, htmlBody, "Well, what are you?")
+		require.Equal(t, subject, "fixed from firing")
+		require.NotContains(t, subject, "subject")
 	})
 }
 

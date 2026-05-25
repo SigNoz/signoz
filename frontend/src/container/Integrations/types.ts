@@ -4,8 +4,8 @@ import {
 } from './CloudIntegration/AmazonWebServices/types';
 
 export enum IntegrationType {
-	AWS_SERVICES = 'aws-services',
-	AZURE_SERVICES = 'azure-services',
+	AWS_SERVICES = 'aws',
+	AZURE_SERVICES = 'azure',
 }
 
 interface LogField {
@@ -89,6 +89,7 @@ export interface CloudAccount {
 	cloud_account_id: string;
 	config: AzureCloudAccountConfig | AWSCloudAccountConfig;
 	status: AccountStatus | IServiceStatus;
+	providerAccountId: string;
 }
 
 export interface AzureCloudAccountConfig {

@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import YAxisUnitSelectorComponent from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
@@ -24,9 +24,8 @@ function DashboardYAxisUnitSelectorWrapper({
 	selectedQueryName?: string;
 	'data-testid'?: string;
 }): JSX.Element {
-	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
-		selectedQueryName,
-	);
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
 
 	useEffect(() => {
 		if (shouldUpdateYAxisUnit) {

@@ -73,7 +73,7 @@ function FilterInput({ fieldData }: FilterInputProps): JSX.Element {
 			name={fieldData.name}
 		>
 			{/* Antd form will supply value and onChange here.
-      // @ts-ignore */}
+      // @ts-expect-error */}
 			<TagFilterInputWithLogsResultPreview
 				placeholder={t(fieldData.placeholder)}
 			/>

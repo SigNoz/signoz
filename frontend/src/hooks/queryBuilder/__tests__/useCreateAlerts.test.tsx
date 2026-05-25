@@ -70,7 +70,7 @@ const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>;
 const mockUseSelector = useSelector as jest.MockedFunction<typeof useSelector>;
 
 const buildWidget = (queryType: EQueryType | undefined): Widgets =>
-	(({
+	({
 		id: 'widget-1',
 		panelTypes: 'graph',
 		timePreferance: 'GLOBAL_TIME',
@@ -82,7 +82,7 @@ const buildWidget = (queryType: EQueryType | undefined): Widgets =>
 			promql: [],
 			id: 'q-1',
 		},
-	} as unknown) as Widgets);
+	}) as unknown as Widgets;
 
 const getCompositeQueryFromLastOpen = (): Record<string, unknown> => {
 	const [url] = (window.open as jest.Mock).mock.calls[0];
@@ -105,11 +105,11 @@ describe('useCreateAlerts', () => {
 
 		mockUseSelector.mockReturnValue({ selectedTime: '1h' });
 
-		mockUseMutation.mockReturnValue(({
+		mockUseMutation.mockReturnValue({
 			mutate: jest.fn((_payload, opts) => {
 				capturedOnSuccess = opts?.onSuccess ?? null;
 			}),
-		} as unknown) as ReturnType<typeof useMutation>);
+		} as unknown as ReturnType<typeof useMutation>);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(window as any).open = jest.fn();
@@ -189,9 +189,9 @@ describe('useCreateAlerts', () => {
 			result.current();
 		});
 
-		const mutateCalls = (mockUseMutation.mock.results[0].value as ReturnType<
-			typeof useMutation
-		>).mutate as jest.Mock;
+		const mutateCalls = (
+			mockUseMutation.mock.results[0].value as ReturnType<typeof useMutation>
+		).mutate as jest.Mock;
 		expect(mutateCalls).not.toHaveBeenCalled();
 	});
 });

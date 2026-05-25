@@ -68,6 +68,10 @@
 				border-left: unset;
 				border-radius: 0px 4px 4px 0px;
 			}
+
+			.new-view-btn {
+				margin-left: 8px;
+			}
 		}
 
 		.second-row {
@@ -167,7 +171,11 @@
 				color: var(--l1-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+				font-feature-settings:
+					'case' on,
+					'cpsp' on,
+					'dlig' on,
+					'salt' on;
 				font-family: Inter;
 				font-size: 20px;
 				font-style: normal;

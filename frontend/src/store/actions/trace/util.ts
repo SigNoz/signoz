@@ -52,10 +52,13 @@ export const updateURL = (
 		}
 	});
 
-	const preResultParams = preResult.reduce((acc, item) => {
-		acc[item.key] = item.value;
-		return acc;
-	}, {} as Record<string, string>);
+	const preResultParams = preResult.reduce(
+		(acc, item) => {
+			acc[item.key] = item.value;
+			return acc;
+		},
+		{} as Record<string, string>,
+	);
 
 	const queryParams = {
 		selected: JSON.stringify(Object.fromEntries(selectedFilter)),
@@ -70,7 +73,7 @@ export const updateURL = (
 		userSelectedFilter: JSON.stringify(Object.fromEntries(userSelectedFilter)),
 	};
 	history.replace(
-		`${window.location.pathname}?${createQueryParams(queryParams)}`,
+		`${history.location.pathname}?${createQueryParams(queryParams)}`,
 	);
 };
 

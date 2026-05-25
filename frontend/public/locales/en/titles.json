@@ -76,5 +76,6 @@
 	"METER": "SigNoz | Meter",
 	"ROLES_SETTINGS": "SigNoz | Roles",
 	"MEMBERS_SETTINGS": "SigNoz | Members",
-	"SERVICE_ACCOUNTS_SETTINGS": "SigNoz | Service Accounts"
+	"SERVICE_ACCOUNTS_SETTINGS": "SigNoz | Service Accounts",
+	"MCP_SERVER": "SigNoz | MCP Server"
 }

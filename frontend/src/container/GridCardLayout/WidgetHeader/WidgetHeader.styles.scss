@@ -26,10 +26,13 @@
 	gap: 8px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	flex: 1;
+	min-width: 0;
 }
 
 .widget-header-title {
 	max-width: 80%;
+	min-width: 0;
 }
 
 .widget-header-actions {
@@ -53,14 +56,6 @@
 
 .widget-api-actions {
 	padding-right: 0.25rem;
-}
-
-.lightMode {
-	.widget-header-container {
-		.ant-input-group-addon {
-			background-color: inherit;
-		}
-	}
 }
 
 .long-tooltip {

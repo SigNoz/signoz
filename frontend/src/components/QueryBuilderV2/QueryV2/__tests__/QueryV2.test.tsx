@@ -94,13 +94,12 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			},
 		};
 
-		const updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'] = (
-			q,
-		) => q;
+		const updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'] =
+			(q) => q;
 		const updateQueriesData: QueryBuilderContextType['updateQueriesData'] = (q) =>
 			q;
 
-		const baseContext = ({
+		const baseContext = {
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
@@ -133,7 +132,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			initQueryBuilderData: jest.fn(),
 			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
-		} as unknown) as QueryBuilderContextType;
+		} as unknown as QueryBuilderContextType;
 
 		baseQBContext = baseContext;
 		mockedUseQueryBuilder.mockReturnValue(baseQBContext);
@@ -149,7 +148,8 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			handleChangeAggregatorAttribute: jest.fn(),
 			handleChangeDataSource: jest.fn(),
 			handleDeleteQuery: jest.fn(),
-			handleChangeQueryData: (jest.fn() as unknown) as ReturnType<UseQueryOperations>['handleChangeQueryData'],
+			handleChangeQueryData:
+				jest.fn() as unknown as ReturnType<UseQueryOperations>['handleChangeQueryData'],
 			handleChangeFormulaData: jest.fn(),
 			handleQueryFunctionsUpdates: handleQueryFunctionsUpdatesMock,
 			listOfAdditionalFormulaFilters: [],

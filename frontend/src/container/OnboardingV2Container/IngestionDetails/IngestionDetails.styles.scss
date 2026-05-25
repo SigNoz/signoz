@@ -17,17 +17,3 @@
 		color: var(--l2-foreground);
 	}
 }
-
-.lightMode {
-	.ingestion-url-error-tooltip {
-		.ingestion-url-error-content {
-			.ingestion-url-error-code {
-				color: var(--bg-amber-500);
-			}
-		}
-
-		.ingestion-url-error-message {
-			color: var(--l1-foreground);
-		}
-	}
-}

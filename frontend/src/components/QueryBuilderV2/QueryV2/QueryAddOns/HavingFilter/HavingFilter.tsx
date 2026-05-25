@@ -17,7 +17,7 @@ import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 const havingOperators = [

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line typescript/no-require-imports
 const path = require('path');
 
 module.exports = {

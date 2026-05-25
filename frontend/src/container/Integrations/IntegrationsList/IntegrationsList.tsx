@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Badge } from '@signozhq/ui';
-import { Button, Skeleton, Typography } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Button, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { MoveUpRight, RotateCw } from 'lucide-react';
+import { MoveUpRight, RotateCw } from '@signozhq/icons';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
@@ -22,14 +23,8 @@ interface IntegrationsListProps {
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	const { searchQuery, setSelectedIntegration } = props;
 
-	const {
-		data,
-		isFetching,
-		isLoading,
-		isRefetching,
-		isError,
-		refetch,
-	} = useGetAllIntegrations();
+	const { data, isFetching, isLoading, isRefetching, isError, refetch } =
+		useGetAllIntegrations();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 

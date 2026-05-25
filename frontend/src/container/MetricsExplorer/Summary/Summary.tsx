@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -59,21 +59,15 @@ const DEFAULT_ORDER_BY: Querybuildertypesv5OrderByDTO = {
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [orderBy, setOrderBy] = useState<Querybuildertypesv5OrderByDTO>(
-		DEFAULT_ORDER_BY,
-	);
-	const [
-		heatmapView,
-		setHeatmapView,
-	] = useState<MetricsexplorertypesTreemapModeDTO>(
-		MetricsexplorertypesTreemapModeDTO.samples,
-	);
+	const [orderBy, setOrderBy] =
+		useState<Querybuildertypesv5OrderByDTO>(DEFAULT_ORDER_BY);
+	const [heatmapView, setHeatmapView] =
+		useState<MetricsexplorertypesTreemapModeDTO>(
+			MetricsexplorertypesTreemapModeDTO.samples,
+		);
 
-	const {
-		currentQuery,
-		stagedQuery,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, stagedQuery, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 
 	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
 
@@ -101,10 +95,8 @@ function Summary(): JSX.Element {
 
 	const appliedFilterExpression = query?.filter?.expression || '';
 
-	const [
-		currentQueryFilterExpression,
-		setCurrentQueryFilterExpression,
-	] = useState<string>(appliedFilterExpression);
+	const [currentQueryFilterExpression, setCurrentQueryFilterExpression] =
+		useState<string>(appliedFilterExpression);
 
 	const [isCancelled, setIsCancelled] = useState<boolean>(false);
 

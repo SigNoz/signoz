@@ -1,15 +1,15 @@
 import type {
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesScheduleDTO,
+	AlertmanagertypesScheduleDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
-	RuletypesMaintenanceKindDTO,
-	RuletypesMaintenanceStatusDTO,
+	AlertmanagertypesMaintenanceKindDTO,
+	AlertmanagertypesMaintenanceStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export const buildSchedule = (
-	schedule: Partial<RuletypesScheduleDTO>,
-): RuletypesScheduleDTO => ({
+	schedule: Partial<AlertmanagertypesScheduleDTO>,
+): AlertmanagertypesScheduleDTO => ({
 	timezone: schedule?.timezone ?? '',
 	startTime: schedule?.startTime,
 	endTime: schedule?.endTime,
@@ -17,14 +17,14 @@ export const buildSchedule = (
 });
 
 export const createMockDowntime = (
-	overrides: Partial<RuletypesPlannedMaintenanceDTO>,
-): RuletypesPlannedMaintenanceDTO => ({
+	overrides: Partial<AlertmanagertypesPlannedMaintenanceDTO>,
+): AlertmanagertypesPlannedMaintenanceDTO => ({
 	id: overrides.id ?? '0',
 	name: overrides.name ?? '',
 	description: overrides.description ?? '',
 	schedule: buildSchedule({
 		timezone: 'UTC',
-		startTime: new Date('2024-01-01'),
+		startTime: '2024-01-01',
 		...overrides.schedule,
 	}),
 	alertIds: overrides.alertIds ?? [],
@@ -32,6 +32,6 @@ export const createMockDowntime = (
 	createdBy: overrides.createdBy ?? '',
 	updatedAt: overrides.updatedAt,
 	updatedBy: overrides.updatedBy ?? '',
-	kind: overrides.kind ?? RuletypesMaintenanceKindDTO.recurring,
-	status: overrides.status ?? RuletypesMaintenanceStatusDTO.active,
+	kind: overrides.kind ?? AlertmanagertypesMaintenanceKindDTO.recurring,
+	status: overrides.status ?? AlertmanagertypesMaintenanceStatusDTO.active,
 });

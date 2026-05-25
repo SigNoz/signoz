@@ -9,6 +9,8 @@ import React, {
 	useMemo,
 	useState,
 } from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import {
 	getBrowserTimezone,
 	getTimezoneObjectByTimezoneString,
@@ -43,7 +45,7 @@ function TimezoneProvider({
 }): JSX.Element {
 	const getStoredTimezoneValue = (): Timezone | null => {
 		try {
-			const timezoneValue = localStorage.getItem(LOCALSTORAGE.PREFERRED_TIMEZONE);
+			const timezoneValue = getLocalStorageKey(LOCALSTORAGE.PREFERRED_TIMEZONE);
 			if (timezoneValue) {
 				return getTimezoneObjectByTimezoneString(timezoneValue);
 			}
@@ -55,7 +57,7 @@ function TimezoneProvider({
 
 	const setStoredTimezoneValue = (value: string): void => {
 		try {
-			localStorage.setItem(LOCALSTORAGE.PREFERRED_TIMEZONE, value);
+			setLocalStorageKey(LOCALSTORAGE.PREFERRED_TIMEZONE, value);
 		} catch (error) {
 			console.error('Error saving timezone to localStorage:', error);
 		}

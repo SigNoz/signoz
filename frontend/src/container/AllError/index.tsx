@@ -1,19 +1,12 @@
+import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Space,
-	TableProps,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
+import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { ColumnsType } from 'antd/lib/table';
@@ -126,50 +119,48 @@ function AllErrors(): JSX.Element {
 	const setIsFetching = useAllErrorsQueryState((s) => s.setIsFetching);
 	const isCancelled = useAllErrorsQueryState((s) => s.isCancelled);
 
-	const [
-		{ isLoading, isFetching: isErrorsFetching, data },
-		errorCountResponse,
-	] = useQueries([
-		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
-			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
-				getAll({
-					end: maxTime,
-					start: minTime,
-					order: updatedOrder,
-					limit: getUpdatedPageSize,
-					offset: getUpdatedOffset,
-					orderParam: getUpdatedParams,
-					exceptionType: getUpdatedExceptionType,
-					serviceName: getUpdatedServiceName,
-					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters?.items || [],
-					),
-				}),
-			enabled: !loading,
-		},
-		{
-			queryKey: [
-				'getErrorCounts',
-				maxTime,
-				minTime,
-				getUpdatedExceptionType,
-				getUpdatedServiceName,
-				compositeData,
-			],
-			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
-				getErrorCounts({
-					end: maxTime,
-					start: minTime,
-					exceptionType: getUpdatedExceptionType,
-					serviceName: getUpdatedServiceName,
-					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters?.items || [],
-					),
-				}),
-			enabled: !loading,
-		},
-	]);
+	const [{ isLoading, isFetching: isErrorsFetching, data }, errorCountResponse] =
+		useQueries([
+			{
+				queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
+				queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
+					getAll({
+						end: maxTime,
+						start: minTime,
+						order: updatedOrder,
+						limit: getUpdatedPageSize,
+						offset: getUpdatedOffset,
+						orderParam: getUpdatedParams,
+						exceptionType: getUpdatedExceptionType,
+						serviceName: getUpdatedServiceName,
+						tags: convertCompositeQueryToTraceSelectedTags(
+							compositeData?.builder.queryData?.[0]?.filters?.items || [],
+						),
+					}),
+				enabled: !loading,
+			},
+			{
+				queryKey: [
+					'getErrorCounts',
+					maxTime,
+					minTime,
+					getUpdatedExceptionType,
+					getUpdatedServiceName,
+					compositeData,
+				],
+				queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
+					getErrorCounts({
+						end: maxTime,
+						start: minTime,
+						exceptionType: getUpdatedExceptionType,
+						serviceName: getUpdatedServiceName,
+						tags: convertCompositeQueryToTraceSelectedTags(
+							compositeData?.builder.queryData?.[0]?.filters?.items || [],
+						),
+					}),
+				enabled: !loading,
+			},
+		]);
 
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {
@@ -201,40 +192,41 @@ function AllErrors(): JSX.Element {
 		</Typography>
 	);
 
-	const filterIcon = useCallback(() => <SearchOutlined />, []);
+	const filterIcon = useCallback(() => <Search size="md" />, []);
 
 	const handleSearch = useCallback(
 		(
 			confirm: (param?: FilterConfirmProps) => void,
 			filterValue: string,
 			filterKey: string,
-		): VoidFunction => (): void => {
-			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
-				getUpdatedServiceName || '',
-				getUpdatedExceptionType || '',
-				filterKey,
-				filterValue || '',
-			);
+		): VoidFunction =>
+			(): void => {
+				const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
+					getUpdatedServiceName || '',
+					getUpdatedExceptionType || '',
+					filterKey,
+					filterValue || '',
+				);
 
-			const queryParams: QueryParams = {
-				order: updatedOrder,
-				offset: getUpdatedOffset,
-				orderParam: getUpdatedParams,
-				pageSize: getUpdatedPageSize,
-				compositeQuery: getUpdatedCompositeQuery,
-			};
+				const queryParams: QueryParams = {
+					order: updatedOrder,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
+					pageSize: getUpdatedPageSize,
+					compositeQuery: getUpdatedCompositeQuery,
+				};
 
-			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
-				queryParams.exceptionType = exceptionFilterValue;
-			}
+				if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
+					queryParams.exceptionType = exceptionFilterValue;
+				}
 
-			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
-				queryParams.serviceName = serviceFilterValue;
-			}
+				if (serviceFilterValue && serviceFilterValue !== 'undefined') {
+					queryParams.serviceName = serviceFilterValue;
+				}
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
-			confirm();
-		},
+				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				confirm();
+			},
 		[
 			getUpdatedExceptionType,
 			getUpdatedOffset,
@@ -276,10 +268,12 @@ function AllErrors(): JSX.Element {
 					<Button
 						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						icon={<SearchOutlined />}
 						size="small"
 					>
-						Search
+						<Flex align="center" justify="center" gap={4}>
+							<Search size="md" />
+							Search
+						</Flex>
 					</Button>
 				</Space>
 			</Card>
@@ -361,13 +355,7 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Paragraph
-						ellipsis={{
-							rows: 2,
-						}}
-					>
-						{value}
-					</Typography.Paragraph>
+					<Typography.Text truncate={2}>{value}</Typography.Text>
 				</Tooltip>
 			),
 		},

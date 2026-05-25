@@ -38,9 +38,10 @@ const useFilterConfig = ({
 		},
 	);
 
-	const isDynamicFilters = useMemo(() => customFilters.length > 0, [
-		customFilters,
-	]);
+	const isDynamicFilters = useMemo(
+		() => customFilters.length > 0,
+		[customFilters],
+	);
 
 	const filterConfig = useMemo(
 		() => getFilterConfig(signal, customFilters, config),

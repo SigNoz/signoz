@@ -20,6 +20,8 @@ var (
 	NameNavShortcuts                            = Name{valuer.NewString("nav_shortcuts")}
 	NameLastSeenChangelogVersion                = Name{valuer.NewString("last_seen_changelog_version")}
 	NameSpanDetailsPinnedAttributes             = Name{valuer.NewString("span_details_pinned_attributes")}
+	NameSpanDetailsPreviewAttributes            = Name{valuer.NewString("span_details_preview_attributes")}
+	NameSpanDetailsColorByAttribute             = Name{valuer.NewString("span_details_color_by_attribute")}
 	NameSpanPercentileResourceAttributes        = Name{valuer.NewString("span_percentile_resource_attributes")}
 )
 
@@ -40,6 +42,8 @@ func NewName(name string) (Name, error) {
 			NameNavShortcuts.StringValue(),
 			NameLastSeenChangelogVersion.StringValue(),
 			NameSpanDetailsPinnedAttributes.StringValue(),
+			NameSpanDetailsPreviewAttributes.StringValue(),
+			NameSpanDetailsColorByAttribute.StringValue(),
 			NameSpanPercentileResourceAttributes.StringValue(),
 		},
 		name,

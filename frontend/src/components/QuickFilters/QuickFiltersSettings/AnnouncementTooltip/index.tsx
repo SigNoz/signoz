@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import classNames from 'classnames';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 
 import './AnnouncementTooltip.styles.scss';
 

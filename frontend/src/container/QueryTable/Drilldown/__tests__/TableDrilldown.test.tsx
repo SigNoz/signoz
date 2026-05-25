@@ -206,7 +206,7 @@ describe('TableDrilldown', () => {
 		expect(firstQueryData.filters).toBeDefined();
 
 		// Check that newTab option is set to true
-		expect(options).toEqual({ newTab: true });
+		expect(options).toStrictEqual({ newTab: true });
 	});
 
 	it('should include timestamps in logs explorer URL when "View in Logs" is clicked', (): void => {
@@ -278,10 +278,12 @@ describe('TableDrilldown', () => {
 		// Check that the query contains the correct filter expression
 		// The filter should include the clicked data filters (service.name = 'adservice', trace_id = 'df2cfb0e57bb8736207689851478cd50')
 		const firstQueryData = compositeQuery.builder.queryData[0];
-		expect(firstQueryData.filter.expression).toEqual(MOCK_QUERY_WITH_FILTER);
+		expect(firstQueryData.filter.expression).toStrictEqual(
+			MOCK_QUERY_WITH_FILTER,
+		);
 
 		// Check that newTab option is set to true
-		expect(options).toEqual({ newTab: true });
+		expect(options).toStrictEqual({ newTab: true });
 	});
 
 	it('should include timestamps in traces explorer URL when "View in Traces" is clicked', (): void => {
@@ -338,12 +340,8 @@ describe('TableDrilldown', () => {
 		// Verify redirectWithQueryBuilderData was called instead of safeNavigate
 		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
 
-		const [
-			query,
-			queryParams,
-			,
-			newTab,
-		] = mockRedirectWithQueryBuilderData.mock.calls[0];
+		const [query, queryParams, , newTab] =
+			mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		// Check that the query contains the filter that was added
 		expect(query.builder).toBeDefined();
@@ -362,7 +360,7 @@ describe('TableDrilldown', () => {
 		);
 
 		// Check that the queryParams contain the expandedWidgetId
-		expect(queryParams).toEqual({ expandedWidgetId: 'test-widget' });
+		expect(queryParams).toStrictEqual({ expandedWidgetId: 'test-widget' });
 
 		// Check that newTab is true
 		expect(newTab).toBe(true);

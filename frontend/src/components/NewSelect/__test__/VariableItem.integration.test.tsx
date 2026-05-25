@@ -86,7 +86,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 1. INTEGRATION WITH CUSTOMSELECT =====
 	describe('CustomSelect Integration (VI)', () => {
-		test('VI-01: Single select variable integration', async () => {
+		it('VI-01: Single select variable integration', async () => {
 			const variable = createMockVariable({
 				multiSelect: false,
 				type: 'CUSTOM',
@@ -130,7 +130,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 2. INTEGRATION WITH CUSTOMMULTISELECT =====
 	describe('CustomMultiSelect Integration (VI)', () => {
-		test('VI-02: Multi select variable integration', async () => {
+		it('VI-02: Multi select variable integration', async () => {
 			const variable = createMockVariable({
 				multiSelect: true,
 				type: 'CUSTOM',
@@ -174,7 +174,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 3. TEXTBOX VARIABLE TYPE =====
 	describe('Textbox Variable Integration', () => {
-		test('VI-03: Textbox variable handling', async () => {
+		it('VI-03: Textbox variable handling', async () => {
 			const variable = createMockVariable({
 				type: 'TEXTBOX',
 				selectedValue: 'initial-value',
@@ -219,7 +219,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 4. VALUE PERSISTENCE AND STATE MANAGEMENT =====
 	describe('Value Persistence and State Management', () => {
-		test('VI-04: All selected state handling', () => {
+		it('VI-04: All selected state handling', () => {
 			const variable = createMockVariable({
 				multiSelect: true,
 				type: 'CUSTOM',
@@ -243,7 +243,7 @@ describe('VariableItem Integration Tests', () => {
 			expect(screen.getByText('ALL')).toBeInTheDocument();
 		});
 
-		test('VI-05: Dropdown behavior with temporary selections', async () => {
+		it('VI-05: Dropdown behavior with temporary selections', async () => {
 			const variable = createMockVariable({
 				multiSelect: true,
 				type: 'CUSTOM',
@@ -277,7 +277,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 6. ACCESSIBILITY AND USER EXPERIENCE =====
 	describe('Accessibility and User Experience', () => {
-		test('VI-06: Variable description tooltip', async () => {
+		it('VI-06: Variable description tooltip', async () => {
 			const variable = createMockVariable({
 				description: 'This variable controls the service selection',
 				type: 'CUSTOM',
@@ -310,7 +310,7 @@ describe('VariableItem Integration Tests', () => {
 			});
 		});
 
-		test('VI-07: Variable name display', () => {
+		it('VI-07: Variable name display', () => {
 			const variable = createMockVariable({
 				name: 'service_name',
 				type: 'CUSTOM',
@@ -331,7 +331,7 @@ describe('VariableItem Integration Tests', () => {
 			expect(screen.getByText('$service_name')).toBeInTheDocument();
 		});
 
-		test('VI-08: Max tag count behavior', async () => {
+		it('VI-08: Max tag count behavior', async () => {
 			const variable = createMockVariable({
 				multiSelect: true,
 				type: 'CUSTOM',
@@ -365,7 +365,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 8. SEARCH INTERACTION TESTS =====
 	describe('Search Interaction Tests', () => {
-		test('VI-14: Search persistence across dropdown open/close', async () => {
+		it('VI-14: Search persistence across dropdown open/close', async () => {
 			const variable = createMockVariable({
 				type: 'CUSTOM',
 				customValue: 'option1,option2,option3',
@@ -417,7 +417,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 9. ADVANCED KEYBOARD NAVIGATION =====
 	describe('Advanced Keyboard Navigation (VI)', () => {
-		test('VI-15: Shift + Arrow + Del chip deletion in multiselect', async () => {
+		it('VI-15: Shift + Arrow + Del chip deletion in multiselect', async () => {
 			const variable = createMockVariable({
 				type: 'CUSTOM',
 				customValue: 'option1,option2,option3',
@@ -461,7 +461,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 11. ADVANCED UI STATES =====
 	describe('Advanced UI States (VI)', () => {
-		test('VI-19: No data with previous value selected in variable', async () => {
+		it('VI-19: No data with previous value selected in variable', async () => {
 			const variable = createMockVariable({
 				type: 'CUSTOM',
 				customValue: '',
@@ -499,7 +499,7 @@ describe('VariableItem Integration Tests', () => {
 			expect(combobox).toBeInTheDocument();
 		});
 
-		test('VI-20: Always editable accessibility in variable', async () => {
+		it('VI-20: Always editable accessibility in variable', async () => {
 			const variable = createMockVariable({
 				type: 'CUSTOM',
 				customValue: 'option1,option2',
@@ -530,7 +530,7 @@ describe('VariableItem Integration Tests', () => {
 
 	// ===== 13. DROPDOWN PERSISTENCE =====
 	describe('Dropdown Persistence (VI)', () => {
-		test('VI-24: Dropdown stays open for non-save actions in variable', async () => {
+		it('VI-24: Dropdown stays open for non-save actions in variable', async () => {
 			const variable = createMockVariable({
 				type: 'CUSTOM',
 				customValue: 'option1,option2,option3',

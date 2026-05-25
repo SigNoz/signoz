@@ -47,12 +47,13 @@ const (
 type ValidationOption func(*validationConfig)
 
 type validationConfig struct {
-	skipLimitOffsetValidation bool
-	skipAggregationValidation bool
-	skipHavingValidation      bool
-	skipAggregationOrderBy    bool
-	skipSelectFieldValidation bool
-	skipGroupByValidation     bool
+	skipLimitOffsetValidation      bool
+	skipAggregationValidation      bool
+	skipHavingValidation           bool
+	skipAggregationOrderBy         bool
+	skipSelectFieldValidation      bool
+	skipGroupByValidation          bool
+	withTimestampGroupByValidation bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -108,6 +109,13 @@ func WithSkipSelectFieldValidation() ValidationOption {
 func WithSkipGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.skipGroupByValidation = true
+	}
+}
+
+// WithTimestampGroupByValidation enables validation to disallow grouping by timestamp field.
+func WithTimestampGroupByValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withTimestampGroupByValidation = true
 	}
 }
 
@@ -175,6 +183,11 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 		if item.Name == "" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
+			)
+		}
+		if cfg.withTimestampGroupByValidation && item.Name == "timestamp" {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput, "group by on timestamp is not allowed",
 			)
 		}
 	}
@@ -665,7 +678,9 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
-	case RequestTypeTimeSeries, RequestTypeScalar:
+	case RequestTypeTimeSeries:
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
+	case RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}

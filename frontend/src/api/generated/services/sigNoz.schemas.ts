@@ -1,7 +1,7 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
 export interface AlertmanagertypesChannelDTO {
@@ -9,7 +9,7 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -34,7 +34,26 @@ export interface AlertmanagertypesChannelDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
+}
+
+export interface ModelLabelSetDTO {
+	[key: string]: string;
+}
+
+export interface TypesAlertStatusDTO {
+	/**
+	 * @type array,null
+	 */
+	inhibitedBy?: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	silencedBy?: string[] | null;
+	/**
+	 * @type string
+	 */
+	state?: string;
 }
 
 export interface AlertmanagertypesDeprecatedGettableAlertDTO {
@@ -43,7 +62,7 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	endsAt?: Date;
+	endsAt?: string;
 	/**
 	 * @type string
 	 */
@@ -54,15 +73,14 @@ export interface AlertmanagertypesDeprecatedGettableAlertDTO {
 	generatorURL?: string;
 	labels?: ModelLabelSetDTO;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	receivers?: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	startsAt?: Date;
+	startsAt?: string;
 	status?: TypesAlertStatusDTO;
 }
 
@@ -72,18 +90,16 @@ export enum AlertmanagertypesExpressionKindDTO {
 }
 export interface AlertmanagertypesGettableRoutePolicyDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	channels: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt: Date;
+	createdAt: string;
 	/**
-	 * @type string
-	 * @nullable true
+	 * @type string,null
 	 */
 	createdBy?: string | null;
 	/**
@@ -104,28 +120,97 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	 */
 	name: string;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	tags?: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt: Date;
+	updatedAt: string;
 	/**
-	 * @type string
-	 * @nullable true
+	 * @type string,null
 	 */
 	updatedBy?: string | null;
 }
 
-export interface AlertmanagertypesPostableRoutePolicyDTO {
+export enum AlertmanagertypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum AlertmanagertypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum AlertmanagertypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum AlertmanagertypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface AlertmanagertypesRecurrenceDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type string
 	 */
-	channels: string[] | null;
+	duration: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	endTime?: string | null;
+	/**
+	 * @type array,null
+	 */
+	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
+	repeatType: AlertmanagertypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: string;
+}
+
+export interface AlertmanagertypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: string;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: string;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface AlertmanagertypesPlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
 	/**
 	 * @type string
 	 */
@@ -133,1168 +218,27 @@ export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type string
 	 */
-	expression: string;
-	kind?: AlertmanagertypesExpressionKindDTO;
+	id: string;
+	kind: AlertmanagertypesMaintenanceKindDTO;
 	/**
 	 * @type string
 	 */
 	name: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	tags?: string[] | null;
-}
-
-export interface AuthtypesAttributeMappingDTO {
+	schedule: AlertmanagertypesScheduleDTO;
 	/**
 	 * @type string
 	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	groups?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
-export interface AuthtypesAuthDomainConfigDTO {
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
-}
-
-export interface AuthtypesAuthNProviderInfoDTO {
-	/**
-	 * @type string
-	 * @nullable true
-	 */
-	relayStatePath?: string | null;
-}
-
-export interface AuthtypesAuthNSupportDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	callback?: AuthtypesCallbackAuthNSupportDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	password?: AuthtypesPasswordAuthNSupportDTO[] | null;
-}
-
-export interface AuthtypesCallbackAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
-export interface AuthtypesGettableAuthDomainDTO {
-	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	scope?: string;
+	status: AlertmanagertypesMaintenanceStatusDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: AuthtypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 */
-	resources: AuthtypesResourceDTO[];
-}
-
-export interface AuthtypesGettableTokenDTO {
-	/**
-	 * @type string
-	 */
-	accessToken?: string;
-	/**
-	 * @type integer
-	 */
-	expiresIn?: number;
-	/**
-	 * @type string
-	 */
-	refreshToken?: string;
-	/**
-	 * @type string
-	 */
-	tokenType?: string;
-}
-
-export interface AuthtypesGettableTransactionDTO {
-	/**
-	 * @type boolean
-	 */
-	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
-}
-
-export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
-	[key: string]: string;
-};
-
-export interface AuthtypesGoogleConfigDTO {
-	/**
-	 * @type array
-	 */
-	allowedGroups?: string[];
-	/**
-	 * @type string
-	 */
-	clientId?: string;
-	/**
-	 * @type string
-	 */
-	clientSecret?: string;
-	/**
-	 * @type object
-	 */
-	domainToAdminEmail?: AuthtypesGoogleConfigDTODomainToAdminEmail;
-	/**
-	 * @type boolean
-	 */
-	fetchGroups?: boolean;
-	/**
-	 * @type boolean
-	 */
-	fetchTransitiveGroupMembership?: boolean;
-	/**
-	 * @type boolean
-	 */
-	insecureSkipEmailVerified?: boolean;
-	/**
-	 * @type string
-	 */
-	redirectURI?: string;
-	/**
-	 * @type string
-	 */
-	serviceAccountJson?: string;
-}
-
-export interface AuthtypesOIDCConfigDTO {
-	claimMapping?: AuthtypesAttributeMappingDTO;
-	/**
-	 * @type string
-	 */
-	clientId?: string;
-	/**
-	 * @type string
-	 */
-	clientSecret?: string;
-	/**
-	 * @type boolean
-	 */
-	getUserInfo?: boolean;
-	/**
-	 * @type boolean
-	 */
-	insecureSkipEmailVerified?: boolean;
-	/**
-	 * @type string
-	 */
-	issuer?: string;
-	/**
-	 * @type string
-	 */
-	issuerAlias?: string;
-}
-
-export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
-export interface AuthtypesOrgSessionContextDTO {
-	authNSupport?: AuthtypesAuthNSupportDTO;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	warning?: ErrorsJSONDTO;
-}
-
-export interface AuthtypesPasswordAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
-}
-
-export interface AuthtypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
-export interface AuthtypesPostableAuthDomainDTO {
-	config?: AuthtypesAuthDomainConfigDTO;
-	/**
-	 * @type string
-	 */
-	name?: string;
-}
-
-export interface AuthtypesPostableEmailPasswordSessionDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-}
-
-export interface AuthtypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface AuthtypesPostableRotateTokenDTO {
-	/**
-	 * @type string
-	 */
-	refreshToken?: string;
-}
-
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-}
-
-export interface AuthtypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-/**
- * @nullable
- */
-export type AuthtypesRoleMappingDTOGroupMappings = {
-	[key: string]: string;
-} | null;
-
-export interface AuthtypesRoleMappingDTO {
-	/**
-	 * @type string
-	 */
-	defaultRole?: string;
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	groupMappings?: AuthtypesRoleMappingDTOGroupMappings;
-	/**
-	 * @type boolean
-	 */
-	useRoleAttribute?: boolean;
-}
-
-export interface AuthtypesSamlConfigDTO {
-	attributeMapping?: AuthtypesAttributeMappingDTO;
-	/**
-	 * @type boolean
-	 */
-	insecureSkipAuthNRequestsSigned?: boolean;
-	/**
-	 * @type string
-	 */
-	samlCert?: string;
-	/**
-	 * @type string
-	 */
-	samlEntity?: string;
-	/**
-	 * @type string
-	 */
-	samlIdp?: string;
-}
-
-export interface AuthtypesSessionContextDTO {
-	/**
-	 * @type boolean
-	 */
-	exists?: boolean;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	orgs?: AuthtypesOrgSessionContextDTO[] | null;
-}
-
-export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
-}
-
-export interface AuthtypesUpdateableAuthDomainDTO {
-	config?: AuthtypesAuthDomainConfigDTO;
-}
-
-export interface AuthtypesUserRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	role: AuthtypesRoleDTO;
-	/**
-	 * @type string
-	 */
-	roleId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt: Date;
-	/**
-	 * @type string
-	 */
-	userId: string;
-}
-
-export interface AuthtypesUserWithRolesDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	userRoles?: AuthtypesUserRoleDTO[] | null;
-}
-
-export interface CloudintegrationtypesAWSAccountConfigDTO {
-	/**
-	 * @type array
-	 */
-	regions: string[];
-}
-
-export interface CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO {
-	/**
-	 * @type string
-	 */
-	filterPattern: string;
-	/**
-	 * @type string
-	 */
-	logGroupNamePrefix: string;
-}
-
-export interface CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO {
-	/**
-	 * @type array
-	 */
-	metricNames?: string[];
-	/**
-	 * @type string
-	 */
-	namespace: string;
-}
-
-export interface CloudintegrationtypesAWSConnectionArtifactDTO {
-	/**
-	 * @type string
-	 */
-	connectionUrl: string;
-}
-
-export interface CloudintegrationtypesAWSIntegrationConfigDTO {
-	/**
-	 * @type array
-	 */
-	enabledRegions: string[];
-	telemetryCollectionStrategy: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
-}
-
-export interface CloudintegrationtypesAWSLogsCollectionStrategyDTO {
-	/**
-	 * @type array
-	 */
-	subscriptions: CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO[];
-}
-
-export interface CloudintegrationtypesAWSMetricsCollectionStrategyDTO {
-	/**
-	 * @type array
-	 */
-	streamFilters: CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO[];
-}
-
-export interface CloudintegrationtypesAWSPostableAccountConfigDTO {
-	/**
-	 * @type string
-	 */
-	deploymentRegion: string;
-	/**
-	 * @type array
-	 */
-	regions: string[];
-}
-
-export interface CloudintegrationtypesAWSServiceConfigDTO {
-	logs?: CloudintegrationtypesAWSServiceLogsConfigDTO;
-	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
-}
-
-export type CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets = {
-	[key: string]: string[];
-};
-
-export interface CloudintegrationtypesAWSServiceLogsConfigDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-	/**
-	 * @type object
-	 */
-	s3Buckets?: CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets;
-}
-
-export interface CloudintegrationtypesAWSServiceMetricsConfigDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-}
-
-export type CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets = {
-	[key: string]: string[];
-};
-
-export interface CloudintegrationtypesAWSTelemetryCollectionStrategyDTO {
-	logs?: CloudintegrationtypesAWSLogsCollectionStrategyDTO;
-	metrics?: CloudintegrationtypesAWSMetricsCollectionStrategyDTO;
-	/**
-	 * @type object
-	 */
-	s3Buckets?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets;
-}
-
-export interface CloudintegrationtypesAccountDTO {
-	agentReport: CloudintegrationtypesAgentReportDTO;
-	config: CloudintegrationtypesAccountConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	provider: string;
-	/**
-	 * @type string
-	 * @nullable true
-	 */
-	providerAccountId: string | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
-	 */
-	removedAt: Date | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
-export interface CloudintegrationtypesAccountConfigDTO {
-	aws?: CloudintegrationtypesAWSAccountConfigDTO;
-	azure?: CloudintegrationtypesAzureAccountConfigDTO;
-}
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesAgentReportDTOData = {
-	[key: string]: unknown;
-} | null;
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesAgentReportDTO = {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	data: CloudintegrationtypesAgentReportDTOData;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	timestampMillis: number;
-} | null;
-
-export interface CloudintegrationtypesAssetsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
-}
-
-export interface CloudintegrationtypesAzureAccountConfigDTO {
-	/**
-	 * @type string
-	 */
-	deploymentRegion: string;
-	/**
-	 * @type array
-	 */
-	resourceGroups: string[];
-}
-
-export interface CloudintegrationtypesAzureConnectionArtifactDTO {
-	/**
-	 * @type string
-	 */
-	cliCommand: string;
-	/**
-	 * @type string
-	 */
-	cloudPowerShellCommand: string;
-}
-
-export interface CloudintegrationtypesAzureIntegrationConfigDTO {
-	/**
-	 * @type string
-	 */
-	deploymentRegion: string;
-	/**
-	 * @type array
-	 */
-	resourceGroups: string[];
-	/**
-	 * @type array
-	 */
-	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
-}
-
-export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
-	/**
-	 * @type array
-	 */
-	categoryGroups: string[];
-}
-
-export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
-	[key: string]: unknown;
-}
-
-export interface CloudintegrationtypesAzureServiceConfigDTO {
-	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
-	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
-}
-
-export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-}
-
-export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-}
-
-export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
-	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
-	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
-	/**
-	 * @type string
-	 */
-	resourceProvider: string;
-	/**
-	 * @type string
-	 */
-	resourceType: string;
-}
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesCloudIntegrationServiceDTO = {
-	/**
-	 * @type string
-	 */
-	cloudIntegrationId?: string;
-	config?: CloudintegrationtypesServiceConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	id: string;
-	type?: CloudintegrationtypesServiceIDDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-} | null;
-
-export interface CloudintegrationtypesCollectedLogAttributeDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	path?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-}
-
-export interface CloudintegrationtypesCollectedMetricDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export interface CloudintegrationtypesConnectionArtifactDTO {
-	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
-	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
-}
-
-export interface CloudintegrationtypesCredentialsDTO {
-	/**
-	 * @type string
-	 */
-	ingestionKey: string;
-	/**
-	 * @type string
-	 */
-	ingestionUrl: string;
-	/**
-	 * @type string
-	 */
-	sigNozApiKey: string;
-	/**
-	 * @type string
-	 */
-	sigNozApiUrl: string;
-}
-
-export interface CloudintegrationtypesDashboardDTO {
-	definition?: DashboardtypesStorableDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface CloudintegrationtypesDataCollectedDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	logs?: CloudintegrationtypesCollectedLogAttributeDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
-}
-
-export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
-	connectionArtifact: CloudintegrationtypesConnectionArtifactDTO;
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
-export interface CloudintegrationtypesGettableAccountsDTO {
-	/**
-	 * @type array
-	 */
-	accounts: CloudintegrationtypesAccountDTO[];
-}
-
-export interface CloudintegrationtypesGettableAgentCheckInDTO {
-	/**
-	 * @type string
-	 */
-	account_id: string;
-	/**
-	 * @type string
-	 */
-	cloud_account_id: string;
-	/**
-	 * @type string
-	 */
-	cloudIntegrationId: string;
-	integration_config: CloudintegrationtypesIntegrationConfigDTO;
-	integrationConfig: CloudintegrationtypesProviderIntegrationConfigDTO;
-	/**
-	 * @type string
-	 */
-	providerAccountId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
-	 */
-	removed_at: Date | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
-	 */
-	removedAt: Date | null;
-}
-
-export interface CloudintegrationtypesGettableServicesMetadataDTO {
-	/**
-	 * @type array
-	 */
-	services: CloudintegrationtypesServiceMetadataDTO[];
-}
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesIntegrationConfigDTO = {
-	/**
-	 * @type array
-	 */
-	enabled_regions: string[];
-	telemetry: CloudintegrationtypesOldAWSCollectionStrategyDTO;
-} | null;
-
-export type CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets = {
-	[key: string]: string[];
-};
-
-export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
-	aws_logs?: CloudintegrationtypesOldAWSLogsStrategyDTO;
-	aws_metrics?: CloudintegrationtypesOldAWSMetricsStrategyDTO;
-	/**
-	 * @type string
-	 */
-	provider?: string;
-	/**
-	 * @type object
-	 */
-	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
-}
-
-export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem =
-	{
-		/**
-		 * @type string
-		 */
-		filter_pattern?: string;
-		/**
-		 * @type string
-		 */
-		log_group_name_prefix?: string;
-	};
-
-export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	cloudwatch_logs_subscriptions?:
-		| CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem[]
-		| null;
-}
-
-export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem =
-	{
-		/**
-		 * @type array
-		 */
-		MetricNames?: string[];
-		/**
-		 * @type string
-		 */
-		Namespace?: string;
-	};
-
-export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	cloudwatch_metric_stream_filters?:
-		| CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem[]
-		| null;
-}
-
-export interface CloudintegrationtypesPostableAccountDTO {
-	config: CloudintegrationtypesPostableAccountConfigDTO;
-	credentials: CloudintegrationtypesCredentialsDTO;
-}
-
-export interface CloudintegrationtypesPostableAccountConfigDTO {
-	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
-	azure?: CloudintegrationtypesAzureAccountConfigDTO;
-}
-
-/**
- * @nullable
- */
-export type CloudintegrationtypesPostableAgentCheckInDTOData = {
-	[key: string]: unknown;
-} | null;
-
-export interface CloudintegrationtypesPostableAgentCheckInDTO {
-	/**
-	 * @type string
-	 */
-	account_id?: string;
-	/**
-	 * @type string
-	 */
-	cloud_account_id?: string;
-	/**
-	 * @type string
-	 */
-	cloudIntegrationId?: string;
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	data: CloudintegrationtypesPostableAgentCheckInDTOData;
-	/**
-	 * @type string
-	 */
-	providerAccountId?: string;
-}
-
-export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
-	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
-}
-
-export interface CloudintegrationtypesServiceDTO {
-	assets: CloudintegrationtypesAssetsDTO;
-	cloudIntegrationService: CloudintegrationtypesCloudIntegrationServiceDTO;
-	dataCollected: CloudintegrationtypesDataCollectedDTO;
-	/**
-	 * @type string
-	 */
-	icon: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	overview: string;
-	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
-	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
-	/**
-	 * @type string
-	 */
-	title: string;
-}
-
-export interface CloudintegrationtypesServiceConfigDTO {
-	aws?: CloudintegrationtypesAWSServiceConfigDTO;
-	azure?: CloudintegrationtypesAzureServiceConfigDTO;
-}
-
-export enum CloudintegrationtypesServiceIDDTO {
-	alb = 'alb',
-	'api-gateway' = 'api-gateway',
-	dynamodb = 'dynamodb',
-	ec2 = 'ec2',
-	ecs = 'ecs',
-	eks = 'eks',
-	elasticache = 'elasticache',
-	lambda = 'lambda',
-	msk = 'msk',
-	rds = 'rds',
-	s3sync = 's3sync',
-	sns = 'sns',
-	sqs = 'sqs',
-	storageaccountsblob = 'storageaccountsblob',
-	cdnprofile = 'cdnprofile',
-}
-export interface CloudintegrationtypesServiceMetadataDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	/**
-	 * @type string
-	 */
-	icon: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	title: string;
-}
-
-export interface CloudintegrationtypesSupportedSignalsDTO {
-	/**
-	 * @type boolean
-	 */
-	logs?: boolean;
-	/**
-	 * @type boolean
-	 */
-	metrics?: boolean;
-}
-
-export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
-	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
-}
-
-export interface CloudintegrationtypesUpdatableAccountDTO {
-	config: CloudintegrationtypesUpdatableAccountConfigDTO;
-}
-
-export interface CloudintegrationtypesUpdatableAccountConfigDTO {
-	aws?: CloudintegrationtypesAWSAccountConfigDTO;
-	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
-}
-
-export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
-	/**
-	 * @type array
-	 */
-	resourceGroups: string[];
-}
-
-export interface CloudintegrationtypesUpdatableServiceDTO {
-	config: CloudintegrationtypesServiceConfigDTO;
+	updatedBy?: string;
 }
 
 export interface ConfigAuthorizationDTO {
@@ -1343,426 +287,16 @@ export interface ConfigBasicAuthDTO {
 	username_ref?: string;
 }
 
-export interface ConfigDiscordConfigDTO {
-	/**
-	 * @type string
-	 */
-	avatar_url?: string;
-	/**
-	 * @type string
-	 */
-	content?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type string
-	 */
-	message?: string;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	username?: string;
-	webhook_url?: ConfigSecretURLDTO;
-	/**
-	 * @type string
-	 */
-	webhook_url_file?: string;
-}
-
-export type ConfigDurationDTO = string;
-
-export type ConfigEmailConfigDTOHeaders = { [key: string]: string };
-
-export interface ConfigEmailConfigDTO {
-	/**
-	 * @type string
-	 */
-	auth_identity?: string;
-	/**
-	 * @type string
-	 */
-	auth_password?: string;
-	/**
-	 * @type string
-	 */
-	auth_password_file?: string;
-	/**
-	 * @type string
-	 */
-	auth_secret?: string;
-	/**
-	 * @type string
-	 */
-	auth_secret_file?: string;
-	/**
-	 * @type string
-	 */
-	auth_username?: string;
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	force_implicit_tls?: boolean | null;
-	/**
-	 * @type string
-	 */
-	from?: string;
-	/**
-	 * @type object
-	 */
-	headers?: ConfigEmailConfigDTOHeaders;
-	/**
-	 * @type string
-	 */
-	hello?: string;
-	/**
-	 * @type string
-	 */
-	html?: string;
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	require_tls?: boolean | null;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	smarthost?: ConfigHostPortDTO;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	threading?: ConfigThreadingConfigDTO;
-	tls_config?: ConfigTLSConfigDTO;
-	/**
-	 * @type string
-	 */
-	to?: string;
-}
-
-export interface ConfigHTTPClientConfigDTO {
-	authorization?: ConfigAuthorizationDTO;
-	basic_auth?: ConfigBasicAuthDTO;
-	/**
-	 * @type string
-	 */
-	bearer_token?: string;
-	/**
-	 * @type string
-	 */
-	bearer_token_file?: string;
-	/**
-	 * @type boolean
-	 */
-	enable_http2?: boolean;
-	/**
-	 * @type boolean
-	 */
-	follow_redirects?: boolean;
-	http_headers?: ConfigHeadersDTO;
-	/**
-	 * @type string
-	 */
-	no_proxy?: string;
-	oauth2?: ConfigOAuth2DTO;
-	proxy_connect_header?: ConfigProxyHeaderDTO;
-	/**
-	 * @type boolean
-	 */
-	proxy_from_environment?: boolean;
-	proxy_url?: ConfigURLDTO;
-	tls_config?: ConfigTLSConfigDTO;
-}
-
 export interface ConfigHeadersDTO {
 	[key: string]: unknown;
 }
 
-export interface ConfigHostPortDTO {
+export interface ConfigProxyHeaderDTO {
+	[key: string]: string[];
+}
+
+export interface ConfigURLDTO {
 	[key: string]: unknown;
-}
-
-export interface ConfigIncidentioConfigDTO {
-	/**
-	 * @type string
-	 */
-	alert_source_token?: string;
-	/**
-	 * @type string
-	 */
-	alert_source_token_file?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_alerts?: number;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	timeout?: TimeDurationDTO;
-	url?: ConfigURLType2DTO;
-	/**
-	 * @type string
-	 */
-	url_file?: string;
-}
-
-export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
-
-export interface ConfigJiraConfigDTO {
-	/**
-	 * @type string
-	 */
-	api_type?: string;
-	api_url?: ConfigURLType2DTO;
-	/**
-	 * @type object
-	 */
-	custom_fields?: ConfigJiraConfigDTOCustomFields;
-	description?: ConfigJiraFieldConfigDTO;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type string
-	 */
-	issue_type?: string;
-	/**
-	 * @type array
-	 */
-	labels?: string[];
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type string
-	 */
-	project?: string;
-	reopen_duration?: ModelDurationDTO;
-	/**
-	 * @type string
-	 */
-	reopen_transition?: string;
-	/**
-	 * @type string
-	 */
-	resolve_transition?: string;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	summary?: ConfigJiraFieldConfigDTO;
-	/**
-	 * @type string
-	 */
-	wont_fix_resolution?: string;
-}
-
-export interface ConfigJiraFieldConfigDTO {
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	enable_update?: boolean | null;
-	/**
-	 * @type string
-	 */
-	template?: string;
-}
-
-export interface ConfigMSTeamsConfigDTO {
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	/**
-	 * @type string
-	 */
-	summary?: string;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	webhook_url?: ConfigSecretURLDTO;
-	/**
-	 * @type string
-	 */
-	webhook_url_file?: string;
-}
-
-export interface ConfigMSTeamsV2ConfigDTO {
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	webhook_url?: ConfigSecretURLDTO;
-	/**
-	 * @type string
-	 */
-	webhook_url_file?: string;
-}
-
-export interface ConfigMattermostAttachmentDTO {
-	/**
-	 * @type string
-	 */
-	author_icon?: string;
-	/**
-	 * @type string
-	 */
-	author_link?: string;
-	/**
-	 * @type string
-	 */
-	author_name?: string;
-	/**
-	 * @type string
-	 */
-	color?: string;
-	/**
-	 * @type string
-	 */
-	fallback?: string;
-	/**
-	 * @type array
-	 */
-	fields?: ConfigMattermostFieldDTO[];
-	/**
-	 * @type string
-	 */
-	footer?: string;
-	/**
-	 * @type string
-	 */
-	footer_icon?: string;
-	/**
-	 * @type string
-	 */
-	image_url?: string;
-	/**
-	 * @type string
-	 */
-	pretext?: string;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	thumb_url?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	title_link?: string;
-}
-
-export interface ConfigMattermostConfigDTO {
-	/**
-	 * @type array
-	 */
-	attachments?: ConfigMattermostAttachmentDTO[];
-	/**
-	 * @type string
-	 */
-	channel?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type string
-	 */
-	icon_emoji?: string;
-	/**
-	 * @type string
-	 */
-	icon_url?: string;
-	priority?: ConfigMattermostPriorityDTO;
-	props?: ConfigMattermostPropsDTO;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 */
-	username?: string;
-	webhook_url?: ConfigSecretURLDTO;
-	/**
-	 * @type string
-	 */
-	webhook_url_file?: string;
-}
-
-export interface ConfigMattermostFieldDTO {
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	short?: boolean | null;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
-
-export interface ConfigMattermostPriorityDTO {
-	/**
-	 * @type boolean
-	 */
-	persistent_notifications?: boolean;
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type boolean
-	 */
-	requested_ack?: boolean;
-}
-
-export interface ConfigMattermostPropsDTO {
-	/**
-	 * @type string
-	 */
-	card?: string;
 }
 
 export type ConfigOAuth2DTOClaims = { [key: string]: unknown };
@@ -1846,6 +380,517 @@ export interface ConfigOAuth2DTO {
 	token_url?: string;
 }
 
+export interface ConfigTLSConfigDTO {
+	/**
+	 * @type string
+	 */
+	ca?: string;
+	/**
+	 * @type string
+	 */
+	ca_file?: string;
+	/**
+	 * @type string
+	 */
+	ca_ref?: string;
+	/**
+	 * @type string
+	 */
+	cert?: string;
+	/**
+	 * @type string
+	 */
+	cert_file?: string;
+	/**
+	 * @type string
+	 */
+	cert_ref?: string;
+	/**
+	 * @type boolean
+	 */
+	insecure_skip_verify?: boolean;
+	/**
+	 * @type string
+	 */
+	key?: string;
+	/**
+	 * @type string
+	 */
+	key_file?: string;
+	/**
+	 * @type string
+	 */
+	key_ref?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_version?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	min_version?: number;
+	/**
+	 * @type string
+	 */
+	server_name?: string;
+}
+
+export interface ConfigHTTPClientConfigDTO {
+	authorization?: ConfigAuthorizationDTO;
+	basic_auth?: ConfigBasicAuthDTO;
+	/**
+	 * @type string
+	 */
+	bearer_token?: string;
+	/**
+	 * @type string
+	 */
+	bearer_token_file?: string;
+	/**
+	 * @type boolean
+	 */
+	enable_http2?: boolean;
+	/**
+	 * @type boolean
+	 */
+	follow_redirects?: boolean;
+	http_headers?: ConfigHeadersDTO;
+	/**
+	 * @type string
+	 */
+	no_proxy?: string;
+	oauth2?: ConfigOAuth2DTO;
+	proxy_connect_header?: ConfigProxyHeaderDTO;
+	/**
+	 * @type boolean
+	 */
+	proxy_from_environment?: boolean;
+	proxy_url?: ConfigURLDTO;
+	tls_config?: ConfigTLSConfigDTO;
+}
+
+export interface ConfigSecretURLDTO {
+	[key: string]: unknown;
+}
+
+export interface ConfigDiscordConfigDTO {
+	/**
+	 * @type string
+	 */
+	avatar_url?: string;
+	/**
+	 * @type string
+	 */
+	content?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	username?: string;
+	webhook_url?: ConfigSecretURLDTO;
+	/**
+	 * @type string
+	 */
+	webhook_url_file?: string;
+}
+
+export interface ConfigHostPortDTO {
+	[key: string]: unknown;
+}
+
+export interface ConfigThreadingConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	thread_by_date?: string;
+}
+
+export type ConfigEmailConfigDTOHeaders = { [key: string]: string };
+
+export interface ConfigEmailConfigDTO {
+	/**
+	 * @type string
+	 */
+	auth_identity?: string;
+	/**
+	 * @type string
+	 */
+	auth_password?: string;
+	/**
+	 * @type string
+	 */
+	auth_password_file?: string;
+	/**
+	 * @type string
+	 */
+	auth_secret?: string;
+	/**
+	 * @type string
+	 */
+	auth_secret_file?: string;
+	/**
+	 * @type string
+	 */
+	auth_username?: string;
+	/**
+	 * @type boolean,null
+	 */
+	force_implicit_tls?: boolean | null;
+	/**
+	 * @type string
+	 */
+	from?: string;
+	/**
+	 * @type object
+	 */
+	headers?: ConfigEmailConfigDTOHeaders;
+	/**
+	 * @type string
+	 */
+	hello?: string;
+	/**
+	 * @type string
+	 */
+	html?: string;
+	/**
+	 * @type boolean,null
+	 */
+	require_tls?: boolean | null;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	smarthost?: ConfigHostPortDTO;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	threading?: ConfigThreadingConfigDTO;
+	tls_config?: ConfigTLSConfigDTO;
+	/**
+	 * @type string
+	 */
+	to?: string;
+}
+
+export type TimeDurationDTO = number;
+
+export interface ConfigURLType2DTO {
+	[key: string]: unknown;
+}
+
+export interface ConfigIncidentioConfigDTO {
+	/**
+	 * @type string
+	 */
+	alert_source_token?: string;
+	/**
+	 * @type string
+	 */
+	alert_source_token_file?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_alerts?: number;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	timeout?: TimeDurationDTO;
+	url?: ConfigURLType2DTO;
+	/**
+	 * @type string
+	 */
+	url_file?: string;
+}
+
+export interface ConfigJiraFieldConfigDTO {
+	/**
+	 * @type boolean,null
+	 */
+	enable_update?: boolean | null;
+	/**
+	 * @type string
+	 */
+	template?: string;
+}
+
+export type ModelDurationDTO = number;
+
+export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
+
+export interface ConfigJiraConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_type?: string;
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type object
+	 */
+	custom_fields?: ConfigJiraConfigDTOCustomFields;
+	description?: ConfigJiraFieldConfigDTO;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	issue_type?: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project?: string;
+	reopen_duration?: ModelDurationDTO;
+	/**
+	 * @type string
+	 */
+	reopen_transition?: string;
+	/**
+	 * @type string
+	 */
+	resolve_transition?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	summary?: ConfigJiraFieldConfigDTO;
+	/**
+	 * @type string
+	 */
+	wont_fix_resolution?: string;
+}
+
+export interface ConfigMattermostFieldDTO {
+	/**
+	 * @type boolean,null
+	 */
+	short?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface ConfigMattermostAttachmentDTO {
+	/**
+	 * @type string
+	 */
+	author_icon?: string;
+	/**
+	 * @type string
+	 */
+	author_link?: string;
+	/**
+	 * @type string
+	 */
+	author_name?: string;
+	/**
+	 * @type string
+	 */
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fallback?: string;
+	/**
+	 * @type array
+	 */
+	fields?: ConfigMattermostFieldDTO[];
+	/**
+	 * @type string
+	 */
+	footer?: string;
+	/**
+	 * @type string
+	 */
+	footer_icon?: string;
+	/**
+	 * @type string
+	 */
+	image_url?: string;
+	/**
+	 * @type string
+	 */
+	pretext?: string;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	thumb_url?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	title_link?: string;
+}
+
+export interface ConfigMattermostPriorityDTO {
+	/**
+	 * @type boolean
+	 */
+	persistent_notifications?: boolean;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean
+	 */
+	requested_ack?: boolean;
+}
+
+export interface ConfigMattermostPropsDTO {
+	/**
+	 * @type string
+	 */
+	card?: string;
+}
+
+export interface ConfigMattermostConfigDTO {
+	/**
+	 * @type array
+	 */
+	attachments?: ConfigMattermostAttachmentDTO[];
+	/**
+	 * @type string
+	 */
+	channel?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	icon_emoji?: string;
+	/**
+	 * @type string
+	 */
+	icon_url?: string;
+	priority?: ConfigMattermostPriorityDTO;
+	props?: ConfigMattermostPropsDTO;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	username?: string;
+	webhook_url?: ConfigSecretURLDTO;
+	/**
+	 * @type string
+	 */
+	webhook_url_file?: string;
+}
+
+export interface ConfigMSTeamsConfigDTO {
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	summary?: string;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	webhook_url?: ConfigSecretURLDTO;
+	/**
+	 * @type string
+	 */
+	webhook_url_file?: string;
+}
+
+export interface ConfigMSTeamsV2ConfigDTO {
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	webhook_url?: ConfigSecretURLDTO;
+	/**
+	 * @type string
+	 */
+	webhook_url_file?: string;
+}
+
+export interface ConfigOpsGenieConfigResponderDTO {
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	username?: string;
+}
+
 export type ConfigOpsGenieConfigDTODetails = { [key: string]: string };
 
 export interface ConfigOpsGenieConfigDTO {
@@ -1909,23 +954,30 @@ export interface ConfigOpsGenieConfigDTO {
 	update_alerts?: boolean;
 }
 
-export interface ConfigOpsGenieConfigResponderDTO {
+export interface ConfigPagerdutyImageDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	alt?: string;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	href?: string;
 	/**
 	 * @type string
 	 */
-	type?: string;
+	src?: string;
+}
+
+export interface ConfigPagerdutyLinkDTO {
 	/**
 	 * @type string
 	 */
-	username?: string;
+	href?: string;
+	/**
+	 * @type string
+	 */
+	text?: string;
 }
 
 export type ConfigPagerdutyConfigDTODetails = { [key: string]: unknown };
@@ -2000,35 +1052,7 @@ export interface ConfigPagerdutyConfigDTO {
 	url?: ConfigURLType2DTO;
 }
 
-export interface ConfigPagerdutyImageDTO {
-	/**
-	 * @type string
-	 */
-	alt?: string;
-	/**
-	 * @type string
-	 */
-	href?: string;
-	/**
-	 * @type string
-	 */
-	src?: string;
-}
-
-export interface ConfigPagerdutyLinkDTO {
-	/**
-	 * @type string
-	 */
-	href?: string;
-	/**
-	 * @type string
-	 */
-	text?: string;
-}
-
-export interface ConfigProxyHeaderDTO {
-	[key: string]: string[];
-}
+export type ConfigDurationDTO = string;
 
 export interface ConfigPushoverConfigDTO {
 	/**
@@ -2093,85 +1117,6 @@ export interface ConfigPushoverConfigDTO {
 	user_key_file?: string;
 }
 
-export interface ConfigReceiverDTO {
-	/**
-	 * @type array
-	 */
-	discord_configs?: ConfigDiscordConfigDTO[];
-	/**
-	 * @type array
-	 */
-	email_configs?: ConfigEmailConfigDTO[];
-	/**
-	 * @type array
-	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
-	/**
-	 * @type array
-	 */
-	jira_configs?: ConfigJiraConfigDTO[];
-	/**
-	 * @type array
-	 */
-	mattermost_configs?: ConfigMattermostConfigDTO[];
-	/**
-	 * @type array
-	 */
-	msteams_configs?: ConfigMSTeamsConfigDTO[];
-	/**
-	 * @type array
-	 */
-	msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type array
-	 */
-	opsgenie_configs?: ConfigOpsGenieConfigDTO[];
-	/**
-	 * @type array
-	 */
-	pagerduty_configs?: ConfigPagerdutyConfigDTO[];
-	/**
-	 * @type array
-	 */
-	pushover_configs?: ConfigPushoverConfigDTO[];
-	/**
-	 * @type array
-	 */
-	rocketchat_configs?: ConfigRocketchatConfigDTO[];
-	/**
-	 * @type array
-	 */
-	slack_configs?: ConfigSlackConfigDTO[];
-	/**
-	 * @type array
-	 */
-	sns_configs?: ConfigSNSConfigDTO[];
-	/**
-	 * @type array
-	 */
-	telegram_configs?: ConfigTelegramConfigDTO[];
-	/**
-	 * @type array
-	 */
-	victorops_configs?: ConfigVictorOpsConfigDTO[];
-	/**
-	 * @type array
-	 */
-	webex_configs?: ConfigWebexConfigDTO[];
-	/**
-	 * @type array
-	 */
-	webhook_configs?: ConfigWebhookConfigDTO[];
-	/**
-	 * @type array
-	 */
-	wechat_configs?: ConfigWechatConfigDTO[];
-}
-
 export interface ConfigRocketchatAttachmentActionDTO {
 	/**
 	 * @type string
@@ -2213,8 +1158,7 @@ export interface ConfigRocketchatAttachmentActionDTO {
 
 export interface ConfigRocketchatAttachmentFieldDTO {
 	/**
-	 * @type boolean
-	 * @nullable true
+	 * @type boolean,null
 	 */
 	short?: boolean | null;
 	/**
@@ -2304,47 +1248,23 @@ export interface ConfigRocketchatConfigDTO {
 	token_id_file?: string;
 }
 
-export type ConfigSNSConfigDTOAttributes = { [key: string]: string };
-
-export interface ConfigSNSConfigDTO {
+export interface ConfigSlackConfirmationFieldDTO {
 	/**
 	 * @type string
 	 */
-	api_url?: string;
-	/**
-	 * @type object
-	 */
-	attributes?: ConfigSNSConfigDTOAttributes;
-	http_config?: ConfigHTTPClientConfigDTO;
+	dismiss_text?: string;
 	/**
 	 * @type string
 	 */
-	message?: string;
+	ok_text?: string;
 	/**
 	 * @type string
 	 */
-	phone_number?: string;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	sigv4?: Sigv4SigV4ConfigDTO;
+	text?: string;
 	/**
 	 * @type string
 	 */
-	subject?: string;
-	/**
-	 * @type string
-	 */
-	target_arn?: string;
-	/**
-	 * @type string
-	 */
-	topic_arn?: string;
-}
-
-export interface ConfigSecretURLDTO {
-	[key: string]: unknown;
+	title?: string;
 }
 
 export interface ConfigSlackActionDTO {
@@ -2369,6 +1289,21 @@ export interface ConfigSlackActionDTO {
 	 * @type string
 	 */
 	url?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+}
+
+export interface ConfigSlackFieldDTO {
+	/**
+	 * @type boolean,null
+	 */
+	short?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
 	/**
 	 * @type string
 	 */
@@ -2478,96 +1413,47 @@ export interface ConfigSlackConfigDTO {
 	username?: string;
 }
 
-export interface ConfigSlackConfirmationFieldDTO {
-	/**
-	 * @type string
-	 */
-	dismiss_text?: string;
-	/**
-	 * @type string
-	 */
-	ok_text?: string;
-	/**
-	 * @type string
-	 */
-	text?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
+export interface Sigv4SigV4ConfigDTO {
+	[key: string]: unknown;
 }
 
-export interface ConfigSlackFieldDTO {
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	short?: boolean | null;
-	/**
-	 * @type string
-	 */
-	title?: string;
-	/**
-	 * @type string
-	 */
-	value?: string;
-}
+export type ConfigSNSConfigDTOAttributes = { [key: string]: string };
 
-export interface ConfigTLSConfigDTO {
+export interface ConfigSNSConfigDTO {
 	/**
 	 * @type string
 	 */
-	ca?: string;
+	api_url?: string;
+	/**
+	 * @type object
+	 */
+	attributes?: ConfigSNSConfigDTOAttributes;
+	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type string
 	 */
-	ca_file?: string;
+	message?: string;
 	/**
 	 * @type string
 	 */
-	ca_ref?: string;
-	/**
-	 * @type string
-	 */
-	cert?: string;
-	/**
-	 * @type string
-	 */
-	cert_file?: string;
-	/**
-	 * @type string
-	 */
-	cert_ref?: string;
+	phone_number?: string;
 	/**
 	 * @type boolean
 	 */
-	insecure_skip_verify?: boolean;
+	send_resolved?: boolean;
+	sigv4?: Sigv4SigV4ConfigDTO;
 	/**
 	 * @type string
 	 */
-	key?: string;
+	subject?: string;
 	/**
 	 * @type string
 	 */
-	key_file?: string;
+	target_arn?: string;
 	/**
 	 * @type string
 	 */
-	key_ref?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_version?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	min_version?: number;
-	/**
-	 * @type string
-	 */
-	server_name?: string;
+	topic_arn?: string;
 }
 
 export interface ConfigTelegramConfigDTO {
@@ -2610,25 +1496,6 @@ export interface ConfigTelegramConfigDTO {
 	 * @type string
 	 */
 	token_file?: string;
-}
-
-export interface ConfigThreadingConfigDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-	/**
-	 * @type string
-	 */
-	thread_by_date?: string;
-}
-
-export interface ConfigURLDTO {
-	[key: string]: unknown;
-}
-
-export interface ConfigURLType2DTO {
-	[key: string]: unknown;
 }
 
 export type ConfigVictorOpsConfigDTOCustomFields = { [key: string]: string };
@@ -2758,12 +1625,1399 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export type AlertmanagertypesPostableChannelDTO = unknown & {
+	/**
+	 * @type array
+	 */
+	discord_configs?: ConfigDiscordConfigDTO[];
+	/**
+	 * @type array
+	 */
+	email_configs?: ConfigEmailConfigDTO[];
+	/**
+	 * @type array
+	 */
+	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jira_configs?: ConfigJiraConfigDTO[];
+	/**
+	 * @type array
+	 */
+	mattermost_configs?: ConfigMattermostConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteams_configs?: ConfigMSTeamsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array
+	 */
+	opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pushover_configs?: ConfigPushoverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	rocketchat_configs?: ConfigRocketchatConfigDTO[];
+	/**
+	 * @type array
+	 */
+	slack_configs?: ConfigSlackConfigDTO[];
+	/**
+	 * @type array
+	 */
+	sns_configs?: ConfigSNSConfigDTO[];
+	/**
+	 * @type array
+	 */
+	telegram_configs?: ConfigTelegramConfigDTO[];
+	/**
+	 * @type array
+	 */
+	victorops_configs?: ConfigVictorOpsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webex_configs?: ConfigWebexConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webhook_configs?: ConfigWebhookConfigDTO[];
+	/**
+	 * @type array
+	 */
+	wechat_configs?: ConfigWechatConfigDTO[];
+};
+
+export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array,null
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
+}
+
+export interface AlertmanagertypesPostableRoutePolicyDTO {
+	/**
+	 * @type array,null
+	 */
+	channels: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	expression: string;
+	kind?: AlertmanagertypesExpressionKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+}
+
+export interface AuthtypesAttributeMappingDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	groups?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+}
+
+export interface AuthtypesSamlConfigDTO {
+	attributeMapping?: AuthtypesAttributeMappingDTO;
+	/**
+	 * @type boolean
+	 */
+	insecureSkipAuthNRequestsSigned?: boolean;
+	/**
+	 * @type string
+	 */
+	samlCert?: string;
+	/**
+	 * @type string
+	 */
+	samlEntity?: string;
+	/**
+	 * @type string
+	 */
+	samlIdp?: string;
+}
+
+export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
+	[key: string]: string;
+};
+
+export interface AuthtypesGoogleConfigDTO {
+	/**
+	 * @type array
+	 */
+	allowedGroups?: string[];
+	/**
+	 * @type string
+	 */
+	clientId?: string;
+	/**
+	 * @type string
+	 */
+	clientSecret?: string;
+	/**
+	 * @type object
+	 */
+	domainToAdminEmail?: AuthtypesGoogleConfigDTODomainToAdminEmail;
+	/**
+	 * @type boolean
+	 */
+	fetchGroups?: boolean;
+	/**
+	 * @type boolean
+	 */
+	fetchTransitiveGroupMembership?: boolean;
+	/**
+	 * @type boolean
+	 */
+	insecureSkipEmailVerified?: boolean;
+	/**
+	 * @type string
+	 */
+	redirectURI?: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountJson?: string;
+}
+
+export interface AuthtypesOIDCConfigDTO {
+	claimMapping?: AuthtypesAttributeMappingDTO;
+	/**
+	 * @type string
+	 */
+	clientId?: string;
+	/**
+	 * @type string
+	 */
+	clientSecret?: string;
+	/**
+	 * @type boolean
+	 */
+	getUserInfo?: boolean;
+	/**
+	 * @type boolean
+	 */
+	insecureSkipEmailVerified?: boolean;
+	/**
+	 * @type string
+	 */
+	issuer?: string;
+	/**
+	 * @type string
+	 */
+	issuerAlias?: string;
+}
+
+export type AuthtypesRoleMappingDTOGroupMappingsAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type AuthtypesRoleMappingDTOGroupMappings =
+	AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
+
+export interface AuthtypesRoleMappingDTO {
+	/**
+	 * @type string
+	 */
+	defaultRole?: string;
+	/**
+	 * @type object,null
+	 */
+	groupMappings?: AuthtypesRoleMappingDTOGroupMappings;
+	/**
+	 * @type boolean
+	 */
+	useRoleAttribute?: boolean;
+}
+
+export enum AuthtypesAuthNProviderDTO {
+	google_auth = 'google_auth',
+	saml = 'saml',
+	email_password = 'email_password',
+	oidc = 'oidc',
+}
+export type AuthtypesAuthDomainConfigDTO =
+	| (AuthtypesSamlConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesGoogleConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesOIDCConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  });
+
+export interface AuthtypesAuthNProviderInfoDTO {
+	/**
+	 * @type string,null
+	 */
+	relayStatePath?: string | null;
+}
+
+export interface AuthtypesCallbackAuthNSupportDTO {
+	provider?: AuthtypesAuthNProviderDTO;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface AuthtypesPasswordAuthNSupportDTO {
+	provider?: AuthtypesAuthNProviderDTO;
+}
+
+export interface AuthtypesAuthNSupportDTO {
+	/**
+	 * @type array,null
+	 */
+	callback?: AuthtypesCallbackAuthNSupportDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	password?: AuthtypesPasswordAuthNSupportDTO[] | null;
+}
+
+export interface AuthtypesGettableAuthDomainDTO {
+	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	config?: AuthtypesAuthDomainConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface AuthtypesGettableTokenDTO {
+	/**
+	 * @type string
+	 */
+	accessToken?: string;
+	/**
+	 * @type integer
+	 */
+	expiresIn?: number;
+	/**
+	 * @type string
+	 */
+	refreshToken?: string;
+	/**
+	 * @type string
+	 */
+	tokenType?: string;
+}
+
+export enum CoretypesTypeDTO {
+	user = 'user',
+	serviceaccount = 'serviceaccount',
+	anonymous = 'anonymous',
+	role = 'role',
+	organization = 'organization',
+	metaresource = 'metaresource',
+	telemetryresource = 'telemetryresource',
+}
+export interface CoretypesResourceRefDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	type: CoretypesTypeDTO;
+}
+
+export interface CoretypesObjectDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
+export enum AuthtypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
+	attach = 'attach',
+	detach = 'detach',
+}
+export interface AuthtypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
+}
+
+export interface ErrorsResponseerroradditionalDTO {
+	/**
+	 * @type string
+	 */
+	message?: string;
+}
+
+export interface ErrorsJSONDTO {
+	/**
+	 * @type string
+	 */
+	code: string;
+	/**
+	 * @type array
+	 */
+	errors?: ErrorsResponseerroradditionalDTO[];
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface AuthtypesOrgSessionContextDTO {
+	authNSupport?: AuthtypesAuthNSupportDTO;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	warning?: ErrorsJSONDTO;
+}
+
+export interface AuthtypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
+export interface AuthtypesPostableAuthDomainDTO {
+	config?: AuthtypesAuthDomainConfigDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
+export interface AuthtypesPostableEmailPasswordSessionDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	password?: string;
+}
+
+export interface AuthtypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface AuthtypesPostableRotateTokenDTO {
+	/**
+	 * @type string
+	 */
+	refreshToken?: string;
+}
+
+export interface AuthtypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface AuthtypesSessionContextDTO {
+	/**
+	 * @type boolean
+	 */
+	exists?: boolean;
+	/**
+	 * @type array,null
+	 */
+	orgs?: AuthtypesOrgSessionContextDTO[] | null;
+}
+
+export interface AuthtypesTransactionDTO {
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
+}
+
+export interface AuthtypesUpdatableAuthDomainDTO {
+	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role: AuthtypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type string
+	 */
+	userId: string;
+}
+
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type array,null
+	 */
+	userRoles?: AuthtypesUserRoleDTO[] | null;
+}
+
+export interface CloudintegrationtypesAWSAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	regions: string[];
+}
+
+export interface CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	filterPattern: string;
+	/**
+	 * @type string
+	 */
+	logGroupNamePrefix: string;
+}
+
+export interface CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO {
+	/**
+	 * @type array
+	 */
+	metricNames?: string[];
+	/**
+	 * @type string
+	 */
+	namespace: string;
+}
+
+export interface CloudintegrationtypesAWSConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	connectionUrl: string;
+}
+
+export interface CloudintegrationtypesAWSLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	subscriptions: CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO[];
+}
+
+export interface CloudintegrationtypesAWSMetricsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	streamFilters: CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO[];
+}
+
+export type CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesAWSTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAWSLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAWSMetricsCollectionStrategyDTO;
+	/**
+	 * @type object
+	 */
+	s3Buckets?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets;
+}
+
+export interface CloudintegrationtypesAWSIntegrationConfigDTO {
+	/**
+	 * @type array
+	 */
+	enabledRegions: string[];
+	telemetryCollectionStrategy: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+}
+
+export interface CloudintegrationtypesAWSPostableAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	regions: string[];
+}
+
+export type CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesAWSServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type object
+	 */
+	s3Buckets?: CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets;
+}
+
+export interface CloudintegrationtypesAWSServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAWSServiceConfigDTO {
+	logs?: CloudintegrationtypesAWSServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
+}
+
+export type CloudintegrationtypesAgentReportDTOAnyOfDataAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesAgentReportDTOAnyOfData =
+	CloudintegrationtypesAgentReportDTOAnyOfDataAnyOf | null;
+
+export type CloudintegrationtypesAgentReportDTOAnyOf = {
+	/**
+	 * @type object,null
+	 */
+	data: CloudintegrationtypesAgentReportDTOAnyOfData;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestampMillis: number;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesAgentReportDTO =
+	CloudintegrationtypesAgentReportDTOAnyOf | null;
+
+export interface CloudintegrationtypesAzureAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesAccountDTO {
+	agentReport: CloudintegrationtypesAgentReportDTO | null;
+	config: CloudintegrationtypesAccountConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string,null
+	 */
+	providerAccountId: string | null;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	removedAt: string | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface DashboardtypesStorableDashboardDataDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesDashboardDTO {
+	definition?: DashboardtypesStorableDashboardDataDTO;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface CloudintegrationtypesAssetsDTO {
+	/**
+	 * @type array,null
+	 */
+	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesAzureConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	cloudPowerShellCommand: string;
+}
+
+export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	categoryGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
+}
+
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
+export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceConfigDTO {
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+}
+
+export interface CloudintegrationtypesServiceConfigDTO {
+	aws?: CloudintegrationtypesAWSServiceConfigDTO;
+	azure?: CloudintegrationtypesAzureServiceConfigDTO;
+}
+
+export enum CloudintegrationtypesServiceIDDTO {
+	alb = 'alb',
+	'api-gateway' = 'api-gateway',
+	dynamodb = 'dynamodb',
+	ec2 = 'ec2',
+	ecs = 'ecs',
+	eks = 'eks',
+	elasticache = 'elasticache',
+	lambda = 'lambda',
+	msk = 'msk',
+	rds = 'rds',
+	s3sync = 's3sync',
+	sns = 'sns',
+	sqs = 'sqs',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
+}
+export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
+	/**
+	 * @type string
+	 */
+	cloudIntegrationId?: string;
+	config?: CloudintegrationtypesServiceConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	type?: CloudintegrationtypesServiceIDDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesCloudIntegrationServiceDTO =
+	CloudintegrationtypesCloudIntegrationServiceDTOAnyOf | null;
+
+export interface CloudintegrationtypesCollectedLogAttributeDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	path?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
+export interface CloudintegrationtypesCollectedMetricDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface CloudintegrationtypesConnectionArtifactDTO {
+	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
+	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
+}
+
+export interface CloudintegrationtypesCredentialsDTO {
+	/**
+	 * @type string
+	 */
+	ingestionKey: string;
+	/**
+	 * @type string
+	 */
+	ingestionUrl: string;
+	/**
+	 * @type string
+	 */
+	sigNozApiKey: string;
+	/**
+	 * @type string
+	 */
+	sigNozApiUrl: string;
+}
+
+export interface CloudintegrationtypesDataCollectedDTO {
+	/**
+	 * @type array,null
+	 */
+	logs?: CloudintegrationtypesCollectedLogAttributeDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
+	connectionArtifact: CloudintegrationtypesConnectionArtifactDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface CloudintegrationtypesGettableAccountsDTO {
+	/**
+	 * @type array
+	 */
+	accounts: CloudintegrationtypesAccountDTO[];
+}
+
+export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem =
+	{
+		/**
+		 * @type string
+		 */
+		filter_pattern?: string;
+		/**
+		 * @type string
+		 */
+		log_group_name_prefix?: string;
+	};
+
+export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
+	/**
+	 * @type array,null
+	 */
+	cloudwatch_logs_subscriptions?:
+		| CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem[]
+		| null;
+}
+
+export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem =
+	{
+		/**
+		 * @type array
+		 */
+		MetricNames?: string[];
+		/**
+		 * @type string
+		 */
+		Namespace?: string;
+	};
+
+export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
+	/**
+	 * @type array,null
+	 */
+	cloudwatch_metric_stream_filters?:
+		| CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem[]
+		| null;
+}
+
+export type CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
+	aws_logs?: CloudintegrationtypesOldAWSLogsStrategyDTO;
+	aws_metrics?: CloudintegrationtypesOldAWSMetricsStrategyDTO;
+	/**
+	 * @type string
+	 */
+	provider?: string;
+	/**
+	 * @type object
+	 */
+	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
+}
+
+export type CloudintegrationtypesIntegrationConfigDTOAnyOf = {
+	/**
+	 * @type array
+	 */
+	enabled_regions: string[];
+	telemetry: CloudintegrationtypesOldAWSCollectionStrategyDTO;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesIntegrationConfigDTO =
+	CloudintegrationtypesIntegrationConfigDTOAnyOf | null;
+
+export interface CloudintegrationtypesProviderIntegrationConfigDTO {
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
+}
+
+export interface CloudintegrationtypesGettableAgentCheckInDTO {
+	/**
+	 * @type string
+	 */
+	account_id: string;
+	/**
+	 * @type string
+	 */
+	cloud_account_id: string;
+	/**
+	 * @type string
+	 */
+	cloudIntegrationId: string;
+	integration_config: CloudintegrationtypesIntegrationConfigDTO | null;
+	integrationConfig: CloudintegrationtypesProviderIntegrationConfigDTO;
+	/**
+	 * @type string
+	 */
+	providerAccountId: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	removed_at: string | null;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	removedAt: string | null;
+}
+
+export interface CloudintegrationtypesServiceMetadataDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	icon: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesGettableServicesMetadataDTO {
+	/**
+	 * @type array
+	 */
+	services: CloudintegrationtypesServiceMetadataDTO[];
+}
+
+export interface CloudintegrationtypesPostableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesPostableAccountDTO {
+	config: CloudintegrationtypesPostableAccountConfigDTO;
+	credentials: CloudintegrationtypesCredentialsDTO;
+}
+
+export type CloudintegrationtypesPostableAgentCheckInDTODataAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesPostableAgentCheckInDTOData =
+	CloudintegrationtypesPostableAgentCheckInDTODataAnyOf | null;
+
+export interface CloudintegrationtypesPostableAgentCheckInDTO {
+	/**
+	 * @type string
+	 */
+	account_id?: string;
+	/**
+	 * @type string
+	 */
+	cloud_account_id?: string;
+	/**
+	 * @type string
+	 */
+	cloudIntegrationId?: string;
+	/**
+	 * @type object,null
+	 */
+	data: CloudintegrationtypesPostableAgentCheckInDTOData;
+	/**
+	 * @type string
+	 */
+	providerAccountId?: string;
+}
+
+export interface CloudintegrationtypesSupportedSignalsDTO {
+	/**
+	 * @type boolean
+	 */
+	logs?: boolean;
+	/**
+	 * @type boolean
+	 */
+	metrics?: boolean;
+}
+
+export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
+	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
+}
+
+export interface CloudintegrationtypesServiceDTO {
+	assets: CloudintegrationtypesAssetsDTO;
+	cloudIntegrationService: CloudintegrationtypesCloudIntegrationServiceDTO | null;
+	dataCollected: CloudintegrationtypesDataCollectedDTO;
+	/**
+	 * @type string
+	 */
+	icon: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	overview: string;
+	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
+	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesUpdatableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAccountDTO {
+	config: CloudintegrationtypesUpdatableAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableServiceDTO {
+	config: CloudintegrationtypesServiceConfigDTO;
+}
+
+export interface ConfigReceiverDTO {
+	/**
+	 * @type array
+	 */
+	discord_configs?: ConfigDiscordConfigDTO[];
+	/**
+	 * @type array
+	 */
+	email_configs?: ConfigEmailConfigDTO[];
+	/**
+	 * @type array
+	 */
+	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jira_configs?: ConfigJiraConfigDTO[];
+	/**
+	 * @type array
+	 */
+	mattermost_configs?: ConfigMattermostConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteams_configs?: ConfigMSTeamsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 */
+	opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+	/**
+	 * @type array
+	 */
+	pushover_configs?: ConfigPushoverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	rocketchat_configs?: ConfigRocketchatConfigDTO[];
+	/**
+	 * @type array
+	 */
+	slack_configs?: ConfigSlackConfigDTO[];
+	/**
+	 * @type array
+	 */
+	sns_configs?: ConfigSNSConfigDTO[];
+	/**
+	 * @type array
+	 */
+	telegram_configs?: ConfigTelegramConfigDTO[];
+	/**
+	 * @type array
+	 */
+	victorops_configs?: ConfigVictorOpsConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webex_configs?: ConfigWebexConfigDTO[];
+	/**
+	 * @type array
+	 */
+	webhook_configs?: ConfigWebhookConfigDTO[];
+	/**
+	 * @type array
+	 */
+	wechat_configs?: ConfigWechatConfigDTO[];
+}
+
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array,null
+	 */
+	additions: CoretypesObjectGroupDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export enum DashboardtypesSourceDTO {
+	user = 'user',
+	system = 'system',
+	integration = 'integration',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2781,11 +3035,12 @@ export interface DashboardtypesDashboardDTO {
 	 * @type string
 	 */
 	org_id?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -2823,10 +3078,6 @@ export interface DashboardtypesPostablePublicDashboardDTO {
 	timeRangeEnabled?: boolean;
 }
 
-export interface DashboardtypesStorableDashboardDataDTO {
-	[key: string]: unknown;
-}
-
 export interface DashboardtypesUpdatablePublicDashboardDTO {
 	/**
 	 * @type string
@@ -2838,36 +3089,12 @@ export interface DashboardtypesUpdatablePublicDashboardDTO {
 	timeRangeEnabled?: boolean;
 }
 
-export interface ErrorsJSONDTO {
-	/**
-	 * @type string
-	 */
-	code: string;
-	/**
-	 * @type array
-	 */
-	errors?: ErrorsResponseerroradditionalDTO[];
-	/**
-	 * @type string
-	 */
-	message: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
-export interface ErrorsResponseerroradditionalDTO {
-	/**
-	 * @type string
-	 */
-	message?: string;
-}
+export type FactoryResponseDTOServicesAnyOf = { [key: string]: string[] };
 
 /**
  * @nullable
  */
-export type FactoryResponseDTOServices = { [key: string]: string[] } | null;
+export type FactoryResponseDTOServices = FactoryResponseDTOServicesAnyOf | null;
 
 export interface FactoryResponseDTO {
 	/**
@@ -2875,18 +3102,20 @@ export interface FactoryResponseDTO {
 	 */
 	healthy?: boolean;
 	/**
-	 * @type object
-	 * @nullable true
+	 * @type object,null
 	 */
 	services?: FactoryResponseDTOServices;
 }
 
+export type FeaturetypesGettableFeatureDTOVariantsAnyOf = {
+	[key: string]: unknown;
+};
+
 /**
  * @nullable
  */
-export type FeaturetypesGettableFeatureDTOVariants = {
-	[key: string]: unknown;
-} | null;
+export type FeaturetypesGettableFeatureDTOVariants =
+	FeaturetypesGettableFeatureDTOVariantsAnyOf | null;
 
 export interface FeaturetypesGettableFeatureDTO {
 	/**
@@ -2911,8 +3140,7 @@ export interface FeaturetypesGettableFeatureDTO {
 	 */
 	stage?: string;
 	/**
-	 * @type object
-	 * @nullable true
+	 * @type object,null
 	 */
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
@@ -2935,127 +3163,6 @@ export interface GatewaytypesGettableCreatedIngestionKeyLimitDTO {
 	id: string;
 }
 
-export interface GatewaytypesGettableIngestionKeysDTO {
-	_pagination?: GatewaytypesPaginationDTO;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	keys?: GatewaytypesIngestionKeyDTO[] | null;
-}
-
-export interface GatewaytypesIngestionKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	expires_at?: Date;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	limits?: GatewaytypesLimitDTO[] | null;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	tags?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updated_at?: Date;
-	/**
-	 * @type string
-	 */
-	value?: string;
-	/**
-	 * @type string
-	 */
-	workspace_id?: string;
-}
-
-export interface GatewaytypesLimitDTO {
-	config?: GatewaytypesLimitConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	created_at?: Date;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	key_id?: string;
-	metric?: GatewaytypesLimitMetricDTO;
-	/**
-	 * @type string
-	 */
-	signal?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	tags?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updated_at?: Date;
-}
-
-export interface GatewaytypesLimitConfigDTO {
-	day?: GatewaytypesLimitValueDTO;
-	second?: GatewaytypesLimitValueDTO;
-}
-
-export interface GatewaytypesLimitMetricDTO {
-	day?: GatewaytypesLimitMetricValueDTO;
-	second?: GatewaytypesLimitMetricValueDTO;
-}
-
-export interface GatewaytypesLimitMetricValueDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	count?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	size?: number;
-}
-
-export interface GatewaytypesLimitValueDTO {
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	count?: number | null;
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	size?: number | null;
-}
-
 export interface GatewaytypesPaginationDTO {
 	/**
 	 * @type integer
@@ -3075,19 +3182,133 @@ export interface GatewaytypesPaginationDTO {
 	total?: number;
 }
 
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer,null
+	 */
+	count?: number | null;
+	/**
+	 * @type integer,null
+	 */
+	size?: number | null;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
+}
+
+export interface GatewaytypesLimitMetricValueDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	count?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	size?: number;
+}
+
+export interface GatewaytypesLimitMetricDTO {
+	day?: GatewaytypesLimitMetricValueDTO;
+	second?: GatewaytypesLimitMetricValueDTO;
+}
+
+export interface GatewaytypesLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	key_id?: string;
+	metric?: GatewaytypesLimitMetricDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+}
+
+export interface GatewaytypesIngestionKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	expires_at?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type array,null
+	 */
+	limits?: GatewaytypesLimitDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+	/**
+	 * @type string
+	 */
+	value?: string;
+	/**
+	 * @type string
+	 */
+	workspace_id?: string;
+}
+
+export interface GatewaytypesGettableIngestionKeysDTO {
+	_pagination?: GatewaytypesPaginationDTO;
+	/**
+	 * @type array,null
+	 */
+	keys?: GatewaytypesIngestionKeyDTO[] | null;
+}
+
 export interface GatewaytypesPostableIngestionKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	expires_at?: Date;
+	expires_at?: string;
 	/**
 	 * @type string
 	 */
 	name: string;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	tags?: string[] | null;
 }
@@ -3099,8 +3320,7 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	 */
 	signal?: string;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	tags?: string[] | null;
 }
@@ -3108,8 +3328,7 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	config: GatewaytypesLimitConfigDTO;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	tags?: string[] | null;
 }
@@ -3119,24 +3338,6 @@ export interface GlobaltypesAPIKeyConfigDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
-}
-
-export interface GlobaltypesConfigDTO {
-	/**
-	 * @type string
-	 */
-	external_url?: string;
-	identN?: GlobaltypesIdentNConfigDTO;
-	/**
-	 * @type string
-	 */
-	ingestion_url?: string;
-}
-
-export interface GlobaltypesIdentNConfigDTO {
-	apikey?: GlobaltypesAPIKeyConfigDTO;
-	impersonation?: GlobaltypesImpersonationConfigDTO;
-	tokenizer?: GlobaltypesTokenizerConfigDTO;
 }
 
 export interface GlobaltypesImpersonationConfigDTO {
@@ -3153,6 +3354,321 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface GlobaltypesIdentNConfigDTO {
+	apikey?: GlobaltypesAPIKeyConfigDTO;
+	impersonation?: GlobaltypesImpersonationConfigDTO;
+	tokenizer?: GlobaltypesTokenizerConfigDTO;
+}
+
+export interface GlobaltypesConfigDTO {
+	/**
+	 * @type string,null
+	 */
+	ai_assistant_url: string | null;
+	/**
+	 * @type string
+	 */
+	external_url: string;
+	identN?: GlobaltypesIdentNConfigDTO;
+	/**
+	 * @type string
+	 */
+	ingestion_url: string;
+	/**
+	 * @type string,null
+	 */
+	mcp_url: string | null;
+}
+
+export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesClusterRecordDTOMeta =
+	InframonitoringtypesClusterRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesNodeCountsByReadinessDTO {
+	/**
+	 * @type integer
+	 */
+	notReady: number;
+	/**
+	 * @type integer
+	 */
+	ready: number;
+}
+
+export interface InframonitoringtypesPodCountsByPhaseDTO {
+	/**
+	 * @type integer
+	 */
+	failed: number;
+	/**
+	 * @type integer
+	 */
+	pending: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	succeeded: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+}
+
+export interface InframonitoringtypesClusterRecordDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPUAllocatable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	clusterName: string;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesClusterRecordDTOMeta;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array,null
+	 */
+	missingMetrics: string[] | null;
+}
+
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
+export interface Querybuildertypesv5QueryWarnDataAdditionalDTO {
+	/**
+	 * @type string
+	 */
+	message?: string;
+}
+
+export interface Querybuildertypesv5QueryWarnDataDTO {
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+	/**
+	 * @type array
+	 */
+	warnings?: Querybuildertypesv5QueryWarnDataAdditionalDTO[];
+}
+
+export interface InframonitoringtypesClustersDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesClusterRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesDaemonSetRecordDTOMeta =
+	InframonitoringtypesDaemonSetRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesDaemonSetRecordDTO {
+	/**
+	 * @type integer
+	 */
+	currentNodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	daemonSetMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	daemonSetName: string;
+	/**
+	 * @type integer
+	 */
+	desiredNodes: number;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesDaemonSetRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesDaemonSetsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesDaemonSetRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesDeploymentRecordDTOMeta =
+	InframonitoringtypesDeploymentRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesDeploymentRecordDTO {
+	/**
+	 * @type integer
+	 */
+	availablePods: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	deploymentMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	deploymentName: string;
+	/**
+	 * @type integer
+	 */
+	desiredPods: number;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesDeploymentRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesDeploymentsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesDeploymentRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
 export interface InframonitoringtypesHostFilterDTO {
 	/**
 	 * @type string
@@ -3161,12 +3677,15 @@ export interface InframonitoringtypesHostFilterDTO {
 	filterByStatus?: InframonitoringtypesHostStatusDTO;
 }
 
+export type InframonitoringtypesHostRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
 /**
  * @nullable
  */
-export type InframonitoringtypesHostRecordDTOMeta = {
-	[key: string]: unknown;
-} | null;
+export type InframonitoringtypesHostRecordDTOMeta =
+	InframonitoringtypesHostRecordDTOMetaAnyOf | null;
 
 export interface InframonitoringtypesHostRecordDTO {
 	/**
@@ -3202,8 +3721,7 @@ export interface InframonitoringtypesHostRecordDTO {
 	 */
 	memory: number;
 	/**
-	 * @type object
-	 * @nullable true
+	 * @type object,null
 	 */
 	meta: InframonitoringtypesHostRecordDTOMeta;
 	status: InframonitoringtypesHostStatusDTO;
@@ -3214,11 +3732,6 @@ export interface InframonitoringtypesHostRecordDTO {
 	wait: number;
 }
 
-export enum InframonitoringtypesHostStatusDTO {
-	active = 'active',
-	inactive = 'inactive',
-	'' = '',
-}
 export interface InframonitoringtypesHostsDTO {
 	/**
 	 * @type boolean
@@ -3226,9 +3739,8 @@ export interface InframonitoringtypesHostsDTO {
 	endTimeBeforeRetention: boolean;
 	/**
 	 * @type array
-	 * @nullable true
 	 */
-	records: InframonitoringtypesHostRecordDTO[] | null;
+	records: InframonitoringtypesHostRecordDTO[];
 	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
 	/**
 	 * @type integer
@@ -3238,16 +3750,374 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export interface InframonitoringtypesPostableHostsDTO {
+export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesJobRecordDTOMeta =
+	InframonitoringtypesJobRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesJobRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activePods: number;
+	/**
+	 * @type integer
+	 */
+	desiredSuccessfulPods: number;
+	/**
+	 * @type integer
+	 */
+	failedPods: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	jobMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	jobName: string;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesJobRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type integer
+	 */
+	successfulPods: number;
+}
+
+export interface InframonitoringtypesJobsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesJobRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export type InframonitoringtypesNamespaceRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNamespaceRecordDTOMeta =
+	InframonitoringtypesNamespaceRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesNamespaceRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceMemory: number;
+	/**
+	 * @type string
+	 */
+	namespaceName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNamespacesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesNamespaceRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNodeRecordDTOMeta =
+	InframonitoringtypesNodeRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesNodeRecordDTO {
+	condition: InframonitoringtypesNodeConditionDTO;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesNodeRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPUAllocatable: number;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	nodeName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNodesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesNodeRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export enum InframonitoringtypesPodPhaseDTO {
+	pending = 'pending',
+	running = 'running',
+	succeeded = 'succeeded',
+	failed = 'failed',
+	unknown = 'unknown',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesPodRecordDTOMeta =
+	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesPodRecordDTO {
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesPodRecordDTOMeta;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	podAge: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPURequest: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryRequest: number;
+	podPhase: InframonitoringtypesPodPhaseDTO;
+	/**
+	 * @type string
+	 */
+	podUID: string;
+}
+
+export interface InframonitoringtypesPodsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesPodRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface Querybuildertypesv5FilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+}
+
+export enum TelemetrytypesFieldContextDTO {
+	metric = 'metric',
+	log = 'log',
+	span = 'span',
+	resource = 'resource',
+	attribute = 'attribute',
+	body = 'body',
+}
+export enum TelemetrytypesFieldDataTypeDTO {
+	string = 'string',
+	bool = 'bool',
+	float64 = 'float64',
+	int64 = 'int64',
+	number = 'number',
+}
+export enum TelemetrytypesSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+}
+export interface Querybuildertypesv5GroupByKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export enum Querybuildertypesv5OrderDirectionDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export interface Querybuildertypesv5OrderByKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface Querybuildertypesv5OrderByDTO {
+	direction?: Querybuildertypesv5OrderDirectionDTO;
+	key?: Querybuildertypesv5OrderByKeyDTO;
+}
+
+export interface InframonitoringtypesPostableClustersDTO {
 	/**
 	 * @type integer
 	 * @format int64
 	 */
 	end: number;
-	filter?: InframonitoringtypesHostFilterDTO;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
 	/**
@@ -3266,18 +4136,553 @@ export interface InframonitoringtypesPostableHostsDTO {
 	start: number;
 }
 
-export interface InframonitoringtypesRequiredMetricsCheckDTO {
+export interface InframonitoringtypesPostableDaemonSetsDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type integer
+	 * @format int64
 	 */
-	missingMetrics: string[] | null;
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
 }
 
-export enum InframonitoringtypesResponseTypeDTO {
-	list = 'list',
-	grouped_list = 'grouped_list',
+export interface InframonitoringtypesPostableDeploymentsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
 }
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableJobsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNamespacesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNodesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostablePodsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableStatefulSetsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableVolumesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array,null
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export type InframonitoringtypesStatefulSetRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesStatefulSetRecordDTOMeta =
+	InframonitoringtypesStatefulSetRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesStatefulSetRecordDTO {
+	/**
+	 * @type integer
+	 */
+	currentPods: number;
+	/**
+	 * @type integer
+	 */
+	desiredPods: number;
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	statefulSetMemoryRequest: number;
+	/**
+	 * @type string
+	 */
+	statefulSetName: string;
+}
+
+export interface InframonitoringtypesStatefulSetsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesStatefulSetRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export type InframonitoringtypesVolumeRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesVolumeRecordDTOMeta =
+	InframonitoringtypesVolumeRecordDTOMetaAnyOf | null;
+
+export interface InframonitoringtypesVolumeRecordDTO {
+	/**
+	 * @type object,null
+	 */
+	meta: InframonitoringtypesVolumeRecordDTOMeta;
+	/**
+	 * @type string
+	 */
+	persistentVolumeClaimName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeAvailable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeCapacity: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesFree: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesUsed: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeUsage: number;
+}
+
+export interface InframonitoringtypesVolumesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 */
+	records: InframonitoringtypesVolumeRecordDTO[];
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
+export type LlmpricingruletypesStringSliceDTO = string[] | null;
+
+export enum LlmpricingruletypesLLMPricingRuleCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export interface LlmpricingruletypesLLMPricingCacheCostsDTO {
+	mode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	read?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	write?: number;
+}
+
+export interface LlmpricingruletypesLLMRulePricingDTO {
+	cache?: LlmpricingruletypesLLMPricingCacheCostsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	input: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	output: number;
+}
+
+export enum LlmpricingruletypesLLMPricingRuleUnitDTO {
+	per_million_tokens = 'per_million_tokens',
+}
+export interface LlmpricingruletypesLLMPricingRuleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isOverride: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	modelPattern: LlmpricingruletypesStringSliceDTO | null;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	sourceId?: string;
+	/**
+	 * @type string,null
+	 * @format date-time
+	 */
+	syncedAt?: string | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface LlmpricingruletypesGettablePricingRulesDTO {
+	/**
+	 * @type array,null
+	 */
+	items: LlmpricingruletypesLLMPricingRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type boolean,null
+	 */
+	isOverride?: boolean | null;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array,null
+	 */
+	modelPattern: string[] | null;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string,null
+	 */
+	sourceId?: string | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+}
+
+export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
+	/**
+	 * @type array,null
+	 */
+	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -3296,14 +4701,89 @@ export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	start: number;
 }
 
-export interface MetricsexplorertypesInspectMetricsResponseDTO {
+export interface TelemetrytypesTelemetryFieldKeyDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface Querybuildertypesv5LabelDTO {
+	key?: TelemetrytypesTelemetryFieldKeyDTO;
+	value?: unknown;
+}
+
+export interface Querybuildertypesv5BucketDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	step?: number;
+}
+
+export interface Querybuildertypesv5TimeSeriesValueDTO {
+	bucket?: Querybuildertypesv5BucketDTO;
+	/**
+	 * @type boolean
+	 */
+	partial?: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestamp?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	value?: number;
 	/**
 	 * @type array
-	 * @nullable true
+	 */
+	values?: number[];
+}
+
+export interface Querybuildertypesv5TimeSeriesDTO {
+	/**
+	 * @type array
+	 */
+	labels?: Querybuildertypesv5LabelDTO[];
+	/**
+	 * @type array,null
+	 */
+	values?: Querybuildertypesv5TimeSeriesValueDTO[] | null;
+}
+
+export interface MetricsexplorertypesInspectMetricsResponseDTO {
+	/**
+	 * @type array,null
 	 */
 	series: Querybuildertypesv5TimeSeriesDTO[] | null;
 }
 
+export enum MetrictypesTemporalityDTO {
+	delta = 'delta',
+	cumulative = 'cumulative',
+	unspecified = 'unspecified',
+}
+export enum MetrictypesTypeDTO {
+	gauge = 'gauge',
+	sum = 'sum',
+	histogram = 'histogram',
+	summary = 'summary',
+	exponentialhistogram = 'exponentialhistogram',
+}
 export interface MetricsexplorertypesListMetricDTO {
 	/**
 	 * @type string
@@ -3327,8 +4807,7 @@ export interface MetricsexplorertypesListMetricDTO {
 
 export interface MetricsexplorertypesListMetricsResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	metrics: MetricsexplorertypesListMetricDTO[] | null;
 }
@@ -3346,8 +4825,7 @@ export interface MetricsexplorertypesMetricAlertDTO {
 
 export interface MetricsexplorertypesMetricAlertsResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	alerts: MetricsexplorertypesMetricAlertDTO[] | null;
 }
@@ -3363,16 +4841,14 @@ export interface MetricsexplorertypesMetricAttributeDTO {
 	 */
 	valueCount: number;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	values: string[] | null;
 }
 
 export interface MetricsexplorertypesMetricAttributesResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	attributes: MetricsexplorertypesMetricAttributeDTO[] | null;
 	/**
@@ -3403,8 +4879,7 @@ export interface MetricsexplorertypesMetricDashboardDTO {
 
 export interface MetricsexplorertypesMetricDashboardsResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	dashboards: MetricsexplorertypesMetricDashboardDTO[] | null;
 }
@@ -3507,8 +4982,7 @@ export interface MetricsexplorertypesStatsRequestDTO {
 
 export interface MetricsexplorertypesStatsResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	metrics: MetricsexplorertypesStatDTO[] | null;
 	/**
@@ -3560,13 +5034,11 @@ export interface MetricsexplorertypesTreemapRequestDTO {
 
 export interface MetricsexplorertypesTreemapResponseDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	samples: MetricsexplorertypesTreemapEntryDTO[] | null;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	timeseries: MetricsexplorertypesTreemapEntryDTO[] | null;
 }
@@ -3616,11 +5088,6 @@ export enum MetrictypesSpaceAggregationDTO {
 	p95 = 'p95',
 	p99 = 'p99',
 }
-export enum MetrictypesTemporalityDTO {
-	delta = 'delta',
-	cumulative = 'cumulative',
-	unspecified = 'unspecified',
-}
 export enum MetrictypesTimeAggregationDTO {
 	latest = 'latest',
 	sum = 'sum',
@@ -3632,28 +5099,17 @@ export enum MetrictypesTimeAggregationDTO {
 	rate = 'rate',
 	increase = 'increase',
 }
-export enum MetrictypesTypeDTO {
-	gauge = 'gauge',
-	sum = 'sum',
-	histogram = 'histogram',
-	summary = 'summary',
-	exponentialhistogram = 'exponentialhistogram',
-}
-export type ModelDurationDTO = number;
-
-export interface ModelLabelSetDTO {
-	[key: string]: string;
+export interface PreferencetypesValueDTO {
+	[key: string]: unknown;
 }
 
 export interface PreferencetypesPreferenceDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	allowedScopes?: string[] | null;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	allowedValues?: string[] | null;
 	defaultValue?: PreferencetypesValueDTO;
@@ -3676,8 +5132,16 @@ export interface PreferencetypesUpdatablePreferenceDTO {
 	value?: unknown;
 }
 
-export interface PreferencetypesValueDTO {
-	[key: string]: unknown;
+export interface PromotetypesWrappedIndexDTO {
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 */
+	granularity?: number;
+	/**
+	 * @type string
+	 */
+	type?: string;
 }
 
 export interface PromotetypesPromotePathDTO {
@@ -3693,21 +5157,6 @@ export interface PromotetypesPromotePathDTO {
 	 * @type boolean
 	 */
 	promote?: boolean;
-}
-
-export interface PromotetypesWrappedIndexDTO {
-	/**
-	 * @type string
-	 */
-	column_type?: string;
-	/**
-	 * @type integer
-	 */
-	granularity?: number;
-	/**
-	 * @type string
-	 */
-	type?: string;
 }
 
 export type Querybuildertypesv5AggregationBucketDTOMeta = {
@@ -3743,22 +5192,13 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	 */
 	predictedSeries?: Querybuildertypesv5TimeSeriesDTO[];
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	series?: Querybuildertypesv5TimeSeriesDTO[] | null;
 	/**
 	 * @type array
 	 */
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
-}
-
-export interface Querybuildertypesv5BucketDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	step?: number;
 }
 
 export interface Querybuildertypesv5ClickHouseQueryDTO {
@@ -3787,6 +5227,10 @@ export type Querybuildertypesv5ColumnDescriptorDTOMeta = {
 	unit?: string;
 };
 
+export enum Querybuildertypesv5ColumnTypeDTO {
+	group = 'group',
+	aggregation = 'aggregation',
+}
 export interface Querybuildertypesv5ColumnDescriptorDTO {
 	/**
 	 * @type integer
@@ -3819,74 +5263,15 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	unit?: string;
 }
 
-export enum Querybuildertypesv5ColumnTypeDTO {
-	group = 'group',
-	aggregation = 'aggregation',
-}
-/**
- * Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.
- */
-export interface Querybuildertypesv5CompositeQueryDTO {
+export interface Querybuildertypesv5TraceAggregationDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type string
 	 */
-	queries?: Querybuildertypesv5QueryEnvelopeDTO[] | null;
-}
-
-export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
-	[key: string]: number;
-};
-
-/**
- * Execution statistics for the query, including rows scanned, bytes scanned, and duration.
- */
-export interface Querybuildertypesv5ExecStatsDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	bytesScanned?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	durationMs?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	rowsScanned?: number;
-	/**
-	 * @type object
-	 */
-	stepIntervals?: Querybuildertypesv5ExecStatsDTOStepIntervals;
-}
-
-export interface Querybuildertypesv5FilterDTO {
+	alias?: string;
 	/**
 	 * @type string
 	 */
 	expression?: string;
-}
-
-export interface Querybuildertypesv5FormatOptionsDTO {
-	/**
-	 * @type boolean
-	 */
-	fillGaps?: boolean;
-	/**
-	 * @type boolean
-	 */
-	formatTableResultForUI?: boolean;
-}
-
-export interface Querybuildertypesv5FunctionDTO {
-	/**
-	 * @type array
-	 */
-	args?: Querybuildertypesv5FunctionArgDTO[];
-	name?: Querybuildertypesv5FunctionNameDTO;
 }
 
 export interface Querybuildertypesv5FunctionArgDTO {
@@ -3917,22 +5302,12 @@ export enum Querybuildertypesv5FunctionNameDTO {
 	anomaly = 'anomaly',
 	fillzero = 'fillzero',
 }
-export interface Querybuildertypesv5GroupByKeyDTO {
+export interface Querybuildertypesv5FunctionDTO {
 	/**
-	 * @type string
+	 * @type array
 	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
+	args?: Querybuildertypesv5FunctionArgDTO[];
+	name?: Querybuildertypesv5FunctionNameDTO;
 }
 
 export interface Querybuildertypesv5HavingDTO {
@@ -3942,21 +5317,117 @@ export interface Querybuildertypesv5HavingDTO {
 	expression?: string;
 }
 
-export interface Querybuildertypesv5LabelDTO {
-	key?: TelemetrytypesTelemetryFieldKeyDTO;
-	value?: unknown;
-}
-
 export interface Querybuildertypesv5LimitByDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	keys?: string[] | null;
 	/**
 	 * @type string
 	 */
 	value?: string;
+}
+
+/**
+ * Step interval. Accepts a Go duration string (e.g., "60s", "1m", "1h") or a number representing seconds (e.g., 60).
+ */
+export type Querybuildertypesv5StepDTO = string | number;
+
+export interface Querybuildertypesv5SecondaryAggregationDTO {
+	/**
+	 * @type string
+	 */
+	alias?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export enum TelemetrytypesSourceDTO {
+	meter = 'meter',
+}
+export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
+	/**
+	 * @type array
+	 */
+	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
+	/**
+	 * @type string
+	 */
+	cursor?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 */
+	functions?: Querybuildertypesv5FunctionDTO[];
+	/**
+	 * @type array
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
+	having?: Querybuildertypesv5HavingDTO;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type integer
+	 */
+	limit?: number;
+	limitBy?: Querybuildertypesv5LimitByDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	/**
+	 * @type array
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
+	/**
+	 * @type array
+	 */
+	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
+	/**
+	 * @type array
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	signal?: TelemetrytypesSignalDTO;
+	source?: TelemetrytypesSourceDTO;
+	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export enum Querybuildertypesv5QueryTypeDTO {
+	builder_query = 'builder_query',
+	builder_formula = 'builder_formula',
+	builder_trace_operator = 'builder_trace_operator',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
+export interface Querybuildertypesv5QueryEnvelopeBuilderTraceDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
 }
 
 export interface Querybuildertypesv5LogAggregationDTO {
@@ -3968,101 +5439,6 @@ export interface Querybuildertypesv5LogAggregationDTO {
 	 * @type string
 	 */
 	expression?: string;
-}
-
-export interface Querybuildertypesv5MetricAggregationDTO {
-	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
-	/**
-	 * @type string
-	 */
-	metricName?: string;
-	reduceTo?: Querybuildertypesv5ReduceToDTO;
-	spaceAggregation?: MetrictypesSpaceAggregationDTO;
-	temporality?: MetrictypesTemporalityDTO;
-	timeAggregation?: MetrictypesTimeAggregationDTO;
-}
-
-export interface Querybuildertypesv5OrderByDTO {
-	direction?: Querybuildertypesv5OrderDirectionDTO;
-	key?: Querybuildertypesv5OrderByKeyDTO;
-}
-
-export interface Querybuildertypesv5OrderByKeyDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
-}
-
-export enum Querybuildertypesv5OrderDirectionDTO {
-	asc = 'asc',
-	desc = 'desc',
-}
-export interface Querybuildertypesv5PromQueryDTO {
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	query?: string;
-	/**
-	 * @type boolean
-	 */
-	stats?: boolean;
-	step?: Querybuildertypesv5StepDTO;
-}
-
-export interface Querybuildertypesv5QueryBuilderFormulaDTO {
-	/**
-	 * @type boolean
-	 */
-	disabled?: boolean;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-	/**
-	 * @type array
-	 */
-	functions?: Querybuildertypesv5FunctionDTO[];
-	having?: Querybuildertypesv5HavingDTO;
-	/**
-	 * @type string
-	 */
-	legend?: string;
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
 }
 
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO {
@@ -4122,6 +5498,32 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
+export interface Querybuildertypesv5QueryEnvelopeBuilderLogDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
+
+export enum Querybuildertypesv5ReduceToDTO {
+	sum = 'sum',
+	count = 'count',
+	avg = 'avg',
+	min = 'min',
+	max = 'max',
+	last = 'last',
+	median = 'median',
+}
+export interface Querybuildertypesv5MetricAggregationDTO {
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
+	/**
+	 * @type string
+	 */
+	metricName?: string;
+	reduceTo?: Querybuildertypesv5ReduceToDTO;
+	spaceAggregation?: MetrictypesSpaceAggregationDTO;
+	temporality?: MetrictypesTemporalityDTO;
+	timeAggregation?: MetrictypesTimeAggregationDTO;
+}
+
 export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO {
 	/**
 	 * @type array
@@ -4179,28 +5581,24 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
-export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO {
-	/**
-	 * @type array
-	 */
-	aggregations?: Querybuildertypesv5TraceAggregationDTO[];
-	/**
-	 * @type string
-	 */
-	cursor?: string;
+export interface Querybuildertypesv5QueryEnvelopeBuilderMetricDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
+
+export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	/**
 	 * @type boolean
 	 */
 	disabled?: boolean;
-	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type string
+	 */
+	expression?: string;
 	/**
 	 * @type array
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[];
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
 	having?: Querybuildertypesv5HavingDTO;
 	/**
 	 * @type string
@@ -4210,30 +5608,19 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 * @type integer
 	 */
 	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
 	 * @type string
 	 */
 	name?: string;
 	/**
-	 * @type integer
-	 */
-	offset?: number;
-	/**
 	 * @type array
 	 */
 	order?: Querybuildertypesv5OrderByDTO[];
-	/**
-	 * @type array
-	 */
-	secondaryAggregations?: Querybuildertypesv5SecondaryAggregationDTO[];
-	/**
-	 * @type array
-	 */
-	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
-	signal?: TelemetrytypesSignalDTO;
-	source?: TelemetrytypesSourceDTO;
-	stepInterval?: Querybuildertypesv5StepDTO;
+}
+
+export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
+	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
 }
 
 export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
@@ -4294,28 +5681,44 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	stepInterval?: Querybuildertypesv5StepDTO;
 }
 
-export type Querybuildertypesv5QueryDataDTO =
-	| (Querybuildertypesv5TimeSeriesDataDTO & {
-			/**
-			 * @type array
-			 * @nullable true
-			 */
-			results?: unknown[] | null;
-	  })
-	| (Querybuildertypesv5ScalarDataDTO & {
-			/**
-			 * @type array
-			 * @nullable true
-			 */
-			results?: unknown[] | null;
-	  })
-	| (Querybuildertypesv5RawDataDTO & {
-			/**
-			 * @type array
-			 * @nullable true
-			 */
-			results?: unknown[] | null;
-	  });
+export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
+	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
+
+export interface Querybuildertypesv5PromQueryDTO {
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	/**
+	 * @type string
+	 */
+	legend?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	query?: string;
+	/**
+	 * @type boolean
+	 */
+	stats?: boolean;
+	step?: Querybuildertypesv5StepDTO;
+}
+
+export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
+	spec?: Querybuildertypesv5PromQueryDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
+
+export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
+	spec?: Querybuildertypesv5ClickHouseQueryDTO;
+	type?: Querybuildertypesv5QueryTypeDTO;
+}
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
 	| (Querybuildertypesv5QueryEnvelopeBuilderTraceDTO & {
@@ -4347,45 +5750,159 @@ export type Querybuildertypesv5QueryEnvelopeDTO =
 			type?: Querybuildertypesv5QueryTypeDTO;
 	  });
 
-export interface Querybuildertypesv5QueryEnvelopeBuilderLogDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+/**
+ * Composite query containing one or more query envelopes. Each query envelope specifies its type and corresponding spec.
+ */
+export interface Querybuildertypesv5CompositeQueryDTO {
+	/**
+	 * @type array,null
+	 */
+	queries?: Querybuildertypesv5QueryEnvelopeDTO[] | null;
 }
 
-export interface Querybuildertypesv5QueryEnvelopeBuilderMetricDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
+	[key: string]: number;
+};
+
+/**
+ * Execution statistics for the query, including rows scanned, bytes scanned, and duration.
+ */
+export interface Querybuildertypesv5ExecStatsDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	bytesScanned?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	durationMs?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	rowsScanned?: number;
+	/**
+	 * @type object
+	 */
+	stepIntervals?: Querybuildertypesv5ExecStatsDTOStepIntervals;
 }
 
-export interface Querybuildertypesv5QueryEnvelopeBuilderTraceDTO {
-	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5FormatOptionsDTO {
+	/**
+	 * @type boolean
+	 */
+	fillGaps?: boolean;
+	/**
+	 * @type boolean
+	 */
+	formatTableResultForUI?: boolean;
 }
 
-export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
-	spec?: Querybuildertypesv5ClickHouseQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5TimeSeriesDataDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: Querybuildertypesv5AggregationBucketDTO[] | null;
+	/**
+	 * @type string
+	 */
+	queryName?: string;
 }
 
-export interface Querybuildertypesv5QueryEnvelopeFormulaDTO {
-	spec?: Querybuildertypesv5QueryBuilderFormulaDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5ScalarDataDTO {
+	/**
+	 * @type array,null
+	 */
+	columns?: Querybuildertypesv5ColumnDescriptorDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	data?: unknown[][] | null;
+	/**
+	 * @type string
+	 */
+	queryName?: string;
 }
 
-export interface Querybuildertypesv5QueryEnvelopePromQLDTO {
-	spec?: Querybuildertypesv5PromQueryDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export type Querybuildertypesv5RawRowDTODataAnyOf = { [key: string]: unknown };
+
+/**
+ * @nullable
+ */
+export type Querybuildertypesv5RawRowDTOData =
+	Querybuildertypesv5RawRowDTODataAnyOf | null;
+
+export interface Querybuildertypesv5RawRowDTO {
+	/**
+	 * @type object,null
+	 */
+	data?: Querybuildertypesv5RawRowDTOData;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	timestamp?: string;
 }
 
-export interface Querybuildertypesv5QueryEnvelopeTraceOperatorDTO {
-	spec?: Querybuildertypesv5QueryBuilderTraceOperatorDTO;
-	type?: Querybuildertypesv5QueryTypeDTO;
+export interface Querybuildertypesv5RawDataDTO {
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type string
+	 */
+	queryName?: string;
+	/**
+	 * @type array,null
+	 */
+	rows?: Querybuildertypesv5RawRowDTO[] | null;
+}
+
+export type Querybuildertypesv5QueryDataDTO =
+	| (Querybuildertypesv5TimeSeriesDataDTO & {
+			/**
+			 * @type array,null
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5ScalarDataDTO & {
+			/**
+			 * @type array,null
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5RawDataDTO & {
+			/**
+			 * @type array,null
+			 */
+			results?: unknown[] | null;
+	  });
+
+export enum Querybuildertypesv5VariableTypeDTO {
+	query = 'query',
+	dynamic = 'dynamic',
+	custom = 'custom',
+	text = 'text',
+}
+export interface Querybuildertypesv5VariableItemDTO {
+	type?: Querybuildertypesv5VariableTypeDTO;
+	value?: unknown;
 }
 
 export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
 
+export enum Querybuildertypesv5RequestTypeDTO {
+	scalar = 'scalar',
+	time_series = 'time_series',
+	raw = 'raw',
+	raw_stream = 'raw_stream',
+	trace = 'trace',
+}
 /**
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
@@ -4427,202 +5944,6 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum Querybuildertypesv5QueryTypeDTO {
-	builder_query = 'builder_query',
-	builder_formula = 'builder_formula',
-	builder_trace_operator = 'builder_trace_operator',
-	clickhouse_sql = 'clickhouse_sql',
-	promql = 'promql',
-}
-export interface Querybuildertypesv5QueryWarnDataDTO {
-	/**
-	 * @type string
-	 */
-	message?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-	/**
-	 * @type array
-	 */
-	warnings?: Querybuildertypesv5QueryWarnDataAdditionalDTO[];
-}
-
-export interface Querybuildertypesv5QueryWarnDataAdditionalDTO {
-	/**
-	 * @type string
-	 */
-	message?: string;
-}
-
-export interface Querybuildertypesv5RawDataDTO {
-	/**
-	 * @type string
-	 */
-	nextCursor?: string;
-	/**
-	 * @type string
-	 */
-	queryName?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	rows?: Querybuildertypesv5RawRowDTO[] | null;
-}
-
-/**
- * @nullable
- */
-export type Querybuildertypesv5RawRowDTOData = {
-	[key: string]: unknown;
-} | null;
-
-export interface Querybuildertypesv5RawRowDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	data?: Querybuildertypesv5RawRowDTOData;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	timestamp?: Date;
-}
-
-export enum Querybuildertypesv5ReduceToDTO {
-	sum = 'sum',
-	count = 'count',
-	avg = 'avg',
-	min = 'min',
-	max = 'max',
-	last = 'last',
-	median = 'median',
-}
-export enum Querybuildertypesv5RequestTypeDTO {
-	scalar = 'scalar',
-	time_series = 'time_series',
-	raw = 'raw',
-	raw_stream = 'raw_stream',
-	trace = 'trace',
-}
-export interface Querybuildertypesv5ScalarDataDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	columns?: Querybuildertypesv5ColumnDescriptorDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	data?: unknown[][] | null;
-	/**
-	 * @type string
-	 */
-	queryName?: string;
-}
-
-export interface Querybuildertypesv5SecondaryAggregationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-	/**
-	 * @type array
-	 */
-	groupBy?: Querybuildertypesv5GroupByKeyDTO[];
-	/**
-	 * @type integer
-	 */
-	limit?: number;
-	limitBy?: Querybuildertypesv5LimitByDTO;
-	/**
-	 * @type array
-	 */
-	order?: Querybuildertypesv5OrderByDTO[];
-	stepInterval?: Querybuildertypesv5StepDTO;
-}
-
-/**
- * Step interval. Accepts a Go duration string (e.g., "60s", "1m", "1h") or a number representing seconds (e.g., 60).
- */
-export type Querybuildertypesv5StepDTO = string | number;
-
-export interface Querybuildertypesv5TimeSeriesDTO {
-	/**
-	 * @type array
-	 */
-	labels?: Querybuildertypesv5LabelDTO[];
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	values?: Querybuildertypesv5TimeSeriesValueDTO[] | null;
-}
-
-export interface Querybuildertypesv5TimeSeriesDataDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	aggregations?: Querybuildertypesv5AggregationBucketDTO[] | null;
-	/**
-	 * @type string
-	 */
-	queryName?: string;
-}
-
-export interface Querybuildertypesv5TimeSeriesValueDTO {
-	bucket?: Querybuildertypesv5BucketDTO;
-	/**
-	 * @type boolean
-	 */
-	partial?: boolean;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	timestamp?: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	value?: number;
-	/**
-	 * @type array
-	 */
-	values?: number[];
-}
-
-export interface Querybuildertypesv5TraceAggregationDTO {
-	/**
-	 * @type string
-	 */
-	alias?: string;
-	/**
-	 * @type string
-	 */
-	expression?: string;
-}
-
-export interface Querybuildertypesv5VariableItemDTO {
-	type?: Querybuildertypesv5VariableTypeDTO;
-	value?: unknown;
-}
-
-export enum Querybuildertypesv5VariableTypeDTO {
-	query = 'query',
-	dynamic = 'dynamic',
-	custom = 'custom',
-	text = 'text',
-}
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -4631,6 +5952,14 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
+export enum RuletypesAlertStateDTO {
+	inactive = 'inactive',
+	pending = 'pending',
+	recovering = 'recovering',
+	firing = 'firing',
+	nodata = 'nodata',
+	disabled = 'disabled',
+}
 export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type integer
@@ -4638,8 +5967,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	 */
 	fingerprint: number;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
 	overallState: RuletypesAlertStateDTO;
@@ -4684,8 +6012,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryContributorDTO {
 	 */
 	fingerprint: number;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
 	/**
@@ -4727,8 +6054,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryStatsDTO {
 
 export interface RulestatehistorytypesGettableRuleStateTimelineDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	items: RulestatehistorytypesGettableRuleStateHistoryDTO[] | null;
 	/**
@@ -4756,11 +6082,20 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	state: RuletypesAlertStateDTO;
 }
 
+export enum RuletypesPanelTypeDTO {
+	value = 'value',
+	table = 'table',
+	graph = 'graph',
+}
+export enum RuletypesQueryTypeDTO {
+	builder = 'builder',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
 export interface RuletypesAlertCompositeQueryDTO {
 	panelType: RuletypesPanelTypeDTO;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
 	queryType: RuletypesQueryTypeDTO;
@@ -4770,24 +6105,29 @@ export interface RuletypesAlertCompositeQueryDTO {
 	unit?: string;
 }
 
-export enum RuletypesAlertStateDTO {
-	inactive = 'inactive',
-	pending = 'pending',
-	recovering = 'recovering',
-	firing = 'firing',
-	nodata = 'nodata',
-	disabled = 'disabled',
-}
 export enum RuletypesAlertTypeDTO {
 	METRIC_BASED_ALERT = 'METRIC_BASED_ALERT',
 	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
 	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
 	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
 }
+export enum RuletypesMatchTypeDTO {
+	at_least_once = 'at_least_once',
+	all_the_times = 'all_the_times',
+	on_average = 'on_average',
+	in_total = 'in_total',
+	last = 'last',
+}
+export enum RuletypesCompareOperatorDTO {
+	above = 'above',
+	below = 'below',
+	equal = 'equal',
+	not_equal = 'not_equal',
+	outside_bounds = 'outside_bounds',
+}
 export interface RuletypesBasicRuleThresholdDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	channels?: string[] | null;
 	matchType: RuletypesMatchTypeDTO;
@@ -4797,13 +6137,11 @@ export interface RuletypesBasicRuleThresholdDTO {
 	name: string;
 	op: RuletypesCompareOperatorDTO;
 	/**
-	 * @type number
-	 * @nullable true
+	 * @type number,null
 	 */
 	recoveryTarget?: number | null;
 	/**
-	 * @type number
-	 * @nullable true
+	 * @type number,null
 	 */
 	target: number | null;
 	/**
@@ -4819,33 +6157,28 @@ export type RuletypesBasicRuleThresholdsDTO =
 	| RuletypesBasicRuleThresholdDTO[]
 	| null;
 
-export enum RuletypesCompareOperatorDTO {
-	above = 'above',
-	below = 'below',
-	equal = 'equal',
-	not_equal = 'not_equal',
-	outside_bounds = 'outside_bounds',
+export enum RuletypesScheduleTypeDTO {
+	hourly = 'hourly',
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
 }
 export interface RuletypesCumulativeScheduleDTO {
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 */
 	day?: number | null;
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 */
 	hour?: number | null;
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 */
 	minute?: number | null;
 	type: RuletypesScheduleTypeDTO;
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 */
 	weekday?: number | null;
 }
@@ -4862,30 +6195,49 @@ export interface RuletypesCumulativeWindowDTO {
 	timezone: string;
 }
 
+export enum RuletypesEvaluationCumulativeDTOKind {
+	cumulative = 'cumulative',
+}
 export interface RuletypesEvaluationCumulativeDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesCumulativeWindowDTO;
+	/**
+	 * @type string
+	 * @enum cumulative
+	 */
+	kind: RuletypesEvaluationCumulativeDTOKind;
+	spec: RuletypesCumulativeWindowDTO;
+}
+
+export enum RuletypesEvaluationRollingDTOKind {
+	rolling = 'rolling',
+}
+export interface RuletypesRollingWindowDTO {
+	/**
+	 * @type string
+	 */
+	evalWindow: string;
+	/**
+	 * @type string
+	 */
+	frequency: string;
+}
+
+export interface RuletypesEvaluationRollingDTO {
+	/**
+	 * @type string
+	 * @enum rolling
+	 */
+	kind: RuletypesEvaluationRollingDTOKind;
+	spec: RuletypesRollingWindowDTO;
 }
 
 export type RuletypesEvaluationEnvelopeDTO =
-	| (RuletypesEvaluationRollingDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  })
-	| (RuletypesEvaluationCumulativeDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  });
+	| RuletypesEvaluationRollingDTO
+	| RuletypesEvaluationCumulativeDTO;
 
 export enum RuletypesEvaluationKindDTO {
 	rolling = 'rolling',
 	cumulative = 'cumulative',
 }
-export interface RuletypesEvaluationRollingDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesRollingWindowDTO;
-}
-
 export interface RuletypesGettableTestRuleDTO {
 	/**
 	 * @type integer
@@ -4897,22 +6249,21 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
-export enum RuletypesMaintenanceKindDTO {
-	fixed = 'fixed',
-	recurring = 'recurring',
+export interface RuletypesRenotifyDTO {
+	/**
+	 * @type array
+	 */
+	alertStates?: RuletypesAlertStateDTO[];
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	interval?: string;
 }
-export enum RuletypesMaintenanceStatusDTO {
-	active = 'active',
-	upcoming = 'upcoming',
-	expired = 'expired',
-}
-export enum RuletypesMatchTypeDTO {
-	at_least_once = 'at_least_once',
-	all_the_times = 'all_the_times',
-	on_average = 'on_average',
-	in_total = 'in_total',
-	last = 'last',
-}
+
 export interface RuletypesNotificationSettingsDTO {
 	/**
 	 * @type array
@@ -4929,73 +6280,75 @@ export interface RuletypesNotificationSettingsDTO {
 	usePolicy?: boolean;
 }
 
-export enum RuletypesPanelTypeDTO {
-	value = 'value',
-	table = 'table',
-	graph = 'graph',
-}
-export interface RuletypesPlannedMaintenanceDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	kind: RuletypesMaintenanceKindDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-	status: RuletypesMaintenanceStatusDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface RuletypesPostablePlannedMaintenanceDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-}
-
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
+export enum RuletypesSeasonalityDTO {
+	hourly = 'hourly',
+	daily = 'daily',
+	weekly = 'weekly',
+}
+export enum RuletypesThresholdBasicDTOKind {
+	basic = 'basic',
+}
+export interface RuletypesThresholdBasicDTO {
+	/**
+	 * @type string
+	 * @enum basic
+	 */
+	kind: RuletypesThresholdBasicDTOKind;
+	spec: RuletypesBasicRuleThresholdsDTO | null;
+}
+
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;
+
+export interface RuletypesRuleConditionDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	absentFor?: number;
+	/**
+	 * @type boolean
+	 */
+	alertOnAbsent?: boolean;
+	/**
+	 * @type string
+	 */
+	algorithm?: string;
+	compositeQuery: RuletypesAlertCompositeQueryDTO;
+	matchType?: RuletypesMatchTypeDTO;
+	op?: RuletypesCompareOperatorDTO;
+	/**
+	 * @type boolean
+	 */
+	requireMinPoints?: boolean;
+	/**
+	 * @type integer
+	 */
+	requiredNumPoints?: number;
+	seasonality?: RuletypesSeasonalityDTO;
+	/**
+	 * @type string
+	 */
+	selectedQueryName?: string;
+	/**
+	 * @type number,null
+	 */
+	target?: number | null;
+	/**
+	 * @type string
+	 */
+	targetUnit?: string;
+	thresholds?: RuletypesRuleThresholdDataDTO;
+}
+
+export enum RuletypesRuleTypeDTO {
+	threshold_rule = 'threshold_rule',
+	promql_rule = 'promql_rule',
+	anomaly_rule = 'anomaly_rule',
+}
 export interface RuletypesPostableRuleDTO {
 	/**
 	 * @type string
@@ -5048,75 +6401,6 @@ export interface RuletypesPostableRuleDTO {
 	version?: string;
 }
 
-export enum RuletypesQueryTypeDTO {
-	builder = 'builder',
-	clickhouse_sql = 'clickhouse_sql',
-	promql = 'promql',
-}
-export interface RuletypesRecurrenceDTO {
-	/**
-	 * @type string
-	 */
-	duration: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
-	 */
-	endTime?: Date | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	repeatOn?: RuletypesRepeatOnDTO[] | null;
-	repeatType: RuletypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: Date;
-}
-
-export interface RuletypesRenotifyDTO {
-	/**
-	 * @type array
-	 */
-	alertStates?: RuletypesAlertStateDTO[];
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-	/**
-	 * @type string
-	 */
-	interval?: string;
-}
-
-export enum RuletypesRepeatOnDTO {
-	sunday = 'sunday',
-	monday = 'monday',
-	tuesday = 'tuesday',
-	wednesday = 'wednesday',
-	thursday = 'thursday',
-	friday = 'friday',
-	saturday = 'saturday',
-}
-export enum RuletypesRepeatTypeDTO {
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export interface RuletypesRollingWindowDTO {
-	/**
-	 * @type string
-	 */
-	evalWindow: string;
-	/**
-	 * @type string
-	 */
-	frequency: string;
-}
-
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesRuleDTOLabels = { [key: string]: string };
@@ -5136,7 +6420,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5185,7 +6469,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5196,92 +6480,6 @@ export interface RuletypesRuleDTO {
 	version?: string;
 }
 
-export interface RuletypesRuleConditionDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	absentFor?: number;
-	/**
-	 * @type boolean
-	 */
-	alertOnAbsent?: boolean;
-	/**
-	 * @type string
-	 */
-	algorithm?: string;
-	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType?: RuletypesMatchTypeDTO;
-	op?: RuletypesCompareOperatorDTO;
-	/**
-	 * @type boolean
-	 */
-	requireMinPoints?: boolean;
-	/**
-	 * @type integer
-	 */
-	requiredNumPoints?: number;
-	seasonality?: RuletypesSeasonalityDTO;
-	/**
-	 * @type string
-	 */
-	selectedQueryName?: string;
-	/**
-	 * @type number
-	 * @nullable true
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 */
-	targetUnit?: string;
-	thresholds?: RuletypesRuleThresholdDataDTO;
-}
-
-export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
-	kind: RuletypesThresholdKindDTO;
-	spec: unknown;
-};
-
-export enum RuletypesRuleTypeDTO {
-	threshold_rule = 'threshold_rule',
-	promql_rule = 'promql_rule',
-	anomaly_rule = 'anomaly_rule',
-}
-export interface RuletypesScheduleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	endTime?: Date;
-	recurrence?: RuletypesRecurrenceDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime?: Date;
-	/**
-	 * @type string
-	 */
-	timezone: string;
-}
-
-export enum RuletypesScheduleTypeDTO {
-	hourly = 'hourly',
-	daily = 'daily',
-	weekly = 'weekly',
-	monthly = 'monthly',
-}
-export enum RuletypesSeasonalityDTO {
-	hourly = 'hourly',
-	daily = 'daily',
-	weekly = 'weekly',
-}
-export interface RuletypesThresholdBasicDTO {
-	kind?: RuletypesThresholdKindDTO;
-	spec?: RuletypesBasicRuleThresholdsDTO;
-}
-
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
@@ -5290,7 +6488,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -5304,7 +6502,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	lastObservedAt: Date;
+	lastObservedAt: string;
 	/**
 	 * @type string
 	 */
@@ -5317,7 +6515,7 @@ export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
@@ -5362,7 +6560,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5387,7 +6585,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountRoleDTO {
@@ -5395,7 +6593,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5413,7 +6611,7 @@ export interface ServiceaccounttypesServiceAccountRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesServiceAccountWithRolesDTO {
@@ -5421,7 +6619,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5439,8 +6637,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 */
 	orgId: string;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
 	/**
@@ -5451,7 +6648,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
@@ -5466,31 +6663,450 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	name: string;
 }
 
-export interface Sigv4SigV4ConfigDTO {
-	[key: string]: unknown;
+export type SpantypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface SpantypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: SpantypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
 }
 
-export enum TelemetrytypesFieldContextDTO {
-	metric = 'metric',
-	log = 'log',
-	span = 'span',
-	resource = 'resource',
+export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
-	body = 'body',
+	resource = 'resource',
 }
-export enum TelemetrytypesFieldDataTypeDTO {
-	string = 'string',
-	bool = 'bool',
-	float64 = 'float64',
-	int64 = 'int64',
-	number = 'number',
-}
+export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
+	/**
+	 * @type array,null
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	resource: string[] | null;
+};
+
 /**
  * @nullable
  */
-export type TelemetrytypesGettableFieldKeysDTOKeys = {
+export type SpantypesSpanMapperGroupConditionDTO =
+	SpantypesSpanMapperGroupConditionDTOAnyOf | null;
+
+export interface SpantypesSpanMapperGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesGettableSpanMapperGroupsDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesSpanMapperGroupDTO[];
+}
+
+export enum SpantypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
+export type SpantypesSpanAggregationResultDTOValueAnyOf = {
+	[key: string]: number;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanAggregationResultDTOValue =
+	SpantypesSpanAggregationResultDTOValueAnyOf | null;
+
+export interface SpantypesSpanAggregationResultDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object,null
+	 */
+	value?: SpantypesSpanAggregationResultDTOValue;
+}
+
+export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOAttributes =
+	SpantypesWaterfallSpanDTOAttributesAnyOf | null;
+
+export type SpantypesWaterfallSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOResource =
+	SpantypesWaterfallSpanDTOResourceAnyOf | null;
+
+export interface SpantypesWaterfallSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array,null
+	 */
+	events?: SpantypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
+export interface SpantypesGettableWaterfallTraceDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export enum SpantypesSpanMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key: string;
+	operation: SpantypesSpanMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority: number;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
+	/**
+	 * @type array,null
+	 */
+	sources: SpantypesSpanMapperSourceDTO[] | null;
+}
+
+export interface SpantypesPostableSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesSpanAggregationDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+export interface SpantypesPostableWaterfallDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	group_id: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesUpdatableSpanMapperDTO {
+	config?: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean,null
+	 */
+	enabled?: boolean | null;
+	fieldContext?: SpantypesFieldContextDTO;
+}
+
+export interface SpantypesUpdatableSpanMapperGroupDTO {
+	condition?: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type boolean,null
+	 */
+	enabled?: boolean | null;
+	/**
+	 * @type string,null
+	 */
+	name?: string | null;
+}
+
+export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
-} | null;
+};
+
+/**
+ * @nullable
+ */
+export type TelemetrytypesGettableFieldKeysDTOKeys =
+	TelemetrytypesGettableFieldKeysDTOKeysAnyOf | null;
 
 export interface TelemetrytypesGettableFieldKeysDTO {
 	/**
@@ -5498,44 +7114,9 @@ export interface TelemetrytypesGettableFieldKeysDTO {
 	 */
 	complete: boolean;
 	/**
-	 * @type object
-	 * @nullable true
+	 * @type object,null
 	 */
 	keys: TelemetrytypesGettableFieldKeysDTOKeys;
-}
-
-export interface TelemetrytypesGettableFieldValuesDTO {
-	/**
-	 * @type boolean
-	 */
-	complete: boolean;
-	values: TelemetrytypesTelemetryFieldValuesDTO;
-}
-
-export enum TelemetrytypesSignalDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-}
-export enum TelemetrytypesSourceDTO {
-	meter = 'meter',
-}
-export interface TelemetrytypesTelemetryFieldKeyDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @type string
-	 */
-	unit?: string;
 }
 
 export interface TelemetrytypesTelemetryFieldValuesDTO {
@@ -5557,23 +7138,12 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 	stringValues?: string[];
 }
 
-export type TimeDurationDTO = number;
-
-export interface TypesAlertStatusDTO {
+export interface TelemetrytypesGettableFieldValuesDTO {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type boolean
 	 */
-	inhibitedBy?: string[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	silencedBy?: string[] | null;
-	/**
-	 * @type string
-	 */
-	state?: string;
+	complete: boolean;
+	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -5592,7 +7162,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5625,7 +7195,7 @@ export interface TypesDeprecatedUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesIdentifiableDTO {
@@ -5640,7 +7210,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5673,7 +7243,7 @@ export interface TypesInviteDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -5685,7 +7255,7 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5707,7 +7277,26 @@ export interface TypesOrganizationDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt?: string;
+}
+
+export interface TypesPostableInviteDTO {
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseUrl?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
 }
 
 export interface TypesPostableBulkInviteRequestDTO {
@@ -5730,25 +7319,6 @@ export interface TypesPostableForgotPasswordDTO {
 	 * @type string
 	 */
 	orgId: string;
-}
-
-export interface TypesPostableInviteDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseUrl?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
 }
 
 export interface TypesPostableResetPasswordDTO {
@@ -5774,7 +7344,7 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	expiresAt?: Date;
+	expiresAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5801,7 +7371,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -5830,27 +7400,7 @@ export interface TypesUserDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
-}
-
-export interface ZeustypesGettableHostDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	hosts: ZeustypesHostDTO[] | null;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	state: string;
-	/**
-	 * @type string
-	 */
-	tier: string;
+	updatedAt?: string;
 }
 
 export interface ZeustypesHostDTO {
@@ -5866,6 +7416,25 @@ export interface ZeustypesHostDTO {
 	 * @type string
 	 */
 	url: string;
+}
+
+export interface ZeustypesGettableHostDTO {
+	/**
+	 * @type array,null
+	 */
+	hosts: ZeustypesHostDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	tier: string;
 }
 
 export interface ZeustypesPostableHostDTO {
@@ -5900,8 +7469,7 @@ export interface ZeustypesPostableProfileDTO {
 	 */
 	number_of_services: number;
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	reasons_for_interest_in_signoz: string[] | null;
 	/**
@@ -5934,14 +7502,6 @@ export type AuthzCheck200 = {
 	 * @type array
 	 */
 	data: AuthtypesGettableTransactionDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
 	/**
 	 * @type string
 	 */
@@ -6190,8 +7750,8 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
@@ -6201,19 +7761,28 @@ export type CreateAuthDomain200 = {
 export type DeleteAuthDomainPathParameters = {
 	id: string;
 };
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
 export type ListDowntimeSchedulesParams = {
 	/**
-	 * @type boolean
-	 * @nullable true
+	 * @type boolean,null
 	 * @description undefined
 	 */
 	active?: boolean | null;
 	/**
-	 * @type boolean
-	 * @nullable true
+	 * @type boolean,null
 	 * @description undefined
 	 */
 	recurring?: boolean | null;
@@ -6223,7 +7792,7 @@ export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array
 	 */
-	data: RuletypesPlannedMaintenanceDTO[];
+	data: AlertmanagertypesPlannedMaintenanceDTO[];
 	/**
 	 * @type string
 	 */
@@ -6231,7 +7800,7 @@ export type ListDowntimeSchedules200 = {
 };
 
 export type CreateDowntimeSchedule201 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -6245,7 +7814,7 @@ export type GetDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
 export type GetDowntimeScheduleByID200 = {
-	data: RuletypesPlannedMaintenanceDTO;
+	data: AlertmanagertypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
@@ -6423,10 +7992,44 @@ export type CreateInvite201 = {
 	status: string;
 };
 
+export type ListLLMPricingRulesParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListLLMPricingRules200 = {
+	data: LlmpricingruletypesGettablePricingRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRule200 = {
+	data: LlmpricingruletypesLLMPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListPromotedAndIndexedPaths200 = {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	data: PromotetypesPromotePathDTO[] | null;
 	/**
@@ -6527,7 +8130,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesObjectGroupDTO[];
 	/**
 	 * @type string
 	 */
@@ -6656,8 +8259,7 @@ export type GetServiceAccountRolesPathParameters = {
 };
 export type GetServiceAccountRoles200 = {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	data: AuthtypesRoleDTO[] | null;
 	/**
@@ -6689,6 +8291,66 @@ export type GetMyServiceAccount200 = {
 	status: string;
 };
 
+export type ListSpanMapperGroupsParams = {
+	/**
+	 * @type boolean,null
+	 * @description undefined
+	 */
+	enabled?: boolean | null;
+};
+
+export type ListSpanMapperGroups200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperGroup201 = {
+	data: SpantypesSpanMapperGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type UpdateSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappersPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappers200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperPathParameters = {
+	groupId: string;
+};
+export type CreateSpanMapper201 = {
+	data: SpantypesSpanMapperDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
+export type UpdateSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
@@ -6863,8 +8525,80 @@ export type Healthz503 = {
 	status: string;
 };
 
+export type ListClusters200 = {
+	data: InframonitoringtypesClustersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDaemonSets200 = {
+	data: InframonitoringtypesDaemonSetsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListDeployments200 = {
+	data: InframonitoringtypesDeploymentsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListJobs200 = {
+	data: InframonitoringtypesJobsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNamespaces200 = {
+	data: InframonitoringtypesNamespacesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNodes200 = {
+	data: InframonitoringtypesNodesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListPods200 = {
+	data: InframonitoringtypesPodsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListVolumes200 = {
+	data: InframonitoringtypesVolumesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListStatefulSets200 = {
+	data: InframonitoringtypesStatefulSetsDTO;
 	/**
 	 * @type string
 	 */
@@ -6881,14 +8615,12 @@ export type Livez200 = {
 
 export type ListMetricsParams = {
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 * @description undefined
 	 */
 	start?: number | null;
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 * @description undefined
 	 */
 	end?: number | null;
@@ -6933,14 +8665,12 @@ export type GetMetricAttributesPathParameters = {
 };
 export type GetMetricAttributesParams = {
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 * @description undefined
 	 */
 	start?: number | null;
 	/**
-	 * @type integer
-	 * @nullable true
+	 * @type integer,null
 	 * @description undefined
 	 */
 	end?: number | null;
@@ -7261,8 +8991,7 @@ export type GetRuleHistoryOverallStatusParams = {
 
 export type GetRuleHistoryOverallStatus200 = {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	data: RulestatehistorytypesGettableRuleStateWindowDTO[] | null;
 	/**
@@ -7367,8 +9096,7 @@ export type GetRuleHistoryTopContributorsParams = {
 
 export type GetRuleHistoryTopContributors200 = {
 	/**
-	 * @type array
-	 * @nullable true
+	 * @type array,null
 	 */
 	data: RulestatehistorytypesGettableRuleStateHistoryContributorDTO[] | null;
 	/**
@@ -7487,6 +9215,17 @@ export type GetMyUser200 = {
 
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetWaterfallPathParameters = {
+	traceID: string;
+};
+export type GetWaterfall200 = {
+	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */

@@ -30,20 +30,21 @@ export const k8sJobGetSelectedItemFilters = (
 	],
 });
 
-export const k8sJobDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sJobsData>[] = [
-	{
-		label: 'Job Name',
-		getValue: (p): string => p.meta.k8s_job_name,
-	},
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-	{
-		label: 'Namespace Name',
-		getValue: (p): string => p.meta.k8s_namespace_name,
-	},
-];
+export const k8sJobDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sJobsData>[] =
+	[
+		{
+			label: 'Job Name',
+			getValue: (p): string => p.meta.k8s_job_name,
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+		{
+			label: 'Namespace Name',
+			getValue: (p): string => p.meta.k8s_namespace_name,
+		},
+	];
 
 export const k8sJobInitialFilters = [
 	QUERY_KEYS.K8S_JOB_NAME,

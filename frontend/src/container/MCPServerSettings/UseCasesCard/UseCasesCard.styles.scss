@@ -1,0 +1,35 @@
+.mcp-use-cases-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--padding-4) var(--padding-5);
+	border: 1px solid var(--l2-border);
+	border-radius: 8px;
+	background: var(--l2-background);
+
+	&__title {
+		font-size: var(--label-medium-500-font-size);
+		font-weight: var(--label-medium-500-font-weight);
+		color: var(--l1-foreground);
+		margin: 0;
+	}
+
+	.learn-more {
+		width: fit-content;
+		font-size: var(--font-size-xs);
+	}
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
+		padding-left: var(--padding-4);
+		margin: 0;
+
+		li {
+			font-size: var(--font-size-xs);
+			color: var(--l1-foreground);
+			line-height: var(--line-height-20);
+		}
+	}
+}

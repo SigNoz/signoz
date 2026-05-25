@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
+import { Divider, Dropdown, MenuProps, Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
+import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
 	useAlertRuleDelete,
 	useAlertRuleDuplicate,
@@ -33,13 +34,12 @@ const menuItemStyleV2: CSSProperties = {
 function AlertActionButtons({
 	ruleId,
 	alertDetails,
-	setUpdatedName,
 }: {
 	ruleId: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
-	setUpdatedName: (name: string) => void;
 }): JSX.Element {
-	const { alertRuleState, setAlertRuleState } = useAlertRule();
+	const { alertRuleState, setAlertRuleState, alertRuleName, setAlertRuleName } =
+		useAlertRule();
 	const [intermediateName, setIntermediateName] = useState<string>(
 		alertDetails.alert,
 	);
@@ -48,12 +48,12 @@ function AlertActionButtons({
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
+		alertDetails: alertDetails as unknown as AlertDef,
 	});
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
-		setUpdatedName,
+		alertDetails: alertDetails as unknown as AlertDef,
+		setAlertRuleName,
 		intermediateName,
 	});
 
@@ -80,7 +80,7 @@ function AlertActionButtons({
 						onClick: handleRename,
 						style: finalMenuItemStyle,
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'duplicate-rule',
@@ -113,6 +113,12 @@ function AlertActionButtons({
 		}
 	}, [setAlertRuleState, alertRuleState, alertDetails.state]);
 
+	useEffect(() => {
+		if (alertRuleName !== undefined) {
+			setIntermediateName(alertRuleName);
+		}
+	}, [alertRuleName]);
+
 	// on unmount remove the alert state
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => (): void => setAlertRuleState(undefined), []);
@@ -127,11 +133,7 @@ function AlertActionButtons({
 			<div className="alert-action-buttons">
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
-						<Switch
-							size="small"
-							onChange={toggleAlertRule}
-							checked={!isAlertRuleDisabled}
-						/>
+						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
 					)}
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />

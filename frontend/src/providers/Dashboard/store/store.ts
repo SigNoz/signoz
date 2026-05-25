@@ -2,9 +2,7 @@
 import { produce } from 'immer';
 type ListenerFn = () => void;
 
-export default function createStore<T>(
-	init: T,
-): {
+export default function createStore<T>(init: T): {
 	set: (setter: any) => void;
 	update: (updater: (draft: T) => void) => void;
 	subscribe: (listener: ListenerFn) => () => void;

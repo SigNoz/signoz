@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { CircleCheck, CircleX, LoaderCircle } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -34,11 +30,8 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
-	const {
-		selectedDataSource,
-		activeStep,
-		selectedEnvironment,
-	} = useOnboardingContext();
+	const { selectedDataSource, activeStep, selectedEnvironment } =
+		useOnboardingContext();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
@@ -248,16 +241,18 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isFetching) && <LoadingOutlined />}
+						{(loading || isFetching) && (
+							<LoaderCircle size="md" className="animate-spin" />
+						)}
 						{!(loading || isFetching) && isReceivingData && (
 							<>
-								<CheckCircleTwoTone twoToneColor="#52c41a" />
+								<CircleCheck size="md" color="#52c41a" />
 								<span> Success </span>
 							</>
 						)}
 						{!(loading || isFetching) && !isReceivingData && (
 							<>
-								<CloseCircleTwoTone twoToneColor="#e84749" />
+								<CircleX size="md" color="#e84749" />
 								<span> Failed </span>
 							</>
 						)}

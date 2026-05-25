@@ -30,6 +30,7 @@ def sqlite(
             assert result.fetchone()[0] == 1
 
         mode = pytestconfig.getoption("--sqlite-mode")
+        transaction_mode = pytestconfig.getoption("--sqlite-transaction-mode")
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
                 id="",
@@ -41,6 +42,7 @@ def sqlite(
                 "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
                 "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
                 "SIGNOZ_SQLSTORE_SQLITE_MODE": mode,
+                "SIGNOZ_SQLSTORE_SQLITE_TRANSACTION__MODE": transaction_mode,
             },
         )
 

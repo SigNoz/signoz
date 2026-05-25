@@ -53,7 +53,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setSearchText(searchText as string);
 	}, 500);
 
-	const { isFetching: fetching, keys, results: res } = useGetAggregateValues({
+	const {
+		isFetching: fetching,
+		keys,
+		results: res,
+	} = useGetAggregateValues({
 		value: type,
 		searchText,
 	});
@@ -150,7 +154,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 								<div className="checkbox-label">
 									<div className={labelClassname(item)} />
 									<Tooltip overlay={<div>{item}</div>} placement="rightTop">
-										<ParaGraph ellipsis style={{ maxWidth: 200 }}>
+										<ParaGraph truncate={1} style={{ maxWidth: 200 }}>
 											{item}
 										</ParaGraph>
 									</Tooltip>

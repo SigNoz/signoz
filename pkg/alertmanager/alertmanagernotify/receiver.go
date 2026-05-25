@@ -26,7 +26,7 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, deps alertmanagertypes.NotificationDeps) ([]notify.Integration, error) {
+func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 	for i, c := range nc.EmailConfigs {
 		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return email.New(c, tmpl, l, templater, emailStore), nil
+			return email.New(c, tmpl, l, templater), nil
 		})
 	}
 	for i, c := range nc.PagerdutyConfigs {

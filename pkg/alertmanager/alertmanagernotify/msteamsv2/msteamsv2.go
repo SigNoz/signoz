@@ -55,7 +55,7 @@ type Content struct {
 	Type    string   `json:"type"`
 	Version string   `json:"version"`
 	Body    []Body   `json:"body"`
-	Msteams Msteams  `json:"msteams,omitempty"`
+	Msteams Msteams  `json:"msteams,omitzero"`
 	Actions []Action `json:"actions"`
 }
 
@@ -209,9 +209,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		// Default body is not a template — it's built per-alert below from
-		// labels/annotations as Adaptive Card FactSets, so leave it empty.
-		DefaultBodyTemplate: "",
+		DefaultBodyTemplate:  n.conf.Text,
 	}, alerts)
 	if err != nil {
 		return nil, err
@@ -301,9 +299,6 @@ func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
 
 	annotationsFacts := []Fact{}
 	for k, v := range alert.Annotations {
-		// Skip private (`_`-prefixed) annotations — templating inputs,
-		// threshold metadata, related-link URLs — and "summary", which default
-		// channels surface as the attachment pretext rather than a fact row.
 		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
 			alertmanagertypes.IsPrivateAnnotation(string(k)) {
 			continue

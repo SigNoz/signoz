@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -59,7 +60,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		dashboardMigrator.Migrate(ctx, req)
 	}
 
-	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), req)
+	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardtypes.SourceUser, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -158,15 +159,15 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	isAdmin := false
-	selectors := []authtypes.Selector{
-		authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+	selectors := []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
 	}
 	err = handler.authz.CheckWithTupleCreation(
 		ctx,
 		claims,
 		valuer.MustNewUUID(claims.OrgID),
-		authtypes.RelationAssignee,
-		authtypes.TypeableRole,
+		authtypes.Relation{Verb: coretypes.VerbAssignee},
+		coretypes.NewResourceRole(),
 		selectors,
 		selectors,
 	)

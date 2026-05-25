@@ -5,14 +5,14 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { isEmpty, isEqual } from 'lodash-es';
+import dayjs, { Dayjs } from 'dayjs';
+import { isEmpty } from 'lodash-es';
 import APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
@@ -38,14 +38,20 @@ export const getDuration = (
 	return `${hours} hours`;
 };
 
-export const formatDateTime = (dateTimeString?: string | null): string => {
+export const formatDateTime = (
+	dateTimeString?: string | Dayjs | null,
+	timezone?: string,
+): string => {
 	if (!dateTimeString) {
 		return 'N/A';
 	}
 
-	return dayjs(dateTimeString.slice(0, 19)).format(
-		DATE_TIME_FORMATS.MONTH_DATETIME,
-	);
+	let dt = dayjs(dateTimeString);
+	if (timezone) {
+		dt = dt.tz(timezone);
+	}
+
+	return dt.format(DATE_TIME_FORMATS.MONTH_DATETIME);
 };
 
 export const getAlertOptionsFromIds = (
@@ -60,7 +66,8 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	recurrence?: RuletypesRecurrenceDTO | null,
+	recurrence?: AlertmanagertypesRecurrenceDTO | null,
+	timezone?: string,
 ): string => {
 	if (!recurrence) {
 		return 'No';
@@ -69,10 +76,10 @@ export const recurrenceInfo = (
 	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
 
 	const formattedStartTime = startTime
-		? formatDateTime(dayjs(startTime).toISOString())
+		? formatDateTime(startTime, timezone)
 		: '';
 	const formattedEndTime = endTime
-		? `to ${formatDateTime(dayjs(endTime).toISOString())}`
+		? `to ${formatDateTime(endTime, timezone)}`
 		: '';
 	const weeklyRepeatString = repeatOn ? `on ${repeatOn.join(', ')}` : '';
 	const durationString = duration ? `- Duration: ${duration}` : '';
@@ -80,22 +87,20 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defautlInitialValues: Partial<
-	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
-> = {
-	name: '',
-	description: '',
-	schedule: {
-		timezone: '',
-		endTime: undefined,
-		recurrence: undefined,
-		startTime: undefined,
-	},
-	alertIds: [],
-	createdAt: undefined,
-	createdBy: undefined,
-	editMode: false,
-};
+export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> =
+	{
+		name: '',
+		description: '',
+		schedule: {
+			timezone: '',
+			endTime: undefined,
+			recurrence: undefined,
+			startTime: undefined,
+		},
+		alertIds: [],
+		createdAt: undefined,
+		createdBy: undefined,
+	};
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
@@ -210,75 +215,6 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 	recurrenceOptions.monthly,
 ];
 
-export const getRecurrenceOptionFromValue = (
-	value?: string | Option | null,
-): Option | null | undefined => {
-	if (!value) {
-		return null;
-	}
-	if (typeof value === 'string') {
-		return Object.values(recurrenceOptions).find(
-			(option) => option.value === value,
-		);
-	}
-	return value;
-};
-
-export const getEndTime = ({
-	kind,
-	schedule,
-}: Partial<
-	RuletypesPlannedMaintenanceDTO & {
-		editMode: boolean;
-	}
->): string | dayjs.Dayjs => {
-	if (kind === 'fixed') {
-		return schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '';
-	}
-
-	return schedule?.recurrence?.endTime
-		? dayjs(schedule.recurrence.endTime).toISOString()
-		: '';
-};
-
 export const isScheduleRecurring = (
-	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,
+	schedule?: AlertmanagertypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
-
-function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {
-	const sign = offsetMinutes >= 0 ? '+' : '-';
-	const absOffset = Math.abs(offsetMinutes);
-	const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
-	const minutes = String(absOffset % 60).padStart(2, '0');
-	return `${sign}${hours}:${minutes}`;
-}
-
-export function formatWithTimezone(
-	dateValue?: string | dayjs.Dayjs,
-	timezone?: string,
-): string {
-	const parsedDate =
-		typeof dateValue === 'string' ? dateValue : dateValue?.format();
-
-	// Get the target timezone offset
-	const targetOffset = convertUtcOffsetToTimezoneOffset(
-		dayjs(dateValue).tz(timezone).utcOffset(),
-	);
-
-	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
-}
-
-export function handleTimeConversion(
-	dateValue: string | dayjs.Dayjs,
-	timezoneInit?: string,
-	timezone?: string,
-	shouldKeepLocalTime?: boolean,
-): string {
-	const timezoneChanged = !isEqual(timezoneInit, timezone);
-	const initialTime = dayjs(dateValue).tz(timezoneInit);
-
-	const formattedTime = formatWithTimezone(initialTime, timezone);
-	return timezoneChanged
-		? formattedTime
-		: dayjs(dateValue).tz(timezone, shouldKeepLocalTime).format();
-}

@@ -78,6 +78,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-10);
+		padding-left: 18px;
 	}
 
 	.custom-domain-card-meta-row.workspace-name-hidden {
@@ -90,7 +91,9 @@
 		gap: var(--spacing-3);
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: var(--paragraph-small-400-font-size);
 		font-style: normal;
@@ -119,30 +122,6 @@
 		height: 1px;
 		background: var(--l1-border);
 		margin: 0;
-	}
-}
-
-.workspace-url-trigger {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-3);
-	background: none;
-	border: none;
-	padding: 0;
-	cursor: pointer;
-	color: var(--l1-foreground);
-	font-size: var(--font-size-xs);
-	line-height: var(--line-height-18);
-	letter-spacing: -0.06px;
-
-	&:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	svg {
-		flex-shrink: 0;
-		color: var(--l2-foreground);
 	}
 }
 

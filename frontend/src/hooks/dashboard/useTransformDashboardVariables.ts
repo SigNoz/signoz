@@ -8,9 +8,10 @@ import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlVa
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as generateUUID } from 'uuid';
 
-export function useTransformDashboardVariables(
-	dashboardId: string,
-): Pick<UseVariablesFromUrlReturn, 'getUrlVariables' | 'updateUrlVariable'> & {
+export function useTransformDashboardVariables(dashboardId: string): Pick<
+	UseVariablesFromUrlReturn,
+	'getUrlVariables' | 'updateUrlVariable'
+> & {
 	transformDashboardVariables: (data: Dashboard) => Dashboard;
 	currentDashboard: ReturnType<typeof getLocalStorageDashboardVariables>;
 } {

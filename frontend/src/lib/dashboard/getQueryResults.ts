@@ -159,7 +159,7 @@ export const getLegend = (
 					aggregationExpression,
 					labelName,
 					singleAggregation,
-			  )
+				)
 			: getLegendForMultipleAggregations(
 					queryData,
 					allQueries,
@@ -167,7 +167,7 @@ export const getLegend = (
 					aggregationExpression,
 					labelName,
 					singleAggregation,
-			  );
+				);
 	}
 	return labelName || metaData?.queryName || queryData.queryName;
 };
@@ -352,15 +352,14 @@ export async function GetMetricQueryRange(
 	}
 
 	if (response.payload?.data?.newResult?.data?.resultType === 'anomaly') {
-		response.payload.data.newResult.data.result = response.payload.data.newResult.data.result.map(
-			(queryData) => {
+		response.payload.data.newResult.data.result =
+			response.payload.data.newResult.data.result.map((queryData) => {
 				if (legendMap[queryData.queryName]) {
 					queryData.legend = legendMap[queryData.queryName];
 				}
 
 				return queryData;
-			},
-		);
+			});
 	}
 
 	return {

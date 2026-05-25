@@ -348,7 +348,8 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 						CreatedBy: author,
 						UpdatedBy: author,
 					},
-					OrgID: orgId,
+					OrgID:  orgId,
+					Source: dashboardtypes.SourceIntegration,
 				}, nil
 			}
 		}
@@ -387,7 +388,8 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 							CreatedBy: author,
 							UpdatedBy: author,
 						},
-						OrgID: orgId,
+						OrgID:  orgId,
+						Source: dashboardtypes.SourceIntegration,
 					})
 				}
 			}

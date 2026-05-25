@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Select, Typography } from 'antd';
-import { Axis3D, LineChart, Spline } from 'lucide-react';
+import { InputNumber, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Axis3D, ChartLine, Spline } from '@signozhq/icons';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
@@ -77,7 +78,7 @@ export default function AxesSection({
 						<Option value={LogScale.LINEAR}>
 							<div className="select-option">
 								<div className="icon">
-									<LineChart size={16} />
+									<ChartLine size={16} />
 								</div>
 								<Typography.Text className="display">Linear</Typography.Text>
 							</div>

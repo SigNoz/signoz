@@ -190,7 +190,9 @@
 	opacity: 0.6 !important;
 	cursor: pointer;
 	padding: 0 !important;
-	transition: background-color 0.2s, opacity 0.2s;
+	transition:
+		background-color 0.2s,
+		opacity 0.2s;
 	box-shadow: none !important;
 
 	svg {
@@ -367,144 +369,6 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
-		}
-	}
-}
-
-.lightMode {
-	.invite-team-members-table-header {
-		.table-header-cell {
-			color: var(--l3-foreground);
-		}
-	}
-
-	.team-member-email-input {
-		background: var(--l2-background) !important;
-		border-color: var(--l1-border) !important;
-		color: var(--l1-foreground) !important;
-
-		input {
-			background: var(--l2-background) !important;
-			border-color: var(--l1-border) !important;
-			color: var(--l1-foreground) !important;
-
-			&::placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-
-			&:focus {
-				border-color: var(--bg-robin-500) !important;
-			}
-		}
-
-		&::placeholder {
-			color: var(--text-neutral-light-200) !important;
-		}
-
-		&:hover {
-			border-color: var(--l1-border) !important;
-		}
-
-		&:focus {
-			border-color: var(--bg-robin-500) !important;
-		}
-	}
-
-	.team-member-role-select {
-		.ant-select-selector {
-			background: var(--l3-background) !important;
-			border: 1px solid var(--l1-border) !important;
-			color: var(--l1-foreground) !important;
-
-			.ant-select-selection-placeholder {
-				color: var(--l3-foreground) !important;
-			}
-
-			.ant-select-selection-item {
-				color: var(--l1-foreground) !important;
-			}
-		}
-
-		.ant-select-arrow {
-			color: var(--l3-foreground) !important;
-		}
-
-		&.ant-select-focused .ant-select-selector {
-			border-color: var(--bg-robin-500) !important;
-		}
-
-		&:hover .ant-select-selector {
-			border-color: var(--bg-robin-500) !important;
-		}
-	}
-
-	.remove-team-member-button {
-		border: none !important;
-		background: transparent !important;
-		color: var(--danger-background) !important;
-
-		svg {
-			color: var(--danger-background) !important;
-		}
-
-		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--bg-cherry-400) 10%,
-				transparent
-			) !important;
-			color: var(--danger-background) !important;
-
-			svg {
-				color: var(--danger-background) !important;
-			}
-		}
-	}
-
-	.add-another-member-button {
-		border: 1px dashed var(--l1-border) !important;
-		background: transparent !important;
-		color: var(--l3-foreground);
-
-		svg,
-		[class*='icon'] {
-			color: var(--l3-foreground) !important;
-			display: inline-block !important;
-			opacity: 1 !important;
-		}
-
-		&:hover {
-			border-color: var(--bg-robin-500) !important;
-			border-style: dashed !important;
-			color: var(--l1-foreground);
-			background: color-mix(
-				in srgb,
-				var(--primary-background) 10%,
-				transparent
-			) !important;
-
-			svg,
-			[class*='icon'] {
-				color: var(--l1-foreground) !important;
-			}
-		}
-	}
-
-	.questions-form-container {
-		.invite-users-error-message-container,
-		.invite-users-success-message-container {
-			.success-message {
-				color: var(--bg-success-500);
-			}
-		}
-
-		.partially-sent-invites-container {
-			border: 1px solid var(--l1-border);
-			background-color: var(--l1-foreground);
-
-			.partially-sent-invites-message {
-				color: var(--bg-warning-500);
-			}
 		}
 	}
 }

@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { EllipsisOutlined } from '@ant-design/icons';
+import { Ellipsis } from '@signozhq/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import './DropDown.styles.scss';
 
@@ -12,8 +11,6 @@ function DropDown({
 	element: JSX.Element[];
 	onDropDownItemClick?: MenuProps['onClick'];
 }): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const items: MenuProps['items'] = element.map(
 		(e: JSX.Element, index: number) => ({
 			label: e,
@@ -35,13 +32,13 @@ function DropDown({
 		>
 			<Button
 				type="link"
-				className={!isDarkMode ? 'dropdown-button--dark' : 'dropdown-button'}
+				className={`dropdown-button`}
 				onClick={(e): void => {
 					e.preventDefault();
 					setDdOpen(true);
 				}}
 			>
-				<EllipsisOutlined className="dropdown-icon" />
+				<Ellipsis className="dropdown-icon" size={16} />
 			</Button>
 		</Dropdown>
 	);

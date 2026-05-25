@@ -1,4 +1,4 @@
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import { Button, Card, Input, Space } from 'antd';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 
@@ -30,7 +30,7 @@ export const filterDropdown = ({
 				<Button
 					type="primary"
 					onClick={handleSearch}
-					icon={<SearchOutlined />}
+					icon={<Search size="md" />}
 					size="small"
 				>
 					Search

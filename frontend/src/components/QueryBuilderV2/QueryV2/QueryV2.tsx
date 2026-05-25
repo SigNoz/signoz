@@ -15,7 +15,7 @@ import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interf
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Copy, Ellipsis, Trash } from 'lucide-react';
+import { Copy, Ellipsis, Trash } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -93,9 +93,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[dataSource, panelType],
 	);
 
-	const showSpanScopeSelector = useMemo(() => dataSource === DataSource.TRACES, [
-		dataSource,
-	]);
+	const showSpanScopeSelector = useMemo(
+		() => dataSource === DataSource.TRACES,
+		[dataSource],
+	);
 
 	const showInlineQuerySearch = useMemo(() => {
 		if (!showTraceOperator) {
@@ -212,7 +213,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 															icon: <Trash size={14} />,
 															onClick: handleDeleteQuery,
 														},
-												  ]
+													]
 												: []),
 										],
 									}}

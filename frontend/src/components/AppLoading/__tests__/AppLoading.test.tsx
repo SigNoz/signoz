@@ -9,7 +9,7 @@ jest.mock('../../../api/browser/localstorage/get', () => ({
 }));
 
 // Access the mocked function
-const mockGet = (getLocal as unknown) as jest.Mock;
+const mockGet = getLocal as unknown as jest.Mock;
 
 describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';

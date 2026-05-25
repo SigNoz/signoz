@@ -138,7 +138,11 @@
 			> a {
 				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'case' on,
+					'cpsp' on;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);

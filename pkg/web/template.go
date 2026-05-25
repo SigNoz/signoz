@@ -11,8 +11,14 @@ import (
 
 // Field names map to the HTML attributes they populate in the template:
 //   - BaseHref  → <base href="[[.BaseHref]]" />
+//   - Settings  → window.signozBootData = { settings: [[.Settings]] }
 type TemplateData struct {
 	BaseHref string
+
+	// Settings is the pre-serialized JSON of web.Settings for injection into a
+	// <script> block. The template.JS type prevents html/template from
+	// HTML-escaping the value.
+	Settings template.JS
 }
 
 // If the template cannot be parsed or executed, the raw bytes are

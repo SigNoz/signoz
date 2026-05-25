@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { SquareMinus, SquarePlus } from '@signozhq/icons';
 import { Tag } from 'antd';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
@@ -22,7 +22,7 @@ function TableRowComponent({
 				<TableCell minWidth="90px">
 					<StatusContainer>
 						<IconContainer onClick={onClickHandler}>
-							{!isClicked ? <PlusSquareOutlined /> : <MinusSquareOutlined />}
+							{!isClicked ? <SquarePlus size="md" /> : <SquareMinus size="md" />}
 						</IconContainer>
 						<>
 							{tags.map((tag) => (

@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import logEvent from 'api/common/logEvent';
 import TextToolTip from 'components/TextToolTip';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
+import { PencilLine, Plus } from '@signozhq/icons';
+import { Flex } from 'antd';
 
 function CreatePipelineButton({
 	setActionType,
@@ -45,20 +46,15 @@ function CreatePipelineButton({
 				url="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
 			/>
 			{isAddNewPipelineVisible && (
-				<CustomButton
-					icon={<EditFilled />}
-					onClick={onEnterEditMode}
-					disabled={isDisabled}
-				>
-					{t('enter_edit_mode')}
+				<CustomButton onClick={onEnterEditMode} disabled={isDisabled}>
+					<Flex align="center" gap={4}>
+						<PencilLine size="md" />
+						{t('enter_edit_mode')}
+					</Flex>
 				</CustomButton>
 			)}
 			{!isAddNewPipelineVisible && (
-				<CustomButton
-					icon={<PlusOutlined />}
-					onClick={onAddNewPipeline}
-					type="primary"
-				>
+				<CustomButton icon={<Plus />} onClick={onAddNewPipeline} type="primary">
 					{t('new_pipeline')}
 				</CustomButton>
 			)}

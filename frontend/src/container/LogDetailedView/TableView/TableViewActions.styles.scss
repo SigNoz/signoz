@@ -58,14 +58,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.table-view-actions-content {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background) !important;
-			backdrop-filter: none;
-			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-		}
-	}
-}

@@ -11,6 +11,10 @@ global:
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
+  # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
+  # mcp_url: <unset>
+  # the url of the SigNoz AI Assistant server. when unset, the AI Assistant is hidden in the frontend.
+  # ai_assistant_url: <unset>
 
 ##################### Version #####################
 version:
@@ -56,6 +60,14 @@ web:
   index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
+  # Settings exposed to the web.
+  settings:
+    posthog:
+      # Whether to enable PostHog in web.
+      enabled: true
+    appcues:
+      # Whether to enable Appcues in web.
+      enabled: true
 
 ##################### Cache #####################
 cache:
@@ -170,6 +182,11 @@ alertmanager:
     poll_interval: 1m
     # The URL under which Alertmanager is externally reachable (for example, if Alertmanager is served via a reverse proxy). Used for generating relative and absolute links back to Alertmanager itself.
     external_url: http://localhost:8080
+    # The list of globs from which SigNoz's alertmanager notification templates are loaded (e.g. the email.signoz.html layout).
+    # This mirrors the upstream alertmanager `templates` config option. The upstream default templates (default.tmpl, email.tmpl)
+    # are always loaded from the embedded alertmanager assets, so only SigNoz's own templates need to be listed here.
+    templates:
+      - /opt/signoz/conf/templates/alertmanager/*.gotmpl
     # The global configuration for the alertmanager. All the exahustive fields can be found in the upstream: https://github.com/prometheus/alertmanager/blob/efa05feffd644ba4accb526e98a8c6545d26a783/config/config.go#L833
     global:
       # ResolveTimeout is the time after which an alert is declared resolved if it has not been updated.
@@ -408,10 +425,27 @@ cloudintegration:
     # The version of the cloud integration agent.
     version: v0.0.8
 
+##################### Trace Detail #####################
+tracedetail:
+  waterfall:
+    # Number of spans returned per request when the trace is too large to show all at once.
+    span_page_size: 500
+    # Maximum depth of descendents to auto-expand for the selected span.
+    max_depth_to_auto_expand: 5
+    # Threshold below which all spans are returned without windowing.
+    max_limit_to_select_all_spans: 10000
+
 ##################### Authz #################################
 authz:
   # Specifies the authz provider to use.
   provider: openfga
   openfga:
     # maximum tuples allowed per openfga write operation.
-    max_tuples_per_write: 100
+    max_tuples_per_write: 300
+
+##################### Meter Reporter #####################
+meterreporter:
+  # The interval between collection ticks. Minimum 5m.
+  interval: 6h
+  # Whether to backfill sealed days from the license creation day.
+  backfill: true

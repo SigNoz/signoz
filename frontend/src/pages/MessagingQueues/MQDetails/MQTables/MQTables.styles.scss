@@ -72,7 +72,9 @@
 				cursor: pointer;
 				background-color: var(--l1-border) !important;
 				color: var(--l2-foreground);
-				transition: background-color 0.3s ease, color 0.3s ease;
+				transition:
+					background-color 0.3s ease,
+					color 0.3s ease;
 			}
 		}
 	}

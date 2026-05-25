@@ -193,10 +193,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		TitleTemplate:        customTitle,
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
-		// The default path renders the attachment body using the configured
-		// Text template (and Slack's own mrkdwn flavour) below, so the default
-		// body template here is left empty.
-		DefaultBodyTemplate: "",
+		DefaultBodyTemplate:  n.conf.Text,
 	}, alerts)
 	if err != nil {
 		return nil, err
@@ -219,7 +216,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 				Title:      title,
 				TitleLink:  tmplText(n.conf.TitleLink),
 				Pretext:    tmplText(n.conf.Pretext),
-				Text:       tmplText(n.conf.Text),
+				Text:       result.Body[0],
 				Fallback:   tmplText(n.conf.Fallback),
 				CallbackID: tmplText(n.conf.CallbackID),
 				ImageURL:   tmplText(n.conf.ImageURL),

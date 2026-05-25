@@ -121,6 +121,8 @@ class Logs(ABC):
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
+        body_v2: str | None = None,
+        body_promoted: str | None = None,
         severity_text: str = "INFO",
         trace_id: str = "",
         span_id: str = "",
@@ -165,6 +167,33 @@ class Logs(ABC):
 
         # Set body
         self.body = body
+
+        # Set body_v2 - if body is JSON, parse and stringify it, otherwise use empty string
+        # ClickHouse accepts String input for JSON column
+        if body_v2 is not None:
+            self.body_v2 = body_v2
+        else:
+            # Try to parse body as JSON; if successful use it directly,
+            # otherwise wrap as {"message": body} matching the normalize operator behavior.
+            try:
+                json.loads(body)
+                self.body_v2 = body
+            except (json.JSONDecodeError, TypeError):
+                self.body_v2 = json.dumps({"message": body})
+
+        # Set body_promoted - must be valid JSON
+        # Tests will explicitly pass promoted column's content, but we validate it
+        if body_promoted is not None:
+            # Validate that it's valid JSON
+            try:
+                json.loads(body_promoted)
+                self.body_promoted = body_promoted
+            except (json.JSONDecodeError, TypeError):
+                # If invalid, default to empty JSON object
+                self.body_promoted = "{}"
+        else:
+            # Default to empty JSON object (valid JSON)
+            self.body_promoted = "{}"
 
         # Process resources and attributes
         self.resources_string = {k: str(v) for k, v in resources.items()}
@@ -309,6 +338,8 @@ class Logs(ABC):
                 self.severity_text,
                 self.severity_number,
                 self.body,
+                self.body_v2,
+                self.body_promoted,
                 self.attributes_string,
                 self.attributes_number,
                 self.attributes_bool,
@@ -436,31 +467,47 @@ def insert_logs_to_clickhouse(conn, logs: list[Logs]) -> None:
             data=[resource_key.np_arr() for resource_key in resource_keys],
         )
 
+    all_column_names = [
+        "ts_bucket_start",
+        "resource_fingerprint",
+        "timestamp",
+        "observed_timestamp",
+        "id",
+        "trace_id",
+        "span_id",
+        "trace_flags",
+        "severity_text",
+        "severity_number",
+        "body",
+        "body_v2",
+        "body_promoted",
+        "attributes_string",
+        "attributes_number",
+        "attributes_bool",
+        "resources_string",
+        "scope_name",
+        "scope_version",
+        "scope_string",
+        "resource",
+    ]
+
+    result = conn.query("SELECT count() FROM system.columns WHERE database = 'signoz_logs' AND table = 'logs_v2' AND name = 'body_v2'")
+    has_json_body = result.result_rows[0][0] > 0
+
+    if has_json_body:
+        column_names = all_column_names
+        data = [log.np_arr() for log in logs]
+    else:
+        json_body_cols = {"body_v2", "body_promoted"}
+        keep_indices = [i for i, c in enumerate(all_column_names) if c not in json_body_cols]
+        column_names = [all_column_names[i] for i in keep_indices]
+        data = [log.np_arr()[keep_indices] for log in logs]
+
     conn.insert(
         database="signoz_logs",
         table="distributed_logs_v2",
-        data=[log.np_arr() for log in logs],
-        column_names=[
-            "ts_bucket_start",
-            "resource_fingerprint",
-            "timestamp",
-            "observed_timestamp",
-            "id",
-            "trace_id",
-            "span_id",
-            "trace_flags",
-            "severity_text",
-            "severity_number",
-            "body",
-            "attributes_string",
-            "attributes_number",
-            "attributes_bool",
-            "resources_string",
-            "scope_name",
-            "scope_version",
-            "scope_string",
-            "resource",
-        ],
+        data=data,
+        column_names=column_names,
     )
 
 

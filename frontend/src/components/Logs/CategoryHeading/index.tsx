@@ -6,7 +6,7 @@ interface ICategoryHeadingProps {
 	children: ReactNode;
 }
 function CategoryHeading({ children }: ICategoryHeadingProps): JSX.Element {
-	return <CategoryHeadingText type="secondary">{children}</CategoryHeadingText>;
+	return <CategoryHeadingText color="muted">{children}</CategoryHeadingText>;
 }
 
 export default CategoryHeading;

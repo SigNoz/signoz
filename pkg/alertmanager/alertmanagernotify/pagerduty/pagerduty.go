@@ -315,39 +315,6 @@ func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (str
 	return result.Title, nil
 }
 
-// stripPrivateAnnotations returns a copy of alerts with every private (`_`-
-// prefixed) annotation removed. These keys — templating inputs, threshold
-// metadata, related-link URLs — are internal inputs to the notifier, not
-// content the external receiver should see. The original alert
-// objects are never mutated: they are shared with other receivers in the
-// fanout.
-func stripPrivateAnnotations(alerts []*types.Alert) []*types.Alert {
-	out := make([]*types.Alert, len(alerts))
-	for i, alert := range alerts {
-		hasPrivate := false
-		for k := range alert.Annotations {
-			if alertmanagertypes.IsPrivateAnnotation(string(k)) {
-				hasPrivate = true
-				break
-			}
-		}
-		if !hasPrivate {
-			out[i] = alert
-			continue
-		}
-		cloned := *alert
-		cloned.Annotations = make(model.LabelSet, len(alert.Annotations))
-		for k, v := range alert.Annotations {
-			if alertmanagertypes.IsPrivateAnnotation(string(k)) {
-				continue
-			}
-			cloned.Annotations[k] = v
-		}
-		out[i] = &cloned
-	}
-	return out
-}
-
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
@@ -361,10 +328,6 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
 	}
-
-	// strip private annotations so they're not sent to the external receiver,
-	// pagerduty default details template contains labels and annotations.
-	as = stripPrivateAnnotations(as)
 
 	var (
 		alerts    = types.Alerts(as...)

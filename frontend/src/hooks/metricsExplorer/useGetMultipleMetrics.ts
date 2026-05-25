@@ -32,6 +32,6 @@ export const useGetMultipleMetrics: UseGetMultipleMetrics = (
 							signal,
 						),
 					...options,
-				} as UseQueryOptions<GetMetricMetadata200, Error>),
+				}) as UseQueryOptions<GetMetricMetadata200, Error>,
 		),
 	);

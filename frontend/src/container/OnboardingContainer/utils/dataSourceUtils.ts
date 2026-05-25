@@ -391,7 +391,7 @@ export const getSupportedFrameworks = ({
 		return [];
 	}
 
-	// @ts-ignore
+	// @ts-expect-error
 	return frameworksMap[moduleID][dataSourceName];
 };
 

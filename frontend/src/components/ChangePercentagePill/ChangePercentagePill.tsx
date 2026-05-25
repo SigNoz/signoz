@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import cx from 'classnames';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from '@signozhq/icons';
 
 import './ChangePercentagePill.styles.scss';
 

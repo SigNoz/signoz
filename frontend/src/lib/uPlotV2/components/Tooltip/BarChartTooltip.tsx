@@ -16,6 +16,8 @@ export default function BarChartTooltip(props: BarTooltipProps): JSX.Element {
 				yAxisUnit: props.yAxisUnit ?? '',
 				decimalPrecision: props.decimalPrecision,
 				isStackedBarChart: props.isStackedBarChart,
+				syncedSeriesIndexes: props.syncedSeriesIndexes,
+				syncFilterMode: props.syncFilterMode,
 			}),
 		[
 			props.uPlotInstance,
@@ -24,6 +26,8 @@ export default function BarChartTooltip(props: BarTooltipProps): JSX.Element {
 			props.yAxisUnit,
 			props.decimalPrecision,
 			props.isStackedBarChart,
+			props.syncedSeriesIndexes,
+			props.syncFilterMode,
 		],
 	);
 

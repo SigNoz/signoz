@@ -10,7 +10,7 @@ import (
 )
 
 type provider struct {
-	settings          telemetrystore.QuerySettings
+	settings telemetrystore.QuerySettings
 }
 
 func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
@@ -21,7 +21,7 @@ func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreH
 
 func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config) (telemetrystore.TelemetryStoreHook, error) {
 	return &provider{
-		settings:          config.Clickhouse.QuerySettings,
+		settings: config.Clickhouse.QuerySettings,
 	}, nil
 }
 

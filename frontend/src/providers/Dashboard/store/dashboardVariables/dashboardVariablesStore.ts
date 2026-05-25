@@ -17,9 +17,8 @@ const initialState: IDashboardVariablesStoreState = {
 	dynamicVariableOrder: [],
 };
 
-export const dashboardVariablesStore = createStore<IDashboardVariablesStoreState>(
-	initialState,
-);
+export const dashboardVariablesStore =
+	createStore<IDashboardVariablesStoreState>(initialState);
 
 /**
  * Set dashboard variables (replaces all variables)

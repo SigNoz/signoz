@@ -1,5 +1,7 @@
 import { Check, Copy } from '@signozhq/icons';
-import { Badge, Button, Callout } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
 
 export interface KeyCreatedPhaseProps {
@@ -22,9 +24,8 @@ function KeyCreatedPhase({
 				<div className="add-key-modal__key-display">
 					<span className="add-key-modal__key-text">{createdKey.key}</span>
 					<Button
-						variant="outlined"
+						variant="link"
 						color="secondary"
-						size="sm"
 						onClick={onCopy}
 						className="add-key-modal__copy-btn"
 					>

@@ -19,7 +19,7 @@ export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
-		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		newTab?: boolean,
 	) => void;
 } => {
@@ -63,7 +63,7 @@ export const useHandleExplorerTabChange = (): {
 		(
 			type: string,
 			currentQueryData?: ICurrentQueryData,
-			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+			redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			newTab?: boolean,
 		) => {
 			const newPanelType = type as PANEL_TYPES;

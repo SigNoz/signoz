@@ -13,9 +13,8 @@ function PipelineProcessingPreview({
 	pipeline,
 }: PipelineProcessingPreviewProps): JSX.Element {
 	const last1HourInterval = RelativeDurationOptions[3].value;
-	const [logsSampleQueryInterval, setLogsSampleQueryInterval] = useState(
-		last1HourInterval,
-	);
+	const [logsSampleQueryInterval, setLogsSampleQueryInterval] =
+		useState(last1HourInterval);
 
 	const sampleLogsResponse = useSampleLogs({
 		filter: pipeline.filter,

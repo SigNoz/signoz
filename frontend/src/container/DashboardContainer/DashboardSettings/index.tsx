@@ -1,6 +1,6 @@
 import { Button, Tabs, Tooltip } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Braces, Globe, Table } from 'lucide-react';
+import { Braces, Globe, Table } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -50,7 +50,7 @@ function DashboardSettings({
 	const items = [
 		{
 			label: (
-				<Button type="text" icon={<Table size="14" />} className="overview-btn">
+				<Button type="text" icon={<Table size={14} />} className="overview-btn">
 					Overview
 				</Button>
 			),

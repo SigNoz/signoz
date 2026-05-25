@@ -93,7 +93,7 @@ function convertTimeSeriesData(
 				labels: series.labels
 					? Object.fromEntries(
 							series.labels.map((label: any) => [label.key.name, label.value]),
-					  )
+						)
 					: {},
 				labelsArray: series.labels
 					? series.labels.map((label: any) => ({ [label.key.name]: label.value }))
@@ -264,6 +264,7 @@ function convertRawData(
 				date: row.timestamp,
 			} as any,
 		})),
+		nextCursor: rawData.nextCursor,
 	};
 }
 
@@ -358,16 +359,19 @@ export function convertV5ResponseToLegacy(
 	const aggregationPerQuery =
 		(params as QueryRangeRequestV5)?.compositeQuery?.queries
 			?.filter((query) => query.type === 'builder_query')
-			.reduce((acc, query) => {
-				if (
-					query.type === 'builder_query' &&
-					'aggregations' in query.spec &&
-					query.spec.name
-				) {
-					acc[query.spec.name] = query.spec.aggregations;
-				}
-				return acc;
-			}, {} as Record<string, any>) || {};
+			.reduce(
+				(acc, query) => {
+					if (
+						query.type === 'builder_query' &&
+						'aggregations' in query.spec &&
+						query.spec.name
+					) {
+						acc[query.spec.name] = query.spec.aggregations;
+					}
+					return acc;
+				},
+				{} as Record<string, any>,
+			) || {};
 
 	// If formatForWeb is true, return as-is (like existing logic)
 	if (formatForWeb && v5Data?.type === 'scalar') {

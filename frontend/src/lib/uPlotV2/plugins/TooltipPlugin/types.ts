@@ -4,6 +4,7 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
@@ -15,9 +16,18 @@ export const TOOLTIP_OFFSET = 10;
 export const DEFAULT_PIN_TOOLTIP_KEY = 'p';
 
 export enum DashboardCursorSync {
-	Crosshair,
-	None,
-	Tooltip,
+	Crosshair = 'crosshair',
+	None = 'none',
+	Tooltip = 'tooltip',
+}
+
+/**
+ * Controls whether a synced tooltip filters series by groupBy intersection
+ * or shows every series with the matching ones highlighted.
+ */
+export enum SyncTooltipFilterMode {
+	Filtered = 'filtered',
+	All = 'all',
 }
 
 export interface TooltipViewState {
@@ -39,6 +49,8 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
+	filterMode?: SyncTooltipFilterMode;
 }
 
 export interface TooltipPluginProps {
@@ -95,6 +107,11 @@ export interface TooltipControllerState {
 	verticalOffset: number;
 	seriesIndexes: Array<number | null>;
 	focusedSeriesIndex: number | null;
+	/** Receiver-side series filtering for Tooltip sync mode.
+	 * null  = no filtering (source panel or no groupBy configured)
+	 * []    = no matching series found → hide the synced tooltip
+	 * [...] = only these 1-based series indexes should appear in the synced tooltip */
+	syncedSeriesIndexes: number[] | null;
 	cursorDrivenBySync: boolean;
 	plotWithinViewport: boolean;
 	windowWidth: number;

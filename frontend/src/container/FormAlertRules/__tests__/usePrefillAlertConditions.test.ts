@@ -76,7 +76,7 @@ describe('usePrefillAlertConditions', () => {
 				builder: { queryData: [{ reduceTo: 'p90' }] },
 			} as any),
 		);
-		expect(result.current.matchType).toBe(null);
+		expect(result.current.matchType).toBeNull();
 	});
 
 	it('returns the correct matchType for multiple queries with same time aggregation', () => {
@@ -112,7 +112,7 @@ describe('usePrefillAlertConditions', () => {
 				},
 			} as any),
 		);
-		expect(result.current.matchType).toBe(null);
+		expect(result.current.matchType).toBeNull();
 	});
 
 	it('returns the correct op, target, targetUnit from the higher priority threshold for multiple thresholds', () => {

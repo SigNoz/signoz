@@ -1,0 +1,32 @@
+.trigger {
+	position: absolute;
+	bottom: 24px;
+	right: 24px;
+	z-index: 10;
+
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	border: none;
+	cursor: pointer;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background: var(--accent-primary);
+	color: var(--accent-primary-foreground);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+	transition:
+		transform 0.15s,
+		box-shadow 0.15s;
+
+	&:hover {
+		transform: scale(1.08);
+		box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+	}
+
+	&:active {
+		transform: scale(0.96);
+	}
+}

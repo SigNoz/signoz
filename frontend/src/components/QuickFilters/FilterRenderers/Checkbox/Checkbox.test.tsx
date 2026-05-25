@@ -83,7 +83,7 @@ const createMockQueryBuilderData = (hasActiveFilters = false): any => ({
 										op: 'in',
 										value: [OTEL_DEMO, SAMPLE_FLASK],
 									},
-							  ]
+								]
 							: [],
 					},
 				},
@@ -99,7 +99,7 @@ describe('CheckboxFilter - User Flows', () => {
 		jest.clearAllMocks();
 
 		// Default mock implementations for useGetAggregateValues
-		mockUseGetAggregateValues.mockReturnValue(({
+		mockUseGetAggregateValues.mockReturnValue({
 			data: {
 				payload: {
 					stringAttributeValues: MOCK_SERVICE_NAMES,
@@ -107,7 +107,7 @@ describe('CheckboxFilter - User Flows', () => {
 			},
 			isLoading: false,
 			refetch: jest.fn(),
-		} as unknown) as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
+		} as unknown as UseQueryResult<SuccessResponse<IAttributeValuesResponse>>);
 
 		// Default mock implementations for useGetQueryKeyValueSuggestions
 		// Returns data in the format expected by the hook
@@ -471,6 +471,6 @@ describe('CheckboxFilter - User Flows', () => {
 
 		expect(filterForServiceName.key.key).toBe(SERVICE_NAME_KEY);
 		expect(filterForServiceName.op).toBe('in');
-		expect(filterForServiceName.value).toEqual(['mq-kafka', 'otel-demo']);
+		expect(filterForServiceName.value).toStrictEqual(['mq-kafka', 'otel-demo']);
 	});
 });

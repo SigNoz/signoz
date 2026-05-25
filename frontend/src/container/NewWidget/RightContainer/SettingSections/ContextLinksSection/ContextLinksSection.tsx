@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Link as LinkIcon } from 'lucide-react';
+import { Link } from '@signozhq/icons';
 import { ContextLinksData, Widgets } from 'types/api/dashboard/getAll';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
@@ -21,7 +21,7 @@ export default function ContextLinksSection({
 	return (
 		<SettingsSection
 			title="Context Links"
-			icon={<LinkIcon size={14} />}
+			icon={<Link size={14} />}
 			defaultOpen={!!contextLinks.linksData.length}
 		>
 			<div className="context-links-section">

@@ -30,16 +30,17 @@ export const k8sStatefulSetGetSelectedItemFilters = (
 	],
 });
 
-export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sStatefulSetsData>[] = [
-	{
-		label: 'Statefulset Name',
-		getValue: (p): string => p.meta.k8s_statefulset_name,
-	},
-	{
-		label: 'Namespace Name',
-		getValue: (p): string => p.meta.k8s_namespace_name,
-	},
-];
+export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sStatefulSetsData>[] =
+	[
+		{
+			label: 'Statefulset Name',
+			getValue: (p): string => p.meta.k8s_statefulset_name,
+		},
+		{
+			label: 'Namespace Name',
+			getValue: (p): string => p.meta.k8s_namespace_name,
+		},
+	];
 
 export const k8sStatefulSetInitialFilters = [
 	QUERY_KEYS.K8S_STATEFUL_SET_NAME,

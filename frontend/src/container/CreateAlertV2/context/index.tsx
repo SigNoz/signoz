@@ -7,6 +7,7 @@ import {
 	useEffect,
 	useMemo,
 	useReducer,
+	useRef,
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -55,13 +56,8 @@ export const useCreateAlertState = (): ICreateAlertContextProps => {
 export function CreateAlertProvider(
 	props: ICreateAlertProviderProps,
 ): JSX.Element {
-	const {
-		children,
-		initialAlertState,
-		isEditMode,
-		ruleId,
-		initialAlertType,
-	} = props;
+	const { children, initialAlertState, isEditMode, ruleId, initialAlertType } =
+		props;
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -128,6 +124,8 @@ export function CreateAlertProvider(
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
+	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
+	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -158,6 +156,9 @@ export function CreateAlertProvider(
 		},
 		[redirectWithQueryBuilderData],
 	);
+
+	const ruleNameAppliedRef = useRef(false);
+	const yAxisUnitAppliedRef = useRef(false);
 
 	useEffect(() => {
 		setCreateAlertState({
@@ -196,7 +197,29 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, thresholdsFromURL]);
+
+		if (ruleNameFromURL && !ruleNameAppliedRef.current) {
+			ruleNameAppliedRef.current = true;
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_ALERT_NAME',
+					payload: ruleNameFromURL,
+				},
+			});
+		}
+
+		if (yAxisUnitFromURL && !yAxisUnitAppliedRef.current) {
+			yAxisUnitAppliedRef.current = true;
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_Y_AXIS_UNIT',
+					payload: yAxisUnitFromURL,
+				},
+			});
+		}
+	}, [alertType, thresholdsFromURL, ruleNameFromURL, yAxisUnitFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
@@ -214,17 +237,13 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
-	const {
-		mutate: createAlertRule,
-		isLoading: isCreatingAlertRule,
-	} = useCreateRule();
+	const { mutate: createAlertRule, isLoading: isCreatingAlertRule } =
+		useCreateRule();
 
 	const { mutate: testAlertRule, isLoading: isTestingAlertRule } = useTestRule();
 
-	const {
-		mutate: updateAlertRule,
-		isLoading: isUpdatingAlertRule,
-	} = useUpdateRuleByID();
+	const { mutate: updateAlertRule, isLoading: isUpdatingAlertRule } =
+		useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({

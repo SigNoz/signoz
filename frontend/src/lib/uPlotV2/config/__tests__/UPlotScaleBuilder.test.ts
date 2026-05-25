@@ -171,8 +171,7 @@ describe('UPlotScaleBuilder', () => {
 
 	it('respects explicit range function when provided on props', () => {
 		const explicitRange: uPlot.Scale.Range = jest.fn(() => [
-			0,
-			10,
+			0, 10,
 		]) as uPlot.Scale.Range;
 
 		const builder = new UPlotScaleBuilder(
@@ -225,12 +224,12 @@ describe('UPlotScaleBuilder', () => {
 		});
 
 		expect(builder.props.min).toBe(2);
-		expect(builder.props.softMax).toBe(undefined);
+		expect(builder.props.softMax).toBeUndefined();
 		expect(builder.props.max).toBe(10);
 		expect(builder.props.softMin).toBe(1);
 		expect(builder.props.time).toBe(false);
 		expect(builder.props.scaleKey).toBe('y');
 		expect(builder.props.distribution).toBe(DistributionType.Linear);
-		expect(builder.props.thresholds).toBe(undefined);
+		expect(builder.props.thresholds).toBeUndefined();
 	});
 });

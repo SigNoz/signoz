@@ -1,0 +1,43 @@
+.options {
+	// Antd Radio.Group / Checkbox.Group renders inline-block by default.
+	// Override so the className we apply fills the block and stacks options vertically.
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 6px;
+	width: 100%;
+
+	&.checkbox {
+		margin-bottom: 10px;
+	}
+}
+
+.option {
+	color: var(--l1-foreground) !important;
+	font-size: 13px !important;
+	white-space: normal !important;
+	word-break: break-word;
+	display: flex !important;
+	align-items: flex-start !important;
+}
+
+.submit {
+	margin-top: 2px;
+}
+
+.answered {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px;
+	opacity: 0.7;
+}
+
+.check {
+	color: var(--accent-forest);
+	font-size: 13px;
+}
+
+.answerText {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}

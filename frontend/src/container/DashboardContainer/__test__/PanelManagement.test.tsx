@@ -424,7 +424,7 @@ describe('Panel Management Tests', () => {
 			);
 
 			// Should return dashboard unchanged
-			expect(updatedDashboard).toEqual(dashboard);
+			expect(updatedDashboard).toStrictEqual(dashboard);
 		});
 
 		it('should handle undefined dashboard gracefully', () => {

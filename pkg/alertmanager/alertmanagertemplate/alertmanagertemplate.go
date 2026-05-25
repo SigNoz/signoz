@@ -15,13 +15,6 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// Templater expands user-authored title and body templates against a group
-// of alerts and returns channel-ready strings along with the aggregate data
-// a caller might reuse (e.g. to render an email layout around the body).
-type Templater interface {
-	Expand(ctx context.Context, req alertmanagertypes.ExpandRequest, alerts []*types.Alert) (*alertmanagertypes.ExpandResult, error)
-}
-
 type templater struct {
 	tmpl   *template.Template
 	logger *slog.Logger
@@ -29,7 +22,7 @@ type templater struct {
 
 // New returns a Templater bound to the given Prometheus alertmanager
 // template and logger.
-func New(tmpl *template.Template, logger *slog.Logger) Templater {
+func New(tmpl *template.Template, logger *slog.Logger) alertmanagertypes.Templater {
 	return &templater{tmpl: tmpl, logger: logger}
 }
 
@@ -190,8 +183,8 @@ func (at *templater) buildNotificationTemplateData(
 	}
 
 	// Raw (including private `_*`) kv first so buildRuleInfo can read the
-	// private rule-metadata annotations (threshold, op, match_type). The
-	// filtered copies are what ends up on the template-visible surfaces.
+	// private rule annotations. The filtered copies are what ends up
+	// on the template-visible surfaces.
 	rawCommonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
 	commonLabels := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
 

@@ -29,7 +29,7 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 // Generic type that can work with both legacy and V5 query types
 export type HandleChangeQueryData<T = IBuilderQuery> = <
 	Key extends keyof T,
-	Value extends T[Key]
+	Value extends T[Key],
 >(
 	key: Key,
 	value: Value,
@@ -37,7 +37,7 @@ export type HandleChangeQueryData<T = IBuilderQuery> = <
 
 export type HandleChangeTraceOperatorData<T = IBuilderTraceOperator> = <
 	Key extends keyof T,
-	Value extends T[Key]
+	Value extends T[Key],
 >(
 	key: Key,
 	value: Value,
@@ -53,15 +53,13 @@ export type HandleChangeQueryDataV5 = HandleChangeQueryData<
 
 export type HandleChangeFormulaData = <
 	Key extends keyof IBuilderFormula,
-	Value extends IBuilderFormula[Key]
+	Value extends IBuilderFormula[Key],
 >(
 	key: Key,
 	value: Value,
 ) => void;
 
-export type UseQueryOperations = (
-	params: UseQueryOperationsParams,
-) => {
+export type UseQueryOperations = (params: UseQueryOperationsParams) => {
 	isTracePanelType: boolean;
 	isMetricsDataSource: boolean;
 	operators: SelectOption<string, string>[];
