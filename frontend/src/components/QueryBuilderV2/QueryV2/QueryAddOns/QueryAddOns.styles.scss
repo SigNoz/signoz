@@ -2,6 +2,13 @@
 
 .query-add-ons {
 	width: 100%;
+
+	.add-on-tab-title {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--margin-2);
+	}
 }
 
 .add-ons-list {
