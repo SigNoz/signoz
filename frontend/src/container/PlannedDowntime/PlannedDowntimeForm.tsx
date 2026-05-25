@@ -276,12 +276,11 @@ export function PlannedDowntimeForm(
 		const endTime = schedule?.recurrence?.endTime || schedule?.endTime;
 
 		const initialAlertIds = initialValues.alertIds || [];
-		const isExistingSchedule = Boolean(initialValues.id);
 
 		return {
 			name: defaultTo(initialValues.name, ''),
 			alertRuleScope:
-				isExistingSchedule && initialAlertIds.length === 0 ? 'all' : 'specific',
+				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
 			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
 			startTime: startTime ? dayjs(startTime).tz(schedule.timezone) : null,
 			endTime: endTime ? dayjs(endTime).tz(schedule.timezone) : null,
