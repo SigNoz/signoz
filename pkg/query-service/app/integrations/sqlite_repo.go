@@ -54,7 +54,7 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 		typeValues = append(typeValues, integrationType)
 	}
 
-	err := r.store.BunDB().NewSelect().Model(&integrations).
+	err := r.store.BunDBCtx(ctx).NewSelect().Model(&integrations).
 		Where("org_id = ?", orgId).
 		Where("type IN (?)", bun.In(typeValues)).
 		Scan(ctx)
@@ -88,7 +88,7 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		Config: config,
 	}
 
-	_, dbErr := r.store.BunDB().NewInsert().
+	_, dbErr := r.store.BunDBCtx(ctx).NewInsert().
 		Model(&integration).
 		On("conflict (type, org_id) DO UPDATE").
 		Set("config = EXCLUDED.config").
@@ -115,7 +115,7 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 func (r *InstalledIntegrationsSqliteRepo) delete(
 	ctx context.Context, orgId string, integrationType string,
 ) *model.ApiError {
-	_, dbErr := r.store.BunDB().NewDelete().
+	_, dbErr := r.store.BunDBCtx(ctx).NewDelete().
 		Model(&cloudintegrationtypes.InstalledIntegration{}).
 		Where("type = ?", integrationType).
 		Where("org_id = ?", orgId).

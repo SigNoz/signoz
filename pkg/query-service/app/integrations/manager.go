@@ -242,9 +242,7 @@ func (m *Manager) InstallIntegration(
 	}
 
 	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		_, apiErr = m.installedIntegrationsRepo.upsert(
-			ctx, orgId, integrationId, config,
-		)
+		_, apiErr = m.installedIntegrationsRepo.upsert(ctx, orgId, integrationId, config)
 		if apiErr != nil {
 			return model.WrapApiError(apiErr, "could not insert installed integration")
 		}
