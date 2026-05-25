@@ -7,14 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// TODO(nikhilmantri0902): change to k8s.cluster.uid after showing the missing
-// data banner. Carried forward from v1 (see k8sClusterUIDAttrKey in
-// pkg/query-service/app/inframetrics/clusters.go).
-const clusterNameAttrKey = "k8s.cluster.name"
-
 var clusterNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          clusterNameAttrKey,
+		Name:          inframonitoringtypes.ClusterNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

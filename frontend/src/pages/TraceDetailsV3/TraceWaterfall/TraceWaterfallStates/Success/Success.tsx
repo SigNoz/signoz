@@ -473,6 +473,7 @@ export const SpanDuration = memo(function SpanDuration({
 const columnDefHelper = createColumnHelper<SpanV3>();
 
 const ROW_HEIGHT = 28;
+const WATERFALL_BOTTOM_PADDING = 24;
 const DEFAULT_SIDEBAR_WIDTH = 450;
 const MIN_SIDEBAR_WIDTH = 240;
 const MAX_SIDEBAR_WIDTH = 900;
@@ -579,10 +580,9 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					return next;
 				});
+				return;
 			}
-			// Backend mode: trigger API call (current behavior)
-			// keeping this for both mode to support scroll to view to function well.
-			// interestedspan would not make api call in frontend mode so it is safe to use for both mode.
+			// Backend mode: trigger refetch via interestedSpanId
 			setInterestedSpanId({
 				spanId,
 				isUncollapsed: !collapse,
@@ -740,53 +740,76 @@ function Success(props: ISuccessProps): JSX.Element {
 		);
 	}, [spans, sidebarWidth]);
 
-	// Scroll to the interested span only when it isn't already on screen.
-	// Covers every entry point uniformly: deep-link, flamegraph click,
-	// filter prev/next, browser back/forward all scroll only if needed;
-	// waterfall row clicks and chevron expand/collapse don't yank the viewport
-	// because the affected row is by definition already visible.
-	useEffect(() => {
-		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
-			const idx = spans.findIndex(
-				(span) => span.span_id === interestedSpanId.spanId,
-			);
-			if (idx !== -1) {
-				const visible = virtualizerRef.current.getVirtualItems();
-				const isOnScreen =
-					visible.length > 0 &&
-					idx >= visible[0].index &&
-					idx <= visible[visible.length - 1].index;
-
-				if (!isOnScreen) {
-					setTimeout(() => {
-						virtualizerRef.current?.scrollToIndex(idx, {
-							align: 'center',
-							behavior: 'auto',
-						});
-
-						// Auto-scroll sidebar horizontally to show the span name
-						const span = spans[idx];
-						const sidebarScrollEl = scrollContainerRef.current?.querySelector(
-							'.resizable-box__content',
-						);
-						if (sidebarScrollEl) {
-							const targetScrollLeft = Math.max(0, span.level * CONNECTOR_WIDTH - 40);
-							sidebarScrollEl.scrollLeft = targetScrollLeft;
-						}
-					}, 400);
-				}
-
-				setSelectedSpan(spans[idx]);
+	// Scroll a span to viewport center if it isn't already visible. Shared by
+	// the two effects below — one keyed on interestedSpanId (chevron, boundary
+	// pagination, deep-link to unloaded), the other on selectedSpan (in-window
+	// URL navigation that doesn't mutate interestedSpanId).
+	const scrollSpanIntoView = useCallback(
+		(span: SpanV3, spansList: SpanV3[]): void => {
+			if (!virtualizerRef.current) {
+				return;
 			}
-		} else {
-			setSelectedSpan((prev) => {
-				if (!prev) {
-					return spans[0];
+			const idx = spansList.findIndex((s) => s.span_id === span.span_id);
+			if (idx === -1) {
+				return;
+			}
+			const scrollEl = scrollContainerRef.current;
+			const scrollTop = scrollEl?.scrollTop ?? 0;
+			const viewportHeight = scrollEl?.clientHeight ?? 0;
+			const viewportStartIdx = Math.floor(scrollTop / ROW_HEIGHT);
+			const viewportEndIdx =
+				Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) - 1;
+			const isOnScreen =
+				viewportHeight > 0 && idx >= viewportStartIdx && idx <= viewportEndIdx;
+			if (isOnScreen) {
+				return;
+			}
+			setTimeout(() => {
+				virtualizerRef.current?.scrollToIndex(idx, {
+					align: 'center',
+					behavior: 'auto',
+				});
+				const sidebarScrollEl = scrollContainerRef.current?.querySelector(
+					'.resizable-box__content',
+				);
+				if (sidebarScrollEl) {
+					const targetScrollLeft = Math.max(0, span.level * CONNECTOR_WIDTH - 40);
+					(sidebarScrollEl as HTMLElement).scrollLeft = targetScrollLeft;
 				}
-				return prev;
-			});
+			}, 100);
+		},
+		[],
+	);
+
+	// Backend mode: scroll + select to the interestedSpanId target. `spans` in
+	// deps so we retry once a refetch lands (chevron / pagination / deep-link).
+	useEffect(() => {
+		if (isFullDataLoaded || interestedSpanId.spanId === '') {
+			return;
 		}
-	}, [interestedSpanId, setSelectedSpan, spans]);
+		const idx = spans.findIndex(
+			(span) => span.span_id === interestedSpanId.spanId,
+		);
+		if (idx !== -1) {
+			scrollSpanIntoView(spans[idx], spans);
+			setSelectedSpan(spans[idx]);
+		}
+	}, [
+		interestedSpanId,
+		setSelectedSpan,
+		spans,
+		scrollSpanIntoView,
+		isFullDataLoaded,
+	]);
+
+	// Covers URL-driven navigation to an already-loaded span (flamegraph /
+	// filter / browser back) that the interestedSpanId-keyed effect doesn't see.
+	useEffect(() => {
+		if (selectedSpan) {
+			scrollSpanIntoView(selectedSpan, spans);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedSpan, scrollSpanIntoView]);
 
 	const virtualItems = virtualizer.getVirtualItems();
 	const leftRows = leftTable.getRowModel().rows;
@@ -846,7 +869,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				<div
 					className={styles.splitBody}
 					style={{
-						minHeight: virtualizer.getTotalSize(),
+						minHeight: virtualizer.getTotalSize() + WATERFALL_BOTTOM_PADDING,
 						height: '100%',
 					}}
 				>

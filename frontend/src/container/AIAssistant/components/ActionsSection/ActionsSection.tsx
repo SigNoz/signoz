@@ -41,12 +41,68 @@ import {
 	Undo,
 } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
 import styles from './ActionsSection.module.scss';
 
 interface ActionsSectionProps {
 	actions: MessageActionDTO[];
+	/** ID of the assistant message these actions belong to — used in analytics. */
+	messageId: string;
+}
+
+/**
+ * Resource-type strings the backend uses for `open_resource` and rollback
+ * actions. Centralized here so the route/module lookups below stay in sync.
+ */
+const ResourceType = {
+	dashboard: 'dashboard',
+	alert: 'alert',
+	service: 'service',
+	saved_view: 'saved_view',
+	logs_explorer: 'logs_explorer',
+	traces_explorer: 'traces_explorer',
+	metrics_explorer: 'metrics_explorer',
+} as const;
+
+/** Maps an open_resource action's resourceType to its product module name. */
+function targetModuleForResource(resourceType: string): string | null {
+	switch (resourceType) {
+		case ResourceType.dashboard:
+			return 'dashboards';
+		case ResourceType.alert:
+			return 'alerts';
+		case ResourceType.service:
+			return 'apm';
+		case ResourceType.saved_view:
+			return 'savedViews';
+		case ResourceType.logs_explorer:
+			return 'logs';
+		case ResourceType.traces_explorer:
+			return 'traces';
+		case ResourceType.metrics_explorer:
+			return 'metrics';
+		default:
+			return null;
+	}
+}
+
+/** Maps an apply_filter signal to its product module name. */
+function targetModuleForSignal(signal: ApplyFilterSignalDTO): string | null {
+	switch (signal) {
+		case ApplyFilterSignalDTO.logs:
+			return 'logs';
+		case ApplyFilterSignalDTO.traces:
+			return 'traces';
+		case ApplyFilterSignalDTO.metrics:
+			return 'metrics';
+		default:
+			return null;
+	}
 }
 
 type ChipState = 'idle' | 'loading' | 'success' | 'error';
@@ -94,23 +150,23 @@ function resourceRoute(
 	resourceId: string,
 ): string | null {
 	switch (resourceType) {
-		case 'dashboard':
+		case ResourceType.dashboard:
 			return ROUTES.DASHBOARD.replace(':dashboardId', resourceId);
-		case 'alert': {
+		case ResourceType.alert: {
 			const params = new URLSearchParams({ [QueryParams.ruleId]: resourceId });
 			return `${ROUTES.EDIT_ALERTS}?${params.toString()}`;
 		}
-		case 'service':
+		case ResourceType.service:
 			return ROUTES.SERVICE_METRICS.replace(':servicename', resourceId);
-		case 'saved_view':
+		case ResourceType.saved_view:
 			// No detail route — saved views land on the list page.
 			// Caller may provide signal-aware metadata in future; default to logs.
 			return ROUTES.LOGS_SAVE_VIEWS;
-		case 'logs_explorer':
+		case ResourceType.logs_explorer:
 			return ROUTES.LOGS_EXPLORER;
-		case 'traces_explorer':
+		case ResourceType.traces_explorer:
 			return ROUTES.TRACES_EXPLORER;
-		case 'metrics_explorer':
+		case ResourceType.metrics_explorer:
 			return ROUTES.METRICS_EXPLORER_EXPLORER;
 		default:
 			return null;
@@ -222,6 +278,24 @@ function actionKey(action: MessageActionDTO, index: number): string {
 	return action.actionMetadataId
 		? `${action.kind}:${action.actionMetadataId}`
 		: `${action.kind}:${action.label}:${index}`;
+}
+
+/**
+ * Resolves the prompt to send for a follow_up action. The chip's `label` is
+ * the short display text (e.g. "Python setup"); the real prompt lives in
+ * `input.intent` per the schema doc. Falls back to label defensively so a
+ * malformed server payload doesn't drop the click silently. Both branches
+ * are trimmed so whitespace-only payloads don't become whitespace messages.
+ */
+function followUpIntent(action: MessageActionDTO): string {
+	const intent = action.input?.intent;
+	if (typeof intent === 'string') {
+		const trimmed = intent.trim();
+		if (trimmed.length > 0) {
+			return trimmed;
+		}
+	}
+	return action.label.trim();
 }
 
 /** Maps a signal to its target explorer route. */
@@ -353,10 +427,12 @@ function rollbackCall(
  */
 export default function ActionsSection({
 	actions,
+	messageId,
 }: ActionsSectionProps): JSX.Element | null {
 	const history = useHistory();
 	const { pathname } = useLocation();
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
+	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
 
 	// Per-chip click state, keyed by chip key (see `key` below). Persists
@@ -430,13 +506,39 @@ export default function ActionsSection({
 		switch (action.kind) {
 			case MessageActionKindDTO.open_docs: {
 				if (action.url) {
+					void logEvent(AIAssistantEvents.DocOpened, {
+						threadId,
+						messageId,
+						docPath: action.url,
+					});
 					openInNewTab(action.url);
 				}
 				break;
 			}
 			case MessageActionKindDTO.follow_up: {
-				if (action.label) {
-					void sendMessage(action.label);
+				const intent = followUpIntent(action);
+				if (intent) {
+					// Fire SuggestedPromptClicked + MessageSent so analytics can compute
+					// both the click-through rate against follow-ups offered *and* keep
+					// the unified send funnel intact. `category` distinguishes server-
+					// emitted follow-ups from the empty-state grid. `promptId` stays the
+					// label so dashboards group identical chip texts together regardless
+					// of the dynamic intent payload.
+					void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
+						threadId,
+						messageId,
+						promptId: action.label,
+						category: SuggestedPromptCategory.FollowUp,
+					});
+					void logEvent(AIAssistantEvents.MessageSent, {
+						threadId,
+						page,
+						mode,
+						queryLength: intent.length,
+						hasContext: false,
+						respondingToClarification: false,
+					});
+					void sendMessage(intent);
 				}
 				break;
 			}
@@ -444,6 +546,12 @@ export default function ActionsSection({
 				if (action.resourceType && action.resourceId) {
 					const path = resourceRoute(action.resourceType, action.resourceId);
 					if (path) {
+						void logEvent(AIAssistantEvents.ResourceOpened, {
+							threadId,
+							messageId,
+							targetModule: targetModuleForResource(action.resourceType),
+							resourceId: action.resourceId,
+						});
 						history.push(path);
 					}
 				}
@@ -456,6 +564,13 @@ export default function ActionsSection({
 				break;
 			}
 			case MessageActionKindDTO.apply_filter: {
+				if (action.signal) {
+					void logEvent(AIAssistantEvents.ApplyFilterClicked, {
+						threadId,
+						messageId,
+						targetModule: targetModuleForSignal(action.signal),
+					});
+				}
 				applyFilter(action, {
 					history,
 					pathname,
