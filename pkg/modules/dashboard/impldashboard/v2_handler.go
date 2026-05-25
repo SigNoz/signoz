@@ -36,7 +36,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.CreateV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), req)
+	dashboard, err := handler.module.CreateV2(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), dashboardtypes.SourceUser, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
