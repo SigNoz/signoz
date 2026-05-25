@@ -20,6 +20,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func expectedHTML(baseHref string, settings web.Settings) string {
+	settingsJSON, _ := json.Marshal(settings)
+	return `<html><head><base href="` + baseHref + `" /></head><body><script>window.signozBootData={settings:` + string(settingsJSON) + `}</script>Welcome to test data!!!</body></html>`
+}
+
 func startServer(t *testing.T, config web.Config, globalConfig global.Config) string {
 	t.Helper()
 
@@ -50,11 +55,6 @@ func httpGet(t *testing.T, url string) string {
 	require.NoError(t, err)
 
 	return string(body)
-}
-
-func expectedHTML(baseHref string, settings web.Settings) string {
-	settingsJSON, _ := json.Marshal(settings)
-	return "<html>\n  <head>\n    <base href=\"" + baseHref + "\" />\n  </head>\n  <body>\n    <script>\n      window.signozBootData = { settings: " + string(settingsJSON) + " }\n    </script>\n    Welcome to test data!!!\n  </body>\n</html>"
 }
 
 func TestServeTemplatedIndex(t *testing.T) {
