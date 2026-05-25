@@ -75,12 +75,14 @@ func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	webhookURL, err := url.Parse("http://" + webhookListener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	err = server.TestReceiver(context.Background(), alertmanagertypes.Receiver{
-		Name: "test-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhookURL.String()),
+	err = server.TestReceiver(context.Background(), &alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "test-receiver",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL(webhookURL.String()),
+				},
 			},
 		},
 	})
@@ -101,12 +103,14 @@ func TestServerPutAlerts(t *testing.T) {
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
-		Name: "test-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL("http://localhost/test-receiver"),
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "test-receiver",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL("http://localhost/test-receiver"),
+				},
 			},
 		},
 	}))
@@ -181,22 +185,26 @@ func TestServerTestAlert(t *testing.T) {
 	webhook2URL, err := url.Parse("http://" + webhook2Listener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
-		Name: "receiver-1",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhook1URL.String()),
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "receiver-1",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL(webhook1URL.String()),
+				},
 			},
 		},
 	}))
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
-		Name: "receiver-2",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhook2URL.String()),
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "receiver-2",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL(webhook2URL.String()),
+				},
 			},
 		},
 	}))
@@ -273,22 +281,26 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 	webhookURL, err := url.Parse("http://" + webhookListener.Addr().String() + "/webhook")
 	require.NoError(t, err)
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
-		Name: "working-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL(webhookURL.String()),
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "working-receiver",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL(webhookURL.String()),
+				},
 			},
 		},
 	}))
 
-	require.NoError(t, amConfig.CreateReceiver(alertmanagertypes.Receiver{
-		Name: "failing-receiver",
-		WebhookConfigs: []*config.WebhookConfig{
-			{
-				HTTPConfig: &commoncfg.HTTPClientConfig{},
-				URL:        config.SecretTemplateURL("http://localhost:1/webhook"),
+	require.NoError(t, amConfig.CreateReceiver(&alertmanagertypes.Receiver{
+		Receiver: &config.Receiver{
+			Name: "failing-receiver",
+			WebhookConfigs: []*config.WebhookConfig{
+				{
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					URL:        config.SecretTemplateURL("http://localhost:1/webhook"),
+				},
 			},
 		},
 	}))

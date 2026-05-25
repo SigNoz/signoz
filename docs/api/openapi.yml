@@ -1540,6 +1540,17 @@ components:
         webhook_url_file:
           type: string
       type: object
+    ConfigGoogleChatConfig:
+      properties:
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+      type: object
     ConfigMattermostAttachment:
       properties:
         author_icon:
@@ -1842,6 +1853,10 @@ components:
         email_configs:
           items:
             $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigGoogleChatConfig'
           type: array
         incidentio_configs:
           items:

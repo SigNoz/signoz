@@ -240,29 +240,25 @@ func TestNewConfigFromChannels(t *testing.T) {
 func TestNewChannelFromReceiver(t *testing.T) {
 	testCases := []struct {
 		name     string
-		receiver config.Receiver
+		receiver *Receiver
 		expected *Channel
 		pass     bool
 	}{
 		{
 			name: "InvalidReceiver_OnlyName",
-			receiver: config.Receiver{
-				Name: "test-receiver",
-			},
+			receiver: &Receiver{Receiver: &config.Receiver{Name: "test-receiver"}},
 			expected: nil,
 			pass:     false,
 		},
 		{
 			name: "InvalidReceiver_DefaultReceiver",
-			receiver: config.Receiver{
-				Name: DefaultReceiverName,
-			},
+			receiver: &Receiver{Receiver: &config.Receiver{Name: DefaultReceiverName}},
 			expected: nil,
 			pass:     false,
 		},
 		{
 			name: "ValidReceiver_Slack",
-			receiver: config.Receiver{
+			receiver: &Receiver{Receiver: &config.Receiver{
 				Name: "test-receiver",
 				SlackConfigs: []*config.SlackConfig{
 					{
@@ -273,11 +269,30 @@ func TestNewChannelFromReceiver(t *testing.T) {
 						},
 					},
 				},
-			},
+			}},
 			expected: &Channel{
 				Name: "test-receiver",
 				Type: "slack",
 				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
+			},
+			pass: true,
+		},
+		{
+			name: "ValidReceiver_GoogleChat",
+			receiver: &Receiver{Receiver: &config.Receiver{
+				Name: "googlechat-receiver",
+			}, GoogleChatConfigs: []*GoogleChatReceiverConfig{
+				{
+					WebhookURL:        &config.SecretURL{URL: &url.URL{Scheme: "https", Host: "chat.googleapis.com", Path: "/v1/spaces/test/messages"}},
+					Title:             "Alert",
+					Text:              "Body",
+					SendResolvedValue: true,
+				},
+			}},
+			expected: &Channel{
+				Name: "googlechat-receiver",
+				Type: "googlechat",
+				Data: `{"name":"googlechat-receiver","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body","send_resolved":true}]}`,
 			},
 			pass: true,
 		},
@@ -294,7 +309,7 @@ func TestNewChannelFromReceiver(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, testCase.expected.Name, channel.Name)
 			assert.Equal(t, testCase.expected.Type, channel.Type)
-			assert.Equal(t, testCase.expected.Data, channel.Data)
+			assert.JSONEq(t, testCase.expected.Data, channel.Data)
 		})
 	}
 

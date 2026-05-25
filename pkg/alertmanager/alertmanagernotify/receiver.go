@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/googlechat"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -24,10 +25,11 @@ var customNotifierIntegrations = []string{
 	opsgenie.Integration,
 	slack.Integration,
 	msteamsv2.Integration,
+	googlechat.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
-	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
+func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
+	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +72,11 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	for i, c := range nc.MSTeamsV2Configs {
 		add(msteamsv2.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l)
+		})
+	}
+	for i, c := range nc.GoogleChatConfigs {
+		add(googlechat.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return googlechat.New(c, tmpl, l)
 		})
 	}
 
