@@ -129,7 +129,6 @@ func (module *module) RecommendAgentConfig(orgID valuer.UUID, currentConfYaml []
 
 // listEnabledGroupsWithMappers returns groups with their mappers.
 func (module *module) listEnabledGroupsWithMappers(ctx context.Context, orgID valuer.UUID) ([]*spantypes.SpanMapperGroupWithMappers, error) {
-	enabled := true
 	groups, err := module.store.ListGroups(ctx, orgID, &spantypes.ListSpanMapperGroupsQuery{Enabled: &enabled})
 	if err != nil {
 		return nil, err
