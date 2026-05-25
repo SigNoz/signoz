@@ -531,14 +531,6 @@ export function PlannedDowntimeForm(
 							</Form.Item>
 						</>
 					)}
-					{alertRuleScope === 'all' && (
-						<Typography
-							className="alert-rule-info alert-rule-all-warning"
-							style={{ marginBottom: 16 }}
-						>
-							All alerts will be silenced for the duration of this maintenance window.
-						</Typography>
-					)}
 				</div>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
