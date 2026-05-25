@@ -150,6 +150,10 @@ func paginateWithBackfill(
 	offset, limit int,
 ) []map[string]string {
 
+	// note: we took a stand here that we are NOT removing those metricGroups from the array that are not in metadataMap.
+	// we are relying on time adjustment logic from alignedMetricWindow. In future if a user complains about seeing metric groups
+	// with missing metadata, we can consider removing those groups from the metricGroups array here before paginating.
+
 	metricKeySet := make(map[string]bool, len(metricGroups))
 	for _, g := range metricGroups {
 		metricKeySet[g.compositeKey] = true
@@ -325,7 +329,8 @@ func alignedMetricWindow(startMs, endMs int64) (
 	samplesAdjustedStartMs = uint64(startMs)
 	flooredEndMs = uint64(endMs)
 	stepSecs := querybuilder.RecommendedStepIntervalForMetric(samplesAdjustedStartMs, flooredEndMs)
-	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange
+	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange. Duplicated code.
+	// TODO(nikhilmantri0902): if the querybuilder.AdjustMetricTimeRange logic changes, this needs to be updated too.
 	if stepSecs > 0 {
 		samplesAdjustedStartMs = samplesAdjustedStartMs - (samplesAdjustedStartMs % (stepSecs * 1000))
 		adjustStep := stepSecs
