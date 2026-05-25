@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/slack"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/webhook"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/prometheus/alertmanager/config/receiver"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -27,7 +26,7 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 }
 
-func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater, emailTemplateStore emailtypes.TemplateStore) ([]notify.Integration, error) {
+func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -58,7 +57,7 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	}
 	for i, c := range nc.EmailConfigs {
 		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return email.New(c, tmpl, l, templater, emailTemplateStore), nil
+			return email.New(c, tmpl, l, templater), nil
 		})
 	}
 	for i, c := range nc.PagerdutyConfigs {

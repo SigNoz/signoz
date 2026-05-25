@@ -26,9 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 )
 
 // This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
@@ -69,7 +67,6 @@ type Server struct {
 	marker              *types.MemMarker
 	tmpl                *template.Template
 	templater           alertmanagertypes.Templater
-	emailTemplateStore  emailtypes.TemplateStore
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
@@ -211,12 +208,6 @@ func New(
 	server.muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
 	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
-	emailTemplateStore, storeErr := filetemplatestore.NewStore(ctx, srvConfig.EmailTemplatesDirectory, emailtypes.AlertmanagerTemplates, server.logger)
-	if storeErr != nil {
-		server.logger.ErrorContext(ctx, "failed to create alert email template store, using empty store", errors.Attr(storeErr))
-		emailTemplateStore = filetemplatestore.NewEmptyStore()
-	}
-	server.emailTemplateStore = emailTemplateStore
 
 	return server, nil
 }
@@ -253,7 +244,13 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	config := alertmanagerConfig.AlertmanagerConfig()
 
 	var err error
-	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
+	// Load SigNoz's alertmanager notification templates from the configured
+	// globs. The upstream default templates (default.tmpl, email.tmpl) are
+	// always loaded from the embedded alertmanager assets inside FromGlobs, so
+	// only SigNoz's own templates (e.g. the email.signoz.html layout) are listed
+	// here. The upstream config.Templates field is not used: SigNoz never
+	// populates it (there is no per-org template configuration).
+	server.tmpl, err = alertmanagertypes.FromGlobs(server.srvConfig.Templates)
 	if err != nil {
 		return err
 	}
@@ -278,7 +275,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.templater, server.emailTemplateStore)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}
@@ -355,7 +352,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, server.emailTemplateStore, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -439,7 +436,6 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.tmpl,
 					server.logger,
 					server.templater,
-					server.emailTemplateStore,
 					group.groupLabels,
 					group.alerts...,
 				)

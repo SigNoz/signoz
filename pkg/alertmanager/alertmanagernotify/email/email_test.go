@@ -19,10 +19,8 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
-	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/emersion/go-smtp"
 	commoncfg "github.com/prometheus/common/config"
@@ -51,13 +49,6 @@ const (
 // testTemplater returns a Templater bound to tmpl with a discard logger.
 func testTemplater(tmpl *template.Template) alertmanagertypes.Templater {
 	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
-}
-
-// testEmptyStore returns an email template store with no templates. When the
-// email notifier tries to render the alert_email_notification layout against
-// this, the Get call fails and prepareContent falls back to plain <div> wrap.
-func testEmptyStore() emailtypes.TemplateStore {
-	return filetemplatestore.NewEmptyStore()
 }
 
 // email represents an email returned by the MailDev REST API.
@@ -180,7 +171,7 @@ func notifyEmailWithContext(ctx context.Context, t *testing.T, cfg *config.Email
 		return nil, false, err
 	}
 
-	email := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+	email := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 	retry, err := email.Notify(ctx, firingAlert)
 	if err != nil {
@@ -724,7 +715,7 @@ func TestEmailRejected(t *testing.T) {
 	tmpl, firingAlert, err := prepare(cfg)
 	require.NoError(t, err)
 
-	e := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+	e := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
@@ -1078,7 +1069,7 @@ func TestPrepareContent(t *testing.T) {
 		alerts := []*types.Alert{a1, a2}
 
 		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "subj"}}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
@@ -1107,7 +1098,7 @@ func TestPrepareContent(t *testing.T) {
 			Headers: map[string]string{},
 			HTML:    "Status: {{ .Status }}",
 		}
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
@@ -1121,7 +1112,7 @@ func TestPrepareContent(t *testing.T) {
 		tmpl, err := template.FromGlobs([]string{})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), testEmptyStore())
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		firingAlert := &types.Alert{
 			Alert: model.Alert{
@@ -1139,7 +1130,9 @@ func TestPrepareContent(t *testing.T) {
 	})
 
 	t.Run("custom title template; custom body template", func(t *testing.T) {
-		tmpl, err := template.FromGlobs([]string{})
+		// Load the email.signoz.html layout into the notification template
+		// the same way the alertmanager server does via the templates config.
+		tmpl, err := template.FromGlobs([]string{"../../../../templates/alertmanager/*.gotmpl"})
 		require.NoError(t, err)
 		tmpl.ExternalURL, _ = url.Parse("http://am")
 
@@ -1162,12 +1155,7 @@ func TestPrepareContent(t *testing.T) {
 			HTML:    "Well, what are you?",
 		}
 
-		tmplStore, err := filetemplatestore.NewStore(
-			context.Background(), "../../../../templates/alertmanager", emailtypes.AlertmanagerTemplates, slog.New(slog.DiscardHandler),
-		)
-		require.NoError(t, err)
-
-		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl), tmplStore)
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
 
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)

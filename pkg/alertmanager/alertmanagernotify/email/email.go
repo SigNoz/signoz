@@ -29,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
@@ -41,19 +40,24 @@ import (
 
 const (
 	Integration = "email"
+
+	// alertEmailLayoutTemplate is the name of the HTML layout template that
+	// wraps the rendered alert bodies. It is loaded into the notification
+	// template (n.tmpl) from the alertmanager templates config and lives at
+	// templates/alertmanager/email.gotmpl.
+	alertEmailLayoutTemplate = "email.signoz.html"
 )
 
 // Email implements a Notifier for email notifications.
 type Email struct {
-	conf          *config.EmailConfig
-	tmpl          *template.Template
-	logger        *slog.Logger
-	hostname      string
-	templater     alertmanagertypes.Templater
-	templateStore emailtypes.TemplateStore
+	conf      *config.EmailConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	hostname  string
+	templater alertmanagertypes.Templater
 }
 
-// layoutData is the value passed to the alert_email_notification layout
+// layoutData is the value passed to the email.signoz.html layout
 // template. It embeds NotificationTemplateData so templates can reference
 // `.Alert.Status`, `.Alert.TotalFiring`, `.Alert.TotalResolved`,
 // `.NotificationTemplateData.ExternalURL`, etc. alongside the rendered
@@ -66,9 +70,9 @@ type layoutData struct {
 
 var errNoAuthUsernameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
 
-// New returns a new Email notifier. templateStore may be nil; in that case
-// custom-body alerts fall back to plain <div>-wrapped HTML.
-func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, templateStore emailtypes.TemplateStore) *Email {
+// New returns a new Email notifier. When the email.signoz.html layout is
+// not defined in t, custom-body alerts fall back to plain <div>-wrapped HTML.
+func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) *Email {
 	if _, ok := c.Headers["Subject"]; !ok {
 		c.Headers["Subject"] = config.DefaultEmailSubject
 	}
@@ -84,7 +88,7 @@ func New(c *config.EmailConfig, t *template.Template, l *slog.Logger, templater 
 	if err != nil {
 		h = "localhost.localdomain"
 	}
-	return &Email{conf: c, tmpl: t, logger: l, hostname: h, templater: templater, templateStore: templateStore}
+	return &Email{conf: c, tmpl: t, logger: l, hostname: h, templater: templater}
 }
 
 // auth resolves a string of authentication mechanisms.
@@ -431,8 +435,8 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 
 	if !result.IsDefaultBody {
 		// Custom-body path: render each expanded markdown body to HTML, then
-		// wrap the whole thing in the alert_email_notification layout (or fall
-		// back to plain <div> wrapping when the template store is absent).
+		// wrap the whole thing in the email.signoz.html layout (or fall
+		// back to plain <div> wrapping when the layout template is not loaded).
 		for i, body := range result.Body {
 			if body == "" {
 				continue
@@ -444,7 +448,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 			result.Body[i] = rendered
 		}
 		appendRelatedLinkButtons(alerts, result.Body)
-		html, err := n.renderLayout(ctx, result)
+		html, err := n.renderLayout(result)
 		if err != nil {
 			n.logger.WarnContext(ctx, "custom email template rendering failed, falling back to plain <div> wrap", errors.Attr(err))
 			return subject, wrapBodiesAsDivs(result.Body), nil
@@ -455,17 +459,11 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 	return subject, result.Body[0], nil
 }
 
-// renderLayout wraps result in the alert_email_notification HTML layout.
-// Returns an error when the store has no such template (e.g. in tests using
-// an empty store) so prepareContent can fall back to plain <div> wrapping.
-func (n *Email) renderLayout(ctx context.Context, result *alertmanagertypes.ExpandResult) (string, error) {
-	if n.templateStore == nil {
-		return "", errors.NewInternalf(errors.CodeInternal, "no email template store configured")
-	}
-	layout, err := n.templateStore.Get(ctx, emailtypes.TemplateNameAlertEmailNotification)
-	if err != nil {
-		return "", err
-	}
+// renderLayout wraps result in the email.signoz.html HTML layout loaded
+// into n.tmpl from the alertmanager templates config. Returns an error when the
+// layout template is not defined (e.g. in tests where no templates are loaded)
+// so prepareContent can fall back to plain <div> wrapping.
+func (n *Email) renderLayout(result *alertmanagertypes.ExpandResult) (string, error) {
 	bodies := make([]htmltemplate.HTML, 0, len(result.Body))
 	for _, b := range result.Body {
 		bodies = append(bodies, htmltemplate.HTML(b))
@@ -474,11 +472,11 @@ func (n *Email) renderLayout(ctx context.Context, result *alertmanagertypes.Expa
 	if result.NotificationData != nil {
 		data.NotificationTemplateData = *result.NotificationData
 	}
-	var buf bytes.Buffer
-	if err := layout.Execute(&buf, data); err != nil {
+	html, err := n.tmpl.ExecuteHTMLString(`{{ template "`+alertEmailLayoutTemplate+`" . }}`, data)
+	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to render email layout")
 	}
-	return buf.String(), nil
+	return html, nil
 }
 
 // appendRelatedLinkButtons appends "View Related Logs/Traces" buttons to each

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -18,4 +17,4 @@ type Templater interface {
 
 // ReceiverIntegrationsFunc constructs the notify.Integration list for a
 // configured receiver.
-type ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger, templater Templater, emailTemplateStore emailtypes.TemplateStore) ([]notify.Integration, error)
+type ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger, templater Templater) ([]notify.Integration, error)
