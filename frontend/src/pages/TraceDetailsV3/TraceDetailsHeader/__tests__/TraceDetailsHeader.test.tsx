@@ -109,9 +109,12 @@ describe('TraceDetailsHeader – action cluster', () => {
 		expect(
 			screen.queryByRole('button', { name: /^analytics$/i }),
 		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /trace options/i }),
+		).not.toBeInTheDocument();
 	});
 
-	it('renders Legacy View and Analytics action buttons once data is loaded', () => {
+	it('renders Legacy View, Analytics, and Settings action buttons once data is loaded', () => {
 		render(<TraceDetailsHeader {...baseProps} isDataLoaded />);
 
 		expect(
@@ -119,6 +122,9 @@ describe('TraceDetailsHeader – action cluster', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: /^analytics$/i }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /trace options/i }),
 		).toBeInTheDocument();
 	});
 
@@ -145,10 +151,12 @@ describe('TraceDetailsHeader – action cluster', () => {
 		const panel = screen.getByTestId('analytics-panel');
 		expect(panel).toHaveAttribute('data-open', 'false');
 
-		fireEvent.click(screen.getByRole('button', { name: /^analytics$/i }));
+		const analyticsBtn = screen.getByRole('button', { name: /^analytics$/i });
+
+		fireEvent.click(analyticsBtn);
 		expect(panel).toHaveAttribute('data-open', 'true');
 
-		fireEvent.click(screen.getByRole('button', { name: /^analytics$/i }));
+		fireEvent.click(analyticsBtn);
 		expect(panel).toHaveAttribute('data-open', 'false');
 	});
 });

@@ -93,6 +93,7 @@ function TraceOptionsMenu({
 				variant="ghost"
 				size="icon"
 				color="secondary"
+				aria-label="Trace options"
 				prefix={<Settings2 size={14} />}
 			/>
 		</Dropdown>

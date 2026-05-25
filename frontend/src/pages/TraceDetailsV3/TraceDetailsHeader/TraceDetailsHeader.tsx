@@ -152,6 +152,7 @@ function TraceDetailsHeader({
 												variant="ghost"
 												size="icon"
 												color="secondary"
+												aria-label="Switch to legacy trace view"
 												onClick={handleSwitchToOldView}
 											>
 												<CornerUpLeft size={14} />
@@ -165,6 +166,7 @@ function TraceDetailsHeader({
 												variant="ghost"
 												size="icon"
 												color="secondary"
+												aria-label="Analytics"
 												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 											>
 												<ChartPie size={14} />
