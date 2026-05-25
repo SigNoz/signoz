@@ -23,7 +23,59 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	}
 }
 
+// GetWaterfall is the V3 waterfall — identical behavior to main branch.
+// Fetches all spans, builds the full in-memory tree, selects all-or-windowed
+// based on effectiveLimit, and returns in-memory aggregations.
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
+	waterfallTrace, err := m.getTraceData(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
+		req.UncollapsedSpans,
+		req.SelectedSpanID,
+		min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans),
+		m.config.Waterfall.SpanPageSize,
+		m.config.Waterfall.MaxDepthToAutoExpand,
+	)
+
+	aggregationResults := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
+	for _, a := range req.Aggregations {
+		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
+	}
+
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
+}
+
+// getTraceData fetches all spans for a trace and builds the WaterfallTrace.
+func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(spanItems) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+
+	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
+	for i := range spanItems {
+		nodes[i] = spanItems[i].ToWaterfallSpan()
+	}
+	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
+}
+
+// GetWaterfallV4 is the OOM-safe V4 waterfall.
+// For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
+// minimal fields for all spans to build the tree, then full fields for the
+// visible window only. Aggregations are not returned.
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -79,11 +131,6 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *
 		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
 
-	aggregationResults := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
-	for _, a := range req.Aggregations {
-		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
-	}
-
 	// Step 2: full fetch for the selected window only
 	spanIDs := make([]string, len(selectedSpans))
 	for i, s := range selectedSpans {
@@ -112,6 +159,6 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *
 	}
 
 	return spantypes.NewGettableWaterfallTrace(
-		waterfallTrace, selectedSpans, uncollapsedSpans, false, aggregationResults,
+		waterfallTrace, selectedSpans, uncollapsedSpans, false, nil,
 	), nil
 }
