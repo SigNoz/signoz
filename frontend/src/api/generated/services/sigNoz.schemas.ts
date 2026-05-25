@@ -4570,16 +4570,16 @@ export interface DashboardtypesGettableDashboardV2MetadataDTO {
 	/**
 	 * @type string
 	 */
-	schemaVersion?: string;
+	schemaVersion: string;
 	/**
 	 * @type array,null
 	 */
-	tags?: TagtypesPostableTagDTO[] | null;
+	tags: TagtypesPostableTagDTO[] | null;
 }
 
 export interface DashboardtypesGettableDashboardV2DataDTO {
-	metadata?: DashboardtypesGettableDashboardV2MetadataDTO;
-	spec?: DashboardtypesDashboardSpecDTO;
+	metadata: DashboardtypesGettableDashboardV2MetadataDTO;
+	spec: DashboardtypesDashboardSpecDTO;
 }
 
 export interface DashboardtypesGettableDashboardV2DTO {
@@ -4592,7 +4592,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: DashboardtypesGettableDashboardV2DataDTO;
+	data: DashboardtypesGettableDashboardV2DataDTO;
 	/**
 	 * @type string
 	 */
@@ -4600,12 +4600,12 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type boolean
 	 */
-	locked?: boolean;
+	locked: boolean;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
-	source?: DashboardtypesSourceDTO;
+	orgId: string;
+	source: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4654,7 +4654,7 @@ export interface DashboardtypesPostableDashboardV2MetadataDTO {
 	/**
 	 * @type string
 	 */
-	schemaVersion?: string;
+	schemaVersion: string;
 	/**
 	 * @type array,null
 	 */
@@ -4662,8 +4662,8 @@ export interface DashboardtypesPostableDashboardV2MetadataDTO {
 }
 
 export interface DashboardtypesPostableDashboardV2DTO {
-	metadata?: DashboardtypesPostableDashboardV2MetadataDTO;
-	spec?: DashboardtypesDashboardSpecDTO;
+	metadata: DashboardtypesPostableDashboardV2MetadataDTO;
+	spec: DashboardtypesDashboardSpecDTO;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {

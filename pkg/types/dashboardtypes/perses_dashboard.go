@@ -48,24 +48,24 @@ type DashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID  valuer.UUID     `json:"orgId"`
-	Locked bool            `json:"locked"`
-	Source Source          `json:"source"`
-	Data   DashboardV2Data `json:"data"`
+	OrgID  valuer.UUID     `json:"orgId" required:"true"`
+	Locked bool            `json:"locked" required:"true"`
+	Source Source          `json:"source" required:"true"`
+	Data   DashboardV2Data `json:"data" required:"true"`
 }
 
 type DashboardV2Data struct {
-	Metadata DashboardV2Metadata `json:"metadata"`
-	Spec     DashboardSpec       `json:"spec"`
+	Metadata DashboardV2Metadata `json:"metadata" required:"true"`
+	Spec     DashboardSpec       `json:"spec" required:"true"`
 }
 
 type DashboardV2Metadata struct {
 	DashboardV2MetadataBase
-	Tags []*tagtypes.Tag `json:"tags"`
+	Tags []*tagtypes.Tag `json:"tags" required:"true"`
 }
 
 type DashboardV2MetadataBase struct {
-	SchemaVersion string `json:"schemaVersion"`
+	SchemaVersion string `json:"schemaVersion" required:"true"`
 	Image         string `json:"image,omitempty"`
 }
 
@@ -74,8 +74,8 @@ type DashboardV2MetadataBase struct {
 // ════════════════════════════════════════════════════════════════════════
 
 type PostableDashboardV2 struct {
-	Metadata PostableDashboardV2Metadata `json:"metadata"`
-	Spec     DashboardSpec               `json:"spec"`
+	Metadata PostableDashboardV2Metadata `json:"metadata" required:"true"`
+	Spec     DashboardSpec               `json:"spec" required:"true"`
 }
 
 func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
@@ -153,20 +153,20 @@ type GettableDashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID  valuer.UUID             `json:"orgId"`
-	Locked bool                    `json:"locked"`
-	Source Source                  `json:"source"`
-	Data   GettableDashboardV2Data `json:"data"`
+	OrgID  valuer.UUID             `json:"orgId" required:"true"`
+	Locked bool                    `json:"locked" required:"true"`
+	Source Source                  `json:"source" required:"true"`
+	Data   GettableDashboardV2Data `json:"data" required:"true"`
 }
 
 type GettableDashboardV2Data struct {
-	Metadata GettableDashboardV2Metadata `json:"metadata"`
-	Spec     DashboardSpec               `json:"spec"`
+	Metadata GettableDashboardV2Metadata `json:"metadata" required:"true"`
+	Spec     DashboardSpec               `json:"spec" required:"true"`
 }
 
 type GettableDashboardV2Metadata struct {
 	DashboardV2MetadataBase
-	Tags []*tagtypes.GettableTag `json:"tags"`
+	Tags []*tagtypes.GettableTag `json:"tags" required:"true"`
 }
 
 func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {

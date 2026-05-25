@@ -2593,6 +2593,10 @@ components:
           type: string
       required:
       - id
+      - orgId
+      - locked
+      - source
+      - data
       type: object
     DashboardtypesGettableDashboardV2Data:
       properties:
@@ -2600,6 +2604,9 @@ components:
           $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Metadata'
         spec:
           $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+      required:
+      - metadata
+      - spec
       type: object
     DashboardtypesGettableDashboardV2Metadata:
       properties:
@@ -2612,6 +2619,9 @@ components:
             $ref: '#/components/schemas/TagtypesPostableTag'
           nullable: true
           type: array
+      required:
+      - schemaVersion
+      - tags
       type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
@@ -2877,6 +2887,9 @@ components:
           $ref: '#/components/schemas/DashboardtypesPostableDashboardV2Metadata'
         spec:
           $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+      required:
+      - metadata
+      - spec
       type: object
     DashboardtypesPostableDashboardV2Metadata:
       properties:
@@ -2889,6 +2902,8 @@ components:
             $ref: '#/components/schemas/TagtypesPostableTag'
           nullable: true
           type: array
+      required:
+      - schemaVersion
       type: object
     DashboardtypesPostablePublicDashboard:
       properties:
