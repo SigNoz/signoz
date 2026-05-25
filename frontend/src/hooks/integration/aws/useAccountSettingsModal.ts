@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Form } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';

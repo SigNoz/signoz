@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
-import { Button, Callout } from '@signozhq/ui';
-import { Form, Input as AntdInput, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Form, Input as AntdInput } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
 import AuthError from 'components/AuthError/AuthError';
@@ -11,7 +13,7 @@ import ROUTES from 'constants/routes';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { ArrowRight, CircleAlert, KeyRound } from 'lucide-react';
+import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
 import APIError from 'types/api/error';
 
@@ -152,9 +154,9 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					<Typography.Title level={4} className="reset-password-header-title">
 						Reset Your Password
 					</Typography.Title>
-					<Typography.Paragraph className="reset-password-header-subtitle">
+					<Typography.Text className="reset-password-header-subtitle">
 						Monitor your applications. Find what is causing issues.
-					</Typography.Paragraph>
+					</Typography.Text>
 					{version && (
 						<div className="reset-password-version-badge">SigNoz {version}</div>
 					)}

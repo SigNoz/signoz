@@ -2,7 +2,7 @@ import { useQuery } from 'react-query';
 import { Button, Tooltip } from 'antd';
 import getAllChannels from 'api/channels/getAll';
 import classNames from 'classnames';
-import { ChartLine } from 'lucide-react';
+import { ChartLine } from '@signozhq/icons';
 import { SuccessResponseV2 } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Select, Switch, Tooltip } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button, Flex, Form, Select, Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -198,10 +199,10 @@ function BasicInfo({
 						placement="right"
 					>
 						<Switch
-							checked={shouldBroadCastToAllChannels}
+							value={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
 							disabled={noChannels || !!isLoading}
-							data-testid="alert-broadcast-to-all-channels"
+							testId="alert-broadcast-to-all-channels"
 						/>
 					</Tooltip>
 				</FormItemMedium>
@@ -254,11 +255,13 @@ function BasicInfo({
 					>
 						<Button
 							onClick={handleCreateNewChannels}
-							icon={<PlusOutlined />}
 							className="create-notification-btn"
 							disabled={!addNewChannelPermission}
 						>
-							Create a notification channel
+							<Flex align="center" justify="center">
+								<Plus size="md" />
+								Create a notification channel
+							</Flex>
 						</Button>
 					</Tooltip>
 				)}

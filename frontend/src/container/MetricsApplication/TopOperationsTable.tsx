@@ -2,15 +2,15 @@ import { useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
+import { Search } from '@signozhq/icons';
 import {
 	InputRef,
-	Switch,
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -104,7 +104,7 @@ function TopOperationsTable({
 
 	const getSearchOption = (): ColumnType<TopOperationList> => ({
 		filterDropdown,
-		filterIcon: <SearchOutlined />,
+		filterIcon: <Search size="md" />,
 		onFilter: (value, record): boolean =>
 			record.name
 				.toString()
@@ -212,11 +212,7 @@ function TopOperationsTable({
 					/>
 				</div>
 				<div className="top-operation__entry-point">
-					<Switch
-						checked={isEntryPoint}
-						onChange={onEntryPointToggle}
-						size="small"
-					/>
+					<Switch value={isEntryPoint} onChange={onEntryPointToggle} />
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 					<TextToolTip
 						text={entryPointSpanInfo.text}

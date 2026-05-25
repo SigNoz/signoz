@@ -28,18 +28,6 @@
 		cursor: default;
 	}
 
-	&__input {
-		height: 32px;
-		background: var(--l2-background);
-		border-color: var(--l1-border);
-		color: var(--l1-foreground);
-		box-shadow: none;
-
-		&::placeholder {
-			color: var(--l3-foreground);
-		}
-	}
-
 	&__input-wrapper {
 		display: flex;
 		align-items: center;
@@ -48,7 +36,7 @@
 		padding: var(--padding-1) var(--padding-2);
 		border-radius: 2px;
 		background: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		border: 1px solid var(--border);
 		box-sizing: border-box;
 
 		&--disabled {
@@ -65,8 +53,8 @@
 	}
 
 	&__email-text {
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-normal);
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
@@ -178,36 +166,6 @@
 	}
 }
 
-.delete-dialog {
-	background: var(--l2-background);
-	border: 1px solid var(--l1-border);
-
-	[data-slot='dialog-title'] {
-		color: var(--l1-foreground);
-	}
-
-	&__body {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
-		color: var(--l2-foreground);
-		line-height: var(--paragraph-base-400-line-height);
-		letter-spacing: -0.065px;
-		margin: 0;
-
-		strong {
-			font-weight: var(--font-weight-medium);
-			color: var(--l1-foreground);
-		}
-	}
-
-	&__footer {
-		display: flex;
-		justify-content: flex-end;
-		gap: var(--spacing-4);
-		margin-top: var(--margin-6);
-	}
-}
-
 .reset-link-dialog {
 	background: var(--l2-background);
 	border: 1px solid var(--l1-border);
@@ -264,13 +222,6 @@
 	}
 
 	&__copy-btn {
-		flex-shrink: 0;
-		height: 32px;
-		border-radius: 0 2px 2px 0;
-		border-top: none;
-		border-right: none;
-		border-bottom: none;
 		border-left: 1px solid var(--l1-border);
-		min-width: 64px;
 	}
 }

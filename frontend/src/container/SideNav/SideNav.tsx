@@ -34,9 +34,11 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
@@ -51,12 +53,12 @@ import {
 	GitCommitVertical,
 	GripVertical,
 	LampDesk,
-	Logs,
+	List,
 	MousePointerClick,
 	PackagePlus,
 	ScrollText,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -77,6 +79,7 @@ import {
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
+	aiAssistantMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
 import {
@@ -221,6 +224,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const [licenseTag, setLicenseTag] = useState('');
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const aiAssistantActiveConversationId = useAIAssistantStore(
+		(s) => s.activeConversationId,
+	);
 
 	// Compute initial pinned items and secondary menu items synchronously to avoid flash
 	const computedPinnedMenuItems = useMemo(() => {
@@ -401,7 +408,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	);
 
 	const handleReorderShortcutNavItems = (): void => {
-		logEvent('Sidebar V2: Save shortcuts clicked', {
+		void logEvent('Sidebar V2: Save shortcuts clicked', {
 			shortcuts: tempPinnedMenuItems.map((item) => item.key),
 		});
 		setPinnedMenuItems(tempPinnedMenuItems);
@@ -429,7 +436,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
 	const onClickGetStarted = (event: MouseEvent): void => {
-		logEvent('Sidebar: Menu clicked', {
+		void logEvent('Sidebar: Menu clicked', {
 			menuRoute: '/get-started',
 			menuLabel: 'Get Started',
 		});
@@ -625,10 +632,26 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			}
 		} else if (item.key === 'quick-search') {
 			openCmdK();
+		} else if (item.key === aiAssistantMenuItem.key) {
+			// Resume the active conversation when one exists — without this
+			// every sidenav click hits `/ai-assistant/new` which the page
+			// resolves by spawning a fresh thread. Only fall back to /new
+			// when there's no active conversation to resume.
+			const aiPath = aiAssistantActiveConversationId
+				? ROUTES.AI_ASSISTANT.replace(
+						':conversationId',
+						aiAssistantActiveConversationId,
+					)
+				: aiAssistantMenuItem.key;
+			if (isModifierKeyPressed(event)) {
+				openInNewTab(aiPath);
+			} else {
+				history.push(aiPath);
+			}
 		} else if (item) {
 			onClickHandler(item?.key as string, event);
 		}
-		logEvent('Sidebar V2: Menu clicked', {
+		void logEvent('Sidebar V2: Menu clicked', {
 			menuRoute: item?.key,
 			menuLabel: item?.label,
 		});
@@ -771,7 +794,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					onTogglePin={
 						allowPin
 							? (item): void => {
-									logEvent(
+									void logEvent(
 										`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
 										{
 											menuRoute: item.key,
@@ -818,7 +841,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
 
 		if (item && !('type' in item)) {
-			logEvent('Help Popover: Item clicked', {
+			void logEvent('Help Popover: Item clicked', {
 				menuRoute: item.key,
 				menuLabel: String(item.label),
 			});
@@ -867,7 +890,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			menuLabel = item.label;
 		}
 
-		logEvent('Settings Popover: Item clicked', {
+		void logEvent('Settings Popover: Item clicked', {
 			menuRoute: item?.key,
 			menuLabel,
 		});
@@ -904,7 +927,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				}
 				break;
 			case 'logout':
-				Logout();
+				void Logout();
 				break;
 			default:
 		}
@@ -1058,11 +1081,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													<div
 														className="nav-section-title-icon reorder"
 														onClick={(): void => {
-															logEvent('Sidebar V2: Manage shortcuts clicked', {});
+															void logEvent('Sidebar V2: Manage shortcuts clicked', {});
 															setIsReorderShortcutNavItemsModalOpen(true);
 														}}
 													>
-														<Logs size={16} />
+														<List size={16} />
 													</div>
 												</Tooltip>
 											)}
@@ -1105,7 +1128,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 													return;
 												}
 												const newCollapsedState = !isMoreMenuCollapsed;
-												logEvent('Sidebar V2: More menu clicked', {
+												void logEvent('Sidebar V2: More menu clicked', {
 													action: isMoreMenuCollapsed ? 'expand' : 'collapse',
 												});
 												setIsMoreMenuCollapsed(newCollapsedState);
@@ -1156,6 +1179,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 					<div className="nav-bottom-section">
 						<div className="secondary-nav-items">
+							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
+
 							<div className="nav-dropdown-item">
 								<Dropdown
 									menu={{
@@ -1209,14 +1234,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				open={isReorderShortcutNavItemsModalOpen}
 				closable
 				onCancel={(): void => {
-					logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+					void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
 					hideReorderShortcutNavItemsModal();
 				}}
 				footer={[
 					<Button
 						key="cancel"
 						onClick={(): void => {
-							logEvent('Sidebar V2: Manage shortcuts dismissed', {});
+							void logEvent('Sidebar V2: Manage shortcuts dismissed', {});
 							hideReorderShortcutNavItemsModal();
 						}}
 						className="periscope-btn cancel-btn secondary-btn"

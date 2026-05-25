@@ -9,7 +9,7 @@ import (
 )
 
 func (provider *provider) addOrgRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authZ.AdminAccess(provider.orgHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.AdminAccess(provider.orgHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetMyOrganization",
 		Tags:                []string{"orgs"},
 		Summary:             "Get my organization",
@@ -26,7 +26,7 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authZ.AdminAccess(provider.orgHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.AdminAccess(provider.orgHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateMyOrganization",
 		Tags:                []string{"orgs"},
 		Summary:             "Update my organization",

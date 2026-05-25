@@ -40,7 +40,7 @@ describe('VariableItem', () => {
 		useEffectSpy.mockRestore();
 	});
 
-	test('renders component with default props', () => {
+	it('renders component with default props', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -54,7 +54,7 @@ describe('VariableItem', () => {
 		expect(screen.getByText('$testVariable')).toBeInTheDocument();
 	});
 
-	test('renders Input when the variable type is TEXTBOX', () => {
+	it('renders Input when the variable type is TEXTBOX', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -69,7 +69,7 @@ describe('VariableItem', () => {
 		).toBeInTheDocument();
 	});
 
-	test('calls onValueUpdate when Input value changes and blurs', async () => {
+	it('calls onValueUpdate when Input value changes and blurs', async () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -102,7 +102,7 @@ describe('VariableItem', () => {
 		});
 	});
 
-	test('renders a Select element when variable type is CUSTOM', () => {
+	it('renders a Select element when variable type is CUSTOM', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -117,7 +117,7 @@ describe('VariableItem', () => {
 		expect(screen.getByTestId('variable-select')).toBeInTheDocument();
 	});
 
-	test('renders a Select element with all selected', async () => {
+	it('renders a Select element with all selected', async () => {
 		const customVariableData = {
 			...mockCustomVariableData,
 			allSelected: true,
@@ -138,7 +138,7 @@ describe('VariableItem', () => {
 		expect(screen.getByText('ALL')).toBeInTheDocument();
 	});
 
-	test('calls useEffect when the component mounts', () => {
+	it('calls useEffect when the component mounts', () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem

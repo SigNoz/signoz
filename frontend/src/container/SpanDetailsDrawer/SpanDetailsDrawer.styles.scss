@@ -685,34 +685,3 @@
 	align-items: center;
 	gap: 0.5rem;
 }
-
-.lightMode {
-	.span-details-drawer {
-		.span-percentile-values-table-data-row {
-			.dashed-line {
-				border-image: repeating-linear-gradient(
-						to right,
-						var(--l1-border) 0,
-						var(--l1-border) 10px,
-						transparent 10px,
-						transparent 20px
-					)
-					1 stretch;
-			}
-		}
-
-		.current-span-percentile-row {
-			.dashed-line {
-				border-top: 1px dashed var(--primary);
-				border-image: repeating-linear-gradient(
-						to right,
-						var(--primary) 0,
-						var(--primary) 10px,
-						transparent 10px,
-						transparent 20px
-					)
-					1 stretch;
-			}
-		}
-	}
-}

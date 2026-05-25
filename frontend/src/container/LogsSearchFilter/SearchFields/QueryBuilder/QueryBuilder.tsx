@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
+import { SquareX, X } from '@signozhq/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -161,7 +161,7 @@ function QueryField({
 			</div>
 
 			<Button
-				icon={<CloseOutlined />}
+				icon={<X size="md" />}
 				type="text"
 				size="small"
 				onClick={handleClear}
@@ -247,7 +247,7 @@ function QueryBuilder({
 		<>
 			<Container isMargin={fieldsQuery.length === 0}>
 				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
+				<SquareX onClick={onDropDownToggleHandler(false)} size="md" />
 			</Container>
 
 			<QueryWrapper key={keyPrefix}>{QueryUI(fieldsQuery)}</QueryWrapper>

@@ -4,12 +4,13 @@ import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
-import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
+import { Button, Dropdown, Flex, MenuProps } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from '@signozhq/icons';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
@@ -60,9 +61,7 @@ function DynamicColumnTable({
 
 	const onToggleHandler =
 		(index: number, column: ColumnGroupType<any> | ColumnType<any>) =>
-		(checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
-			event.stopPropagation();
-
+		(checked: boolean): void => {
 			if (shouldSendAlertsLogEvent) {
 				logEvent('Alert: Column toggled', {
 					column: column?.title,
@@ -88,10 +87,14 @@ function DynamicColumnTable({
 	const items: MenuProps['items'] =
 		dynamicColumns?.map((column, index) => ({
 			label: (
-				<div className="dynamicColumnsTable-items">
+				<div
+					className="dynamicColumnsTable-items"
+					onClick={(e): void => e.stopPropagation()}
+					role="presentation"
+				>
 					<div>{column.title?.toString()}</div>
 					<Switch
-						checked={columnsData?.findIndex((c) => c.key === column.key) !== -1}
+						value={columnsData?.findIndex((c) => c.key === column.key) !== -1}
 						onChange={onToggleHandler(index, column)}
 					/>
 				</div>

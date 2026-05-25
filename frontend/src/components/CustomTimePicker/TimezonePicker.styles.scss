@@ -129,20 +129,3 @@ $item-spacing: 8px;
 		width: 15px;
 	}
 }
-
-.lightMode {
-	.timezone-picker {
-		&__search {
-			.search-icon {
-				stroke: var(--l1-foreground);
-			}
-		}
-	}
-	.timezone-name-wrapper {
-		&__selected-icon {
-			.check-icon {
-				stroke: var(--l1-foreground);
-			}
-		}
-	}
-}

@@ -10,7 +10,12 @@ import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { BarChart2, DraftingCompass, FileText, ScrollText } from 'lucide-react';
+import {
+	BarChart,
+	DraftingCompass,
+	FileText,
+	ScrollText,
+} from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -104,7 +109,7 @@ function QuerySection(): JSX.Element {
 	const tabs = [
 		{
 			label: 'Metrics',
-			icon: <BarChart2 size={14} data-testid="metrics-view" />,
+			icon: <BarChart size={14} data-testid="metrics-view" />,
 			value: AlertTypes.METRICS_BASED_ALERT,
 		},
 		{

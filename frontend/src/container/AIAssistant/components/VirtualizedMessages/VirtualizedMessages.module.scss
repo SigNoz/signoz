@@ -1,0 +1,87 @@
+@use '../../_scrollbar' as *;
+
+.messages {
+	flex: 1;
+	overflow: auto;
+	@include scrollbar;
+
+	// 64px bottom padding leaves breathing room between the last bubble and
+	// the scroll viewport's edge so the bubble doesn't sit flush against the
+	// disclaimer / input bar. The scroll-to-bottom effect uses the scroller
+	// ref to scroll past this padding (Virtuoso's `align: 'end'` would only
+	// reach the last item's bottom and leave the padding hidden below).
+	& > div {
+		padding: 16px 0 64px;
+	}
+}
+
+.empty {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 32px 24px;
+	gap: 8px;
+	text-align: center;
+}
+
+.emptyIcon {
+	margin-bottom: 4px;
+	opacity: 0.85;
+}
+
+.emptyTitle {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+	margin: 0;
+}
+
+.emptySubtitle {
+	font-size: 13px;
+	color: var(--l3-foreground);
+	margin: 0 0 12px;
+	max-width: 320px;
+	line-height: 1.45;
+}
+
+.emptySuggestions {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	width: 100%;
+	max-width: 360px;
+}
+
+.emptyChip {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start !important;
+	gap: 8px;
+	padding: 10px 14px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	color: var(--l2-foreground);
+	font-size: 12.5px;
+	text-align: left;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	line-height: 1.35;
+
+	&:hover {
+		background: var(--l2-background);
+		border-color: var(--l3-border);
+		color: var(--l1-foreground);
+	}
+
+	svg {
+		flex-shrink: 0;
+		color: var(--l3-foreground);
+	}
+
+	&:hover svg {
+		color: var(--accent-primary);
+	}
+}

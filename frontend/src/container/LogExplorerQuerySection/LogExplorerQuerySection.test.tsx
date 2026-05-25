@@ -256,7 +256,7 @@ describe('LogExplorerQuerySection', () => {
 
 		VIEWS_TO_TEST.forEach((view) => {
 			rerender(<LogExplorerQuerySection selectedView={view} />);
-			expect(mockQueryBuilderContext.currentQuery).toEqual(initialQuery);
+			expect(mockQueryBuilderContext.currentQuery).toStrictEqual(initialQuery);
 		});
 	});
 

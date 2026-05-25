@@ -30,7 +30,7 @@ const mockOptions = [
 ];
 
 // CSS selector for retry button
-const RETRY_BUTTON_SELECTOR = '.navigation-icons .anticon-reload';
+const RETRY_BUTTON_SELECTOR = '[data-testid="retry-button"]';
 
 describe('CustomMultiSelect - Retry Functionality', () => {
 	beforeEach(() => {

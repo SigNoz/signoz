@@ -29,7 +29,7 @@ import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 

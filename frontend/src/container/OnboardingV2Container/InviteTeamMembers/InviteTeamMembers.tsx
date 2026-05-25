@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Select, Typography } from 'antd';
+import { Button, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import { ArrowRight, CheckCircle, Plus, TriangleAlert, X } from 'lucide-react';
+import {
+	ArrowRight,
+	CircleCheck,
+	Plus,
+	TriangleAlert,
+	X,
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
@@ -215,7 +222,7 @@ function InviteTeamMembers({
 										emailValidity[member.id!] === undefined ? null : emailValidity[
 												member.id!
 										  ] ? (
-											<CheckCircle size={14} color={Color.BG_FOREST_500} />
+											<CircleCheck size={14} color={Color.BG_FOREST_500} />
 										) : (
 											<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
 										)
@@ -257,7 +264,7 @@ function InviteTeamMembers({
 
 				{hasInvalidEmails && (
 					<div className="error-message-container">
-						<Typography.Text className="error-message" type="danger">
+						<Typography.Text className="error-message" color="danger">
 							<TriangleAlert size={14} /> Please enter valid emails for all team
 							members
 						</Typography.Text>

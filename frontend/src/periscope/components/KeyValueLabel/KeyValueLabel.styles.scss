@@ -1,17 +1,53 @@
 .key-value-label {
 	display: flex;
-	align-items: center;
-	border: 1px solid var(--l1-border);
+	width: fit-content;
+	border: 1px solid var(--l2-border);
 	border-radius: 2px;
-	flex-wrap: wrap;
+
+	&--row {
+		align-items: center;
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	&--column {
+		flex-direction: column;
+		border: none;
+		border-radius: 0;
+		gap: 4px;
+		padding: 8px;
+
+		.key-value-label__key {
+			background: transparent;
+			border-radius: 0;
+			padding: 0;
+			font-size: 12px;
+			font-weight: 500;
+			text-transform: uppercase;
+			letter-spacing: 0.48px;
+			line-height: 20px;
+		}
+
+		.key-value-label__value {
+			background: transparent;
+			padding: 0;
+			font-size: 14px;
+			line-height: 20px;
+		}
+	}
 
 	&__key,
 	&__value {
-		padding: 1px 6px;
-		font-size: 14px;
+		padding: 6px 8px;
+		font-size: 13px;
 		font-weight: 400;
 		line-height: 18px;
-		letter-spacing: -0.005em;
+		letter-spacing: -0.07px;
+	}
+
+	&__key {
+		background: var(--l2-background);
+		border-radius: 2px 0 0 2px;
 		&,
 		&:hover {
 			color: var(--l2-foreground);
@@ -23,5 +59,6 @@
 	}
 	&__value {
 		background: var(--l3-background);
+		color: var(--foreground);
 	}
 }

@@ -8,7 +8,7 @@ import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/Re
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
-import { BarChart2, ChevronUp, ExternalLink, ScrollText } from 'lucide-react';
+import { BarChart, ChevronUp, ExternalLink, ScrollText } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -46,7 +46,7 @@ const ADD_ONS_KEYS_TO_QUERY_PATH = {
 
 const ADD_ONS = [
 	{
-		icon: <BarChart2 size={14} />,
+		icon: <BarChart size={14} />,
 		label: 'Group By',
 		key: ADD_ONS_KEYS.GROUP_BY,
 		description:

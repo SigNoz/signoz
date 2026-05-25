@@ -1,0 +1,462 @@
+@use '../../_scrollbar' as *;
+
+.input {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	background: var(--l1-background);
+	border-radius: var(--radius-2);
+	padding: 8px;
+	border: 1px solid var(--l1-border);
+	transition: border-color 0.15s;
+	position: relative;
+
+	&:focus-within {
+		border-color: var(--l1-border);
+	}
+}
+
+.attachments {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.contextTags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.contextTag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	background: var(--l2-background);
+	border: 1px solid var(--l1-border);
+	border-radius: var(--radius-2);
+	padding: 4px 6px 4px 8px;
+	color: var(--l1-foreground);
+
+	button {
+		height: auto !important;
+		min-height: 0 !important;
+		width: auto !important;
+	}
+
+	// `auto` chips are derived from the URL (current page) — visually
+	// distinguished by a dashed border + slightly muted text so the user
+	// can tell them apart from explicit @-mentions. Tighter padding /
+	// font-size keeps them visually subordinate to user `@`-picks.
+	&.auto {
+		border-style: dashed;
+		color: var(--l2-foreground);
+		background: transparent;
+		font-size: 10px;
+		padding: 2px 4px 2px 6px;
+		gap: 3px;
+	}
+}
+
+.contextTagContent {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 220px;
+
+	.contextTagCategory {
+		flex-shrink: 0;
+	}
+
+	.contextTagLabel {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.contextTagCategory {
+	flex-shrink: 0;
+}
+
+.contextTagLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contextTagRemove {
+	flex-shrink: 0;
+	padding: 0 !important;
+	height: auto !important;
+	min-height: 0 !important;
+}
+
+.attachmentChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	background: var(--l3-background);
+	border-radius: var(--radius-2);
+	padding: 2px 6px 2px 8px;
+	color: var(--l2-foreground);
+	max-width: 180px;
+}
+
+.attachmentName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.attachmentRemove {
+	flex-shrink: 0;
+	padding: 0 !important;
+	height: auto !important;
+	min-height: 0 !important;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.composer {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: 4px;
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.leftActions,
+.rightActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.attachBtn {
+	color: var(--l3-foreground);
+}
+
+.contextBtn {
+	flex-shrink: 0;
+	gap: 6px;
+	border-style: dashed !important;
+	padding-inline: 12px !important;
+}
+
+.textarea {
+	display: block;
+	width: 100%;
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	color: var(--l1-foreground);
+	font-size: 12px;
+	line-height: 1.5;
+	overflow-y: auto;
+	font-family: inherit;
+	@include scrollbar(0.2rem);
+
+	&::placeholder {
+		color: var(--l3-foreground);
+		opacity: 0.6;
+	}
+
+	&:disabled {
+		opacity: 0.2;
+		cursor: not-allowed;
+	}
+}
+
+.charWarning {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 6px 8px;
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--accent-sienna);
+	background: color-mix(in srgb, var(--accent-sienna), transparent 90%);
+	border: 1px solid color-mix(in srgb, var(--accent-sienna), transparent 65%);
+	border-radius: var(--radius-2);
+}
+
+.sendBtn {
+	flex-shrink: 0;
+	border-radius: var(--radius-2);
+
+	&.stop {
+		background: var(--accent-cherry) !important;
+		border-color: var(--accent-cherry) !important;
+
+		&:hover {
+			opacity: 0.85;
+		}
+	}
+}
+
+.contextPopover {
+	width: 480px !important;
+	max-width: min(92vw, 480px);
+	margin-left: 16px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+	padding: 8px;
+	// Clip horizontal overflow so long entity titles can't poke past the
+	// popover's right edge. Vertical overflow is handled inside
+	// `.contextPopoverEntities`.
+	overflow-x: hidden;
+
+	--popover-padding: 0;
+
+	z-index: 1000;
+}
+
+.contextPopoverContent {
+	display: grid;
+	grid-template-columns: 180px 1fr;
+	min-height: 250px;
+	min-width: 0;
+}
+
+.contextPopoverCategories {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	border-right: 1px solid var(--l2-border);
+}
+
+.contextPopoverCategoryItem {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 32px;
+	padding: 0 8px;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	font-size: 12px;
+	font-weight: 550;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
+
+	&:hover {
+		background: var(--l2-background);
+		color: var(--l1-foreground);
+		border-color: var(--l2-border);
+	}
+
+	&.active {
+		background: color-mix(in srgb, var(--accent-primary), transparent 86%);
+		color: var(--l1-foreground);
+		border-color: color-mix(in srgb, var(--accent-primary), transparent 64%);
+	}
+}
+
+.contextPopoverRight {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	// Match the previous fixed entity-list height so the inner search +
+	// scrolling list have a definite container to size against.
+	height: 320px;
+}
+
+.contextPopoverSearch {
+	padding: 8px;
+	flex-shrink: 0;
+	position: relative;
+	width: 90%;
+}
+
+.contextPopoverSearchInput {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.contextPopoverEntities {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 8px;
+	min-width: 0;
+	@include scrollbar(0.2rem);
+}
+
+.contextPopoverEntityItem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	color: var(--l1-foreground);
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.35;
+	text-align: left;
+	cursor: pointer;
+	// Required for the inner span's `text-overflow: ellipsis` to engage —
+	// flex items default to `min-width: auto` (intrinsic width) and would
+	// otherwise grow past their parent's width to fit long titles.
+	min-width: 0;
+
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.15s ease;
+
+	&:hover {
+		background: var(--l2-background);
+		border-color: var(--l2-border);
+		transform: translateY(-1px);
+	}
+
+	&.selected {
+		background: color-mix(in srgb, var(--accent-primary), transparent 86%);
+		border-color: color-mix(in srgb, var(--accent-primary), transparent 64%);
+
+		span {
+			color: var(--l1-foreground);
+			font-weight: 600;
+		}
+	}
+}
+
+.contextPopoverEntityItemText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contextPopoverEmpty {
+	font-size: 12px;
+	color: var(--l3-foreground);
+	padding: 10px 8px;
+}
+
+.micBtn {
+	flex-shrink: 0;
+}
+
+.micRecording {
+	display: flex;
+	align-items: center;
+	background: var(--l2-background);
+	border-radius: 999px;
+	padding: 2px;
+	gap: 0;
+	flex-shrink: 0;
+}
+
+.micDiscard,
+.micStop {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	border: none;
+	cursor: pointer;
+}
+
+.micDiscard {
+	background: var(--l2-background);
+	color: var(--l2-foreground);
+	transition: color 0.12s;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.micWaves {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	height: 20px;
+	padding: 0 6px;
+
+	span {
+		display: block;
+		width: 2px;
+		border-radius: 2px;
+		background: var(--l1-foreground);
+		animation: voiceWave 0.9s ease-in-out infinite;
+
+		&:nth-child(1) {
+			animation-delay: 0s;
+		}
+		&:nth-child(2) {
+			animation-delay: 0.1s;
+		}
+		&:nth-child(3) {
+			animation-delay: 0.2s;
+		}
+		&:nth-child(4) {
+			animation-delay: 0.3s;
+		}
+		&:nth-child(5) {
+			animation-delay: 0.4s;
+		}
+		&:nth-child(6) {
+			animation-delay: 0.3s;
+		}
+		&:nth-child(7) {
+			animation-delay: 0.2s;
+		}
+		&:nth-child(8) {
+			animation-delay: 0.1s;
+		}
+	}
+}
+
+@keyframes voiceWave {
+	0%,
+	100% {
+		height: 2px;
+		opacity: 0.4;
+	}
+	50% {
+		height: 12px;
+		opacity: 1;
+	}
+}
+
+.micStop {
+	background: var(--accent-cherry);
+	color: var(--accent-cherry-foreground);
+	transition: opacity 0.12s;
+
+	&:hover {
+		opacity: 0.85;
+	}
+}

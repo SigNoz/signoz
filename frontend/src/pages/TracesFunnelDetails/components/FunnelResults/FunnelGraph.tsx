@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Empty, Spin } from 'antd';
 import {
 	BarController,
@@ -97,7 +97,10 @@ function FunnelGraph(): JSX.Element {
 	}
 
 	return (
-		<Spin spinning={isFetching} indicator={<LoadingOutlined spin />}>
+		<Spin
+			spinning={isFetching}
+			indicator={<Loader className="animate-spin" size="md" />}
+		>
 			<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
 				<div className="funnel-graph__chart-container">
 					<canvas ref={canvasRef} />

@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ArrowRight, ArrowRightToLine, BookOpenText } from 'lucide-react';
+import { ArrowRight, ArrowRightToLine, BookOpenText } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';

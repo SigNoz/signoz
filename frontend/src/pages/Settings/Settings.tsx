@@ -13,7 +13,7 @@ import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { Cog } from 'lucide-react';
+import { Cog } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
@@ -36,6 +36,7 @@ function SettingsPage(): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
+	const isViewer = user.role === USER_ROLES.VIEWER;
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -71,19 +72,28 @@ function SettingsPage(): JSX.Element {
 			}
 
 			if (isCloudUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.SHORTCUTS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -95,26 +105,43 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.SHORTCUTS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
+					}));
+				}
+
+				if (isViewer) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
 					}));
 				}
 			}
 
 			if (isEnterpriseSelfHostedUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
 							item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.INGESTION_SETTINGS
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -125,23 +152,38 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.INTEGRATIONS ||
-							item.key === ROUTES.INGESTION_SETTINGS
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
+					}));
+				}
+
+				if (isViewer) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
 					}));
 				}
 			}
 
 			if (!isCloudUser && !isEnterpriseSelfHostedUser) {
+				// Visible to all authenticated users
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled:
+						item.key === ROUTES.ROLES_SETTINGS ||
+						item.key === ROUTES.ROLE_DETAILS ||
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							? true
+							: item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS
+							item.key === ROUTES.ORG_SETTINGS || item.key === ROUTES.MEMBERS_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
@@ -162,6 +204,7 @@ function SettingsPage(): JSX.Element {
 	}, [
 		isAdmin,
 		isEditor,
+		isViewer,
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
 		isFetchingActiveLicense,
@@ -278,7 +321,7 @@ function SettingsPage(): JSX.Element {
 										isDisabled={false}
 										showIcon={false}
 										onClick={(event): void => {
-											logEvent('Settings V2: Menu clicked', {
+											void logEvent('Settings V2: Menu clicked', {
 												menuLabel: item.label,
 												menuRoute: item.key,
 											});

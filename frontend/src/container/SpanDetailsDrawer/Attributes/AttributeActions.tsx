@@ -10,7 +10,7 @@ import {
 	Copy,
 	Ellipsis,
 	Pin,
-} from 'lucide-react';
+} from '@signozhq/icons';
 
 interface AttributeRecord {
 	field: string;
@@ -184,6 +184,8 @@ export default function AttributeActions({
 				placement="bottomLeft"
 			>
 				<Button
+					data-testid="attribute-actions-more"
+					aria-label="More attribute actions"
 					icon={<Ellipsis size={14} />}
 					className="filter-btn periscope-btn"
 				/>

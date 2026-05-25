@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-	Button,
-	Col,
-	Form,
-	Input as AntInput,
-	Input,
-	Row,
-	Typography,
-} from 'antd';
+import { Button, Col, Form, Input as AntInput, Input, Row } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {
 	getInitialValues,
@@ -16,7 +9,7 @@ import {
 	updateUrlWithParams,
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from '@signozhq/icons';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
 import { getBaseUrl } from 'utils/basePath';
 

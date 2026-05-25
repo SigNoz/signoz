@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/common/model"
 	"log/slog"
 	"time"
+
+	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"

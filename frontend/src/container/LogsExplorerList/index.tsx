@@ -2,7 +2,7 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -38,7 +38,7 @@ import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { getAbsoluteUrl } from '@/utils/basePath';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import NoLogs from '../NoLogs/NoLogs';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';

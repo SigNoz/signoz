@@ -471,6 +471,6 @@ describe('CheckboxFilter - User Flows', () => {
 
 		expect(filterForServiceName.key.key).toBe(SERVICE_NAME_KEY);
 		expect(filterForServiceName.op).toBe('in');
-		expect(filterForServiceName.value).toEqual(['mq-kafka', 'otel-demo']);
+		expect(filterForServiceName.value).toStrictEqual(['mq-kafka', 'otel-demo']);
 	});
 });

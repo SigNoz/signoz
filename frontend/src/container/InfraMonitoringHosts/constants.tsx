@@ -1,6 +1,8 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Tag, Typography } from 'antd';
+import { Tag } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	getHostLists,
 	HostData,
@@ -78,8 +80,8 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				size="small"
 				strokeColor={getProgressColor(Number(value))}
+				showInfo
 			/>
 		),
 	},
@@ -89,8 +91,8 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				size="small"
 				strokeColor={getMemoryProgressColor(Number(value))}
+				showInfo
 			/>
 		),
 	},

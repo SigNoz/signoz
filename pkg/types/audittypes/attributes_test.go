@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +36,7 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, ActionUpdate, ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, ActionCategoryConfigurationChange, claims)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
@@ -53,7 +54,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyResourceID",
 			auditAttributes: AuditAttributes{
-				Action:         ActionDelete,
+				Action:         coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -63,7 +64,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) deleted dashboard",
@@ -71,7 +72,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyPrincipalEmail",
 			auditAttributes: AuditAttributes{
-				Action:         ActionDelete,
+				Action:         coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -81,7 +82,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "abd",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "019a1234-abcd-7000-8000-567800000001 deleted dashboard (abd)",
@@ -89,7 +90,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyPrincipalIDandEmail",
 			auditAttributes: AuditAttributes{
-				Action:         ActionDelete,
+				Action:         coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -99,7 +100,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "abd",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "deleted dashboard (abd)",
@@ -107,7 +108,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_AllPresent",
 			auditAttributes: AuditAttributes{
-				Action:         ActionCreate,
+				Action:         coretypes.VerbCreate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -117,7 +118,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678)",
@@ -125,13 +126,13 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyEverythingOptional",
 			auditAttributes: AuditAttributes{
-				Action:         ActionUpdate,
+				Action:         coretypes.VerbUpdate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
 			principalAttributes: PrincipalAttributes{},
 			resourceAttributes: ResourceAttributes{
-				ResourceKind: "alert-rule",
+				ResourceKind: coretypes.MustNewKind("alert-rule"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "updated alert-rule",
@@ -139,7 +140,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_AllPresent",
 			auditAttributes: AuditAttributes{
-				Action:         ActionUpdate,
+				Action:         coretypes.VerbUpdate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeFailure,
 			},
@@ -149,7 +150,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "forbidden",
@@ -160,7 +161,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_ErrorTypeOnly",
 			auditAttributes: AuditAttributes{
-				Action:  ActionDelete,
+				Action:  coretypes.VerbDelete,
 				Outcome: OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -168,7 +169,7 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("test@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceKind: "user",
+				ResourceKind: coretypes.MustNewKind("user"),
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "not-found",
@@ -178,7 +179,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_NoErrorDetails",
 			auditAttributes: AuditAttributes{
-				Action:  ActionCreate,
+				Action:  coretypes.VerbCreate,
 				Outcome: OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -187,7 +188,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceKind: "dashboard",
+				ResourceKind: coretypes.MustNewKind("dashboard"),
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) failed to create dashboard (019b-5678)",

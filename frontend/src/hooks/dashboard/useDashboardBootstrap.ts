@@ -102,11 +102,19 @@ export function useDashboardBootstrap(
 				onOk() {
 					setDashboardData(updatedDashboardData);
 
-					const { maxTime, minTime } = getMinMaxForSelectedTime(
-						globalTime.selectedTime,
-						globalTime.minTime,
-						globalTime.maxTime,
-					);
+					const { maxTime, minTime } =
+						globalTime.selectedTime === 'custom'
+							? {
+									// For custom ranges, min/max are already stored in nanoseconds.
+									// Recomputing via getMinMaxForSelectedTime would multiply them again.
+									maxTime: globalTime.maxTime,
+									minTime: globalTime.minTime,
+								}
+							: getMinMaxForSelectedTime(
+									globalTime.selectedTime,
+									globalTime.minTime,
+									globalTime.maxTime,
+								);
 					dispatch({
 						type: UPDATE_TIME_INTERVAL,
 						payload: { maxTime, minTime, selectedTime: globalTime.selectedTime },

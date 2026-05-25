@@ -89,25 +89,4 @@
 			) !important;
 		}
 	}
-
-	&__add-btn {
-		width: 100%;
-
-		// Ensure icon is visible
-		svg,
-		[class*='icon'] {
-			color: var(--l2-foreground) !important;
-			display: inline-block !important;
-			opacity: 1 !important;
-		}
-
-		&:hover {
-			color: var(--l1-foreground);
-
-			svg,
-			[class*='icon'] {
-				color: var(--l1-foreground) !important;
-			}
-		}
-	}
 }

@@ -3,7 +3,7 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ListMinus, Rows3 } from 'lucide-react';
+import { ListMinus, Rows3 } from '@signozhq/icons';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';

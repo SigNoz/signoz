@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -47,6 +47,14 @@ func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publi
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
 	}
 
 	storablePublicDashboard, err := module.store.GetPublic(ctx, publicDashboard.DashboardID.StringValue())
@@ -88,7 +96,7 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
 		orgIDs[idx] = org.ID.StringValue()
@@ -99,9 +107,9 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 		return nil, valuer.UUID{}, err
 	}
 
-	return []authtypes.Selector{
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, authtypes.WildCardSelectorString),
+	return []coretypes.Selector{
+		coretypes.TypeMetaResource.MustSelector(id.StringValue()),
+		coretypes.TypeMetaResource.MustSelector(coretypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -129,6 +137,14 @@ func (module *module) UpdatePublic(ctx context.Context, orgID valuer.UUID, publi
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	dashboard, err := module.Get(ctx, orgID, publicDashboard.DashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
+	}
+
 	return module.store.UpdatePublic(ctx, dashboardtypes.NewStorablePublicDashboardFromPublicDashboard(publicDashboard))
 }
 
@@ -138,34 +154,33 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
+	if err := dashboard.ErrIfNotDeletable(); err != nil {
+		return err
+	}
+
 	if dashboard.Locked {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err := module.deletePublic(ctx, orgID, id)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return err
-		}
+	return module.delete(ctx, orgID, id)
+}
 
-		err = module.store.Delete(ctx, orgID, id)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (module *module) DeleteUnsafe(ctx context.Context, orgID, id valuer.UUID) error {
+	return module.delete(ctx, orgID, id)
 }
 
 func (module *module) DeletePublic(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	dashboard, err := module.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		return err
+	}
+	if err := dashboard.ErrIfNotPublishable(); err != nil {
+		return err
 	}
 
 	err = module.store.DeletePublic(ctx, dashboardID.StringValue())
@@ -193,8 +208,8 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, data)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, source, data)
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
@@ -217,28 +232,11 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return module.pkgDashboardModule.MustGetTypeables()
-}
-
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return map[string][]*authtypes.Transaction{
-		authtypes.SigNozAnonymousRoleName: {
-			{
-				ID:       valuer.GenerateUUID(),
-				Relation: authtypes.RelationRead,
-				Object: *authtypes.MustNewObject(
-					authtypes.Resource{
-						Type: authtypes.TypeMetaResource,
-						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
-					},
-					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
-				),
-			},
-		},
-	}
-}
-
-func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {
-	return module.store.DeletePublic(ctx, dashboardID.StringValue())
+func (module *module) delete(ctx context.Context, orgID, id valuer.UUID) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.store.Delete(ctx, orgID, id)
+	})
 }

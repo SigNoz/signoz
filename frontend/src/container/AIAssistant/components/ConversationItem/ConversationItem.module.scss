@@ -1,0 +1,145 @@
+.item {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 6px 8px;
+	border-radius: var(--radius-2);
+	cursor: pointer;
+	min-width: 0;
+	position: relative;
+	// Driven below: hover and active reveal the action buttons.
+	--actions-opacity: 0;
+
+	&:hover {
+		background: var(--l2-background);
+		--actions-opacity: 1;
+	}
+
+	&.active {
+		background: var(--l2-background);
+		--actions-opacity: 1;
+
+		.title {
+			color: var(--l1-foreground);
+			font-weight: 500;
+		}
+	}
+
+	&.archived {
+		opacity: 0.92;
+
+		.title {
+			color: var(--l3-foreground);
+		}
+	}
+}
+
+.icon {
+	flex-shrink: 0;
+	color: var(--l3-foreground);
+}
+
+.body {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.title {
+	font-size: 12px;
+	color: var(--l2-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.4;
+}
+
+.time {
+	font-size: 10px;
+	color: var(--l3-foreground);
+	opacity: 0.7;
+}
+
+.input {
+	width: 100%;
+	background: transparent;
+	border: none;
+	border-bottom: 1px solid var(--accent-primary);
+	outline: none;
+	color: var(--l1-foreground);
+	font-size: 12px;
+	font-family: inherit;
+	padding: 1px 0;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+	flex-shrink: 0;
+	opacity: var(--actions-opacity, 0);
+	transition: opacity 0.12s;
+	// Float over the right edge of the item so the title can keep using
+	// the full width while the buttons are hidden — no layout shift +
+	// no premature truncation. The `background` matches the hover/active
+	// state so the buttons visually mask any title text underneath.
+	position: absolute;
+	top: 50%;
+	right: 4px;
+	transform: translateY(-50%);
+	background: var(--l2-background);
+	padding: 1px 2px;
+	border-radius: var(--radius-2);
+	pointer-events: var(--actions-pointer, none);
+}
+
+.item:hover,
+.item.active {
+	--actions-pointer: auto;
+}
+
+.btn {
+	padding: 2px !important;
+	height: auto !important;
+	min-height: 0 !important;
+
+	&.danger:hover {
+		color: var(--accent-cherry) !important;
+	}
+}
+
+// Compact menu — narrower than the design-system default so the
+// content (Rename / Copy link / Archive) doesn't dwarf the row.
+.menu {
+	min-width: 160px !important;
+	width: 160px !important;
+}
+
+// Shared sizing for every dropdown item so the menu reads compact —
+// matches the row's own 12px label scale.
+.menuItem {
+	font-size: 12px !important;
+	cursor: pointer !important;
+}
+
+// Amber treatment for the destructive-but-recoverable Archive action —
+// less alarming than red since the conversation can be restored later.
+// Targets both the label text and the leading icon (icons inherit color
+// via `currentColor`).
+.archiveItem {
+	color: var(--accent-amber) !important;
+
+	svg {
+		color: inherit !important;
+	}
+}
+
+.restoreItem {
+	color: var(--primary) !important;
+
+	svg {
+		color: inherit !important;
+	}
+}

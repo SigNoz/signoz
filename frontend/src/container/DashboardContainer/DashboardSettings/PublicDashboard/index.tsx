@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { Checkbox, toast } from '@signozhq/ui';
-import { Button, Select, Typography } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { toast } from '@signozhq/ui/sonner';
+import { Button, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
+import {
+	Copy,
+	ExternalLink,
+	Globe,
+	Info,
+	LoaderCircle,
+	Trash,
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
@@ -327,7 +336,7 @@ function PublicDashboardSetting(): JSX.Element {
 								isLoadingCreatePublicDashboard ||
 								isFetchingPublicDashboard ||
 								isLoadingPublicDashboard ? (
-									<Loader2 className="animate-spin" size={14} />
+									<LoaderCircle className="animate-spin" size={14} />
 								) : (
 									<Globe size={14} />
 								)

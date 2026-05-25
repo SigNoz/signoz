@@ -9,7 +9,15 @@ import {
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import {
+	Check,
+	ConciergeBell,
+	Disc3,
+	PanelBottomClose,
+	Plus,
+	X,
+	Info,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -20,8 +28,8 @@ import {
 	RefSelectProps,
 	Select,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -56,14 +64,6 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { cloneDeep, isEqual, omit } from 'lodash-es';
-import {
-	Check,
-	ConciergeBell,
-	Disc3,
-	PanelBottomClose,
-	Plus,
-	X,
-} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { FormattingOptions } from 'providers/preferences/types';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -970,9 +970,10 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<InfoCircleOutlined className="info-icon" />
+								<Info size="md" className="info-icon" />
 							</Tooltip>
 						)}
+
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -1009,6 +1010,7 @@ function ExplorerOptions({
 						onClick={onSaveHandler}
 						disabled={isSaveViewLoading}
 						data-testid="save-view-btn"
+						className="save-button"
 					>
 						Save this view
 					</Button>,

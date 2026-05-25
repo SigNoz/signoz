@@ -5,7 +5,7 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';

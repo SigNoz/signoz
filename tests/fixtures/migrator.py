@@ -8,20 +8,24 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-@pytest.fixture(name="migrator", scope="package")
-def migrator(
+def create_migrator(
     network: Network,
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    cache_key: str = "migrator",
+    env_overrides: dict | None = None,
 ) -> types.Operation:
     """
-    Package-scoped fixture for running schema migrations.
+    Factory function for running schema migrations.
+    Accepts optional env_overrides to customize the migrator environment.
     """
 
     def create() -> None:
         version = request.config.getoption("--schema-migrator-version")
         client = docker.from_env()
+
+        environment = dict(env_overrides) if env_overrides else {}
 
         container = client.containers.run(
             image=f"signoz/signoz-schema-migrator:{version}",
@@ -29,6 +33,7 @@ def migrator(
             detach=True,
             auto_remove=False,
             network=network.id,
+            environment=environment,
         )
 
         result = container.wait()
@@ -47,6 +52,7 @@ def migrator(
             detach=True,
             auto_remove=False,
             network=network.id,
+            environment=environment,
         )
 
         result = container.wait()
@@ -59,7 +65,7 @@ def migrator(
 
         container.remove()
 
-        return types.Operation(name="migrator")
+        return types.Operation(name=cache_key)
 
     def delete(_: types.Operation) -> None:
         pass
@@ -70,9 +76,27 @@ def migrator(
     return reuse.wrap(
         request,
         pytestconfig,
-        "migrator",
+        cache_key,
         lambda: types.Operation(name=""),
         create,
         delete,
         restore,
+    )
+
+
+@pytest.fixture(name="migrator", scope="package")
+def migrator(
+    network: Network,
+    clickhouse: types.TestContainerClickhouse,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.Operation:
+    """
+    Package-scoped fixture for running schema migrations.
+    """
+    return create_migrator(
+        network=network,
+        clickhouse=clickhouse,
+        request=request,
+        pytestconfig=pytestconfig,
     )

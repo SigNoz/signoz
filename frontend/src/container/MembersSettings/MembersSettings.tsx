@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListUsers } from 'api/generated/services/users';
@@ -20,7 +21,6 @@ const PAGE_SIZE = 20;
 function MembersSettings(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
-
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
@@ -145,7 +145,7 @@ function MembersSettings(): JSX.Element {
 				: `Deleted ⎯ ${deletedCount}`;
 
 	const handleInviteComplete = useCallback((): void => {
-		refetchUsers();
+		void refetchUsers();
 	}, [refetchUsers]);
 
 	const handleRowClick = useCallback((member: MemberRow): void => {
@@ -157,7 +157,7 @@ function MembersSettings(): JSX.Element {
 	}, []);
 
 	const handleMemberEditComplete = useCallback((): void => {
-		refetchUsers();
+		void refetchUsers();
 	}, [refetchUsers]);
 
 	return (

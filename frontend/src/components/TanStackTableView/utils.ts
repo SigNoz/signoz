@@ -35,7 +35,10 @@ export const getColumnWidthStyle = <TData>(
 ): CSSProperties => {
 	// Last column always fills remaining space
 	if (isLastColumn) {
-		return { width: '100%' };
+		return {
+			width: '100%',
+			minWidth: persistedWidth ?? column?.width?.min,
+		};
 	}
 
 	const { width } = column;
@@ -59,10 +62,19 @@ export const getColumnWidthStyle = <TData>(
 	};
 };
 
+const isSkeletonRow = (row: unknown): boolean => {
+	const r = row as Record<string, unknown>;
+	return typeof r?.id === 'string' && r.id.startsWith('skeleton-');
+};
+
 const buildAccessorFn = <TData>(
 	colDef: TableColumnDef<TData>,
 ): ((row: TData) => unknown) => {
 	return (row: TData): unknown => {
+		// Skip accessor for skeleton rows to avoid errors with missing properties
+		if (isSkeletonRow(row)) {
+			return undefined;
+		}
 		if (colDef.accessorFn) {
 			return colDef.accessorFn(row);
 		}

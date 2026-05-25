@@ -9,7 +9,7 @@ import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Check, Share2 } from 'lucide-react';
+import { Check, Share2 } from '@signozhq/icons';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
@@ -219,7 +219,7 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 					}}
 				/>
 			</div>
-			<Tooltip title="Share this" arrow={false}>
+			<Tooltip title="Share This" arrow={false}>
 				<Button
 					className="periscope-btn copy-url-btn"
 					onClick={(): void => {

@@ -5,7 +5,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Tag } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
@@ -29,7 +31,7 @@ import {
 	LayoutList,
 	Pyramid,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {
@@ -485,7 +487,7 @@ function VariableItem({
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
+								<Typography.Text color="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
@@ -762,7 +764,7 @@ function VariableItem({
 									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableMultiSelect}
+									value={variableMultiSelect}
 									onChange={(e): void => {
 										setVariableMultiSelect(e);
 										if (!e) {
@@ -779,7 +781,7 @@ function VariableItem({
 										</Typography>
 									</LabelContainer>
 									<Switch
-										checked={variableShowALLOption}
+										value={variableShowALLOption}
 										onChange={(e): void => setVariableShowALLOption(e)}
 									/>
 								</VariableItemRow>

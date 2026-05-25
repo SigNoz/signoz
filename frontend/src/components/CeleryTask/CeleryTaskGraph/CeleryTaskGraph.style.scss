@@ -41,7 +41,6 @@
 		justify-content: center;
 		align-items: center;
 		border: 1px solid var(--l1-border);
-		background: linear-gradient(0deg, transparent 0%, transparent 100%), #0b0c0e;
 
 		.ant-card-body {
 			height: 100%;
@@ -238,18 +237,7 @@
 		height: 2px;
 		bottom: 0;
 		left: 0;
-		background-color: var(--l1-foreground);
-	}
-}
-
-.lightMode {
-	.celery-task-graph-grid-container {
-		.celery-task-graph-worker-count {
-			background: unset;
-		}
-	}
-
-	.configure-option-Info {
-		border: 1px dashed var(--bg-robin-400);
+		background-color: var(--l1-background);
+		color: var(--l1-foreground);
 	}
 }

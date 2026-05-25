@@ -34,7 +34,7 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ArrowUp10, Minus } from 'lucide-react';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';

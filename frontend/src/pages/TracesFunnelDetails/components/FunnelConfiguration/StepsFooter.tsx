@@ -1,7 +1,7 @@
 import { useIsMutating } from 'react-query';
 import { Button, Skeleton } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Check, Cone } from 'lucide-react';
+import { Check, Cone } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
 import './StepsFooter.styles.scss';

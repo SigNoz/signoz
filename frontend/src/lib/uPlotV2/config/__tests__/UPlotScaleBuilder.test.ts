@@ -224,12 +224,12 @@ describe('UPlotScaleBuilder', () => {
 		});
 
 		expect(builder.props.min).toBe(2);
-		expect(builder.props.softMax).toBe(undefined);
+		expect(builder.props.softMax).toBeUndefined();
 		expect(builder.props.max).toBe(10);
 		expect(builder.props.softMin).toBe(1);
 		expect(builder.props.time).toBe(false);
 		expect(builder.props.scaleKey).toBe('y');
 		expect(builder.props.distribution).toBe(DistributionType.Linear);
-		expect(builder.props.thresholds).toBe(undefined);
+		expect(builder.props.thresholds).toBeUndefined();
 	});
 });

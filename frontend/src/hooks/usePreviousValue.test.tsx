@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import usePreviousValue from './usePreviousValue';
 
 describe('usePreviousValue', () => {
-	test('returns the previous value of a given variable', () => {
+	it('returns the previous value of a given variable', () => {
 		const { result, rerender } = renderHook(
 			({ value }) => usePreviousValue(value),
 			{
@@ -23,7 +23,7 @@ describe('usePreviousValue', () => {
 		expect(result.current).toBe(2);
 	});
 
-	test('works with different types of values', () => {
+	it('works with different types of values', () => {
 		const { result, rerender } = renderHook(
 			({ value }) => usePreviousValue(value),
 			{

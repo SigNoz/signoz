@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Skeleton, Table, TablePaginationConfig, Typography } from 'antd';
+import { Skeleton, Table, TablePaginationConfig } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
 import {
 	dependentServicesColumns,
 	DependentServicesData,
 	getFormattedDependentServicesData,
 } from 'container/ApiMonitoring/utils';
-import { UnfoldVertical } from 'lucide-react';
+import { UnfoldVertical } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
 import { openInNewTab } from 'utils/navigation';
 

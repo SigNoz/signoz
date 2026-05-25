@@ -88,7 +88,7 @@ describe('sanitizeOrderByForExplorer', () => {
 
 		const result = sanitizeOrderByForExplorer(query);
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{ columnName: 'service.name', order: 'asc' },
 			{ columnName: 'count()', order: 'desc' },
 			{ columnName: 'avg(duration)', order: 'asc' },
@@ -116,7 +116,7 @@ describe('sanitizeOrderByForExplorer', () => {
 		});
 
 		const result = sanitizeOrderByForExplorer(query);
-		expect(result).toEqual([]);
+		expect(result).toStrictEqual([]);
 	});
 
 	it('handles missing orderBy by returning an empty array', () => {
@@ -124,6 +124,6 @@ describe('sanitizeOrderByForExplorer', () => {
 
 		const query = buildQuery({ orderBy: [] });
 		const result = sanitizeOrderByForExplorer(query);
-		expect(result).toEqual([]);
+		expect(result).toStrictEqual([]);
 	});
 });

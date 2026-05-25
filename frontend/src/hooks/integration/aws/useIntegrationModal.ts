@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
@@ -20,11 +20,11 @@ import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
-} from 'container/Integrations/CloudIntegration/AmazonWebServices/HeroSection/types';
-import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+} from 'container/Integrations/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';
 import { regions } from 'utils/regions';
 

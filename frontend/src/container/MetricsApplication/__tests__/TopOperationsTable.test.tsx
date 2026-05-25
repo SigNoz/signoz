@@ -164,7 +164,7 @@ describe('TopOperation API Integration', () => {
 		// Verify that only the top_operations endpoint was called
 		expect(apiCalls).toHaveLength(1);
 		expect(apiCalls[0].endpoint).toBe(TOP_OPERATIONS_ENDPOINT);
-		expect(apiCalls[0].body).toEqual({
+		expect(apiCalls[0].body).toStrictEqual({
 			start: `${defaultApiCallExpectation.start}`,
 			end: `${defaultApiCallExpectation.end}`,
 			service: defaultApiCallExpectation.service,
@@ -198,7 +198,7 @@ describe('TopOperation API Integration', () => {
 		// Verify that the entry_point_operations endpoint was called
 		expect(apiCalls).toHaveLength(1);
 		expect(apiCalls[0].endpoint).toBe(ENTRY_POINT_OPERATIONS_ENDPOINT);
-		expect(apiCalls[0].body).toEqual({
+		expect(apiCalls[0].body).toStrictEqual({
 			start: `${defaultApiCallExpectation.start}`,
 			end: `${defaultApiCallExpectation.end}`,
 			service: defaultApiCallExpectation.service,

@@ -42,7 +42,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns formula labels when queryFormulas is populated', () => {
@@ -60,7 +60,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'F1', value: 'F1' },
 				{ label: 'F2', value: 'F2' },
 			]);
@@ -76,7 +76,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns labels from clickhouse_sql when populated', () => {
@@ -90,7 +90,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'query_a', value: 'query_a' },
 				{ label: 'query_b', value: 'query_b' },
 			]);
@@ -106,7 +106,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([]);
+			expect(result.current).toStrictEqual([]);
 		});
 
 		it('returns labels from promql when populated', () => {
@@ -120,7 +120,7 @@ describe('useGetQueryLabels', () => {
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
 
-			expect(result.current).toEqual([
+			expect(result.current).toStrictEqual([
 				{ label: 'prom_1', value: 'prom_1' },
 				{ label: 'prom_2', value: 'prom_2' },
 			]);

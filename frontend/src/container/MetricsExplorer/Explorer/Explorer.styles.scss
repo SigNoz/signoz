@@ -179,16 +179,6 @@
 	}
 }
 
-.lightMode {
-	.metrics-explorer-explore-container {
-		.explore-tabs {
-			.selected-view {
-				background: var(--l3-background);
-			}
-		}
-	}
-}
-
 .dashboards-and-alerts-popover-container {
 	display: flex;
 	gap: 16px;

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -122,8 +123,9 @@ func TestExistsConditionForWithEvolutions(t *testing.T) {
 			expectedError: nil,
 		},
 	}
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	conditionBuilder := NewConditionBuilder(fm, fl)
 	ctx := context.Background()
 
 	for _, tc := range testCases {
@@ -513,8 +515,9 @@ func TestConditionFor(t *testing.T) {
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
 	}
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	conditionBuilder := NewConditionBuilder(fm, fl)
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
@@ -566,8 +569,9 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	conditionBuilder := NewConditionBuilder(fm, fl)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -825,8 +829,9 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	conditionBuilder := NewConditionBuilder(fm, fl)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()

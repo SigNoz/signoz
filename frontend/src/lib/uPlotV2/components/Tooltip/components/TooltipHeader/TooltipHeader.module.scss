@@ -11,11 +11,10 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-2);
-	margin-bottom: var(--spacing-2);
 }
 
 .pinnedItem {
-	padding: var(--spacing-4) var(--spacing-4) 0 var(--spacing-4);
+	padding: var(--spacing-4);
 }
 
 .status {

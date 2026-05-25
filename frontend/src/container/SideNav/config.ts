@@ -46,6 +46,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.TRACES_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACE]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACE_DETAIL]: [QueryParams.resourceAttributes],
+	[ROUTES.TRACE_DETAIL_OLD]: [QueryParams.resourceAttributes],
 	[ROUTES.UN_AUTHORIZED]: [QueryParams.resourceAttributes],
 	[ROUTES.USAGE_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.VERSION]: [QueryParams.resourceAttributes],

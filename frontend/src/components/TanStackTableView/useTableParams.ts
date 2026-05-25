@@ -8,6 +8,12 @@ import { SortState, TanstackTableQueryParamsConfig } from './types';
 const NUQS_OPTIONS = { history: 'push' as const };
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 50;
+const URL_KEYS_DEFAULT = {
+	page: 'page',
+	limit: 'limit',
+	orderBy: 'order_by',
+	expanded: 'expanded',
+} as const;
 
 type Defaults = {
 	page?: number;
@@ -49,30 +55,49 @@ export function useTableParams(
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig,
 	defaults?: Defaults,
 ): TableParamsResult {
+	// Determine which params should sync to URL vs use local state
+	const isObjectConfig = typeof enableQueryParams === 'object';
+	const useUrlForPage =
+		enableQueryParams === true ||
+		typeof enableQueryParams === 'string' ||
+		(isObjectConfig && enableQueryParams.page !== undefined);
+	const useUrlForLimit =
+		enableQueryParams === true ||
+		typeof enableQueryParams === 'string' ||
+		(isObjectConfig && enableQueryParams.limit !== undefined);
+	const useUrlForOrderBy =
+		enableQueryParams === true ||
+		typeof enableQueryParams === 'string' ||
+		(isObjectConfig && enableQueryParams.orderBy !== undefined);
+	const useUrlForExpanded =
+		enableQueryParams === true ||
+		typeof enableQueryParams === 'string' ||
+		(isObjectConfig && enableQueryParams.expanded !== undefined);
+
 	const pageQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_page`
-			: typeof enableQueryParams === 'object'
-				? enableQueryParams.page
-				: 'page';
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.page}`
+			: isObjectConfig
+				? (enableQueryParams.page ?? URL_KEYS_DEFAULT.page)
+				: URL_KEYS_DEFAULT.page;
 	const limitQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_limit`
-			: typeof enableQueryParams === 'object'
-				? enableQueryParams.limit
-				: 'limit';
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.limit}`
+			: isObjectConfig
+				? (enableQueryParams.limit ?? URL_KEYS_DEFAULT.limit)
+				: URL_KEYS_DEFAULT.limit;
 	const orderByQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_order_by`
-			: typeof enableQueryParams === 'object'
-				? enableQueryParams.orderBy
-				: 'order_by';
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.orderBy}`
+			: isObjectConfig
+				? (enableQueryParams.orderBy ?? URL_KEYS_DEFAULT.orderBy)
+				: URL_KEYS_DEFAULT.orderBy;
 	const expandedQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_expanded`
-			: typeof enableQueryParams === 'object'
-				? enableQueryParams.expanded
-				: 'expanded';
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.expanded}`
+			: isObjectConfig
+				? (enableQueryParams.expanded ?? URL_KEYS_DEFAULT.expanded)
+				: URL_KEYS_DEFAULT.expanded;
 	const pageDefault = defaults?.page ?? DEFAULT_PAGE;
 	const limitDefault = defaults?.limit ?? DEFAULT_LIMIT;
 	const orderByDefault = defaults?.orderBy ?? null;
@@ -149,45 +174,29 @@ export function useTableParams(
 
 	const orderByDefaultMemoKey = `${orderByDefault?.columnName}${orderByDefault?.order}`;
 	const orderByUrlMemoKey = `${urlOrderBy?.columnName}${urlOrderBy?.order}`;
-	const isEnabledQueryParams =
-		typeof enableQueryParams === 'string' ||
-		typeof enableQueryParams === 'object';
 
 	useEffect(() => {
-		if (isEnabledQueryParams) {
+		if (useUrlForPage) {
 			setUrlPage(pageDefault);
 		} else {
 			setLocalPage(pageDefault);
 		}
 	}, [
-		isEnabledQueryParams,
+		useUrlForPage,
 		orderByDefaultMemoKey,
 		orderByUrlMemoKey,
 		pageDefault,
 		setUrlPage,
 	]);
 
-	if (enableQueryParams) {
-		return {
-			page: urlPage,
-			limit: urlLimit,
-			orderBy: urlOrderBy as SortState | null,
-			expanded: urlExpanded,
-			setPage: setUrlPage,
-			setLimit: setUrlLimit,
-			setOrderBy: setUrlOrderBy,
-			setExpanded: setUrlExpanded,
-		};
-	}
-
 	return {
-		page: localPage,
-		limit: localLimit,
-		orderBy: localOrderBy,
-		expanded: localExpanded,
-		setPage: setLocalPage,
-		setLimit: setLocalLimit,
-		setOrderBy: setLocalOrderBy,
-		setExpanded: handleSetLocalExpanded,
+		page: useUrlForPage ? urlPage : localPage,
+		limit: useUrlForLimit ? urlLimit : localLimit,
+		orderBy: (useUrlForOrderBy ? urlOrderBy : localOrderBy) as SortState | null,
+		expanded: useUrlForExpanded ? urlExpanded : localExpanded,
+		setPage: useUrlForPage ? setUrlPage : setLocalPage,
+		setLimit: useUrlForLimit ? setUrlLimit : setLocalLimit,
+		setOrderBy: useUrlForOrderBy ? setUrlOrderBy : setLocalOrderBy,
+		setExpanded: useUrlForExpanded ? setUrlExpanded : handleSetLocalExpanded,
 	};
 }

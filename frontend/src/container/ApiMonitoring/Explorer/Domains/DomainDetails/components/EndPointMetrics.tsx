@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Skeleton, Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
@@ -37,28 +39,16 @@ function EndPointMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						Rate
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						ERROR %
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						LAST USED
 					</Typography.Text>
 				</div>
@@ -91,10 +81,9 @@ function EndPointMetrics({
 							<Tooltip title={metricsData?.errorRate}>
 								{metricsData?.errorRate !== '-' ? (
 									<Progress
-										status="active"
 										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
 										strokeLinecap="butt"
-										size="small"
+										showInfo
 										strokeColor={((): string => {
 											const errorRatePercent = Number(
 												Number(metricsData?.errorRate ?? 0).toFixed(2),

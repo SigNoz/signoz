@@ -199,26 +199,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.legend-container {
-		.legend-virtuoso-container {
-			&::-webkit-scrollbar-thumb {
-				background: var(--l2-foreground);
-			}
-		}
-	}
-
-	.legend-item {
-		&:hover {
-			background: rgba(0, 0, 0, 0.05);
-		}
-		.legend-copy-button {
-			color: var(--l2-background);
-
-			&:hover {
-				color: var(--l1-background);
-			}
-		}
-	}
-}

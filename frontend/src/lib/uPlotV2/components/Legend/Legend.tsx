@@ -5,7 +5,7 @@ import cx from 'classnames';
 import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@signozhq/icons';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
 import { LegendPosition, LegendProps } from '../types';

@@ -54,7 +54,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_ALERT_NAME',
 				payload: 'Test Alert',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_STATE,
 				name: 'Test Alert',
 			});
@@ -66,7 +66,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_ALERT_LABELS',
 				payload: labels,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_STATE,
 				labels,
 			});
@@ -77,7 +77,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_Y_AXIS_UNIT',
 				payload: 'ms',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_STATE,
 				yAxisUnit: 'ms',
 			});
@@ -90,7 +90,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				yAxisUnit: 'ms',
 			};
 			const result = alertCreationReducer(modifiedState, { type: 'RESET' });
-			expect(result).toEqual(INITIAL_ALERT_STATE);
+			expect(result).toStrictEqual(INITIAL_ALERT_STATE);
 		});
 
 		it(TEST_SET_INITIAL_STATE_FROM_PAYLOAD, () => {
@@ -103,7 +103,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_INITIAL_STATE',
 				payload: newState,
 			});
-			expect(result).toEqual(newState);
+			expect(result).toStrictEqual(newState);
 		});
 
 		it(TEST_RETURN_STATE_FOR_UNKNOWN_ACTION, () => {
@@ -112,7 +112,7 @@ describe('CreateAlertV2 Context Utils', () => {
 
 				{ type: UNKNOWN_ACTION_TYPE } as any,
 			);
-			expect(result).toEqual(INITIAL_ALERT_STATE);
+			expect(result).toStrictEqual(INITIAL_ALERT_STATE);
 		});
 	});
 
@@ -211,7 +211,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_SELECTED_QUERY',
 				payload: 'B',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_THRESHOLD_STATE,
 				selectedQuery: 'B',
 			});
@@ -222,7 +222,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_OPERATOR',
 				payload: AlertThresholdOperator.IS_BELOW,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_THRESHOLD_STATE,
 				operator: AlertThresholdOperator.IS_BELOW,
 			});
@@ -233,7 +233,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_MATCH_TYPE',
 				payload: AlertThresholdMatchType.ALL_THE_TIME,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_THRESHOLD_STATE,
 				matchType: AlertThresholdMatchType.ALL_THE_TIME,
 			});
@@ -255,7 +255,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_THRESHOLDS',
 				payload: newThresholds,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ALERT_THRESHOLD_STATE,
 				thresholds: newThresholds,
 			});
@@ -272,7 +272,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				thresholds: [],
 			};
 			const result = alertThresholdReducer(modifiedState, { type: 'RESET' });
-			expect(result).toEqual(INITIAL_ALERT_THRESHOLD_STATE);
+			expect(result).toStrictEqual(INITIAL_ALERT_THRESHOLD_STATE);
 		});
 
 		it(TEST_SET_INITIAL_STATE_FROM_PAYLOAD, () => {
@@ -289,7 +289,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_INITIAL_STATE',
 				payload: newState,
 			});
-			expect(result).toEqual(newState);
+			expect(result).toStrictEqual(newState);
 		});
 
 		it(TEST_RETURN_STATE_FOR_UNKNOWN_ACTION, () => {
@@ -298,7 +298,7 @@ describe('CreateAlertV2 Context Utils', () => {
 
 				{ type: UNKNOWN_ACTION_TYPE } as any,
 			);
-			expect(result).toEqual(INITIAL_ALERT_THRESHOLD_STATE);
+			expect(result).toStrictEqual(INITIAL_ALERT_THRESHOLD_STATE);
 		});
 	});
 
@@ -308,7 +308,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
 				payload: { toleranceLimit: 21, timeUnit: UniversalYAxisUnit.HOURS },
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				sendNotificationIfDataIsMissing: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.sendNotificationIfDataIsMissing,
@@ -323,7 +323,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
 				payload: true,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				sendNotificationIfDataIsMissing: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.sendNotificationIfDataIsMissing,
@@ -337,7 +337,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_ENFORCE_MINIMUM_DATAPOINTS',
 				payload: { minimumDatapoints: 10 },
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				enforceMinimumDatapoints: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.enforceMinimumDatapoints,
@@ -351,7 +351,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS',
 				payload: true,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				enforceMinimumDatapoints: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.enforceMinimumDatapoints,
@@ -365,7 +365,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_DELAY_EVALUATION',
 				payload: { delay: 10, timeUnit: UniversalYAxisUnit.HOURS },
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				delayEvaluation: { delay: 10, timeUnit: UniversalYAxisUnit.HOURS },
 			});
@@ -386,7 +386,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_EVALUATION_CADENCE',
 				payload: newCadence,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
@@ -400,7 +400,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_EVALUATION_CADENCE_MODE',
 				payload: 'custom',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_ADVANCED_OPTIONS_STATE,
 				evaluationCadence: {
 					...INITIAL_ADVANCED_OPTIONS_STATE.evaluationCadence,
@@ -415,7 +415,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				delayEvaluation: { delay: 10, timeUnit: UniversalYAxisUnit.HOURS },
 			};
 			const result = advancedOptionsReducer(modifiedState, { type: 'RESET' });
-			expect(result).toEqual(INITIAL_ADVANCED_OPTIONS_STATE);
+			expect(result).toStrictEqual(INITIAL_ADVANCED_OPTIONS_STATE);
 		});
 
 		it(TEST_SET_INITIAL_STATE_FROM_PAYLOAD, () => {
@@ -431,7 +431,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_INITIAL_STATE',
 				payload: newState,
 			});
-			expect(result).toEqual(newState);
+			expect(result).toStrictEqual(newState);
 		});
 
 		it(TEST_RETURN_STATE_FOR_UNKNOWN_ACTION, () => {
@@ -440,7 +440,7 @@ describe('CreateAlertV2 Context Utils', () => {
 
 				{ type: UNKNOWN_ACTION_TYPE } as any,
 			);
-			expect(result).toEqual(INITIAL_ADVANCED_OPTIONS_STATE);
+			expect(result).toStrictEqual(INITIAL_ADVANCED_OPTIONS_STATE);
 		});
 	});
 
@@ -455,7 +455,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_WINDOW_TYPE',
 				payload: 'rolling',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				windowType: 'rolling',
 				timeframe: INITIAL_EVALUATION_WINDOW_STATE.timeframe,
 				startingAt: INITIAL_EVALUATION_WINDOW_STATE.startingAt,
@@ -467,7 +467,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_WINDOW_TYPE',
 				payload: 'cumulative',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				windowType: 'cumulative',
 				timeframe: 'currentHour',
 				startingAt: INITIAL_EVALUATION_WINDOW_STATE.startingAt,
@@ -479,7 +479,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_TIMEFRAME',
 				payload: '10m0s',
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_EVALUATION_WINDOW_STATE,
 				timeframe: '10m0s',
 			});
@@ -496,7 +496,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_STARTING_AT',
 				payload: newStartingAt,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_EVALUATION_WINDOW_STATE,
 				startingAt: newStartingAt,
 			});
@@ -514,7 +514,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				},
 			};
 			const result = evaluationWindowReducer(modifiedState, { type: 'RESET' });
-			expect(result).toEqual(INITIAL_EVALUATION_WINDOW_STATE);
+			expect(result).toStrictEqual(INITIAL_EVALUATION_WINDOW_STATE);
 		});
 
 		it(TEST_SET_INITIAL_STATE_FROM_PAYLOAD, () => {
@@ -532,7 +532,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_INITIAL_STATE',
 				payload: newState,
 			});
-			expect(result).toEqual(newState);
+			expect(result).toStrictEqual(newState);
 		});
 
 		it(TEST_RETURN_STATE_FOR_UNKNOWN_ACTION, () => {
@@ -541,7 +541,7 @@ describe('CreateAlertV2 Context Utils', () => {
 
 				{ type: UNKNOWN_ACTION_TYPE } as any,
 			);
-			expect(result).toEqual(INITIAL_EVALUATION_WINDOW_STATE);
+			expect(result).toStrictEqual(INITIAL_EVALUATION_WINDOW_STATE);
 		});
 	});
 
@@ -555,7 +555,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					payload: notifications,
 				},
 			);
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_NOTIFICATION_SETTINGS_STATE,
 				multipleNotifications: notifications,
 			});
@@ -570,7 +570,7 @@ describe('CreateAlertV2 Context Utils', () => {
 				type: 'SET_MULTIPLE_NOTIFICATIONS',
 				payload: null,
 			});
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...modifiedState,
 				multipleNotifications: null,
 			});
@@ -590,7 +590,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					payload: reNotification,
 				},
 			);
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_NOTIFICATION_SETTINGS_STATE,
 				reNotification,
 			});
@@ -605,7 +605,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					payload: description,
 				},
 			);
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_NOTIFICATION_SETTINGS_STATE,
 				description,
 			});
@@ -619,7 +619,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					payload: true,
 				},
 			);
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				...INITIAL_NOTIFICATION_SETTINGS_STATE,
 				routingPolicies: true,
 			});
@@ -640,7 +640,7 @@ describe('CreateAlertV2 Context Utils', () => {
 			const result = notificationSettingsReducer(modifiedState, {
 				type: 'RESET',
 			});
-			expect(result).toEqual(INITIAL_NOTIFICATION_SETTINGS_STATE);
+			expect(result).toStrictEqual(INITIAL_NOTIFICATION_SETTINGS_STATE);
 		});
 
 		it(TEST_SET_INITIAL_STATE_FROM_PAYLOAD, () => {
@@ -662,7 +662,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					payload: newState,
 				},
 			);
-			expect(result).toEqual(newState);
+			expect(result).toStrictEqual(newState);
 		});
 
 		it(TEST_RETURN_STATE_FOR_UNKNOWN_ACTION, () => {
@@ -671,7 +671,7 @@ describe('CreateAlertV2 Context Utils', () => {
 
 				{ type: UNKNOWN_ACTION_TYPE } as any,
 			);
-			expect(result).toEqual(INITIAL_NOTIFICATION_SETTINGS_STATE);
+			expect(result).toStrictEqual(INITIAL_NOTIFICATION_SETTINGS_STATE);
 		});
 	});
 });

@@ -9,6 +9,7 @@ import {
 	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
+	ExtendedSeries,
 	FillMode,
 	LineInterpolation,
 	LineStyle,
@@ -27,7 +28,10 @@ let builders: PathBuilders | null = null;
 
 const DEFAULT_LINE_WIDTH = 2;
 export const POINT_SIZE_FACTOR = 2.5;
-export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
+export class UPlotSeriesBuilder extends ConfigBuilder<
+	SeriesProps,
+	ExtendedSeries
+> {
 	constructor(props: SeriesProps) {
 		super(props);
 		const pathBuilders = uPlot.paths;
@@ -205,8 +209,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		);
 	}
 
-	getConfig(): Series {
-		const { scaleKey, label, spanGaps, show = true } = this.props;
+	getConfig(): ExtendedSeries {
+		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
 
 		const resolvedLineColor = this.getLineColor();
 
@@ -233,6 +237,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			...lineConfig,
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
+			metric,
 		};
 	}
 }

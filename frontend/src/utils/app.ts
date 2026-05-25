@@ -16,12 +16,15 @@ export function extractDomain(email: string): string {
 	return emailParts[1];
 }
 
+const stripVersionPrefix = (version: string): string =>
+	version?.replace(/^v/i, '') ?? '';
+
 export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
 ): boolean => {
 	const versionCore = currentVersion?.split('-')[0];
-	return versionCore === latestVersion;
+	return stripVersionPrefix(versionCore) === stripVersionPrefix(latestVersion);
 };
 
 // list of forbidden tags to remove in dompurify

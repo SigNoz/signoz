@@ -47,7 +47,7 @@ describe('dashboardVariables - utilities and processors', () => {
 			},
 		];
 
-		test.each(testCases)(
+		it.each(testCases)(
 			'should update variable node when $scenario',
 			({ nodeToUpdate, expected }) => {
 				const updatedVariables: string[] = [];
@@ -57,7 +57,7 @@ describe('dashboardVariables - utilities and processors', () => {
 
 				onUpdateVariableNode(nodeToUpdate, graph, topologicalOrder, callback);
 
-				expect(updatedVariables).toEqual(expected);
+				expect(updatedVariables).toStrictEqual(expected);
 			},
 		);
 
@@ -66,7 +66,7 @@ describe('dashboardVariables - utilities and processors', () => {
 			onUpdateVariableNode('http_status_code', graph, [], (node) =>
 				updatedVariables.push(node),
 			);
-			expect(updatedVariables).toEqual([]);
+			expect(updatedVariables).toStrictEqual([]);
 		});
 	});
 
@@ -87,11 +87,11 @@ describe('dashboardVariables - utilities and processors', () => {
 					environment: [],
 				};
 
-				expect(buildParentDependencyGraph(graph)).toEqual(expected);
+				expect(buildParentDependencyGraph(graph)).toStrictEqual(expected);
 			});
 
 			it('should handle empty graph', () => {
-				expect(buildParentDependencyGraph({})).toEqual({});
+				expect(buildParentDependencyGraph({})).toStrictEqual({});
 			});
 		});
 
@@ -142,13 +142,13 @@ describe('dashboardVariables - utilities and processors', () => {
 					},
 				};
 
-				expect(buildDependencyGraph(graph)).toEqual(expected);
+				expect(buildDependencyGraph(graph)).toStrictEqual(expected);
 			});
 
 			it('should return empty transitiveDescendants for an empty graph', () => {
 				const result = buildDependencyGraph({});
-				expect(result.transitiveDescendants).toEqual({});
-				expect(result.order).toEqual([]);
+				expect(result.transitiveDescendants).toStrictEqual({});
+				expect(result.order).toStrictEqual([]);
 				expect(result.hasCycle).toBe(false);
 			});
 
@@ -159,7 +159,7 @@ describe('dashboardVariables - utilities and processors', () => {
 					c: [],
 				};
 				const result = buildDependencyGraph(linearGraph);
-				expect(result.transitiveDescendants).toEqual({
+				expect(result.transitiveDescendants).toStrictEqual({
 					a: ['b', 'c'],
 					b: ['c'],
 					c: [],
@@ -174,13 +174,13 @@ describe('dashboardVariables - utilities and processors', () => {
 					d: [],
 				};
 				const result = buildDependencyGraph(diamondGraph);
-				expect(result.transitiveDescendants.a).toEqual(
+				expect(result.transitiveDescendants.a).toStrictEqual(
 					expect.arrayContaining(['b', 'c', 'd']),
 				);
 				expect(result.transitiveDescendants.a).toHaveLength(3);
-				expect(result.transitiveDescendants.b).toEqual(['d']);
-				expect(result.transitiveDescendants.c).toEqual(['d']);
-				expect(result.transitiveDescendants.d).toEqual([]);
+				expect(result.transitiveDescendants.b).toStrictEqual(['d']);
+				expect(result.transitiveDescendants.c).toStrictEqual(['d']);
+				expect(result.transitiveDescendants.d).toStrictEqual([]);
 			});
 
 			it('should handle disconnected components in transitiveDescendants', () => {
@@ -191,10 +191,10 @@ describe('dashboardVariables - utilities and processors', () => {
 					y: [],
 				};
 				const result = buildDependencyGraph(disconnectedGraph);
-				expect(result.transitiveDescendants.a).toEqual(['b']);
-				expect(result.transitiveDescendants.b).toEqual([]);
-				expect(result.transitiveDescendants.x).toEqual(['y']);
-				expect(result.transitiveDescendants.y).toEqual([]);
+				expect(result.transitiveDescendants.a).toStrictEqual(['b']);
+				expect(result.transitiveDescendants.b).toStrictEqual([]);
+				expect(result.transitiveDescendants.x).toStrictEqual(['y']);
+				expect(result.transitiveDescendants.y).toStrictEqual([]);
 			});
 
 			it('should return empty transitiveDescendants for all leaf nodes', () => {
@@ -204,7 +204,7 @@ describe('dashboardVariables - utilities and processors', () => {
 					c: [],
 				};
 				const result = buildDependencyGraph(leafOnlyGraph);
-				expect(result.transitiveDescendants).toEqual({
+				expect(result.transitiveDescendants).toStrictEqual({
 					a: [],
 					b: [],
 					c: [],
@@ -225,11 +225,11 @@ describe('dashboardVariables - utilities and processors', () => {
 					environment: [],
 				};
 
-				expect(buildDependencies(variables)).toEqual(expected);
+				expect(buildDependencies(variables)).toStrictEqual(expected);
 			});
 
 			it('should handle empty variables array', () => {
-				expect(buildDependencies([])).toEqual({});
+				expect(buildDependencies([])).toStrictEqual({});
 			});
 		});
 	});

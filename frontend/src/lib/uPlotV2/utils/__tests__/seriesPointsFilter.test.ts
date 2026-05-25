@@ -78,7 +78,7 @@ describe('findSandwichedIndices', () => {
 		];
 		const yData = [1, null, null, 2];
 		const u = makeUPlot({ xData: [0, 1, 2, 3], yData });
-		expect(findSandwichedIndices(gaps, yData, u)).toEqual([]);
+		expect(findSandwichedIndices(gaps, yData, u)).toStrictEqual([]);
 	});
 
 	it('returns the index between two gaps that share a pixel boundary', () => {
@@ -90,7 +90,7 @@ describe('findSandwichedIndices', () => {
 		// posToIdx(10) → 2
 		const yData = [null, null, 5, null, null];
 		const u = makeUPlot({ xData: [0, 1, 2, 3, 4], yData, posToIdxFn: () => 2 });
-		expect(findSandwichedIndices(gaps, yData, u)).toEqual([2]);
+		expect(findSandwichedIndices(gaps, yData, u)).toStrictEqual([2]);
 	});
 
 	it('scans to nearest non-null when posToIdx lands on a null', () => {
@@ -101,7 +101,7 @@ describe('findSandwichedIndices', () => {
 		];
 		const yData = [null, null, null, 7, null];
 		const u = makeUPlot({ xData: [0, 1, 2, 3, 4], yData, posToIdxFn: () => 2 });
-		expect(findSandwichedIndices(gaps, yData, u)).toEqual([3]);
+		expect(findSandwichedIndices(gaps, yData, u)).toStrictEqual([3]);
 	});
 
 	it('returns multiple indices when several gap pairs share boundaries', () => {
@@ -118,7 +118,7 @@ describe('findSandwichedIndices', () => {
 			yData,
 			posToIdxFn: (pos) => (pos === 10 ? 1 : 3),
 		});
-		expect(findSandwichedIndices(gaps, yData, u)).toEqual([1, 3]);
+		expect(findSandwichedIndices(gaps, yData, u)).toStrictEqual([1, 3]);
 	});
 });
 

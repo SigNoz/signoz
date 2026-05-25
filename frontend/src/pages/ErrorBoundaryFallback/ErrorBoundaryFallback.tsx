@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Home, LifeBuoy } from 'lucide-react';
+import { Home, LifeBuoy } from '@signozhq/icons';
 import { withBasePath } from 'utils/basePath';
 
 import cloudUrl from '@/assets/Images/cloud.svg';

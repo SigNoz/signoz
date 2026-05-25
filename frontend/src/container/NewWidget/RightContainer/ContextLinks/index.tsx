@@ -16,7 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Pencil, Plus, Trash2 } from '@signozhq/icons';
 import {
 	ContextLinkProps,
 	ContextLinksData,

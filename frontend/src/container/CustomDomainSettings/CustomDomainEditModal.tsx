@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
-import { Button, DialogWrapper, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';

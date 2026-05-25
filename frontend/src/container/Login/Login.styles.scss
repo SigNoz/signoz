@@ -160,55 +160,6 @@
 	}
 }
 
-.lightMode {
-	.login-form-card {
-		background: var(--l2-background);
-	}
-
-	.login-error-container {
-		.error-content {
-			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-			border-color: color-mix(in srgb, var(--danger-background) 20%, transparent);
-
-			&__error-code {
-				color: var(--l2-foreground);
-			}
-
-			&__error-message {
-				color: var(--l1-foreground);
-			}
-
-			&__docs-button {
-				color: var(--l1-foreground);
-				border-color: var(--l1-border);
-				background: transparent;
-
-				&:hover {
-					color: var(--l2-foreground);
-					border-color: var(--l1-border);
-					background: transparent;
-				}
-			}
-
-			&__message-badge-label-text {
-				color: var(--l2-foreground);
-			}
-
-			&__message-item {
-				color: var(--l1-foreground);
-
-				&::before {
-					background: var(--l3-background);
-				}
-			}
-
-			&__scroll-hint-text {
-				color: var(--l2-foreground);
-			}
-		}
-	}
-}
-
 .password-label-container {
 	display: flex;
 	justify-content: space-between;

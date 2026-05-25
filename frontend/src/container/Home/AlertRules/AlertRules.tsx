@@ -8,7 +8,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { toCompositeMetricQuery } from 'types/api/alerts/convert';

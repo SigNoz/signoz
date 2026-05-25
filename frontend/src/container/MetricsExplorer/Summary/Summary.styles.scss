@@ -142,13 +142,6 @@
 				}
 			}
 
-			.progress-container {
-				.ant-progress-bg {
-					height: 8px !important;
-					border-radius: 4px;
-				}
-			}
-
 			.ant-table-tbody > tr:hover > td {
 				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
 			}
@@ -227,29 +220,6 @@
 		min-height: 400px;
 		gap: 16px;
 		padding-top: 32px;
-	}
-}
-
-.lightMode {
-	.metrics-table-container {
-		.ant-table {
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
-		}
-
-		.ant-pagination {
-			.ant-pagination-item {
-				&-active {
-					background: var(--primary-background);
-					border-color: var(--bg-robin-500);
-
-					a {
-						color: var(--l1-foreground) !important;
-					}
-				}
-			}
-		}
 	}
 }
 

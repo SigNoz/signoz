@@ -204,7 +204,7 @@ describe('PlotContext', () => {
 			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
 
 			// index 0 is skipped, so we expect calls for 1 and 2
-			expect(setSeries).toEqual([
+			expect(setSeries).toStrictEqual([
 				[1, { show: true }],
 				[2, { show: false }],
 			]);
@@ -249,7 +249,7 @@ describe('PlotContext', () => {
 			const setSeries = (plot.setSeries as jest.Mock).mock.calls;
 
 			// After reset, all non-zero series should be shown
-			expect(setSeries).toEqual([
+			expect(setSeries).toStrictEqual([
 				[1, { show: true }],
 				[2, { show: true }],
 			]);

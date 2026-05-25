@@ -29,7 +29,7 @@ describe('FilterAlerts', () => {
 
 		const result = FilterAlerts(alerts, filters);
 
-		expect(result).toEqual([criticalAlert]);
+		expect(result).toStrictEqual([criticalAlert]);
 	});
 
 	it('includes alerts when any filter matches', () => {
@@ -54,7 +54,7 @@ describe('FilterAlerts', () => {
 		const result = FilterAlerts(alerts, filters);
 
 		expect(result).toHaveLength(2);
-		expect(result).toEqual([severityAlert, teamAlert]);
+		expect(result).toStrictEqual([severityAlert, teamAlert]);
 	});
 
 	it('matches labels even when filters contain surrounding whitespace', () => {
@@ -67,7 +67,7 @@ describe('FilterAlerts', () => {
 
 		const result = FilterAlerts(alerts, filters);
 
-		expect(result).toEqual([alert]);
+		expect(result).toStrictEqual([alert]);
 	});
 
 	it('ignores filters that do not contain a key/value delimiter', () => {
@@ -80,6 +80,6 @@ describe('FilterAlerts', () => {
 
 		const result = FilterAlerts(alerts, filters);
 
-		expect(result).toEqual([]);
+		expect(result).toStrictEqual([]);
 	});
 });

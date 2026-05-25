@@ -111,35 +111,3 @@
 .add-context-link-button {
 	width: 100%;
 }
-
-.lightMode {
-	.context-links-text {
-		color: var(--l2-background);
-	}
-
-	.context-link-item {
-		&:hover {
-			background-color: var(--l2-background);
-		}
-
-		.context-link-label {
-			color: var(--l1-border);
-		}
-
-		.context-link-url {
-			color: var(--l1-border);
-		}
-
-		.drag-handle-icon {
-			color: var(--l1-border);
-		}
-
-		.delete-context-link-btn {
-			&:hover {
-				color: var(--danger-background);
-				border-color: var(--danger-background);
-				background-color: var(--bg-cherry-100);
-			}
-		}
-	}
-}
