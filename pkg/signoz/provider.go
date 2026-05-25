@@ -205,6 +205,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
 		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSourceToDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateCloudIntegrationDashboardsFactory(sqlstore),
 		sqlmigration.NewAddPinnedDashboardFactory(sqlstore, sqlschema),
 	)
 }

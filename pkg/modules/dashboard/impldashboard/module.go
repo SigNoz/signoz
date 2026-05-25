@@ -40,8 +40,8 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 	}
 }
 
-func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
-	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, dashboardtypes.SourceUser, postableDashboard)
+func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postableDashboard dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := dashboardtypes.NewDashboard(orgID, createdBy, source, postableDashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +162,10 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	return nil
+}
+
+func (module *module) DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.Delete(ctx, orgID, id)
 }
 
 func (module *module) GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error) {

@@ -26,7 +26,7 @@ func buildClusterRecords(
 	records := make([]inframonitoringtypes.ClusterRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		clusterName := labels[clusterNameAttrKey]
+		clusterName := labels[inframonitoringtypes.ClusterNameAttrKey]
 
 		record := inframonitoringtypes.ClusterRecord{ // initialize with default values
 			ClusterName:              clusterName,
@@ -87,6 +87,9 @@ func (m *module) getTopClusterGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.ClusterNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToClustersQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
