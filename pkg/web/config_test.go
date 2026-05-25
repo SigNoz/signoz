@@ -38,6 +38,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 		Enabled:   false,
 		Index:     def.Index,
 		Directory: def.Directory,
+		Settings:  def.Settings,
 	}
 
 	assert.Equal(t, expected, actual)
