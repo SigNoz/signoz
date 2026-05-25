@@ -370,6 +370,36 @@ export async function findDashboardIdByTitle(
 	return body.data.find((d) => d.data.title === title)?.id;
 }
 
+/** Shape of the persisted dashboard payload returned by GET /api/v1/dashboards/<id>. */
+export interface DashboardData {
+	title: string;
+	description?: string;
+	tags?: string[];
+	widgets?: Array<{ id?: string; title?: string }>;
+	variables?: Record<string, Record<string, unknown>>;
+	layout?: unknown[];
+}
+
+/**
+ * Fetch the persisted dashboard payload via API. Use this for "did the save
+ * actually land on the server?" assertions — UI-only checks can pass on
+ * optimistic-update bugs.
+ */
+export async function fetchDashboardData(
+	page: Page,
+	id: string,
+): Promise<DashboardData> {
+	const token = await authToken(page);
+	const res = await page.request.get(`/api/v1/dashboards/${id}`, {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!res.ok()) {
+		throw new Error(`GET /dashboards/${id} ${res.status()}: ${await res.text()}`);
+	}
+	const body = (await res.json()) as { data: { data: DashboardData } };
+	return body.data.data;
+}
+
 // ─── List page UI helpers ────────────────────────────────────────────────
 
 /**
@@ -467,8 +497,7 @@ export async function renameDashboardViaToolbar(
  *      AutoComplete and select it from the dropdown. For logs/traces: switch
  *      the data-source selector to LOGS / TRACES; default Query Builder state
  *      is sufficient (queries.json query strings are empty by design).
- *   5. Click Save Changes, confirm the modal, and wait for the
- *      PUT /api/v1/dashboards/<id> response.
+ *   5. Click Save Changes and wait for the PUT /api/v1/dashboards/<id> response.
  *
  * Throws if the PUT response is not 2xx. After return, the page is back on
  * the dashboard detail page; the caller asserts the panel rendered.
@@ -516,12 +545,6 @@ export async function configureAndSavePanel(
 			r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
 	);
 	await page.getByTestId('new-widget-save').click();
-
-	// Confirmation modal (title varies: "Save Widget" vs "Unsaved Changes" —
-	// don't assert title, just click OK on the topmost dialog).
-	const confirmModal = page.getByRole('dialog').last();
-	await confirmModal.waitFor({ state: 'visible' });
-	await confirmModal.getByRole('button', { name: /^OK$/i }).click();
 
 	const res = await putResponse;
 	if (!res.ok()) {
