@@ -65,6 +65,20 @@ func newConfig() factory.Config {
 		Enabled:   true,
 		Index:     "index.html",
 		Directory: "/etc/signoz/web",
+		Settings: Settings{
+			Sentry: Sentry{
+				Enabled: false,
+			},
+			Posthog: Posthog{
+				Enabled: false,
+			},
+			Pylon: Pylon{
+				Enabled: false,
+			},
+			Appcues: Appcues{
+				Enabled: false,
+			},
+		},
 	}
 }
 

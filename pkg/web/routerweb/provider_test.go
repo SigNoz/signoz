@@ -3,7 +3,6 @@ package routerweb
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -55,7 +54,7 @@ func httpGet(t *testing.T, url string) string {
 
 func expectedHTML(baseHref string, settings web.Settings) string {
 	settingsJSON, _ := json.Marshal(settings)
-	return `<html><head><base href="` + baseHref + `" /></head><body><script>window.signozBootData = { settings: ` + string(settingsJSON) + ` }</script>Welcome to test data!!!</body></html>`
+	return "<html>\n  <head>\n    <base href=\"" + baseHref + "\" />\n  </head>\n  <body>\n    <script>\n      window.signozBootData = { settings: " + string(settingsJSON) + " }\n    </script>\n    Welcome to test data!!!\n  </body>\n</html>"
 }
 
 func TestServeTemplatedIndex(t *testing.T) {
@@ -139,7 +138,6 @@ func TestServeTemplatedIndex(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			base := startServer(t, testCase.webConfig, testCase.globalConfig)
 
-			fmt.Println(testCase.expected)
 			assert.Equal(t, testCase.expected, strings.TrimSuffix(httpGet(t, base+testCase.path), "\n"))
 		})
 	}
