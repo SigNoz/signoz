@@ -367,9 +367,9 @@
             "id": "31d3f13b-27d5-4291-9fb3-d5d5708a72f3",
             "modificationUUID": "e4a9edf1-acd0-48b7-8a35-1b4bb668408d",
             "multiSelect": false,
-            "name": "mysql_instance_endpoint",
+            "name": "mysql.instance.endpoint",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'mysql_instance_endpoint') as mysql_instance_endpoint\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mysql_uptime'\nGROUP BY mysql_instance_endpoint",
+            "queryValue": "SELECT JSONExtractString(labels, 'mysql.instance.endpoint') as `mysql.instance.endpoint`\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'mysql.uptime'\nGROUP BY `mysql.instance.endpoint`",
             "selectedValue": "",
             "showALLOption": false,
             "sort": "ASC",
@@ -393,7 +393,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_buffer_pool_usage",
+                                    "metricName": "mysql.buffer_pool.pages",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -404,7 +404,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -529,7 +529,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_buffer_pool_pages",
+                                    "metricName": "mysql.buffer_pool.pages",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -540,7 +540,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -658,7 +658,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_buffer_pool_data_pages",
+                                    "metricName": "mysql.buffer_pool.data_pages",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -669,7 +669,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -788,7 +788,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_buffer_pool_page_flushes",
+                                    "metricName": "mysql.buffer_pool.page_flushes",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -799,7 +799,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [],
@@ -915,7 +915,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_table_io_wait_count",
+                                    "metricName": "mysql.table.io.wait.count",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -926,7 +926,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1045,7 +1045,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_table_io_wait_count",
+                                    "metricName": "mysql.table.io.wait.count",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1056,7 +1056,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1175,7 +1175,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_table_io_wait_count",
+                                    "metricName": "mysql.table.io.wait.count",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1186,7 +1186,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1305,7 +1305,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_handlers",
+                                    "metricName": "mysql.handlers",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1316,7 +1316,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1329,7 +1329,7 @@
                                 }
                             ],
                             "having": {
-                                "expression": "sum(mysql_handlers) \u003e 0"
+                                "expression": "sum(mysql.handlers) \u003e 0"
                             },
                             "legend": "{{kind}}",
                             "limit": null,
@@ -1434,7 +1434,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_locks",
+                                    "metricName": "mysql.locks",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1445,7 +1445,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1563,7 +1563,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_log_operations",
+                                    "metricName": "mysql.log_operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1574,7 +1574,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1693,7 +1693,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_connection_count",
+                                    "metricName": "mysql.connection.count",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1704,7 +1704,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [],
@@ -1720,7 +1720,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_connection_errors",
+                                    "metricName": "mysql.connection.errors",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1731,7 +1731,7 @@
                             "disabled": false,
                             "expression": "B",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1745,7 +1745,7 @@
                                 }
                             ],
                             "having": {
-                                "expression": "sum(mysql_connection_errors) \u003e 0"
+                                "expression": "sum(mysql.connection.errors) \u003e 0"
                             },
                             "legend": "Error count: {{error}}",
                             "limit": null,
@@ -1850,7 +1850,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_opened_resources",
+                                    "metricName": "mysql.opened_resources",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1861,7 +1861,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -1874,7 +1874,7 @@
                                 }
                             ],
                             "having": {
-                                "expression": "sum(mysql_opened_resources) \u003e 0"
+                                "expression": "sum(mysql.opened_resources) \u003e 0"
                             },
                             "legend": "{{kind}}",
                             "limit": null,
@@ -1979,7 +1979,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_operations",
+                                    "metricName": "mysql.operations",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1990,7 +1990,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -2109,7 +2109,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_row_locks",
+                                    "metricName": "mysql.row_locks",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2120,7 +2120,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -2238,7 +2238,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_threads",
+                                    "metricName": "mysql.threads",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2249,7 +2249,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -2367,7 +2367,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_row_operations",
+                                    "metricName": "mysql.row_operations",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2378,7 +2378,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [
@@ -2497,7 +2497,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "mysql_prepared_statements",
+                                    "metricName": "mysql.prepared_statements",
                                     "reduceTo": "sum",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2508,7 +2508,7 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "mysql_instance_endpoint = $mysql_instance_endpoint"
+                                "expression": "mysql.instance.endpoint = $mysql.instance.endpoint"
                             },
                             "functions": [],
                             "groupBy": [

@@ -75,6 +75,7 @@ function TraceDetailsV3(): JSX.Element {
 	});
 
 	const allSpansRef = useRef<SpanV3[]>([]);
+	const deepLinkResolvedRef = useRef(false);
 
 	// Refetch only when the URL target isn't already loaded. Keeps row clicks
 	// and other in-window URL navigation from triggering a backend window slide.
@@ -175,12 +176,36 @@ function TraceDetailsV3(): JSX.Element {
 		}
 	}, [traceData, isFullDataLoaded]);
 
-	// Frontend mode: auto-expand ancestors of the selected span so it becomes visible
+	// Tracks whether we've already done the initial URL→selectedSpan handoff
+	//Lets `interestedSpanId` stay purely as the refetch trigger in frontend mode.
 	useEffect(() => {
-		if (!isFullDataLoaded || !interestedSpanId.spanId || allSpans.length === 0) {
+		if (deepLinkResolvedRef.current) {
 			return;
 		}
-		const ancestors = getAncestorSpanIds(allSpans, interestedSpanId.spanId);
+		if (allSpans.length === 0) {
+			return;
+		}
+		if (selectedSpanId) {
+			const span = allSpans.find((s) => s.span_id === selectedSpanId);
+			if (!span) {
+				// Span not in the current window — wait for more data (backend
+				// pagination) before marking resolved.
+				return;
+			}
+			setSelectedSpan(span);
+		} else {
+			setSelectedSpan((prev) => prev ?? allSpans[0]);
+		}
+		deepLinkResolvedRef.current = true;
+	}, [selectedSpanId, allSpans]);
+
+	// Frontend mode: auto-expand ancestors of the URL-targeted span so it's
+	// visible. Keyed on URL `spanId`(selectedSpanId).
+	useEffect(() => {
+		if (!isFullDataLoaded || !selectedSpanId || allSpans.length === 0) {
+			return;
+		}
+		const ancestors = getAncestorSpanIds(allSpans, selectedSpanId);
 		if (ancestors.size === 0) {
 			return;
 		}
@@ -203,7 +228,7 @@ function TraceDetailsV3(): JSX.Element {
 			}
 			return next;
 		});
-	}, [isFullDataLoaded, interestedSpanId.spanId, allSpans]);
+	}, [isFullDataLoaded, selectedSpanId, allSpans]);
 
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 
@@ -217,7 +242,7 @@ function TraceDetailsV3(): JSX.Element {
 		() =>
 			(getLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-			) as SpanDetailVariant) || SpanDetailVariant.DOCKED,
+			) as SpanDetailVariant) || SpanDetailVariant.DIALOG,
 	);
 
 	const handleVariantChange = useCallback(

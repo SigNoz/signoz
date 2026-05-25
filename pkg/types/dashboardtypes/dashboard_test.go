@@ -66,7 +66,7 @@ func TestCanUpdate_MultipleDeletions_ByDiff(t *testing.T) {
 			initial := StorableDashboardData{
 				"widgets": makeTestWidgets("a", "b", "c"),
 			}
-			d, err := NewDashboard(orgID, "tester", initial)
+			d, err := NewDashboard(orgID, "tester", SourceUser, initial)
 			assert.NoError(t, err)
 
 			updated := StorableDashboardData{

@@ -292,6 +292,8 @@ function FullView({
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
+	const showEditBtn = editWidget && dashboardEditView;
+
 	return (
 		<div className="full-view-container">
 			<OverlayScrollbar>
@@ -306,7 +308,7 @@ function FullView({
 												Reset Query
 											</Button>
 										)}
-										{editWidget && (
+										{showEditBtn && (
 											<Button
 												className="switch-edit-btn"
 												disabled={response.isFetching || response.isLoading}
