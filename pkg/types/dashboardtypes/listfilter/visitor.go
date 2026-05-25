@@ -137,9 +137,9 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		}
 		switch dashboardtypes.DSLKey(key) {
 		case dashboardtypes.DSLKeyName:
-			return v.emitJSONStringComparison(ctx, op, "$.data.display.name")
+			return v.emitJSONStringComparison(ctx, op, "$.spec.display.name")
 		case dashboardtypes.DSLKeyDescription:
-			return v.emitJSONStringComparison(ctx, op, "$.data.display.description")
+			return v.emitJSONStringComparison(ctx, op, "$.spec.display.description")
 		case dashboardtypes.DSLKeyCreatedAt:
 			return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
 		case dashboardtypes.DSLKeyUpdatedAt:

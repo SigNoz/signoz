@@ -74,7 +74,7 @@ func TestCompile_Name(t *testing.T) {
 		{
 			subtestName:       "name =",
 			dslQueryToCompile: `name = 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') = ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs:      []any{"overview"},
 		},
 		{
@@ -82,25 +82,25 @@ func TestCompile_Name(t *testing.T) {
 			// strips whichever quote pair surrounds the value.
 			subtestName:       "name = with double-quoted value",
 			dslQueryToCompile: `name = "something"`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') = ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs:      []any{"something"},
 		},
 		{
 			subtestName:       "name CONTAINS",
 			dslQueryToCompile: `name CONTAINS 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
 			expectedArgs:      []any{"%overview%"},
 		},
 		{
 			subtestName:       "name ILIKE — emitted as LOWER(col) LIKE LOWER(?) for dialect parity",
 			dslQueryToCompile: `name ILIKE 'Prod%'`,
-			expectedSQL:       `lower(json_extract("dashboard"."data", '$.data.display.name')) LIKE LOWER(?)`,
+			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?)`,
 			expectedArgs:      []any{"Prod%"},
 		},
 		{
 			subtestName:       "CONTAINS escapes % in user input",
 			dslQueryToCompile: `name CONTAINS '50%'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
 			expectedArgs:      []any{`%50\%%`},
 		},
 	})
@@ -325,19 +325,19 @@ func TestCompile_NOT(t *testing.T) {
 		{
 			subtestName:       "NOT on a single comparison",
 			dslQueryToCompile: `NOT name = 'foo'`,
-			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)`,
+			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
 			expectedArgs:      []any{"foo"},
 		},
 		{
 			subtestName:       "NOT binds tightly to its primary in an AND chain",
 			dslQueryToCompile: `NOT name = 'foo' AND created_by = 'alice'`,
-			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.data.display.name') = ?) AND dashboard.created_by = ?`,
+			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?) AND dashboard.created_by = ?`,
 			expectedArgs:      []any{"foo", "alice"},
 		},
 		{
 			subtestName:       "NOT applied to the second term in an AND chain",
 			dslQueryToCompile: `locked = true AND NOT name = 'foo'`,
-			expectedSQL:       `dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)`,
+			expectedSQL:       `dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
 			expectedArgs:      []any{true, "foo"},
 		},
 		{
@@ -349,7 +349,7 @@ func TestCompile_NOT(t *testing.T) {
 		{
 			subtestName:       "double NOT via parens",
 			dslQueryToCompile: `NOT (NOT name = 'foo')`,
-			expectedSQL:       `NOT ((NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)))`,
+			expectedSQL:       `NOT ((NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)))`,
 			expectedArgs:      []any{"foo"},
 		},
 		{
@@ -380,7 +380,7 @@ func TestCompile_NOT(t *testing.T) {
 						AND t.value = ?
 					)
 				)
-				AND json_extract("dashboard"."data", '$.data.display.name') = ?`,
+				AND json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs: []any{"team", "pulse", "overview"},
 		},
 	})
@@ -392,7 +392,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
 			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
-				json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+				json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
@@ -441,7 +441,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
-					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				)
 				AND (
 					EXISTS (
@@ -451,7 +451,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
-					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				)`,
 			expectedArgs: []any{"database", "sql", "redis", "mongo", "%database%", "team", "pulse", "%pulse%"},
 		},
