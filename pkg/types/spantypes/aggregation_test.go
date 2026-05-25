@@ -33,7 +33,7 @@ func buildTraceFromSpans(spans ...*WaterfallSpan) *WaterfallTrace {
 			endTime = end
 		}
 	}
-	return NewWaterfallTrace(startTime, endTime, uint64(len(spanMap)), 0, spanMap, nil, nil, false)
+	return NewWaterfallTrace(startTime, endTime, uint64(len(spanMap)), 0, spanMap, nil, false)
 }
 
 var (
