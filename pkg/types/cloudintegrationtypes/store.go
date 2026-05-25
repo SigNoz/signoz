@@ -39,13 +39,30 @@ type Store interface {
 	// ListServices returns all the cloud integration services for the given cloud integration id
 	ListServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
 
+	// ListSharedServices returns a map of service type to services from other connected accounts
+	// that share that service type with the given cloudIntegrationID.
+	// Only service types present in the given account are included.
+	// The caller is responsible for any further filtering (e.g. metrics-enabled checks).
+	ListSharedServices(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, cloudIntegrationID valuer.UUID) (map[ServiceID][]*StorableCloudIntegrationService, error)
+
 	// CreateService creates a new cloud integration service
 	CreateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
+	// DeleteServicesByCloudIntegrationID deletes all services for the given cloud integration id
+	DeleteServicesByCloudIntegrationID(ctx context.Context, orgID, cloudIntegrationID valuer.UUID) error
+
 	RunInTx(context.Context, func(ctx context.Context) error) error
+
+	CreateIntegrationDashboard(ctx context.Context, row *StorableIntegrationDashboard) error
+
+	GetIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slug string) (*StorableIntegrationDashboard, error)
+
+	ListIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slugPrefix string) ([]*StorableIntegrationDashboard, error)
+
+	DeleteIntegrationDashboardBySlug(ctx context.Context, orgID valuer.UUID, provider IntegrationDashboardProviderType, slug string) error
 }
 
 type ServiceDefinitionStore interface {

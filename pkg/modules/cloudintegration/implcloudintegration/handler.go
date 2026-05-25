@@ -380,7 +380,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = handler.module.CreateService(ctx, orgID, cloudIntegrationService, provider)
+		err = handler.module.CreateService(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), cloudIntegrationService, provider)
 	} else {
 		err = svc.CloudIntegrationService.Update(provider, serviceID, req.Config)
 		if err != nil {
@@ -388,7 +388,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = handler.module.UpdateService(ctx, orgID, svc.CloudIntegrationService, provider)
+		err = handler.module.UpdateService(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.IdentityID()), svc.CloudIntegrationService, provider)
 	}
 	if err != nil {
 		render.Error(rw, err)

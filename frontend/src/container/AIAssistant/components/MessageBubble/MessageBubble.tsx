@@ -144,7 +144,7 @@ export default function MessageBubble({
 						)}
 
 						{!isUser && message.actions && message.actions.length > 0 && (
-							<ActionsSection actions={message.actions} />
+							<ActionsSection actions={message.actions} messageId={message.id} />
 						)}
 					</div>
 				</div>
