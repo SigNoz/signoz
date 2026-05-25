@@ -32,12 +32,10 @@ type Config struct {
 
 func newConfig() factory.Config {
 	return Config{
-		Interval: 6 * time.Hour,
-		Backfill: true,
-		// Negative sentinels so defaults track Interval if a user only
-		// overrides Interval. Resolved at use time.
-		MaxStartJitter: -1,
-		MaxTickJitter:  -1,
+		Interval:       6 * time.Hour,
+		Backfill:       true,
+		MaxStartJitter: -1, // Negative sentinels. Resolved at use time unless explicitly set.
+		MaxTickJitter:  -1, // Negative sentinels. Resolved at use time unless explicitly set.
 	}
 }
 
@@ -50,11 +48,11 @@ func (c Config) Validate() error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::interval must be between 5m and 24h")
 	}
 
-	if c.MaxStartJitter >= 0 && c.MaxStartJitter > c.Interval {
+	if c.MaxStartJitter > c.Interval {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::max_start_jitter must be between 0 and interval")
 	}
 
-	if c.MaxTickJitter >= 0 && c.MaxTickJitter >= c.Interval {
+	if c.MaxTickJitter >= c.Interval {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "meterreporter::max_tick_jitter must be in [0, interval)")
 	}
 
