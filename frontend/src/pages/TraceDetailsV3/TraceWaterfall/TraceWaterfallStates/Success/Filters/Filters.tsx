@@ -289,78 +289,107 @@ function Filters({
 		setCurrentSearchedIndex((prev) => prev + 1);
 	}, [currentSearchedIndex, handlePrevNext]);
 
-	const resultNav = hasExpression ? (
-		<div className={styles.resultNav}>
-			<QueryResult
-				hasExpression={hasExpression}
-				hasResults={hasResults}
-				isFetching={isFetching}
-				error={error}
-				noData={noData}
-				currentIndex={currentSearchedIndex}
-				total={filteredSpanIds.length}
-				onPrev={handlePrev}
-				onNext={handleNext}
-			/>
-			<TooltipRoot>
-				<TooltipTrigger asChild>
-					<Button
-						variant="ghost"
-						size="icon"
-						color="secondary"
-						onClick={handleClear}
-					>
-						<X size={14} />
-					</Button>
-				</TooltipTrigger>
-				<TooltipContent>Clear filter</TooltipContent>
-			</TooltipRoot>
+	const pill = (
+		/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+		<div className={styles.pill} onClick={onExpand}>
+			<Search size={12} />
+			<span className={styles.pillText}>{expression || 'Search...'}</span>
+			{expression && <span className={styles.pillIndicator} />}
 		</div>
-	) : null;
+	);
 
-	// --- COLLAPSED VIEW ---
-	if (!isExpanded) {
-		const pill = (
-			/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-			<div className={styles.pill} onClick={onExpand}>
-				<Search size={12} />
-				<span className={styles.pillText}>{expression || 'Search...'}</span>
-				{expression && <span className={styles.pillIndicator} />}
-			</div>
-		);
+	const pillWithPopover = expression ? (
+		<TooltipRoot>
+			<TooltipTrigger asChild>{pill}</TooltipTrigger>
+			<TooltipContent side="bottom" align="start">
+				<div className={styles.pillPopover}>
+					<div className={styles.pillPopoverHeader}>
+						<Typography.Text>Search query</Typography.Text>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							onClick={(): void => {
+								setCopy(expression);
+								toast.success('Copied to clipboard', {
+									richColors: false,
+									position: 'top-right',
+								});
+							}}
+						>
+							<Copy size={12} />
+						</Button>
+					</div>
+					<div className={styles.pillPopoverExpression}>{expression}</div>
+				</div>
+			</TooltipContent>
+		</TooltipRoot>
+	) : (
+		pill
+	);
 
-		return (
-			<TooltipProvider>
-				<div className={styles.root}>
-					{expression ? (
-						<TooltipRoot>
-							<TooltipTrigger asChild>{pill}</TooltipTrigger>
-							<TooltipContent side="bottom" align="start">
-								<div className={styles.pillPopover}>
-									<div className={styles.pillPopoverHeader}>
-										<Typography.Text>Search query</Typography.Text>
-										<Button
-											variant="ghost"
-											size="icon"
-											color="secondary"
-											onClick={(): void => {
-												setCopy(expression);
-												toast.success('Copied to clipboard', {
-													richColors: false,
-													position: 'top-right',
-												});
-											}}
-										>
-											<Copy size={12} />
-										</Button>
-									</div>
-									<div className={styles.pillPopoverExpression}>{expression}</div>
-								</div>
-							</TooltipContent>
-						</TooltipRoot>
+	// Mode-conditional render: only one of (pill | QuerySearch) is mounted
+	// at a time. Collapsing unmounts the editor — half-written queries are
+	// dropped, so collapse can't accidentally commit a malformed expression
+	// and fire an erroring /query_range request.
+	return (
+		<TooltipProvider>
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+			<div
+				className={cx(styles.root, isExpanded && styles.isExpanded)}
+				ref={containerRef}
+				onBlur={(e): void => {
+					const relatedTarget = e.relatedTarget as Node | null;
+					const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
+					if (!blurredIntoSelf) {
+						handleBlur();
+					}
+				}}
+			>
+				{isExpanded && (
+					<div className={styles.categoryControls}>
+						<ToggleGroup
+							type="single"
+							value={selectedCategory}
+							onChange={(value): void => {
+								if (value) {
+									handleCategoryChange(value as SpanCategory);
+								}
+							}}
+							size="sm"
+						>
+							{categories.map((category) => (
+								<ToggleGroupItem key={category} value={category}>
+									{category}
+								</ToggleGroupItem>
+							))}
+						</ToggleGroup>
+					</div>
+				)}
+
+				<div className={styles.searchInput}>
+					{isExpanded ? (
+						<div className={styles.searchAndNav}>
+							<div className={styles.searchContainer}>
+								<QuerySearch
+									queryData={{
+										...BASE_FILTER_QUERY,
+										filters,
+										filter: { expression },
+									}}
+									onChange={handleExpressionChange}
+									onRun={handleRunQuery}
+									dataSource={DataSource.TRACES}
+									placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+								/>
+							</div>
+						</div>
 					) : (
-						pill
+						<div className={styles.searchPill}>{pillWithPopover}</div>
 					)}
+				</div>
+
+				<div className={styles.resultActions}>
 					<QueryResult
 						hasExpression={hasExpression}
 						hasResults={hasResults}
@@ -371,76 +400,43 @@ function Filters({
 						total={filteredSpanIds.length}
 						onPrev={handlePrev}
 						onNext={handleNext}
-						showNavigation={false}
+						showNavigation={isExpanded}
 					/>
-					{highlightErrorsToggle}
+					{isExpanded && (
+						<div className={styles.expandedActions}>
+							{hasExpression && (
+								<TooltipRoot>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											color="secondary"
+											onClick={handleClear}
+										>
+											<X size={14} />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>Clear filter</TooltipContent>
+								</TooltipRoot>
+							)}
+							<TooltipRoot>
+								<TooltipTrigger asChild>
+									<Button
+										variant="ghost"
+										size="icon"
+										color="secondary"
+										onClick={onCollapse}
+									>
+										<ChevronsRight size={14} />
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>Collapse filters</TooltipContent>
+							</TooltipRoot>
+						</div>
+					)}
 				</div>
-			</TooltipProvider>
-		);
-	}
 
-	// --- EXPANDED VIEW ---
-	return (
-		<TooltipProvider>
-			<div className={cx(styles.root, styles.isExpanded)}>
-				<ToggleGroup
-					type="single"
-					value={selectedCategory}
-					onChange={(value): void => {
-						if (value) {
-							handleCategoryChange(value as SpanCategory);
-						}
-					}}
-					size="sm"
-				>
-					{categories.map((category) => (
-						<ToggleGroupItem key={category} value={category}>
-							{category}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
-				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-				<div
-					className={styles.searchAndNav}
-					ref={containerRef}
-					onBlur={(e): void => {
-						const relatedTarget = e.relatedTarget as Node | null;
-						const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
-						if (!blurredIntoSelf) {
-							handleBlur();
-						}
-					}}
-				>
-					<div className={styles.searchContainer}>
-						<QuerySearch
-							queryData={{
-								...BASE_FILTER_QUERY,
-								filters,
-								filter: { expression },
-							}}
-							onChange={handleExpressionChange}
-							onRun={handleRunQuery}
-							dataSource={DataSource.TRACES}
-							placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-						/>
-					</div>
-					<div className={styles.resultNavSlot}>{resultNav}</div>
-				</div>
-				{highlightErrorsToggle}
-				<TooltipRoot>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							className={styles.collapseBtn}
-							onClick={onCollapse}
-						>
-							<ChevronsRight size={14} />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent>Collapse filters</TooltipContent>
-				</TooltipRoot>
+				<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
 			</div>
 		</TooltipProvider>
 	);

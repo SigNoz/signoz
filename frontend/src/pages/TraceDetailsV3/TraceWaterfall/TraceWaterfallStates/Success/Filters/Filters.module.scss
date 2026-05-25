@@ -3,12 +3,6 @@
 	align-items: center;
 	gap: 12px;
 
-	// QuerySearch child sets `query-builder-search-v2` globally; size it to the
-	// search container by reaching into the descendant.
-	:global(.query-builder-search-v2) {
-		width: 100%;
-	}
-
 	// ToggleGroup children use generated class names; nest the global selectors
 	// under the local row so they only apply inside this filter row.
 	:global([class*='toggle-group']) {
@@ -20,33 +14,67 @@
 	}
 }
 
+// Expanded-mode root: grows to fill .filter wrapper, and lets the search
+// input flex within. In collapsed mode none of these grow — the whole
+// Filters region is content-sized (just the pill + result + toggle).
 .isExpanded {
 	flex: 1;
 
-	// Push the right-side controls (highlight toggle, status, fetching,
-	// collapse) to the far right of the row in expanded view, leaving the
-	// search+nav cluster anchored to the left.
-	.highlightErrorsToggle {
-		margin-left: auto;
+	.searchInput {
+		flex: 1;
+	}
+
+	.searchAndNav {
+		flex: 1;
 	}
 }
 
-// Visual container that holds the input + the result-nav cluster. Sized to
-// its contents so adding/removing nav controls grows/shrinks the cluster
-// width, while the input itself stays a stable width.
-.searchAndNav {
+.categoryControls {
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
-	gap: 12px;
 }
 
-// Fixed-width input area. Decoupled from the row's flex sizing so the input
-// doesn't resize when nav controls (count + arrows + X) pop in or out next
-// to it. Tune the basis if the default feels off on common viewports.
+.searchInput {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.searchPill {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.searchAndNav {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
 .searchContainer {
 	flex: 1;
 	min-width: 0;
+}
+
+.resultActions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.expandedActions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.highlightControl {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
 }
 
 .pill {
@@ -105,41 +133,10 @@
 	border-radius: 4px;
 }
 
-.collapseBtn {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	box-shadow: none;
-}
-
 .highlightErrorsToggle {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	flex-shrink: 0;
 	white-space: nowrap;
-}
-
-// Content-sized slot for the result-nav cluster. Lives inside .searchAndNav
-// next to the input, so its width directly contributes to the cluster's
-// overall width (input width is fixed; this slot grows/shrinks with nav
-// state).
-.resultNavSlot {
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-}
-
-// Result-nav cluster: count + ↑↓ + clear (X), sits between the filter input
-// and the right-side status/highlight controls. Visible whenever there's an
-// active expression; count + ↑↓ collapse out when no results, clear stays.
-.resultNav {
-	display: flex;
-	align-items: center;
-	flex-shrink: 0;
-	gap: 2px;
-	color: var(--l2-foreground);
-	font-family: 'Geist Mono';
-	font-size: 12px;
 }

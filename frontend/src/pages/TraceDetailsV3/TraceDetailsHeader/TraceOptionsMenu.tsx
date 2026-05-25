@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
-import { Ellipsis } from '@signozhq/icons';
+import { Settings2 } from '@signozhq/icons';
 
 import { useTraceStore } from '../stores/traceStore';
 
@@ -87,7 +87,7 @@ function TraceOptionsMenu({
 				variant="ghost"
 				size="icon"
 				color="secondary"
-				prefix={<Ellipsis size={14} />}
+				prefix={<Settings2 size={14} />}
 			/>
 		</Dropdown>
 	);

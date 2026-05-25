@@ -20,6 +20,7 @@ import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
+	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
@@ -124,7 +125,7 @@ function TraceDetailsHeader({
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				{!isFilterExpanded && (
-					<>
+					<div className={styles.traceIdSection}>
 						<Button
 							variant="solid"
 							color="secondary"
@@ -139,20 +140,37 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
-					</>
+					</div>
 				)}
 				{isDataLoaded && (
-					<>
+					<div
+						className={cx(
+							styles.filterSection,
+							isFilterExpanded && styles.isExpanded,
+						)}
+					>
 						{!isFilterExpanded && (
-							<>
-								<TooltipProvider>
+							<TooltipProvider>
+								<div className={styles.headerActions}>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className={styles.analyticsBtn}
+												onClick={handleSwitchToOldView}
+											>
+												<CornerUpLeft size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Switch to legacy trace view</TooltipContent>
+									</TooltipRoot>
+									<TooltipRoot>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
 												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 											>
 												<ChartPie size={14} />
@@ -160,13 +178,13 @@ function TraceDetailsHeader({
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
 									</TooltipRoot>
-								</TooltipProvider>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+									<TraceOptionsMenu
+										showTraceDetails={showTraceDetails}
+										onToggleTraceDetails={handleToggleTraceDetails}
+										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									/>
+								</div>
+							</TooltipProvider>
 						)}
 						<div
 							key="filter"
@@ -182,18 +200,7 @@ function TraceDetailsHeader({
 								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						{!isFilterExpanded && (
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								className={styles.oldViewBtn}
-								onClick={handleSwitchToOldView}
-							>
-								Legacy View
-							</Button>
-						)}
-					</>
+					</div>
 				)}
 			</div>
 
