@@ -123,11 +123,20 @@ func NewWaterfallTraceFromSpans(nodes []*WaterfallSpan) *WaterfallTrace {
 }
 
 func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selectedSpanID string, limit uint, spanPageSize float64, maxDepthToAutoExpand int) ([]*WaterfallSpan, []string, bool) {
-	if wt.TotalSpans <= uint64(limit) {
-		return wt.GetAllSpans(), nil, true
+	// Span selection decision: all spans or windowed
+	selectAllSpans := wt.TotalSpans <= uint64(limit)
+
+	var (
+		selectedSpans    []*WaterfallSpan
+		uncollapsedSpans []string
+	)
+
+	if selectAllSpans {
+		selectedSpans = wt.GetAllSpans()
+	} else {
+		selectedSpans, uncollapsedSpans = wt.GetSelectedSpans(uncollapsedSpanIDs, selectedSpanID, spanPageSize, maxDepthToAutoExpand)
 	}
-	spans, uncollapsed := wt.GetSelectedSpans(uncollapsedSpanIDs, selectedSpanID, spanPageSize, maxDepthToAutoExpand)
-	return spans, uncollapsed, false
+	return selectedSpans, uncollapsedSpans, selectAllSpans
 }
 
 // GetAllSpans returns all spans with pre order traversal.
