@@ -1,0 +1,67 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+processors:
+  signozspanmapper:
+    groups:
+      - id: llm
+        exists_any:
+          attributes:
+            - model
+          resource:
+            - service.name
+        attributes:
+          - target: gen_ai.request.model
+            context: resource
+            sources:
+              - key: gen_ai.llm.model
+              - key: llm.model
+              - key: resource.service.name
+          - target: gen_ai.request.tokens
+            context: attribute
+            sources:
+              - key: gen_ai.request_tokens
+              - key: llm.tokens
+          - target: gen_ai.request.input
+            context: attribute
+            sources:
+              - key: gen_ai.input
+                action: move
+              - key: llm.input
+                action: move
+      - id: agent
+        exists_any:
+          attributes:
+            - agent.
+        attributes:
+          - target: gen_ai.agent.name
+            context: attribute
+            sources:
+              - key: agent.name
+              - key: llm.agent.name
+          - target: gen_ai.agent.id
+            context: attribute
+            sources:
+              - key: gen_ai.agent.id
+              - key: llm.agent.id
+      - id: tool
+        exists_any:
+          attributes:
+            - agent.
+        attributes:
+          - target: gen_ai.tool.name
+            context: attribute
+            sources:
+              - key: ai.tool.name
+              - key: llm.tool.name
+  batch: {}
+exporters:
+  otlp:
+    endpoint: localhost:4317
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [signozspanmapper, batch]
+      exporters: [otlp]
