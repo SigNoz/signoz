@@ -4605,6 +4605,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 */
 	orgId?: string;
+	source?: DashboardtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time

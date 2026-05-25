@@ -2584,6 +2584,8 @@ components:
           type: boolean
         orgId:
           type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
         updatedAt:
           format: date-time
           type: string
