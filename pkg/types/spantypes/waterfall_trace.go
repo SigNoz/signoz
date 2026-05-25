@@ -62,26 +62,24 @@ func NewWaterfallTrace(
 	}
 }
 
-func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
+// NewWaterfallTraceFromSpans constructs a trace tree from pre-converted WaterfallSpan nodes.
+// SpanID, ParentSpanID, TimeUnix, DurationNano, HasError, and ServiceName must be populated.
+func NewWaterfallTraceFromSpans(nodes []*WaterfallSpan) *WaterfallTrace {
 	var (
 		startTime, endTime, totalErrorSpans uint64
-		spanIDToSpanNodeMap                 = make(map[string]*WaterfallSpan, len(spans))
+		spanIDToSpanNodeMap                 = make(map[string]*WaterfallSpan, len(nodes))
 		traceRoots                          []*WaterfallSpan
 		hasMissingSpans                     bool
 	)
 
-	for _, item := range spans {
-		span := item.ToWaterfallSpan()
-		startTimeUnixNano := uint64(item.StartTime.UnixNano())
-		if startTime == 0 || startTimeUnixNano < startTime {
-			startTime = startTimeUnixNano
+	for _, span := range nodes {
+		if startTime == 0 || span.TimeUnix < startTime {
+			startTime = span.TimeUnix
 		}
-		endTime = max(endTime, startTimeUnixNano+span.DurationNano)
-
+		endTime = max(endTime, span.TimeUnix+span.DurationNano)
 		if span.HasError {
 			totalErrorSpans++
 		}
-
 		spanIDToSpanNodeMap[span.SpanID] = span
 	}
 
@@ -116,29 +114,12 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	return NewWaterfallTrace(
 		startTime,
 		endTime,
-		uint64(len(spans)),
+		uint64(len(nodes)),
 		totalErrorSpans,
 		spanIDToSpanNodeMap,
 		traceRoots,
 		hasMissingSpans,
 	)
-}
-
-func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selectedSpanID string, limit uint, spanPageSize float64, maxDepthToAutoExpand int) ([]*WaterfallSpan, []string, bool) {
-	// Span selection decision: all spans or windowed
-	selectAllSpans := wt.TotalSpans <= uint64(limit)
-
-	var (
-		selectedSpans    []*WaterfallSpan
-		uncollapsedSpans []string
-	)
-
-	if selectAllSpans {
-		selectedSpans = wt.GetAllSpans()
-	} else {
-		selectedSpans, uncollapsedSpans = wt.GetSelectedSpans(uncollapsedSpanIDs, selectedSpanID, spanPageSize, maxDepthToAutoExpand)
-	}
-	return selectedSpans, uncollapsedSpans, selectAllSpans
 }
 
 // GetAllSpans returns all spans with pre order traversal.
