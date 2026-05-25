@@ -825,7 +825,7 @@ export const useCreateDashboardV2 = <
 	return useMutation(getCreateDashboardV2MutationOptions(options));
 };
 /**
- * This endpoint returns a v2-shape dashboard with its tags and public sharing config (if any).
+ * This endpoint returns a v2-shape dashboard.
  * @summary Get dashboard (v2)
  */
 export const getDashboardV2 = (

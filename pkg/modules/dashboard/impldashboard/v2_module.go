@@ -22,11 +22,11 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	var storableDashboard *dashboardtypes.StorableDashboard
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Metadata.Tags)
+		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
 		if err != nil {
 			return err
 		}
-		dashboard.Data.Metadata.Tags = resolvedTags
+		dashboard.Tags = resolvedTags
 
 		storable, err := dashboard.ToStorableDashboard()
 		if err != nil {
@@ -90,7 +90,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Metadata.Tags)
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
 		if err != nil {
 			return err
 		}

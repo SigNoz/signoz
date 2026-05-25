@@ -340,7 +340,7 @@ func New(
 	// where needed.
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 
-	// Initialize dashboard module (needed for authz registry)
+	// Initialize dashboard module
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
 
 	// Initialize user getter
