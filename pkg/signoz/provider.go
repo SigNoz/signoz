@@ -322,9 +322,9 @@ func NewIdentNProviderFactories(tokenizer tokenizer.Tokenizer, serviceAccount se
 	)
 }
 
-func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+func NewGlobalProviderFactories(identNConfig identn.Config, webConfig web.Config) factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
 	return factory.MustNewNamedMap(
-		signozglobal.NewFactory(identNConfig),
+		signozglobal.NewFactory(identNConfig, webConfig),
 	)
 }
 

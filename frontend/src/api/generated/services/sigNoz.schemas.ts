@@ -3332,6 +3332,17 @@ export interface GlobaltypesAPIKeyConfigDTO {
 	enabled?: boolean;
 }
 
+export interface GlobaltypesAppcuesDTO {
+	/**
+	 * @type string
+	 */
+	appID?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+}
+
 export interface GlobaltypesImpersonationConfigDTO {
 	/**
 	 * @type boolean
@@ -3352,6 +3363,58 @@ export interface GlobaltypesIdentNConfigDTO {
 	tokenizer?: GlobaltypesTokenizerConfigDTO;
 }
 
+export interface GlobaltypesPosthogDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	key?: string;
+}
+
+export interface GlobaltypesPylonDTO {
+	/**
+	 * @type string
+	 */
+	appID?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	identSecret?: string;
+}
+
+export interface GlobaltypesSentryDTO {
+	/**
+	 * @type string
+	 */
+	dsn?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	tunnelURL?: string;
+}
+
+export interface GlobaltypesSettingsDTO {
+	appcues: GlobaltypesAppcuesDTO;
+	posthog: GlobaltypesPosthogDTO;
+	pylon: GlobaltypesPylonDTO;
+	sentry: GlobaltypesSentryDTO;
+}
+
+export interface GlobaltypesWebConfigDTO {
+	settings: GlobaltypesSettingsDTO;
+}
+
 export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string,null
@@ -3370,6 +3433,7 @@ export interface GlobaltypesConfigDTO {
 	 * @type string,null
 	 */
 	mcp_url: string | null;
+	web?: GlobaltypesWebConfigDTO;
 }
 
 export type InframonitoringtypesClusterRecordDTOMetaAnyOf = {

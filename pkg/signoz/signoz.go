@@ -449,7 +449,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Global,
-		NewGlobalProviderFactories(config.IdentN),
+		NewGlobalProviderFactories(config.IdentN, config.Web),
 		"signoz",
 	)
 	if err != nil {
