@@ -17,6 +17,7 @@ func RegisterGenerate(parentCmd *cobra.Command, logger *slog.Logger) {
 
 	registerGenerateOpenAPI(generateCmd)
 	registerGenerateAuthz(generateCmd)
+	registerGenerateSettings(generateCmd)
 
 	parentCmd.AddCommand(generateCmd)
 }

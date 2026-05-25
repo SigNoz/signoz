@@ -1,0 +1,42 @@
+{
+  "required": [
+    "posthog",
+    "appcues"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "WebAppcues": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "WebPosthog": {
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "appcues": {
+      "$ref": "#/definitions/WebAppcues"
+    },
+    "posthog": {
+      "$ref": "#/definitions/WebPosthog"
+    }
+  },
+  "type": "object"
+}
