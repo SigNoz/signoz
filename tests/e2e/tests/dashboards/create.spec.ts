@@ -23,7 +23,7 @@ test.describe.configure({ mode: 'serial' });
 // ─── Suite-level seed registry ────────────────────────────────────────────────
 //
 // Every dashboard created by any test is registered here; one afterAll tears
-// them all down. Tests that don't create anything (TC-10, TC-11, TC-13) need
+// them all down. Tests that don't create anything (TC-04, TC-05, TC-06) need
 // no cleanup entry.
 const seedIds = new Set<string>();
 const BASE_FIXTURE_TITLE = 'create-flow-base-fixture';
@@ -116,265 +116,42 @@ test.describe('Dashboard Create Flow', () => {
 		seedIds.add(id);
 	});
 
-	test('TC-02 configure drawer opens with Overview tab and pre-fills existing title', async ({
+	test('TC-02 rename via toolbar options popover persists to the toolbar title', async ({
 		authedPage: page,
 	}) => {
 		const id = await seed(page, 'create-flow-tc02');
 		await page.goto(`/dashboard/${id}`);
 
-		const drawer = await openDashboardSettingsDrawer(page);
-
-		// Overview tab is the default active tab.
-		await expect(drawer.getByRole('button', { name: 'Overview' })).toBeVisible();
-
-		const nameInput = drawer.getByTestId('dashboard-name');
-		await expect(nameInput).toHaveValue('create-flow-tc02');
-
-		const descInput = drawer.getByTestId('dashboard-desc');
-		await expect(descInput).toBeVisible();
-		await expect(descInput).toHaveValue('');
-
-		await expect(
-			drawer.getByPlaceholder('Start typing your tag name'),
-		).toBeVisible();
-
-		// Ant Drawer does not close on Escape — use the X close button in the header.
-		await drawer.getByRole('button', { name: 'Close' }).click();
-		await expect(drawer).not.toHaveClass(/ant-drawer-open/);
-	});
-
-	test('TC-03 rename title, add description and tags, save persists to list', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc03-original');
-		await page.goto(`/dashboard/${id}`);
-
-		const drawer = await openDashboardSettingsDrawer(page);
-
-		const nameInput = drawer.getByTestId('dashboard-name');
-		await nameInput.clear();
-		await nameInput.fill('create-flow-tc03-renamed');
-		await expect(drawer.getByText(/1 unsaved change/)).toBeVisible();
-
-		await drawer.getByTestId('dashboard-desc').fill('A test description');
-		await expect(drawer.getByText(/2 unsaved changes/)).toBeVisible();
-
-		const tagInput = drawer.getByPlaceholder('Start typing your tag name');
-		await tagInput.click();
-		await tagInput.fill('e2e-tag');
-		await page.keyboard.press('Enter');
-		await expect(drawer.getByText(/3 unsaved changes/)).toBeVisible();
-
-		// Click save, capture the PUT, and verify it carried all three fields.
-		const putResponse = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'PUT' &&
-				new RegExp(`/api/v1/dashboards/${id}$`).test(r.url()),
-		);
-		await page.getByTestId('save-dashboard-config').click();
-		const putRes = await putResponse;
-		expect(putRes.status()).toBeGreaterThanOrEqual(200);
-		expect(putRes.status()).toBeLessThan(300);
-
-		// Server-side state must match what the user typed. UI-only checks pass
-		// on optimistic-update bugs; this catches them.
-		const persisted = await fetchDashboardData(page, id);
-		expect(persisted.title).toBe('create-flow-tc03-renamed');
-		expect(persisted.description).toBe('A test description');
-		expect(persisted.tags ?? []).toContain('e2e-tag');
-
-		// Footer clears only after the PUT success callback re-syncs local state.
-		await expect(drawer.getByText(/unsaved change/)).not.toBeVisible();
-
-		await drawer.getByRole('button', { name: 'Close' }).click();
-
-		// Renamed dashboard appears in the list.
-		await gotoDashboardsList(page);
-		const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER);
-		await searchInput.fill('create-flow-tc03-renamed');
-		await expect(
-			page.getByText('create-flow-tc03-renamed').first(),
-		).toBeVisible();
-
-		// Tag search also surfaces the renamed dashboard.
-		await searchInput.fill('e2e-tag');
-		await expect(
-			page.getByText('create-flow-tc03-renamed').first(),
-		).toBeVisible();
-	});
-
-	test('TC-04 discard reverts unsaved changes without API call', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc04');
-		await page.goto(`/dashboard/${id}`);
-
-		const drawer = await openDashboardSettingsDrawer(page);
-
-		const nameInput = drawer.getByTestId('dashboard-name');
-		await nameInput.clear();
-		await nameInput.fill('create-flow-tc04-discarded');
-		await drawer.getByTestId('dashboard-desc').fill('discarded desc');
-		await expect(drawer.getByText(/unsaved change/)).toBeVisible();
-
-		// Intercept any PUT to detect an unwanted save.
-		let patchFired = false;
-		await page.route(/\/api\/v1\/dashboards\//, (route) => {
-			if (route.request().method() === 'PUT') {
-				patchFired = true;
-			}
-			route.continue();
-		});
-
-		await drawer.getByRole('button', { name: 'Discard' }).click();
-
-		await expect(drawer.getByText(/unsaved change/)).not.toBeVisible();
-		await expect(nameInput).toHaveValue('create-flow-tc04');
-		await expect(drawer.getByTestId('dashboard-desc')).toHaveValue('');
-
-		// Settle before asserting "no PUT fired" — a delayed save request that
-		// races past the UI revert would otherwise sneak past the check.
-		await page.waitForLoadState('networkidle');
-		expect(patchFired).toBe(false);
-	});
-
-	test('TC-05 rename via toolbar options popover persists to the toolbar title', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc05');
-		await page.goto(`/dashboard/${id}`);
-
 		// DashboardDescription toolbar always renders — even on blank dashboards.
 		await expect(page.getByTestId('options')).toBeVisible();
 
-		await renameDashboardViaToolbar(page, 'create-flow-tc05-renamed');
+		await renameDashboardViaToolbar(page, 'create-flow-tc02-renamed');
 
 		await expect(page.getByTestId('dashboard-title')).toHaveText(
-			'create-flow-tc05-renamed',
+			'create-flow-tc02-renamed',
 		);
 
 		// Server-side persistence — toolbar rename uses a separate PUT path from
 		// the settings drawer; this catches an optimistic-update regression.
 		const persisted = await fetchDashboardData(page, id);
-		expect(persisted.title).toBe('create-flow-tc05-renamed');
+		expect(persisted.title).toBe('create-flow-tc02-renamed');
 
 		// List view reflects the rename after navigating back.
 		await gotoDashboardsList(page);
 		await page
 			.getByPlaceholder(SEARCH_PLACEHOLDER)
-			.fill('create-flow-tc05-renamed');
+			.fill('create-flow-tc02-renamed');
 		await expect(
-			page.getByText('create-flow-tc05-renamed').first(),
+			page.getByText('create-flow-tc02-renamed').first(),
 		).toBeVisible();
 	});
 
-	// ─── 2. Variables ─────────────────────────────────────────────────────────
-
-	test('TC-06 add a Custom variable, verify it appears in the variables bar', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc06');
-		await page.goto(`/dashboard/${id}`);
-
-		const drawer = await openDashboardSettingsDrawer(page);
-		await drawer.getByRole('button', { name: 'Variables' }).click();
-
-		await drawer.getByTestId('add-new-variable').click();
-		await expect(
-			drawer.getByRole('button', { name: 'All variables' }),
-		).toBeVisible();
-
-		await drawer.getByPlaceholder('Unique name of the variable').fill('env');
-
-		await drawer.getByRole('button', { name: 'Custom' }).click();
-
-		// After selecting "Custom" type, the Options collapse panel contains a
-		// textarea with placeholder "Enter options separated by commas."
-		const customInput = drawer.getByPlaceholder(
-			'Enter options separated by commas.',
-		);
-		await customInput.fill('prod,staging,dev');
-
-		const patchResponse = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
-		);
-		await drawer.getByRole('button', { name: 'Save Variable' }).click();
-		const res = await patchResponse;
-		expect(res.status()).toBeGreaterThanOrEqual(200);
-		expect(res.status()).toBeLessThan(300);
-
-		// After saving, the variable form disappears and the table row is visible.
-		await expect(
-			drawer.getByRole('button', { name: 'All variables' }),
-		).not.toBeVisible();
-		await expect(drawer.getByText('env')).toBeVisible();
-
-		// Server-side persistence — the variable record must land in the dashboard JSON.
-		const persisted = await fetchDashboardData(page, id);
-		const persistedVars = Object.values(persisted.variables ?? {}) as Array<{
-			name?: string;
-			customValue?: string;
-			type?: string;
-		}>;
-		const envVar = persistedVars.find((v) => v.name === 'env');
-		expect(
-			envVar,
-			'env variable must be persisted on the dashboard',
-		).toBeTruthy();
-		expect(envVar?.customValue).toBe('prod,staging,dev');
-
-		// Close the drawer via its X button and check the variables bar renders the
-		// variable label. `.dashboard-variables` always exists once any variable
-		// is defined; assert it contains `$env` (the rendered prefix from
-		// VariableItem) so an empty-bar regression is caught.
-		await drawer.getByRole('button', { name: 'Close' }).click();
-		const varsBar = page.locator('.dashboard-variables');
-		await expect(varsBar).toBeVisible();
-		await expect(varsBar).toContainText('$env');
-	});
-
-	test('TC-07 duplicate variable name is rejected inline', async ({
-		authedPage: page,
-	}) => {
-		// Seed a dashboard that already has a variable named 'env'.
-		const id = await seed(page, 'create-flow-tc07');
-		await page.goto(`/dashboard/${id}`);
-
-		// Use the UI to add the first variable so the state is real.
-		const drawer = await openDashboardSettingsDrawer(page);
-		await drawer.getByRole('button', { name: 'Variables' }).click();
-		await drawer.getByTestId('add-new-variable').click();
-		await drawer.getByPlaceholder('Unique name of the variable').fill('env');
-		await drawer.getByRole('button', { name: 'Custom' }).click();
-		await drawer
-			.getByPlaceholder('Enter options separated by commas.')
-			.fill('prod');
-		const firstSave = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'PUT' && /\/api\/v1\/dashboards\//.test(r.url()),
-		);
-		await drawer.getByRole('button', { name: 'Save Variable' }).click();
-		await firstSave;
-
-		// Now try to add a second variable with the same name.
-		await drawer.getByTestId('add-new-variable').click();
-		const nameInput = drawer.getByPlaceholder('Unique name of the variable');
-		await nameInput.fill('env');
-
-		await expect(drawer.getByText('Variable name already exists')).toBeVisible();
-		await expect(
-			drawer.getByRole('button', { name: 'Save Variable' }),
-		).toBeDisabled();
-	});
-
-	// ─── 3. Import JSON ───────────────────────────────────────────────────────
+	// ─── 2. Import JSON ───────────────────────────────────────────────────────
 	//
-	// TC-08 and TC-12 are merged: TC-08 covers the POST contract and navigation;
-	// the merged test also navigates back to the list and verifies metadata
-	// surfacing (the TC-12 concern). This avoids two identical import flows.
+	// TC-03 covers the POST contract, navigation, and metadata surfacing on
+	// the list — one flow rather than two near-identical imports.
 
-	test('TC-08 import via file upload creates dashboard, navigates to detail, and surfaces metadata in list', async ({
+	test('TC-03 import via file upload creates dashboard, navigates to detail, and surfaces metadata in list', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -420,7 +197,7 @@ test.describe('Dashboard Create Flow', () => {
 		);
 
 		// Navigate back and confirm the imported dashboard surfaces in the list
-		// with at least one tag chip (TC-12 coverage).
+		// with at least one tag chip.
 		await gotoDashboardsList(page);
 		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(APM_METRICS_TITLE);
 		await expect(page.getByText(APM_METRICS_TITLE).first()).toBeVisible();
@@ -428,11 +205,11 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByText('apm').first()).toBeVisible();
 	});
 
-	// TC-09 (Monaco paste path) is intentionally dropped — the file-upload
-	// path (TC-08) exercises the same populate-editor-then-import code path.
+	// The Monaco paste path is intentionally not covered — the file-upload
+	// path (TC-03) exercises the same populate-editor-then-import code path.
 	// Keyboard-typing large JSON into Monaco is unreliable in headless CI.
 
-	test('TC-10 invalid JSON via file upload shows "Invalid JSON" error', async ({
+	test('TC-04 invalid JSON via file upload shows "Invalid JSON" error', async ({
 		authedPage: page,
 	}) => {
 		// No dashboard is created by this test — no cleanup entry needed.
@@ -473,7 +250,7 @@ test.describe('Dashboard Create Flow', () => {
 		expect(postFired, 'invalid JSON must not trigger POST').toBe(false);
 	});
 
-	test('TC-11 import with empty editor clicking Import and Next shows error', async ({
+	test('TC-05 import with empty editor clicking Import and Next shows error', async ({
 		authedPage: page,
 	}) => {
 		// No dashboard is created — no cleanup entry needed.
@@ -504,9 +281,9 @@ test.describe('Dashboard Create Flow', () => {
 		expect(postFired, 'empty editor must not trigger POST').toBe(false);
 	});
 
-	// ─── 4. View Templates ────────────────────────────────────────────────────
+	// ─── 3. View Templates ────────────────────────────────────────────────────
 
-	test('TC-13 New Dashboard dropdown has the three expected entries, View templates is an external link', async ({
+	test('TC-06 New Dashboard dropdown has the three expected entries, View templates is an external link', async ({
 		authedPage: page,
 	}) => {
 		// No dashboard is created — no cleanup entry needed.
@@ -536,64 +313,16 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(link).toHaveAttribute('rel', /noopener/);
 	});
 
-	// ─── 5. Post-Create Dashboard Detail — Panel Addition ────────────────────
+	// ─── 4. Cancellation and Navigation Away ─────────────────────────────────
 
-	test('TC-14 New Panel modal opens and selecting Time Series navigates to widget editor', async ({
+	test('TC-07 browser Back from dashboard detail returns to list with URL preserved', async ({
 		authedPage: page,
 	}) => {
-		const id = await seed(page, 'create-flow-tc14');
-		await page.goto(`/dashboard/${id}`);
+		// `seed` registers the dashboard for afterAll cleanup; the id isn't
+		// needed because the test navigates via the list search query.
+		await seed(page, 'create-flow-tc07');
 
-		await expect(page.getByText('Welcome to your new dashboard')).toBeVisible();
-
-		await page.getByTestId('add-panel').click();
-		// PANEL_TYPES enum: TIME_SERIES='graph', VALUE='value', TABLE='table'
-		// — the testid is panel-type-<enum-value>, not panel-type-<enum-name>.
-		const modal = page.getByRole('dialog').filter({ hasText: 'New Panel' });
-		await expect(modal).toBeVisible();
-
-		await expect(modal.getByTestId('panel-type-graph')).toBeVisible();
-		await expect(modal.getByTestId('panel-type-value')).toBeVisible();
-		await expect(modal.getByTestId('panel-type-table')).toBeVisible();
-
-		await modal.getByTestId('panel-type-graph').click();
-		await expect(page).toHaveURL(/graphType=graph/);
-
-		// Confirm the widget editor actually loaded — URL-only checks pass even
-		// if the route resolves to a blank/broken page.
-		await expect(page.getByTestId('new-widget-save')).toBeVisible();
-		await expect(page.getByTestId('panel-name-input')).toBeVisible();
-	});
-
-	test('TC-15 New Panel button from toolbar header opens the same panel type modal', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc15');
-		await page.goto(`/dashboard/${id}`);
-
-		// The toolbar "New Panel" button (add-panel-header) is present even on
-		// a blank dashboard, alongside the empty-state "add-panel" button.
-		await expect(page.getByTestId('add-panel-header')).toBeVisible();
-		await page.getByTestId('add-panel-header').click();
-
-		const modal = page.getByRole('dialog').filter({ hasText: 'New Panel' });
-		await expect(modal).toBeVisible();
-		await expect(modal.getByTestId('panel-type-graph')).toBeVisible();
-
-		// Click the modal X button to close (Escape also works but may conflict
-		// with the Enterprise modal in the background; explicit click is more reliable).
-		await modal.getByRole('button', { name: 'Close' }).click();
-		await expect(modal).not.toBeVisible();
-	});
-
-	// ─── 6. Cancellation and Navigation Away ─────────────────────────────────
-
-	test('TC-16 browser Back from dashboard detail returns to list with URL preserved', async ({
-		authedPage: page,
-	}) => {
-		const id = await seed(page, 'create-flow-tc16');
-
-		await page.goto(`/dashboard?search=create-flow-tc16`);
+		await page.goto(`/dashboard?search=create-flow-tc07`);
 		await page
 			.getByRole('heading', { name: 'Dashboards', level: 1 })
 			.waitFor({ state: 'visible' });
@@ -602,16 +331,16 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 
 		await page.goBack();
-		await expect(page).toHaveURL(/search=create-flow-tc16/);
+		await expect(page).toHaveURL(/search=create-flow-tc07/);
 		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(
-			'create-flow-tc16',
+			'create-flow-tc07',
 		);
 	});
 
-	test('TC-17 navigating away with the settings drawer open does not crash', async ({
+	test('TC-08 navigating away with the settings drawer open does not crash', async ({
 		authedPage: page,
 	}) => {
-		const id = await seed(page, 'create-flow-tc17');
+		const id = await seed(page, 'create-flow-tc08');
 		await page.goto(`/dashboard/${id}`);
 
 		await openDashboardSettingsDrawer(page);
@@ -628,14 +357,14 @@ test.describe('Dashboard Create Flow', () => {
 		).toHaveCount(0);
 	});
 
-	// ─── 7. Add Panel — end-to-end per signal ────────────────────────────────
+	// ─── 5. Add Panel — end-to-end per signal ────────────────────────────────
 	//
-	// TC-14/TC-15 verify the New Panel modal opens and routes to the widget
-	// editor. The TCs below go further: configure a query for each signal
-	// using values from testdata/queries.json, save the panel, return to the
-	// dashboard, and verify the panel card renders.
+	// The New Panel modal + widget-editor entry point is covered in
+	// `details/35-add-panel.spec.ts`. The TCs below go further: configure a
+	// query for each signal using values from testdata/queries.json, save the
+	// panel, return to the dashboard, and verify the panel card renders.
 
-	test('TC-18 add metrics Time Series panel using signoz_calls_total from queries.json', async ({
+	test('TC-09 add metrics Time Series panel using signoz_calls_total from queries.json', async ({
 		authedPage: page,
 	}) => {
 		const id = await seed(page, 'add-panel-metrics');
@@ -651,7 +380,7 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByTestId('metrics-timeseries')).toBeVisible();
 	});
 
-	test('TC-19 add logs Time Series panel with default query from queries.json', async ({
+	test('TC-10 add logs Time Series panel with default query from queries.json', async ({
 		authedPage: page,
 	}) => {
 		const id = await seed(page, 'add-panel-logs');
@@ -666,7 +395,7 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByTestId('logs-timeseries')).toBeVisible();
 	});
 
-	test('TC-20 add traces Time Series panel with default query from queries.json', async ({
+	test('TC-11 add traces Time Series panel with default query from queries.json', async ({
 		authedPage: page,
 	}) => {
 		const id = await seed(page, 'add-panel-traces');
@@ -681,13 +410,13 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByTestId('traces-timeseries')).toBeVisible();
 	});
 
-	// ─── 8. Destructive CRUD ─────────────────────────────────────────────────
+	// ─── 6. Destructive CRUD ─────────────────────────────────────────────────
 
-	test('TC-21 delete dashboard via list action menu removes it from the list', async ({
+	test('TC-12 delete dashboard via list action menu removes it from the list', async ({
 		authedPage: page,
 	}) => {
 		// Seed with a unique title so the list filter resolves to exactly one row.
-		const targetTitle = 'create-flow-tc21-to-delete';
+		const targetTitle = 'create-flow-tc12-to-delete';
 		const id = await createDashboardViaApi(page, targetTitle);
 		// Intentionally not registered in seedIds — this test deletes it via UI.
 
@@ -736,22 +465,22 @@ test.describe('Dashboard Create Flow', () => {
 		expect(verifyRes.status()).toBe(404);
 	});
 
-	// ─── 9. Full Round-Trip ──────────────────────────────────────────────────
+	// ─── 7. Full Round-Trip ──────────────────────────────────────────────────
 	//
 	// Catches cross-feature regressions: a settings save that nukes variables,
 	// a variable add that strips widgets, a panel save that overwrites tags, etc.
 	// Stress-tests the dashboard PUT contract by writing every editable surface.
 
-	test('TC-22 settings + variable + panel survive a hard reload', async ({
+	test('TC-13 settings + variable + panel survive a hard reload', async ({
 		authedPage: page,
 	}) => {
-		const id = await seed(page, 'create-flow-tc22');
+		const id = await seed(page, 'create-flow-tc13');
 		await page.goto(`/dashboard/${id}`);
 
 		// 1. Settings drawer: rename + description + tag.
 		let drawer = await openDashboardSettingsDrawer(page);
 		await drawer.getByTestId('dashboard-name').clear();
-		await drawer.getByTestId('dashboard-name').fill('create-flow-tc22-roundtrip');
+		await drawer.getByTestId('dashboard-name').fill('create-flow-tc13-roundtrip');
 		await drawer.getByTestId('dashboard-desc').fill('round trip description');
 		const tagInput = drawer.getByPlaceholder('Start typing your tag name');
 		await tagInput.click();
@@ -777,20 +506,20 @@ test.describe('Dashboard Create Flow', () => {
 		await drawer.getByRole('button', { name: 'Close' }).click();
 
 		// 3. Add a metrics panel.
-		await configureAndSavePanel(page, 'metrics', 'tc22-metrics');
-		await expect(page.getByTestId('tc22-metrics')).toBeVisible();
+		await configureAndSavePanel(page, 'metrics', 'tc13-metrics');
+		await expect(page.getByTestId('tc13-metrics')).toBeVisible();
 
 		// 4. Hard reload — assert everything persisted across a fresh fetch.
 		await page.reload();
 		await expect(page.getByTestId('dashboard-title')).toHaveText(
-			'create-flow-tc22-roundtrip',
+			'create-flow-tc13-roundtrip',
 		);
 		await expect(page.locator('.dashboard-variables')).toContainText('$region');
-		await expect(page.getByTestId('tc22-metrics')).toBeVisible();
+		await expect(page.getByTestId('tc13-metrics')).toBeVisible();
 
 		// 5. Server confirmation — every change is in the persisted JSON.
 		const persisted = await fetchDashboardData(page, id);
-		expect(persisted.title).toBe('create-flow-tc22-roundtrip');
+		expect(persisted.title).toBe('create-flow-tc13-roundtrip');
 		expect(persisted.description).toBe('round trip description');
 		expect(persisted.tags ?? []).toContain('roundtrip-tag');
 		expect(persisted.widgets?.length).toBe(1);
