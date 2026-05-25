@@ -132,6 +132,31 @@ type StorableSpan struct {
 	ResponseStatusCode string             `ch:"response_status_code"`
 }
 
+// MinimalSpan with only the fields needed to build the parent-child tree
+type MinimalSpan struct {
+	SpanID       string    `ch:"span_id"`
+	ParentSpanID string    `ch:"parent_span_id"`
+	StartTime    time.Time `ch:"timestamp"`
+	DurationNano uint64    `ch:"duration_nano"`
+	HasError     bool      `ch:"has_error"`
+	ServiceName  string    `ch:"resource_string_service$$name"`
+}
+
+func (item *MinimalSpan) ToWaterfallSpan() *WaterfallSpan {
+	return &WaterfallSpan{
+		SpanID:       item.SpanID,
+		ParentSpanID: item.ParentSpanID,
+		TimeUnix:     uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		ServiceName:  item.ServiceName,
+		Resource:     map[string]string{"service.name": item.ServiceName},
+		Children:     make([]*WaterfallSpan, 0),
+		Attributes:   make(map[string]any),
+		Events:       make([]Event, 0),
+	}
+}
+
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
 func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{

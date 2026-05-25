@@ -26,4 +26,6 @@ type SpanMapperStore interface {
 type TraceStore interface {
 	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
 	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
+	GetMinimalSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]MinimalSpan, error)
+	GetTraceSpansByIDs(ctx context.Context, traceID string, summary *TraceSummary, spanIDs []string) ([]StorableSpan, error)
 }

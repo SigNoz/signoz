@@ -69,3 +69,57 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	}
 	return spanItems, nil
 }
+
+func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.MinimalSpan, error) {
+	query := fmt.Sprintf(`
+		SELECT DISTINCT ON (span_id)
+			span_id, parent_span_id, timestamp, duration_nano, has_error,
+			resource_string_service$$name
+		FROM %s.%s
+		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
+		ORDER BY timestamp ASC, name ASC`,
+		spantypes.TraceDB, spantypes.TraceTable,
+	)
+	var spans []spantypes.MinimalSpan
+	err := s.telemetryStore.ClickhouseDB().Select(
+		ctx, &spans, query,
+		traceID,
+		summary.Start.Unix()-1800,
+		summary.End.Unix(),
+	)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying minimal spans")
+	}
+	return spans, nil
+}
+
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, summary *spantypes.TraceSummary, spanIDs []string) ([]spantypes.StorableSpan, error) {
+	if len(spanIDs) == 0 {
+		return []spantypes.StorableSpan{}, nil
+	}
+	query := fmt.Sprintf(`
+		SELECT DISTINCT ON (span_id)
+			timestamp, duration_nano, span_id, trace_id, has_error, kind,
+			resource_string_service$$name, name, links as references,
+			attributes_string, attributes_number, attributes_bool, resources_string,
+			events, status_message, status_code_string, kind_string, parent_span_id,
+			flags, is_remote, trace_state, status_code,
+			db_name, db_operation, http_method, http_url, http_host,
+			external_http_method, external_http_url, response_status_code
+		FROM %s.%s
+		WHERE trace_id=? AND span_id IN (?) AND ts_bucket_start>=? AND ts_bucket_start<=?
+		ORDER BY timestamp ASC, name ASC`,
+		spantypes.TraceDB, spantypes.TraceTable,
+	)
+	var spans []spantypes.StorableSpan
+	err := s.telemetryStore.ClickhouseDB().Select(
+		ctx, &spans, query,
+		traceID, spanIDs,
+		summary.Start.Unix()-1800,
+		summary.End.Unix(),
+	)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
+	}
+	return spans, nil
+}
