@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, Switch } from 'antd';
+import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Switch } from '@signozhq/ui/switch';
 import { CalendarClock, Check, Clock4 } from '@signozhq/icons';
 import dayjs from 'dayjs';
 import { get, isEmpty } from 'lodash-es';
