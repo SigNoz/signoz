@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
-	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +19,7 @@ func NewHandler(module tracedetail.Module) tracedetail.Handler {
 }
 
 func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
-	req := new(tracedetailtypes.PostableWaterfall)
+	req := new(spantypes.PostableWaterfall)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return

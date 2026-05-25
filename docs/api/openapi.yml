@@ -2576,16 +2576,27 @@ components:
           type: string
         createdBy:
           type: string
-        data:
-          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Data'
         id:
+          type: string
+        image:
           type: string
         locked:
           type: boolean
+        name:
+          type: string
         orgId:
+          type: string
+        schemaVersion:
           type: string
         source:
           $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
         updatedAt:
           format: date-time
           type: string
@@ -2593,25 +2604,13 @@ components:
           type: string
       required:
       - id
-      type: object
-    DashboardtypesGettableDashboardV2Data:
-      properties:
-        metadata:
-          $ref: '#/components/schemas/DashboardtypesGettableDashboardV2Metadata'
-        spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
-      type: object
-    DashboardtypesGettableDashboardV2Metadata:
-      properties:
-        image:
-          type: string
-        schemaVersion:
-          type: string
-        tags:
-          items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
-          nullable: true
-          type: array
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
       type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
@@ -2909,22 +2908,23 @@ components:
       type: object
     DashboardtypesPostableDashboardV2:
       properties:
-        metadata:
-          $ref: '#/components/schemas/DashboardtypesPostableDashboardV2Metadata'
-        spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
-      type: object
-    DashboardtypesPostableDashboardV2Metadata:
-      properties:
         image:
+          type: string
+        name:
           type: string
         schemaVersion:
           type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
         tags:
           items:
             $ref: '#/components/schemas/TagtypesPostableTag'
           nullable: true
           type: array
+      required:
+      - schemaVersion
+      - name
+      - spec
       type: object
     DashboardtypesPostablePublicDashboard:
       properties:
@@ -6516,6 +6516,19 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
+    SpantypesEvent:
+      properties:
+        attributeMap:
+          additionalProperties: {}
+          type: object
+        isError:
+          type: boolean
+        name:
+          type: string
+        timeUnixNano:
+          minimum: 0
+          type: integer
+      type: object
     SpantypesFieldContext:
       enum:
       - attribute
@@ -6529,6 +6542,50 @@ components:
           type: array
       required:
       - items
+      type: object
+    SpantypesGettableWaterfallTrace:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          nullable: true
+          type: array
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        hasMore:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        serviceNameToTotalDurationMap:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesWaterfallSpan'
+          nullable: true
+          type: array
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
       type: object
     SpantypesPostableSpanMapper:
       properties:
@@ -6557,6 +6614,50 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableWaterfall:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          nullable: true
+          type: array
+        limit:
+          minimum: 0
+          type: integer
+        selectedSpanId:
+          type: string
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    SpantypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/SpantypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      type: object
+    SpantypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/SpantypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      type: object
+    SpantypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     SpantypesSpanMapper:
       properties:
         config:
@@ -6687,6 +6788,78 @@ components:
           nullable: true
           type: string
       type: object
+    SpantypesWaterfallSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        db_name:
+          type: string
+        db_operation:
+          type: string
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          nullable: true
+          type: array
+        external_http_method:
+          type: string
+        external_http_url:
+          type: string
+        flags:
+          minimum: 0
+          type: integer
+        has_children:
+          type: boolean
+        has_error:
+          type: boolean
+        http_host:
+          type: string
+        http_method:
+          type: string
+        http_url:
+          type: string
+        is_remote:
+          type: string
+        kind_string:
+          type: string
+        level:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        resource:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        response_status_code:
+          type: string
+        span_id:
+          type: string
+        status_code:
+          type: integer
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        sub_tree_node_count:
+          minimum: 0
+          type: integer
+        time_unix:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+        trace_state:
+          type: string
+      type: object
     TagtypesPostableTag:
       properties:
         key:
@@ -6789,179 +6962,6 @@ components:
     TimeDuration:
       format: int64
       type: integer
-    TracedetailtypesEvent:
-      properties:
-        attributeMap:
-          additionalProperties: {}
-          type: object
-        isError:
-          type: boolean
-        name:
-          type: string
-        timeUnixNano:
-          minimum: 0
-          type: integer
-      type: object
-    TracedetailtypesGettableWaterfallTrace:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
-          nullable: true
-          type: array
-        endTimestampMillis:
-          minimum: 0
-          type: integer
-        hasMissingSpans:
-          type: boolean
-        hasMore:
-          type: boolean
-        rootServiceEntryPoint:
-          type: string
-        rootServiceName:
-          type: string
-        serviceNameToTotalDurationMap:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
-        spans:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesWaterfallSpan'
-          nullable: true
-          type: array
-        startTimestampMillis:
-          minimum: 0
-          type: integer
-        totalErrorSpansCount:
-          minimum: 0
-          type: integer
-        totalSpansCount:
-          minimum: 0
-          type: integer
-        uncollapsedSpans:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    TracedetailtypesPostableWaterfall:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
-          nullable: true
-          type: array
-        limit:
-          minimum: 0
-          type: integer
-        selectedSpanId:
-          type: string
-        uncollapsedSpans:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    TracedetailtypesSpanAggregation:
-      properties:
-        aggregation:
-          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
-        field:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-      type: object
-    TracedetailtypesSpanAggregationResult:
-      properties:
-        aggregation:
-          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
-        field:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-        value:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
-      type: object
-    TracedetailtypesSpanAggregationType:
-      enum:
-      - span_count
-      - execution_time_percentage
-      - duration
-      type: string
-    TracedetailtypesWaterfallSpan:
-      properties:
-        attributes:
-          additionalProperties: {}
-          nullable: true
-          type: object
-        db_name:
-          type: string
-        db_operation:
-          type: string
-        duration_nano:
-          minimum: 0
-          type: integer
-        events:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesEvent'
-          nullable: true
-          type: array
-        external_http_method:
-          type: string
-        external_http_url:
-          type: string
-        flags:
-          minimum: 0
-          type: integer
-        has_children:
-          type: boolean
-        has_error:
-          type: boolean
-        http_host:
-          type: string
-        http_method:
-          type: string
-        http_url:
-          type: string
-        is_remote:
-          type: string
-        kind_string:
-          type: string
-        level:
-          minimum: 0
-          type: integer
-        name:
-          type: string
-        parent_span_id:
-          type: string
-        resource:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        response_status_code:
-          type: string
-        span_id:
-          type: string
-        status_code:
-          type: integer
-        status_code_string:
-          type: string
-        status_message:
-          type: string
-        sub_tree_node_count:
-          minimum: 0
-          type: integer
-        time_unix:
-          minimum: 0
-          type: integer
-        trace_id:
-          type: string
-        trace_state:
-          type: string
-      type: object
     TypesAlertStatus:
       properties:
         inhibitedBy:
@@ -12709,8 +12709,8 @@ paths:
   /api/v2/dashboards:
     post:
       deprecated: false
-      description: This endpoint creates a v2-shape dashboard with structured metadata,
-        a typed data tree, and resolved tags.
+      description: This endpoint creates a dashboard in the v2 format that follows
+        Perses spec.
       operationId: CreateDashboardV2
       requestBody:
         content:
@@ -12761,8 +12761,7 @@ paths:
   /api/v2/dashboards/{id}:
     get:
       deprecated: false
-      description: This endpoint returns a v2-shape dashboard with its tags and public
-        sharing config (if any).
+      description: This endpoint returns a v2-shape dashboard.
       operationId: GetDashboardV2
       parameters:
       - in: path
@@ -20123,7 +20122,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TracedetailtypesPostableWaterfall'
+              $ref: '#/components/schemas/SpantypesPostableWaterfall'
       responses:
         "200":
           content:
@@ -20131,7 +20130,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TracedetailtypesGettableWaterfallTrace'
+                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
                   status:
                     type: string
                 required:

@@ -4562,26 +4562,6 @@ export interface TagtypesPostableTagDTO {
 	value: string;
 }
 
-export interface DashboardtypesGettableDashboardV2MetadataDTO {
-	/**
-	 * @type string
-	 */
-	image?: string;
-	/**
-	 * @type string
-	 */
-	schemaVersion?: string;
-	/**
-	 * @type array,null
-	 */
-	tags?: TagtypesPostableTagDTO[] | null;
-}
-
-export interface DashboardtypesGettableDashboardV2DataDTO {
-	metadata?: DashboardtypesGettableDashboardV2MetadataDTO;
-	spec?: DashboardtypesDashboardSpecDTO;
-}
-
 export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type string
@@ -4592,20 +4572,36 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: DashboardtypesGettableDashboardV2DataDTO;
 	/**
 	 * @type string
 	 */
 	id: string;
 	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
 	 * @type boolean
 	 */
-	locked?: boolean;
+	locked: boolean;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
-	source?: DashboardtypesSourceDTO;
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4683,7 +4679,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
-export interface DashboardtypesPostableDashboardV2MetadataDTO {
+export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type string
 	 */
@@ -4691,16 +4687,16 @@ export interface DashboardtypesPostableDashboardV2MetadataDTO {
 	/**
 	 * @type string
 	 */
-	schemaVersion?: string;
+	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: DashboardtypesDashboardSpecDTO;
 	/**
 	 * @type array,null
 	 */
 	tags?: TagtypesPostableTagDTO[] | null;
-}
-
-export interface DashboardtypesPostableDashboardV2DTO {
-	metadata?: DashboardtypesPostableDashboardV2MetadataDTO;
-	spec?: DashboardtypesDashboardSpecDTO;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {
@@ -7666,6 +7662,28 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	name: string;
 }
 
+export type SpantypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface SpantypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: SpantypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
 export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
@@ -7732,6 +7750,232 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf =
+	{ [key: string]: number };
+
+/**
+ * @nullable
+ */
+export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
+	SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf | null;
+
+export enum SpantypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
+export type SpantypesSpanAggregationResultDTOValueAnyOf = {
+	[key: string]: number;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanAggregationResultDTOValue =
+	SpantypesSpanAggregationResultDTOValueAnyOf | null;
+
+export interface SpantypesSpanAggregationResultDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object,null
+	 */
+	value?: SpantypesSpanAggregationResultDTOValue;
+}
+
+export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOAttributes =
+	SpantypesWaterfallSpanDTOAttributesAnyOf | null;
+
+export type SpantypesWaterfallSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesWaterfallSpanDTOResource =
+	SpantypesWaterfallSpanDTOResourceAnyOf | null;
+
+export interface SpantypesWaterfallSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array,null
+	 */
+	events?: SpantypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
+export interface SpantypesGettableWaterfallTraceDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type object,null
+	 */
+	serviceNameToTotalDurationMap?: SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
 	copy = 'copy',
@@ -7779,6 +8023,31 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface SpantypesSpanAggregationDTO {
+	aggregation?: SpantypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+export interface SpantypesPostableWaterfallDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array,null
+	 */
+	uncollapsedSpans?: string[] | null;
 }
 
 export interface SpantypesSpanMapperDTO {
@@ -7887,281 +8156,6 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	 */
 	complete: boolean;
 	values: TelemetrytypesTelemetryFieldValuesDTO;
-}
-
-export type TracedetailtypesEventDTOAttributeMap = { [key: string]: unknown };
-
-export interface TracedetailtypesEventDTO {
-	/**
-	 * @type object
-	 */
-	attributeMap?: TracedetailtypesEventDTOAttributeMap;
-	/**
-	 * @type boolean
-	 */
-	isError?: boolean;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	timeUnixNano?: number;
-}
-
-export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf =
-	{ [key: string]: number };
-
-/**
- * @nullable
- */
-export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
-	TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf | null;
-
-export enum TracedetailtypesSpanAggregationTypeDTO {
-	span_count = 'span_count',
-	execution_time_percentage = 'execution_time_percentage',
-	duration = 'duration',
-}
-export type TracedetailtypesSpanAggregationResultDTOValueAnyOf = {
-	[key: string]: number;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesSpanAggregationResultDTOValue =
-	TracedetailtypesSpanAggregationResultDTOValueAnyOf | null;
-
-export interface TracedetailtypesSpanAggregationResultDTO {
-	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
-	/**
-	 * @type object,null
-	 */
-	value?: TracedetailtypesSpanAggregationResultDTOValue;
-}
-
-export type TracedetailtypesWaterfallSpanDTOAttributesAnyOf = {
-	[key: string]: unknown;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesWaterfallSpanDTOAttributes =
-	TracedetailtypesWaterfallSpanDTOAttributesAnyOf | null;
-
-export type TracedetailtypesWaterfallSpanDTOResourceAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type TracedetailtypesWaterfallSpanDTOResource =
-	TracedetailtypesWaterfallSpanDTOResourceAnyOf | null;
-
-export interface TracedetailtypesWaterfallSpanDTO {
-	/**
-	 * @type object,null
-	 */
-	attributes?: TracedetailtypesWaterfallSpanDTOAttributes;
-	/**
-	 * @type string
-	 */
-	db_name?: string;
-	/**
-	 * @type string
-	 */
-	db_operation?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	duration_nano?: number;
-	/**
-	 * @type array,null
-	 */
-	events?: TracedetailtypesEventDTO[] | null;
-	/**
-	 * @type string
-	 */
-	external_http_method?: string;
-	/**
-	 * @type string
-	 */
-	external_http_url?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	flags?: number;
-	/**
-	 * @type boolean
-	 */
-	has_children?: boolean;
-	/**
-	 * @type boolean
-	 */
-	has_error?: boolean;
-	/**
-	 * @type string
-	 */
-	http_host?: string;
-	/**
-	 * @type string
-	 */
-	http_method?: string;
-	/**
-	 * @type string
-	 */
-	http_url?: string;
-	/**
-	 * @type string
-	 */
-	is_remote?: string;
-	/**
-	 * @type string
-	 */
-	kind_string?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	level?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	parent_span_id?: string;
-	/**
-	 * @type object,null
-	 */
-	resource?: TracedetailtypesWaterfallSpanDTOResource;
-	/**
-	 * @type string
-	 */
-	response_status_code?: string;
-	/**
-	 * @type string
-	 */
-	span_id?: string;
-	/**
-	 * @type integer
-	 */
-	status_code?: number;
-	/**
-	 * @type string
-	 */
-	status_code_string?: string;
-	/**
-	 * @type string
-	 */
-	status_message?: string;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	sub_tree_node_count?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	time_unix?: number;
-	/**
-	 * @type string
-	 */
-	trace_id?: string;
-	/**
-	 * @type string
-	 */
-	trace_state?: string;
-}
-
-export interface TracedetailtypesGettableWaterfallTraceDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: TracedetailtypesSpanAggregationResultDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	endTimestampMillis?: number;
-	/**
-	 * @type boolean
-	 */
-	hasMissingSpans?: boolean;
-	/**
-	 * @type boolean
-	 */
-	hasMore?: boolean;
-	/**
-	 * @type string
-	 */
-	rootServiceEntryPoint?: string;
-	/**
-	 * @type string
-	 */
-	rootServiceName?: string;
-	/**
-	 * @type object,null
-	 */
-	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
-	/**
-	 * @type array,null
-	 */
-	spans?: TracedetailtypesWaterfallSpanDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	startTimestampMillis?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	totalErrorSpansCount?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	totalSpansCount?: number;
-	/**
-	 * @type array,null
-	 */
-	uncollapsedSpans?: string[] | null;
-}
-
-export interface TracedetailtypesSpanAggregationDTO {
-	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
-}
-
-export interface TracedetailtypesPostableWaterfallDTO {
-	/**
-	 * @type array,null
-	 */
-	aggregations?: TracedetailtypesSpanAggregationDTO[] | null;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	selectedSpanId?: string;
-	/**
-	 * @type array,null
-	 */
-	uncollapsedSpans?: string[] | null;
 }
 
 export interface TypesChangePasswordRequestDTO {
@@ -10290,7 +10284,7 @@ export type GetWaterfallPathParameters = {
 	traceID: string;
 };
 export type GetWaterfall200 = {
-	data: TracedetailtypesGettableWaterfallTraceDTO;
+	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */
