@@ -9,7 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 )
 
 type traceStore struct {
@@ -20,28 +20,28 @@ func NewTraceStore(ts telemetrystore.TelemetryStore) *traceStore {
 	return &traceStore{telemetryStore: ts}
 }
 
-func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*tracedetailtypes.TraceSummary, error) {
+func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*spantypes.TraceSummary, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("trace_id", "min(start) AS start", "max(end) AS end", "sum(num_spans) AS num_spans")
-	sb.From(fmt.Sprintf("%s.%s", tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable))
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceSummaryTable))
 	sb.Where(sb.E("trace_id", traceID))
 	sb.GroupBy("trace_id")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	var summary tracedetailtypes.TraceSummary
+	var summary spantypes.TraceSummary
 	err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
 		&summary.TraceID, &summary.Start, &summary.End, &summary.NumSpans,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, tracedetailtypes.ErrTraceNotFound
+			return nil, spantypes.ErrTraceNotFound
 		}
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace summary")
 	}
 	return &summary, nil
 }
 
-func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
@@ -55,9 +55,9 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 		FROM %s.%s
 		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
 		ORDER BY timestamp ASC, name ASC`,
-		tracedetailtypes.TraceDB, tracedetailtypes.TraceTable,
+		spantypes.TraceDB, spantypes.TraceTable,
 	)
-	var spanItems []tracedetailtypes.StorableSpan
+	var spanItems []spantypes.StorableSpan
 	err := s.telemetryStore.ClickhouseDB().Select(
 		ctx, &spanItems, query,
 		traceID,
