@@ -304,7 +304,7 @@ def test_trace_operator(
     case: dict,
 ) -> None:
     t1_trace_id = TraceIdGenerator.trace_id()
-    t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — parents the chain
+    t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — structural root of T1
     t1_child_span_id = TraceIdGenerator.span_id()      # lookup-cart
 
     t2_trace_id = TraceIdGenerator.trace_id()
