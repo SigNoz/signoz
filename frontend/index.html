@@ -95,7 +95,9 @@
 			})();
 		</script>
 		<script>
-			window.signozBootData = { settings: [[.Settings]] };
+			try {
+				window.signozBootData = { settings: [[.Settings]] };
+			} catch (e) {}
 		</script>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
@@ -138,8 +140,9 @@
 		</script>
 		<script>
 			var APPCUES_APP_ID = '<%- APPCUES_APP_ID %>';
-			var appcuesEnabled =
-				(window.signozBootData?.settings?.appcues || {}).enabled !== false;
+			var appcuesSettings =
+				(((window.signozBootData || {}).settings || {}).appcues || {});
+			var appcuesEnabled = appcuesSettings.enabled !== false;
 			if (APPCUES_APP_ID && appcuesEnabled) {
 				(function (d, t) {
 					var a = d.createElement(t);
