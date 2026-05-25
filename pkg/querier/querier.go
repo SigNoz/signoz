@@ -688,10 +688,11 @@ func (q *querier) run(
 	}
 
 	gomaps.Copy(results, preseededResults)
-	processedResults, err := q.postProcessResults(ctx, orgID, results, req)
+	processedResults, postProcessWarnings, err := q.postProcessResults(ctx, orgID, results, req)
 	if err != nil {
 		return nil, err
 	}
+	warnings = append(warnings, postProcessWarnings...)
 
 	// attach step interval to metadata so client can make informed decisions, ex: width of the bar
 	// or go to related logs/traces from a point in line/bar chart with correct time range

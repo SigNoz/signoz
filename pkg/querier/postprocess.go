@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -20,30 +21,34 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// legendVarRegex matches `{{var}}` placeholders in legend templates.
+var legendVarRegex = regexp.MustCompile(`\{\{([^}]+)\}\}`)
+
 // queryInfo holds common query properties.
 type queryInfo struct {
 	Name     string
 	Disabled bool
 	Step     qbtypes.Step
+	Legend   string
 }
 
 // getqueryInfo extracts common info from any query type.
 func getqueryInfo(spec any) queryInfo {
 	switch s := spec.(type) {
 	case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval, Legend: s.Legend}
 	case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval, Legend: s.Legend}
 	case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval, Legend: s.Legend}
 	case qbtypes.QueryBuilderTraceOperator:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.StepInterval, Legend: s.Legend}
 	case qbtypes.QueryBuilderFormula:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Legend: s.Legend}
 	case qbtypes.PromQuery:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.Step}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Step: s.Step, Legend: s.Legend}
 	case qbtypes.ClickHouseQuery:
-		return queryInfo{Name: s.Name, Disabled: s.Disabled}
+		return queryInfo{Name: s.Name, Disabled: s.Disabled, Legend: s.Legend}
 	}
 	return queryInfo{}
 }
@@ -53,7 +58,7 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
+func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, []string, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
 	for name, result := range results {
@@ -94,6 +99,10 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 	// Filter out disabled queries
 	typedResults = q.filterDisabledQueries(typedResults, req)
 
+	// Collect warnings for legend templates that reference labels not present
+	// on the result series. Done here while results are still typed.
+	legendWarnings := q.collectLegendWarnings(typedResults, req)
+
 	// Apply table formatting for UI if requested
 	if req.FormatOptions != nil && req.FormatOptions.FormatTableResultForUI && req.RequestType == qbtypes.RequestTypeScalar {
 
@@ -104,7 +113,7 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 				for name, v := range typedResults {
 					retResult[name] = v.Value
 				}
-				return retResult, nil
+				return retResult, legendWarnings, nil
 			}
 		}
 
@@ -116,11 +125,11 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 			firstQueryName := getQueryName(req.CompositeQuery.Queries[0].Spec)
 			if firstQueryName != "" && tableResult["table"] != nil {
 				// Return table under first query name
-				return map[string]any{firstQueryName: tableResult["table"]}, nil
+				return map[string]any{firstQueryName: tableResult["table"]}, legendWarnings, nil
 			}
 		}
 
-		return tableResult, nil
+		return tableResult, legendWarnings, nil
 	}
 
 	if req.RequestType == qbtypes.RequestTypeTimeSeries && req.FormatOptions != nil && req.FormatOptions.FillGaps {
@@ -131,7 +140,7 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 
 			stepInterval, err := req.StepIntervalForQuery(name)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
 			funcs = q.prepareFillZeroArgsWithStep(funcs, req, stepInterval)
@@ -167,7 +176,62 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 		finalResults[name] = result.Value
 	}
 
-	return finalResults, nil
+	return finalResults, legendWarnings, nil
+}
+
+// collectLegendWarnings emits one warning per query whose legend template
+// references label keys absent from all of its result series. Surfaces the
+// "{{var}} renders as undefined" case (e.g. F = A/B with A having no data —
+// the result carries B's labels, not A's) proactively to the user.
+func (q *querier) collectLegendWarnings(typedResults map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) []string {
+	var warnings []string
+	for _, query := range req.CompositeQuery.Queries {
+		info := getqueryInfo(query.Spec)
+		if info.Disabled || info.Legend == "" {
+			continue
+		}
+		matches := legendVarRegex.FindAllStringSubmatch(info.Legend, -1)
+		if len(matches) == 0 {
+			continue
+		}
+		result, ok := typedResults[info.Name]
+		if !ok || result == nil {
+			continue
+		}
+		tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
+		if !ok || tsData == nil {
+			continue
+		}
+
+		labelKeys := make(map[string]struct{})
+		for _, agg := range tsData.Aggregations {
+			for _, series := range agg.Series {
+				for _, label := range series.Labels {
+					labelKeys[label.Key.Name] = struct{}{}
+				}
+			}
+		}
+
+		seen := make(map[string]struct{})
+		var missing []string
+		for _, m := range matches {
+			v := m[1]
+			if _, dup := seen[v]; dup {
+				continue
+			}
+			seen[v] = struct{}{}
+			if _, present := labelKeys[v]; !present {
+				missing = append(missing, v)
+			}
+		}
+		if len(missing) > 0 {
+			warnings = append(warnings, fmt.Sprintf(
+				"Legend for query %q references labels not present on any result series: %s",
+				info.Name, strings.Join(missing, ", "),
+			))
+		}
+	}
+	return warnings
 }
 
 // postProcessBuilderQuery applies postprocessing to a single builder query result.
