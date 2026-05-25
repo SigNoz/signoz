@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -194,11 +195,11 @@ func (m *migrateInstalledIntegrationDashboards) loadDashboardDefs() (map[string]
 
 		var top map[string]json.RawMessage
 		if err := json.Unmarshal(data, &top); err != nil {
-			return fmt.Errorf("failed to parse dashboard JSON %s: %w", path, err)
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to parse dashboard JSON %s", path)
 		}
 		var dashID string
 		if err := json.Unmarshal(top["id"], &dashID); err != nil || dashID == "" {
-			return fmt.Errorf("missing or invalid id field in %s", path)
+			return errors.NewInternalf(errors.CodeInternal, "missing or invalid id field in %s", path)
 		}
 
 		if result[integrationID] == nil {

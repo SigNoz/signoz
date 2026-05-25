@@ -131,6 +131,10 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	return nil
 }
 
+func (r *InstalledIntegrationsSqliteRepo) runInTx(ctx context.Context, fn func(ctx context.Context) error) error {
+	return r.store.RunInTxCtx(ctx, nil, fn)
+}
+
 func (r *InstalledIntegrationsSqliteRepo) createIntegrationDashboard(
 	ctx context.Context, row *integrationtypes.StorableIntegrationDashboard,
 ) error {

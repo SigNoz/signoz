@@ -30,6 +30,8 @@ type InstalledIntegrationsRepo interface {
 	listIntegrationDashboardsBySlugPrefix(ctx context.Context, orgID string, slugPrefix string) ([]*integrationtypes.StorableIntegrationDashboard, error)
 
 	deleteIntegrationDashboardBySlug(ctx context.Context, orgID string, slug string) error
+
+	runInTx(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type AvailableIntegrationsRepo interface {
