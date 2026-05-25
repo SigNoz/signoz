@@ -12673,8 +12673,8 @@ paths:
   /api/v2/dashboards:
     post:
       deprecated: false
-      description: This endpoint creates a v2-shape dashboard with structured metadata,
-        a typed data tree, and resolved tags.
+      description: This endpoint creates a dashboard in the v2 format that follows
+        Perses spec.
       operationId: CreateDashboardV2
       requestBody:
         content:
@@ -12725,8 +12725,7 @@ paths:
   /api/v2/dashboards/{id}:
     get:
       deprecated: false
-      description: This endpoint returns a v2-shape dashboard with its tags and public
-        sharing config (if any).
+      description: This endpoint returns a v2-shape dashboard.
       operationId: GetDashboardV2
       parameters:
       - in: path
