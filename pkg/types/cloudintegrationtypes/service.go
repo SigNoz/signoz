@@ -316,3 +316,19 @@ func (updatableService *UpdatableService) UnmarshalJSON(data []byte) error {
 	*updatableService = UpdatableService(temp)
 	return nil
 }
+
+// IsServiceSharedWithMetricsEnabled returns true if any of the provided services has metrics enabled.
+// It is used to determine whether dashboards for a service type should be deprovisioned when
+// an account is disconnected or a service is updated.
+func IsServiceSharedWithMetricsEnabled(provider CloudProviderType, services []*StorableCloudIntegrationService) bool {
+	for _, svc := range services {
+		cfg, err := NewServiceConfigFromJSON(provider, svc.Config)
+		if err != nil {
+			continue
+		}
+		if cfg.IsMetricsEnabled(provider) {
+			return true
+		}
+	}
+	return false
+}

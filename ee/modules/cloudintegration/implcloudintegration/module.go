@@ -277,7 +277,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 				continue
 			}
 
-			if isServiceSharedWithMetricsEnabled(provider, sharedServices[svc.Type]) {
+			if cloudintegrationtypes.IsServiceSharedWithMetricsEnabled(provider, sharedServices[svc.Type]) {
 				continue
 			}
 
@@ -449,7 +449,7 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, crea
 		if err != nil {
 			return err
 		}
-		if isServiceSharedWithMetricsEnabled(provider, sharedServices[integrationService.Type]) {
+		if cloudintegrationtypes.IsServiceSharedWithMetricsEnabled(provider, sharedServices[integrationService.Type]) {
 			return nil
 		}
 
@@ -584,24 +584,8 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 	return nil
 }
 
-// isServiceSharedWithMetricsEnabled returns true if any of the provided services has metrics enabled.
-// It is used to determine whether dashboards for a service type should be deprovisioned when
-// an account is disconnected or a service is updated.
-func isServiceSharedWithMetricsEnabled(provider cloudintegrationtypes.CloudProviderType, services []*cloudintegrationtypes.StorableCloudIntegrationService) bool {
-	for _, svc := range services {
-		cfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, svc.Config)
-		if err != nil {
-			continue
-		}
-		if cfg.IsMetricsEnabled(provider) {
-			return true
-		}
-	}
-	return false
-}
-
-// enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID,
-// or sets it to nil if the dashboard has not been provisioned yet.
+// enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID.
+// TODO: remove this hack and send idiomatic response to client.
 func (module *module) enrichDashboardIDs(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
 	for i, d := range serviceDefinition.Assets.Dashboards {
 		slug := cloudintegrationtypes.IntegrationDashboardSlug(provider, serviceID, d.ID)

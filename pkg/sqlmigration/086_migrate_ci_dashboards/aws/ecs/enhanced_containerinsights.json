@@ -224,7 +224,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -356,7 +355,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerCpuReserved_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -488,7 +486,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -620,7 +617,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerMemoryReserved_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -752,7 +748,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerCpuUtilization_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -893,7 +888,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerMemoryUtilization_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],
@@ -1034,7 +1028,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerNetworkRxBytes_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -1175,7 +1168,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerNetworkTxBytes_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -1316,7 +1308,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerStorageReadBytes_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "max",
-                  "temporality": "",
                   "timeAggregation": "max"
                 }
               ],
@@ -1457,7 +1448,6 @@
                   "metricName": "aws_ECS_ContainerInsights_ContainerStorageWriteBytes_max",
                   "reduceTo": "avg",
                   "spaceAggregation": "avg",
-                  "temporality": "",
                   "timeAggregation": "avg"
                 }
               ],

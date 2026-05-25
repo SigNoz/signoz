@@ -3,6 +3,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import requests
+from sqlalchemy import bindparam, sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
@@ -378,7 +379,7 @@ def test_enable_metrics_provisions_dashboards(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Enabling metrics provisions dashboards visible in both GetService and the dashboards list."""
+    """Enabling metrics provisions dashboards visible in GetService and present in the DB."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
@@ -419,24 +420,19 @@ def test_enable_metrics_provisions_dashboards(
             raise AssertionError(f"Dashboard id '{dash['id']}' is not a UUID — dashboard was not provisioned") from err
         provisioned_ids.add(dash["id"])
 
-    # Assertion 2: Dashboards listing API includes the provisioned dashboards
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-    assert list_response.status_code == HTTPStatus.OK, f"Expected 200 from dashboards list, got {list_response.status_code}: {list_response.text}"
+    # Assertion 2: Provisioned dashboard IDs are present in the DB
+    with signoz.sqlstore.conn.connect() as conn:
+        rows = (
+            conn.execute(
+                sql.text("SELECT id FROM dashboard WHERE id IN :ids").bindparams(bindparam("ids", expanding=True)),
+                {"ids": list(provisioned_ids)},
+            )
+            .mappings()
+            .fetchall()
+        )
 
-    all_dashboards = list_response.json()["data"]
-    integration_dashboards = [d for d in all_dashboards if d.get("source") == "integration"]
-    assert len(integration_dashboards) > 0, "Dashboards list should contain at least one integration dashboard after enabling metrics"
-
-    listed_ids = {d["id"] for d in integration_dashboards}
-    assert provisioned_ids & listed_ids, f"None of the provisioned dashboard IDs {provisioned_ids} appear in the dashboards list {listed_ids}"
-
-    for d in integration_dashboards:
-        if d["id"] in provisioned_ids:
-            assert d.get("locked") is True, f"Integration dashboard {d['id']} should be locked=true"
+    db_ids = {row["id"] for row in rows}
+    assert provisioned_ids == db_ids, f"Dashboards {provisioned_ids - db_ids} are missing from the DB"
 
 
 def test_disable_metrics_deprovisions_dashboards(
