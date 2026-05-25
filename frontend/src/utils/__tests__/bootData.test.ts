@@ -20,68 +20,42 @@ afterEach(() => {
 describe('when window.signozBootData is absent', () => {
 	it('all sub-objects are defined and empty', () => {
 		const { bootSettings } = loadModule();
-		expect(bootSettings.sentry).toStrictEqual({});
 		expect(bootSettings.posthog).toStrictEqual({});
-		expect(bootSettings.pylon).toStrictEqual({});
 		expect(bootSettings.appcues).toStrictEqual({});
-		expect(bootSettings.roles).toStrictEqual({});
 	});
 
-	it('optional fields are undefined', () => {
+	it('enabled fields are undefined', () => {
 		const { bootSettings } = loadModule();
-		expect(bootSettings.sentry.dsn).toBeUndefined();
-		expect(bootSettings.sentry.tunnelUrl).toBeUndefined();
-		expect(bootSettings.posthog.key).toBeUndefined();
-		expect(bootSettings.pylon.appId).toBeUndefined();
-		expect(bootSettings.pylon.identSecret).toBeUndefined();
-		expect(bootSettings.appcues.appId).toBeUndefined();
-		expect(bootSettings.roles.isRolesDetailEnabled).toBeUndefined();
+		expect(bootSettings.posthog.enabled).toBeUndefined();
+		expect(bootSettings.appcues.enabled).toBeUndefined();
 	});
 });
 
 describe('when window.signozBootData.settings is populated', () => {
-	it('reads sentry config', () => {
-		const { bootSettings } = loadModule({
-			sentry: { dsn: 'https://abc@sentry.io/1', tunnelUrl: '/tunnel' },
-		});
-		expect(bootSettings.sentry.dsn).toBe('https://abc@sentry.io/1');
-		expect(bootSettings.sentry.tunnelUrl).toBe('/tunnel');
+	it('reads posthog enabled true', () => {
+		const { bootSettings } = loadModule({ posthog: { enabled: true } });
+		expect(bootSettings.posthog.enabled).toBe(true);
 	});
 
-	it('reads posthog config', () => {
-		const { bootSettings } = loadModule({ posthog: { key: 'phk_xxx' } });
-		expect(bootSettings.posthog.key).toBe('phk_xxx');
+	it('reads posthog enabled false', () => {
+		const { bootSettings } = loadModule({ posthog: { enabled: false } });
+		expect(bootSettings.posthog.enabled).toBe(false);
 	});
 
-	it('reads pylon config', () => {
-		const { bootSettings } = loadModule({
-			pylon: { appId: 'pylon-abc', identSecret: 'secret-xyz' },
-		});
-		expect(bootSettings.pylon.appId).toBe('pylon-abc');
-		expect(bootSettings.pylon.identSecret).toBe('secret-xyz');
+	it('reads appcues enabled true', () => {
+		const { bootSettings } = loadModule({ appcues: { enabled: true } });
+		expect(bootSettings.appcues.enabled).toBe(true);
 	});
 
-	it('reads appcues config', () => {
-		const { bootSettings } = loadModule({ appcues: { appId: 'appcues-123' } });
-		expect(bootSettings.appcues.appId).toBe('appcues-123');
-	});
-
-	it('reads roles config', () => {
-		const { bootSettings } = loadModule({
-			roles: { isRolesDetailEnabled: true },
-		});
-		expect(bootSettings.roles.isRolesDetailEnabled).toBe(true);
+	it('reads appcues enabled false', () => {
+		const { bootSettings } = loadModule({ appcues: { enabled: false } });
+		expect(bootSettings.appcues.enabled).toBe(false);
 	});
 
 	it('missing sub-namespaces fall back to empty objects', () => {
-		const { bootSettings } = loadModule({
-			sentry: { dsn: 'https://abc@sentry.io/1' },
-		});
-		expect(bootSettings.posthog).toStrictEqual({});
-		expect(bootSettings.posthog.key).toBeUndefined();
-		expect(bootSettings.pylon).toStrictEqual({});
+		const { bootSettings } = loadModule({ posthog: { enabled: true } });
 		expect(bootSettings.appcues).toStrictEqual({});
-		expect(bootSettings.roles).toStrictEqual({});
+		expect(bootSettings.appcues.enabled).toBeUndefined();
 	});
 });
 
@@ -93,7 +67,7 @@ describe('when window.signozBootData exists but settings is undefined', () => {
 			// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 			mod = require('../bootData');
 		});
-		expect(mod.bootSettings.sentry).toStrictEqual({});
 		expect(mod.bootSettings.posthog).toStrictEqual({});
+		expect(mod.bootSettings.appcues).toStrictEqual({});
 	});
 });
