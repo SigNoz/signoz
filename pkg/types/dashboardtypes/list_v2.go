@@ -92,8 +92,7 @@ type gettableDashboardWithPin struct {
 }
 
 type ListableDashboardV2 struct {
-	Dashboards []*gettableDashboardWithPin `json:"dashboards"`
-	HasMore    bool                        `json:"hasMore"`
+	Dashboards []*gettableDashboardWithPin `json:"dashboards" required:"true" nullable:"false"`
 }
 
 // DashboardListRow is the per-row shape Store.ListV2 returns. Bundles the
@@ -105,7 +104,7 @@ type DashboardListRow struct {
 	Pinned    bool
 }
 
-func NewListableDashboardV2(rows []*DashboardListRow, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, hasMore bool) (*ListableDashboardV2, error) {
+func NewListableDashboardV2(rows []*DashboardListRow, tagsByEntity map[valuer.UUID][]*tagtypes.Tag) (*ListableDashboardV2, error) {
 	dashboards := make([]*gettableDashboardWithPin, len(rows))
 	for i, r := range rows {
 		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
@@ -120,6 +119,5 @@ func NewListableDashboardV2(rows []*DashboardListRow, tagsByEntity map[valuer.UU
 	}
 	return &ListableDashboardV2{
 		Dashboards: dashboards,
-		HasMore:    hasMore,
 	}, nil
 }

@@ -2782,10 +2782,9 @@ components:
         dashboards:
           items:
             $ref: '#/components/schemas/DashboardtypesGettableDashboardWithPin'
-          nullable: true
           type: array
-        hasMore:
-          type: boolean
+      required:
+      - dashboards
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
