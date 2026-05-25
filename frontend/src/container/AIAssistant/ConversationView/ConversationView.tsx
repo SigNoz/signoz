@@ -159,6 +159,7 @@ export default function ConversationView({
 				<ConversationSkeleton />
 				<div className={inputWrapperClass}>
 					<ChatInput
+						key={conversationId}
 						onSend={handleSend}
 						disabled
 						autoContexts={autoContexts}
@@ -185,6 +186,7 @@ export default function ConversationView({
 			)}
 			<div className={inputWrapperClass}>
 				<ChatInput
+					key={conversationId}
 					onSend={handleSend}
 					onCancel={handleCancel}
 					disabled={inputDisabled}
