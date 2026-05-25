@@ -104,7 +104,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	var p PostableDashboardV2
 	require.NoError(t, json.Unmarshal([]byte(basePostableJSON), &p), "base postable JSON must validate")
 	testOrgID := valuer.GenerateUUID()
-	base := p.NewDashboardV2WithoutTags(testOrgID, "somecreatedthisiguess@signoz.io")
+	base := p.NewDashboardV2WithoutTags(testOrgID, "somecreatedthisiguess@signoz.io", SourceUser)
 	base.Data.Metadata.Tags = []*tagtypes.Tag{
 		{Key: "team", Value: "alpha"},
 		{Key: "env", Value: "prod"},

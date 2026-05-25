@@ -9,12 +9,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if !source.IsValid() {
+		return nil, errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source.StringValue())
+	}
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
 
-	dashboard := postable.NewDashboardV2WithoutTags(orgID, createdBy)
+	dashboard := postable.NewDashboardV2WithoutTags(orgID, createdBy, source)
 	var storableDashboard *dashboardtypes.StorableDashboard
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {

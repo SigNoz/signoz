@@ -214,8 +214,8 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, createdBy s
 	return module.pkgDashboardModule.Create(ctx, orgID, createdBy, creator, source, data)
 }
 
-func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
-	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, postable)
+func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.CreateV2(ctx, orgID, createdBy, creator, source, postable)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
