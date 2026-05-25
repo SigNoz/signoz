@@ -340,13 +340,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.ExternalURLHost() != "" {
 				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/traces-explorer?%s", r.ExternalURLHost(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.ExternalURLHost(), link)})
+				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedTraces, Value: fmt.Sprintf("%s/traces-explorer?%s", r.ExternalURLHost(), link)})
 			}
 		case ruletypes.AlertTypeLogs:
 			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
 			if link != "" && r.ExternalURLHost() != "" {
 				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.ExternalURLHost(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.ExternalURLHost(), link)})
+				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogs, Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.ExternalURLHost(), link)})
 			}
 		}
 
