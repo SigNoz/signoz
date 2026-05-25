@@ -14,6 +14,8 @@ import type {
 import type {
 	GetWaterfall200,
 	GetWaterfallPathParameters,
+	GetWaterfallV4200,
+	GetWaterfallV4PathParameters,
 	RenderErrorResponseDTO,
 	SpantypesPostableWaterfallDTO,
 } from '../sigNoz.schemas';
@@ -119,4 +121,103 @@ export const useGetWaterfall = <
 	TContext
 > => {
 	return useMutation(getGetWaterfallMutationOptions(options));
+};
+/**
+ * Two-step fetch: minimal fields for all spans to build the tree, full fields only for the visible window. Aggregations are not included in the response.
+ * @summary Get waterfall view for a trace (OOM-safe)
+ */
+export const getWaterfallV4 = (
+	{ traceID }: GetWaterfallV4PathParameters,
+	spantypesPostableWaterfallDTO?: BodyType<SpantypesPostableWaterfallDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetWaterfallV4200>({
+		url: `/api/v4/traces/${traceID}/waterfall`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: spantypesPostableWaterfallDTO,
+		signal,
+	});
+};
+
+export const getGetWaterfallV4MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getWaterfallV4>>,
+		TError,
+		{
+			pathParams: GetWaterfallV4PathParameters;
+			data?: BodyType<SpantypesPostableWaterfallDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof getWaterfallV4>>,
+	TError,
+	{
+		pathParams: GetWaterfallV4PathParameters;
+		data?: BodyType<SpantypesPostableWaterfallDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['getWaterfallV4'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof getWaterfallV4>>,
+		{
+			pathParams: GetWaterfallV4PathParameters;
+			data?: BodyType<SpantypesPostableWaterfallDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return getWaterfallV4(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type GetWaterfallV4MutationResult = NonNullable<
+	Awaited<ReturnType<typeof getWaterfallV4>>
+>;
+export type GetWaterfallV4MutationBody =
+	| BodyType<SpantypesPostableWaterfallDTO>
+	| undefined;
+export type GetWaterfallV4MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get waterfall view for a trace (OOM-safe)
+ */
+export const useGetWaterfallV4 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof getWaterfallV4>>,
+		TError,
+		{
+			pathParams: GetWaterfallV4PathParameters;
+			data?: BodyType<SpantypesPostableWaterfallDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof getWaterfallV4>>,
+	TError,
+	{
+		pathParams: GetWaterfallV4PathParameters;
+		data?: BodyType<SpantypesPostableWaterfallDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getGetWaterfallV4MutationOptions(options));
 };
