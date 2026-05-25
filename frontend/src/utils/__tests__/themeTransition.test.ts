@@ -32,8 +32,9 @@ const removeStartViewTransition = (): void => {
 };
 
 const setReducedMotion = (matches: boolean): void => {
-	(window.matchMedia as jest.Mock) = jest.fn().mockImplementation(
-		(query: string) => ({
+	(window.matchMedia as jest.Mock) = jest
+		.fn()
+		.mockImplementation((query: string) => ({
 			matches: query === '(prefers-reduced-motion: reduce)' ? matches : false,
 			media: query,
 			addListener: jest.fn(),
@@ -41,8 +42,7 @@ const setReducedMotion = (matches: boolean): void => {
 			addEventListener: jest.fn(),
 			removeEventListener: jest.fn(),
 			dispatchEvent: jest.fn(),
-		}),
-	);
+		}));
 };
 
 describe('canAnimateThemeTransition', () => {
