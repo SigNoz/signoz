@@ -78,14 +78,6 @@ type PostableDashboardV2 struct {
 func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
 	now := time.Now()
 
-	spec := postable.Spec
-	if spec.Display == nil {
-		spec.Display = &common.Display{}
-	}
-	if spec.Display.Name == "" {
-		spec.Display.Name = postable.Name
-	}
-
 	return &DashboardV2{
 		Identifiable:            types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable:           types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
@@ -96,7 +88,7 @@ func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID,
 		DashboardV2MetadataBase: postable.DashboardV2MetadataBase,
 		Name:                    postable.Name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
-		Spec:                    spec,
+		Spec:                    postable.Spec,
 	}
 }
 
@@ -109,6 +101,12 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*p = PostableDashboardV2(tmp)
+	if p.Spec.Display == nil {
+		p.Spec.Display = &common.Display{}
+	}
+	if p.Spec.Display.Name == "" {
+		p.Spec.Display.Name = p.Name
+	}
 	return p.Validate()
 }
 
