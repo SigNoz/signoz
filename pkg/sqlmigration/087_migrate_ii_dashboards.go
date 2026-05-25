@@ -23,7 +23,7 @@ var (
 	installedIntegrationSource   = valuer.NewString("integration")
 )
 
-//go:embed 087_migrate_ii_dashboards
+//go:embed 088_migrate_ii_dashboards
 var installedIntegrationDashboardFiles embed.FS
 
 type migrateInstalledIntegrationDashboards struct {
@@ -172,7 +172,7 @@ func (m *migrateInstalledIntegrationDashboards) Down(context.Context, *bun.DB) e
 func (m *migrateInstalledIntegrationDashboards) loadDashboardDefs() (map[string]map[string]json.RawMessage, error) {
 	result := make(map[string]map[string]json.RawMessage)
 
-	err := fs.WalkDir(installedIntegrationDashboardFiles, "087_migrate_ii_dashboards", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(installedIntegrationDashboardFiles, "088_migrate_ii_dashboards", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -180,8 +180,8 @@ func (m *migrateInstalledIntegrationDashboards) loadDashboardDefs() (map[string]
 			return nil
 		}
 
-		// path: 087_migrate_ii_dashboards/{integrationID}/{dashID}.json
-		rel := strings.TrimPrefix(path, "087_migrate_ii_dashboards/")
+		// path: 088_migrate_ii_dashboards/{integrationID}/{dashID}.json
+		rel := strings.TrimPrefix(path, "088_migrate_ii_dashboards/")
 		parts := strings.SplitN(rel, "/", 2)
 		if len(parts) != 2 {
 			return nil

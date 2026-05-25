@@ -241,17 +241,18 @@ func (m *Manager) InstallIntegration(
 		return nil, model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
-	_, apiErr = m.installedIntegrationsRepo.upsert(
-		ctx, orgId, integrationId, config,
-	)
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not insert installed integration",
+	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
+		_, apiErr = m.installedIntegrationsRepo.upsert(
+			ctx, orgId, integrationId, config,
 		)
-	}
+		if apiErr != nil {
+			return model.WrapApiError(apiErr, "could not insert installed integration")
+		}
 
-	if err := m.provisionDashboards(ctx, orgUUID, createdBy, creator, integrationId, integrationDetails); err != nil {
-		return nil, model.InternalError(fmt.Errorf("could not provision dashboards: %w", err))
+		return m.provisionDashboards(ctx, orgUUID, createdBy, creator, integrationId, integrationDetails)
+	})
+	if err != nil {
+		return nil, model.WrapApiError(model.InternalError(err), "could not install integration")
 	}
 
 	return &IntegrationsListItem{
@@ -270,11 +271,21 @@ func (m *Manager) UninstallIntegration(
 		return model.BadRequest(fmt.Errorf("invalid org id: %w", err))
 	}
 
-	if err := m.deprovisionDashboards(ctx, orgUUID, integrationId); err != nil {
-		return model.InternalError(fmt.Errorf("could not deprovision dashboards: %w", err))
-	}
+	err = m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
+		if err := m.deprovisionDashboards(ctx, orgUUID, integrationId); err != nil {
+			return model.InternalError(fmt.Errorf("could not deprovision dashboards: %w", err))
+		}
+		apiErr := m.installedIntegrationsRepo.delete(ctx, orgId, integrationId)
+		if apiErr != nil {
+			return model.WrapApiError(apiErr, "could not delete installed integration")
+		}
 
-	return m.installedIntegrationsRepo.delete(ctx, orgId, integrationId)
+		return nil
+	})
+	if err != nil {
+		return model.WrapApiError(model.InternalError(err), "could not uninstall integration")
+	}
+	return nil
 }
 
 func (m *Manager) GetPipelinesForInstalledIntegrations(
@@ -407,31 +418,29 @@ func (m *Manager) provisionDashboards(
 	integration *IntegrationDetails,
 ) error {
 	bareIntegrationID := strings.TrimPrefix(integrationID, "builtin-")
-	return m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		for _, dd := range integration.Assets.Dashboards {
-			dashID, _ := dd["id"].(string)
-			if dashID == "" {
-				continue
-			}
-			slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
-
-			existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
-			if err == nil && existing != nil {
-				continue
-			}
-
-			createdDashboard, err := m.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dd))
-			if err != nil {
-				return fmt.Errorf("could not create dashboard for slug %s: %w", slug, err)
-			}
-
-			row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
-			if err := m.installedIntegrationsRepo.createIntegrationDashboard(ctx, row); err != nil {
-				return fmt.Errorf("could not create integration_dashboard row for slug %s: %w", slug, err)
-			}
+	for _, dd := range integration.Assets.Dashboards {
+		dashID, _ := dd["id"].(string)
+		if dashID == "" {
+			continue
 		}
-		return nil
-	})
+		slug := cloudintegrationtypes.InstalledIntegrationDashboardSlug(bareIntegrationID, dashID)
+
+		existing, err := m.installedIntegrationsRepo.getIntegrationDashboardBySlug(ctx, orgID.StringValue(), slug)
+		if err == nil && existing != nil {
+			continue
+		}
+
+		createdDashboard, err := m.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dd))
+		if err != nil {
+			return fmt.Errorf("could not create dashboard for slug %s: %w", slug, err)
+		}
+
+		row := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardInstalledIntegrationProvider, slug)
+		if err := m.installedIntegrationsRepo.createIntegrationDashboard(ctx, row); err != nil {
+			return fmt.Errorf("could not create integration_dashboard row for slug %s: %w", slug, err)
+		}
+	}
+	return nil
 }
 
 func (m *Manager) deprovisionDashboards(
@@ -441,25 +450,23 @@ func (m *Manager) deprovisionDashboards(
 ) error {
 	integrationID = strings.TrimPrefix(integrationID, "builtin-")
 	slugPrefix := cloudintegrationtypes.InstalledIntegrationDashboardSlugPrefix(integrationID)
-	return m.installedIntegrationsRepo.runInTx(ctx, func(ctx context.Context) error {
-		rows, err := m.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), slugPrefix)
-		if err != nil {
+	rows, err := m.installedIntegrationsRepo.listIntegrationDashboardsBySlugPrefix(ctx, orgID.StringValue(), slugPrefix)
+	if err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		if err := m.installedIntegrationsRepo.deleteIntegrationDashboardBySlug(ctx, orgID.StringValue(), row.Slug); err != nil {
 			return err
 		}
 
-		for _, row := range rows {
-			if err := m.installedIntegrationsRepo.deleteIntegrationDashboardBySlug(ctx, orgID.StringValue(), row.Slug); err != nil {
-				return err
-			}
-
-			dashID, err := valuer.NewUUID(row.DashboardID)
-			if err != nil {
-				return err
-			}
-			if err := m.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
-				return err
-			}
+		dashID, err := valuer.NewUUID(row.DashboardID)
+		if err != nil {
+			return err
 		}
-		return nil
-	})
+		if err := m.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
