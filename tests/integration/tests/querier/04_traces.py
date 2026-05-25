@@ -17,7 +17,51 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+from fixtures.traces import (
+    TraceIdGenerator,
+    Traces,
+    TracesEvent,
+    TracesKind,
+    TracesLink,
+    TracesRefType,
+    TracesStatusCode,
+)
+
+# All keys returned by the trace list endpoint when selectFields is empty:
+# every intrinsic and calculated column, plus the merged `attributes` and
+# `resource` maps that wrap the contextual columns in the response layer.
+ALL_SELECT_FIELDS = [
+    # all intrinsic columns
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "trace_state",
+    "parent_span_id",
+    "flags",
+    "name",
+    "kind",
+    "kind_string",
+    "duration_nano",
+    "status_code",
+    "status_message",
+    "status_code_string",
+    "events",
+    "links",
+    # all calculated columns
+    "response_status_code",
+    "external_http_url",
+    "http_url",
+    "external_http_method",
+    "http_method",
+    "http_host",
+    "db_name",
+    "db_operation",
+    "has_error",
+    "is_remote",
+    # all contextual columns (merged in response layer)
+    "attributes",
+    "resource",
+]
 
 
 def test_traces_list(
@@ -473,7 +517,9 @@ def test_traces_list(
 @pytest.mark.parametrize(
     "payload,status_code,results",
     [
-        # Case 1: order by timestamp field which there in attributes as well
+        # Case 1: order by timestamp; empty selectFields returns the full
+        # response shape (all intrinsic + calculated columns plus the merged
+        # `attributes` and `resource` maps). x[3] (topic-service) is latest.
         pytest.param(
             {
                 "type": "builder_query",
@@ -487,19 +533,42 @@ def test_traces_list(
             },
             HTTPStatus.OK,
             lambda x: [
-                x[3].duration_nano,
+                {
+                    **x[3].attribute_string,
+                    **x[3].attributes_number,
+                    **x[3].attributes_bool,
+                },  # attributes
+                x[3].db_name,
+                x[3].db_operation,
+                int(x[3].duration_nano),
+                x[3].events,
+                x[3].external_http_method,
+                x[3].external_http_url,
+                int(x[3].flags),
+                x[3].has_error,
+                x[3].http_host,
+                x[3].http_method,
+                x[3].http_url,
+                x[3].is_remote,
+                int(x[3].kind),
+                x[3].kind_string,
+                x[3].links,
                 x[3].name,
+                x[3].parent_span_id,
+                x[3].resources_string,
                 x[3].response_status_code,
-                x[3].service_name,
                 x[3].span_id,
+                int(x[3].status_code),
+                x[3].status_code_string,
+                x[3].status_message,
                 format_timestamp(x[3].timestamp),
                 x[3].trace_id,
+                x[3].trace_state,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
-        # Case 2: order by attribute timestamp field which is there in attributes as well
-        # This should break but it doesn't because attribute.timestamp gets adjusted to timestamp
-        # because of default trace.timestamp gets added by default and bug in field mapper picks
-        # instrinsic field
+        # Case 2: order by attribute.timestamp. The key resolves to the
+        # intrinsic span.timestamp column, so the latest span (x[3]) is
+        # returned with the same full response shape as Case 1.
         pytest.param(
             {
                 "type": "builder_query",
@@ -513,13 +582,37 @@ def test_traces_list(
             },
             HTTPStatus.OK,
             lambda x: [
-                x[3].duration_nano,
+                {
+                    **x[3].attribute_string,
+                    **x[3].attributes_number,
+                    **x[3].attributes_bool,
+                },  # attributes
+                x[3].db_name,
+                x[3].db_operation,
+                int(x[3].duration_nano),
+                x[3].events,
+                x[3].external_http_method,
+                x[3].external_http_url,
+                int(x[3].flags),
+                x[3].has_error,
+                x[3].http_host,
+                x[3].http_method,
+                x[3].http_url,
+                x[3].is_remote,
+                int(x[3].kind),
+                x[3].kind_string,
+                x[3].links,
                 x[3].name,
+                x[3].parent_span_id,
+                x[3].resources_string,
                 x[3].response_status_code,
-                x[3].service_name,
                 x[3].span_id,
+                int(x[3].status_code),
+                x[3].status_code_string,
+                x[3].status_message,
                 format_timestamp(x[3].timestamp),
                 x[3].trace_id,
+                x[3].trace_state,
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 3: select timestamp with empty order by
@@ -542,7 +635,7 @@ def test_traces_list(
             ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 4: select attribute.timestamp with empty order by
-        # This doesn't return any data because of where_clause using aliased timestamp
+        # This returns the one span which has attribute.timestamp
         pytest.param(
             {
                 "type": "builder_query",
@@ -556,7 +649,11 @@ def test_traces_list(
                 },
             },
             HTTPStatus.OK,
-            lambda x: [],  # type: Callable[[List[Traces]], List[Any]]
+            lambda x: [
+                x[0].span_id,
+                format_timestamp(x[0].timestamp),
+                x[0].trace_id,
+            ],  # type: Callable[[List[Traces]], List[Any]]
         ),
         # Case 5: select timestamp with timestamp order by
         pytest.param(
@@ -691,6 +788,159 @@ def test_traces_list_with_corrupt_data(
             # Cannot compare values as they are randomly generated
             for key, value in zip(list(data.keys()), results(traces)):
                 assert data[key] == value
+
+
+def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:
+    """Empty-selectFields case: events/links arrive parsed into structured objects.
+    Every row's events/links should match the fixture's stored parsed shape
+    (the fixture's `.events`/`.links` mirror the API response shape directly).
+    """
+    for row, trace in zip(rows, traces, strict=True):
+        assert row["data"]["events"] == trace.events
+        assert row["data"]["links"] == trace.links
+        # Jaeger-era `refType` is dropped at the consume layer.
+        for link in row["data"]["links"]:
+            assert "refType" not in link
+
+
+def _verify_events_links_skip(rows: list[dict], traces: list[Traces]) -> None:
+    """Projected-selectFields case: nothing to verify beyond the key set."""
+
+
+@pytest.mark.parametrize(
+    "select_fields,status_code,expected_keys,verify_values",
+    [
+        pytest.param(
+            [],
+            HTTPStatus.OK,
+            ALL_SELECT_FIELDS,
+            _verify_events_links_full,
+        ),
+        pytest.param(
+            [
+                {"name": "service.name"},
+            ],
+            HTTPStatus.OK,
+            ["timestamp", "trace_id", "span_id", "service.name"],
+            _verify_events_links_skip,
+        ),
+    ],
+)
+def test_traces_list_with_select_fields(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    select_fields: list[dict],
+    status_code: HTTPStatus,
+    expected_keys: list[str],
+    verify_values: Callable[[list[dict], list[Traces]], None],
+) -> None:
+    """
+    Setup:
+    Insert a root span with no events/links and a child span carrying two
+    events and one user-supplied link.
+
+    Tests:
+    1. Empty select fields should return all the fields, and the `events` /
+       `links` columns should arrive parsed into structured objects (events
+       carry `attributes`, links carry only `traceId`/`spanId` — refType is
+       dropped at the consume layer).
+    2. Non-empty select field should return the select field along with
+       timestamp, trace_id and span_id.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    parent_trace_id = TraceIdGenerator.trace_id()
+    parent_span_id = TraceIdGenerator.span_id()
+    child_span_id = TraceIdGenerator.span_id()
+    linked_trace_id = TraceIdGenerator.trace_id()
+    linked_span_id = TraceIdGenerator.span_id()
+
+    event_one = TracesEvent(
+        name="request_received",
+        timestamp=now - timedelta(seconds=3, microseconds=500_000),
+        attribute_map={"http.method": "GET", "http.route": "/api/chat"},
+    )
+    event_two = TracesEvent(
+        name="cache_lookup",
+        timestamp=now - timedelta(seconds=3, microseconds=400_000),
+        attribute_map={"cache.hit": "true", "cache.key": "user:123:prompt"},
+    )
+    user_link = TracesLink(
+        trace_id=linked_trace_id,
+        span_id=linked_span_id,
+        ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM,
+    )
+
+    traces = [
+        # Root span: no events, no links. Verifies the empty-case parsed shape.
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=3),
+            trace_id=parent_trace_id,
+            span_id=parent_span_id,
+            parent_span_id="",
+            name="root span",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "events-links-service"},
+            attributes={"http.request.method": "GET"},
+        ),
+        # Child span: two events + one user-supplied link. The fixture
+        # auto-inserts a CHILD_OF link for the parent, so the parsed response
+        # contains two links total — the auto-inserted one first.
+        Traces(
+            timestamp=now - timedelta(seconds=3),
+            duration=timedelta(seconds=1),
+            trace_id=parent_trace_id,
+            span_id=child_span_id,
+            parent_span_id=parent_span_id,
+            name="child span",
+            kind=TracesKind.SPAN_KIND_INTERNAL,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "events-links-service"},
+            attributes={"http.request.method": "GET"},
+            events=[event_one, event_two],
+            links=[user_link],
+        ),
+    ]
+
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    payload = {
+        "type": "builder_query",
+        "spec": {
+            "name": "A",
+            "signal": "traces",
+            "filter": {"expression": "resource.service.name = 'events-links-service'"},
+            "selectFields": select_fields,
+            "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
+            "limit": 10,
+        },
+    }
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=[payload],
+    )
+    assert response.status_code == status_code
+
+    if response.status_code != HTTPStatus.OK:
+        return
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 2
+    for row in rows:
+        assert set(row["data"].keys()) == set(expected_keys)
+
+    verify_values(rows, traces)
 
 
 @pytest.mark.parametrize(
@@ -2123,3 +2373,178 @@ def test_traces_list_filter_by_trace_id(
     past_rows = _query(past_start_ms, past_end_ms)
 
     assert len(past_rows) == 0, f"Expected 0 spans for trace_id filter outside time window, got {len(past_rows)}"
+
+
+# Hardcoded core columns the trace_operator buildListQuery always projects,
+# in addition to any user-supplied selectFields.
+TRACE_OPERATOR_CORE_FIELDS = [
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "name",
+    "duration_nano",
+    "parent_span_id",
+]
+
+
+def _verify_full_expansion(rows: list[dict], parent_trace: Traces) -> None:
+    """Empty-selectFields case: every column from the builder_query parity set
+    arrives, and events/links are parsed into structured form (refType is
+    dropped at the consume layer).
+    """
+    assert len(rows) == 1
+    parent_row = rows[0]["data"]
+    assert set(parent_row.keys()) == set(ALL_SELECT_FIELDS)
+    assert parent_row["events"] == parent_trace.events
+    assert parent_row["links"] == parent_trace.links
+    for link in parent_row["links"]:
+        assert "refType" not in link
+
+
+def _verify_explicit_projection(rows: list[dict], parent_trace: Traces) -> None:  # pylint: disable=unused-argument
+    """Explicit-selectFields case: only the 6 hardcoded core fields plus the
+    user-supplied resource.service.name come back. Contextual columns
+    (events/links/attributes/resource) and the rest of the intrinsics never
+    appear because the consume-layer merge isn't triggered.
+    """
+    assert len(rows) == 1
+    parent_row = rows[0]["data"]
+    assert set(parent_row.keys()) == set(TRACE_OPERATOR_CORE_FIELDS + ["service.name"])
+
+
+@pytest.mark.parametrize(
+    "select_fields,verify_values",
+    [
+        pytest.param([], _verify_full_expansion, id="empty-select-fields"),
+        pytest.param(
+            [{"name": "service.name", "fieldContext": "resource"}],
+            _verify_explicit_projection,
+            id="explicit-service-name",
+        ),
+    ],
+)
+def test_trace_operator_select_fields(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    select_fields: list[dict[str, Any]],
+    verify_values: Callable[[list[dict], Traces], None],
+) -> None:
+    """
+    Setup:
+    Insert a parent (operation.type = 'parent') with one event and one
+    user-supplied link, plus a child span (operation.type = 'child').
+
+    Tests:
+    1. With selectFields=[], the `A => B` trace_operator returns every column
+       in ALL_SELECT_FIELDS, mirroring the builder_query path. Events arrive
+       as {name, timeUnixNano, attributes} and links as {traceId, spanId}
+       with refType dropped at the consume layer.
+    2. With an explicit selectFields=[{"name": "service.name"}], only the 6
+       hardcoded core columns plus service.name come back — no auto-expansion
+       to the full set.
+
+    See:
+    - pkg/telemetrytraces/trace_operator_cte_builder.go::buildFinalQuery for
+      the expansion gate.
+    - pkg/telemetrytraces/trace_operator_cte_builder.go::buildListQuery for
+      the per-row SELECT.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    trace_id = TraceIdGenerator.trace_id()
+    parent_span_id = TraceIdGenerator.span_id()
+    child_span_id = TraceIdGenerator.span_id()
+
+    parent_event = TracesEvent(
+        name="request_received",
+        timestamp=now - timedelta(seconds=4, microseconds=500_000),
+        attribute_map={"http.method": "GET"},
+    )
+    linked_trace_id = TraceIdGenerator.trace_id()
+    linked_span_id = TraceIdGenerator.span_id()
+    user_link = TracesLink(
+        trace_id=linked_trace_id,
+        span_id=linked_span_id,
+        ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM,
+    )
+
+    parent_trace = Traces(
+        timestamp=now - timedelta(seconds=5),
+        duration=timedelta(seconds=4),
+        trace_id=trace_id,
+        span_id=parent_span_id,
+        parent_span_id="",
+        name="parent-operation",
+        kind=TracesKind.SPAN_KIND_SERVER,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "trace-operator-query"},
+        attributes={"operation.type": "parent"},
+        events=[parent_event],
+        links=[user_link],
+    )
+    child_trace = Traces(
+        timestamp=now - timedelta(seconds=4),
+        duration=timedelta(seconds=1),
+        trace_id=trace_id,
+        span_id=child_span_id,
+        parent_span_id=parent_span_id,
+        name="child-operation",
+        kind=TracesKind.SPAN_KIND_INTERNAL,
+        status_code=TracesStatusCode.STATUS_CODE_OK,
+        resources={"service.name": "trace-operator-query"},
+        attributes={"operation.type": "child"},
+    )
+    insert_traces([parent_trace, child_trace])
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    operator_spec: dict[str, Any] = {
+        "name": "C",
+        "expression": "A => B",
+        "limit": 10,
+        "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
+    }
+    if select_fields:
+        operator_spec["selectFields"] = select_fields
+
+    queries = [
+        {
+            "type": "builder_query",
+            "spec": {
+                "name": "A",
+                "signal": "traces",
+                "filter": {"expression": "operation.type = 'parent'"},
+                "limit": 100,
+                "disabled": True,
+            },
+        },
+        {
+            "type": "builder_query",
+            "spec": {
+                "name": "B",
+                "signal": "traces",
+                "filter": {"expression": "operation.type = 'child'"},
+                "limit": 100,
+                "disabled": True,
+            },
+        },
+        {"type": "builder_trace_operator", "spec": operator_spec},
+    ]
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=queries,
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    results = response.json()["data"]["data"]["results"]
+    trace_operator_result = find_named_result(results, "C")
+    rows = trace_operator_result["rows"]
+    verify_values(rows, parent_trace)

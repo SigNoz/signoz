@@ -265,6 +265,15 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		return nil, err
 	}
 
+	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
+	if q.spec.Signal == telemetrytypes.SignalTraces {
+		if raw, ok := payload.(*qbtypes.RawData); ok {
+			for _, rr := range raw.Rows {
+				mergeSpanAttributeColumns(rr.Data)
+			}
+		}
+	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,
