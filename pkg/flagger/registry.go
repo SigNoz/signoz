@@ -3,15 +3,15 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics    = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval     = featuretypes.MustNewName("kafka_span_eval")
-	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
-	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
-	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
-	FeatureUseMeterReporter  = featuretypes.MustNewName("use_meter_reporter")
-	FeatureUseJSONBody            = featuretypes.MustNewName("use_json_body")
-	FeatureUseFineGrainedAuthz    = featuretypes.MustNewName("use_fine_grained_authz")
-  FeatureDashboardV2       = featuretypes.MustNewName("dashboard_v2")
+	FeatureUseSpanMetrics      = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval       = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser        = featuretypes.MustNewName("hide_root_user")
+	FeatureGetMetersFromZeus   = featuretypes.MustNewName("get_meters_from_zeus")
+	FeaturePutMetersInZeus     = featuretypes.MustNewName("put_meters_in_zeus")
+	FeatureUseMeterReporter    = featuretypes.MustNewName("use_meter_reporter")
+	FeatureUseJSONBody         = featuretypes.MustNewName("use_json_body")
+	FeatureUseFineGrainedAuthz = featuretypes.MustNewName("use_fine_grained_authz")
+	FeatureDashboardV2         = featuretypes.MustNewName("dashboard_v2")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -80,12 +80,12 @@ func MustNewRegistry() featuretypes.Registry {
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
-    &featuretypes.Feature{
-      Name:           FeatureDashboardV2,
+		&featuretypes.Feature{
+			Name:           FeatureDashboardV2,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether dashboard v2 is enabled",
-      DefaultVariant: featuretypes.MustNewName("disabled"),
+			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 	)
