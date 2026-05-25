@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, Switch } from 'antd';
+import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Switch } from '@signozhq/ui/switch';
 import { CalendarClock, Check, Clock4 } from '@signozhq/icons';
 import dayjs from 'dayjs';
 import { get, isEmpty } from 'lodash-es';
@@ -166,8 +167,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked
+							value
 							disabled
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
@@ -186,8 +186,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked
+							value
 							disabled
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
@@ -206,8 +205,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked={draftColumns.updatedAt}
+							value={draftColumns.updatedAt}
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
 									...prev,
@@ -225,8 +223,7 @@ function ConfigureMetadataModal({
 					<div className={styles.connectionLine} />
 					<div className={styles.actionRight}>
 						<Switch
-							size="small"
-							checked={draftColumns.updatedBy}
+							value={draftColumns.updatedBy}
 							onChange={(check): void =>
 								setDraftColumns((prev) => ({
 									...prev,

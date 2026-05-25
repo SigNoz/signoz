@@ -7,10 +7,20 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'container/DashboardContainer';
 import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
+import { useIsDashboardV2 } from 'hooks/useIsDashboardV2';
+import DashboardPageV2 from 'pages/DashboardPageV2';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ErrorType } from 'types/common';
 
 function DashboardPage(): JSX.Element {
+	const isV2 = useIsDashboardV2();
+	if (isV2) {
+		return <DashboardPageV2 />;
+	}
+	return <DashboardPageV1 />;
+}
+
+function DashboardPageV1(): JSX.Element {
 	const { dashboardId } = useParams<{ dashboardId: string }>();
 
 	const [onModal, Content] = Modal.useModal();
