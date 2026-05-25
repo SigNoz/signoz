@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 )
 
-// The $$$$ becomes $$ since go-sqlbuilder escapes $ sign
+// The $$$$ becomes $$ since go-sqlbuilder escapes $ sign.
 const serviceNameCol = "resource_string_service$$$$name"
 
 type traceStore struct {
