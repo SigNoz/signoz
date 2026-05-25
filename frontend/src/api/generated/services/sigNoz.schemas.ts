@@ -225,6 +225,10 @@ export interface AlertmanagertypesPlannedMaintenanceDTO {
 	 */
 	name: string;
 	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
 	status: AlertmanagertypesMaintenanceStatusDTO;
 	/**
 	 * @type string
@@ -1714,6 +1718,10 @@ export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
 	 */
 	name: string;
 	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
 }
 
 export interface AlertmanagertypesPostableRoutePolicyDTO {
