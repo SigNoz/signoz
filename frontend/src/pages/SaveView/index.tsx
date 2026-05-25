@@ -312,12 +312,15 @@ function SaveView(): JSX.Element {
 						Learn more
 					</Typography.Link>
 				</Typography.Text>
-				<Input
-					placeholder="Search for views..."
-					prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-					value={searchValue}
-					onChange={handleSearch}
-				/>
+				<div className="search-input-container">
+					<Input
+						placeholder="Search for views..."
+						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						value={searchValue}
+						onChange={handleSearch}
+						className="search-input"
+					/>
+				</div>
 
 				<Table
 					columns={columns}

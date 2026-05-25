@@ -259,6 +259,14 @@
 			border-left: transparent;
 			border-top-left-radius: 0px;
 			border-bottom-left-radius: 0px;
+
+			&:focus:not(:focus-visible),
+			&.ant-btn:focus:not(:focus-visible) {
+				border-color: var(--l2-border);
+				border-left-color: transparent;
+				outline: none;
+				box-shadow: none;
+			}
 		}
 	}
 }
@@ -283,6 +291,25 @@
 		position: relative;
 		.cm-placeholder {
 			font-size: 12px !important;
+		}
+
+		// Row height is driven by the close-btn / cm-content (both 38px).
+		// Align the inner select / signoz input to the same height so the
+		// label can stretch flush against the input/close-btn borders.
+		$add-on-row-height: 38px;
+
+		.periscope-input-with-label {
+			.input {
+				.ant-select {
+					height: $add-on-row-height;
+				}
+			}
+		}
+
+		.input-with-label {
+			.input {
+				height: $add-on-row-height;
+			}
 		}
 	}
 }
