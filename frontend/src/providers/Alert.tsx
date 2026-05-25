@@ -9,6 +9,8 @@ import React, {
 interface AlertRuleContextType {
 	alertRuleState: string | undefined;
 	setAlertRuleState: React.Dispatch<React.SetStateAction<string | undefined>>;
+	alertRuleName: string | undefined;
+	setAlertRuleName: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 
 const AlertRuleContext = createContext<AlertRuleContextType | undefined>(
@@ -23,13 +25,18 @@ function AlertRuleProvider({
 	const [alertRuleState, setAlertRuleState] = useState<string | undefined>(
 		undefined,
 	);
+	const [alertRuleName, setAlertRuleName] = useState<string | undefined>(
+		undefined,
+	);
 
 	const value = React.useMemo(
 		() => ({
 			alertRuleState,
 			setAlertRuleState,
+			alertRuleName,
+			setAlertRuleName,
 		}),
-		[alertRuleState],
+		[alertRuleState, alertRuleName],
 	);
 
 	return (
@@ -46,5 +53,8 @@ export const useAlertRule = (): AlertRuleContextType => {
 	}
 	return context;
 };
+
+export const useAlertRuleOptional = (): AlertRuleContextType | undefined =>
+	useContext(AlertRuleContext);
 
 export default AlertRuleProvider;

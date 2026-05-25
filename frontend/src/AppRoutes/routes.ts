@@ -5,7 +5,6 @@ import {
 	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AlertTypeSelectionPage,
 	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
@@ -144,18 +143,18 @@ const routes: AppRoutes[] = [
 	// /trace-old serves V3 (URL-only access). Flip the two `component`
 	// values back to release V3.
 	{
-		path: ROUTES.TRACE_DETAIL,
+		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,
 		component: TraceDetail,
 		isPrivate: true,
-		key: 'TRACE_DETAIL',
+		key: 'TRACE_DETAIL_OLD',
 	},
 	{
-		path: ROUTES.TRACE_DETAIL_OLD,
+		path: ROUTES.TRACE_DETAIL,
 		exact: true,
 		component: TraceDetailV3,
 		isPrivate: true,
-		key: 'TRACE_DETAIL_OLD',
+		key: 'TRACE_DETAIL',
 	},
 	{
 		path: ROUTES.SETTINGS,
@@ -212,13 +211,6 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
-	},
-	{
-		path: ROUTES.ALERT_TYPE_SELECTION,
-		exact: true,
-		component: AlertTypeSelectionPage,
-		isPrivate: true,
-		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
@@ -533,18 +525,6 @@ export const LIST_LICENSES: AppRoutes = {
 	key: 'LIST_LICENSES',
 };
 
-export const oldRoutes = [
-	'/pipelines',
-	'/logs-explorer',
-	'/logs-explorer/live',
-	'/logs-save-views',
-	'/traces-save-views',
-	'/settings/access-tokens',
-	'/settings/api-keys',
-	'/messaging-queues',
-	'/alerts/edit',
-];
-
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
@@ -555,7 +535,9 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
+	'/alerts/type-selection': '/alerts/new',
 };
+export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
 	ROUTES.WORKSPACE_LOCKED,

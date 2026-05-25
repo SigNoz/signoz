@@ -7,6 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/emailing/emailingtest"
@@ -41,7 +42,8 @@ func TestNewModules(t *testing.T) {
 	orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstore), sharder)
 	notificationManager := nfmanagertest.NewMock()
 	require.NoError(t, err)
-	alertmanager, err := signozalertmanager.New(context.TODO(), providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager)
+	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore, providerSettings)
+	alertmanager, err := signozalertmanager.New(providerSettings, alertmanager.Config{}, sqlstore, orgGetter, notificationManager, maintenanceStore)
 	require.NoError(t, err)
 	tokenizer := tokenizertest.NewMockTokenizer(t)
 	emailing := emailingtest.New()
