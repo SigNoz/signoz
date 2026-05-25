@@ -15,13 +15,13 @@ import {
 	Modal,
 	Row,
 	Select,
-	Switch,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
@@ -438,9 +438,7 @@ function MultiIngestionSettings(): JSX.Element {
 							data: {
 								name: values.name,
 								tags: updatedTags,
-								expires_at: new Date(
-									dayjs(values.expires_at).endOf('day').toISOString(),
-								),
+								expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 							},
 						},
 						{
@@ -471,13 +469,11 @@ function MultiIngestionSettings(): JSX.Element {
 					const requestPayload = {
 						name: values.name,
 						tags: updatedTags,
-						expires_at: new Date(dayjs(values.expires_at).endOf('day').toISOString()),
+						expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 					};
 
 					createIngestionKey(
-						{
-							data: requestPayload,
-						},
+						{ data: requestPayload },
 						{
 							onSuccess: (_data) => {
 								notifications.success({
@@ -1184,8 +1180,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableDailyLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.day?.enabled}
+																								value={activeSignal?.config?.day?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev
@@ -1274,8 +1269,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableSecondLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.second?.enabled}
+																								value={activeSignal?.config?.second?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev

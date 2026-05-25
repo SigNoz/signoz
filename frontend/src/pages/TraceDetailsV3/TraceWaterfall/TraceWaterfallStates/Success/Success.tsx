@@ -580,10 +580,9 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					return next;
 				});
+				return;
 			}
-			// Backend mode: trigger API call (current behavior)
-			// keeping this for both mode to support scroll to view to function well.
-			// interestedspan would not make api call in frontend mode so it is safe to use for both mode.
+			// Backend mode: trigger refetch via interestedSpanId
 			setInterestedSpanId({
 				spanId,
 				isUncollapsed: !collapse,
@@ -782,19 +781,26 @@ function Success(props: ISuccessProps): JSX.Element {
 		[],
 	);
 
+	// Backend mode: scroll + select to the interestedSpanId target. `spans` in
+	// deps so we retry once a refetch lands (chevron / pagination / deep-link).
 	useEffect(() => {
-		if (interestedSpanId.spanId !== '') {
-			const idx = spans.findIndex(
-				(span) => span.span_id === interestedSpanId.spanId,
-			);
-			if (idx !== -1) {
-				scrollSpanIntoView(spans[idx], spans);
-				setSelectedSpan(spans[idx]);
-			}
-		} else {
-			setSelectedSpan((prev) => prev ?? spans[0]);
+		if (isFullDataLoaded || interestedSpanId.spanId === '') {
+			return;
 		}
-	}, [interestedSpanId, setSelectedSpan, spans, scrollSpanIntoView]);
+		const idx = spans.findIndex(
+			(span) => span.span_id === interestedSpanId.spanId,
+		);
+		if (idx !== -1) {
+			scrollSpanIntoView(spans[idx], spans);
+			setSelectedSpan(spans[idx]);
+		}
+	}, [
+		interestedSpanId,
+		setSelectedSpan,
+		spans,
+		scrollSpanIntoView,
+		isFullDataLoaded,
+	]);
 
 	// Covers URL-driven navigation to an already-loaded span (flamegraph /
 	// filter / browser back) that the interestedSpanId-keyed effect doesn't see.

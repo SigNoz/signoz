@@ -119,6 +119,12 @@
 	flex-shrink: 0;
 }
 
+.statusMessageBadge {
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
 .traceId {
 	color: var(--accent-primary);
 	overflow: hidden;

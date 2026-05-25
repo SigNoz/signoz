@@ -1,5 +1,7 @@
 package inframonitoringtypes
 
+const PersistentVolumeClaimNameAttrKey = "k8s.persistentvolumeclaim.name"
+
 const (
 	VolumesOrderByAvailable  = "available"
 	VolumesOrderByCapacity   = "capacity"
@@ -16,4 +18,5 @@ var VolumesValidOrderByKeys = []string{
 	VolumesOrderByInodes,
 	VolumesOrderByInodesFree,
 	VolumesOrderByInodesUsed,
+	PersistentVolumeClaimNameAttrKey,
 }
