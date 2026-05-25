@@ -192,11 +192,15 @@ test.describe('Dashboard Create Flow', () => {
 		await gotoDashboardsList(page);
 		const searchInput = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 		await searchInput.fill('create-flow-tc03-renamed');
-		await expect(page.getByText('create-flow-tc03-renamed').first()).toBeVisible();
+		await expect(
+			page.getByText('create-flow-tc03-renamed').first(),
+		).toBeVisible();
 
 		// Tag search also surfaces the renamed dashboard.
 		await searchInput.fill('e2e-tag');
-		await expect(page.getByText('create-flow-tc03-renamed').first()).toBeVisible();
+		await expect(
+			page.getByText('create-flow-tc03-renamed').first(),
+		).toBeVisible();
 	});
 
 	test('TC-04 discard reverts unsaved changes without API call', async ({
@@ -256,8 +260,12 @@ test.describe('Dashboard Create Flow', () => {
 
 		// List view reflects the rename after navigating back.
 		await gotoDashboardsList(page);
-		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill('create-flow-tc05-renamed');
-		await expect(page.getByText('create-flow-tc05-renamed').first()).toBeVisible();
+		await page
+			.getByPlaceholder(SEARCH_PLACEHOLDER)
+			.fill('create-flow-tc05-renamed');
+		await expect(
+			page.getByText('create-flow-tc05-renamed').first(),
+		).toBeVisible();
 	});
 
 	// ─── 2. Variables ─────────────────────────────────────────────────────────
@@ -272,11 +280,11 @@ test.describe('Dashboard Create Flow', () => {
 		await drawer.getByRole('button', { name: 'Variables' }).click();
 
 		await drawer.getByTestId('add-new-variable').click();
-		await expect(drawer.getByRole('button', { name: 'All variables' })).toBeVisible();
+		await expect(
+			drawer.getByRole('button', { name: 'All variables' }),
+		).toBeVisible();
 
-		await drawer
-			.getByPlaceholder('Unique name of the variable')
-			.fill('env');
+		await drawer.getByPlaceholder('Unique name of the variable').fill('env');
 
 		await drawer.getByRole('button', { name: 'Custom' }).click();
 
@@ -297,7 +305,9 @@ test.describe('Dashboard Create Flow', () => {
 		expect(res.status()).toBeLessThan(300);
 
 		// After saving, the variable form disappears and the table row is visible.
-		await expect(drawer.getByRole('button', { name: 'All variables' })).not.toBeVisible();
+		await expect(
+			drawer.getByRole('button', { name: 'All variables' }),
+		).not.toBeVisible();
 		await expect(drawer.getByText('env')).toBeVisible();
 
 		// Server-side persistence — the variable record must land in the dashboard JSON.
@@ -308,7 +318,10 @@ test.describe('Dashboard Create Flow', () => {
 			type?: string;
 		}>;
 		const envVar = persistedVars.find((v) => v.name === 'env');
-		expect(envVar, 'env variable must be persisted on the dashboard').toBeTruthy();
+		expect(
+			envVar,
+			'env variable must be persisted on the dashboard',
+		).toBeTruthy();
 		expect(envVar?.customValue).toBe('prod,staging,dev');
 
 		// Close the drawer via its X button and check the variables bar renders the
@@ -349,9 +362,7 @@ test.describe('Dashboard Create Flow', () => {
 		const nameInput = drawer.getByPlaceholder('Unique name of the variable');
 		await nameInput.fill('env');
 
-		await expect(
-			drawer.getByText('Variable name already exists'),
-		).toBeVisible();
+		await expect(drawer.getByText('Variable name already exists')).toBeVisible();
 		await expect(
 			drawer.getByRole('button', { name: 'Save Variable' }),
 		).toBeDisabled();
@@ -370,14 +381,18 @@ test.describe('Dashboard Create Flow', () => {
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 
-		const dialog = page.getByRole('dialog').filter({ hasText: 'Import Dashboard JSON' });
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
 		await expect(dialog).toBeVisible();
 
 		const postResponse = page.waitForResponse(
 			(r) =>
 				r.request().method() === 'POST' && /\/api\/v1\/dashboards/.test(r.url()),
 		);
-		await dialog.locator('input[type="file"]').setInputFiles(APM_METRICS_TESTDATA_PATH);
+		await dialog
+			.locator('input[type="file"]')
+			.setInputFiles(APM_METRICS_TESTDATA_PATH);
 		await dialog.getByRole('button', { name: 'Import and Next' }).click();
 		const res = await postResponse;
 
@@ -391,7 +406,9 @@ test.describe('Dashboard Create Flow', () => {
 		expect(urlMatch, 'URL must contain dashboard ID').not.toBeNull();
 		seedIds.add(urlMatch![1]);
 
-		await expect(page.getByTestId('dashboard-title')).toHaveText(APM_METRICS_TITLE);
+		await expect(page.getByTestId('dashboard-title')).toHaveText(
+			APM_METRICS_TITLE,
+		);
 
 		// Server-side check: every widget + tag from the fixture must be persisted.
 		// A partial import (e.g. silently dropped widgets) would pass the UI title
@@ -423,7 +440,9 @@ test.describe('Dashboard Create Flow', () => {
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 
-		const dialog = page.getByRole('dialog').filter({ hasText: 'Import Dashboard JSON' });
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
 		await expect(dialog).toBeVisible();
 
 		// Track POST attempts: invalid JSON must never reach the create endpoint.
@@ -462,7 +481,9 @@ test.describe('Dashboard Create Flow', () => {
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 
-		const dialog = page.getByRole('dialog').filter({ hasText: 'Import Dashboard JSON' });
+		const dialog = page
+			.getByRole('dialog')
+			.filter({ hasText: 'Import Dashboard JSON' });
 		await expect(dialog).toBeVisible();
 
 		let postFired = false;
@@ -500,7 +521,9 @@ test.describe('Dashboard Create Flow', () => {
 		await expect(page.getByTestId('create-dashboard-menu-cta')).toHaveText(
 			/Create dashboard/i,
 		);
-		await expect(page.getByTestId('import-json-menu-cta')).toHaveText(/Import JSON/i);
+		await expect(page.getByTestId('import-json-menu-cta')).toHaveText(
+			/Import JSON/i,
+		);
 
 		const link = page.getByTestId('view-templates-menu-cta');
 		await expect(link).toHaveText(/View templates/i);
@@ -580,9 +603,9 @@ test.describe('Dashboard Create Flow', () => {
 
 		await page.goBack();
 		await expect(page).toHaveURL(/search=create-flow-tc16/);
-		await expect(
-			page.getByPlaceholder(SEARCH_PLACEHOLDER),
-		).toHaveValue('create-flow-tc16');
+		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(
+			'create-flow-tc16',
+		);
 	});
 
 	test('TC-17 navigating away with the settings drawer open does not crash', async ({

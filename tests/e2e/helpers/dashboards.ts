@@ -432,7 +432,9 @@ export async function openDashboardActionMenu(
  *
  * Returns the drawer locator so callers can scope further assertions to it.
  */
-export async function openDashboardSettingsDrawer(page: Page): Promise<Locator> {
+export async function openDashboardSettingsDrawer(
+	page: Page,
+): Promise<Locator> {
 	await page.getByTestId('show-drawer').first().click();
 	const drawer = page.locator('.settings-container-root');
 	await drawer.waitFor({ state: 'visible' });
@@ -522,7 +524,9 @@ export async function configureAndSavePanel(
 		const metricName = queriesData.metrics.metricName;
 		// The testid is on the Ant Select wrapper <div>; the editable input
 		// lives inside it. Target the descendant input for fill().
-		const metricInput = page.getByTestId('metric-name-selector-0').locator('input');
+		const metricInput = page
+			.getByTestId('metric-name-selector-0')
+			.locator('input');
 		await metricInput.click();
 		await metricInput.fill(metricName);
 		// AutoComplete debounces and fetches; wait for the option then click.
