@@ -12,7 +12,9 @@ import useBaseDrilldownNavigate, {
 const mockSafeNavigate = jest.fn();
 
 jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({ safeNavigate: mockSafeNavigate }),
+	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
+		safeNavigate: mockSafeNavigate,
+	}),
 }));
 
 jest.mock('../drilldownUtils', () => ({
@@ -97,7 +99,11 @@ describe('buildDrilldownUrl', () => {
 	});
 
 	it('returns null for an unknown drilldown key', () => {
-		const url = buildDrilldownUrl(MOCK_QUERY, MOCK_AGGREGATE_DATA, 'view_dashboard');
+		const url = buildDrilldownUrl(
+			MOCK_QUERY,
+			MOCK_AGGREGATE_DATA,
+			'view_dashboard',
+		);
 		expect(url).toBeNull();
 	});
 
@@ -137,7 +143,11 @@ describe('buildDrilldownUrl', () => {
 	});
 
 	it('includes summaryFilters param for view_metrics', () => {
-		const url = buildDrilldownUrl(MOCK_QUERY, MOCK_AGGREGATE_DATA, 'view_metrics');
+		const url = buildDrilldownUrl(
+			MOCK_QUERY,
+			MOCK_AGGREGATE_DATA,
+			'view_metrics',
+		);
 		expect(url).toContain(ROUTES.METRICS_EXPLORER);
 		expect(url).toContain('summaryFilters=');
 	});
@@ -150,7 +160,12 @@ describe('buildDrilldownUrl', () => {
 	it('handles null aggregateData by passing empty filters and empty queryName', () => {
 		const url = buildDrilldownUrl(MOCK_QUERY, null, 'view_logs');
 		expect(url).not.toBeNull();
-		expect(mockGetViewQuery).toHaveBeenCalledWith(MOCK_QUERY, [], 'view_logs', '');
+		expect(mockGetViewQuery).toHaveBeenCalledWith(
+			MOCK_QUERY,
+			[],
+			'view_logs',
+			'',
+		);
 	});
 
 	it('passes aggregateData filters and queryName to getViewQuery', () => {
@@ -201,10 +216,9 @@ describe('useBaseDrilldownNavigate', () => {
 
 		result.current('view_traces');
 
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			expect.any(String),
-			{ newTab: true },
-		);
+		expect(mockSafeNavigate).toHaveBeenCalledWith(expect.any(String), {
+			newTab: true,
+		});
 	});
 
 	it('calls callback after successful navigation', () => {
