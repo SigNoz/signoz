@@ -83,42 +83,40 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
 
 
 # ============================================================================
-# Dataset — 4 traces shared across all order-by and expression cases
+# Dataset — 4 traces using real OTel semantic-convention attributes
 #
-# Each trace uses a single shared operation.type vocabulary:
-#   "root"    — root-level spans in T1 (two of them), T2, T3
-#   "child"   — direct child of the service root in T1, T2
-#   "leaf"    — grandchild (indirect descendant of the service root) in T1, T2
-#   "orphan"  — T4's only span; no "root" ancestor in its trace
+# Filter A = "http.method EXISTS"  (HTTP entry-point spans)
+# Filter B = "db.system = 'redis'"         (direct Redis cache calls)
+#          / "db.system = 'postgresql'"    (deeper DB queries, for indirect tests)
+#          / "messaging.system = 'kafka'"  (async consumer, for OR tests)
 #
-# T1  checkout-svc  api-proxy (3 s, no children) ─┐
-#                                                   ├─ both op="root", same trace_id
-#                   POST /checkout (5 s) → lookup-cart → check-inventory
+# T1  checkout-svc [SERVER] POST /checkout (5s)   ← structural root, http.method=POST
+#                             ├─ proxy-svc [SERVER] api-proxy (3s)  ← http.method=POST; no db children
+#                             └─ [CLIENT] lookup-cart (redis)
+#                                  └─ [CLIENT] check-inventory (postgresql)
 #
-# T2  catalog-svc   GET /catalog (1 s) → fetch-catalog → read-cache
-# T3  standalone-svc  standalone-server  (root-only, no children)
-# T4  isolated-svc    isolated-worker    (orphan, no root ancestor)
+# T2  catalog-svc  [SERVER] GET /catalog (1s)     ← http.method=GET
+#                             └─ [CLIENT] fetch-catalog (redis)
+#                                  └─ [CLIENT] read-cache (postgresql)
 #
-# T1 has TWO op="root" spans in the same trace: api-proxy (no children) and
-# POST /checkout (parents the chain). This makes returnSpansFrom="" and
-# returnSpansFrom="A" produce different results for A => B and A -> B:
-#   default   → only the root spans that directly satisfy the predicate
-#   return_A  → all root spans from traces where the predicate held
+# T3  standalone-svc  [SERVER] standalone-server   ← http.method=POST; no db/cache children
+# T4  isolated-svc    [CONSUMER] isolated-worker   ← messaging.system=kafka; no http.method → not in A
 #
-# How the traces satisfy each test case:
+# T1 has TWO spans matching filter A (http.method EXISTS); returnSpansFrom changes what is returned:
+#   default  → only spans that directly satisfy the structural predicate
+#   return_A → all matching A spans from traces where the predicate held
 #
-#   A -> B (indirect)  A=root  B=leaf   T1✓ T2✓  T3✗(no leaf)  T4✗
-#   A => B (direct)    A=root  B=child  T1✓ T2✓  T3✗(no child) T4✗
-#   A && B             A=root  B=child  T1✓ T2✓  T3✗           T4✗
-#   A || B             A=root  B=orphan T1✓ T2✓  T3✓(via A)    T4✓(via B)
-#   A NOT B            A=root  B=child  T1✗ T2✗  T3✓(A, no B)  T4✗
+# Expression truth table:
+#   A -> B  (indirect)  A=http.method EXISTS  B=db.system='postgresql'  T1✓ T2✓ T3✗ T4✗
+#   A => B  (direct)    A=http.method EXISTS  B=db.system='redis'       T1✓ T2✓ T3✗ T4✗
+#   A && B              A=http.method EXISTS  B=db.system='redis'       T1✓ T2✓ T3✗ T4✗
+#   A || B              A=http.method EXISTS  B=messaging.system='kafka' T1✓ T2✓ T3✓ T4✓
+#   A NOT B             A=http.method EXISTS  B=db.system='redis'       T1✗ T2✗ T3✓ T4✗
 #
-#   ob.indirect  A->B returnSpansFrom=A order http.method DESC
-#                → 3 rows: POST /checkout(POST), GET /catalog(GET), api-proxy(no method)
-#   ob.duration  A=>B returnSpansFrom=A order duration_nano DESC
-#                → 3 rows: POST /checkout(5s), api-proxy(3s), GET /catalog(1s)
-#   ob.select    A=>B returnSpansFrom=A order http.method DESC (in selectFields)
-#                → 3 rows: POST(POST /checkout), GET(GET /catalog), ""(api-proxy)
+# Order-by cases (all use returnSpansFrom=A, 3 rows expected):
+#   ob.indirect  A->B order http.method DESC  → POST(checkout+proxy), GET(catalog)
+#   ob.duration  A=>B order duration_nano DESC → POST/checkout(5s), api-proxy(3s), GET/catalog(1s)
+#   ob.select    A=>B order http.method DESC  → POST, POST, GET
 # ============================================================================
 
 
@@ -140,25 +138,14 @@ def test_trace_operator(
 
     insert_traces(
         [
-            # T1 — checkout-svc, two op="root" spans in the same trace:
-            #   api-proxy: a network proxy span with no children (3 s)
-            #   POST /checkout: the actual service entry point that parents the chain (5 s)
-            # This split is the key to distinguishing returnSpansFrom="" from "A":
-            #   default   → only POST /checkout satisfies A => B or A -> B
-            #   return_A  → api-proxy is included too (all root spans from the matching trace)
-            Traces(
-                timestamp=now - timedelta(seconds=10),
-                duration=timedelta(seconds=3),
-                trace_id=t1_trace_id,
-                span_id=TraceIdGenerator.span_id(),
-                parent_span_id="",
-                name="api-proxy",
-                kind=TracesKind.SPAN_KIND_SERVER,
-                status_code=TracesStatusCode.STATUS_CODE_OK,
-                status_message="",
-                resources={"service.name": "checkout-svc"},
-                attributes={"operation.type": "root"},
-            ),
+            # T1 — two http.method spans in the same trace, modelling a real proxy+service pair.
+            # POST /checkout (checkout-svc) is the single structural root (parent_span_id="").
+            # api-proxy (proxy-svc) is a structural child of POST /checkout but also has
+            # http.method set, so it matches filter A alongside POST /checkout.
+            # Both carry http.method="POST" — they differ only in service.name.
+            # This is what makes returnSpansFrom="" and returnSpansFrom="A" distinct:
+            #   default  → only POST /checkout satisfies A => B or A -> B
+            #   return_A → api-proxy is pulled in too (all A spans from the matching trace)
             Traces(
                 timestamp=now - timedelta(seconds=10),
                 duration=timedelta(seconds=5),
@@ -170,7 +157,20 @@ def test_trace_operator(
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "checkout-svc"},
-                attributes={"operation.type": "root", "http.method": "POST"},
+                attributes={"http.method": "POST", "http.route": "/checkout"},
+            ),
+            Traces(
+                timestamp=now - timedelta(seconds=10),
+                duration=timedelta(seconds=3),
+                trace_id=t1_trace_id,
+                span_id=TraceIdGenerator.span_id(),
+                parent_span_id=t1_checkout_span_id,
+                name="api-proxy",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={"service.name": "proxy-svc"},
+                attributes={"http.method": "POST", "http.route": "/proxy"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=9),
@@ -179,11 +179,11 @@ def test_trace_operator(
                 span_id=t1_child_span_id,
                 parent_span_id=t1_checkout_span_id,
                 name="lookup-cart",
-                kind=TracesKind.SPAN_KIND_INTERNAL,
+                kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "checkout-svc"},
-                attributes={"operation.type": "child"},
+                attributes={"db.system": "redis", "db.operation": "GET"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=8),
@@ -192,13 +192,13 @@ def test_trace_operator(
                 span_id=TraceIdGenerator.span_id(),
                 parent_span_id=t1_child_span_id,
                 name="check-inventory",
-                kind=TracesKind.SPAN_KIND_INTERNAL,
+                kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "checkout-svc"},
-                attributes={"operation.type": "leaf"},
+                attributes={"db.system": "postgresql", "db.operation": "SELECT"},
             ),
-            # T2 — catalog-svc: GET /catalog (1 s root) → fetch-catalog → read-cache
+            # T2 — catalog-svc: GET /catalog (1 s root) → fetch-catalog (redis) → read-cache (postgresql)
             Traces(
                 timestamp=now - timedelta(seconds=10),
                 duration=timedelta(seconds=1),
@@ -210,7 +210,7 @@ def test_trace_operator(
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "catalog-svc"},
-                attributes={"operation.type": "root", "http.method": "GET"},
+                attributes={"http.method": "GET", "http.route": "/catalog"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=9),
@@ -219,11 +219,11 @@ def test_trace_operator(
                 span_id=t2_child_span_id,
                 parent_span_id=t2_root_span_id,
                 name="fetch-catalog",
-                kind=TracesKind.SPAN_KIND_INTERNAL,
+                kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "catalog-svc"},
-                attributes={"operation.type": "child"},
+                attributes={"db.system": "redis", "db.operation": "GET"},
             ),
             Traces(
                 timestamp=now - timedelta(seconds=8),
@@ -232,15 +232,15 @@ def test_trace_operator(
                 span_id=TraceIdGenerator.span_id(),
                 parent_span_id=t2_child_span_id,
                 name="read-cache",
-                kind=TracesKind.SPAN_KIND_INTERNAL,
+                kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "catalog-svc"},
-                attributes={"operation.type": "leaf"},
+                attributes={"db.system": "postgresql", "db.operation": "SELECT"},
             ),
-            # T3 — standalone-svc: root-only, no children
-            #   Fails A => B / A -> B / A && B (no child or leaf descendant).
-            #   Matches A NOT B (has root, no child).
+            # T3 — standalone-svc: HTTP entry span with no downstream calls.
+            #   Fails A => B / A -> B / A && B (no redis/postgresql descendant).
+            #   Matches A NOT B (has http.method span, no redis child).
             #   Contributes to A || B via A.
             Traces(
                 timestamp=now - timedelta(seconds=10),
@@ -253,9 +253,9 @@ def test_trace_operator(
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "standalone-svc"},
-                attributes={"operation.type": "root", "http.method": "POST"},
+                attributes={"http.method": "POST", "http.route": "/"},
             ),
-            # T4 — isolated-svc: single orphan span with no "root" ancestor in its trace.
+            # T4 — isolated-svc: Kafka consumer; no http.method so it never matches filter A.
             #   Used only as the B side of A || B to prove the OR operator matches via B.
             Traces(
                 timestamp=now - timedelta(seconds=10),
@@ -264,11 +264,11 @@ def test_trace_operator(
                 span_id=TraceIdGenerator.span_id(),
                 parent_span_id="",
                 name="isolated-worker",
-                kind=TracesKind.SPAN_KIND_SERVER,
+                kind=TracesKind.SPAN_KIND_CONSUMER,
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 status_message="",
                 resources={"service.name": "isolated-svc"},
-                attributes={"operation.type": "orphan"},
+                attributes={"messaging.system": "kafka", "messaging.destination": "orders"},
             ),
         ]
     )
@@ -279,23 +279,23 @@ def test_trace_operator(
 
     cases = [
         # ── Order-by: http.method DESC, NOT in selectFields ──────────────────────
-        # Guards against NOT_FOUND_COLUMN_IN_BLOCK: ordering by a column absent from
-        # the outer SELECT used to cause a ClickHouse query failure.
-        # returnSpansFrom="A" returns all T1 root spans: POST /checkout (POST) and
-        # api-proxy (no http.method), plus GET /catalog (GET) from T2.
+        # returnSpansFrom="A" returns all T1 http.method spans: POST /checkout and api-proxy
+        # (both http.method="POST", services checkout-svc and proxy-svc), plus
+        # GET /catalog (http.method="GET") from T2.
+        # The two POST spans are tied so their relative order is undefined; catalog-svc
+        # (GET) is guaranteed to sort last.
         {
             "name": "ob.indirect.http_method_not_in_select",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'leaf'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'postgresql'",
             "expression": "A -> B",
             "return_spans_from": "A",
             "select_fields": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
             "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
             "validate": lambda r: (
                 len(_rows(r)) == 3
-                and _rows(r)[0]["data"]["service.name"] == "checkout-svc"   # POST /checkout
-                and _rows(r)[1]["data"]["service.name"] == "catalog-svc"    # GET /catalog
-                and _rows(r)[2]["data"]["service.name"] == "checkout-svc"   # api-proxy (no http.method → last)
+                and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"}
+                and _rows(r)[2]["data"]["service.name"] == "catalog-svc"
             ),
         },
         # ── Order-by: duration_nano DESC, core span field ─────────────────────────
@@ -303,8 +303,8 @@ def test_trace_operator(
         # Order: POST /checkout (5 s) > api-proxy (3 s) > GET /catalog (1 s).
         {
             "name": "ob.duration.duration_nano_desc",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A => B",
             "return_spans_from": "A",
             "order": [{"key": {"name": "duration_nano", "fieldContext": "span"}, "direction": "desc"}],
@@ -317,11 +317,12 @@ def test_trace_operator(
         },
         # ── Order-by: http.method DESC, IS in selectFields ────────────────────────
         # http.method is selected so it appears in each result row.
-        # api-proxy has no http.method attribute → empty string → sorts last.
+        # Both POST /checkout and api-proxy carry http.method="POST"; their relative
+        # order is undefined. GET /catalog ("GET") always sorts last.
         {
             "name": "ob.select.http_method_in_select",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A => B",
             "return_spans_from": "A",
             "select_fields": [{"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}],
@@ -329,99 +330,99 @@ def test_trace_operator(
             "validate": lambda r: (
                 len(_rows(r)) == 3
                 and _rows(r)[0]["data"]["http.method"] == "POST"
-                and _rows(r)[1]["data"]["http.method"] == "GET"
-                and _rows(r)[2]["data"]["http.method"] == ""
+                and _rows(r)[1]["data"]["http.method"] == "POST"
+                and _rows(r)[2]["data"]["http.method"] == "GET"
             ),
         },
         # ── A => B (direct child), returnSpansFrom="" ─────────────────────────────
-        # Only POST /checkout directly parents lookup-cart; api-proxy has no children.
-        # T3 does not match (root-only). Default returns only the satisfying A spans.
+        # POST /checkout directly parents lookup-cart (redis); api-proxy has no redis child.
+        # T3 does not match (no redis descendant). Default returns only the satisfying A spans.
         {
             "name": "ex.direct_child.default",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A => B",
             "return_spans_from": "",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+            "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
         },
         # ── A => B (direct child), returnSpansFrom="A" ────────────────────────────
-        # T1 matches; return_A pulls all T1 root spans → api-proxy is included too.
+        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
         {
             "name": "ex.direct_child.return_A",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A => B",
             "return_spans_from": "A",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
         },
         # ── A -> B (indirect descendant), returnSpansFrom="" ──────────────────────
-        # Only POST /checkout is an ancestor of check-inventory; api-proxy has no descendants.
-        # T3 does not match (no leaf). Default returns only the satisfying A spans.
+        # POST /checkout is an ancestor of check-inventory (postgresql) via lookup-cart.
+        # api-proxy has no postgresql descendants. T3 has no postgresql descendant.
         {
             "name": "ex.indirect_descendant.default",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'leaf'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'postgresql'",
             "expression": "A -> B",
             "return_spans_from": "",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+            "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
         },
         # ── A -> B (indirect descendant), returnSpansFrom="A" ────────────────────
-        # T1 matches; return_A pulls all T1 root spans → api-proxy is included too.
+        # T1 matches; return_A pulls all T1 http.method spans → api-proxy is included too.
         {
             "name": "ex.indirect_descendant.return_A",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'leaf'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'postgresql'",
             "expression": "A -> B",
             "return_spans_from": "A",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
         },
         # ── A && B (both present in same trace), returnSpansFrom="" ───────────────
-        # T1 and T2 match (each trace has both root and child); T3 does not.
+        # T1 and T2 match (each trace has http.method spans AND redis spans); T3 does not.
         # A && B returns all A spans from matching traces — api-proxy is included
         # because it shares T1's trace_id with POST /checkout.
         # (return_A produces the same set by definition; no separate case needed.)
         {
             "name": "ex.and.default",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A && B",
             "return_spans_from": "",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+            "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
         },
         # ── A || B (either present), returnSpansFrom="" ───────────────────────────
-        # T1, T2, T3 match via A; T4 matches via B.
+        # T1, T2, T3 match via A (http.method spans); T4 matches via B (kafka span).
         # Default returns UNION of all A and B spans from matching traces.
         {
             "name": "ex.or.default",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'orphan'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "messaging.system = 'kafka'",
             "expression": "A || B",
             "return_spans_from": "",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
+            "validate": lambda r: len(_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
         },
         # ── A || B, returnSpansFrom="A" ───────────────────────────────────────────
         # All four traces match; only A spans are returned.
-        # T4 has no root span, so it contributes nothing.
+        # T4 has no http.method span, so it contributes nothing to A.
         {
             "name": "ex.or.return_A",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'orphan'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "messaging.system = 'kafka'",
             "expression": "A || B",
             "return_spans_from": "A",
-            "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
+            "validate": lambda r: len(_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
         },
         # ── A NOT B (A present, B absent from trace), returnSpansFrom="" ─────────
-        # T1 and T2 do NOT match: their traces contain child spans.
-        # T3 MATCHES: has root but no child in its trace.
-        # T4 has no root, so it cannot contribute an A span.
+        # T1 and T2 do NOT match: their traces contain redis spans.
+        # T3 MATCHES: has http.method span but no redis span in its trace.
+        # T4 has no http.method span, so it cannot contribute an A span.
         # (return_A produces the same set; no separate case needed.)
         {
             "name": "ex.not.default",
-            "filter_a": "operation.type = 'root'",
-            "filter_b": "operation.type = 'child'",
+            "filter_a": "http.method EXISTS",
+            "filter_b": "db.system = 'redis'",
             "expression": "A NOT B",
             "return_spans_from": "",
-            "validate": lambda r: _names(r) == {"standalone-server"},
+            "validate": lambda r: len(_rows(r)) == 1 and _names(r) == {"standalone-server"},
         },
     ]
 
