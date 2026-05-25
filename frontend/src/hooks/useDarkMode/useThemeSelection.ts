@@ -35,7 +35,14 @@ export function useThemeSelection(): SelectTheme {
 
 			const applyChange = (): void => {
 				if (value === THEME_MODE.SYSTEM) {
+					// Also push the resolved light/dark value through setTheme so the
+					// View Transition snapshot reflects the new theme synchronously.
+					// Otherwise the flip would only land via ThemeProvider's effect
+					// (setAutoSwitch → re-render → effect → setThemeState), which
+					// isn't guaranteed to run inside this flushSync batch and would
+					// cause the wipe to capture old → old followed by a post-animation snap.
 					setAutoSwitch(true);
+					setTheme(resolvedTargetIsDark ? THEME_MODE.DARK : THEME_MODE.LIGHT);
 				} else {
 					setAutoSwitch(false);
 					setTheme(value);
