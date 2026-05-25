@@ -17,6 +17,8 @@ import (
 
 var ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 
+const scopeDocUrl = "https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+
 type MaintenanceStatus struct {
 	valuer.String
 }
@@ -125,7 +127,11 @@ func (p *PostablePlannedMaintenance) Validate() error {
 	}
 	if p.Scope != "" {
 		if _, err := expr.Compile(p.Scope, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid scope: %v", err)
+			err := errors.Newf(
+				errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload,
+				"invalid scope: %s", err.Error(),
+			)
+			return err.WithUrl(scopeDocUrl)
 		}
 	}
 	return nil
