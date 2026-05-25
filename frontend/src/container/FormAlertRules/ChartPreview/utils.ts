@@ -1,6 +1,10 @@
 import { Color } from '@signozhq/design-tokens';
+import { ExecStats } from 'api/v5/v5';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Threshold } from 'container/CreateAlertV2/context/types';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import {
 	BooleanFormats,
@@ -11,6 +15,20 @@ import {
 	TimeFormats,
 } from 'container/NewWidget/RightContainer/types';
 import { TFunction } from 'i18next';
+import { getLegend } from 'lib/dashboard/getQueryResults';
+import getLabelName from 'lib/getLabelName';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import {
+	DrawStyle,
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
+import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import { hasSingleVisiblePoint } from 'lib/uPlotV2/utils/dataUtils';
+import { get } from 'lodash-es';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	dataFormatConfig,
@@ -19,6 +37,8 @@ import {
 	throughputConfig,
 	timeUnitsConfig,
 } from './config';
+
+const CHART_ID_PREFIX = 'alert_legend_widget';
 
 export function covertIntoDataFormats({
 	value,
@@ -142,3 +162,110 @@ export const getThresholds = (
 	});
 	return thresholdsToReturn;
 };
+
+export type AlertChartPanelType = PANEL_TYPES.TIME_SERIES | PANEL_TYPES.BAR;
+
+export interface BuildAlertChartConfigParams {
+	id: string;
+	panelType: AlertChartPanelType;
+	query: Query;
+	thresholds: ThresholdProps[];
+	apiResponse?: MetricRangePayloadProps;
+	yAxisUnit?: string;
+	isDarkMode: boolean;
+	timezone: Timezone;
+	minTimeScale?: number;
+	maxTimeScale?: number;
+	onDragSelect: (startTime: number, endTime: number) => void;
+	onClick?: OnClickPluginOpts['onClick'];
+}
+
+export const buildAlertChartConfig = ({
+	id,
+	panelType,
+	query,
+	thresholds,
+	apiResponse,
+	yAxisUnit,
+	isDarkMode,
+	timezone,
+	minTimeScale,
+	maxTimeScale,
+	onDragSelect,
+	onClick,
+}: BuildAlertChartConfigParams): UPlotConfigBuilder => {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const stepIntervalValues = Object.values(stepIntervals);
+	const minStepInterval = stepIntervalValues.length
+		? Math.min(...stepIntervalValues)
+		: undefined;
+
+	const builder = buildBaseConfig({
+		id,
+		panelType,
+		panelMode: PanelMode.DASHBOARD_VIEW,
+		thresholds,
+		apiResponse,
+		yAxisUnit,
+		isDarkMode,
+		timezone,
+		minTimeScale,
+		maxTimeScale,
+		stepInterval: minStepInterval,
+		onDragSelect,
+		onClick,
+	});
+
+	const seriesList = apiResponse?.data?.result;
+	if (!seriesList?.length) {
+		return builder;
+	}
+
+	const isBar = panelType === PANEL_TYPES.BAR;
+
+	seriesList.forEach((series) => {
+		const baseLabelName = getLabelName(
+			series.metric,
+			series.queryName || '',
+			series.legend || '',
+		);
+		const label = query ? getLegend(series, query, baseLabelName) : baseLabelName;
+
+		if (isBar) {
+			builder.addSeries({
+				scaleKey: 'y',
+				drawStyle: DrawStyle.Bar,
+				label,
+				colorMapping: {},
+				isDarkMode,
+				stepInterval: get(stepIntervals, series.queryName, undefined),
+			});
+			return;
+		}
+
+		const hasSingleValidPoint = hasSingleVisiblePoint(series.values);
+		builder.addSeries({
+			scaleKey: 'y',
+			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
+			label,
+			colorMapping: {},
+			spanGaps: true,
+			lineStyle: LineStyle.Solid,
+			lineInterpolation: LineInterpolation.Spline,
+			showPoints: hasSingleValidPoint,
+			pointSize: 5,
+			fillMode: FillMode.None,
+			isDarkMode,
+			metric: series.metric,
+		});
+	});
+
+	return builder;
+};
+
+export const buildChartId = (id?: string): string =>
+	id ? `${CHART_ID_PREFIX}_${id}` : CHART_ID_PREFIX;
