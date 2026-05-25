@@ -48,3 +48,30 @@ func (SpanAggregationType) Enum() []any {
 func (s SpanAggregationType) isValid() bool {
 	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
 }
+
+// PostableTraceAggregations is the request body for the V4 aggregations endpoint.
+type PostableTraceAggregations struct {
+	Aggregations []SpanAggregation `json:"aggregations"`
+}
+
+func (p *PostableTraceAggregations) Validate() error {
+	if len(p.Aggregations) > maxAggregationItems {
+		return ErrTooManyAggregationItems
+	}
+	for _, a := range p.Aggregations {
+		if !a.Aggregation.isValid() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
+		}
+		fc := a.Field.FieldContext
+		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
+				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
+		}
+	}
+	return nil
+}
+
+// GettableTraceAggregations is the response for the V4 aggregations endpoint.
+type GettableTraceAggregations struct {
+	Aggregations []SpanAggregationResult `json:"aggregations"`
+}
