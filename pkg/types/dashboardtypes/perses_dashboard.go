@@ -16,7 +16,7 @@ import (
 
 const (
 	SchemaVersion       = "v6"
-	MaxTagsPerDashboard = 5
+	MaxTagsPerDashboard = 10
 )
 
 type DSLKey string
