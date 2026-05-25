@@ -15,9 +15,11 @@ type Config struct {
 	// The directory from which to serve the web files.
 	Directory string `mapstructure:"directory"`
 
+	// Settings that are exposed to the web.
 	Settings Settings `mapstructure:"settings"`
 }
 
+// Settings that are exposed to the web.
 type Settings struct {
 	Posthog Posthog `mapstructure:"posthog"`
 
@@ -43,10 +45,10 @@ func newConfig() factory.Config {
 		Directory: "/etc/signoz/web",
 		Settings: Settings{
 			Posthog: Posthog{
-				Enabled: false,
+				Enabled: true,
 			},
 			Appcues: Appcues{
-				Enabled: false,
+				Enabled: true,
 			},
 		},
 	}
