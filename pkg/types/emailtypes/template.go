@@ -12,7 +12,11 @@ import (
 var (
 	// Templates is a list of all the templates that are supported by the emailing service.
 	// This list should be updated whenever a new template is added.
-	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameResetPassword, TemplateNameAlertEmailNotification}
+	Templates = []TemplateName{TemplateNameInvitationEmail, TemplateNameResetPassword}
+
+	// AlertmanagerTemplates is a list of all the templates that are supported by the alertmanager.
+	// This list should be updated whenever a new alertmanager template is added.
+	AlertmanagerTemplates = []TemplateName{TemplateNameAlertEmailNotification}
 )
 
 var (

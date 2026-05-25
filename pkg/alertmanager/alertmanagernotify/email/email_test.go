@@ -1163,7 +1163,7 @@ func TestPrepareContent(t *testing.T) {
 		}
 
 		tmplStore, err := filetemplatestore.NewStore(
-			context.Background(), "../../../../templates/email", emailtypes.Templates, slog.New(slog.DiscardHandler),
+			context.Background(), "../../../../templates/alertmanager", emailtypes.AlertmanagerTemplates, slog.New(slog.DiscardHandler),
 		)
 		require.NoError(t, err)
 

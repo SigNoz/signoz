@@ -211,7 +211,7 @@ func New(
 	server.muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
 	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
-	emailTemplateStore, storeErr := filetemplatestore.NewStore(ctx, srvConfig.EmailTemplatesDirectory, emailtypes.Templates, server.logger)
+	emailTemplateStore, storeErr := filetemplatestore.NewStore(ctx, srvConfig.EmailTemplatesDirectory, emailtypes.AlertmanagerTemplates, server.logger)
 	if storeErr != nil {
 		server.logger.ErrorContext(ctx, "failed to create alert email template store, using empty store", errors.Attr(storeErr))
 		emailTemplateStore = filetemplatestore.NewEmptyStore()

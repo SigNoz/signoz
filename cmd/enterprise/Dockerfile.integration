@@ -26,7 +26,7 @@ RUN go mod download
 COPY ./cmd/ ./cmd/
 COPY ./ee/ ./ee/
 COPY ./pkg/ ./pkg/
-COPY ./templates/email /root/templates
+COPY ./templates /root/templates
 
 COPY Makefile Makefile
 RUN TARGET_DIR=/root ARCHS=${TARGETARCH} ZEUS_URL=${ZEUSURL} LICENSE_URL=${ZEUSURL}/api/v1 make go-build-enterprise-race

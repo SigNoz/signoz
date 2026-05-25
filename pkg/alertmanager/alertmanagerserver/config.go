@@ -103,6 +103,6 @@ func NewConfig() Config {
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
 		},
-		EmailTemplatesDirectory: "/root/templates",
+		EmailTemplatesDirectory: "/root/templates/alertmanager",
 	}
 }
