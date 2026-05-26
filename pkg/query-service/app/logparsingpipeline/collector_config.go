@@ -118,8 +118,13 @@ iteration:
 		// same processor exist; retain the location of pre-existing location
 		case p == memoryLimiterProcessor || strings.HasPrefix(p, memoryLimiterProcessorPrefix):
 			result = append(result, p)
-		case hasSignozPipelineProcessorPrefix(p) && inDesiredSet:
-			result = append(result, p)
+		case hasSignozPipelineProcessorPrefix(p):
+			// this processor has been dropped
+			if !inDesiredSet {
+				continue iteration
+			} else {
+				result = append(result, p)
+			}
 		case p == batchProcessor || strings.HasPrefix(p, batchProcessorPrefix):
 			batchProcIdx = idx
 			batchProcFound = true

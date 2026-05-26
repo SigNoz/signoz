@@ -139,25 +139,25 @@ var BuildLogsPipelinesTestData = []struct {
 		Name:          "Remove old pipeline add add new",
 		fromCollector: []string{constants.LogsPPLPfx + "a", constants.LogsPPLPfx + "b", "processor1", "processor2"},
 		userPipelines: []string{constants.LogsPPLPfx + "a"},
-		finalOutput:   []string{constants.LogsPPLPfx + "a", constants.LogsPPLPfx + "b", "processor1", "processor2"},
+		finalOutput:   []string{constants.LogsPPLPfx + "a", "processor1", "processor2"},
 	},
 	{
 		Name:          "Remove old pipeline from middle",
 		fromCollector: []string{"processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", constants.LogsPPLPfx + "b", "batch"},
 		userPipelines: []string{constants.LogsPPLPfx + "a"},
-		finalOutput:   []string{"processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", constants.LogsPPLPfx + "b", "batch"},
+		finalOutput:   []string{"processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", "batch"},
 	},
 	{
 		Name:          "Remove old pipeline from middle and add new pipeline",
 		fromCollector: []string{"memory_limiter", "processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", constants.LogsPPLPfx + "b", "batch"},
 		userPipelines: []string{constants.LogsPPLPfx + "a", constants.LogsPPLPfx + "c"},
-		finalOutput:   []string{"memory_limiter", "processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", constants.LogsPPLPfx + "b", constants.LogsPPLPfx + "c", "batch"},
+		finalOutput:   []string{"memory_limiter", "processor1", "processor2", constants.LogsPPLPfx + "a", "processor3", constants.LogsPPLPfx + "c", "batch"},
 	},
 	{
 		Name:          "Remove multiple old pipelines from middle and add multiple new ones",
 		fromCollector: []string{"processor1", constants.LogsPPLPfx + "a", "processor2", constants.LogsPPLPfx + "b", "processor3", constants.LogsPPLPfx + "c", "processor4", constants.LogsPPLPfx + "d", "processor5", "batch"},
 		userPipelines: []string{constants.LogsPPLPfx + "a", constants.LogsPPLPfx + "a1", constants.LogsPPLPfx + "c", constants.LogsPPLPfx + "c1"},
-		finalOutput:   []string{"processor1", constants.LogsPPLPfx + "a", "processor2", constants.LogsPPLPfx + "b", "processor3", constants.LogsPPLPfx + "c", "processor4", constants.LogsPPLPfx + "d", "processor5", constants.LogsPPLPfx + "a1", constants.LogsPPLPfx + "c1", "batch"},
+		finalOutput:   []string{"processor1", constants.LogsPPLPfx + "a", "processor2", "processor3", constants.LogsPPLPfx + "c", "processor4", "processor5", constants.LogsPPLPfx + "a1", constants.LogsPPLPfx + "c1", "batch"},
 	},
 	{
 		Name:          "rearrange pipelines",
@@ -175,7 +175,7 @@ var BuildLogsPipelinesTestData = []struct {
 		Name:          "delete processor",
 		fromCollector: []string{"processor1", "processor2", constants.LogsPPLPfx + "_a", "processor3", constants.LogsPPLPfx + "_b", "batch"},
 		userPipelines: []string{},
-		finalOutput:   []string{"processor1", "processor2", constants.LogsPPLPfx + "_a", "processor3", constants.LogsPPLPfx + "_b", "batch"},
+		finalOutput:   []string{"processor1", "processor2", "processor3", "batch"},
 	},
 	{
 		Name:          "last to first",
