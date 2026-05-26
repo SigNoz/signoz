@@ -422,7 +422,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, false)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, true)
 
 	if err != nil {
 		return nil, err
