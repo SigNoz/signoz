@@ -15,7 +15,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -34,25 +37,27 @@ const maxMessageLenRunes = 130
 
 // Notifier implements a Notifier for OpsGenie notifications.
 type Notifier struct {
-	conf    *config.OpsGenieConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.OpsGenieConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new OpsGenie notifier.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Notifier{
-		conf:    c,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		conf:      c,
+		tmpl:      t,
+		logger:    l,
+		client:    client,
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater: templater,
 	}, nil
 }
 
@@ -123,6 +128,55 @@ func safeSplit(s, sep string) []string {
 	return b
 }
 
+// prepareContent expands alert templates and returns the OpsGenie-ready title
+// (truncated to the 130-rune limit) and HTML description. Custom bodies are
+// rendered to HTML and stitched together with <hr> dividers; default bodies
+// are joined with newlines (OpsGenie's legacy plain-text description).
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (string, string, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Message,
+		DefaultBodyTemplate:  n.conf.Description,
+	}, alerts)
+	if err != nil {
+		return "", "", err
+	}
+
+	var description string
+	if result.IsDefaultBody {
+		description = strings.Join(result.Body, "\n")
+	} else {
+		var b strings.Builder
+		first := true
+		for _, part := range result.Body {
+			if part == "" {
+				continue
+			}
+			rendered, renderErr := markdownrenderer.RenderHTML(part)
+			if renderErr != nil {
+				return "", "", renderErr
+			}
+			if !first {
+				b.WriteString("<hr>")
+			}
+			b.WriteString("<div>")
+			b.WriteString(rendered)
+			b.WriteString("</div>")
+			first = false
+		}
+		description = b.String()
+	}
+
+	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated message", slog.Int("max_runes", maxMessageLenRunes))
+	}
+
+	return title, description, nil
+}
+
 // Create requests for a list of alerts.
 func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*http.Request, bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
@@ -168,9 +222,10 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		}
 		requests = append(requests, req.WithContext(ctx))
 	default:
-		message, truncated := notify.TruncateInRunes(tmpl(n.conf.Message), maxMessageLenRunes)
-		if truncated {
-			logger.WarnContext(ctx, "Truncated message", slog.Any("alert", key), slog.Int("max_runes", maxMessageLenRunes))
+		message, description, err := n.prepareContent(ctx, as)
+		if err != nil {
+			n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+			return nil, false, err
 		}
 
 		createEndpointURL := n.conf.APIURL.Copy()
@@ -209,7 +264,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		msg := &opsGenieCreateMessage{
 			Alias:       alias,
 			Message:     message,
-			Description: tmpl(n.conf.Description),
+			Description: description,
 			Details:     details,
 			Source:      tmpl(n.conf.Source),
 			Responders:  responders,

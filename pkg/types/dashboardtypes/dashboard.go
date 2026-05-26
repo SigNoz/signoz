@@ -110,7 +110,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 		},
 		OrgID:  orgID,
 		Data:   storableDashboardData,
-		Locked: false,
+		Locked: source == SourceIntegration,
 		Source: source,
 	}, nil
 }

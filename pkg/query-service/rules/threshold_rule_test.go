@@ -869,7 +869,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == "related_traces" {
+					if name == ruletypes.AnnotationRelatedTraces {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "GET")
 					}
@@ -986,7 +986,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound, "case %d", idx)
 			for _, item := range rule.Active {
 				for name, value := range item.Annotations.Map() {
-					if name == "related_logs" {
+					if name == ruletypes.AnnotationRelatedLogs {
 						assert.NotEmpty(t, value, "case %d", idx)
 						assert.Contains(t, value, "testcontainer")
 					}
