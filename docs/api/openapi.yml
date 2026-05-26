@@ -2437,6 +2437,15 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+    DashboardtypesComparisonOperator:
+      enum:
+      - above
+      - below
+      - above_or_equal
+      - below_or_equal
+      - equal
+      - not_equal
+      type: string
     DashboardtypesComparisonThreshold:
       properties:
         color:
@@ -2444,7 +2453,7 @@ components:
         format:
           $ref: '#/components/schemas/DashboardtypesThresholdFormat'
         operator:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
         unit:
           type: string
         value:
@@ -2862,6 +2871,8 @@ components:
       type: object
     DashboardtypesPostableDashboardV2:
       properties:
+        generateName:
+          type: boolean
         image:
           type: string
         name:
@@ -2877,7 +2888,6 @@ components:
           type: array
       required:
       - schemaVersion
-      - name
       - spec
       type: object
     DashboardtypesPostablePublicDashboard:
@@ -3053,7 +3063,7 @@ components:
         format:
           $ref: '#/components/schemas/DashboardtypesThresholdFormat'
         operator:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
         unit:
           type: string
         value:
