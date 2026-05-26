@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Loader, MoveUpRight } from '@signozhq/icons';
 import { Spin, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -17,9 +17,9 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
-import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
@@ -38,13 +38,11 @@ function DomainList(): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
 	const { showIP, selectedDomain } = params;
 	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
-	const { maxTime, minTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const queryClient = useQueryClient();
-	const dispatch = useDispatch();
 	const { currentQuery, handleRunQuery, stagedQuery } = useQueryBuilder();
 	const query = useMemo(
 		() => currentQuery?.builder?.queryData[0] || null,
@@ -72,27 +70,7 @@ function DomainList(): JSX.Element {
 		handleRunQuery();
 	}, [queryClient, handleRunQuery]);
 
-	// Push fresh min/max back into Redux on each Run Query for relative intervals,
-	// so the picker reflects the same window we just fetched. useListOverview reads
-	// minTime/maxTime straight from Redux, so without this Run Query for a relative
-	// interval would re-fetch with the original frozen window.
-	// ref - https://github.com/SigNoz/signoz/pull/8277/files#diff-d4fa32689fb1a0d3a2fdb5fe0ee16ac6f6142ef6882ad272164d0f68ab428953
-	const prevStagedQueryIdRef = useRef<string | undefined>();
-
-	useEffect(() => {
-		const prevId = prevStagedQueryIdRef.current;
-		const currentId = stagedQuery?.id;
-		prevStagedQueryIdRef.current = currentId;
-
-		if (
-			prevId !== undefined &&
-			currentId !== undefined &&
-			prevId !== currentId &&
-			selectedTime !== 'custom'
-		) {
-			dispatch(UpdateTimeInterval(selectedTime));
-		}
-	}, [stagedQuery?.id, selectedTime, dispatch]);
+	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const { data, isLoading, isFetching } = useListOverview({
 		start: minTime,

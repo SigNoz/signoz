@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
@@ -33,6 +31,7 @@ import TracesView from 'container/TracesExplorer/TracesView';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
@@ -43,13 +42,10 @@ import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { TOOLBAR_VIEWS } from 'pages/TracesExplorer/constants';
-import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import {
 	explorerViewToPanelType,
@@ -105,30 +101,7 @@ function TracesExplorer(): JSX.Element {
 		}
 	}, [isLoadingQueries]);
 
-	// Push fresh min/max back into Redux on each Run Query for relative intervals.
-	// useGetQueryRange recomputes now() at fetch time, so without this Redux drifts
-	// behind and the time picker displays a stale absolute window.
-	// ref - https://github.com/SigNoz/signoz/pull/8277/files#diff-d4fa32689fb1a0d3a2fdb5fe0ee16ac6f6142ef6882ad272164d0f68ab428953
-	const dispatch = useDispatch();
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-	const prevStagedQueryIdRef = useRef<string | undefined>();
-
-	useEffect(() => {
-		const prevId = prevStagedQueryIdRef.current;
-		const currentId = stagedQuery?.id;
-		prevStagedQueryIdRef.current = currentId;
-
-		if (
-			prevId !== undefined &&
-			currentId !== undefined &&
-			prevId !== currentId &&
-			selectedTime !== 'custom'
-		) {
-			dispatch(UpdateTimeInterval(selectedTime));
-		}
-	}, [stagedQuery?.id, selectedTime, dispatch]);
+	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const handleCancelQuery = useCallback(() => {
 		if (listQueryKeyRef.current) {
