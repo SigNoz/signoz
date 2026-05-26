@@ -410,10 +410,6 @@ var (
 	ComparisonOperatorNotEqual     = ComparisonOperator{valuer.NewString("not_equal")}
 )
 
-func (ComparisonOperator) Enum() []any {
-	return []any{ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ, ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual, ComparisonOperatorEqual, ComparisonOperatorNotEqual}
-}
-
 func (o ComparisonOperator) ValueOrDefault() string {
 	if o.IsZero() {
 		return ComparisonOperatorGT.StringValue()

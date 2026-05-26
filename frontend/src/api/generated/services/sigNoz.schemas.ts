@@ -3651,19 +3651,6 @@ export type DashboardtypesBuilderQuerySpecDTO =
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 
-export enum DashboardtypesComparisonOperatorDTO {
-	'>' = '>',
-	'<' = '<',
-	'>=' = '>=',
-	'<=' = '<=',
-	'=' = '=',
-	above = 'above',
-	below = 'below',
-	above_or_equal = 'above_or_equal',
-	below_or_equal = 'below_or_equal',
-	equal = 'equal',
-	not_equal = 'not_equal',
-}
 export enum DashboardtypesThresholdFormatDTO {
 	text = 'text',
 	background = 'background',
@@ -3674,7 +3661,10 @@ export interface DashboardtypesComparisonThresholdDTO {
 	 */
 	color: string;
 	format?: DashboardtypesThresholdFormatDTO;
-	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	operator?: string;
 	/**
 	 * @type string
 	 */
@@ -3959,7 +3949,10 @@ export interface DashboardtypesTableThresholdDTO {
 	 */
 	columnName: string;
 	format?: DashboardtypesThresholdFormatDTO;
-	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 */
+	operator?: string;
 	/**
 	 * @type string
 	 */
