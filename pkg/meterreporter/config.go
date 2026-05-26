@@ -49,9 +49,8 @@ func (c Config) Validate() error {
 	return nil
 }
 
-// ResolvedJitter returns the configured Jitter, or min(Interval, 2h) when the
-// sentinel default is still in place. The 2h default reaches uniform fleet
-// distribution in ~1.7 days (see docs/superpowers/specs/meterreporter-jitter).
+// ResolvedJitter returns the configured Jitter, or
+// min(Interval, 2h) when the sentinel default is still in place.
 func (c Config) ResolvedJitter() time.Duration {
 	if c.Jitter < 0 {
 		if c.Interval < 2*time.Hour {
