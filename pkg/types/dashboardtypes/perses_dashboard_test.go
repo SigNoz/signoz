@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func unmarshalDashboard(data []byte) (*DashboardSpec, error) {
@@ -923,6 +924,112 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.True(t,
 		strings.Contains(responseStr, `"operator":">"`) || strings.Contains(responseStr, `"operator":"\u003e"`),
 		"expected operator:> after storage round-trip")
+}
+
+func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
+	const validSpec = `"spec": {"panels": {}, "layouts": []}`
+
+	tests := []struct {
+		scenario     string
+		body         string
+		wantErr      bool
+		wantErrMatch string
+		wantName     string
+		wantDisplay  string
+	}{
+		{
+			scenario:    "flag true with display.name derives name on conversion",
+			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[]}}`,
+			wantName:    "",
+			wantDisplay: "My Dashboard!",
+		},
+		{
+			scenario:     "flag true with non-empty name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"panels":{},"layouts":[]}}`,
+			wantErr:      true,
+			wantErrMatch: "name must be empty when generateName is true",
+		},
+		{
+			scenario:     "flag true with empty display.name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `","generateName":true,` + validSpec + `}`,
+			wantErr:      true,
+			wantErrMatch: "spec.display.name is required",
+		},
+		{
+			scenario:    "flag false",
+			body:        `{"schemaVersion":"` + SchemaVersion + `","name":"my-dashboard",` + validSpec + `}`,
+			wantName:    "my-dashboard",
+			wantDisplay: "my-dashboard",
+		},
+		{
+			scenario:     "flag false with missing name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `",` + validSpec + `}`,
+			wantErr:      true,
+			wantErrMatch: "name is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			var p PostableDashboardV2
+			err := json.Unmarshal([]byte(tt.body), &p)
+			if tt.wantErr {
+				require.Error(t, err, "expected validation error")
+				assert.Contains(t, err.Error(), tt.wantErrMatch)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantName, p.Name)
+			assert.Equal(t, tt.wantDisplay, p.Spec.Display.Name)
+		})
+	}
+}
+
+func TestGenerateDashboardName(t *testing.T) {
+	tests := []struct {
+		scenario   string
+		input      string
+		wantPrefix string // expected slug prefix before the "-<suffix>" tail (empty if prefix is dropped)
+	}{
+		{scenario: "simple words with spaces", input: "My Dashboard", wantPrefix: "my-dashboard"},
+		{scenario: "punctuation collapses", input: "Hello, World!", wantPrefix: "hello-world"},
+		{scenario: "leading and trailing whitespace", input: "  hello  ", wantPrefix: "hello"},
+		{scenario: "leading and trailing hyphens", input: "---abc---", wantPrefix: "abc"},
+		{scenario: "consecutive non-alphanumerics collapse", input: "a___b...c", wantPrefix: "a-b-c"},
+		{scenario: "digits are preserved", input: "Region us-east-1", wantPrefix: "region-us-east-1"},
+		{scenario: "no alphanumerics drops prefix and returns suffix only", input: "!!! ???", wantPrefix: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			got := generateDashboardName(tt.input)
+			require.NotEmpty(t, got)
+			require.LessOrEqual(t, len(got), 63)
+			require.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
+
+			if tt.wantPrefix == "" {
+				assert.Len(t, got, dashboardNameSuffixLen, "expected the bare random suffix")
+				return
+			}
+			expectedPrefix := tt.wantPrefix + "-"
+			assert.True(t, strings.HasPrefix(got, expectedPrefix), "expected prefix %q, got %q", expectedPrefix, got)
+			assert.Len(t, got, len(expectedPrefix)+dashboardNameSuffixLen)
+		})
+	}
+
+	t.Run("prefix is truncated to leave room for the suffix", func(t *testing.T) {
+		input := strings.Repeat("a", 100)
+		got := generateDashboardName(input)
+		require.LessOrEqual(t, len(got), 63)
+		require.Empty(t, validation.IsDNS1123Label(got))
+		assert.Equal(t, len(got), 63, "expected the result to be padded to the max DNS-1123 length")
+	})
+
+	t.Run("suffix differs across calls", func(t *testing.T) {
+		first := generateDashboardName("collision-test")
+		second := generateDashboardName("collision-test")
+		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
+	})
 }
 
 func TestSpanGaps(t *testing.T) {

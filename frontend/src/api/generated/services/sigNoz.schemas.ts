@@ -3652,11 +3652,6 @@ export type DashboardtypesBuilderQuerySpecDTO =
 	| Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
 
 export enum DashboardtypesComparisonOperatorDTO {
-	'>' = '>',
-	'<' = '<',
-	'>=' = '>=',
-	'<=' = '<=',
-	'=' = '=',
 	above = 'above',
 	below = 'below',
 	above_or_equal = 'above_or_equal',
@@ -4756,13 +4751,17 @@ export enum DashboardtypesPanelPluginKindDTO {
 }
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
+	 * @type boolean
+	 */
+	generateName?: boolean;
+	/**
 	 * @type string
 	 */
 	image?: string;
 	/**
 	 * @type string
 	 */
-	name: string;
+	name?: string;
 	/**
 	 * @type string
 	 */
@@ -4771,7 +4770,7 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type array,null
 	 */
-	tags?: TagtypesPostableTagDTO[] | null;
+	tags: TagtypesPostableTagDTO[] | null;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {

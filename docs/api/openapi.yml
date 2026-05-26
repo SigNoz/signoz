@@ -2439,11 +2439,6 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
     DashboardtypesComparisonOperator:
       enum:
-      - '>'
-      - <
-      - '>='
-      - <=
-      - =
       - above
       - below
       - above_or_equal
@@ -2970,6 +2965,8 @@ components:
       type: object
     DashboardtypesPostableDashboardV2:
       properties:
+        generateName:
+          type: boolean
         image:
           type: string
         name:
@@ -2985,7 +2982,7 @@ components:
           type: array
       required:
       - schemaVersion
-      - name
+      - tags
       - spec
       type: object
     DashboardtypesPostablePublicDashboard:
