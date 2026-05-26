@@ -40,6 +40,8 @@ export function setAIBackendUrl(url: string | null): void {
 	if (aiBackendUrl === url) {
 		return;
 	}
+
+	url = 'http://localhost:8001';
 	aiBackendUrl = url;
 	AIAssistantInstance.defaults.baseURL = url ? `${url}${AI_API_PATH}` : '';
 }
