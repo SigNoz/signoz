@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -156,6 +158,20 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 		first := postable.NewDashboardV2(orgID, "alice", SourceUser)
 		second := postable.NewDashboardV2(orgID, "alice", SourceUser)
 		assert.NotEqual(t, first.ID, second.ID, "expected distinct UUIDs across invocations")
+	})
+
+	t.Run("generateName derives name from display.name with a random suffix", func(t *testing.T) {
+		postable := PostableDashboardV2{
+			DashboardV2MetadataBase: DashboardV2MetadataBase{SchemaVersion: SchemaVersion},
+			GenerateName:            true,
+			Spec: DashboardSpec{
+				Display: &common.Display{Name: "My Dashboard!"},
+			},
+		}
+
+		dashboard := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		assert.True(t, strings.HasPrefix(dashboard.Name, "my-dashboard-"), "expected slug prefix, got %q", dashboard.Name)
+		assert.Len(t, dashboard.Name, len("my-dashboard-")+dashboardNameSuffixLen)
 	})
 }
 

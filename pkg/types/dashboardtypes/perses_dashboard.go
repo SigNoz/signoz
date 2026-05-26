@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"strings"
 	"time"
@@ -16,8 +17,9 @@ import (
 )
 
 const (
-	SchemaVersion       = "v6"
-	MaxTagsPerDashboard = 10
+	SchemaVersion          = "v6"
+	MaxTagsPerDashboard    = 10
+	dashboardNameSuffixLen = 8
 )
 
 type DSLKey string
@@ -71,13 +73,19 @@ type DashboardV2MetadataBase struct {
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name string                 `json:"name" required:"true"`
-	Tags []tagtypes.PostableTag `json:"tags"`
-	Spec DashboardSpec          `json:"spec" required:"true"`
+	Name         string                 `json:"name,omitempty"`
+	GenerateName bool                   `json:"generateName,omitempty"`
+	Tags         []tagtypes.PostableTag `json:"tags"`
+	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
 
 func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
 	now := time.Now()
+
+	name := postable.Name
+	if postable.GenerateName {
+		name = generateDashboardName(postable.Spec.Display.Name)
+	}
 
 	return &DashboardV2{
 		Identifiable:            types.Identifiable{ID: valuer.GenerateUUID()},
@@ -87,7 +95,7 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 		Locked:                  source == SourceIntegration,
 		Source:                  source,
 		DashboardV2MetadataBase: postable.DashboardV2MetadataBase,
-		Name:                    postable.Name,
+		Name:                    name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
 		Spec:                    postable.Spec,
 	}
@@ -105,7 +113,7 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 	if p.Spec.Display == nil {
 		p.Spec.Display = &common.Display{}
 	}
-	if p.Spec.Display.Name == "" {
+	if !p.GenerateName && p.Spec.Display.Name == "" {
 		p.Spec.Display.Name = p.Name
 	}
 	return p.Validate()
@@ -115,13 +123,26 @@ func (p *PostableDashboardV2) Validate() error {
 	if p.SchemaVersion != SchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, p.SchemaVersion)
 	}
-	if err := validateDashboardName(p.Name); err != nil {
+	if err := p.validateName(); err != nil {
 		return err
 	}
 	if err := p.validateTags(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
+}
+
+func (p *PostableDashboardV2) validateName() error {
+	if !p.GenerateName {
+		return validateDashboardName(p.Name)
+	}
+	if p.Name != "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name must be empty when generateName is true, got %q", p.Name)
+	}
+	if p.Spec.Display == nil || p.Spec.Display.Name == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.display.name is required when generateName is true")
+	}
+	return nil
 }
 
 // Matches https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names.
@@ -133,6 +154,43 @@ func validateDashboardName(name string) error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+func generateDashboardName(displayName string) string {
+	const dns1123LabelMaxLen = 63
+	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
+
+	var b strings.Builder
+	b.Grow(len(displayName))
+	prevHyphen := false
+	for _, r := range strings.ToLower(displayName) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevHyphen = false
+		case b.Len() > 0 && !prevHyphen:
+			b.WriteByte('-')
+			prevHyphen = true
+		}
+	}
+	prefix := strings.TrimRight(b.String(), "-")
+
+	suffix := make([]byte, dashboardNameSuffixLen)
+	if _, err := rand.Read(suffix); err != nil {
+		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for dashboard name suffix"))
+	}
+	for i := range suffix {
+		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
+	}
+
+	maxPrefix := dns1123LabelMaxLen - 1 - dashboardNameSuffixLen
+	if len(prefix) > maxPrefix {
+		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
+	}
+	if prefix == "" {
+		return string(suffix)
+	}
+	return prefix + "-" + string(suffix)
 }
 
 func (p *PostableDashboardV2) validateTags() error {
