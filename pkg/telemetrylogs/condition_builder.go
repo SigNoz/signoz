@@ -43,7 +43,7 @@ func buildFTSCondition(
 	columns []*schema.Column,
 	key *telemetrytypes.TelemetryFieldKey,
 	tsStart, tsEnd uint64,
-	rawVal string,
+	value any,
 	useJSONBody bool,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
@@ -77,15 +77,15 @@ func buildFTSCondition(
 				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", colName)
 			}
 			conditions = append(conditions,
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), keysExpr),
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), valsExpr),
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
 			)
 		case schema.ColumnTypeEnumJSON:
 			conditions = append(conditions,
-				fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, colName, sb.Var(rawVal)))
+				fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, colName, sb.Var(value)))
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
 			conditions = append(conditions,
-				fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, colName, sb.Var(rawVal)))
+				fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, colName, sb.Var(value)))
 		}
 	}
 	if len(conditions) == 0 {
@@ -114,11 +114,11 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// FTS keys are fully handled here — no FieldFor or operator-switch needed.
+	// FTS is branched here
 	if key.Name == querybuilder.FTSInternalKey {
 		// TODO(Tushar): thread orgID here to evaluate correctly
 		useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
-		return buildFTSCondition(columns, key, startNs, endNs, fmt.Sprintf("%v", value), useJSONBody, sb)
+		return buildFTSCondition(columns, key, startNs, endNs, value, useJSONBody, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
