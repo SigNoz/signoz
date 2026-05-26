@@ -73,5 +73,25 @@ func (c Config) Validate() error {
 	if c.Flamegraph.SelectAllSpansLimit == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "tracedetail.flamegraph.max_limit_to_select_all_spans must be positive")
 	}
+	if c.Flamegraph.MaxSelectedLevels <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"tracedetail.flamegraph.level_limit must be positive, got %d", c.Flamegraph.MaxSelectedLevels)
+	}
+	if c.Flamegraph.MaxSpansPerLevel <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"tracedetail.flamegraph.spans_per_level must be positive, got %d", c.Flamegraph.MaxSpansPerLevel)
+	}
+	if c.Flamegraph.SamplingTopLatencySpansCount < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"tracedetail.flamegraph.top_latency_count cannot be negative, got %d", c.Flamegraph.SamplingTopLatencySpansCount)
+	}
+	if c.Flamegraph.SamplingBucketCount <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"tracedetail.flamegraph.bucket_count must be positive, got %d", c.Flamegraph.SamplingBucketCount)
+	}
+	if c.Flamegraph.SelectAllSpansLimit == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"tracedetail.flamegraph.max_limit_to_select_all_spans must be positive")
+	}
 	return nil
 }
