@@ -11,20 +11,9 @@ import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { AlignedData } from 'uplot';
 
 import { PanelMode } from '../types';
-import { fillMissingXAxisTimestamps, getXAxisTimestamps } from '../utils';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
-
-export function prepareBarPanelData(
-	apiResponse: MetricRangePayloadProps,
-): AlignedData {
-	const seriesList = apiResponse?.data?.result || [];
-	const timestampArr = getXAxisTimestamps(seriesList);
-	const yAxisValuesArr = fillMissingXAxisTimestamps(timestampArr, seriesList);
-	return [timestampArr, ...yAxisValuesArr];
-}
 
 export function prepareBarPanelConfig({
 	widget,

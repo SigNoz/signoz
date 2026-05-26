@@ -19,6 +19,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/logspipeline"
+	"github.com/SigNoz/signoz/pkg/modules/logspipeline/impllogspipeline"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -85,6 +87,7 @@ type Modules struct {
 	Promote          promote.Module
 	ServiceAccount   serviceaccount.Module
 	CloudIntegration cloudintegration.Module
+	LogsPipeline     logspipeline.Module
 	RuleStateHistory rulestatehistory.Module
 	TraceDetail      tracedetail.Module
 	SpanMapper       spanmapper.Module
@@ -143,6 +146,7 @@ func NewModules(
 		InfraMonitoring:  implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:   serviceAccount,
+		LogsPipeline:     impllogspipeline.NewModule(sqlstore),
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),

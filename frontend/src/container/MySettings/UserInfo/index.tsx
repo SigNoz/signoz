@@ -1,25 +1,27 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
+import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
 	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
-import { useNotifications } from 'hooks/useNotifications';
+import { toast } from '@signozhq/ui/sonner';
 import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { ErrorV2Resp } from 'types/api';
+import { AxiosError } from 'axios';
 
 import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
 
 function UserInfo(): JSX.Element {
 	const { user, org, updateUser } = useAppContext();
-	const { t } = useTranslation(['routes', 'settings', 'common']);
 
-	const { notifications } = useNotifications();
+	const { showErrorModal } = useErrorModal();
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 
 	const [currentPassword, setCurrentPassword] = useState<string>('');
@@ -47,6 +49,8 @@ function UserInfo(): JSX.Element {
 
 	const hideResetPasswordModal = (): void => {
 		setIsResetPasswordModalOpen(false);
+		setCurrentPassword('');
+		setUpdatePassword('');
 	};
 
 	const onChangePasswordClickHandler = async (): Promise<void> => {
@@ -57,27 +61,29 @@ function UserInfo(): JSX.Element {
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
 			});
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
+			toast.success('Password updated successfully');
 			hideResetPasswordModal();
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notifications.error({
-				message: (error as APIError).error.error.code,
-				description: (error as APIError).error.error.message,
-			});
+			try {
+				ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+			} catch (apiError) {
+				showErrorModal(apiError as APIError);
+			}
 		}
 	};
+
+	const passwordsMatch =
+		currentPassword.length > 0 &&
+		updatePassword.length > 0 &&
+		currentPassword === updatePassword;
 
 	const isResetPasswordDisabled =
 		isLoading ||
 		currentPassword.length === 0 ||
 		updatePassword.length === 0 ||
-		currentPassword === updatePassword;
+		passwordsMatch;
 
 	const onSaveHandler = async (): Promise<void> => {
 		void logEvent('Account Settings: Name Updated', {
@@ -94,11 +100,7 @@ function UserInfo(): JSX.Element {
 			setIsLoading(true);
 			await updateMyUser({ data: { displayName: changedName } });
 
-			notifications.success({
-				message: t('success', {
-					ns: 'common',
-				}),
-			});
+			toast.success('Name updated successfully');
 			updateUser({
 				...user,
 				displayName: changedName,
@@ -106,10 +108,11 @@ function UserInfo(): JSX.Element {
 			setIsLoading(false);
 			hideUpdateNameModal();
 		} catch (error) {
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
+			try {
+				ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+			} catch (apiError) {
+				showErrorModal(apiError as APIError);
+			}
 		}
 		setIsLoading(false);
 	};
@@ -166,7 +169,7 @@ function UserInfo(): JSX.Element {
 						type="primary"
 						icon={<Check size={16} />}
 						onClick={onSaveHandler}
-						disabled={isLoading}
+						loading={isLoading}
 						data-testid="update-name-btn"
 					>
 						Update name
@@ -178,7 +181,11 @@ function UserInfo(): JSX.Element {
 					<Input
 						placeholder="e.g. John Doe"
 						value={changedName}
+						disabled={isLoading}
 						onChange={(e): void => setChangedName(e.target.value)}
+						onPressEnter={(): void => {
+							void onSaveHandler();
+						}}
 					/>
 				</div>
 			</Modal>
@@ -188,6 +195,7 @@ function UserInfo(): JSX.Element {
 				title={<span className="title">Reset password</span>}
 				open={isResetPasswordModalOpen}
 				closable
+				destroyOnClose
 				onCancel={hideResetPasswordModal}
 				footer={[
 					<Button
@@ -197,7 +205,8 @@ function UserInfo(): JSX.Element {
 						}`}
 						icon={<Check size={16} />}
 						onClick={onChangePasswordClickHandler}
-						disabled={isLoading || isResetPasswordDisabled}
+						loading={isLoading}
+						disabled={isResetPasswordDisabled}
 						data-testid="reset-password-btn"
 					>
 						Reset password
@@ -218,6 +227,11 @@ function UserInfo(): JSX.Element {
 							type="password"
 							autoComplete="off"
 							visibilityToggle
+							onPressEnter={(): void => {
+								if (!isResetPasswordDisabled) {
+									void onChangePasswordClickHandler();
+								}
+							}}
 						/>
 					</div>
 
@@ -235,7 +249,18 @@ function UserInfo(): JSX.Element {
 							type="password"
 							autoComplete="off"
 							visibilityToggle={false}
+							status={passwordsMatch ? 'error' : ''}
+							onPressEnter={(): void => {
+								if (!isResetPasswordDisabled) {
+									void onChangePasswordClickHandler();
+								}
+							}}
 						/>
+						{passwordsMatch && (
+							<span className="password-error-text">
+								New password must be different from current password
+							</span>
+						)}
 					</div>
 				</div>
 			</Modal>

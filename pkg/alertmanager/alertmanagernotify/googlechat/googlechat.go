@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
@@ -27,15 +28,17 @@ const (
 
 // Notifier implements a Notifier for Google Chat notifications.
 type Notifier struct {
-	config  *alertmanagertypes.GoogleChatReceiverConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	config    *alertmanagertypes.GoogleChatReceiverConfig
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
-// New returns a new Google Chat notifier.
-func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+// New returns a new Google Chat notifier. The template is consumed via the
+// templater, so the *template.Template argument is accepted only for signature
+// parity with the other notifiers.
+func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, _ *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	if cfg == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "google chat config is required")
 	}
@@ -52,11 +55,11 @@ func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, 
 	}
 
 	return &Notifier{
-		config:  cfg,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{},
+		config:    cfg,
+		logger:    l,
+		client:    client,
+		retrier:   &notify.Retrier{},
+		templater: templater,
 	}, nil
 }
 
@@ -91,22 +94,31 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 
 	cfg := n.config
 
-	data := notify.GetTemplateData(ctx, n.tmpl, alerts, logger)
-	var tmplErr error
-	tmplText := notify.TmplText(n.tmpl, data, &tmplErr)
-
-	if tmplErr != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "failed to render templates: %v", tmplErr)
+	// Expand the title/body templates via the shared templater so that
+	// per-alert custom templates supplied through annotations override the
+	// receiver defaults (consistent with the other SigNoz notifiers).
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: cfg.Title,
+		DefaultBodyTemplate:  cfg.Text,
+	}, alerts)
+	if err != nil {
+		return false, errors.NewInternalf(errors.CodeInternal, "failed to render templates: %v", err)
 	}
 
-	// Render title and text using the configured templates
-	title := tmplText(cfg.Title)
-	text := tmplText(cfg.Text)
-
-	// Build the final message
-	finalText := title
-	if text != "" {
-		finalText = title + "\n" + text
+	// Build the final message: the title followed by each alert's (non-empty)
+	// rendered body. Google Chat receives a single plain-text message.
+	finalText := result.Title
+	bodyParts := make([]string, 0, len(result.Body))
+	for _, body := range result.Body {
+		if body != "" {
+			bodyParts = append(bodyParts, body)
+		}
+	}
+	if len(bodyParts) > 0 {
+		finalText = result.Title + "\n" + strings.Join(bodyParts, "\n")
 	}
 
 	msg := &Message{

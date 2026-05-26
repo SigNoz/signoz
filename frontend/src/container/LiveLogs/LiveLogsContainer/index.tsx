@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
@@ -228,9 +228,8 @@ function LiveLogsContainer({
 					<div className="live-logs-frequency-chart-view-controller">
 						<Typography>Frequency chart</Typography>
 						<Switch
-							size="small"
-							checked={showLiveLogsFrequencyChart}
-							defaultChecked
+							value={showLiveLogsFrequencyChart}
+							defaultValue
 							onChange={handleToggleFrequencyChart}
 						/>
 					</div>

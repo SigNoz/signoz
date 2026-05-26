@@ -245,13 +245,13 @@ func TestNewChannelFromReceiver(t *testing.T) {
 		pass     bool
 	}{
 		{
-			name: "InvalidReceiver_OnlyName",
+			name:     "InvalidReceiver_OnlyName",
 			receiver: &Receiver{Receiver: &config.Receiver{Name: "test-receiver"}},
 			expected: nil,
 			pass:     false,
 		},
 		{
-			name: "InvalidReceiver_DefaultReceiver",
+			name:     "InvalidReceiver_DefaultReceiver",
 			receiver: &Receiver{Receiver: &config.Receiver{Name: DefaultReceiverName}},
 			expected: nil,
 			pass:     false,

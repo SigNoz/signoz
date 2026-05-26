@@ -127,6 +127,12 @@
 				flex-direction: column;
 				gap: 8px;
 				padding-bottom: 16px;
+
+				.password-error-text {
+					font-size: var(--font-size-xs);
+					color: var(--bg-cherry-400);
+					margin-top: 2px;
+				}
 			}
 
 			.ant-color-picker-trigger {

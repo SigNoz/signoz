@@ -73,26 +73,34 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 		OrgID: orgID,
 	}
 
-	configData, err := json.Marshal(receiver.Receiver)
+	// The embedded *config.Receiver marshals inline, so this single Marshal emits
+	// both the upstream notifier configs and any SigNoz-native ones (e.g.
+	// googlechat_configs) — no separate merge step is required.
+	data, err := json.Marshal(receiver)
 	if err != nil {
 		return nil, err
 	}
+	channel.Data = string(data)
 
-	customType, dataWithCustomConfigs, hasCustomConfigs, err := marshalReceiverWithCustomConfigs(receiver, configData)
-	if err != nil {
-		return nil, err
-	}
-	if hasCustomConfigs {
-		channel.Type = customType
-		channel.Data = string(dataWithCustomConfigs)
-		return &channel, nil
+	channel.Type = receiverChannelType(receiver)
+	if channel.Type == "" {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
 	}
 
-	// Use reflection to examine receiver struct fields
+	return &channel, nil
+}
+
+// receiverChannelType derives the channel.Type discriminator from the configured
+// notifier. SigNoz-native notifiers are checked first; upstream notifiers are
+// derived by reflecting over config.Receiver's *_configs fields.
+func receiverChannelType(receiver *Receiver) string {
+	if len(receiver.GoogleChatConfigs) > 0 {
+		return channelTypeGoogleChat
+	}
+
 	receiverType := reflect.TypeOf(*receiver.Receiver)
 	receiverVal := reflect.ValueOf(*receiver.Receiver)
 
-	// Iterate through fields looking for *Config fields
 	for i := 0; i < receiverType.NumField(); i++ {
 		field := receiverType.Field(i)
 		fieldVal := receiverVal.Field(i)
@@ -114,19 +122,10 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 			continue
 		}
 
-		channelType := matches[1]
-
-		channel.Type = channelType
-		channel.Data = string(configData)
-		break
+		return matches[1]
 	}
 
-	// If we were unable to find the channel type, return an error
-	if channel.Type == "" {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "channel '%s' must have at least one notification configuration (e.g., email_configs, webhook_configs, slack_configs)", receiver.Name)
-	}
-
-	return &channel, nil
+	return ""
 }
 
 func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, channels Channels, orgID string) (*Config, error) {

@@ -28,7 +28,7 @@ var customNotifierIntegrations = []string{
 	googlechat.Integration,
 }
 
-func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
+func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -55,28 +55,30 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	}
 
 	for i, c := range nc.WebhookConfigs {
-		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l) })
+		add(webhook.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.EmailConfigs {
-		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return email.New(c, tmpl, l), nil })
+		add(email.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return email.New(c, tmpl, l, templater), nil
+		})
 	}
 	for i, c := range nc.PagerdutyConfigs {
-		add(pagerduty.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l) })
+		add(pagerduty.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.OpsGenieConfigs {
-		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l) })
+		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.SlackConfigs {
-		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l) })
+		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.MSTeamsV2Configs {
 		add(msteamsv2.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l)
+			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l, templater)
 		})
 	}
 	for i, c := range nc.GoogleChatConfigs {
 		add(googlechat.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return googlechat.New(c, tmpl, l)
+			return googlechat.New(c, tmpl, l, templater)
 		})
 	}
 

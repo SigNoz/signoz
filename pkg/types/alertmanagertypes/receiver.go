@@ -12,96 +12,66 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
-	commoncfg "github.com/prometheus/common/config"
 	"gopkg.in/yaml.v2"
 
 	"github.com/prometheus/alertmanager/config"
 )
 
-// Receiver extends the base alertmanager config.Receiver with custom configs support.
+// Receiver extends the upstream alertmanager config.Receiver with SigNoz-native
+// notifier configs (e.g. Google Chat) that upstream does not know about.
+//
+// The embedded *config.Receiver carries every upstream notifier field; the
+// SigNoz-native configs are declared alongside it. Because config.Receiver has
+// no custom (Un)MarshalJSON, encoding/json marshals the embed inline, so
+// json.Marshal and json.Unmarshal of a *Receiver round-trip both the upstream
+// and the native configs in a single pass — no side maps or field allow-lists
+// are needed. To add another native channel, add a field here and a loop in
+// alertmanagernotify.NewReceiverIntegrations.
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
 }
 
-type ReceiverIntegrationsFunc = func(nc *Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error)
-
-// Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
-// The only default value which is missed is `send_resolved` (as it is a bool) which if not set in the input will always be set to `false`.
+// NewReceiver builds a Receiver from its JSON representation, applying the
+// upstream alertmanager defaults to the base receiver. The only default missed
+// is `send_resolved` (a bool) which, if absent from the input, stays false.
 func NewReceiver(input string) (*Receiver, error) {
-	var rawData map[string]interface{}
-	if err := json.Unmarshal([]byte(input), &rawData); err != nil {
+	receiver := &Receiver{Receiver: &config.Receiver{}}
+	if err := json.Unmarshal([]byte(input), receiver); err != nil {
 		return nil, err
 	}
 
-	googleChatConfigs := extractReceiverConfigList[GoogleChatReceiverConfig](rawData, receiverFieldGoogleChatConfigs)
+	// Round-trip the base receiver through YAML so the upstream defaults are
+	// applied via each notifier config's UnmarshalYAML (mirrors upstream
+	// alertmanager). The native configs on the embed are unaffected.
+	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
+	if err != nil {
+		return nil, err
+	}
+	receiver.Receiver = withDefaults
 
-	cleanedInput, err := json.Marshal(rawData)
+	return receiver, nil
+}
+
+func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
+	bytes, err := yaml.Marshal(base)
 	if err != nil {
 		return nil, err
 	}
 
-	baseReceiver := &config.Receiver{}
-	if err := json.Unmarshal(cleanedInput, baseReceiver); err != nil {
+	withDefaults := &config.Receiver{}
+	if err := yaml.Unmarshal(bytes, withDefaults); err != nil {
 		return nil, err
 	}
 
-	bytes, err := yaml.Marshal(baseReceiver)
-	if err != nil {
+	if err := withDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return nil, err
 	}
 
-	receiverWithDefaults := &config.Receiver{}
-	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
-		return nil, err
-	}
-
-	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return nil, err
-	}
-	defaultReceiverHTTPConfigs(receiverWithDefaults)
-
-	return &Receiver{
-		Receiver:          receiverWithDefaults,
-		GoogleChatConfigs: googleChatConfigs,
-	}, nil
+	return withDefaults, nil
 }
 
-func defaultReceiverHTTPConfigs(receiver *config.Receiver) {
-	defaultCfg := commoncfg.DefaultHTTPClientConfig
-	for _, cfg := range receiver.WebhookConfigs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-	for _, cfg := range receiver.SlackConfigs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-	for _, cfg := range receiver.PagerdutyConfigs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-	for _, cfg := range receiver.OpsGenieConfigs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-	for _, cfg := range receiver.MSTeamsConfigs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-	for _, cfg := range receiver.MSTeamsV2Configs {
-		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &defaultCfg
-		}
-	}
-}
-
-func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
+func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -118,12 +88,12 @@ func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsF
 		return err
 	}
 
-	baseReceiver, err := testConfig.GetReceiver(receiver.Name)
+	defaultedReceiver, err := testConfig.GetReceiver(receiver.Name)
 	if err != nil {
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(baseReceiver, tmpl, logger)
+	integrations, err := receiverIntegrationsFunc(defaultedReceiver, tmpl, logger, templater)
 	if err != nil {
 		return err
 	}

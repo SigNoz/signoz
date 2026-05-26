@@ -17,6 +17,7 @@ import (
 	"time"
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config"
@@ -26,6 +27,11 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
+
+func newTestTemplater(t *testing.T) alertmanagertypes.Templater {
+	t.Helper()
+	return alertmanagertemplate.New(test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+}
 
 func TestGoogleChatWebhook(t *testing.T) {
 	var payload bytes.Buffer
@@ -80,7 +86,7 @@ func TestGoogleChatRetryCodes(t *testing.T) {
 		WebhookURL: secretURLFromString(t, "https://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), newTestTemplater(t))
 	require.NoError(t, err)
 
 	for statusCode, expected := range notifytest.RetryTests(notifytest.DefaultRetryCodes()) {
@@ -94,7 +100,7 @@ func TestGoogleChatWebhookValidation(t *testing.T) {
 		WebhookURL: secretURLFromString(t, "http://chat.googleapis.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), newTestTemplater(t))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhook_url must use https")
 
@@ -102,7 +108,7 @@ func TestGoogleChatWebhookValidation(t *testing.T) {
 		WebhookURL: secretURLFromString(t, "https://example.com/v1/spaces/test/messages"),
 		Title:      "Alert",
 		Text:       "Test message",
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), newTestTemplater(t))
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "webhook_url must use chat.googleapis.com")
 }
@@ -115,7 +121,7 @@ func TestGoogleChatRedactedURL(t *testing.T) {
 		WebhookURL: secretURLFromString(t, urlStr),
 		Title:      "Alert",
 		Text:       "Test message",
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), newTestTemplater(t))
 	require.NoError(t, err)
 
 	notifier.client = &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
@@ -142,7 +148,7 @@ func newTestNotifier(t *testing.T, server *httptest.Server, title, text string) 
 		WebhookURL: secretURLFromString(t, webhookURL),
 		Title:      title,
 		Text:       text,
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler))
+	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), newTestTemplater(t))
 	require.NoError(t, err)
 	notifier.client = newTestHTTPClient(server)
 

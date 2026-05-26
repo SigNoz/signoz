@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -28,15 +29,16 @@ const (
 
 // Notifier implements a Notifier for generic webhooks.
 type Notifier struct {
-	conf    *config.WebhookConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *config.WebhookConfig
+	tmpl      *template.Template
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
 // New returns a new Webhook.
-func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
@@ -48,7 +50,8 @@ func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, httpO
 		client: client,
 		// Webhooks are assumed to respond with 2xx response codes on a successful
 		// request and 5xx response codes are assumed to be recoverable.
-		retrier: &notify.Retrier{},
+		retrier:   &notify.Retrier{},
+		templater: templater,
 	}, nil
 }
 

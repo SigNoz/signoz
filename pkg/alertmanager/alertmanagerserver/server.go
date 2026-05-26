@@ -2,6 +2,8 @@ package alertmanagerserver
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
@@ -10,6 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -23,8 +26,8 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
@@ -65,6 +68,7 @@ type Server struct {
 	muter               *MaintenanceMuter
 	marker              *types.MemMarker
 	tmpl                *template.Template
+	templater           alertmanagertypes.Templater
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
@@ -240,14 +244,24 @@ func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanager
 
 func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertmanagertypes.Config) error {
 	config := alertmanagerConfig.AlertmanagerConfig()
+	jsun, kerr := json.Marshal(config)
+	fmt.Println("yo config here", string(jsun), kerr)
 
 	var err error
-	server.tmpl, err = alertmanagertypes.FromGlobs(config.Templates)
+	// Load SigNoz's alertmanager notification templates from the configured
+	// globs. The upstream default templates (default.tmpl, email.tmpl) are
+	// always loaded from the embedded alertmanager assets inside FromGlobs, so
+	// only SigNoz's own templates (e.g. the email.signoz.html layout) are listed
+	// here. The upstream config.Templates field is not used: SigNoz never
+	// populates it (there is no per-org template configuration).
+	server.tmpl, err = alertmanagertypes.FromGlobs(server.srvConfig.Templates)
 	if err != nil {
 		return err
 	}
 
 	server.tmpl.ExternalURL = server.srvConfig.ExternalURL
+
+	server.templater = alertmanagertemplate.New(server.tmpl, server.logger)
 
 	// Build the routing tree and record which receivers are used.
 	routes := dispatch.NewRoute(config.Route, nil)
@@ -269,7 +283,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		if err != nil {
 			return err
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger)
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger, server.templater)
 		if err != nil {
 			return err
 		}
@@ -346,7 +360,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 
 func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
 	testAlert := alertmanagertypes.NewTestAlert(*receiver.Receiver, time.Now(), time.Now())
-	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
+	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, server.templater, testAlert.Labels, testAlert)
 }
 
 func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmanagertypes.PostableAlert][]string, config *alertmanagertypes.NotificationConfig) error {
@@ -429,6 +443,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 					server.alertmanagerConfig,
 					server.tmpl,
 					server.logger,
+					server.templater,
 					group.groupLabels,
 					group.alerts...,
 				)
