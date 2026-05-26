@@ -76,7 +76,7 @@ type PostableDashboardV2 struct {
 	Spec DashboardSpec          `json:"spec" required:"true"`
 }
 
-func (postable PostableDashboardV2) NewDashboardV2WithoutTags(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
+func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
 	now := time.Now()
 
 	return &DashboardV2{
