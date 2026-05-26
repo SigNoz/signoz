@@ -183,7 +183,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
             },
             id="ex.direct_child.default",
         ),
@@ -195,7 +195,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "A",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.direct_child.return_A",
         ),
@@ -208,7 +208,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
             },
             id="ex.indirect_descendant.default",
         ),
@@ -220,7 +220,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "A",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.indirect_descendant.return_A",
         ),
@@ -235,7 +235,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A && B",
                 "return_spans_from": "",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.and.default",
         ),
@@ -248,7 +248,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
+                "validate": lambda r: len(_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
             },
             id="ex.or.default",
         ),
@@ -261,7 +261,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "A",
-                "validate": lambda r: _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
+                "validate": lambda r: len(_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
             },
             id="ex.or.return_A",
         ),
@@ -276,7 +276,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A NOT B",
                 "return_spans_from": "",
-                "validate": lambda r: _names(r) == {"standalone-server"},
+                "validate": lambda r: len(_rows(r)) == 1 and _names(r) == {"standalone-server"},
             },
             id="ex.not.default",
         ),
@@ -302,7 +302,7 @@ def test_trace_operator(
     insert_traces(
         [
             # T1 — two http.method spans in the same trace, modelling a real proxy+service pair.
-            # POST /checkout (checkout-svc) is the single structural root (parent_span_id="").
+            # POST /checkout (checkout-svc) is the root (parent_span_id="").
             # api-proxy (proxy-svc) is a structural child of POST /checkout but also has
             # http.method set, so it matches filter A alongside POST /checkout.
             # Both carry http.method="POST" — they differ only in service.name.
