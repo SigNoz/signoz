@@ -20,23 +20,14 @@ const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$
 // validFieldName only allows characters safe to embed as ClickHouse map subscript literals.
 var validFieldName = regexp.MustCompile(`^[a-zA-Z0-9._\-]+$`)
 
-// buildFieldExpr returns a ClickHouse SQL expression for the value of fieldKey per span.
-func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
-	if !validFieldName.MatchString(fieldKey.Name) {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid field name: %q", fieldKey.Name)
-	}
-	n := fieldKey.Name
-	switch fieldKey.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return fmt.Sprintf("resources_string['%s']", n), nil
-	case telemetrytypes.FieldContextAttribute:
-		return fmt.Sprintf(
-			"multiIf(mapContains(attributes_string,'%[1]s'),attributes_string['%[1]s'],"+
-				"mapContains(attributes_number,'%[1]s'),toString(attributes_number['%[1]s']),"+
-				"mapContains(attributes_bool,'%[1]s'),toString(attributes_bool['%[1]s']),'')",
-			n), nil
-	}
-	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
+type spanCountRow struct {
+	FieldValue string `ch:"field_value"`
+	Count      uint64 `ch:"count"`
+}
+
+type spanDurationRow struct {
+	FieldValue string `ch:"field_value"`
+	TotalNs    uint64 `ch:"total_ns"`
 }
 
 type traceStore struct {
@@ -121,14 +112,6 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	return spans, nil
 }
 
-func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
-	return nil, nil
-}
-
-func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
-	return nil, nil
-}
-
 func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
@@ -166,28 +149,25 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	return spans, nil
 }
 
-type spanCountRow struct {
-	FieldValue string `ch:"field_value"`
-	Count      uint64 `ch:"count"`
-}
-
 func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
 	fieldExpr, err := buildFieldExpr(fieldKey)
 	if err != nil {
 		return nil, err
 	}
-	query := fmt.Sprintf(`
-		SELECT %[1]s AS field_value, count() AS count
-		FROM %[2]s.%[3]s
-		WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
-		  AND %[1]s != ''
-		GROUP BY field_value`,
-		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(fieldExpr+" AS field_value", "count(DISTINCT span_id) AS count")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", summary.End.Unix()),
+		fieldExpr+" != ''",
 	)
+	sb.GroupBy("field_value")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
 	var rows []spanCountRow
-	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query,
-		traceID, summary.Start.Unix()-1800, summary.End.Unix(),
-	); err != nil {
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying span count by field")
 	}
 	result := make(map[string]uint64, len(rows))
@@ -197,51 +177,38 @@ func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, su
 	return result, nil
 }
 
-type spanDurationRow struct {
-	FieldValue string `ch:"field_value"`
-	TotalNs    uint64 `ch:"total_ns"`
-}
-
 func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
 	fieldExpr, err := buildFieldExpr(fieldKey)
 	if err != nil {
 		return nil, err
 	}
-	// 4-level query: deduplicate → window function → non-overlapping per span → sum per field.
-	// The window function computes the running max end time of preceding spans in the same
-	// field partition (ordered by start), so each span only contributes its non-overlapping
-	// tail — matching the Go-side mergeSpanIntervals semantics in V3.
+	// 3-level query: deduplicate → window function → sum non-overlapping per field.
+	// The window tracks the running max end time of preceding spans within each field_value
+	// partition (ordered by start). Each span contributes only its non-overlapping end
 	query := fmt.Sprintf(`
-		SELECT field_value, sum(non_overlapping_ns) AS total_ns
+		SELECT field_value, sum(multiIf(
+			start_ns >= prev_max_end_ns,                    duration_nano,
+			start_ns + duration_nano > prev_max_end_ns,     start_ns + duration_nano - prev_max_end_ns,
+			0
+		)) AS total_ns
 		FROM (
 			SELECT
-				field_value,
-				multiIf(
-					start_ns >= prev_max_end_ns,                          duration_nano,
-					start_ns + duration_nano > prev_max_end_ns,           start_ns + duration_nano - prev_max_end_ns,
-					0
-				) AS non_overlapping_ns
+				field_value, start_ns, duration_nano,
+				ifNull(max(start_ns + duration_nano) OVER (
+					PARTITION BY field_value
+					ORDER BY start_ns
+					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+				), 0) AS prev_max_end_ns
 			FROM (
-				SELECT
-					field_value,
-					start_ns,
-					duration_nano,
-					ifNull(max(start_ns + duration_nano) OVER (
-						PARTITION BY field_value
-						ORDER BY start_ns
-						ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-					), 0) AS prev_max_end_ns
-				FROM (
-					SELECT DISTINCT ON (span_id)
-						%[1]s AS field_value,
-						toUnixTimestamp64Nano(timestamp) AS start_ns,
-						duration_nano
-					FROM %[2]s.%[3]s
-					WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
-					ORDER BY toUnixTimestamp64Nano(timestamp) ASC, name ASC
-				)
-				WHERE field_value != ''
+				SELECT DISTINCT ON (span_id)
+					%[1]s AS field_value,
+					toUnixTimestamp64Nano(timestamp) AS start_ns,
+					duration_nano
+				FROM %[2]s.%[3]s
+				WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
+				ORDER BY toUnixTimestamp64Nano(timestamp) ASC, name ASC
 			)
+			WHERE field_value != ''
 		)
 		GROUP BY field_value`,
 		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
@@ -257,4 +224,31 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 		result[r.FieldValue] = r.TotalNs
 	}
 	return result, nil
+}
+
+func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
+	if !validFieldName.MatchString(fieldKey.Name) {
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid field name: %q", fieldKey.Name)
+	}
+	n := fieldKey.Name
+	switch fieldKey.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		return fmt.Sprintf("resource.`%s`::String", n), nil
+	case telemetrytypes.FieldContextAttribute:
+		switch fieldKey.FieldDataType {
+		case telemetrytypes.FieldDataTypeString:
+			return fmt.Sprintf("attributes_string['%s']", n), nil
+		case telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeNumber:
+			return fmt.Sprintf("if(mapContains(attributes_number,'%[1]s'),toString(attributes_number['%[1]s']),'')", n), nil
+		case telemetrytypes.FieldDataTypeBool:
+			return fmt.Sprintf("if(mapContains(attributes_bool,'%[1]s'),toString(attributes_bool['%[1]s']),'')", n), nil
+		default:
+			return fmt.Sprintf(
+				"multiIf(mapContains(attributes_string,'%[1]s'),attributes_string['%[1]s'],"+
+					"mapContains(attributes_number,'%[1]s'),toString(attributes_number['%[1]s']),"+
+					"mapContains(attributes_bool,'%[1]s'),toString(attributes_bool['%[1]s']),'')",
+				n), nil
+		}
+	}
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
 }
