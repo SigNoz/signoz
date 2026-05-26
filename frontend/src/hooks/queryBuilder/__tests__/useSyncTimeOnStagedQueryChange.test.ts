@@ -45,8 +45,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('does not dispatch when stagedQueryId transitions from undefined to defined (first staged query arriving)', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: undefined as string | undefined } },
 		);
 
@@ -57,8 +56,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('dispatches UpdateTimeInterval with current selectedTime when stagedQueryId changes', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'first-id' as string | undefined } },
 		);
 
@@ -79,8 +77,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 		setSelectedTime('custom');
 
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'first-id' as string | undefined } },
 		);
 
@@ -92,8 +89,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('does not dispatch when only selectedTime changes (stagedQueryId stable)', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'stable-id' as string | undefined } },
 		);
 
@@ -105,8 +101,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('dispatches once per distinct stagedQueryId change', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'a' as string | undefined } },
 		);
 
@@ -119,8 +114,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('does not dispatch when stagedQueryId transitions from defined to undefined', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'first-id' as string | undefined } },
 		);
 
@@ -131,8 +125,7 @@ describe('useSyncTimeOnStagedQueryChange', () => {
 
 	it('uses the latest selectedTime at the moment of stagedQueryId change', () => {
 		const { rerender } = renderHook(
-			({ id }: { id: string | undefined }) =>
-				useSyncTimeOnStagedQueryChange(id),
+			({ id }: { id: string | undefined }) => useSyncTimeOnStagedQueryChange(id),
 			{ initialProps: { id: 'a' as string | undefined } },
 		);
 
