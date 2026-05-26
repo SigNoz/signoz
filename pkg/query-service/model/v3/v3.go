@@ -935,13 +935,10 @@ func (b *BuilderQuery) SetShiftByFromFunc() {
 				fns = append(fns, b.Functions[idx+1:]...)
 				b.Functions = fns
 				if len(function.Args) > 0 {
-					if shift, ok := function.Args[0].(float64); ok {
-						timeShiftBy = int64(shift)
-					} else if shift, ok := function.Args[0].(string); ok {
-						shiftBy, err := strconv.ParseFloat(shift, 64)
-						if err != nil {
-							slog.Error("failed to parse time shift by", "shift", shift, signozerrors.Attr(err))
-						}
+					shiftBy, err := valuer.ParseTimeShiftSeconds(function.Args[0])
+					if err != nil {
+						slog.Error("failed to parse time shift by", "shift", function.Args[0], signozerrors.Attr(err))
+					} else {
 						timeShiftBy = int64(shiftBy)
 					}
 				}
@@ -1112,15 +1109,11 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("timeShiftBy param missing in query")
 				}
-				_, ok := function.Args[0].(float64)
-				if !ok {
-					// if string, attempt to convert to float
-					timeShiftBy, err := strconv.ParseFloat(function.Args[0].(string), 64)
-					if err != nil {
-						return fmt.Errorf("timeShiftBy param should be a number")
-					}
-					function.Args[0] = timeShiftBy
+				timeShiftBy, err := valuer.ParseTimeShiftSeconds(function.Args[0])
+				if err != nil {
+					return fmt.Errorf("timeShiftBy param should be a valid duration or second value")
 				}
+				function.Args[0] = timeShiftBy
 			} else if function.Name == FunctionNameEWMA3 ||
 				function.Name == FunctionNameEWMA5 ||
 				function.Name == FunctionNameEWMA7 {

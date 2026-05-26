@@ -10,7 +10,6 @@ import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 
 import Function from './Function';
-import { toFloat64 } from './utils';
 
 import './QueryFunctions.styles.scss';
 
@@ -162,14 +161,7 @@ export default function QueryFunctions({
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
-			updateFunctions[index].args = [
-				{
-					value:
-						updateFunctions[index].name === QueryFunctionsTypes.TIME_SHIFT
-							? toFloat64(value)
-							: value,
-				},
-			];
+			updateFunctions[index].args = [{ value }];
 			setFunctions(updateFunctions);
 			onChange(updateFunctions);
 		}

@@ -152,7 +152,7 @@ func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
 		if len(args) == 0 {
 			return result
 		}
-		shift, err := parseFloat64Arg(args[0].Value)
+		shift, err := valuer.ParseTimeShiftSeconds(args[0].Value)
 		if err != nil {
 			return result
 		}
@@ -226,11 +226,11 @@ func (fn Function) ValidateArgs() error {
 				name.StringValue(),
 			)
 		}
-		_, err := parseFloat64Arg(args[0].Value)
+		_, err := valuer.ParseTimeShiftSeconds(args[0].Value)
 		if err != nil {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
-				"time shift value must be a floating value for function %s",
+				"time shift value must be a valid duration for function %s",
 				name.StringValue(),
 			)
 		}

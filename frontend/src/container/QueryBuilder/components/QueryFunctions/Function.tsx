@@ -7,7 +7,6 @@ import {
 	metricQueryFunctionOptions,
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,10 +31,9 @@ export default function Function({
 	handleUpdateFunctionName,
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
-	const { showInput, disabled } =
+	const { showInput, disabled, inputType, selectOptions } =
 		queryFunctionsTypesConfig[normalizedFunctionName];
 
 	let functionValue;
@@ -53,6 +51,14 @@ export default function Function({
 	const debouncedhandleUpdateFunctionArgs = useMemo(
 		() => debounce(handleUpdateFunctionArgs, 500),
 		[handleUpdateFunctionArgs],
+	);
+
+	const predefinedValues = selectOptions
+		? selectOptions.filter((o) => o.value !== 'custom').map((o) => o.value)
+		: [];
+
+	const [isCustomMode, setIsCustomMode] = useState<boolean>(
+		!!value && !predefinedValues.includes(value),
 	);
 
 	// update the logic when we start supporting functions for traces
@@ -81,29 +87,70 @@ export default function Function({
 				dropdownStyle={{
 					minWidth: 200,
 					borderRadius: '4px',
-					border: isDarkMode
-						? '1px solid var(--bg-slate-400)'
-						: '1px solid var(--bg-vanilla-300)',
+					border: '1px solid var(--border)',
 					boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
 				}}
 				placement="bottomRight"
 				options={functionOptions}
 			/>
 
-			{showInput && (
-				<OverflowInputToolTip
-					autoFocus
-					value={value}
-					onChange={(event): void => {
-						const newVal = event.target.value;
-						setValue(newVal);
-						debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
-					}}
-					tooltipPlacement="top"
-					minAutoWidth={70}
-					maxAutoWidth={150}
-					className="query-function-value"
-				/>
+			{showInput && inputType === 'select' && selectOptions ? (
+				<>
+					<Select
+						value={isCustomMode ? 'custom' : value || undefined}
+						options={selectOptions}
+						onChange={(val): void => {
+							if (val === 'custom') {
+								setIsCustomMode(true);
+								setValue('');
+							} else {
+								setIsCustomMode(false);
+								setValue(val);
+								handleUpdateFunctionArgs(funcData, index, val);
+							}
+						}}
+						dropdownStyle={{
+							minWidth: 160,
+							borderRadius: '4px',
+							border: '1px solid var(--border)',
+							boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
+						}}
+						style={{ minWidth: '120px' }}
+						placement="bottomRight"
+						placeholder="Select offset"
+					/>
+					{isCustomMode && (
+						<OverflowInputToolTip
+							autoFocus
+							value={value}
+							onChange={(event): void => {
+								const newVal = event.target.value;
+								setValue(newVal);
+								debouncedhandleUpdateFunctionArgs(funcData, index, newVal);
+							}}
+							tooltipPlacement="top"
+							minAutoWidth={70}
+							maxAutoWidth={150}
+							className="query-function-value"
+						/>
+					)}
+				</>
+			) : (
+				showInput && (
+					<OverflowInputToolTip
+						autoFocus
+						value={value}
+						onChange={(event): void => {
+							const newVal = event.target.value;
+							setValue(newVal);
+							debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
+						}}
+						tooltipPlacement="top"
+						minAutoWidth={70}
+						maxAutoWidth={150}
+						className="query-function-value"
+					/>
+				)
 			)}
 
 			<Button

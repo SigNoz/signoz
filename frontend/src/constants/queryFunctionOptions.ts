@@ -84,8 +84,19 @@ interface QueryFunctionConfigType {
 		inputType?: string;
 		placeholder?: string;
 		disabled?: boolean;
+		selectOptions?: SelectOption<string, string>[];
 	};
 }
+
+export const TIME_SHIFT_OPTIONS: SelectOption<string, string>[] = [
+	{ label: '1 hour ago', value: '3600' },
+	{ label: '6 hours ago', value: '21600' },
+	{ label: '12 hours ago', value: '43200' },
+	{ label: '1 day ago', value: '86400' },
+	{ label: '2 days ago', value: '172800' },
+	{ label: '1 week ago', value: '604800' },
+	{ label: 'Custom', value: 'custom' },
+];
 
 export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	anomaly: {
@@ -153,7 +164,8 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	},
 	timeShift: {
 		showInput: true,
-		inputType: 'text',
+		inputType: 'select',
+		selectOptions: TIME_SHIFT_OPTIONS,
 	},
 	fillZero: {
 		showInput: false,
