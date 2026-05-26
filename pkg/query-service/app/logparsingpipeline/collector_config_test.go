@@ -105,7 +105,7 @@ func TestBuildLogParsingProcessors(t *testing.T) {
 
 }
 
-var BuilduserPipelinesTestData = []struct {
+var BuildLogsPipelinesTestData = []struct {
 	Name          string
 	fromCollector []string
 	userPipelines []string
@@ -203,8 +203,8 @@ var BuilduserPipelinesTestData = []struct {
 	},
 }
 
-func TestBuilduserPipelines(t *testing.T) {
-	for _, test := range BuilduserPipelinesTestData {
+func TestBuildLogsPipeline(t *testing.T) {
+	for _, test := range BuildLogsPipelinesTestData {
 		Convey(test.Name, t, func() {
 			v, err := buildCollectorPipelineProcessorsList(test.fromCollector, test.userPipelines)
 			So(err, ShouldBeNil)
