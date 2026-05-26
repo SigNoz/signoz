@@ -163,7 +163,7 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
 	}
 
-	return module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		// Syncing to an empty tag set drops every tag link for the dashboard.
 		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
 			return err
