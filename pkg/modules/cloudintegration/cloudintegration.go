@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -43,22 +42,13 @@ type Module interface {
 	GetService(ctx context.Context, orgID valuer.UUID, serviceID citypes.ServiceID, provider citypes.CloudProviderType, integrationID valuer.UUID) (*citypes.Service, error)
 
 	// CreateService creates a new service for a cloud integration account.
-	CreateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
+	CreateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
 
 	// UpdateService updates cloud integration service
-	UpdateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
+	UpdateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
 
 	// AgentCheckIn is called by agent to send heartbeat and get latest config in response.
 	AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, req *citypes.AgentCheckInRequest) (*citypes.AgentCheckInResponse, error)
-
-	// GetDashboardByID returns dashboard JSON for a given dashboard id.
-	// this only returns the dashboard when the service (embedded in dashboard id) is enabled
-	// in the org for any cloud integration account
-	GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error)
-
-	// ListDashboards returns list of dashboards across all connected cloud integration accounts
-	// for enabled services in the org. This list gets added to dashboard list page
-	ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
 	statsreporter.StatsCollector
 }

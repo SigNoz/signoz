@@ -129,14 +129,13 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const {
 		permissions: permissionsResult,
 		isFetching: isFetchingPermissions,
-		error: errorOnPermissions,
 		refetchPermissions,
 	} = useAuthZ([IsAdminPermission, IsEditorPermission, IsViewerPermission], {
 		enabled: isLoggedIn,
 	});
 
 	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
-	const userFetchError = userFetchDataError || errorOnPermissions;
+	const userFetchError = userFetchDataError;
 
 	const userRole = useMemo(() => {
 		if (permissionsResult?.[IsAdminPermission]?.isGranted) {

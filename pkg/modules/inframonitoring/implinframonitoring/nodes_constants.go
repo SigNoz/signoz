@@ -7,14 +7,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	nodeNameAttrKey         = "k8s.node.name"
-	nodeConditionMetricName = "k8s.node.condition_ready"
-)
+const nodeConditionMetricName = "k8s.node.condition_ready"
 
 var nodeNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          nodeNameAttrKey,
+		Name:          inframonitoringtypes.NodeNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

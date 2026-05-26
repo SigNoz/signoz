@@ -10,12 +10,29 @@ import { useTimezone } from 'providers/Timezone';
 
 import logEvent from 'api/common/logEvent';
 
+import { FeedbackRatingDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../../types';
 
 import styles from './MessageFeedback.module.scss';
+
+const FEEDBACK_ANALYTICS_RATING = {
+	[FeedbackRatingDTO.positive]: 'up',
+	[FeedbackRatingDTO.negative]: 'down',
+} as const;
+
+const VOTE_LABEL = {
+	[FeedbackRatingDTO.positive]: {
+		tooltip: 'Good response',
+		ariaLabel: 'Good response',
+	},
+	[FeedbackRatingDTO.negative]: {
+		tooltip: 'Bad response',
+		ariaLabel: 'Bad response',
+	},
+} as const;
 
 interface MessageFeedbackProps {
 	message: Message;
@@ -117,7 +134,7 @@ export default function MessageFeedback({
 			if (vote === rating) {
 				return;
 			}
-			if (rating === 'negative') {
+			if (rating === FeedbackRatingDTO.negative) {
 				setNegativeComment('');
 				setIsNegativeDialogOpen(true);
 				return;
@@ -126,7 +143,7 @@ export default function MessageFeedback({
 			void logEvent(AIAssistantEvents.FeedbackSubmitted, {
 				messageId: message.id,
 				threadId,
-				rating: 'up',
+				rating: FEEDBACK_ANALYTICS_RATING[rating],
 				hasComment: false,
 				commentLength: 0,
 			});
@@ -136,17 +153,21 @@ export default function MessageFeedback({
 	);
 
 	const handleSubmitNegative = useCallback((): void => {
-		setVote('negative');
+		setVote(FeedbackRatingDTO.negative);
 		setIsNegativeDialogOpen(false);
 		const trimmed = negativeComment.trim();
 		void logEvent(AIAssistantEvents.FeedbackSubmitted, {
 			messageId: message.id,
 			threadId,
-			rating: 'down',
+			rating: FEEDBACK_ANALYTICS_RATING[FeedbackRatingDTO.negative],
 			hasComment: trimmed.length > 0,
 			commentLength: trimmed.length,
 		});
-		submitMessageFeedback(message.id, 'negative', trimmed || undefined);
+		submitMessageFeedback(
+			message.id,
+			FeedbackRatingDTO.negative,
+			trimmed || undefined,
+		);
 	}, [message.id, negativeComment, submitMessageFeedback, threadId]);
 
 	return (
@@ -160,32 +181,39 @@ export default function MessageFeedback({
 							variant="ghost"
 							onClick={handleCopy}
 							color="secondary"
+							aria-label={copied ? 'Copied' : 'Copy message'}
 						>
 							{copied ? <Check size={12} /> : <Copy size={12} />}
 						</Button>
 					</TooltipSimple>
 
-					<TooltipSimple title="Good response">
+					<TooltipSimple title={VOTE_LABEL[FeedbackRatingDTO.positive].tooltip}>
 						<Button
-							className={cx(styles.btn, { [styles.votedUp]: vote === 'positive' })}
+							className={cx(styles.btn, {
+								[styles.votedUp]: vote === FeedbackRatingDTO.positive,
+							})}
 							size="icon"
 							variant="ghost"
 							color="secondary"
-							onClick={(): void => handleVote('positive')}
+							onClick={(): void => handleVote(FeedbackRatingDTO.positive)}
+							aria-label={VOTE_LABEL[FeedbackRatingDTO.positive].ariaLabel}
+							aria-pressed={vote === FeedbackRatingDTO.positive}
 						>
 							<ThumbsUp size={12} />
 						</Button>
 					</TooltipSimple>
 
-					<TooltipSimple title="Bad response">
+					<TooltipSimple title={VOTE_LABEL[FeedbackRatingDTO.negative].tooltip}>
 						<Button
 							className={cx(styles.btn, {
-								[styles.votedDown]: vote === 'negative',
+								[styles.votedDown]: vote === FeedbackRatingDTO.negative,
 							})}
 							size="icon"
 							variant="ghost"
 							color="secondary"
-							onClick={(): void => handleVote('negative')}
+							onClick={(): void => handleVote(FeedbackRatingDTO.negative)}
+							aria-label={VOTE_LABEL[FeedbackRatingDTO.negative].ariaLabel}
+							aria-pressed={vote === FeedbackRatingDTO.negative}
 						>
 							<ThumbsDown size={12} />
 						</Button>
@@ -199,6 +227,7 @@ export default function MessageFeedback({
 								variant="ghost"
 								color="secondary"
 								onClick={onRegenerate}
+								aria-label="Regenerate response"
 							>
 								<RefreshCw size={12} />
 							</Button>

@@ -6,7 +6,7 @@ import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { Bot } from '@signozhq/icons';
 
-import { AIAssistantEvents } from '../events';
+import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import { normalizePage } from '../hooks/useAIAssistantAnalyticsContext';
 import {
 	openAIAssistant,
@@ -31,7 +31,7 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 
 	const handleOpen = useCallback((): void => {
 		void logEvent(AIAssistantEvents.Opened, {
-			source: 'icon',
+			source: AIAssistantOpenSource.Icon,
 			currentPage: normalizePage(pathname),
 		});
 		openAIAssistant();
