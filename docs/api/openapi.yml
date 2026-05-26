@@ -18951,9 +18951,9 @@ paths:
   /api/v4/traces/{traceID}/waterfall:
     post:
       deprecated: false
-      description: 'Two-step fetch: minimal fields for all spans to build the tree,
-        full fields only for the visible window. Aggregations are not included in
-        the response.'
+      description: Returns the waterfall view of spans including all spans if total
+        spans are under a limit, a max count otherwise. Aggregations are dropped compared
+        to v3
       operationId: GetWaterfallV4
       parameters:
       - in: path
@@ -19016,7 +19016,7 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: Get waterfall view for a trace (OOM-safe)
+      summary: Get waterfall view for a trace
       tags:
       - tracedetail
   /api/v5/query_range:

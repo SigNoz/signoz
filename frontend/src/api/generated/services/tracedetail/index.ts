@@ -123,8 +123,8 @@ export const useGetWaterfall = <
 	return useMutation(getGetWaterfallMutationOptions(options));
 };
 /**
- * Two-step fetch: minimal fields for all spans to build the tree, full fields only for the visible window. Aggregations are not included in the response.
- * @summary Get waterfall view for a trace (OOM-safe)
+ * Returns the waterfall view of spans including all spans if total spans are under a limit, a max count otherwise. Aggregations are dropped compared to v3
+ * @summary Get waterfall view for a trace
  */
 export const getWaterfallV4 = (
 	{ traceID }: GetWaterfallV4PathParameters,
@@ -195,7 +195,7 @@ export type GetWaterfallV4MutationBody =
 export type GetWaterfallV4MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
- * @summary Get waterfall view for a trace (OOM-safe)
+ * @summary Get waterfall view for a trace
  */
 export const useGetWaterfallV4 = <
 	TError = ErrorType<RenderErrorResponseDTO>,
