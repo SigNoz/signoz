@@ -129,13 +129,13 @@ func NewPatchableObjects(additions []*ObjectGroup, deletions []*ObjectGroup, ver
 	}
 
 	for _, objectGroup := range additions {
-		if err := ErrIfVerbNotValidForType(verb, objectGroup.Resource.Type); err != nil {
+		if err := ErrIfVerbNotValidForResource(verb, objectGroup.Resource); err != nil {
 			return nil, nil, err
 		}
 	}
 
 	for _, objectGroup := range deletions {
-		if err := ErrIfVerbNotValidForType(verb, objectGroup.Resource.Type); err != nil {
+		if err := ErrIfVerbNotValidForResource(verb, objectGroup.Resource); err != nil {
 			return nil, nil, err
 		}
 	}

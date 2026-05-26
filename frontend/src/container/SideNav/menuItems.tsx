@@ -1,3 +1,5 @@
+import { MenuProps } from 'antd';
+import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
 	BarChart,
@@ -35,15 +37,13 @@ import {
 	Users,
 	Binoculars,
 } from '@signozhq/icons';
-import { Style } from '@signozhq/design-tokens';
-import { MenuProps } from 'antd';
-import ROUTES from 'constants/routes';
 
 import {
 	SecondaryMenuItemKey,
 	SettingsNavSection,
 	SidebarItem,
 } from './sideNav.types';
+import { Style } from '@signozhq/design-tokens';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -374,6 +374,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Shield size={16} />,
 				isEnabled: false,
 				itemKey: 'roles',
+				isBeta: true,
 			},
 			{
 				key: ROUTES.MEMBERS_SETTINGS,

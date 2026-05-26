@@ -9,13 +9,13 @@ import {
 	Flex,
 	Input,
 	InputRef,
-	Progress,
 	Space,
 	Spin,
 	TableColumnsType,
 	TableColumnType,
 	Tooltip,
 } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
@@ -59,7 +59,7 @@ function ProgressRender(item: string | number): JSX.Element {
 			<Progress
 				percent={percent}
 				strokeLinecap="butt"
-				size="small"
+				showInfo
 				strokeColor={((): string => {
 					const cpuPercent = percent;
 					if (cpuPercent >= 90) {

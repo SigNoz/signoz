@@ -59,7 +59,6 @@ export const k8sPodInitialLogTracesFilter = (
 	pod: K8sPodsData,
 ): ReturnType<typeof createFilterItem>[] => [
 	createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),
-	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, pod.meta.k8s_namespace_name),
 ];
 
 export const k8sPodGetEntityName = (pod: K8sPodsData): string =>

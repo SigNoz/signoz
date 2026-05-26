@@ -21,11 +21,11 @@ import {
 	Modal,
 	Popover,
 	Skeleton,
-	Switch,
 	Table,
 	Tag,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -102,6 +102,7 @@ import {
 	filterDashboards,
 } from './utils';
 
+import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -436,57 +437,53 @@ function DashboardsList(): JSX.Element {
 							{action && (
 								<Popover
 									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Expand size={12} />}
-													onClick={onClickHandler}
-												>
-													View
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														openInNewTab(getLink());
-													}}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Link2 size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(getAbsoluteUrl(getLink()));
-													}}
-												>
-													Copy Link
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<FileJson size={12} />}
-													onClick={handleJsonExport}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
+										<div className={styles.actionContent}>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Expand size={12} />}
+												onClick={onClickHandler}
+											>
+												View
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<SquareArrowOutUpRight size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													openInNewTab(getLink());
+												}}
+											>
+												Open in New Tab
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Link2 size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													setCopy(getAbsoluteUrl(getLink()));
+												}}
+											>
+												Copy Link
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<FileJson size={12} />}
+												onClick={handleJsonExport}
+											>
+												Export JSON
+											</Button>
+											<DeleteButton
+												name={dashboard.name}
+												id={dashboard.id}
+												isLocked={dashboard.isLocked}
+												createdBy={dashboard.createdBy}
+											/>
 										</div>
 									}
 									placement="bottomRight"
@@ -968,8 +965,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked
+									value
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -988,9 +984,8 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
 									disabled
-									checked
+									value
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1008,8 +1003,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedAt}
+									value={visibleColumns.updatedAt}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1027,8 +1021,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedBy}
+									value={visibleColumns.updatedBy}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
