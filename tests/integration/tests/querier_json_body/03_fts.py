@@ -74,7 +74,7 @@ def test_fts_across_contexts(
     )
     log_tid = Logs(
         timestamp=now - timedelta(seconds=9),
-        resources={"service.name": "trace-id-svc"},
+        resources={"service.name": "txid-svc"},
         body_v2=_N,
         body_promoted="",
         severity_text="INFO",
@@ -207,12 +207,12 @@ def test_fts_across_contexts(
         {
             "name": "fts.trace_id/bare",
             "expression": TOK_TID,
-            "validate": _only("trace-id-svc"),
+            "validate": _only("txid-svc"),
         },
         {
             "name": "fts.trace_id/search",
             "expression": f'search("{TOK_TID}")',
-            "validate": _only("trace-id-svc"),
+            "validate": _only("txid-svc"),
         },
         # span_id (String — LOWER/match, case-insensitive)
         {
