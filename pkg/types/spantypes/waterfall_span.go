@@ -103,7 +103,6 @@ type StorableSpan struct {
 	StartTime          time.Time          `ch:"timestamp"`
 	DurationNano       uint64             `ch:"duration_nano"`
 	SpanID             string             `ch:"span_id"`
-	TraceID            string             `ch:"trace_id"`
 	HasError           bool               `ch:"has_error"`
 	Kind               int8               `ch:"kind"`
 	ServiceName        string             `ch:"resource_string_service$$name"`
@@ -142,9 +141,10 @@ type MinimalSpan struct {
 	ServiceName  string    `ch:"resource_string_service$$name"`
 }
 
-func (item *MinimalSpan) ToWaterfallSpan() *WaterfallSpan {
+func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	return &WaterfallSpan{
 		SpanID:       item.SpanID,
+		TraceID:      traceID,
 		ParentSpanID: item.ParentSpanID,
 		TimeUnix:     uint64(item.StartTime.UnixNano()),
 		DurationNano: item.DurationNano,
@@ -286,7 +286,7 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 	return events
 }
 
-func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
+func (item *StorableSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
@@ -314,7 +314,7 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 		StatusCode:         item.StatusCode,
 		StatusCodeString:   item.StatusCodeString,
 		StatusMessage:      item.StatusMessage,
-		TraceID:            item.TraceID,
+		TraceID:            traceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
 		TimeUnix:           uint64(item.StartTime.UnixNano()),
@@ -332,7 +332,7 @@ func EnrichSelectedSpans(window []*WaterfallSpan, fullSpans []StorableSpan) {
 		if !ok {
 			continue // synthesized MissingSpan — keep empty shell
 		}
-		newWS := full.ToWaterfallSpan()
+		newWS := full.ToWaterfallSpan(ws.TraceID)
 		newWS.Level = ws.Level
 		newWS.HasChildren = ws.HasChildren
 		newWS.SubTreeNodeCount = ws.SubTreeNodeCount

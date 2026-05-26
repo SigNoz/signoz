@@ -64,7 +64,7 @@ func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.W
 
 	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
 	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan()
+		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
 	}
 	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
 }
@@ -97,7 +97,7 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 
 	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
 	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan()
+		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
 	}
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 	selectedSpans := waterfallTrace.GetAllSpans()
@@ -118,7 +118,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 
 	nodes := make([]*spantypes.WaterfallSpan, len(minimalSpans))
 	for i := range minimalSpans {
-		nodes[i] = minimalSpans[i].ToWaterfallSpan()
+		nodes[i] = minimalSpans[i].ToWaterfallSpan(traceID)
 	}
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 

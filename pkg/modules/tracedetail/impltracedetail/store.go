@@ -46,7 +46,7 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
-			timestamp, duration_nano, span_id, trace_id, has_error, kind,
+			timestamp, duration_nano, span_id, has_error, kind,
 			resource_string_service$$name, name, links as references,
 			attributes_string, attributes_number, attributes_bool, resources_string,
 			events, status_message, status_code_string, kind_string, parent_span_id,
@@ -102,7 +102,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp",
-		"duration_nano", "span_id", "trace_id", "has_error", "kind",
+		"duration_nano", "span_id", "has_error", "kind",
 		`resource_string_service$$name`, "name", "links as references",
 		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
 		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
