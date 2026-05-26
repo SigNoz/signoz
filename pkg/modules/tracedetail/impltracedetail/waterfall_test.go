@@ -97,7 +97,7 @@ func makeChain(n int) (*spantypes.WaterfallSpan, map[string]*spantypes.Waterfall
 }
 
 func getWaterfallTrace(roots []*spantypes.WaterfallSpan, spanMap map[string]*spantypes.WaterfallSpan) *spantypes.WaterfallTrace {
-	return spantypes.NewWaterfallTrace(0, 0, uint64(len(spanMap)), 0, spanMap, nil, roots, false)
+	return spantypes.NewWaterfallTrace(0, 0, uint64(len(spanMap)), 0, spanMap, roots, false)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

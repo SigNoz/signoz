@@ -225,6 +225,10 @@ export interface AlertmanagertypesPlannedMaintenanceDTO {
 	 */
 	name: string;
 	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
 	status: AlertmanagertypesMaintenanceStatusDTO;
 	/**
 	 * @type string
@@ -1714,6 +1718,10 @@ export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
 	 */
 	name: string;
 	schedule: AlertmanagertypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	scope?: string;
 }
 
 export interface AlertmanagertypesPostableRoutePolicyDTO {
@@ -7750,15 +7758,6 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
-export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf =
-	{ [key: string]: number };
-
-/**
- * @nullable
- */
-export type SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
-	SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMapAnyOf | null;
-
 export enum SpantypesSpanAggregationTypeDTO {
 	span_count = 'span_count',
 	execution_time_percentage = 'execution_time_percentage',
@@ -7947,10 +7946,6 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	 * @type string
 	 */
 	rootServiceName?: string;
-	/**
-	 * @type object,null
-	 */
-	serviceNameToTotalDurationMap?: SpantypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
 	/**
 	 * @type array,null
 	 */

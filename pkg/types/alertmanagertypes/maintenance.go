@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/expr-lang/expr"
+	"github.com/prometheus/common/model"
+	"github.com/uptrace/bun"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 var ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
+
+const scopeDocUrl = "https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
 
 type MaintenanceStatus struct {
 	valuer.String
@@ -58,6 +63,7 @@ type StorablePlannedMaintenance struct {
 	Description string    `bun:"description,type:text"`
 	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
 	OrgID       string    `bun:"org_id,type:text"`
+	Scope       string    `bun:"scope,type:text"`
 }
 
 type PlannedMaintenance struct {
@@ -66,6 +72,7 @@ type PlannedMaintenance struct {
 	Description string            `json:"description"`
 	Schedule    *Schedule         `json:"schedule" required:"true"`
 	RuleIDs     []string          `json:"alertIds"`
+	Scope       string            `json:"scope,omitempty"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	CreatedBy   string            `json:"createdBy"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
@@ -82,6 +89,7 @@ type PostablePlannedMaintenance struct {
 	Description string    `json:"description"`
 	Schedule    *Schedule `json:"schedule" required:"true"`
 	AlertIds    []string  `json:"alertIds"`
+	Scope       string    `json:"scope"`
 }
 
 func (p *PostablePlannedMaintenance) Validate() error {
@@ -114,6 +122,15 @@ func (p *PostablePlannedMaintenance) Validate() error {
 		}
 		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
+		}
+	}
+	if p.Scope != "" {
+		if _, err := expr.Compile(p.Scope, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
+			err := errors.Newf(
+				errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload,
+				"invalid scope: %s", err.Error(),
+			)
+			return err.WithUrl(scopeDocUrl)
 		}
 	}
 	return nil
@@ -151,7 +168,7 @@ func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
 		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
 }
 
-func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
+func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) (bool, error) {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if len(m.RuleIDs) > 0 {
@@ -168,9 +185,27 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	}
 
 	if !found {
-		return false
+		return false, nil
 	}
 
+	if !m.IsActive(now) {
+		return false, nil
+	}
+
+	if m.Scope != "" {
+		result, err := EvalScopeExpression(m.Scope, lset)
+		if err != nil {
+			return false, err
+		}
+		if !result {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// IsActive reports whether [now] falls inside the maintenance window's schedule.
+func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
@@ -301,14 +336,6 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 	return currentTime.Sub(candidate) <= rec.Duration.Duration()
 }
 
-func (m *PlannedMaintenance) IsActive(now time.Time) bool {
-	ruleID := "maintenance"
-	if len(m.RuleIDs) > 0 {
-		ruleID = (m.RuleIDs)[0]
-	}
-	return m.ShouldSkip(ruleID, now)
-}
-
 func (m *PlannedMaintenance) IsUpcoming() bool {
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
@@ -389,6 +416,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Description string            `json:"description" db:"description"`
 		Schedule    *Schedule         `json:"schedule" db:"schedule"`
 		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
+		Scope       string            `json:"scope,omitempty" db:"scope"`
 		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
 		CreatedBy   string            `json:"createdBy" db:"created_by"`
 		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
@@ -401,6 +429,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		Description: m.Description,
 		Schedule:    m.Schedule,
 		AlertIds:    m.RuleIDs,
+		Scope:       m.Scope,
 		CreatedAt:   m.CreatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedAt:   m.UpdatedAt,
@@ -424,6 +453,7 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
 		Description: m.Description,
 		Schedule:    m.Schedule,
 		RuleIDs:     ruleIDs,
+		Scope:       m.Scope,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,

@@ -6,7 +6,8 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelMode } from '../../types';
-import { prepareChartData, prepareUPlotConfig } from '../utils';
+import { prepareUPlotConfig } from '../utils';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
