@@ -2,6 +2,7 @@ package impltracedetail
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -79,7 +80,7 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	}
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
-		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, effectiveLimit, summary)
+		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
 }
@@ -105,9 +106,9 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
-func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, effectiveLimit uint, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window
-	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary)
+	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,7 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 	for i, s := range selectedSpans {
 		spanIDs[i] = s.SpanID
 	}
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, summary, spanIDs)
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, start, end, spanIDs)
 	if err != nil {
 		return nil, err
 	}

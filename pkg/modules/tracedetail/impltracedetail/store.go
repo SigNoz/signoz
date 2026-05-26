@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 
@@ -70,7 +71,7 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	return spanItems, nil
 }
 
-func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, summary *spantypes.TraceSummary) ([]spantypes.MinimalSpan, error) {
+func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]spantypes.MinimalSpan, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"DISTINCT ON (span_id) span_id",
@@ -80,8 +81,8 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, summar
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(
 		sb.E("trace_id", traceID),
-		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		sb.LE("ts_bucket_start", summary.End.Unix()),
+		sb.GE("ts_bucket_start", start.Unix()-1800),
+		sb.LE("ts_bucket_start", end.Unix()),
 	)
 	sb.OrderByAsc("timestamp")
 	sb.OrderByAsc("name")
@@ -94,7 +95,7 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, summar
 	return spans, nil
 }
 
-func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, summary *spantypes.TraceSummary, spanIDs []string) ([]spantypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	if len(spanIDs) == 0 {
 		return []spantypes.StorableSpan{}, nil
 	}
@@ -117,8 +118,8 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sum
 	sb.Where(
 		sb.E("trace_id", traceID),
 		sb.In("span_id", ids...),
-		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
-		sb.LE("ts_bucket_start", summary.End.Unix()),
+		sb.GE("ts_bucket_start", start.Unix()-1800),
+		sb.LE("ts_bucket_start", end.Unix()),
 	)
 	sb.OrderByAsc("timestamp")
 	sb.OrderByAsc("name")
