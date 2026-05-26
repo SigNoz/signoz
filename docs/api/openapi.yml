@@ -2888,6 +2888,7 @@ components:
           type: array
       required:
       - schemaVersion
+      - tags
       - spec
       type: object
     DashboardtypesPostablePublicDashboard:

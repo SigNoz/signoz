@@ -4666,7 +4666,7 @@ export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type array,null
 	 */
-	tags?: TagtypesPostableTagDTO[] | null;
+	tags: TagtypesPostableTagDTO[] | null;
 }
 
 export interface DashboardtypesPostablePublicDashboardDTO {

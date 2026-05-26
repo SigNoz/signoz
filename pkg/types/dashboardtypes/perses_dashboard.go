@@ -75,7 +75,7 @@ type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
 	Name         string                 `json:"name,omitempty"`
 	GenerateName bool                   `json:"generateName,omitempty"`
-	Tags         []tagtypes.PostableTag `json:"tags"`
+	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
 
