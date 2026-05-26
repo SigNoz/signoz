@@ -6,7 +6,8 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelMode } from '../../types';
-import { prepareChartData, prepareUPlotConfig } from '../utils';
+import { prepareUPlotConfig } from '../utils';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
@@ -300,6 +301,27 @@ describe('TimeSeriesPanel utils', () => {
 			const seriesConfig = config.series?.[1];
 			expect(seriesConfig).toBeDefined();
 			expect(seriesConfig!.stroke).toBe('#ff0000');
+		});
+
+		it('passes result metric to each series for cross-panel sync', () => {
+			const metric = { host: 'server1', __name__: 'cpu' };
+			const apiResponse = createApiResponse([
+				{
+					metric,
+					queryName: 'Q',
+					values: [
+						[1000, '1'],
+						[2000, '2'],
+					],
+				} as MetricRangePayloadProps['data']['result'][0],
+			]);
+
+			const config = prepareUPlotConfig({
+				...baseParams,
+				apiResponse,
+			}).getConfig();
+
+			expect(config.series?.[1]).toMatchObject({ metric });
 		});
 
 		it('adds multiple series when result has multiple items', () => {
