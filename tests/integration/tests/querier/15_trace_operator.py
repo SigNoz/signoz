@@ -140,11 +140,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "return_spans_from": "A",
                 "select_fields": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
                 "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-                "validate": lambda r: (
-                    len(_rows(r)) == 3
-                    and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"}
-                    and _rows(r)[2]["data"]["service.name"] == "catalog-svc"
-                ),
+                "validate": lambda r: len(_rows(r)) == 3 and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"} and _rows(r)[2]["data"]["service.name"] == "catalog-svc",
             },
             id="ob.indirect.http_method_not_in_select",
         ),
@@ -158,12 +154,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "expression": "A => B",
                 "return_spans_from": "A",
                 "order": [{"key": {"name": "duration_nano", "fieldContext": "span"}, "direction": "desc"}],
-                "validate": lambda r: (
-                    len(_rows(r)) == 3
-                    and _rows(r)[0]["data"]["name"] == "POST /checkout"
-                    and _rows(r)[1]["data"]["name"] == "api-proxy"
-                    and _rows(r)[2]["data"]["name"] == "GET /catalog"
-                ),
+                "validate": lambda r: len(_rows(r)) == 3 and _rows(r)[0]["data"]["name"] == "POST /checkout" and _rows(r)[1]["data"]["name"] == "api-proxy" and _rows(r)[2]["data"]["name"] == "GET /catalog",
             },
             id="ob.duration.duration_nano_desc",
         ),
@@ -179,12 +170,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "return_spans_from": "A",
                 "select_fields": [{"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}],
                 "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-                "validate": lambda r: (
-                    len(_rows(r)) == 3
-                    and _rows(r)[0]["data"]["http.method"] == "POST"
-                    and _rows(r)[1]["data"]["http.method"] == "POST"
-                    and _rows(r)[2]["data"]["http.method"] == "GET"
-                ),
+                "validate": lambda r: len(_rows(r)) == 3 and _rows(r)[0]["data"]["http.method"] == "POST" and _rows(r)[1]["data"]["http.method"] == "POST" and _rows(r)[2]["data"]["http.method"] == "GET",
             },
             id="ob.select.http_method_in_select",
         ),
@@ -305,7 +291,7 @@ def test_trace_operator(
 ) -> None:
     t1_trace_id = TraceIdGenerator.trace_id()
     t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — structural root of T1
-    t1_child_span_id = TraceIdGenerator.span_id()      # lookup-cart
+    t1_child_span_id = TraceIdGenerator.span_id()  # lookup-cart
 
     t2_trace_id = TraceIdGenerator.trace_id()
     t2_root_span_id = TraceIdGenerator.span_id()
