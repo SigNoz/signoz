@@ -21,19 +21,19 @@ func NewTraceTimeRangeFinder(telemetryStore telemetrystore.TelemetryStore) *Trac
 	}
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, ok bool) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, exists bool, error error) {
 	traceIDs := []string{traceID}
 	return f.GetTraceTimeRangeMulti(ctx, traceIDs)
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, ok bool) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, exists bool, error error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "trace-time-range",
 		instrumentationtypes.CodeFunctionName: "GetTraceTimeRangeMulti",
 	})
 	if len(traceIDs) == 0 {
-		return 0, 0, false
+		return 0, 0, false, nil
 	}
 
 	cleanedIDs := make([]string, len(traceIDs))
@@ -49,7 +49,8 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	}
 
 	query := fmt.Sprintf(`
-		SELECT 
+		SELECT
+			count(),
 			toUnixTimestamp64Nano(min(start)),
 			toUnixTimestamp64Nano(max(end))
 		FROM %s.%s
@@ -58,9 +59,14 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 
 	row := f.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...)
 
-	err := row.Scan(&startNano, &endNano)
+	var rowCount uint64
+	err := row.Scan(&rowCount, &startNano, &endNano)
 	if err != nil {
-		return 0, 0, false
+		return 0, 0, false, err
+	}
+
+	if rowCount == 0 {
+		return 0, 0, false, nil
 	}
 
 	if startNano > 1_000_000_000 {
@@ -68,5 +74,5 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	}
 	endNano += 1_000_000_000
 
-	return startNano, endNano, true
+	return startNano, endNano, true, nil
 }

@@ -1,4 +1,3 @@
-import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
@@ -313,16 +312,6 @@ describe('Create Alert Channel (Normal User)', () => {
 				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
-			it.skip('Should check if the upgrade plan message is shown', () => {
-				expect(screen.getByText('Upgrade to a Paid Plan')).toBeInTheDocument();
-				expect(
-					screen.getByText(/This feature is available for paid plans only./),
-				).toBeInTheDocument();
-				const link = screen.getByRole('link', { name: 'Click here' });
-				expect(link).toBeInTheDocument();
-				expect(link).toHaveAttribute('href', SIGNOZ_UPGRADE_PLAN_URL);
-				expect(screen.getByText(/to Upgrade/)).toBeInTheDocument();
-			});
 			it('Should check if the form buttons are displayed properly (Save, Test, Back)', () => {
 				expect(
 					screen.getByRole('button', { name: 'button_save_channel' }),
