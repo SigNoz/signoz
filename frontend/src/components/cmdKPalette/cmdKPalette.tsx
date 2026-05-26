@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -13,21 +14,25 @@ import { useThemeMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
 
-import { createShortcutActions } from '../../constants/shortcutActions';
+import {
+	CmdAction,
+	createShortcutActions,
+} from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
 
 import './cmdKPalette.scss';
 
-type CmdAction = {
-	id: string;
-	name: string;
-	shortcut?: string[];
-	keywords?: string;
-	section?: string;
-	icon?: React.ReactNode;
-	roles?: UserRole[];
-	perform: () => void;
-};
+export function getActiveSectionFromActions(
+	pathname: string,
+	actions: CmdAction[],
+): string | null {
+	for (const action of actions) {
+		if (action.routePrefix && pathname.startsWith(action.routePrefix)) {
+			return action.section ?? null;
+		}
+	}
+	return null;
+}
 
 export function CmdKPalette({
 	userRole,
@@ -35,7 +40,7 @@ export function CmdKPalette({
 	userRole: UserRole;
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
-
+	const { pathname } = useLocation();
 	const { setAutoSwitch, setTheme, theme } = useThemeMode();
 
 	// toggle palette with ⌘/Ctrl+K
@@ -89,7 +94,7 @@ export function CmdKPalette({
 	);
 
 	// group permitted actions by section
-	const grouped: [string, CmdAction[]][] = ((): [string, CmdAction[]][] => {
+	const grouped: [string, CmdAction[]][] = useMemo(() => {
 		const map = new Map<string, CmdAction[]>();
 
 		permitted.forEach((a) => {
@@ -102,9 +107,20 @@ export function CmdKPalette({
 				map.set(section, [a]);
 			}
 		});
+		const entries = Array.from(map.entries());
+		// Detect the active module from the current URL and move its section to the top
+		const activeSection = getActiveSectionFromActions(pathname, permitted);
 
-		return Array.from(map.entries());
-	})();
+		if (activeSection) {
+			entries.sort((a, b) => {
+				const aMatch = a[0] === activeSection ? 0 : 1;
+				const bMatch = b[0] === activeSection ? 0 : 1;
+				return aMatch - bMatch;
+			});
+		}
+
+		return entries;
+	}, [permitted, pathname]);
 
 	const handleInvoke = (action: CmdAction): void => {
 		try {

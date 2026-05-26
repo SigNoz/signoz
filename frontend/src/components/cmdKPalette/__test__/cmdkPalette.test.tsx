@@ -3,12 +3,13 @@
  */
 // ---- Mocks (must run BEFORE importing the component) ----
 import ROUTES from 'constants/routes';
+import { createShortcutActions } from 'constants/shortcutActions';
 import history from 'lib/history';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import '@testing-library/jest-dom/extend-expect';
 
-import { CmdKPalette } from '../cmdKPalette';
+import { CmdKPalette, getActiveSectionFromActions } from '../cmdKPalette';
 
 const HOME_LABEL = 'Go to Home';
 
@@ -203,5 +204,183 @@ describe('CmdKPalette', () => {
 
 		// last call from handleInvoke should set open to false
 		expect(mockSetOpen).toHaveBeenCalledWith(false);
+	});
+});
+
+// ---- getActiveSectionFromActions unit tests ----
+const mockActions = createShortcutActions({
+	navigate: jest.fn(),
+	handleThemeChange: jest.fn(),
+});
+
+describe('getActiveSectionFromActions', () => {
+	test('returns Settings for /settings paths', () => {
+		expect(getActiveSectionFromActions('/settings', mockActions)).toBe(
+			'Settings',
+		);
+		expect(
+			getActiveSectionFromActions('/settings/my-settings', mockActions),
+		).toBe('Settings');
+		expect(getActiveSectionFromActions('/settings/billing', mockActions)).toBe(
+			'Settings',
+		);
+	});
+
+	test('returns Logs for /logs paths', () => {
+		expect(getActiveSectionFromActions('/logs', mockActions)).toBe('Logs');
+		expect(getActiveSectionFromActions('/logs/logs-explorer', mockActions)).toBe(
+			'Logs',
+		);
+		expect(getActiveSectionFromActions('/logs/pipelines', mockActions)).toBe(
+			'Logs',
+		);
+	});
+
+	test('returns Traces for /traces paths', () => {
+		// /traces-explorer – main explorer page (different URL pattern than sub-pages)
+		expect(getActiveSectionFromActions('/traces-explorer', mockActions)).toBe(
+			'Traces',
+		);
+		// /traces/* – sub-pages share the /traces/ prefix
+		expect(getActiveSectionFromActions('/traces/saved-views', mockActions)).toBe(
+			'Traces',
+		);
+		expect(getActiveSectionFromActions('/traces/funnels', mockActions)).toBe(
+			'Traces',
+		);
+	});
+
+	test('returns Metrics for /metrics-explorer paths', () => {
+		expect(
+			getActiveSectionFromActions('/metrics-explorer/summary', mockActions),
+		).toBe('Metrics');
+	});
+
+	test('returns Navigation for top-level module paths', () => {
+		expect(getActiveSectionFromActions('/home', mockActions)).toBe('Navigation');
+		expect(getActiveSectionFromActions('/services', mockActions)).toBe(
+			'Navigation',
+		);
+		expect(getActiveSectionFromActions('/dashboard', mockActions)).toBe(
+			'Navigation',
+		);
+		expect(getActiveSectionFromActions('/alerts', mockActions)).toBe(
+			'Navigation',
+		);
+		expect(getActiveSectionFromActions('/exceptions', mockActions)).toBe(
+			'Navigation',
+		);
+		expect(
+			getActiveSectionFromActions('/messaging-queues/overview', mockActions),
+		).toBe('Navigation');
+	});
+
+	test('returns null for unrecognized paths', () => {
+		expect(getActiveSectionFromActions('/', mockActions)).toBeNull();
+		expect(getActiveSectionFromActions('/unknown-page', mockActions)).toBeNull();
+	});
+
+	test('returns null when actions have no routePrefix', () => {
+		const noPrefix = [{ id: 'x', name: 'X', section: 'S', perform: jest.fn() }];
+		expect(getActiveSectionFromActions('/anything', noPrefix)).toBeNull();
+	});
+});
+// ---- contextual prioritization integration tests ----
+describe('CmdKPalette contextual prioritization', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	test('Settings section appears first when on /settings route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/settings/my-settings',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		// Settings should be the first section
+		expect(sectionOrder[0]).toBe('Settings');
+	});
+
+	test('Logs section appears first when on /logs route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/logs/logs-explorer',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		expect(sectionOrder[0]).toBe('Logs');
+	});
+
+	test('Navigation section stays first when on / (no match)', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		// Default order: Navigation is first since no active section matched
+		expect(sectionOrder[0]).toBe('Navigation');
+	});
+
+	test('Traces section appears first when on /traces-explorer route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/traces-explorer',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		expect(sectionOrder[0]).toBe('Traces');
+	});
+
+	test('Traces section appears first when on /traces/funnels route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/traces/funnels',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		expect(sectionOrder[0]).toBe('Traces');
+	});
+
+	test('Traces section appears first when on /traces/saved-views route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/traces/saved-views',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		expect(sectionOrder[0]).toBe('Traces');
+	});
+
+	test('Metrics section appears first when on /metrics-explorer route', () => {
+		render(<CmdKPalette userRole="ADMIN" />, undefined, {
+			initialRoute: '/metrics-explorer/summary',
+		});
+
+		const groups = document.querySelectorAll('[cmdk-group]');
+		const sectionOrder = Array.from(groups).map((g) =>
+			g.getAttribute('data-value'),
+		);
+
+		expect(sectionOrder[0]).toBe('Metrics');
 	});
 });
