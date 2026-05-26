@@ -31,56 +31,12 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.querier import get_rows
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
-def _rows(response: requests.Response) -> list:
-    return response.json()["data"]["data"]["results"][0].get("rows") or []
-
-
 def _names(response: requests.Response) -> set:
-    return {r["data"]["name"] for r in _rows(response)}
-
-
-def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case: dict) -> None:
-    spec: dict = {
-        "name": "C",
-        "expression": case["expression"],
-        "returnSpansFrom": case.get("return_spans_from", ""),
-        "limit": case.get("limit", 100),
-    }
-    if case.get("select_fields"):
-        spec["selectFields"] = case["select_fields"]
-    if case.get("order"):
-        spec["order"] = case["order"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": start_ms,
-            "end": end_ms,
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {"name": "A", "signal": "traces", "filter": {"expression": case["filter_a"]}, "limit": 100},
-                    },
-                    {
-                        "type": "builder_query",
-                        "spec": {"name": "B", "signal": "traces", "filter": {"expression": case["filter_b"]}, "limit": 100},
-                    },
-                    {"type": "builder_trace_operator", "spec": spec},
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}: {response.text}"
-    assert case["validate"](response), f"validation failed: {response.json()}"
+    return {r["data"]["name"] for r in get_rows(response)}
 
 
 # ============================================================================
@@ -140,7 +96,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "return_spans_from": "A",
                 "select_fields": [{"name": "service.name", "fieldDataType": "string", "fieldContext": "resource"}],
                 "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-                "validate": lambda r: len(_rows(r)) == 3 and {_rows(r)[0]["data"]["service.name"], _rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"} and _rows(r)[2]["data"]["service.name"] == "catalog-svc",
+                "validate": lambda r: len(get_rows(r)) == 3 and {get_rows(r)[0]["data"]["service.name"], get_rows(r)[1]["data"]["service.name"]} == {"checkout-svc", "proxy-svc"} and get_rows(r)[2]["data"]["service.name"] == "catalog-svc",
             },
             id="ob.indirect.http_method_not_in_select",
         ),
@@ -154,7 +110,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "expression": "A => B",
                 "return_spans_from": "A",
                 "order": [{"key": {"name": "duration_nano", "fieldContext": "span"}, "direction": "desc"}],
-                "validate": lambda r: len(_rows(r)) == 3 and _rows(r)[0]["data"]["name"] == "POST /checkout" and _rows(r)[1]["data"]["name"] == "api-proxy" and _rows(r)[2]["data"]["name"] == "GET /catalog",
+                "validate": lambda r: len(get_rows(r)) == 3 and get_rows(r)[0]["data"]["name"] == "POST /checkout" and get_rows(r)[1]["data"]["name"] == "api-proxy" and get_rows(r)[2]["data"]["name"] == "GET /catalog",
             },
             id="ob.duration.duration_nano_desc",
         ),
@@ -170,7 +126,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "return_spans_from": "A",
                 "select_fields": [{"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}],
                 "order": [{"key": {"name": "http.method", "fieldDataType": "string", "fieldContext": "attribute"}, "direction": "desc"}],
-                "validate": lambda r: len(_rows(r)) == 3 and _rows(r)[0]["data"]["http.method"] == "POST" and _rows(r)[1]["data"]["http.method"] == "POST" and _rows(r)[2]["data"]["http.method"] == "GET",
+                "validate": lambda r: len(get_rows(r)) == 3 and get_rows(r)[0]["data"]["http.method"] == "POST" and get_rows(r)[1]["data"]["http.method"] == "POST" and get_rows(r)[2]["data"]["http.method"] == "GET",
             },
             id="ob.select.http_method_in_select",
         ),
@@ -183,7 +139,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "",
-                "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(get_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
             },
             id="ex.direct_child.default",
         ),
@@ -195,7 +151,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.direct_child.return_A",
         ),
@@ -208,7 +164,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "",
-                "validate": lambda r: len(_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(get_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
             },
             id="ex.indirect_descendant.default",
         ),
@@ -220,7 +176,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.indirect_descendant.return_A",
         ),
@@ -235,7 +191,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A && B",
                 "return_spans_from": "",
-                "validate": lambda r: len(_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.and.default",
         ),
@@ -248,7 +204,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "",
-                "validate": lambda r: len(_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
+                "validate": lambda r: len(get_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
             },
             id="ex.or.default",
         ),
@@ -261,7 +217,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
+                "validate": lambda r: len(get_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
             },
             id="ex.or.return_A",
         ),
@@ -276,7 +232,7 @@ def _run_case(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, case
                 "filter_b": "db.system = 'redis'",
                 "expression": "A NOT B",
                 "return_spans_from": "",
-                "validate": lambda r: len(_rows(r)) == 1 and _names(r) == {"standalone-server"},
+                "validate": lambda r: len(get_rows(r)) == 1 and _names(r) == {"standalone-server"},
             },
             id="ex.not.default",
         ),
@@ -440,4 +396,41 @@ def test_trace_operator(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    _run_case(signoz, token, start_ms, end_ms, case)
+    spec: dict = {
+        "name": "C",
+        "expression": case["expression"],
+        "returnSpansFrom": case.get("return_spans_from", ""),
+        "limit": case.get("limit", 100),
+    }
+    if case.get("select_fields"):
+        spec["selectFields"] = case["select_fields"]
+    if case.get("order"):
+        spec["order"] = case["order"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "raw",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {"name": "A", "signal": "traces", "filter": {"expression": case["filter_a"]}, "limit": 100},
+                    },
+                    {
+                        "type": "builder_query",
+                        "spec": {"name": "B", "signal": "traces", "filter": {"expression": case["filter_b"]}, "limit": 100},
+                    },
+                    {"type": "builder_trace_operator", "spec": spec},
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, f"HTTP {response.status_code}: {response.text}"
+    assert case["validate"](response), f"validation failed: {response.json()}"
