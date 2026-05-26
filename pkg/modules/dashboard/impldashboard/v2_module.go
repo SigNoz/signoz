@@ -17,7 +17,7 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		return nil, err
 	}
 
-	dashboard := postable.NewDashboardV2WithoutTags(orgID, createdBy, source)
+	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
 	var storableDashboard *dashboardtypes.StorableDashboard
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {

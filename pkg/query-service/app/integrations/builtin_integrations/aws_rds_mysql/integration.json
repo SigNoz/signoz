@@ -32,7 +32,7 @@
     },
     "dashboards": [
       "file://assets/dashboards/overview.json",
-      "file://assets/dashboards/db_metrics.json"
+      "file://assets/dashboards/db_metrics_overview.json"
     ],
     "alerts": []
   },
