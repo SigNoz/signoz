@@ -95,7 +95,6 @@ func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
 	startDelay := provider.config.NewJitter()
-	provider.settings.Logger().DebugContext(ctx, "scheduling first meter collect", slog.String("delay", startDelay.String()), slog.Int64("delay_ns", startDelay.Nanoseconds()))
 
 	timer := time.NewTimer(startDelay)
 	defer timer.Stop()
@@ -108,7 +107,6 @@ func (provider *Provider) Start(ctx context.Context) error {
 			provider.collect(ctx)
 			next := provider.config.Interval - provider.config.NewJitter()
 			timer.Reset(next)
-			provider.settings.Logger().DebugContext(ctx, "scheduled next meter collect", slog.String("delay", next.String()), slog.Int64("delay_ns", next.Nanoseconds()))
 		}
 	}
 }
@@ -288,7 +286,6 @@ func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license
 
 	provider.metrics.reports.Add(ctx, 1)
 	provider.metrics.meters.Add(ctx, int64(len(meters)))
-	provider.settings.Logger().DebugContext(ctx, "reported meters to zeus", slog.String("org_id", orgID.StringValue()), slog.String("date", date), slog.Int("meters", len(meters)))
 	return nil
 }
 
