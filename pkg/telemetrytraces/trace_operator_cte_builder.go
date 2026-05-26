@@ -248,7 +248,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", errors.Attr(err), slog.String("filter", query.Filter.Expression))
 			return "", err
 		}
-		if filterWhereClause != nil {
+		if !filterWhereClause.IsEmpty() {
 			b.stmtBuilder.logger.DebugContext(ctx, "Adding where clause", slog.Any("where_clause", filterWhereClause.WhereClause))
 			sb.AddWhereClause(filterWhereClause.WhereClause)
 		} else {
