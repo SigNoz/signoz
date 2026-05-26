@@ -4,8 +4,10 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/perses/perses/pkg/model/api/v1/common"
 )
 
 const (
@@ -86,14 +88,28 @@ func (p *ListDashboardsV2Params) Validate() error {
 	return nil
 }
 
-type gettableDashboardWithPin struct {
-	GettableDashboardV2
-	Pinned bool `json:"pinned"`
+type listedDashboardV2 struct {
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+
+	OrgID         valuer.UUID             `json:"orgId" required:"true"`
+	Locked        bool                    `json:"locked" required:"true"`
+	Source        Source                  `json:"source" required:"true"`
+	SchemaVersion string                  `json:"schemaVersion" required:"true"`
+	Name          string                  `json:"name" required:"true"`
+	Pinned        bool                    `json:"pinned" required:"true"`
+	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
+	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
+}
+
+type listedDashboardV2Spec struct {
+	Display *common.Display `json:"display,omitempty"`
 }
 
 type ListableDashboardV2 struct {
-	Dashboards []*gettableDashboardWithPin `json:"dashboards"`
-	HasMore    bool                        `json:"hasMore"`
+	Dashboards []*listedDashboardV2 `json:"dashboards" required:"true" nullable:"false"`
+	Total      int64                `json:"total" required:"true"`
 }
 
 // DashboardListRow is the per-row shape Store.ListV2 returns. Bundles the
@@ -105,20 +121,30 @@ type DashboardListRow struct {
 	Pinned    bool
 }
 
-func NewListableDashboardV2(rows []*DashboardListRow, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, hasMore bool) (*ListableDashboardV2, error) {
-	dashboards := make([]*gettableDashboardWithPin, len(rows))
+func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag) (*ListableDashboardV2, error) {
+	dashboards := make([]*listedDashboardV2, len(rows))
 	for i, r := range rows {
-		v2, err := NewDashboardV2FromStorable(r.Dashboard, r.Public, tagsByEntity[r.Dashboard.ID])
+		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
 		if err != nil {
 			return nil, err
 		}
-		dashboards[i] = &gettableDashboardWithPin{
-			GettableDashboardV2: *NewGettableDashboardV2FromDashboardV2(v2),
-			Pinned:              r.Pinned,
+
+		dashboards[i] = &listedDashboardV2{
+			Identifiable:  v2.Identifiable,
+			TimeAuditable: v2.TimeAuditable,
+			UserAuditable: v2.UserAuditable,
+			OrgID:         v2.OrgID,
+			Locked:        v2.Locked,
+			Source:        v2.Source,
+			SchemaVersion: v2.SchemaVersion,
+			Name:          v2.Name,
+			Pinned:        r.Pinned,
+			Tags:          tagtypes.NewGettableTagsFromTags(v2.Tags),
+			Spec:          listedDashboardV2Spec{Display: v2.Spec.Display},
 		}
 	}
 	return &ListableDashboardV2{
 		Dashboards: dashboards,
-		HasMore:    hasMore,
+		Total:      total,
 	}, nil
 }

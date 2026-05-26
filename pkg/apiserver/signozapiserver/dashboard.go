@@ -19,8 +19,8 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "List dashboards (v2)",
 		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.",
-		Request:             nil,
-		RequestContentType:  "",
+		Request:             new(dashboardtypes.ListDashboardsV2Params),
+		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.ListableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
@@ -35,7 +35,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "CreateDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard (v2)",
-		Description:         "This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.",
+		Description:         "This endpoint creates a dashboard in the v2 format that follows Perses spec.",
 		Request:             new(dashboardtypes.PostableDashboardV2),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.GettableDashboardV2),
@@ -52,7 +52,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get dashboard (v2)",
-		Description:         "This endpoint returns a v2-shape dashboard with its tags and public sharing config (if any).",
+		Description:         "This endpoint returns a v2-shape dashboard.",
 		Request:             nil,
 		RequestContentType:  "",
 		Response:            new(dashboardtypes.GettableDashboardV2),
@@ -189,40 +189,6 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublicV2), handler.OpenAPIDef{
-		ID:                  "CreatePublicDashboardV2",
-		Tags:                []string{"dashboard"},
-		Summary:             "Make a dashboard v2 public",
-		Description:         "This endpoint creates the public sharing config for a v2 dashboard and returns the dashboard with the new public config attached. Lock state does not gate this endpoint.",
-		Request:             new(dashboardtypes.PostablePublicDashboard),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.GettableDashboardV2),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublicV2), handler.OpenAPIDef{
-		ID:                  "UpdatePublicDashboardV2",
-		Tags:                []string{"dashboard"},
-		Summary:             "Update public sharing config for a dashboard v2",
-		Description:         "This endpoint updates the public sharing config (time range settings) of an already-public v2 dashboard. Lock state does not gate this endpoint.",
-		Request:             new(dashboardtypes.UpdatablePublicDashboard),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.GettableDashboardV2),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 

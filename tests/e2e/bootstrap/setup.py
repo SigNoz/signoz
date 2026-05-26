@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -39,5 +40,17 @@ def test_teardown(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
+    pytestconfig: pytest.Config,
 ) -> None:
-    """Fixture dependencies trigger container teardown via --teardown."""
+    """Truncate seeded telemetry; containers come down via fixture
+    dependency under `--teardown`."""
+    cached = pytestconfig.cache.get("seeder", None)
+    if not cached:
+        return
+    restored = types.TestContainerDocker.from_cache(cached)
+    base = restored.host_configs["8080"].base().rstrip("/")
+    for signal in ("metrics", "traces", "logs"):
+        try:
+            requests.delete(f"{base}/telemetry/{signal}", timeout=30).raise_for_status()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"seeder DELETE /telemetry/{signal} failed: {e}")

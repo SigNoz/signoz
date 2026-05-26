@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -112,7 +113,7 @@ func New(
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	meterReporterProviderFactories func(context.Context, factory.ProviderSettings, flagger.Flagger, licensing.Licensing, telemetrystore.TelemetryStore, retention.Getter, organization.Getter, zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string),
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
-	cloudIntegrationCallback func(sqlstore.SQLStore, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
+	cloudIntegrationCallback func(sqlstore.SQLStore, dashboard.Module, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
 	rulerProviderFactories func(cache.Cache, alertmanager.Alertmanager, sqlstore.SQLStore, telemetrystore.TelemetryStore, telemetrytypes.MetadataStore, prometheus.Prometheus, organization.Getter, rulestatehistory.Module, querier.Querier, queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]],
 ) (*SigNoz, error) {
 	// Initialize instrumentation
@@ -339,7 +340,7 @@ func New(
 	// where needed.
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 
-	// Initialize dashboard module (needed for authz registry)
+	// Initialize dashboard module
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
 
 	// Initialize user getter
@@ -376,12 +377,14 @@ func New(
 		return nil, err
 	}
 
+	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore, providerSettings)
+
 	// Initialize alertmanager from the available alertmanager provider factories
 	alertmanager, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Alertmanager,
-		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager),
+		NewAlertmanagerProviderFactories(sqlstore, orgGetter, nfManager, maintenanceStore),
 		config.Alertmanager.Provider,
 	)
 	if err != nil {
@@ -456,7 +459,7 @@ func New(
 
 	serviceAccount := implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount)
 
-	cloudIntegrationModule, err := cloudIntegrationCallback(sqlstore, global, zeus, gateway, licensing, serviceAccount, config.CloudIntegration)
+	cloudIntegrationModule, err := cloudIntegrationCallback(sqlstore, dashboard, global, zeus, gateway, licensing, serviceAccount, config.CloudIntegration)
 	if err != nil {
 		return nil, err
 	}
@@ -495,6 +498,7 @@ func New(
 		modules.AuthDomain,
 		serviceAccount,
 		cloudIntegrationModule,
+		modules.LogsPipeline,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories

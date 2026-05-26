@@ -264,6 +264,7 @@ function convertRawData(
 				date: row.timestamp,
 			} as any,
 		})),
+		nextCursor: rawData.nextCursor,
 	};
 }
 

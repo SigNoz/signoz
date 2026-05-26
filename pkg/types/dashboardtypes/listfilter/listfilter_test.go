@@ -74,7 +74,7 @@ func TestCompile_Name(t *testing.T) {
 		{
 			subtestName:       "name =",
 			dslQueryToCompile: `name = 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') = ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs:      []any{"overview"},
 		},
 		{
@@ -82,25 +82,25 @@ func TestCompile_Name(t *testing.T) {
 			// strips whichever quote pair surrounds the value.
 			subtestName:       "name = with double-quoted value",
 			dslQueryToCompile: `name = "something"`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') = ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs:      []any{"something"},
 		},
 		{
 			subtestName:       "name CONTAINS",
 			dslQueryToCompile: `name CONTAINS 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
 			expectedArgs:      []any{"%overview%"},
 		},
 		{
 			subtestName:       "name ILIKE — emitted as LOWER(col) LIKE LOWER(?) for dialect parity",
 			dslQueryToCompile: `name ILIKE 'Prod%'`,
-			expectedSQL:       `lower(json_extract("dashboard"."data", '$.data.display.name')) LIKE LOWER(?)`,
+			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?)`,
 			expectedArgs:      []any{"Prod%"},
 		},
 		{
 			subtestName:       "CONTAINS escapes % in user input",
 			dslQueryToCompile: `name CONTAINS '50%'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.data.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
 			expectedArgs:      []any{`%50\%%`},
 		},
 	})
@@ -168,9 +168,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team = 'pulse'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -181,9 +181,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `tag = 'database'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -194,9 +194,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team != 'pulse'`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -207,9 +207,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team IN ['pulse', 'events']`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -220,9 +220,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team NOT IN ['pulse', 'events']`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)`,
@@ -233,9 +233,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team LIKE 'pulse%'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -246,9 +246,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `team NOT LIKE 'staging%'`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)`,
@@ -259,9 +259,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `database EXISTS`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -271,9 +271,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `database NOT EXISTS`,
 			expectedSQL: `
 				NOT EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"database"},
@@ -283,9 +283,9 @@ func TestCompile_Tag(t *testing.T) {
 			dslQueryToCompile: `TEAM = 'pulse'`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -325,19 +325,19 @@ func TestCompile_NOT(t *testing.T) {
 		{
 			subtestName:       "NOT on a single comparison",
 			dslQueryToCompile: `NOT name = 'foo'`,
-			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)`,
+			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
 			expectedArgs:      []any{"foo"},
 		},
 		{
 			subtestName:       "NOT binds tightly to its primary in an AND chain",
 			dslQueryToCompile: `NOT name = 'foo' AND created_by = 'alice'`,
-			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.data.display.name') = ?) AND dashboard.created_by = ?`,
+			expectedSQL:       `NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?) AND dashboard.created_by = ?`,
 			expectedArgs:      []any{"foo", "alice"},
 		},
 		{
 			subtestName:       "NOT applied to the second term in an AND chain",
 			dslQueryToCompile: `locked = true AND NOT name = 'foo'`,
-			expectedSQL:       `dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)`,
+			expectedSQL:       `dashboard.locked = ? AND NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)`,
 			expectedArgs:      []any{true, "foo"},
 		},
 		{
@@ -349,7 +349,7 @@ func TestCompile_NOT(t *testing.T) {
 		{
 			subtestName:       "double NOT via parens",
 			dslQueryToCompile: `NOT (NOT name = 'foo')`,
-			expectedSQL:       `NOT ((NOT (json_extract("dashboard"."data", '$.data.display.name') = ?)))`,
+			expectedSQL:       `NOT ((NOT (json_extract("dashboard"."data", '$.spec.display.name') = ?)))`,
 			expectedArgs:      []any{"foo"},
 		},
 		{
@@ -358,9 +358,9 @@ func TestCompile_NOT(t *testing.T) {
 			expectedSQL: `
 				NOT (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
@@ -373,14 +373,14 @@ func TestCompile_NOT(t *testing.T) {
 			expectedSQL: `
 				NOT (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
 				)
-				AND json_extract("dashboard"."data", '$.data.display.name') = ?`,
+				AND json_extract("dashboard"."data", '$.spec.display.name') = ?`,
 			expectedArgs: []any{"team", "pulse", "overview"},
 		},
 	})
@@ -392,19 +392,19 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
 			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
-				json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+				json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value LIKE ?
 				)
 				AND dashboard.created_by = ?
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value = ?
 				)`,
@@ -415,16 +415,16 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			dslQueryToCompile: `team IN ['pulse', 'events'] AND database EXISTS`,
 			expectedSQL: `
 				EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 					AND t.value IN (?, ?)
 				)
 				AND EXISTS (
-					SELECT 1 FROM tag_relations tr
+					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
 				)`,
 			expectedArgs: []any{"team", "pulse", "events", "database"},
@@ -435,23 +435,23 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			expectedSQL: `
 				(
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
-					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				)
 				AND (
 					EXISTS (
-						SELECT 1 FROM tag_relations tr
+						SELECT 1 FROM tag_relation tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
-					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
 				)`,
 			expectedArgs: []any{"database", "sql", "redis", "mongo", "%database%", "team", "pulse", "%pulse%"},
 		},

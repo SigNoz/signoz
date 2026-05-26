@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
 import {
 	TabsContent,
 	TabsList,
@@ -7,19 +6,11 @@ import {
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
-import {
 	Bookmark,
 	CalendarClock,
 	ChartColumnBig,
-	Dock,
 	Link2,
 	List,
-	PanelBottom,
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
@@ -61,6 +52,7 @@ import {
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
+import DockModeSwitcher from './DockModeSwitcher';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
@@ -72,7 +64,7 @@ import SpanPercentileBadge from './SpanPercentile/SpanPercentileBadge';
 import SpanPercentilePanel from './SpanPercentile/SpanPercentilePanel';
 import useSpanPercentile from './SpanPercentile/useSpanPercentile';
 
-import './SpanDetailsPanel.styles.scss';
+import styles from './SpanDetailsPanel.module.scss';
 
 interface SpanDetailsPanelProps {
 	panelState: DetailsPanelState;
@@ -275,9 +267,9 @@ function SpanDetailsContent({
 	// }, [selectedSpan]);
 
 	return (
-		<div className="span-details-panel__body">
-			<div className="span-details-panel__details-section">
-				<div className="span-details-panel__span-row">
+		<div className={styles.body}>
+			<div className={styles.detailsSection}>
+				<div className={styles.spanRow}>
 					<KeyValueLabel
 						badgeKey="Span name"
 						badgeValue={selectedSpan.name}
@@ -296,8 +288,8 @@ function SpanDetailsContent({
 				<SpanPercentilePanel selectedSpan={selectedSpan} percentile={percentile} />
 
 				{/* Span info: exec time + start time */}
-				<div className="span-details-panel__span-info">
-					<div className="span-details-panel__span-info-item">
+				<div className={styles.spanInfo}>
+					<div className={styles.spanInfoItem}>
 						<Timer size={14} />
 						<span>
 							{getYAxisFormattedValue(`${selectedSpan.duration_nano / 1000000}`, 'ms')}
@@ -316,13 +308,13 @@ function SpanDetailsContent({
 							)}
 						</span>
 					</div>
-					<div className="span-details-panel__span-info-item">
+					<div className={styles.spanInfoItem}>
 						<CalendarClock size={14} />
 						<span>
 							{dayjs(selectedSpan.timestamp).format('HH:mm:ss — MMM D, YYYY')}
 						</span>
 					</div>
-					<div className="span-details-panel__span-info-item">
+					<div className={styles.spanInfoItem}>
 						<Link2 size={14} />
 						<LinkedSpansToggle
 							count={linkedSpans.count}
@@ -338,7 +330,7 @@ function SpanDetailsContent({
 				/>
 
 				{/* Step 6: HighlightedOptions */}
-				<div className="span-details-panel__highlighted-options">
+				<div className={styles.highlightedOptions}>
 					{HIGHLIGHTED_OPTIONS.map((option) => {
 						const rendered = option.render(selectedSpan);
 						if (!rendered) {
@@ -382,7 +374,7 @@ function SpanDetailsContent({
 				{/* Step 8: MiniTraceContext */}
 			</div>
 
-			<div className="span-details-panel__tabs-section">
+			<div className={styles.tabsSection}>
 				{/* Step 9: ContentTabs */}
 				<TabsRoot defaultValue="overview">
 					<TabsList variant="secondary">
@@ -402,7 +394,7 @@ function SpanDetailsContent({
 						)}
 					</TabsList>
 
-					<div className="span-details-panel__tabs-scroll">
+					<div className={styles.tabsScroll}>
 						<TabsContent value="overview">
 							<DataViewer
 								data={spanDisplayData}
@@ -492,31 +484,14 @@ function SpanDetailsPanel({
 		];
 
 		if (onVariantChange) {
-			const isDocked = variant === SpanDetailVariant.DOCKED;
 			actions.push({
-				key: 'dock-toggle',
+				key: 'dock-mode',
 				component: (
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									onClick={(): void =>
-										onVariantChange(
-											isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
-										)
-									}
-								>
-									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="dock-toggle-tooltip">
-								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
+					<DockModeSwitcher
+						value={variant}
+						onChange={onVariantChange}
+						tooltipClassName={styles.dockToggleTooltip}
+					/>
 				),
 			});
 		}
@@ -526,7 +501,7 @@ function SpanDetailsPanel({
 
 	const PANEL_WIDTH = 500;
 	const PANEL_MARGIN_RIGHT = 20;
-	const PANEL_MARGIN_TOP = 25;
+	const PANEL_MARGIN_TOP = 50;
 	const PANEL_MARGIN_BOTTOM = 25;
 
 	const content = (
@@ -546,15 +521,18 @@ function SpanDetailsPanel({
 					traceEndTime={traceEndTime}
 				/>
 			) : (
-				<div className="span-details-panel__body">
+				<div className={styles.body}>
 					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
 				</div>
 			)}
 		</>
 	);
 
-	if (variant === SpanDetailVariant.DOCKED) {
-		return <div className="span-details-panel">{content}</div>;
+	if (
+		variant === SpanDetailVariant.DOCKED ||
+		variant === SpanDetailVariant.DOCKED_RIGHT
+	) {
+		return <div className={styles.root}>{content}</div>;
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
@@ -562,7 +540,7 @@ function SpanDetailsPanel({
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className="span-details-panel"
+				className={styles.root}
 			>
 				{content}
 			</DetailsPanelDrawer>
@@ -572,7 +550,7 @@ function SpanDetailsPanel({
 	return (
 		<FloatingPanel
 			isOpen={panelState.isOpen}
-			className="span-details-panel"
+			className={styles.root}
 			width={PANEL_WIDTH}
 			minWidth={480}
 			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}

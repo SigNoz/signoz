@@ -1,0 +1,101 @@
+.container {
+	margin-top: 1rem;
+}
+
+.filterContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: var(--spacing-6);
+	border-radius: var(--radius);
+	border: 1px solid var(--l1-border);
+
+	:global(.ant-select-selector) {
+		border-radius: 2px;
+		border: 1px solid var(--l1-border) !important;
+		background-color: var(--l3-background) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		:global(.ant-tag .ant-typography) {
+			font-size: 12px;
+		}
+	}
+}
+
+.filterContainerTime {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+}
+
+.filterQuerySearch {
+	flex: 1;
+}
+
+.controls {
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.eventsTable {
+	margin-top: var(--spacing-8);
+
+	:global(.ant-table) {
+		:global(.ant-table-thead) > tr > th {
+			padding: 12px;
+			font-weight: 500;
+			font-size: 11px;
+			line-height: 18px;
+			background: var(--card);
+			border-bottom: none;
+			color: var(--l2-foreground);
+			font-family: Inter;
+			font-style: normal;
+			font-weight: 600;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+
+			&::before {
+				background-color: transparent;
+			}
+		}
+
+		:global(.ant-table-cell) {
+			padding: 12px;
+			font-size: 13px;
+			line-height: 20px;
+			color: var(--l1-foreground);
+			background: var(--card);
+			border-bottom: none;
+		}
+
+		:global(.ant-table-tbody) > tr:hover > td {
+			background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
+		}
+
+		:global(.ant-table-tbody) > tr > td {
+			border-bottom: none;
+		}
+
+		:global(.ant-table-thead)
+			> tr
+			> th:not(:last-child):not(:global(.ant-table-selection-column)):not(
+				:global(.ant-table-row-expand-icon-cell)
+			):not([colspan])::before {
+			background-color: transparent;
+		}
+
+		:global(.ant-empty-normal) {
+			visibility: hidden;
+		}
+	}
+}
+
+.expandIcon {
+	cursor: pointer;
+}

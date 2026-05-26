@@ -137,9 +137,9 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		}
 		switch dashboardtypes.DSLKey(key) {
 		case dashboardtypes.DSLKeyName:
-			return v.emitJSONStringComparison(ctx, op, "$.data.display.name")
+			return v.emitJSONStringComparison(ctx, op, "$.spec.display.name")
 		case dashboardtypes.DSLKeyDescription:
-			return v.emitJSONStringComparison(ctx, op, "$.data.display.description")
+			return v.emitJSONStringComparison(ctx, op, "$.spec.display.description")
 		case dashboardtypes.DSLKeyCreatedAt:
 			return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
 		case dashboardtypes.DSLKeyUpdatedAt:
@@ -321,8 +321,10 @@ func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtype
 	return newFragment("pd.id IS NULL")
 }
 
-const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id " +
-	"WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id " +
+// TODO: drop the extra quotes once coretypes.Kind stops being double-encoded
+// in the tag_relation.kind column.
+const tagSubqueryPrefix = "SELECT 1 FROM tag_relation tr JOIN tag t ON t.id = tr.tag_id " +
+	`WHERE tr.kind = '"dashboard"' AND tr.resource_id = dashboard.id ` +
 	"AND LOWER(t.key) = LOWER(?)"
 
 // emitTagComparison wraps the inner predicate in EXISTS (or NOT EXISTS for the

@@ -221,6 +221,57 @@ func TestPostableNamespaces_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "orderBy name asc with empty groupBy is valid",
+			req: &PostableNamespaces{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NamespaceNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy name desc with empty groupBy is valid",
+			req: &PostableNamespaces{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NamespaceNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionDesc,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "orderBy name with non-empty groupBy is rejected",
+			req: &PostableNamespaces{
+				Start:  1000,
+				End:    2000,
+				Limit:  100,
+				Offset: 0,
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "k8s.cluster.name"}},
+				},
+				OrderBy: &qbtypes.OrderBy{
+					Key: qbtypes.OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: NamespaceNameAttrKey},
+					},
+					Direction: qbtypes.OrderDirectionAsc,
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

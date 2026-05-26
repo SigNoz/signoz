@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,8 +18,10 @@ import (
 // variable — the variable is not patched in any test here, that's
 // covered in a separate variable-focused suite.
 const basePostableJSON = `{
-	"metadata": {"schemaVersion": "v6"},
-	"data": {
+	"schemaVersion": "v6",
+	"name": "service-overview",
+	"tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}],
+	"spec": {
 		"display": {"name": "Service overview"},
 		"variables": [
 			{
@@ -93,8 +96,7 @@ const basePostableJSON = `{
 			}
 		],
 		"duration": "1h"
-	},
-	"tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}]
+	}
 }`
 
 func TestPatchableDashboardV2_Apply(t *testing.T) {
@@ -103,14 +105,11 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// struct. Sharing one base across subtests is safe.
 	var p PostableDashboardV2
 	require.NoError(t, json.Unmarshal([]byte(basePostableJSON), &p), "base postable JSON must validate")
-	base := &DashboardV2{
-		Info: DashboardInfo{
-			StoredDashboardInfo: p.StoredDashboardInfo,
-			Tags: []*tagtypes.Tag{
-				{Key: "team", Value: "alpha"},
-				{Key: "env", Value: "prod"},
-			},
-		},
+	testOrgID := valuer.GenerateUUID()
+	base := p.NewDashboardV2WithoutTags(testOrgID, "somecreatedthisiguess@signoz.io", SourceUser)
+	base.Tags = []*tagtypes.Tag{
+		{Key: "team", Value: "alpha"},
+		{Key: "env", Value: "prod"},
 	}
 
 	decode := func(t *testing.T, body string) PatchableDashboardV2 {
@@ -136,49 +135,50 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("no-op preserves all fields", func(t *testing.T) {
 		out, err := decode(t, `[]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, base.Info.Metadata, out.Metadata)
-		assert.Equal(t, base.Info.Data.Display.Name, out.Data.Display.Name)
-		require.Equal(t, len(base.Info.Data.Panels), len(out.Data.Panels))
-		for k, panel := range base.Info.Data.Panels {
-			require.Contains(t, out.Data.Panels, k)
-			assert.Equal(t, panel.Spec.Plugin.Kind, out.Data.Panels[k].Spec.Plugin.Kind)
+		assert.Equal(t, base.DashboardV2MetadataBase, out.DashboardV2MetadataBase)
+		assert.Equal(t, tagtypes.NewPostableTagsFromTags(base.Tags), out.Tags)
+		assert.Equal(t, base.Spec.Display.Name, out.Spec.Display.Name)
+		require.Equal(t, len(base.Spec.Panels), len(out.Spec.Panels))
+		for k, panel := range base.Spec.Panels {
+			require.Contains(t, out.Spec.Panels, k)
+			assert.Equal(t, panel.Spec.Plugin.Kind, out.Spec.Panels[k].Spec.Plugin.Kind)
 		}
-		assert.Len(t, out.Tags, len(base.Info.Tags))
-		assert.Len(t, out.Data.Variables, len(base.Info.Data.Variables))
-		assert.Len(t, out.Data.Layouts, len(base.Info.Data.Layouts))
+		assert.Len(t, out.Tags, len(base.Tags))
+		assert.Len(t, out.Spec.Variables, len(base.Spec.Variables))
+		assert.Len(t, out.Spec.Layouts, len(base.Spec.Layouts))
 	})
 
 	t.Run("add metadata image", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/metadata/image", "value": "https://example.com/img.png"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "https://example.com/img.png", out.Metadata.Image)
-		assert.Equal(t, SchemaVersion, out.Metadata.SchemaVersion, "schemaVersion preserved")
+		assert.Equal(t, "https://example.com/img.png", out.Image)
+		assert.Equal(t, SchemaVersion, out.SchemaVersion, "schemaVersion preserved")
 	})
 
 	t.Run("replace display name", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/data/display/name", "value": "Renamed"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/display/name", "value": "Renamed"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Renamed", out.Data.Display.Name)
+		assert.Equal(t, "Renamed", out.Spec.Display.Name)
 	})
 
 	// Per RFC 6902 § 4.1, `add` on an existing object member replaces the
 	// existing value rather than erroring — same effect as `replace`.
 	t.Run("add overwrites existing display name", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/data/display/name", "value": "Overwritten"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/spec/display/name", "value": "Overwritten"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Overwritten", out.Data.Display.Name)
+		assert.Equal(t, "Overwritten", out.Spec.Display.Name)
 	})
 
 	t.Run("add data refreshInterval", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/data/refreshInterval", "value": "30s"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/spec/refreshInterval", "value": "30s"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "30s", string(out.Data.RefreshInterval))
+		assert.Equal(t, "30s", string(out.Spec.RefreshInterval))
 	})
 
 	t.Run("add panel leaves others untouched", func(t *testing.T) {
 		out, err := decode(t, `[{
 			"op": "add",
-			"path": "/data/panels/p3",
+			"path": "/spec/panels/p3",
 			"value": {
 				"kind": "Panel",
 				"spec": {
@@ -195,16 +195,24 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 3)
-		assert.Contains(t, out.Data.Panels, "p1")
-		assert.Contains(t, out.Data.Panels, "p2")
-		assert.Contains(t, out.Data.Panels, "p3")
+		assert.Len(t, out.Spec.Panels, 3)
+		assert.Contains(t, out.Spec.Panels, "p3")
+		// Plugin specs round-trip through MarshalJSON which resolves defaults
+		// (e.g. timePreference → "global_time"), so compare the serialized
+		// shape rather than the in-memory structs to skip that normalization.
+		for _, id := range []string{"p1", "p2"} {
+			wantJSON, err := json.Marshal(base.Spec.Panels[id])
+			require.NoError(t, err)
+			gotJSON, err := json.Marshal(out.Spec.Panels[id])
+			require.NoError(t, err)
+			assert.JSONEq(t, string(wantJSON), string(gotJSON), "panel %s untouched", id)
+		}
 	})
 
 	t.Run("replace single panel", func(t *testing.T) {
 		out, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p2",
+			"path": "/spec/panels/p2",
 			"value": {
 				"kind": "Panel",
 				"spec": {
@@ -226,21 +234,21 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, PanelPluginKind("signoz/BarChartPanel"), out.Data.Panels["p2"].Spec.Plugin.Kind)
-		assert.Equal(t, PanelPluginKind("signoz/TimeSeriesPanel"), out.Data.Panels["p1"].Spec.Plugin.Kind, "p1 untouched")
+		assert.Equal(t, PanelPluginKind("signoz/BarChartPanel"), out.Spec.Panels["p2"].Spec.Plugin.Kind)
+		assert.Equal(t, PanelPluginKind("signoz/TimeSeriesPanel"), out.Spec.Panels["p1"].Spec.Plugin.Kind, "p1 untouched")
 	})
 
 	// Removing a panel realistically also drops its layout item — exercise
 	// the multi-op shape the UI sends.
 	t.Run("remove panel and its layout item", func(t *testing.T) {
 		out, err := decode(t, `[
-			{"op": "remove", "path": "/data/panels/p2"},
-			{"op": "remove", "path": "/data/layouts/0/spec/items/1"}
+			{"op": "remove", "path": "/spec/panels/p2"},
+			{"op": "remove", "path": "/spec/layouts/0/spec/items/1"}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 1)
-		assert.Contains(t, out.Data.Panels, "p1")
-		assert.NotContains(t, out.Data.Panels, "p2")
+		assert.Len(t, out.Spec.Panels, 1)
+		assert.Contains(t, out.Spec.Panels, "p1")
+		assert.NotContains(t, out.Spec.Panels, "p2")
 		raw := jsonOf(t, out)
 		assert.NotContains(t, raw, `"$ref":"#/spec/panels/p2"`)
 		assert.Contains(t, raw, `"$ref":"#/spec/panels/p1"`)
@@ -251,12 +259,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("rename single query inside panel", func(t *testing.T) {
 		out, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p1/spec/queries/0/spec/plugin/spec/name",
+			"path": "/spec/panels/p1/spec/queries/0/spec/plugin/spec/name",
 			"value": "renamed"
 		}]`).Apply(base)
 		require.NoError(t, err)
 
-		require.Len(t, out.Data.Panels["p1"].Spec.Queries, 1)
+		require.Len(t, out.Spec.Panels["p1"].Spec.Queries, 1)
 		assert.Contains(t, jsonOf(t, out), `"name":"renamed"`)
 	})
 
@@ -265,7 +273,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("replace query at index", func(t *testing.T) {
 		out, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p1/spec/queries/0",
+			"path": "/spec/panels/p1/spec/queries/0",
 			"value": {
 				"kind": "TimeSeriesQuery",
 				"spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
@@ -281,7 +289,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			}
 		}]`).Apply(base)
 		require.NoError(t, err)
-		require.Len(t, out.Data.Panels["p1"].Spec.Queries, 1)
+		require.Len(t, out.Spec.Panels["p1"].Spec.Queries, 1)
 		raw := jsonOf(t, out)
 		assert.Contains(t, raw, `"name":"B"`)
 		assert.NotContains(t, raw, `"name":"A"`)
@@ -292,7 +300,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// ─────────────────────────────────────────────────────────────────
 
 	t.Run("move panel by editing layout x coordinate", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/data/layouts/0/spec/items/0/x", "value": 6}]`).Apply(base)
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/x", "value": 6}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
 		// The first item used to live at x=0, now lives at x=6.
@@ -300,14 +308,14 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("resize panel by editing layout width", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/data/layouts/0/spec/items/0/width", "value": 12}]`).Apply(base)
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/width", "value": 12}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
 		assert.Contains(t, raw, `"width":12`)
 	})
 
 	t.Run("rename layout row title", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/data/layouts/0/spec/display/title", "value": "Latency"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/display/title", "value": "Latency"}]`).Apply(base)
 		require.NoError(t, err)
 		assert.Contains(t, jsonOf(t, out), `"title":"Latency"`)
 	})
@@ -315,7 +323,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("append layout item", func(t *testing.T) {
 		out, err := decode(t, `[{
 			"op": "add",
-			"path": "/data/layouts/0/spec/items/-",
+			"path": "/spec/layouts/0/spec/items/-",
 			"value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
 		}]`).Apply(base)
 		require.NoError(t, err)
@@ -330,7 +338,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		out, err := decode(t, `[
 			{
 				"op": "add",
-				"path": "/data/panels/p3",
+				"path": "/spec/panels/p3",
 				"value": {
 					"kind": "Panel",
 					"spec": {
@@ -348,12 +356,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			},
 			{
 				"op": "add",
-				"path": "/data/layouts/0/spec/items/-",
+				"path": "/spec/layouts/0/spec/items/-",
 				"value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p3"}}
 			}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Len(t, out.Data.Panels, 3)
+		assert.Len(t, out.Spec.Panels, 3)
 		raw := jsonOf(t, out)
 		assert.Contains(t, raw, `"$ref":"#/spec/panels/p3"`)
 	})
@@ -368,10 +376,10 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	t.Run("append tag when none exist", func(t *testing.T) {
 		noTagsBase := &DashboardV2{
-			Info: DashboardInfo{
-				StoredDashboardInfo: base.Info.StoredDashboardInfo,
-				Tags:                nil,
-			},
+			DashboardV2MetadataBase: base.DashboardV2MetadataBase,
+			Name:                    base.Name,
+			Tags:                    nil,
+			Spec:                    base.Spec,
 		}
 		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"key": "team", "value": "new"}}]`).Apply(noTagsBase)
 		require.NoError(t, err)
@@ -395,13 +403,13 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	t.Run("multiple ops applied in order", func(t *testing.T) {
 		out, err := decode(t, `[
-			{"op": "replace", "path": "/data/display/name", "value": "Multi-step"},
-			{"op": "remove",  "path": "/data/panels/p2"},
+			{"op": "replace", "path": "/spec/display/name", "value": "Multi-step"},
+			{"op": "remove",  "path": "/spec/panels/p2"},
 			{"op": "add",     "path": "/tags/-", "value": {"key": "env", "value": "staging"}}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Multi-step", out.Data.Display.Name)
-		assert.Len(t, out.Data.Panels, 1)
+		assert.Equal(t, "Multi-step", out.Spec.Display.Name)
+		assert.Len(t, out.Spec.Panels, 1)
 		assert.Len(t, out.Tags, 3)
 	})
 
@@ -410,11 +418,11 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// concurrency. Here it matches, so the subsequent ops apply.
 	t.Run("test op passes", func(t *testing.T) {
 		out, err := decode(t, `[
-			{"op": "test",    "path": "/data/display/name", "value": "Service overview"},
-			{"op": "replace", "path": "/data/display/name", "value": "Confirmed"}
+			{"op": "test",    "path": "/spec/display/name", "value": "Service overview"},
+			{"op": "replace", "path": "/spec/display/name", "value": "Confirmed"}
 		]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "Confirmed", out.Data.Display.Name)
+		assert.Equal(t, "Confirmed", out.Spec.Display.Name)
 	})
 
 	// ─────────────────────────────────────────────────────────────────
@@ -440,32 +448,32 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// the subsequent replace.
 	t.Run("test op failure rejected", func(t *testing.T) {
 		_, err := decode(t, `[
-			{"op": "test", "path": "/data/display/name", "value": "Wrong"},
-			{"op": "replace", "path": "/data/display/name", "value": "Should not apply"}
+			{"op": "test", "path": "/spec/display/name", "value": "Wrong"},
+			{"op": "replace", "path": "/spec/display/name", "value": "Should not apply"}
 		]`).Apply(base)
 		require.Error(t, err)
 	})
 
 	t.Run("remove at missing path rejected", func(t *testing.T) {
-		_, err := decode(t, `[{"op": "remove", "path": "/data/panels/does-not-exist"}]`).Apply(base)
+		_, err := decode(t, `[{"op": "remove", "path": "/spec/panels/does-not-exist"}]`).Apply(base)
 		require.Error(t, err)
 	})
 
 	t.Run("remove schemaVersion rejected", func(t *testing.T) {
-		_, err := decode(t, `[{"op": "remove", "path": "/metadata/schemaVersion"}]`).Apply(base)
+		_, err := decode(t, `[{"op": "remove", "path": "/schemaVersion"}]`).Apply(base)
 		require.Error(t, err)
 	})
 
 	t.Run("wrong schemaVersion rejected", func(t *testing.T) {
-		_, err := decode(t, `[{"op": "replace", "path": "/metadata/schemaVersion", "value": "v5"}]`).Apply(base)
+		_, err := decode(t, `[{"op": "replace", "path": "/schemaVersion", "value": "v5"}]`).Apply(base)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), SchemaVersion)
 	})
 
-	t.Run("empty display name rejected", func(t *testing.T) {
-		_, err := decode(t, `[{"op": "replace", "path": "/data/display/name", "value": ""}]`).Apply(base)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "data.display.name is required")
+	t.Run("empty display name defaults to dashboard name", func(t *testing.T) {
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/display/name", "value": ""}]`).Apply(base)
+		require.NoError(t, err)
+		assert.Equal(t, base.Name, out.Spec.Display.Name, "empty display.name should default from name")
 	})
 
 	t.Run("unknown top-level field rejected", func(t *testing.T) {
@@ -477,7 +485,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	t.Run("invalid panel kind rejected", func(t *testing.T) {
 		_, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p1",
+			"path": "/spec/panels/p1",
 			"value": {
 				"kind": "Panel",
 				"spec": {"plugin": {"kind": "signoz/NotAPanel", "spec": {}}}
@@ -492,7 +500,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		// in Validate still runs after a patch.
 		_, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p2",
+			"path": "/spec/panels/p2",
 			"value": {
 				"kind": "Panel",
 				"spec": {
@@ -506,7 +514,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	t.Run("removing the only query rejected", func(t *testing.T) {
 		// Validate requires exactly one query per panel — leaving zero is rejected.
-		_, err := decode(t, `[{"op": "remove", "path": "/data/panels/p2/spec/queries/0"}]`).Apply(base)
+		_, err := decode(t, `[{"op": "remove", "path": "/spec/panels/p2/spec/queries/0"}]`).Apply(base)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "panel must have one query")
 	})
@@ -517,7 +525,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		// "replace query with composite" subtest below).
 		_, err := decode(t, `[{
 			"op": "replace",
-			"path": "/data/panels/p1",
+			"path": "/spec/panels/p1",
 			"value": {
 				"kind": "Panel",
 				"spec": {
@@ -540,11 +548,17 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("too many tags rejected", func(t *testing.T) {
+		// Base already has 2 tags; add 9 more to exceed MaxTagsPerDashboard (10).
 		_, err := decode(t, `[
 			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "1"}},
 			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "2"}},
 			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "3"}},
-			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "4"}}
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "4"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "5"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "6"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "7"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "8"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "9"}}
 		]`).Apply(base)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "at most")

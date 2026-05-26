@@ -1,9 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents } from '../../events';
 import { Message } from '../../types';
 
 import styles from './UserMessageActions.module.scss';
@@ -25,14 +28,19 @@ export default function UserMessageActions({
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const handleCopy = useCallback((): void => {
+		void logEvent(AIAssistantEvents.MessageCopied, {
+			role: message.role,
+			messageId: message.id,
+			hadToolCalls: false,
+		});
 		copyToClipboard(message.content);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1500);
-	}, [copyToClipboard, message.content]);
+	}, [copyToClipboard, message.content, message.id, message.role]);
 
 	return (
 		<div className={styles.actions}>
-			<Tooltip title={copied ? 'Copied!' : 'Copy'}>
+			<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
 				<Button
 					className={styles.btn}
 					size="icon"
@@ -42,7 +50,7 @@ export default function UserMessageActions({
 				>
 					{copied ? <Check size={12} /> : <Copy size={12} />}
 				</Button>
-			</Tooltip>
+			</TooltipSimple>
 		</div>
 	);
 }

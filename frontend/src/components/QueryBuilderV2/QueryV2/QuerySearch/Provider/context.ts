@@ -1,17 +1,80 @@
 // eslint-disable-next-line no-restricted-imports -- React Context required for scoped store pattern
-import { createContext, useContext } from 'react';
+import { createContext, useCallback, useContext } from 'react';
+import { StoreApi, useStore } from 'zustand';
 
-import type { QuerySearchV2ContextValue } from './QuerySearchV2.store';
+import {
+	combineInitialAndUserExpression,
+	getUserExpressionFromCombined,
+} from '../utils';
+import type { QuerySearchV2Store } from './QuerySearchV2.store';
 
 export const QuerySearchV2Context =
-	createContext<QuerySearchV2ContextValue | null>(null);
+	createContext<StoreApi<QuerySearchV2Store> | null>(null);
 
-export function useQuerySearchV2Context(): QuerySearchV2ContextValue {
-	const context = useContext(QuerySearchV2Context);
-	if (!context) {
+function useQuerySearchV2Store(): StoreApi<QuerySearchV2Store> {
+	const store = useContext(QuerySearchV2Context);
+	if (!store) {
 		throw new Error(
-			'useQuerySearchV2Context must be used within a QuerySearchV2Provider',
+			'useQuerySearchV2Store must be used within a QuerySearchV2Provider',
 		);
 	}
-	return context;
+	return store;
+}
+
+export function useInitialExpression(): string {
+	const store = useQuerySearchV2Store();
+	return useStore(store, (s) => s.initialExpression);
+}
+
+export function useInputExpression(): string {
+	const store = useQuerySearchV2Store();
+	return useStore(store, (s) => s.inputExpression);
+}
+
+export function useUserExpression(): string {
+	const store = useQuerySearchV2Store();
+	return useStore(store, (s) => s.committedExpression);
+}
+
+export function useExpression(): string {
+	const store = useQuerySearchV2Store();
+	return useStore(store, (s) =>
+		combineInitialAndUserExpression(s.initialExpression, s.committedExpression),
+	);
+}
+
+export function useQuerySearchOnChange(): (expression: string) => void {
+	const store = useQuerySearchV2Store();
+
+	return useCallback(
+		(expression: string): void => {
+			const userOnly = getUserExpressionFromCombined(
+				store.getState().initialExpression,
+				expression,
+			);
+			store.getState().setInputExpression(userOnly);
+		},
+		[store],
+	);
+}
+
+export function useQuerySearchOnRun(): (expression: string) => void {
+	const store = useQuerySearchV2Store();
+	const initialExpression = useStore(store, (s) => s.initialExpression);
+
+	return useCallback(
+		(expression: string): void => {
+			const userOnly = getUserExpressionFromCombined(
+				initialExpression,
+				expression,
+			);
+			store.getState().commitExpression(userOnly);
+		},
+		[store, initialExpression],
+	);
+}
+
+export function useQuerySearchInitialExpressionProp(): string | undefined {
+	const initialExpression = useInitialExpression();
+	return initialExpression.trim() ? initialExpression : undefined;
 }

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Skeleton, Tooltip } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	getDisplayValue,
@@ -80,10 +81,9 @@ function EndPointMetrics({
 							<Tooltip title={metricsData?.errorRate}>
 								{metricsData?.errorRate !== '-' ? (
 									<Progress
-										status="active"
 										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
 										strokeLinecap="butt"
-										size="small"
+										showInfo
 										strokeColor={((): string => {
 											const errorRatePercent = Number(
 												Number(metricsData?.errorRate ?? 0).toFixed(2),

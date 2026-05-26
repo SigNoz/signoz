@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,6 +16,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -23,21 +27,28 @@ import (
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
+
+func newTestTemplater(tmpl *template.Template) alertmanagertypes.Templater {
+	return alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler))
+}
 
 // This is a test URL that has been modified to not be valid.
 var testWebhookURL, _ = url.Parse("https://example.westeurope.logic.azure.com:443/workflows/xxx/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xxx")
 
 func TestMSTeamsV2Retry(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.MSTeamsV2Config{
 			WebhookURL: &config.SecretURL{URL: testWebhookURL},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
@@ -64,14 +75,16 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.MSTeamsV2Config{
 					WebhookURL: &config.SecretURL{URL: testWebhookURL},
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
-				test.CreateTmpl(t),
+				tmpl,
 				`{{ template "msteamsv2.default.titleLink" . }}`,
 				promslog.NewNopLogger(),
+				newTestTemplater(tmpl),
 			)
 			require.NoError(t, err)
 
@@ -153,7 +166,8 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			tc.cfg.WebhookURL = &config.SecretURL{URL: u}
 			tc.cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
-			pd, err := New(tc.cfg, test.CreateTmpl(t), tc.titleLink, promslog.NewNopLogger())
+			tmpl := test.CreateTmpl(t)
+			pd, err := New(tc.cfg, tmpl, tc.titleLink, promslog.NewNopLogger(), newTestTemplater(tmpl))
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -186,18 +200,122 @@ func TestMSTeamsV2RedactedURL(t *testing.T) {
 	defer fn()
 
 	secret := "secret"
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.MSTeamsV2Config{
 			WebhookURL: &config.SecretURL{URL: u},
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 
 	test.AssertNotifyLeaksNoSecret(ctx, t, notifier, secret)
+}
+
+func TestPrepareContent(t *testing.T) {
+	t.Run("default template - firing alerts", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.MSTeamsV2Config{
+				WebhookURL: &config.SecretURL{URL: testWebhookURL},
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+				Title:      "Alertname: {{ .CommonLabels.alertname }}",
+			},
+			tmpl,
+			`{{ template "msteamsv2.default.titleLink" . }}`,
+			promslog.NewNopLogger(),
+			newTestTemplater(tmpl),
+		)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		ctx = notify.WithGroupKey(ctx, "1")
+
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{"alertname": "test"},
+					// Custom body template
+					Annotations: model.LabelSet{
+						ruletypes.AnnotationBodyTemplate: "Firing alert: $alertname",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+		}
+		blocks, err := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.NotEmpty(t, blocks)
+		// First block should be the title with color (firing = red)
+		require.Equal(t, "Bolder", blocks[0].Weight)
+		require.Equal(t, colorRed, blocks[0].Color)
+		// verify title text
+		require.Equal(t, "Alertname: test", blocks[0].Text)
+		// verify body text
+		require.Equal(t, "Firing alert: test", blocks[1].Text)
+	})
+
+	t.Run("custom template - per-alert color", func(t *testing.T) {
+		tmpl := test.CreateTmpl(t)
+		notifier, err := New(
+			&config.MSTeamsV2Config{
+				WebhookURL: &config.SecretURL{URL: testWebhookURL},
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+			},
+			tmpl,
+			`{{ template "msteamsv2.default.titleLink" . }}`,
+			promslog.NewNopLogger(),
+			newTestTemplater(tmpl),
+		)
+		require.NoError(t, err)
+
+		ctx := context.Background()
+		ctx = notify.WithGroupKey(ctx, "1")
+
+		alerts := []*types.Alert{
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{"alertname": "test1"},
+					Annotations: model.LabelSet{
+						"summary":                         "test",
+						ruletypes.AnnotationTitleTemplate: "Custom Title",
+						ruletypes.AnnotationBodyTemplate:  "custom body $alertname",
+					},
+					StartsAt: time.Now(),
+					EndsAt:   time.Now().Add(time.Hour),
+				},
+			},
+			{
+				Alert: model.Alert{
+					Labels: model.LabelSet{"alertname": "test2"},
+					Annotations: model.LabelSet{
+						"summary":                         "test",
+						ruletypes.AnnotationTitleTemplate: "Custom Title",
+						ruletypes.AnnotationBodyTemplate:  "custom body $alertname",
+					},
+					StartsAt: time.Now().Add(-time.Hour),
+					EndsAt:   time.Now().Add(-time.Minute),
+				},
+			},
+		}
+		blocks, err := notifier.prepareContent(ctx, alerts)
+		require.NoError(t, err)
+		require.NotEmpty(t, blocks)
+		// total 3 blocks: title and 2 body blocks
+		require.True(t, len(blocks) == 3)
+		// First block: title color is overall color of the alerts
+		require.Equal(t, colorRed, blocks[0].Color)
+		// verify title text
+		require.Equal(t, "Custom Title", blocks[0].Text)
+		// Body blocks should have per-alert color
+		require.Equal(t, colorRed, blocks[1].Color)   // firing
+		require.Equal(t, colorGreen, blocks[2].Color) // resolved
+	})
 }
 
 func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
@@ -209,14 +327,16 @@ func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
 	_, err = f.WriteString(u.String() + "\n")
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.MSTeamsV2Config{
 			WebhookURLFile: f.Name(),
 			HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		`{{ template "msteamsv2.default.titleLink" . }}`,
 		promslog.NewNopLogger(),
+		newTestTemplater(tmpl),
 	)
 	require.NoError(t, err)
 

@@ -1,6 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { invalidateGetRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
 	RuletypesRuleDTO,
@@ -28,6 +30,7 @@ function ToggleAlertState({
 
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
+	const queryClient = useQueryClient();
 
 	const onToggleHandler = async (
 		id: string,
@@ -60,6 +63,9 @@ function ToggleAlertState({
 				loading: false,
 				payload: updatedRule,
 			}));
+
+			invalidateGetRuleByID(queryClient, { id });
+
 			notifications.success({
 				message: 'Success',
 			});

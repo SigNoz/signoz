@@ -34,7 +34,7 @@ type Module interface {
 	// deletes the public sharing config and disables public sharing for the dashboard
 	DeletePublic(context.Context, valuer.UUID, valuer.UUID) error
 
-	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, data dashboardtypes.PostableDashboard) (*dashboardtypes.Dashboard, error)
 
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error)
 
@@ -46,6 +46,9 @@ type Module interface {
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
+	// DeleteUnsafe deletes a dashboard bypassing the guards. Intended for internal system callers.
+	DeleteUnsafe(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
 	GetByMetricNames(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]map[string]string, error)
 
 	statsreporter.StatsCollector
@@ -54,7 +57,7 @@ type Module interface {
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
 
-	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
+	CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
@@ -62,19 +65,15 @@ type Module interface {
 
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
-	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
-
-	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
-
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 
-	CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error)
-
-	UpdatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error)
+	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
 
 	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
+
+	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -109,19 +108,15 @@ type Handler interface {
 
 	UpdateV2(http.ResponseWriter, *http.Request)
 
-	PatchV2(http.ResponseWriter, *http.Request)
-
-	DeleteV2(http.ResponseWriter, *http.Request)
-
 	LockV2(http.ResponseWriter, *http.Request)
 
 	UnlockV2(http.ResponseWriter, *http.Request)
 
-	CreatePublicV2(http.ResponseWriter, *http.Request)
-
-	UpdatePublicV2(http.ResponseWriter, *http.Request)
+	PatchV2(http.ResponseWriter, *http.Request)
 
 	PinV2(http.ResponseWriter, *http.Request)
 
 	UnpinV2(http.ResponseWriter, *http.Request)
+
+	DeleteV2(http.ResponseWriter, *http.Request)
 }

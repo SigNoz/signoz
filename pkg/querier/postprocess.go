@@ -12,9 +12,12 @@ import (
 	"github.com/SigNoz/govaluate"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // queryInfo holds common query properties.
@@ -50,7 +53,7 @@ func getQueryName(spec any) string {
 	return getqueryInfo(spec).Name
 }
 
-func (q *querier) postProcessResults(ctx context.Context, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
+func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, results map[string]any, req *qbtypes.QueryRangeRequest) (map[string]any, error) {
 	// Convert results to typed format for processing
 	typedResults := make(map[string]*qbtypes.Result)
 	for name, result := range results {
@@ -69,6 +72,7 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessBuilderQuery(q, result, spec, req)
+				result = q.postProcessLogBody(ctx, orgID, result, req)
 				typedResults[spec.Name] = result
 			}
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -335,10 +339,8 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			}
 		case qbtypes.RequestTypeScalar:
 			result := q.processScalarFormula(ctx, results, formula, req)
-			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
-				results[name] = result
-			}
+			// For scalar results, apply limit by processScalarFormula itself since it needs to be applied before converting back to scalar format
+			results[name] = result
 		}
 	}
 
@@ -525,6 +527,9 @@ func (q *querier) processScalarFormula(
 		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
+
+	// Apply ordering (and limit) before converting to scalar format.
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
 
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{
@@ -1043,5 +1048,35 @@ func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRang
 		result = gcd(result, steps[i])
 	}
 
+	return result
+}
+
+// postProcessLogBody removes the "message" key from the body map when it is empty.
+// Only runs for raw list queries with the use_json_body feature enabled.
+func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, result *qbtypes.Result, req *qbtypes.QueryRangeRequest) *qbtypes.Result {
+	if req.RequestType != qbtypes.RequestTypeRaw {
+		return result
+	}
+	if !q.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		return result
+	}
+	rawData, ok := result.Value.(*qbtypes.RawData)
+	if !ok {
+		return result
+	}
+	for _, row := range rawData.Rows {
+		bodyMap, ok := row.Data["body"].(map[string]any)
+		if !ok {
+			continue
+		}
+		if msg, exists := bodyMap["message"]; exists {
+			switch v := msg.(type) {
+			case string:
+				if v == "" {
+					delete(bodyMap, "message")
+				}
+			}
+		}
+	}
 	return result
 }

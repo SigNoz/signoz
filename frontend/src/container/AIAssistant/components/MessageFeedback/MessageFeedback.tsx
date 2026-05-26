@@ -3,11 +3,15 @@ import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
+import logEvent from 'api/common/logEvent';
+
+import { AIAssistantEvents } from '../../events';
+import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../../types';
 
@@ -54,6 +58,7 @@ export default function MessageFeedback({
 	const submitMessageFeedback = useAIAssistantStore(
 		(s) => s.submitMessageFeedback,
 	);
+	const { threadId } = useAIAssistantAnalyticsContext();
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -91,10 +96,21 @@ export default function MessageFeedback({
 	}, [message.createdAt]);
 
 	const handleCopy = useCallback((): void => {
+		void logEvent(AIAssistantEvents.MessageCopied, {
+			role: message.role,
+			messageId: message.id,
+			hadToolCalls: Boolean(message.blocks?.some((b) => b.type === 'tool_call')),
+		});
 		copyToClipboard(message.content);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1500);
-	}, [copyToClipboard, message.content]);
+	}, [
+		copyToClipboard,
+		message.content,
+		message.id,
+		message.role,
+		message.blocks,
+	]);
 
 	const handleVote = useCallback(
 		(rating: FeedbackRating): void => {
@@ -107,26 +123,37 @@ export default function MessageFeedback({
 				return;
 			}
 			setVote(rating);
+			void logEvent(AIAssistantEvents.FeedbackSubmitted, {
+				messageId: message.id,
+				threadId,
+				rating: 'up',
+				hasComment: false,
+				commentLength: 0,
+			});
 			submitMessageFeedback(message.id, rating);
 		},
-		[vote, message.id, submitMessageFeedback],
+		[vote, message.id, submitMessageFeedback, threadId],
 	);
 
 	const handleSubmitNegative = useCallback((): void => {
 		setVote('negative');
 		setIsNegativeDialogOpen(false);
-		submitMessageFeedback(
-			message.id,
-			'negative',
-			negativeComment.trim() || undefined,
-		);
-	}, [message.id, negativeComment, submitMessageFeedback]);
+		const trimmed = negativeComment.trim();
+		void logEvent(AIAssistantEvents.FeedbackSubmitted, {
+			messageId: message.id,
+			threadId,
+			rating: 'down',
+			hasComment: trimmed.length > 0,
+			commentLength: trimmed.length,
+		});
+		submitMessageFeedback(message.id, 'negative', trimmed || undefined);
+	}, [message.id, negativeComment, submitMessageFeedback, threadId]);
 
 	return (
 		<>
 			<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
 				<div className={styles.actions}>
-					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
+					<TooltipSimple title={copied ? 'Copied!' : 'Copy'}>
 						<Button
 							className={styles.btn}
 							size="icon"
@@ -136,9 +163,9 @@ export default function MessageFeedback({
 						>
 							{copied ? <Check size={12} /> : <Copy size={12} />}
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
-					<Tooltip title="Good response">
+					<TooltipSimple title="Good response">
 						<Button
 							className={cx(styles.btn, { [styles.votedUp]: vote === 'positive' })}
 							size="icon"
@@ -148,9 +175,9 @@ export default function MessageFeedback({
 						>
 							<ThumbsUp size={12} />
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
-					<Tooltip title="Bad response">
+					<TooltipSimple title="Bad response">
 						<Button
 							className={cx(styles.btn, {
 								[styles.votedDown]: vote === 'negative',
@@ -162,10 +189,10 @@ export default function MessageFeedback({
 						>
 							<ThumbsDown size={12} />
 						</Button>
-					</Tooltip>
+					</TooltipSimple>
 
 					{onRegenerate && (
-						<Tooltip title="Regenerate">
+						<TooltipSimple title="Regenerate">
 							<Button
 								className={styles.btn}
 								size="icon"
@@ -175,7 +202,7 @@ export default function MessageFeedback({
 							>
 								<RefreshCw size={12} />
 							</Button>
-						</Tooltip>
+						</TooltipSimple>
 					)}
 				</div>
 

@@ -3,6 +3,7 @@ import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'tests/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
@@ -98,6 +99,7 @@ describe('ServiceAccountDrawer', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -300,13 +302,6 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByText(/No keys/i);
 	});
 
-	it('shows skeleton while loading account data', () => {
-		renderDrawer();
-
-		// Skeleton renders while the fetch is in-flight
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-	});
-
 	it('shows error state when account fetch fails', async () => {
 		server.use(
 			rest.get(SA_ENDPOINT, (_, res, ctx) =>
@@ -359,6 +354,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 

@@ -25,7 +25,7 @@ func NewStore(sqlstore sqlstore.SQLStore) dashboardtypes.Store {
 func (store *store) Create(ctx context.Context, storabledashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(storabledashboard).
 		Exec(ctx)
@@ -122,15 +122,16 @@ func (store *store) ListV2(
 	orgID valuer.UUID,
 	userID valuer.UUID,
 	params *dashboardtypes.ListDashboardsV2Params,
-) ([]*dashboardtypes.DashboardListRow, bool, error) {
+) ([]*dashboardtypes.DashboardListRow, int64, error) {
 	compiled, err := listfilter.Compile(params.Query, store.sqlstore.Formatter())
 	if err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 	type listedRow struct {
 		*dashboardtypes.StorableDashboard `bun:",extend"`
 
-		IsPinned bool `bun:"is_pinned"`
+		IsPinned bool  `bun:"is_pinned"`
+		Total    int64 `bun:"total"`
 
 		PublicID               *valuer.UUID `bun:"public_id"`
 		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
@@ -145,12 +146,14 @@ func (store *store) ListV2(
 		BunDB().
 		NewSelect().
 		Model(&rows).
-		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
+		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.source, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
 		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
+		ColumnExpr("COUNT(*) OVER () AS total").
 		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
 		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = dashboard.id", userID).
 		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
-		Where("dashboard.org_id = ?", orgID)
+		Where("dashboard.org_id = ?", orgID).
+		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
 	if compiled != nil {
 		q = q.Where(compiled.SQL, compiled.Args...)
@@ -158,21 +161,23 @@ func (store *store) ListV2(
 
 	sortExpr, err := store.sortExprForListV2(params.Sort)
 	if err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 	q = q.
 		OrderExpr("is_pinned DESC").
 		OrderExpr(sortExpr + " " + strings.ToUpper(string(params.Order))).
-		Limit(params.Limit + 1).
+		Limit(params.Limit).
 		Offset(params.Offset)
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, false, err
+		return nil, 0, err
 	}
 
-	hasMore := len(rows) > params.Limit
-	if hasMore {
-		rows = rows[:params.Limit]
+	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
+	// full filter total. Empty result page => zero matches.
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
 	}
 
 	out := make([]*dashboardtypes.DashboardListRow, len(rows))
@@ -192,7 +197,7 @@ func (store *store) ListV2(
 		}
 		out[i] = row
 	}
-	return out, hasMore, nil
+	return out, total, nil
 }
 
 // sortExprForListV2 maps a sort enum to the SQL expression to plug into
