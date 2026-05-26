@@ -22,7 +22,6 @@ type base struct {
 	// u denotes the url for the documentation (if present) for the error.
 	u string
 	// a denotes any additional error messages (if present).
-	// NOTE: use attrs['suggestions'] for additional structured suggestions instead of this field.
 	a []string
 	// s contains the stacktrace captured at error creation time.
 	s fmt.Stringer
