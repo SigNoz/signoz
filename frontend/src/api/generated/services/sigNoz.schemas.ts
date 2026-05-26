@@ -6775,6 +6775,13 @@ export interface SpantypesSpanAggregationResultDTO {
 	value?: SpantypesSpanAggregationResultDTOValue;
 }
 
+export interface SpantypesGettableTraceAggregationsDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
+}
+
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 	[key: string]: unknown;
 };
@@ -7016,6 +7023,13 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 export interface SpantypesSpanAggregationDTO {
 	aggregation?: SpantypesSpanAggregationTypeDTO;
 	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+export interface SpantypesPostableTraceAggregationsDTO {
+	/**
+	 * @type array,null
+	 */
+	aggregations?: SpantypesSpanAggregationDTO[] | null;
 }
 
 export interface SpantypesPostableWaterfallDTO {
@@ -8351,6 +8365,17 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetTraceAggregationsPathParameters = {
+	traceID: string;
+};
+export type GetTraceAggregations200 = {
+	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
