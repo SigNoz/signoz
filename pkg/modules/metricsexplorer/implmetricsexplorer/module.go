@@ -219,19 +219,23 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		return nil, err
 	}
 
-	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
-	if err != nil {
-		return nil, err
-	}
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
 
-	// Single query to get stats with samples, timeseries counts in required sorting order
-	metricStats, total, err := m.fetchMetricsStatsWithSamples(
-		ctx,
-		req,
-		filterWhereClause,
-		false,
-		req.OrderBy,
+	var (
+		metricStats []metricsexplorertypes.Stat
+		total       uint64
+		err         error
 	)
+	if hasFilter {
+		var filterWhereClause *sqlbuilder.WhereClause
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+		metricStats, total, err = m.fetchMetricsStatsWithSamples(ctx, req, filterWhereClause, false, req.OrderBy)
+	} else {
+		metricStats, total, err = m.fetchMetricsStatsWithSamplesFastPath(ctx, req, false, req.OrderBy)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1060,6 +1064,109 @@ func (m *module) fetchMetricsStatsWithSamples(
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples query")
+	}
+	defer rows.Close()
+
+	metricStats := make([]metricsexplorertypes.Stat, 0)
+	var total uint64
+
+	for rows.Next() {
+		var (
+			metricStat metricsexplorertypes.Stat
+			rowTotal   uint64
+		)
+		if err := rows.Scan(&metricStat.MetricName, &metricStat.TimeSeries, &metricStat.Samples, &rowTotal); err != nil {
+			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metrics stats row")
+		}
+		metricStats = append(metricStats, metricStat)
+		total = rowTotal
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metrics stats rows")
+	}
+
+	return metricStats, total, nil
+}
+
+func (m *module) fetchMetricsStatsWithSamplesFastPath(
+	ctx context.Context,
+	req *metricsexplorertypes.StatsRequest,
+	normalized bool,
+	orderBy *qbtypes.OrderBy,
+) ([]metricsexplorertypes.Stat, uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricsStatsWithSamplesFastPath")
+
+	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
+	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
+
+	// Timeseries counts per metric
+	tsSB := sqlbuilder.NewSelectBuilder()
+	tsSB.Select(
+		"metric_name",
+		"uniq(fingerprint) AS timeseries",
+	)
+	tsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+	tsSB.Where(tsSB.Between("unix_milli", start, end))
+	tsSB.Where("NOT startsWith(metric_name, 'signoz')")
+	tsSB.Where(tsSB.E("__normalized", normalized))
+	tsSB.GroupBy("metric_name")
+
+	// Distinct metric_names from local TS table — narrows samples scan on its leading sort key
+	metricNamesSB := sqlbuilder.NewSelectBuilder()
+	metricNamesSB.Select("DISTINCT metric_name")
+	metricNamesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTsTable))
+	metricNamesSB.Where(metricNamesSB.Between("unix_milli", start, end))
+	metricNamesSB.Where("NOT startsWith(metric_name, 'signoz')")
+	metricNamesSB.Where(metricNamesSB.E("__normalized", normalized))
+
+	// Samples counts per metric
+	samplesSB := sqlbuilder.NewSelectBuilder()
+	samplesSB.Select(
+		"metric_name",
+		fmt.Sprintf("%s AS samples", countExp),
+	)
+	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	samplesSB.Where(samplesSB.Between("unix_milli", req.Start, req.End))
+	samplesSB.Where("NOT startsWith(metric_name, 'signoz')")
+	samplesSB.Where(fmt.Sprintf("metric_name IN (%s)", samplesSB.Var(metricNamesSB)))
+	samplesSB.GroupBy("metric_name")
+
+	cteBuilder := sqlbuilder.With(
+		sqlbuilder.CTEQuery("__time_series_counts").As(tsSB),
+		sqlbuilder.CTEQuery("__sample_counts").As(samplesSB),
+	)
+
+	finalSB := cteBuilder.Select(
+		"COALESCE(ts.metric_name, s.metric_name) AS metric_name",
+		"COALESCE(ts.timeseries, 0) AS timeseries",
+		"COALESCE(s.samples, 0) AS samples",
+		"COUNT(*) OVER() AS total",
+	)
+	finalSB.From("__time_series_counts ts")
+	finalSB.JoinWithOption(sqlbuilder.FullOuterJoin, "__sample_counts s", "ts.metric_name = s.metric_name")
+	finalSB.Where("(COALESCE(ts.timeseries, 0) > 0 OR COALESCE(s.samples, 0) > 0)")
+
+	orderByColumn, orderDirection, err := getStatsOrderByColumn(orderBy)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	finalSB.OrderBy(
+		fmt.Sprintf("%s %s", orderByColumn, strings.ToUpper(orderDirection)),
+		"metric_name ASC",
+	)
+	finalSB.Limit(req.Limit)
+	finalSB.Offset(req.Offset)
+
+	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(valueCtx, query, args...)
+	if err != nil {
+		return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute metrics stats with samples fastpath query")
 	}
 	defer rows.Close()
 
