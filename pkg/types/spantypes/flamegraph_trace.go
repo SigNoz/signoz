@@ -4,7 +4,7 @@ import (
 	"sort"
 )
 
-// FlamegraphTrace holds the level wise tree
+// FlamegraphTrace holds the level wise tree built from minimal spans.
 type FlamegraphTrace struct {
 	roots     []*FlamegraphSpan
 	nodeByID  map[string]*FlamegraphSpan
@@ -58,13 +58,11 @@ func NewFlamegraphTraceFromMinimal(spans []MinimalSpan) *FlamegraphTrace {
 	return t
 }
 
-// SelectWindow builds all BFS levels, counts total spans, then either returns all
+// GetSelectedSpans builds all BFS levels, counts total spans, then either returns all
 // levels unchanged (totalSpans <= effectiveLimit) or applies a level window with
 // sampling for large traces. The bool return is true when windowing was applied.
-// Children are cleared after traversal so the tree can be GC'd.
-func (t *FlamegraphTrace) SelectWindow(
-	selectedSpanID string,
-	effectiveLimit uint,
+func (t *FlamegraphTrace) GetSelectedSpans(
+	selectedSpanID string, effectiveLimit uint,
 	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
 ) ([]FlamegraphWindowLevel, bool) {
 	allLevels := t.buildAllLevels()
@@ -153,8 +151,35 @@ func (t *FlamegraphTrace) SelectWindow(
 	return result, true
 }
 
-// buildAllLevels performs per-root BFS, appending each root's levels sequentially.
-// This preserves the sequential-root semantics of the legacy GetAllSpansForFlamegraph.
+// GetNode returns the lean tree node for spanID, if it exists.
+func (t *FlamegraphTrace) GetNode(spanID string) (*FlamegraphSpan, bool) {
+	node, ok := t.nodeByID[spanID]
+	return node, ok
+}
+
+// EnrichWindow hydrates a level window with full span data. For each span ID in the
+// window it looks up the corresponding StorableSpan and converts it; synthesized
+// "Missing Span" placeholders fall back to the lean tree node.
+func (t *FlamegraphTrace) EnrichWindow(window []FlamegraphWindowLevel, fullSpans []StorableSpan) [][]*FlamegraphSpan {
+	fullByID := make(map[string]*StorableSpan, len(fullSpans))
+	for i := range fullSpans {
+		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
+	}
+
+	result := make([][]*FlamegraphSpan, len(window))
+	for i, lvl := range window {
+		result[i] = make([]*FlamegraphSpan, 0, len(lvl.SpanIDs))
+		for _, spanID := range lvl.SpanIDs {
+			if full, ok := fullByID[spanID]; ok {
+				result[i] = append(result[i], NewFlamegraphSpanFromStorable(full, lvl.Level))
+			} else if lean, ok := t.nodeByID[spanID]; ok {
+				result[i] = append(result[i], lean)
+			}
+		}
+	}
+	return result
+}
+
 func (t *FlamegraphTrace) buildAllLevels() [][]*FlamegraphSpan {
 	var result [][]*FlamegraphSpan
 
@@ -191,8 +216,6 @@ func (t *FlamegraphTrace) buildAllLevels() [][]*FlamegraphSpan {
 	return result
 }
 
-// sampleFlamegraphLevel down-samples a dense level using latency-top + timestamp bucketing.
-// Mirrors the legacy getLatencyAndTimestampBucketedSpans behavior exactly.
 func sampleFlamegraphLevel(
 	spans []*FlamegraphSpan,
 	selectedSpanID string,
@@ -250,14 +273,6 @@ func sampleFlamegraphLevel(
 	}
 
 	return sampled
-}
-
-// GetNode returns the lean tree node for spanID, if it exists.
-// Useful for recovering synthesized "Missing Span" placeholders that are in the
-// window but will never be returned by GetTraceSpansByIDs.
-func (t *FlamegraphTrace) GetNode(spanID string) (*FlamegraphSpan, bool) {
-	node, ok := t.nodeByID[spanID]
-	return node, ok
 }
 
 func flamegraphSpanIndex(spans []*FlamegraphSpan, spanID string) int {
