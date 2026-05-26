@@ -48,7 +48,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v4/traces/{traceID}/aggregations", handler.New(
+	if err := router.Handle("/api/v1/traces/{traceID}/aggregations", handler.New(
 		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetTraceAggregations),
 		handler.OpenAPIDef{
 			ID:                  "GetTraceAggregations",
