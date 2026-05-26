@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 
@@ -22,8 +23,9 @@ const mockedUseSelector = useSelector as jest.Mock;
 const mockedUpdateTimeInterval = UpdateTimeInterval as unknown as jest.Mock;
 
 const setSelectedTime = (value: string): void => {
-	mockedUseSelector.mockImplementation((selector: any) =>
-		selector({ globalTime: { selectedTime: value } }),
+	mockedUseSelector.mockImplementation(
+		(selector: (state: { globalTime: { selectedTime: string } }) => unknown) =>
+			selector({ globalTime: { selectedTime: value } }),
 	);
 };
 
