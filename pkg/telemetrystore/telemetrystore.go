@@ -19,7 +19,6 @@ type TelemetryStoreHook interface {
 	AfterQuery(ctx context.Context, event *QueryEvent)
 }
 
-
 func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) context.Context {
 	for _, hook := range hooks {
 		ctx = hook.BeforeQuery(ctx, event)

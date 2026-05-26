@@ -161,15 +161,15 @@ const mockProps: WidgetGraphComponentProps = {
 };
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
-		selectedDashboard: {
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
+		dashboardData: {
 			data: {
 				variables: [],
 			},
 		},
 		setLayouts: jest.fn(),
-		setSelectedDashboard: jest.fn(),
+		setDashboardData: jest.fn(),
 		setColumnWidths: jest.fn(),
 	}),
 }));

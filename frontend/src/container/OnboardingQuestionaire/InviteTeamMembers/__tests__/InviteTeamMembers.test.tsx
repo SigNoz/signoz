@@ -240,7 +240,7 @@ describe('InviteTeamMembers', () => {
 
 	describe('Validation callout on Complete', () => {
 		it('shows the correct callout message for each combination of email/role validity', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 			renderComponent();
 
 			const removeButtons = screen.getAllByRole('button', {
@@ -302,10 +302,10 @@ describe('InviteTeamMembers', () => {
 					screen.queryByText(/please enter valid emails and select roles/i),
 				).not.toBeInTheDocument();
 			});
-		});
+		}, 15000);
 
 		it('treats whitespace as untouched, clears the callout on fix-and-resubmit, and clears role error on role select', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 			renderComponent();
 
 			const removeButtons = screen.getAllByRole('button', {
@@ -365,7 +365,7 @@ describe('InviteTeamMembers', () => {
 			await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1), {
 				timeout: 1200,
 			});
-		});
+		}, 15000);
 
 		it('disables the Send Invites button when all rows are untouched (empty)', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });

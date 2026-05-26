@@ -18,7 +18,11 @@ export interface MetricsTableProps {
 	onPaginationChange: (page: number, pageSize: number) => void;
 	setOrderBy: (orderBy: Querybuildertypesv5OrderByDTO) => void;
 	totalCount: number;
-	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	openMetricDetails: (
+		metricName: string,
+		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
+	) => void;
 	queryFilterExpression: Filter;
 	onFilterChange: (expression: string) => void;
 }
@@ -29,6 +33,8 @@ export interface MetricsSearchProps {
 	currentQueryFilterExpression: string;
 	setCurrentQueryFilterExpression: (expression: string) => void;
 	isLoading: boolean;
+	handleCancelQuery: () => void;
+	onRunQuery: () => void;
 }
 
 export interface MetricsTreemapProps {
@@ -37,7 +43,11 @@ export interface MetricsTreemapProps {
 	isError: boolean;
 	error?: APIError;
 	viewType: MetricsexplorertypesTreemapModeDTO;
-	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	openMetricDetails: (
+		metricName: string,
+		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
+	) => void;
 	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
 }
 
@@ -47,7 +57,11 @@ export interface MetricsTreemapInternalProps {
 	error?: APIError;
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	viewType: MetricsexplorertypesTreemapModeDTO;
-	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
+	openMetricDetails: (
+		metricName: string,
+		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
+	) => void;
 }
 
 export interface OrderByPayload {

@@ -69,7 +69,7 @@ type QueryBuilderQuery[T any] struct {
 	ShiftBy int64 `json:"-"`
 }
 
-// Copy creates a deep copy of the QueryBuilderQuery
+// Copy creates a deep copy of the QueryBuilderQuery.
 func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 	// start with a shallow copy
 	c := q
@@ -127,7 +127,7 @@ func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 	return c
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryBuilderQuery[T]
@@ -146,7 +146,7 @@ func (q *QueryBuilderQuery[T]) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Normalize normalizes all the field keys in the query
+// Normalize normalizes all the field keys in the query.
 func (q *QueryBuilderQuery[T]) Normalize() {
 
 	// normalize select fields
@@ -197,7 +197,7 @@ func (q *QueryBuilderQuery[T]) Normalize() {
 // 5. special case exphist, there is no need for per series/fingerprint aggregation
 // we can directly use the quantilesDDMerge function
 //
-// all of this is true only for delta metrics
+// all of this is true only for delta metrics.
 func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
 
 	if metricAgg.Temporality != metrictypes.Delta {

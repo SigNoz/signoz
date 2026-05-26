@@ -118,9 +118,9 @@ describe('Summary', () => {
 			status: 'idle',
 		} as any);
 
-		useQueryBuilderSpy.mockReturnValue(({
+		useQueryBuilderSpy.mockReturnValue({
 			...mockUseQueryBuilderData,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 	});
 
 	it('does not carry filter expression from a previous page', async () => {
@@ -141,11 +141,11 @@ describe('Summary', () => {
 		};
 
 		// stagedQuery has stale filter (before QueryBuilder resets it)
-		useQueryBuilderSpy.mockReturnValue(({
+		useQueryBuilderSpy.mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: staleQuery,
 			currentQuery: staleQuery,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		const { rerender } = render(<Summary />);
 
@@ -154,11 +154,11 @@ describe('Summary', () => {
 		);
 
 		// QB route change effect resets stagedQuery to null
-		useQueryBuilderSpy.mockReturnValue(({
+		useQueryBuilderSpy.mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: null,
 			currentQuery: initialQueriesMap[DataSource.METRICS],
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		rerender(<Summary />);
 

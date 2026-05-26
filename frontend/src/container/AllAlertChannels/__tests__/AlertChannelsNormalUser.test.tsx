@@ -38,7 +38,7 @@ describe('Alert Channels Settings List page (Normal User)', () => {
 		jest.useRealTimers();
 	});
 	describe('Should display the Alert Channels page properly', () => {
-		it('Should check if "The alerts will be sent to all the configured channels." is visible ', async () => {
+		it('Should check if "The alerts will be sent to all the configured channels." is visible', async () => {
 			await waitFor(() =>
 				expect(screen.getByText('sending_channels_note')).toBeInTheDocument(),
 			);
@@ -46,13 +46,13 @@ describe('Alert Channels Settings List page (Normal User)', () => {
 
 		it('Should check if "New Alert Channel" Button is visble and disabled', async () => {
 			const newAlertButton = screen.getByRole('button', {
-				name: 'plus button_new_channel',
+				name: /button_new_channel/i,
 			});
 			await waitFor(() => expect(newAlertButton).toBeInTheDocument());
 			expect(newAlertButton).toBeDisabled();
 		});
-		it('Should check if the help icon is visible and displays "tooltip_notification_channels ', async () => {
-			const helpIcon = screen.getByLabelText('question-circle');
+		it('Should check if the help icon is visible and displays "tooltip_notification_channels', async () => {
+			const helpIcon = screen.getByRole('img', { name: /help/i });
 			fireEvent.mouseOver(helpIcon);
 
 			await waitFor(() => {

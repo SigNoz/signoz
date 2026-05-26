@@ -1,11 +1,12 @@
 package signozglobal
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type handler struct {
@@ -17,7 +18,10 @@ func NewHandler(global global.Global) global.Handler {
 }
 
 func (handler *handler) GetConfig(rw http.ResponseWriter, r *http.Request) {
-	cfg := handler.global.GetConfig()
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	render.Success(rw, http.StatusOK, types.NewGettableGlobalConfig(cfg.ExternalURL, cfg.IngestionURL))
+	cfg := handler.global.GetConfig(ctx)
+
+	render.Success(rw, http.StatusOK, cfg)
 }

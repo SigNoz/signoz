@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Button, Popover } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
+import { Ellipsis, PenLine, Plus, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -39,13 +42,14 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { dashboardData } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
@@ -83,11 +87,11 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							icon={<Plus size={14} />}
 							onClick={(): void => {
 								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
-								if (!selectedDashboard?.id) {
+								if (!dashboardData?.id) {
 									return;
 								}
 
-								setSelectedRowWidgetId(selectedDashboard.id, id);
+								setSelectedRowWidgetId(dashboardData.id, id);
 								setIsPanelTypeSelectionModalOpen(true);
 							}}
 						>
@@ -114,7 +118,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 				</div>
 			}
 		>
-			<EllipsisIcon
+			<Ellipsis
 				size={14}
 				className="settings-icon"
 				onClick={(): void => setIsRowSettingsOpen(!isRowSettingsOpen)}

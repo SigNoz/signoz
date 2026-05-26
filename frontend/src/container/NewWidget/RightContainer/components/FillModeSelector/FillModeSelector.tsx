@@ -1,5 +1,5 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
-import { Typography } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 import { FillMode } from 'lib/uPlotV2/config/types';
 
 import './FillModeSelector.styles.scss';
@@ -9,7 +9,7 @@ interface FillModeSelectorProps {
 	onChange: (value: FillMode) => void;
 }
 
-export function FillModeSelector({
+export default function FillModeSelector({
 	value,
 	onChange,
 }: FillModeSelectorProps): JSX.Element {
@@ -19,15 +19,14 @@ export function FillModeSelector({
 			<ToggleGroup
 				type="single"
 				value={value}
-				variant="outline"
 				size="lg"
-				onValueChange={(newValue): void => {
+				onChange={(newValue): void => {
 					if (newValue) {
 						onChange(newValue as FillMode);
 					}
 				}}
 			>
-				<ToggleGroupItem value={FillMode.None} aria-label="None" title="None">
+				<ToggleGroupItem value={FillMode.None} aria-label="None">
 					<svg
 						className="fill-mode-icon"
 						viewBox="0 0 48 48"
@@ -41,7 +40,7 @@ export function FillModeSelector({
 					</svg>
 					<Typography.Text className="section-heading-small">None</Typography.Text>
 				</ToggleGroupItem>
-				<ToggleGroupItem value={FillMode.Solid} aria-label="Solid" title="Solid">
+				<ToggleGroupItem value={FillMode.Solid} aria-label="Solid">
 					<svg
 						className="fill-mode-icon"
 						viewBox="0 0 48 48"
@@ -55,11 +54,7 @@ export function FillModeSelector({
 					</svg>
 					<Typography.Text className="section-heading-small">Solid</Typography.Text>
 				</ToggleGroupItem>
-				<ToggleGroupItem
-					value={FillMode.Gradient}
-					aria-label="Gradient"
-					title="Gradient"
-				>
+				<ToggleGroupItem value={FillMode.Gradient} aria-label="Gradient">
 					<svg
 						className="fill-mode-icon"
 						viewBox="0 0 48 48"

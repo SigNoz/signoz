@@ -2,6 +2,8 @@ import ROUTES from 'constants/routes';
 
 import { CustomTimeType, Option, Time, TimeFrame } from './types';
 
+export const DEFAULT_TIME_RANGE = '30m';
+
 export const Options: Option[] = [
 	{ value: '5m', label: 'Last 5 minutes' },
 	{ value: '15m', label: 'Last 15 minutes' },
@@ -110,7 +112,7 @@ export const convertOldTimeToNewValidCustomTimeFormat = (
 		return `${match[1]}${unit}` as CustomTimeType;
 	}
 
-	return '30m';
+	return DEFAULT_TIME_RANGE;
 };
 
 export const getDefaultOption = (route: string): Time => {
@@ -141,6 +143,7 @@ export const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.TRACE_DETAIL,
+	ROUTES.TRACE_DETAIL_OLD,
 	ROUTES.ALL_CHANNELS,
 	ROUTES.USAGE_EXPLORER,
 	ROUTES.GET_STARTED,
@@ -154,8 +157,9 @@ export const routesToSkip = [
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
 	ROUTES.MEMBERS_SETTINGS,
+	ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+	ROUTES.MCP_SERVER,
 	ROUTES.INGESTION_SETTINGS,
-	ROUTES.API_KEYS,
 	ROUTES.ERROR_DETAIL,
 	ROUTES.LOGS_PIPELINES,
 	ROUTES.BILLING,
@@ -175,6 +179,7 @@ export const routesToSkip = [
 	ROUTES.TRACES_FUNNELS_DETAIL,
 	ROUTES.SHORTCUTS,
 	ROUTES.INTEGRATIONS,
+	ROUTES.INTEGRATIONS_DETAIL,
 	ROUTES.DASHBOARD,
 	ROUTES.DASHBOARD_WIDGET,
 	ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,

@@ -1,12 +1,10 @@
 import type React from 'react';
-import { Badge } from '@signozhq/badge';
-import { Pagination, Table, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
-import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { ROLES } from 'types/roles';
 
 import './MembersTable.styles.scss';
 
@@ -14,11 +12,9 @@ export interface MemberRow {
 	id: string;
 	name?: string;
 	email: string;
-	role: ROLES;
 	status: MemberStatus;
 	joinedOn: string | null;
 	updatedAt?: string | null;
-	token?: string | null;
 }
 
 interface MembersTableProps {
@@ -64,11 +60,23 @@ function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
 			</Badge>
 		);
 	}
-	return (
-		<Badge color="amber" variant="outline">
-			INVITED
-		</Badge>
-	);
+	if (status === MemberStatus.Deleted) {
+		return (
+			<Badge color="cherry" variant="outline">
+				DELETED
+			</Badge>
+		);
+	}
+
+	if (status === MemberStatus.Invited) {
+		return (
+			<Badge color="amber" variant="outline">
+				INVITED
+			</Badge>
+		);
+	}
+
+	return <Badge color="vanilla">⎯</Badge>;
 }
 
 function MembersEmptyState({
@@ -131,17 +139,6 @@ function MembersTable({
 			),
 		},
 		{
-			title: 'Roles',
-			dataIndex: 'role',
-			key: 'role',
-			width: 180,
-			sorter: (a, b): number => a.role.localeCompare(b.role),
-			render: (role: ROLES): JSX.Element => (
-				<Badge color="vanilla">{capitalize(role)}</Badge>
-			),
-		},
-
-		{
 			title: 'Status',
 			dataIndex: 'status',
 			key: 'status',
@@ -199,14 +196,30 @@ function MembersTable({
 				dataSource={data}
 				rowKey="id"
 				loading={loading}
-				pagination={false}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total,
+					showTotal: showPaginationTotal,
+					showSizeChanger: false,
+					onChange: onPageChange,
+					className: 'members-table-pagination',
+					hideOnSinglePage: true,
+				}}
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
-				onRow={(record): React.HTMLAttributes<HTMLElement> => ({
-					onClick: (): void => onRowClick?.(record),
-					style: onRowClick ? { cursor: 'pointer' } : undefined,
-				})}
+				onRow={(record): React.HTMLAttributes<HTMLElement> => {
+					const isClickable = !!onRowClick;
+					return {
+						onClick: (): void => {
+							if (isClickable) {
+								onRowClick(record);
+							}
+						},
+						style: isClickable ? { cursor: 'pointer' } : undefined,
+					};
+				}}
 				onChange={(_, __, sorter): void => {
 					if (onSortChange) {
 						onSortChange(
@@ -220,17 +233,6 @@ function MembersTable({
 				}}
 				className="members-table"
 			/>
-			{total > pageSize && (
-				<Pagination
-					current={currentPage}
-					pageSize={pageSize}
-					total={total}
-					showTotal={showPaginationTotal}
-					showSizeChanger={false}
-					onChange={onPageChange}
-					className="members-table-pagination"
-				/>
-			)}
 		</div>
 	);
 }

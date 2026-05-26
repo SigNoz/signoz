@@ -34,7 +34,7 @@
 
 		svg {
 			margin-top: 2px;
-			color: var(--l3-foreground);
+			color: var(--l2-foreground);
 			flex-shrink: 0;
 		}
 	}
@@ -52,7 +52,7 @@
 
 	&__section-description {
 		margin: 0;
-		color: var(--l3-foreground);
+		color: var(--l2-foreground);
 	}
 
 	&__content {
@@ -73,7 +73,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--l3-foreground);
+			background: var(--l2-foreground);
 			border-radius: 4px;
 
 			&:hover {
@@ -82,7 +82,7 @@
 		}
 
 		scrollbar-width: thin;
-		scrollbar-color: var(--l3-foreground) transparent;
+		scrollbar-color: var(--l2-foreground) transparent;
 	}
 
 	&__field-group {
@@ -114,18 +114,18 @@
 		&.ant-select {
 			.ant-select-selector {
 				height: 32px;
-				background: var(--l3-background) !important;
-				border: 1px solid var(--l3-border) !important;
+				background: var(--l2-background) !important;
+				border: 1px solid var(--l2-border) !important;
 				border-radius: 2px;
-				color: var(--l1-foreground) !important;
+				color: var(--l2-foreground) !important;
 
 				.ant-select-selection-item {
-					color: var(--l1-foreground) !important;
+					color: var(--l2-foreground) !important;
 				}
 			}
 
 			&:hover .ant-select-selector {
-				border-color: var(--l3-border) !important;
+				border-color: var(--l2-border) !important;
 			}
 
 			&.ant-select-focused .ant-select-selector {
@@ -134,7 +134,7 @@
 			}
 
 			.ant-select-arrow {
-				color: var(--l3-foreground);
+				color: var(--l2-foreground);
 			}
 		}
 	}
@@ -201,7 +201,9 @@
 		color: var(--destructive) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 		box-shadow: none !important;
 		display: flex;
 		align-items: center;
@@ -214,7 +216,11 @@
 		}
 
 		&:hover {
-			background: rgba(229, 72, 77, 0.1) !important;
+			background: color-mix(
+				in srgb,
+				var(--danger-background) 10%,
+				transparent
+			) !important;
 			opacity: 0.9 !important;
 			color: var(--destructive) !important;
 
@@ -225,7 +231,11 @@
 
 		&:active {
 			opacity: 0.7 !important;
-			background: rgba(229, 72, 77, 0.15) !important;
+			background: color-mix(
+				in srgb,
+				var(--danger-background) 15%,
+				transparent
+			) !important;
 		}
 	}
 
@@ -264,18 +274,18 @@
 	// todo: https://github.com/SigNoz/components/issues/116
 	input {
 		height: 32px;
-		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		background: var(--l2-background) !important;
+		border: 1px solid var(--l2-border) !important;
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
+		color: var(--l2-foreground) !important;
 
 		&::placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 			opacity: 1;
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l2-border) !important;
 		}
 
 		&:focus,

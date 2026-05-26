@@ -1,9 +1,10 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetOrgPreference200,
 	GetOrgPreferencePathParameters,
@@ -31,6 +29,9 @@ import type {
 	UpdateOrgPreferencePathParameters,
 	UpdateUserPreferencePathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all org preferences
@@ -50,7 +51,7 @@ export const getListOrgPreferencesQueryKey = () => {
 
 export const getListOrgPreferencesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listOrgPreferences>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listOrgPreferences>>,
@@ -84,7 +85,7 @@ export type ListOrgPreferencesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListOrgPreferences<
 	TData = Awaited<ReturnType<typeof listOrgPreferences>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listOrgPreferences>>,
@@ -98,9 +99,7 @@ export function useListOrgPreferences<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -141,7 +140,7 @@ export const getGetOrgPreferenceQueryKey = ({
 
 export const getGetOrgPreferenceQueryOptions = <
 	TData = Awaited<ReturnType<typeof getOrgPreference>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ name }: GetOrgPreferencePathParameters,
 	options?: {
@@ -184,7 +183,7 @@ export type GetOrgPreferenceQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetOrgPreference<
 	TData = Awaited<ReturnType<typeof getOrgPreference>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ name }: GetOrgPreferencePathParameters,
 	options?: {
@@ -201,9 +200,7 @@ export function useGetOrgPreference<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -228,26 +225,28 @@ export const invalidateGetOrgPreference = async (
  */
 export const updateOrgPreference = (
 	{ name }: UpdateOrgPreferencePathParameters,
-	preferencetypesUpdatablePreferenceDTO: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	preferencetypesUpdatablePreferenceDTO?: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/org/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
+		signal,
 	});
 };
 
 export const getUpdateOrgPreferenceMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateOrgPreference>>,
 		TError,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -256,15 +255,15 @@ export const getUpdateOrgPreferenceMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateOrgPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['updateOrgPreference'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -273,7 +272,7 @@ export const getUpdateOrgPreferenceMutationOptions = <
 		Awaited<ReturnType<typeof updateOrgPreference>>,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -287,22 +286,25 @@ export const getUpdateOrgPreferenceMutationOptions = <
 export type UpdateOrgPreferenceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateOrgPreference>>
 >;
-export type UpdateOrgPreferenceMutationBody = BodyType<PreferencetypesUpdatablePreferenceDTO>;
-export type UpdateOrgPreferenceMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateOrgPreferenceMutationBody =
+	| BodyType<PreferencetypesUpdatablePreferenceDTO>
+	| undefined;
+export type UpdateOrgPreferenceMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update org preference
  */
 export const useUpdateOrgPreference = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateOrgPreference>>,
 		TError,
 		{
 			pathParams: UpdateOrgPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -311,13 +313,11 @@ export const useUpdateOrgPreference = <
 	TError,
 	{
 		pathParams: UpdateOrgPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateOrgPreferenceMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateOrgPreferenceMutationOptions(options));
 };
 /**
  * This endpoint lists all user preferences
@@ -337,7 +337,7 @@ export const getListUserPreferencesQueryKey = () => {
 
 export const getListUserPreferencesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listUserPreferences>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listUserPreferences>>,
@@ -371,7 +371,7 @@ export type ListUserPreferencesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListUserPreferences<
 	TData = Awaited<ReturnType<typeof listUserPreferences>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listUserPreferences>>,
@@ -385,9 +385,7 @@ export function useListUserPreferences<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -428,7 +426,7 @@ export const getGetUserPreferenceQueryKey = ({
 
 export const getGetUserPreferenceQueryOptions = <
 	TData = Awaited<ReturnType<typeof getUserPreference>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ name }: GetUserPreferencePathParameters,
 	options?: {
@@ -471,7 +469,7 @@ export type GetUserPreferenceQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetUserPreference<
 	TData = Awaited<ReturnType<typeof getUserPreference>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ name }: GetUserPreferencePathParameters,
 	options?: {
@@ -488,9 +486,7 @@ export function useGetUserPreference<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -515,26 +511,28 @@ export const invalidateGetUserPreference = async (
  */
 export const updateUserPreference = (
 	{ name }: UpdateUserPreferencePathParameters,
-	preferencetypesUpdatablePreferenceDTO: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	preferencetypesUpdatablePreferenceDTO?: BodyType<PreferencetypesUpdatablePreferenceDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/user/preferences/${name}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: preferencetypesUpdatablePreferenceDTO,
+		signal,
 	});
 };
 
 export const getUpdateUserPreferenceMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUserPreference>>,
 		TError,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -543,15 +541,15 @@ export const getUpdateUserPreferenceMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateUserPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
 	const mutationKey = ['updateUserPreference'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -560,7 +558,7 @@ export const getUpdateUserPreferenceMutationOptions = <
 		Awaited<ReturnType<typeof updateUserPreference>>,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -574,22 +572,25 @@ export const getUpdateUserPreferenceMutationOptions = <
 export type UpdateUserPreferenceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUserPreference>>
 >;
-export type UpdateUserPreferenceMutationBody = BodyType<PreferencetypesUpdatablePreferenceDTO>;
-export type UpdateUserPreferenceMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateUserPreferenceMutationBody =
+	| BodyType<PreferencetypesUpdatablePreferenceDTO>
+	| undefined;
+export type UpdateUserPreferenceMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update user preference
  */
 export const useUpdateUserPreference = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUserPreference>>,
 		TError,
 		{
 			pathParams: UpdateUserPreferencePathParameters;
-			data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+			data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 		},
 		TContext
 	>;
@@ -598,11 +599,9 @@ export const useUpdateUserPreference = <
 	TError,
 	{
 		pathParams: UpdateUserPreferencePathParameters;
-		data: BodyType<PreferencetypesUpdatablePreferenceDTO>;
+		data?: BodyType<PreferencetypesUpdatablePreferenceDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getUpdateUserPreferenceMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getUpdateUserPreferenceMutationOptions(options));
 };

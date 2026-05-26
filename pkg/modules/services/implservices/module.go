@@ -34,7 +34,7 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 	}
 }
 
-// FetchTopLevelOperations returns top-level operations per service using db query
+// FetchTopLevelOperations returns top-level operations per service using db query.
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
 	ctx = m.withServicesContext(ctx, "FetchTopLevelOperations")
 
@@ -107,7 +107,7 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 	return items, nil
 }
 
-// GetTopOperations implements services.Module for QBV5 based top ops
+// GetTopOperations implements services.Module for QBV5 based top ops.
 func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
 	ctx = m.withServicesContext(ctx, "GetTopOperations")
 	if req == nil {
@@ -128,7 +128,7 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 	return items, nil
 }
 
-// GetEntryPointOperations implements services.Module for QBV5 based entry point ops
+// GetEntryPointOperations implements services.Module for QBV5 based entry point ops.
 func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
 	ctx = m.withServicesContext(ctx, "GetEntryPointOperations")
 	if req == nil {
@@ -240,7 +240,7 @@ func (m *module) mapQueryRangeRespToServices(resp *qbtypes.QueryRangeResponse, s
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "service.name" {
+			if c.Name == "service.name" {
 				serviceNameRespIndex = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -388,7 +388,7 @@ func (m *module) mapTopOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse) []ser
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "name" {
+			if c.Name == "name" {
 				nameIdx = i
 			}
 		case qbtypes.ColumnTypeAggregation:
@@ -502,7 +502,7 @@ func (m *module) mapEntryPointOpsQueryRangeResp(resp *qbtypes.QueryRangeResponse
 	for i, c := range sd.Columns {
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
-			if c.TelemetryFieldKey.Name == "name" {
+			if c.Name == "name" {
 				nameIdx = i
 			}
 		case qbtypes.ColumnTypeAggregation:

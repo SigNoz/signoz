@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/templatestore/filetemplatestore"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/smtp/client"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
@@ -28,7 +29,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// Try to create a template store. If it fails, use an empty store.
 	store, err := filetemplatestore.NewStore(ctx, config.Templates.Directory, emailtypes.Templates, settings.Logger())
 	if err != nil {
-		settings.Logger().ErrorContext(ctx, "failed to create template store, using empty store", "error", err)
+		settings.Logger().ErrorContext(ctx, "failed to create template store, using empty store", errors.Attr(err))
 		store = filetemplatestore.NewEmptyStore()
 	}
 
@@ -87,7 +88,7 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 
 	content, err := emailtypes.NewContent(template, data)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to create email content", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to create email content", errors.Attr(err))
 		return err
 	}
 

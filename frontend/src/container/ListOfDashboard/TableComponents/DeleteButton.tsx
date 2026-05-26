@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip, Typography } from 'antd';
+import { CircleAlert, Trash2 } from '@signozhq/icons';
+import { Button, Modal, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
@@ -11,10 +12,8 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import styles from '../DashboardActions.module.scss';
 import { Data } from '../DashboardsList';
-import { TableLinkText } from './styles';
-
-import './DeleteButton.styles.scss';
 
 interface DeleteButtonProps {
 	createdBy: string;
@@ -48,11 +47,19 @@ export function DeleteButton({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
-					<span style={{ color: '#e42b35', fontWeight: 500 }}> {name} </span>
+					<span style={{ color: 'var(--danger-background)', fontWeight: 500 }}>
+						{' '}
+						{name}{' '}
+					</span>
 					dashboard?
 				</Typography.Title>
 			),
-			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
+			icon: (
+				<CircleAlert
+					style={{ color: 'var(--danger-background)', marginInlineEnd: '12px' }}
+					size="3xl"
+				/>
+			),
 			okText: 'Delete',
 			okButtonProps: {
 				danger: true,
@@ -76,7 +83,7 @@ export function DeleteButton({
 				},
 			},
 			centered: true,
-			className: 'delete-modal',
+			className: styles.deleteModal,
 		});
 	}, [
 		modal,
@@ -100,11 +107,16 @@ export function DeleteButton({
 		return '';
 	};
 
+	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
+
 	return (
 		<>
 			<Tooltip placement="left" title={getDeleteTooltipContent()}>
-				<TableLinkText
-					type="danger"
+				<Button
+					type="text"
+					className={styles.deleteBtn}
+					icon={<Trash2 size={12} />}
+					disabled={isDisabled}
 					onClick={(e): void => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -112,11 +124,9 @@ export function DeleteButton({
 							openConfirmationDialog();
 						}
 					}}
-					className="delete-btn"
-					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<DeleteOutlined /> Delete dashboard
-				</TableLinkText>
+					Delete Dashboard
+				</Button>
 			</Tooltip>
 
 			{contextHolder}

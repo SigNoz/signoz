@@ -1,0 +1,113 @@
+.aws-service-dashboards {
+	border-radius: 6px;
+	border: 1px solid var(--l3-background);
+	background: var(--l1-background);
+
+	.aws-service-dashboards-title {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+
+		color: var(--l2-foreground);
+		font-family: Inter;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+
+		padding: 8px 16px;
+		border-bottom: 1px solid var(--l3-background);
+	}
+
+	.aws-service-dashboards-items {
+		display: flex;
+		flex-direction: column;
+
+		.aws-service-dashboard-item {
+			display: flex;
+			flex-direction: row;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 12px 16px 12px 16px;
+			border-bottom: 1px solid var(--l3-background);
+			width: 100%;
+			text-align: left;
+			&:last-child {
+				border-bottom: none;
+			}
+
+			&.aws-service-dashboard-item-clickable {
+				cursor: pointer;
+				transition: background-color 0.15s ease;
+
+				&:hover {
+					background-color: var(--muted);
+				}
+
+				&:focus-visible {
+					outline: 1px solid var(--primary-background);
+					outline-offset: -1px;
+				}
+			}
+
+			.aws-service-dashboard-item-content {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				flex: 1;
+				min-width: 0;
+				width: 100%;
+
+				.aws-service-dashboard-item-title {
+					color: var(--l1-foreground);
+					font-family: Inter;
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 20px; /* 142.857% */
+					letter-spacing: -0.07px;
+					text-align: left;
+
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					justify-content: space-between;
+					gap: 4px;
+				}
+
+				.aws-service-dashboard-item-description {
+					color: var(--l2-foreground);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 150% */
+					text-align: left;
+				}
+			}
+
+			.aws-service-dashboard-item-open-new-tab {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				flex-shrink: 0;
+				padding: 4px;
+				border: none;
+				border-radius: 4px;
+				background: transparent;
+				color: var(--l2-foreground);
+				cursor: pointer;
+				opacity: 0.8;
+				margin-top: 1px;
+
+				&:hover {
+					background: var(--secondary);
+					color: var(--l1-foreground);
+				}
+			}
+		}
+	}
+}

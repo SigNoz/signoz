@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
+import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -17,7 +18,6 @@ import { getVariableReferencesInQuery } from 'lib/dashboardVariables/variableRef
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import APIError from 'types/api/error';
@@ -65,10 +65,21 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
-		false,
-	);
-	const { setDashboardQueryRangeCalled } = useDashboard();
+	const [isInternalServerError, setIsInternalServerError] =
+		useState<boolean>(false);
+	const queryRangeCalledRef = useRef(false);
+
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			if (!queryRangeCalledRef.current) {
+				Sentry.captureEvent({
+					message: `Dashboard query range not called within expected timeframe for widget ${widget?.id}`,
+					level: 'warning',
+				});
+			}
+		}, 120000);
+		return (): void => clearTimeout(timeoutId);
+	}, [widget?.id]);
 
 	const {
 		minTime,
@@ -221,7 +232,7 @@ function GridCardGraph({
 								return { ...acc, [id]: variable.selectedValue };
 							}
 							return acc;
-					  }, {})
+						}, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]
@@ -260,14 +271,14 @@ function GridCardGraph({
 						});
 					}
 				}
-				setDashboardQueryRangeCalled(true);
+				queryRangeCalledRef.current = true;
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
 				getGraphData?.(data?.payload?.data);
-				setDashboardQueryRangeCalled(true);
+				queryRangeCalledRef.current = true;
 			},
 		},
 	);

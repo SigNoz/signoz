@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Button, Input } from 'antd';
-import { CheckIcon, TableColumnsSplit, XIcon } from 'lucide-react';
+import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { SignalType } from '../types';
@@ -57,7 +57,7 @@ function QuickFiltersSettings({
 					<TableColumnsSplit width={16} height={16} />
 					Edit quick filters
 				</div>
-				<XIcon
+				<X
 					className="qf-header-icon"
 					width={16}
 					height={16}
@@ -88,14 +88,14 @@ function QuickFiltersSettings({
 					<Button
 						type="default"
 						onClick={handleDiscardChanges}
-						icon={<XIcon width={16} height={16} />}
+						icon={<X size={16} />}
 					>
 						Discard
 					</Button>
 					<Button
 						type="primary"
 						onClick={handleSaveChanges}
-						icon={<CheckIcon width={16} height={16} />}
+						icon={<Check size={16} />}
 						loading={isUpdatingCustomFilters}
 					>
 						Save changes

@@ -1,7 +1,7 @@
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
+import { InspectMetricsSeries } from './types';
 import {
 	GraphPopoverData,
 	GraphPopoverOptions,
@@ -42,7 +42,7 @@ export function getDefaultTimeAggregationInterval(
 	const reportingInterval =
 		timeSeries.values.length > 1
 			? Math.abs(timeSeries.values[1].timestamp - timeSeries.values[0].timestamp) /
-			  1000
+				1000
 			: 0;
 	return Math.max(60, reportingInterval);
 }
@@ -88,10 +88,8 @@ export function applyTimeAggregation(
 	timeAggregatedSeries: InspectMetricsSeries[];
 	timeAggregatedSeriesMap: Map<number, GraphPopoverData[]>;
 } {
-	const {
-		timeAggregationOption,
-		timeAggregationInterval,
-	} = metricInspectionAppliedOptions;
+	const { timeAggregationOption, timeAggregationInterval } =
+		metricInspectionAppliedOptions;
 
 	if (!timeAggregationInterval) {
 		return {
@@ -103,8 +101,8 @@ export function applyTimeAggregation(
 	// Group timestamps into intervals and aggregate values for each series independently
 	const timeAggregatedSeriesMap: Map<number, GraphPopoverData[]> = new Map();
 
-	const timeAggregatedSeries: InspectMetricsSeries[] = inspectMetricsTimeSeries.map(
-		(series) => {
+	const timeAggregatedSeries: InspectMetricsSeries[] =
+		inspectMetricsTimeSeries.map((series) => {
 			const groupedTimestamps = new Map<number, number[]>();
 
 			series.values.forEach(({ timestamp, value }) => {
@@ -168,8 +166,7 @@ export function applyTimeAggregation(
 				...series,
 				values: aggregatedValues,
 			};
-		},
-	);
+		});
 
 	return { timeAggregatedSeries, timeAggregatedSeriesMap };
 }

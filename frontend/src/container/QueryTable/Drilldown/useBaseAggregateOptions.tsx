@@ -1,25 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { openInNewTab } from 'utils/navigation';
 
 import { ContextMenuItem } from './contextConfig';
 import { getDataLinks } from './dataLinksUtils';
-import { getAggregateColumnHeader, getViewQuery } from './drilldownUtils';
+import { getAggregateColumnHeader } from './drilldownUtils';
 import { getBaseContextConfig } from './menuOptions';
 import { AggregateData } from './useAggregateDrilldown';
+import useBaseDrilldownNavigate from './useBaseDrilldownNavigate';
 
 interface UseBaseAggregateOptionsProps {
 	query: Query;
@@ -37,19 +35,6 @@ interface BaseAggregateOptionsConfig {
 	items?: ContextMenuItem;
 }
 
-const getRoute = (key: string): string => {
-	switch (key) {
-		case 'view_logs':
-			return ROUTES.LOGS_EXPLORER;
-		case 'view_metrics':
-			return ROUTES.METRICS_EXPLORER;
-		case 'view_traces':
-			return ROUTES.TRACES_EXPLORER;
-		default:
-			return '';
-	}
-};
-
 const useBaseAggregateOptions = ({
 	query,
 	onClose,
@@ -62,11 +47,9 @@ const useBaseAggregateOptions = ({
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
-	const {
-		getUpdatedQuery,
-		isLoading: isResolveQueryLoading,
-	} = useUpdatedQuery();
-	const { selectedDashboard } = useDashboard();
+	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
+		useUpdatedQuery();
+	const { dashboardData } = useDashboardStore();
 
 	useEffect(() => {
 		if (!aggregateData) {
@@ -79,15 +62,13 @@ const useBaseAggregateOptions = ({
 					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
 					timePreferance: 'GLOBAL_TIME',
 				},
-				selectedDashboard,
+				dashboardData,
 			});
 			setResolvedQuery(updatedQuery);
 		};
 		resolveQuery();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query, aggregateData, panelType]);
-
-	const { safeNavigate } = useSafeNavigate();
 
 	// Use the new useContextVariables hook
 	const { processedVariables } = useContextVariables({
@@ -113,59 +94,25 @@ const useBaseAggregateOptions = ({
 			return allLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
 					key={id}
-					icon={<LinkOutlined />}
+					icon={<Link size="md" />}
 					onClick={(): void => {
-						window.open(url, '_blank');
+						openInNewTab(url);
 						onClose?.();
 					}}
 				>
 					{label}
 				</ContextMenu.Item>
 			));
-		} catch (error) {
+		} catch {
 			return [];
 		}
 	}, [contextLinks, processedVariables, onClose, aggregateData, query]);
 
-	const handleBaseDrilldown = useCallback(
-		(key: string): void => {
-			const route = getRoute(key);
-			const timeRange = aggregateData?.timeRange;
-			const filtersToAdd = aggregateData?.filters || [];
-			const viewQuery = getViewQuery(
-				resolvedQuery,
-				filtersToAdd,
-				key,
-				aggregateData?.queryName || '',
-			);
-
-			let queryParams = {
-				[QueryParams.compositeQuery]: encodeURIComponent(JSON.stringify(viewQuery)),
-				...(timeRange && {
-					[QueryParams.startTime]: timeRange?.startTime.toString(),
-					[QueryParams.endTime]: timeRange?.endTime.toString(),
-				}),
-			} as Record<string, string>;
-
-			if (route === ROUTES.METRICS_EXPLORER) {
-				queryParams = {
-					...queryParams,
-					[QueryParams.summaryFilters]: JSON.stringify(
-						viewQuery?.builder.queryData[0].filters,
-					),
-				};
-			}
-
-			if (route) {
-				safeNavigate(`${route}?${createQueryParams(queryParams)}`, {
-					newTab: true,
-				});
-			}
-
-			onClose();
-		},
-		[resolvedQuery, safeNavigate, onClose, aggregateData],
-	);
+	const handleBaseDrilldown = useBaseDrilldownNavigate({
+		resolvedQuery,
+		aggregateData,
+		callback: onClose,
+	});
 
 	const { pathname } = useLocation();
 
@@ -229,7 +176,13 @@ const useBaseAggregateOptions = ({
 									return (
 										<ContextMenu.Item
 											key={key}
-											icon={isLoading ? <LoadingOutlined spin /> : icon}
+											icon={
+												isLoading ? (
+													<Loader className="animate-spin" size="md" />
+												) : (
+													<span style={{ color: aggregateData?.seriesColor }}>{icon}</span>
+												)
+											}
 											onClick={(): void => onClick()}
 											disabled={isLoading}
 										>

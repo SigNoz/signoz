@@ -1,0 +1,53 @@
+.download-popover {
+	.ant-popover-inner {
+		border-radius: 4px;
+		background-color: var(--l2-background);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		padding: 0 8px 12px 8px;
+		margin: 6px 0;
+	}
+
+	.export-options-container {
+		width: 240px;
+		border-radius: 4px;
+
+		.title {
+			display: flex;
+			color: var(--l1-foreground);
+			font-family: Inter;
+			font-size: 11px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px;
+			letter-spacing: 0.88px;
+			text-transform: uppercase;
+			margin-bottom: 8px;
+		}
+
+		.export-format,
+		.row-limit,
+		.columns-scope {
+			padding: 12px 4px;
+			display: flex;
+			flex-direction: column;
+
+			:global(.ant-radio-wrapper) {
+				color: var(--l1-foreground);
+				font-family: Inter;
+				font-size: 13px;
+			}
+		}
+
+		.horizontal-line {
+			height: 1px;
+			background: var(--l1-border);
+		}
+
+		.export-button {
+			width: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+}

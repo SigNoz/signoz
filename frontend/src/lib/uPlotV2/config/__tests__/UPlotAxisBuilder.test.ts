@@ -40,12 +40,12 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.gap).toBe(5);
 
 		// Default grid and ticks are created
-		expect(config.grid).toEqual({
+		expect(config.grid).toStrictEqual({
 			stroke: 'rgba(0,0,0,0.5)',
 			width: 0.2,
 			show: true,
 		});
-		expect(config.ticks).toEqual({
+		expect(config.ticks).toStrictEqual({
 			width: 0.3,
 			show: true,
 		});
@@ -81,18 +81,18 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.label).toBe('Time');
 		expect(config.show).toBe(false);
 		expect(config.gap).toBe(10);
-		expect(config.grid).toEqual({
+		expect(config.grid).toStrictEqual({
 			stroke: '#ff0000',
 			width: 1,
 			show: false,
 		});
-		expect(config.ticks).toEqual({
+		expect(config.ticks).toStrictEqual({
 			stroke: '#00ff00',
 			width: 1,
 			show: false,
 			size: 10,
 		});
-		expect(config.values).toEqual(['1', '2', '3']);
+		expect(config.values).toStrictEqual(['1', '2', '3']);
 		expect(config.space).toBe(20);
 		expect(config.size).toBe(100);
 		expect(config.stroke).toBe('#0000ff');
@@ -111,7 +111,7 @@ describe('UPlotAxisBuilder', () => {
 
 		const config = builder.getConfig();
 
-		expect(config.grid).toEqual({
+		expect(config.grid).toStrictEqual({
 			// stroke falls back to theme-based default when not provided
 			stroke: 'rgba(231,233,237,0.3)',
 			// provided width overrides default
@@ -131,7 +131,7 @@ describe('UPlotAxisBuilder', () => {
 		const withoutTicks = new UPlotAxisBuilder(createAxisProps());
 
 		expect(withTicks.getConfig().ticks).toBe(customTicks);
-		expect(withoutTicks.getConfig().ticks).toEqual({
+		expect(withoutTicks.getConfig().ticks).toStrictEqual({
 			width: 0.3,
 			show: true,
 		});
@@ -181,7 +181,7 @@ describe('UPlotAxisBuilder', () => {
 		);
 
 		// Simulate uPlot calling the values formatter
-		const valuesFn = (config.values as unknown) as (
+		const valuesFn = config.values as unknown as (
 			self: uPlot,
 			vals: unknown[],
 		) => string[];
@@ -192,7 +192,12 @@ describe('UPlotAxisBuilder', () => {
 		expect(getToolTipValue).toHaveBeenNthCalledWith(2, '2', 'ms', 3);
 
 		// Null/NaN values should map to empty strings
-		expect(result).toEqual(['formatted:1:ms:3', '', 'formatted:2:ms:3', '']);
+		expect(result).toStrictEqual([
+			'formatted:1:ms:3',
+			'',
+			'formatted:2:ms:3',
+			'',
+		]);
 	});
 
 	it('adds dynamic size calculator only for Y-axis when size is not provided', () => {
@@ -315,17 +320,14 @@ describe('UPlotAxisBuilder', () => {
 			ticks: { size: 10 },
 			font: ['12px sans-serif'],
 		};
-		const mockSelf = ({
+		const mockSelf = {
 			axes: [mockAxis],
 			ctx: { measureText: jest.fn(() => ({ width: 60 })), font: '' },
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
-		const result = (sizeFn as (
-			s: uPlot,
-			v: string[],
-			a: number,
-			c: number,
-		) => number)(
+		const result = (
+			sizeFn as (s: uPlot, v: string[], a: number, c: number) => number
+		)(
 			mockSelf,
 			['100', '200'],
 			0,
@@ -349,7 +351,7 @@ describe('UPlotAxisBuilder', () => {
 			font: ['12px sans-serif'],
 		};
 		const measureText = jest.fn(() => ({ width: 48 }));
-		const mockSelf = ({
+		const mockSelf = {
 			axes: [mockAxis],
 			ctx: {
 				measureText,
@@ -360,14 +362,11 @@ describe('UPlotAxisBuilder', () => {
 					/* noop */
 				},
 			},
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
-		const result = (sizeFn as (
-			s: uPlot,
-			v: string[],
-			a: number,
-			c: number,
-		) => number)(
+		const result = (
+			sizeFn as (s: uPlot, v: string[], a: number, c: number) => number
+		)(
 			mockSelf,
 			['10', '2000ms'],
 			0,

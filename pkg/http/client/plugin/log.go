@@ -9,6 +9,8 @@ import (
 
 	"github.com/gojek/heimdall/v7"
 	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type reqResLog struct {
@@ -51,7 +53,7 @@ func (plugin *reqResLog) OnRequestEnd(request *http.Request, response *http.Resp
 
 	bodybytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		plugin.logger.DebugContext(request.Context(), "::UNABLE-TO-LOG-RESPONSE-BODY::", "error", err)
+		plugin.logger.DebugContext(request.Context(), "::UNABLE-TO-LOG-RESPONSE-BODY::", errors.Attr(err))
 	} else {
 		_ = response.Body.Close()
 		response.Body = io.NopCloser(bytes.NewBuffer(bodybytes))
@@ -69,7 +71,7 @@ func (plugin *reqResLog) OnRequestEnd(request *http.Request, response *http.Resp
 func (plugin *reqResLog) OnError(request *http.Request, err error) {
 	host, port, _ := net.SplitHostPort(request.Host)
 	fields := []any{
-		"error", err,
+		errors.Attr(err),
 		string(semconv.HTTPRequestMethodKey), request.Method,
 		string(semconv.URLPathKey), request.URL.Path,
 		string(semconv.URLSchemeKey), request.URL.Scheme,

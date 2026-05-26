@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { Switch, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -16,9 +20,15 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import {
+	metricsAddFilterAction,
+	metricsRunQueryAction,
+	metricsSaveViewAction,
+} from 'pages/MetricsExplorer/aiActions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -32,7 +42,6 @@ import { v4 as uuid } from 'uuid';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
-import { ExplorerTabs } from './types';
 import {
 	getMetricUnits,
 	splitQueryIntoOneChartPerQuery,
@@ -50,10 +59,28 @@ function Explorer(): JSX.Element {
 		updateAllQueriesOperators,
 		currentQuery,
 		handleSetConfig,
+		handleSetQueryData,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+		setIsCancelled(true);
+	}, [queryClient]);
 
 	const metricNames = useMemo(() => {
 		const currentMetricNames: string[] = [];
@@ -92,10 +119,8 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
-	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
-		false,
-	);
-	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] =
+		useState(false);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
@@ -198,6 +223,41 @@ function Explorer(): JSX.Element {
 		[handleSetConfig, handleExplorerTabChange],
 	);
 
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
+	const aiActions = useMemo(
+		() =>
+			isAIAssistantEnabled
+				? [
+						metricsRunQueryAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						metricsAddFilterAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						metricsSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+					]
+				: [],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			handleSetQueryData,
+			redirectWithQueryBuilderData,
+		],
+	);
+	usePageActions('metrics-explorer', aiActions);
+	// ───────────────────────────────────────────────────────────────────────────
+
 	const handleExport = useCallback(
 		(
 			dashboard: Dashboard | null,
@@ -265,7 +325,7 @@ function Explorer(): JSX.Element {
 		[],
 	);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const oneChartPerQueryDisabledTooltip = useMemo(() => {
 		if (splitedQueries.length <= 1) {
@@ -277,7 +337,7 @@ function Explorer(): JSX.Element {
 		if (disableOneChartPerQuery) {
 			return 'One chart per query cannot be disabled for multiple queries with different units.';
 		}
-		return undefined;
+		return;
 	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
 
 	// Show the y axis unit selector if -
@@ -299,17 +359,20 @@ function Explorer(): JSX.Element {
 							title={oneChartPerQueryDisabledTooltip}
 						>
 							<Switch
-								checked={showOneChartPerQuery}
+								value={showOneChartPerQuery}
 								onChange={handleToggleShowOneChartPerQuery}
 								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
-								size="small"
 							/>
 						</Tooltip>
 					</div>
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery()}
+							isLoadingQueries={isLoadingQueries}
+							handleCancelQuery={handleCancelQuery}
+						/>
 					</div>
 				</div>
 				<QueryBuilderV2
@@ -319,48 +382,23 @@ function Explorer(): JSX.Element {
 					showFunctions={false}
 					version="v3"
 				/>
-				{/* TODO: Enable once we have resolved all related metrics issues */}
-				{/* <Button.Group className="explore-tabs">
-					<Button
-						value={ExplorerTabs.TIME_SERIES}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.TIME_SERIES,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.TIME_SERIES)}
-					>
-						<Typography.Text>Time series</Typography.Text>
-					</Button>
-					<Button
-						value={ExplorerTabs.RELATED_METRICS}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
-					>
-						<Typography.Text>Related</Typography.Text>
-					</Button>
-				</Button.Group> */}
 				<div className="explore-content">
-					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries
-							showOneChartPerQuery={showOneChartPerQuery}
-							setWarning={setWarning}
-							areAllMetricUnitsSame={areAllMetricUnitsSame}
-							isMetricUnitsLoading={isMetricUnitsLoading}
-							isMetricUnitsError={isMetricUnitsError}
-							metricUnits={units}
-							metricNames={metricNames}
-							metrics={metrics}
-							handleOpenMetricDetails={handleOpenMetricDetails}
-							yAxisUnit={yAxisUnit}
-							setYAxisUnit={setYAxisUnit}
-							showYAxisUnitSelector={showYAxisUnitSelector}
-						/>
-					)}
-					{/* TODO: Enable once we have resolved all related metrics issues */}
-					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
-						<RelatedMetrics metricNames={metricNames} />
-					)} */}
+					<TimeSeries
+						onFetchingStateChange={setIsLoadingQueries}
+						showOneChartPerQuery={showOneChartPerQuery}
+						setWarning={setWarning}
+						areAllMetricUnitsSame={areAllMetricUnitsSame}
+						isMetricUnitsLoading={isMetricUnitsLoading}
+						isMetricUnitsError={isMetricUnitsError}
+						metricUnits={units}
+						metricNames={metricNames}
+						metrics={metrics}
+						handleOpenMetricDetails={handleOpenMetricDetails}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						showYAxisUnitSelector={showYAxisUnitSelector}
+						isCancelled={isCancelled}
+					/>
 				</div>
 			</div>
 			<ExplorerOptionWrapper

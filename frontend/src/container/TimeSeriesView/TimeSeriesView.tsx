@@ -65,9 +65,10 @@ function TimeSeriesView({
 	const location = useLocation();
 	const { currentQuery } = useQueryBuilder();
 
-	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
-		data?.payload,
-	]);
+	const chartData = useMemo(
+		() => getUPlotChartData(data?.payload),
+		[data?.payload],
+	);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -91,10 +92,11 @@ function TimeSeriesView({
 		scrollLeft: 0,
 	});
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange();
@@ -106,12 +108,11 @@ function TimeSeriesView({
 	// Initialize graph visibility from localStorage
 	useEffect(() => {
 		if (data?.payload?.data?.result) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: data.payload.data.result,
-				name: 'time-series-explorer',
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: data.payload.data.result,
+					name: 'time-series-explorer',
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 	}, [data?.payload?.data?.result]);

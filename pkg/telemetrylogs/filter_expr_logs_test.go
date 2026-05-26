@@ -1,11 +1,14 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -13,21 +16,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogs(t *testing.T) {
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	ctx := context.Background()
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
 
 	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
+		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
+		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
 	}
 
 	testCases := []struct {
@@ -187,7 +196,7 @@ func TestFilterExprLogs(t *testing.T) {
 			category:              "Special characters",
 			query:                 "ERROR: cannot execute update() in a read-only context",
 			shouldPass:            false,
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got ')'",
+			expectedErrorContains: "expecting one of {(, AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got ')'",
 		},
 		{
 			category:              "Special characters",
@@ -466,7 +475,7 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		// fulltext with parenthesized expression
+		//fulltext with parenthesized expression
 		{
 			category:              "FREETEXT with parentheses",
 			query:                 "error (status.code=500 OR status.code=503)",
@@ -609,7 +618,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          []any{},
-			expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
+			expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
 		},
 		{
 			category:              "Keyword conflict",
@@ -2009,7 +2018,7 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedErrorContains: "",
 		},
 
-		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'AND'"},
+		{category: "Only keywords", query: "AND", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'AND'"},
 		{category: "Only keywords", query: "OR", shouldPass: false, expectedErrorContains: "expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'OR'"},
 		{category: "Only keywords", query: "NOT", shouldPass: false, expectedErrorContains: "expecting one of {(, ), FREETEXT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got EOF"},
 
@@ -2153,7 +2162,7 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            false,
 			expectedQuery:         "",
 			expectedArgs:          nil,
-			expectedErrorContains: "line 1:0 expecting one of {(, ), AND, FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
+			expectedErrorContains: "line 1:0 expecting one of {(, ), FREETEXT, NOT, boolean, has(), hasAll(), hasAny(), hasToken(), number, quoted text} but got 'and'",
 		},
 		{
 			category:              "Operator keywords as keys",
@@ -2386,7 +2395,7 @@ func TestFilterExprLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {
@@ -2420,13 +2429,15 @@ func TestFilterExprLogs(t *testing.T) {
 	}
 }
 
-// TestFilterExprLogs tests a comprehensive set of query patterns for logs search
+// TestFilterExprLogs tests a comprehensive set of query patterns for logs search.
 func TestFilterExprLogsConflictNegation(t *testing.T) {
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
 
 	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	keys["body"] = []*telemetrytypes.TelemetryFieldKey{
 		{
@@ -2442,6 +2453,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -2504,7 +2516,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {

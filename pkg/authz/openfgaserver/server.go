@@ -8,6 +8,7 @@ import (
 	authz "github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -15,7 +16,14 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 	openfgapkgserver "github.com/openfga/openfga/pkg/server"
+	openfgaerrors "github.com/openfga/openfga/pkg/server/errors"
+	"github.com/openfga/openfga/pkg/storage"
 	"google.golang.org/protobuf/encoding/protojson"
+)
+
+const (
+	batchCheckItemErrorMessage = "::AUTHZ-CHECK-ERROR::"
+	writeErrorMessage          = "::AUTHZ-WRITE-ERROR::"
 )
 
 var (
@@ -31,20 +39,15 @@ type Server struct {
 	modelID       string
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
+	healthyC      chan struct{}
 }
 
-func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (*Server, error) {
+func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) (*Server, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
-
-	store, err := NewSQLStore(sqlstore)
-	if err != nil {
-		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
-		return nil, err
-	}
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
-		openfgapkgserver.WithDatastore(store),
+		openfgapkgserver.WithDatastore(openfgaDataStore),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 		openfgapkgserver.WithContextPropagationToDatastore(true),
 	}
@@ -61,6 +64,7 @@ func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, co
 		openfgaSchema: openfgaSchema,
 		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
+		healthyC:      make(chan struct{}),
 	}, nil
 }
 
@@ -80,8 +84,14 @@ func (server *Server) Start(ctx context.Context) error {
 	server.storeID = storeID
 	server.mtx.Unlock()
 
+	close(server.healthyC)
+
 	<-server.stopChan
 	return nil
+}
+
+func (server *Server) Healthy() <-chan struct{} {
+	return server.healthyC
 }
 
 func (server *Server) Stop(ctx context.Context) error {
@@ -118,6 +128,11 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 
 	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
 	for id, tuple := range tupleReq {
+		// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
+		if checkErr := checkResponse.Result[id].GetError(); checkErr != nil {
+			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
+		}
+
 		response[id] = &authtypes.TupleKeyAuthorization{
 			Tuple:      tuple,
 			Authorized: checkResponse.Result[id].GetAllowed(),
@@ -127,16 +142,26 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	return response, nil
 }
 
-func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
-	if err != nil {
-		return err
+func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+	subject := ""
+	switch claims.Principal {
+	case authtypes.PrincipalUser:
+		user, err := authtypes.NewSubject(coretypes.NewResourceUser(), claims.UserID, orgID, nil)
+		if err != nil {
+			return err
+		}
+
+		subject = user
+	case authtypes.PrincipalServiceAccount:
+		serviceAccount, err := authtypes.NewSubject(coretypes.NewResourceServiceAccount(), claims.ServiceAccountID, orgID, nil)
+		if err != nil {
+			return err
+		}
+
+		subject = serviceAccount
 	}
 
-	tupleSlice, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
-	if err != nil {
-		return err
-	}
+	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, roleSelectors, orgID)
 
 	// Convert slice to map with generated IDs for internal use
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
@@ -158,16 +183,13 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, _ authtypes.Typeable, _ []authtypes.Selector, roleSelectors []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
+func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+	subject, err := authtypes.NewSubject(coretypes.NewResourceAnonymous(), coretypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
 
-	tupleSlice, err := authtypes.TypeableRole.Tuples(subject, authtypes.RelationAssignee, roleSelectors, orgID)
-	if err != nil {
-		return err
-	}
+	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, roleSelectors, orgID)
 
 	// Convert slice to map with generated IDs for internal use
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
@@ -223,23 +245,63 @@ func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey
 		}(),
 	})
 
-	return err
+	if err != nil {
+		openfgaError := new(openfgaerrors.InternalError)
+		ok := errors.As(err, openfgaError)
+		if ok {
+			server.settings.Logger().ErrorContext(ctx, writeErrorMessage, errors.Attr(openfgaError.Unwrap()))
+			return errors.New(errors.TypeTooManyRequests, errors.CodeTooManyRequests, openfgaError.Error())
+		}
+
+		server.settings.Logger().ErrorContext(ctx, writeErrorMessage, errors.Attr(err))
+		return err
+	}
+
+	return nil
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
+func (server *Server) ReadTuples(ctx context.Context, tupleKey *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error) {
+	storeID, _ := server.getStoreIDandModelID()
+	var tuples []*openfgav1.TupleKey
+	continuationToken := ""
+
+	for {
+		response, err := server.openfgaServer.Read(ctx, &openfgav1.ReadRequest{
+			StoreId:           storeID,
+			TupleKey:          tupleKey,
+			ContinuationToken: continuationToken,
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "failed to read tuples from authorization server")
+		}
+
+		for _, tuple := range response.Tuples {
+			tuples = append(tuples, tuple.Key)
+		}
+
+		if response.ContinuationToken == "" {
+			break
+		}
+		continuationToken = response.ContinuationToken
+	}
+
+	return tuples, nil
+}
+
+func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	storeID, modelID := server.getStoreIDandModelID()
 	response, err := server.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
 		User:                 subject,
 		Relation:             relation.StringValue(),
-		Type:                 typeable.Type().StringValue(),
+		Type:                 objectType.StringValue(),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), typeable.Type().StringValue())
+		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), objectType.StringValue())
 	}
 
-	return authtypes.MustNewObjectsFromStringSlice(response.Objects), nil
+	return coretypes.MustNewObjectsFromStringSlice(response.Objects), nil
 }
 
 func (server *Server) getOrCreateStore(ctx context.Context, name string) (string, error) {
@@ -332,4 +394,13 @@ func (server *Server) getStoreIDandModelID() (string, string) {
 	modelID := server.modelID
 
 	return storeID, modelID
+}
+
+func (server *Server) getCheckError(checkErr *openfgav1.CheckError) error {
+	switch checkErr.GetCode().(type) {
+	case *openfgav1.CheckError_InputError:
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, checkErr.GetMessage())
+	default:
+		return errors.New(errors.TypeInternal, errors.CodeInternal, checkErr.GetMessage())
+	}
 }

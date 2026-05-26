@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row, Tag, Typography } from 'antd';
+import { Row, Tag } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -54,7 +57,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 			page: 'New alert data source selection page',
 		});
 
-		window.open(url, '_blank');
+		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (
@@ -70,8 +73,8 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 								</Tag>
 							) : undefined
 						}
-						onClick={(): void => {
-							onSelect(option.selection);
+						onClick={(e): void => {
+							onSelect(option.selection, isModifierKeyPressed(e));
 						}}
 						data-testid={`alert-type-card-${option.selection}`}
 					>
@@ -108,7 +111,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 }
 
 interface SelectAlertTypeProps {
-	onSelect: (typ: AlertTypes) => void;
+	onSelect: (type: AlertTypes, newTab?: boolean) => void;
 }
 
 export default SelectAlertType;

@@ -8,10 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
 	opampTypes "github.com/open-telemetry/opamp-go/server/types"
@@ -84,7 +86,7 @@ func (agent *Agent) KeepOnlyLast50Agents(ctx context.Context) {
 				Limit(50)).
 		Exec(ctx)
 	if err != nil {
-		agent.logger.Error("failed to delete old agents", "error", err)
+		agent.logger.Error("failed to delete old agents", errors.Attr(err))
 	}
 }
 
@@ -313,7 +315,7 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
-		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, "error", err)
+		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, errors.Attr(err))
 		return false
 	}
 

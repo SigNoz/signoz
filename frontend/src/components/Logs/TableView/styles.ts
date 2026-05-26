@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 
@@ -10,7 +11,7 @@ interface TableBodyContentProps {
 export const TableBodyContent = styled.div<TableBodyContentProps>`
 	margin-bottom: 0;
 	color: ${(props): string =>
-		props.isDarkMode ? 'var(--bg-vanilla-400, #c0c1c3)' : 'var(--bg-slate-400)'};
+		props.isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400};
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -26,6 +27,6 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px;`
 			: fontSize === FontSize.MEDIUM
-			? `font-size:13px; line-height:20px;`
-			: `font-size:14px; line-height:24px;`}
+				? `font-size:13px; line-height:20px;`
+				: `font-size:14px; line-height:24px;`}
 `;

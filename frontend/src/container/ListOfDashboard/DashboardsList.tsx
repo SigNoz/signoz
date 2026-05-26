@@ -21,13 +21,15 @@ import {
 	Modal,
 	Popover,
 	Skeleton,
-	Switch,
 	Table,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
@@ -40,6 +42,9 @@ import {
 	sanitizeDashboardData,
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// see more: https://github.com/lucide-icons/lucide/issues/94
+import { handleContactSupport } from 'container/Integrations/utils';
 import dayjs from 'dayjs';
 import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -68,10 +73,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
-} from 'lucide-react';
-// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
-// see more: https://github.com/lucide-icons/lucide/issues/94
-import { handleContactSupport } from 'pages/Integrations/utils';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -82,6 +84,13 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+import { isModifierKeyPressed } from 'utils/app';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
+
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import dashboardsUrl from '@/assets/Icons/dashboards.svg';
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -93,6 +102,7 @@ import {
 	filterDashboards,
 } from './utils';
 
+import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -107,10 +117,8 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
-	const {
-		dashboardsListQueryParams,
-		updateDashboardsListQueryParams,
-	} = useDashboardsListQueryParams();
+	const { dashboardsListQueryParams, updateDashboardsListQueryParams } =
+		useDashboardsListQueryParams();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
@@ -122,25 +130,20 @@ function DashboardsList(): JSX.Element {
 		user.role,
 	);
 
-	const [
-		showNewDashboardTemplatesModal,
-		setShowNewDashboardTemplatesModal,
-	] = useState(false);
+	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
+		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
-	const [
-		isImportJSONModalVisible,
-		setIsImportJSONModalVisible,
-	] = useState<boolean>(false);
+	const [isImportJSONModalVisible, setIsImportJSONModalVisible] =
+		useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
-		false,
-	);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] =
+		useState<boolean>(false);
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
-		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		const dashboardDynamicColumnsString = getLocalStorageKey('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
 			createdAt: true,
 			createdBy: true,
@@ -154,7 +157,7 @@ function DashboardsList(): JSX.Element {
 				);
 
 				if (isEmpty(tempDashboardDynamicColumns)) {
-					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+					setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 				} else {
 					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
 				}
@@ -162,7 +165,7 @@ function DashboardsList(): JSX.Element {
 				console.error(error);
 			}
 		} else {
-			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 		}
 
 		return dashboardDynamicColumns;
@@ -176,7 +179,7 @@ function DashboardsList(): JSX.Element {
 		visibleColumns: DashboardDynamicColumns,
 	): void {
 		try {
-			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(visibleColumns));
 		} catch (error) {
 			console.error(error);
 		}
@@ -372,11 +375,7 @@ function DashboardsList(): JSX.Element {
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(), '_blank');
-					} else {
-						safeNavigate(getLink());
-					}
+					safeNavigate(getLink(), { newTab: isModifierKeyPressed(event) });
 					logEvent('Dashboard List: Clicked on dashboard', {
 						dashboardId: dashboard.id,
 						dashboardName: dashboard.name,
@@ -437,64 +436,60 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Expand size={12} />}
-													onClick={onClickHandler}
-												>
-													View
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														window.open(getLink(), '_blank');
-													}}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Link2 size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(`${window.location.origin}${getLink()}`);
-													}}
-												>
-													Copy Link
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<FileJson size={12} />}
-													onClick={handleJsonExport}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
+										<div className={styles.actionContent}>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Expand size={12} />}
+												onClick={onClickHandler}
+											>
+												View
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<SquareArrowOutUpRight size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													openInNewTab(getLink());
+												}}
+											>
+												Open in New Tab
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Link2 size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													setCopy(getAbsoluteUrl(getLink()));
+												}}
+											>
+												Copy Link
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<FileJson size={12} />}
+												onClick={handleJsonExport}
+											>
+												Export JSON
+											</Button>
+											<DeleteButton
+												name={dashboard.name}
+												id={dashboard.id}
+												isLocked={dashboard.isLocked}
+												createdBy={dashboard.createdBy}
+											/>
 										</div>
 									}
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger="click"
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"
@@ -563,6 +558,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="import-json-menu-cta"
 						onClick={(): void => onModalHandler(false)}
 					>
 						<Radius size={14} /> Import JSON
@@ -576,6 +572,7 @@ function DashboardsList(): JSX.Element {
 						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
+						data-testid="view-templates-menu-cta"
 					>
 						<Flex
 							justify="space-between"
@@ -599,6 +596,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="create-dashboard-menu-cta"
 						onClick={(): void => {
 							onNewDashboardHandler();
 						}}
@@ -675,11 +673,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboardFetchError ? (
 					<div className="dashboard-error-state">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="something went wrong"
-							className="error-img"
-						/>
+						<img src={awwSnapUrl} alt="something went wrong" className="error-img" />
 
 						<Typography.Text className="error-text">
 							Something went wrong :/ Please retry or contact support.
@@ -705,11 +699,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboards.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
-						<img
-							src="/Icons/dashboards.svg"
-							alt="dashboards"
-							className="dashboard-img"
-						/>
+						<img src={dashboardsUrl} alt="dashboards" className="dashboard-img" />
 						<section className="text">
 							<Typography.Text className="no-dashboard">
 								No dashboards yet.{' '}
@@ -762,6 +752,7 @@ function DashboardsList(): JSX.Element {
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 								value={searchString}
+								data-testid="dashboards-list-search"
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
@@ -775,6 +766,7 @@ function DashboardsList(): JSX.Element {
 										type="primary"
 										className="periscope-btn primary btn"
 										icon={<Plus size={14} />}
+										data-testid="new-dashboard-cta"
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
@@ -787,7 +779,7 @@ function DashboardsList(): JSX.Element {
 
 						{dashboards.length === 0 ? (
 							<div className="no-search">
-								<img src="/Icons/emptyState.svg" alt="img" className="img" />
+								<img src={emptyStateUrl} alt="img" className="img" />
 								<Typography.Text className="text">
 									No dashboards found for {searchString}. Create a new dashboard?
 								</Typography.Text>
@@ -973,8 +965,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked
+									value
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -993,9 +984,8 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
 									disabled
-									checked
+									value
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1013,8 +1003,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedAt}
+									value={visibleColumns.updatedAt}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1032,8 +1021,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedBy}
+									value={visibleColumns.updatedBy}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,

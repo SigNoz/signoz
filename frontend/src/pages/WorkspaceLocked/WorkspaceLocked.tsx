@@ -1,4 +1,5 @@
-import { useCallback, useEffect } from 'react';
+/* eslint-disable react/no-unescaped-entities */
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
@@ -14,18 +15,21 @@ import {
 	Skeleton,
 	Space,
 	Tabs,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { CircleArrowRight } from 'lucide-react';
+import { CircleArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { isModifierKeyPressed } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -40,14 +44,11 @@ import {
 import './WorkspaceLocked.styles.scss';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const {
-		user,
-		isFetchingActiveLicense,
-		trialInfo,
-		activeLicense,
-	} = useAppContext();
+	const { user, isFetchingActiveLicense, trialInfo, activeLicense } =
+		useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { t } = useTranslation(['workspaceLocked']);
 
@@ -111,7 +112,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [updateCreditCard]);
 
@@ -131,10 +132,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 		});
 	};
 
-	const handleViewBilling = (): void => {
+	const handleViewBilling = (e?: React.MouseEvent): void => {
 		logEvent('Workspace Blocked: User Clicked View Billing', {});
 
-		history.push(ROUTES.BILLING);
+		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 
 	const renderCustomerStories = (
@@ -294,7 +295,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										type="link"
 										size="small"
 										role="button"
-										onClick={handleViewBilling}
+										onClick={(e): void => handleViewBilling(e)}
 									>
 										View Billing
 									</Button>
@@ -333,7 +334,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										<Typography.Title level={2}>
 											<div className="workspace-locked__title">Upgrade to Continue</div>
 										</Typography.Title>
-										<Typography.Paragraph className="workspace-locked__details">
+										<Typography.Text className="workspace-locked__details">
 											{t('upgradeNow')}
 											<br />
 											{t('yourDataIsSafe')}{' '}
@@ -341,7 +342,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>

@@ -1,9 +1,14 @@
 package global
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/types/globaltypes"
+)
 
 type Global interface {
-	GetConfig() Config
+	GetConfig(context.Context) *globaltypes.Config
 }
 
 type Handler interface {

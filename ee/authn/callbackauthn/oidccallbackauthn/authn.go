@@ -3,6 +3,7 @@ package oidccallbackauthn
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/authn"
@@ -150,7 +151,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 				// Some IDPs return a single group as a string instead of an array
 				groups = append(groups, g)
 			default:
-				a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", "type", fmt.Sprintf("%T", claimValue))
+				a.settings.Logger().WarnContext(ctx, "oidc: unsupported groups type", slog.String("type", fmt.Sprintf("%T", claimValue)))
 			}
 		}
 	}

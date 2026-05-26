@@ -7,14 +7,19 @@ export interface Props {
 }
 
 export interface UserResponse {
-	createdAt: number;
+	createdAt: number | string;
 	email: string;
 	id: string;
 	displayName: string;
 	orgId: string;
 	organization: string;
+	/**
+	 * @deprecated This will be removed in the future releases in favor of new AuthZ framework
+	 */
 	role: ROLES;
-	updatedAt?: number;
+	updatedAt?: number | string;
+	isRoot?: boolean;
+	status?: 'active' | 'pending_invite' | 'deleted';
 }
 export interface PayloadProps {
 	data: UserResponse;

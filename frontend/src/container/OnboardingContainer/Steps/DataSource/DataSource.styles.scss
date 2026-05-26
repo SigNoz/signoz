@@ -13,7 +13,7 @@ div[class*='-setup-instructions-container'] {
 			font-size: 18px;
 			display: flex;
 			align-items: center;
-			color: #e5e7eb;
+			color: var(--l2-foreground);
 			gap: 16px;
 			margin: 12px;
 		}
@@ -43,37 +43,31 @@ div[class*='-setup-instructions-container'] {
 }
 
 .intgeration-page-container {
-	background-color: var(--bg-ink-400);
-	border-color: var(--bg-slate-500);
+	background-color: var(--l2-background);
+	border-color: var(--l1-border);
 }
 
 .intgeration-page-container-text {
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 }
 
 .navigate-integrations-page-btn {
 	display: flex;
 	align-items: center;
-	color: var(--bg-vanilla-100);
-	background-color: var(--bg-slate-300);
+	color: var(--l1-foreground);
+	background-color: var(--l3-background);
 	box-shadow: none;
 	border: none;
 }
 
 .dataSourceName {
-	color: var(--bg-vanilla-100);
+	color: var(--l1-foreground);
 	font-weight: 600;
 	cursor: pointer;
 
 	display: flex;
 	align-items: center;
 	gap: 8px;
-}
-
-.lightMode {
-	.dataSourceName {
-		color: var(--bg-slate-500);
-	}
 }
 
 .supported-languages-container {

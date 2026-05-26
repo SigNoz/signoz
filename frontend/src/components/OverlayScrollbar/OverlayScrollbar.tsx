@@ -26,7 +26,7 @@ function OverlayScrollbar({
 					theme: isDarkMode ? 'os-theme-light' : 'os-theme-dark',
 				},
 				...(customOptions || {}),
-			} as PartialOptions),
+			}) as PartialOptions,
 		[customOptions, isDarkMode],
 	);
 

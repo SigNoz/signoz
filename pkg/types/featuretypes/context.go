@@ -5,12 +5,12 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-// A concrete wrapper around the openfeature.EvaluationContext
+// A concrete wrapper around the openfeature.EvaluationContext.
 type FlaggerEvaluationContext struct {
 	ctx openfeature.EvaluationContext
 }
 
-// Creates a new FlaggerEvaluationContext with given details
+// Creates a new FlaggerEvaluationContext with given details.
 func NewFlaggerEvaluationContext(orgID valuer.UUID) FlaggerEvaluationContext {
 	ctx := openfeature.NewTargetlessEvaluationContext(map[string]any{
 		"orgId": orgID.String(),

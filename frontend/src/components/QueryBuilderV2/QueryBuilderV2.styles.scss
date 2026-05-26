@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-builder-v2 {
 	display: flex;
 	flex-direction: row;
@@ -5,11 +7,17 @@
 
 	width: 100%;
 
-	border-bottom: 1px solid var(--bg-slate-400);
-	border-top: 1px solid var(--bg-slate-400);
+	border-bottom: 1px solid var(--l1-border);
+	border-top: 1px solid var(--l1-border);
 
-	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', sans-serif;
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		sans-serif;
 
 	border-right: none;
 	border-left: none;
@@ -72,8 +80,8 @@
 				width: 1px;
 				background: repeating-linear-gradient(
 					to bottom,
-					#1d212d,
-					#1d212d 4px,
+					var(--l1-border),
+					var(--l1-border) 4px,
 					transparent 4px,
 					transparent 8px
 				);
@@ -93,7 +101,7 @@
 					top: 12px;
 					width: 6px;
 					height: 6px;
-					border-left: 6px dotted #1d212d;
+					border-left: 6px dotted var(--l1-border);
 				}
 
 				/* Horizontal line pointing from vertical to the item */
@@ -106,8 +114,8 @@
 					height: 1px;
 					background: repeating-linear-gradient(
 						to right,
-						#1d212d,
-						#1d212d 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -149,7 +157,7 @@
 		width: 44px;
 		padding: 8px;
 
-		border-left: 1px solid var(--bg-slate-400);
+		border-left: 1px solid var(--l1-border);
 
 		.query-name {
 			display: flex;
@@ -163,10 +171,10 @@
 			border-radius: 0px 2px 2px 0px;
 
 			border-radius: 2px;
-			border: 1px solid rgba(242, 71, 105, 0.2);
-			background: rgba(242, 71, 105, 0.1);
+			border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+			background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
 
-			color: var(--Sakura-400, #f56c87);
+			color: var(--bg-sakura-400);
 			font-family: 'Space Mono';
 			font-size: 12px;
 			font-style: normal;
@@ -188,10 +196,10 @@
 			border-radius: 0px 2px 2px 0px;
 
 			border-radius: 2px;
-			border: 1px solid rgba(173, 127, 88, 0.2);
-			background: rgba(173, 127, 88, 0.1);
+			border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+			background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 
-			color: var(--Sienna-500, #ad7f58);
+			color: var(--bg-sienna-500);
 			font-family: 'Space Mono';
 			font-size: 12px;
 			font-style: normal;
@@ -233,7 +241,7 @@
 						top: 12px;
 						width: 6px;
 						height: 6px;
-						border-left: 6px dotted #1d212d;
+						border-left: 6px dotted var(--l1-border);
 					}
 
 					/* Horizontal line pointing from vertical to the item */
@@ -246,8 +254,8 @@
 						height: 1px;
 						background: repeating-linear-gradient(
 							to right,
-							#1d212d,
-							#1d212d 4px,
+							var(--l1-border),
+							var(--l1-border) 4px,
 							transparent 4px,
 							transparent 8px
 						);
@@ -274,8 +282,8 @@
 					.ant-input-group-addon {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
-						background: var(--bg-ink-300);
-						color: var(--bg-vanilla-400);
+						background: var(--l2-background);
+						color: var(--l2-foreground);
 						font-size: 12px;
 						font-weight: 300;
 					}
@@ -315,8 +323,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						#1d212d,
-						#1d212d 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -344,10 +352,14 @@
 		.options {
 			.query-name {
 				border-radius: 0px 2px 2px 0px !important;
-				border: 1px solid rgba(242, 71, 105, 0.2) !important;
-				background: rgba(242, 71, 105, 0.1) !important;
+				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
+				background: color-mix(
+					in srgb,
+					var(--bg-sakura-500) 10%,
+					transparent
+				) !important;
 
-				color: var(--Sakura-400, #f56c87) !important;
+				color: var(--bg-sakura-400) !important;
 				font-family: 'Space Mono';
 				font-size: 14px;
 				font-style: normal;
@@ -362,8 +374,8 @@
 
 			.formula-name {
 				border-radius: 0px 2px 2px 0px;
-				border: 1px solid rgba(173, 127, 88, 0.2);
-				background: rgba(173, 127, 88, 0.1);
+				border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+				background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 
 				font-family: 'Space Mono';
 				font-size: 14px;
@@ -383,8 +395,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						#1d212d,
-						#1d212d 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -400,9 +412,13 @@
 				min-width: 120px;
 
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-300, #16181d);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+
+				.ant-select-selection-item {
+					color: var(--l1-foreground);
+				}
 			}
 		}
 	}
@@ -441,148 +457,22 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d) !important;
-			background: var(--Ink-300, #16181d) !important;
+			border: 1px solid var(--l1-border) !important;
+			background: var(--l1-background) !important;
 			height: 34px !important;
 			box-sizing: border-box !important;
+
+			.ant-select-selection-item {
+				color: var(--l1-foreground);
+			}
 		}
 
 		.ant-select-arrow {
-			color: var(--bg-vanilla-400) !important;
+			color: var(--l2-foreground) !important;
 		}
 	}
 
 	.query-actions-dropdown {
 		cursor: pointer;
-	}
-}
-
-.lightMode {
-	.query-builder-v2 {
-		border-bottom: 1px solid var(--bg-vanilla-300);
-		border-top: 1px solid var(--bg-vanilla-300);
-
-		.qb-content-section {
-			.qb-elements-container {
-				&::after {
-					background: repeating-linear-gradient(
-						to bottom,
-						var(--bg-vanilla-300),
-						var(--bg-vanilla-300) 4px,
-						transparent 4px,
-						transparent 8px
-					);
-				}
-
-				.code-mirror-where-clause,
-				.query-aggregation-container,
-				.query-add-ons,
-				.metrics-aggregation-section-content,
-				.metrics-container {
-					&::before {
-						border-left: 6px dotted var(--bg-vanilla-300);
-					}
-
-					/* Horizontal line pointing from vertical to the item */
-					&::after {
-						background: repeating-linear-gradient(
-							to right,
-							var(--bg-vanilla-300),
-							var(--bg-vanilla-300) 4px,
-							transparent 4px,
-							transparent 8px
-						);
-					}
-				}
-			}
-		}
-
-		.query-names-section {
-			border-left: 1px solid var(--bg-vanilla-300);
-		}
-
-		.qb-formulas-container {
-			.qb-formula {
-				.formula-container {
-					.ant-col {
-						&::before {
-							border-left: 6px dotted var(--bg-vanilla-300);
-						}
-
-						/* Horizontal line pointing from vertical to the item */
-						&::after {
-							background: repeating-linear-gradient(
-								to right,
-								var(--bg-vanilla-300),
-								var(--bg-vanilla-300) 4px,
-								transparent 4px,
-								transparent 8px
-							);
-						}
-					}
-				}
-			}
-		}
-
-		.qb-footer {
-			.qb-footer-container {
-				.qb-add-new-query {
-					&::before {
-						background: repeating-linear-gradient(
-							to bottom,
-							var(--bg-vanilla-300),
-							var(--bg-vanilla-300) 4px,
-							transparent 4px,
-							transparent 8px
-						);
-					}
-				}
-			}
-		}
-
-		.qb-entity-options {
-			.options {
-				.formula-name {
-					&::before {
-						background: repeating-linear-gradient(
-							to bottom,
-							var(--bg-vanilla-300),
-							var(--bg-vanilla-300) 4px,
-							transparent 4px,
-							transparent 8px
-						);
-						left: 15px;
-					}
-				}
-			}
-
-			.query-data-source {
-				.ant-select-selector {
-					border: 1px solid var(--bg-vanilla-300) !important;
-					background: var(--bg-vanilla-100) !important;
-					box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1) !important;
-
-					.ant-select-selection-item {
-						color: var(--text-ink-400);
-					}
-				}
-			}
-		}
-
-		.qb-search-filter-container {
-			.ant-select-selector {
-				border: 1px solid var(--bg-vanilla-300) !important;
-				background: var(--bg-vanilla-100) !important;
-				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1) !important;
-
-				.ant-select-selection-item {
-					color: var(--text-ink-400);
-				}
-			}
-
-			.ant-select-arrow {
-				color: var(--bg-vanilla-400) !important;
-			}
-		}
 	}
 }

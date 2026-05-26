@@ -16,7 +16,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 14px 16px;
-		border-bottom: 1px solid var(--bg-slate-400);
+		border-bottom: 1px solid var(--l1-border);
 		&-right {
 			&,
 			& > div {
@@ -47,14 +47,14 @@
 		padding: 16px 16px 0 16px;
 		.funnel {
 			&-title {
-				color: var(--bg-vanilla-500);
+				color: var(--l2-foreground);
 				font-size: 16px;
 				font-weight: 500;
 				line-height: 24px; /* 150% */
 				letter-spacing: -0.08px;
 			}
 			&-description {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: 12px;
 				line-height: 18px; /* 150% */
 				letter-spacing: -0.06px;
@@ -73,13 +73,5 @@
 		flex-direction: column;
 		gap: 12px;
 		padding: 16px;
-	}
-}
-
-.lightMode {
-	.funnel-configuration {
-		&__header {
-			border-color: var(--bg-vanilla-300);
-		}
 	}
 }

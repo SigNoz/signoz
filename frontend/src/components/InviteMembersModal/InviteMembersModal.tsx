@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import { Style } from '@signozhq/design-tokens';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
-import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { ChevronDown, Plus, Trash2, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import './InviteMembersModal.styles.scss';
@@ -39,6 +42,8 @@ function InviteMembersModal({
 	onClose,
 	onComplete,
 }: InviteMembersModalProps): JSX.Element {
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+
 	const [rows, setRows] = useState<InviteRow[]>(() => [
 		EMPTY_ROW(),
 		EMPTY_ROW(),
@@ -184,7 +189,7 @@ function InviteMembersModal({
 					email: row.email.trim(),
 					name: '',
 					role: row.role as ROLES,
-					frontendBaseUrl: window.location.origin,
+					frontendBaseUrl: getBaseUrl(),
 				});
 			} else {
 				await inviteUsers({
@@ -192,32 +197,19 @@ function InviteMembersModal({
 						email: row.email.trim(),
 						name: '',
 						role: row.role,
-						frontendBaseUrl: window.location.origin,
+						frontendBaseUrl: getBaseUrl(),
 					})),
 				});
 			}
-			toast.success('Invites sent successfully', { richColors: true });
+			toast.success('Invites sent successfully', { position: 'top-right' });
 			resetAndClose();
 			onComplete?.();
 		} catch (err) {
-			const apiErr = err as APIError;
-			if (apiErr?.getHttpStatusCode() === 409) {
-				toast.error(
-					touchedRows.length === 1
-						? `${touchedRows[0].email} is already a member`
-						: 'Invite for one or more users already exists',
-					{ richColors: true },
-				);
-			} else {
-				const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-				toast.error(`Failed to send invites: ${errorMessage}`, {
-					richColors: true,
-				});
-			}
+			showErrorModal(err as APIError);
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [rows, onComplete, resetAndClose, validateAllUsers]);
+	}, [validateAllUsers, rows, resetAndClose, onComplete, showErrorModal]);
 
 	const touchedRows = rows.filter(isRowTouched);
 	const isSubmitDisabled = isSubmitting || touchedRows.length === 0;
@@ -234,7 +226,7 @@ function InviteMembersModal({
 			showCloseButton
 			width="wide"
 			className="invite-members-modal"
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			<div className="invite-members-modal__content">
 				<div className="invite-members-modal__table">
@@ -254,6 +246,8 @@ function InviteMembersModal({
 											value={row.email}
 											onChange={(e): void => updateEmail(row.id, e.target.value)}
 											className="team-member-email-input"
+											name={`invite-email-${row.id}`}
+											autoComplete="email"
 										/>
 										{emailValidity[row.id] === false && row.email.trim() !== '' && (
 											<span className="email-error-message">Invalid email address</span>
@@ -266,10 +260,7 @@ function InviteMembersModal({
 											className="team-member-role-select"
 											placeholder="Select roles"
 											suffixIcon={<ChevronDown size={14} />}
-											getPopupContainer={(triggerNode): HTMLElement =>
-												(triggerNode?.closest('.invite-members-modal') as HTMLElement) ||
-												document.body
-											}
+											getPopupContainer={popupContainer}
 										>
 											<Select.Option value="VIEWER">Viewer</Select.Option>
 											<Select.Option value="EDITOR">Editor</Select.Option>
@@ -281,7 +272,6 @@ function InviteMembersModal({
 											<Button
 												variant="ghost"
 												color="destructive"
-												className="remove-team-member-button"
 												onClick={(): void => removeRow(row.id)}
 												aria-label="Remove row"
 											>
@@ -296,14 +286,14 @@ function InviteMembersModal({
 				</div>
 
 				{(hasInvalidEmails || hasInvalidRoles) && (
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						icon={<CircleAlert size={12} />}
-						className="invite-team-members-error-callout"
-						description={getValidationErrorMessage()}
-					/>
+					<div className="invite-members-modal__error-callout">
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							title={getValidationErrorMessage()}
+						/>
+					</div>
 				)}
 			</div>
 
@@ -311,9 +301,8 @@ function InviteMembersModal({
 				<Button
 					variant="dashed"
 					color="secondary"
-					size="sm"
 					className="add-another-member-button"
-					prefixIcon={<Plus size={12} color={Style.L1_FOREGROUND} />}
+					prefix={<Plus size={12} color={Style.L1_FOREGROUND} />}
 					onClick={addRow}
 				>
 					Add another
@@ -324,7 +313,6 @@ function InviteMembersModal({
 						type="button"
 						variant="solid"
 						color="secondary"
-						size="sm"
 						onClick={resetAndClose}
 					>
 						<X size={12} />
@@ -334,9 +322,9 @@ function InviteMembersModal({
 					<Button
 						variant="solid"
 						color="primary"
-						size="sm"
 						onClick={handleSubmit}
 						disabled={isSubmitDisabled}
+						loading={isSubmitting}
 					>
 						{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
 					</Button>

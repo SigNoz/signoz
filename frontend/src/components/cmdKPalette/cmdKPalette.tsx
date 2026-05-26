@@ -8,10 +8,11 @@ import {
 	CommandItem,
 	CommandList,
 	CommandShortcut,
-} from '@signozhq/command';
+} from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
 import { useThemeMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
+import { ROLES as UserRole } from 'types/roles';
 
 import {
 	CmdAction,
@@ -33,7 +34,6 @@ export function getActiveSectionFromActions(
 	return null;
 }
 
-type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export function CmdKPalette({
 	userRole,
 }: {

@@ -1,6 +1,6 @@
 package servicetypesv1
 
-// Request mirrors the /services API input shape
+// Request mirrors the /services API input shape.
 type Request struct {
 	// Start and End are epoch nanoseconds encoded as strings
 	Start string          `json:"start"`
@@ -17,7 +17,7 @@ type TagFilterItem struct {
 	TagType      string    `json:"TagType"`
 }
 
-// ResponseItem mirrors model.ServiceItem
+// ResponseItem mirrors model.ServiceItem.
 type ResponseItem struct {
 	ServiceName  string      `json:"serviceName"`
 	Percentile99 float64     `json:"p99"`
@@ -35,7 +35,7 @@ type DataWarning struct {
 	TopLevelOps []string `json:"topLevelOps"`
 }
 
-// OperationsRequest is the common request for both top_operations and entry_point_operations
+// OperationsRequest is the common request for both top_operations and entry_point_operations.
 type OperationsRequest struct {
 	Start   string          `json:"start"`
 	End     string          `json:"end"`
@@ -44,7 +44,7 @@ type OperationsRequest struct {
 	Limit   int             `json:"limit,omitempty"`
 }
 
-// OperationItem is the common response item shape for both APIs
+// OperationItem is the common response item shape for both APIs.
 type OperationItem struct {
 	Name       string  `json:"name"`
 	P50        float64 `json:"p50"`

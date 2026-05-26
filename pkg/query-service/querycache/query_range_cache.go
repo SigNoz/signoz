@@ -7,10 +7,11 @@ import (
 	"sort"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
@@ -292,7 +293,7 @@ func (q *queryCache) storeMergedData(orgID valuer.UUID, cacheKey string, mergedD
 	cacheableSeriesData := CacheableSeriesData{Series: mergedData}
 	err := q.cache.Set(context.TODO(), orgID, cacheKey, &cacheableSeriesData, 0)
 	if err != nil {
-		slog.Error("error storing merged data", "error", err)
+		slog.Error("error storing merged data", errors.Attr(err))
 	}
 }
 

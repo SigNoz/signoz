@@ -129,8 +129,8 @@ func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sort
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
 	var clickHouseQuery string
 	var conditions []string
-	var argCount int = 0
-	var selectString string = "fingerprint, any(labels)"
+	var argCount = 0
+	var selectString = "fingerprint, any(labels)"
 	if subQuery {
 		argCount = 1
 		selectString = "fingerprint"
@@ -143,10 +143,7 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 	conditions = append(conditions, "temporality IN ['Cumulative', 'Unspecified']")
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
+	normalized := !constants.IsDotMetricsEnabled
 
 	conditions = append(conditions, fmt.Sprintf("__normalized = %v", normalized))
 

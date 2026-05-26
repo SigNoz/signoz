@@ -2,6 +2,7 @@ package configflagger
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -34,7 +35,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "boolean")
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", slog.String("name", name), slog.String("kind", "boolean"))
 				continue
 			}
 			return nil, err
@@ -52,7 +53,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "string")
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", slog.String("name", name), slog.String("kind", "string"))
 				continue
 			}
 			return nil, err
@@ -70,7 +71,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "float")
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", slog.String("name", name), slog.String("kind", "float"))
 				continue
 			}
 			return nil, err
@@ -88,7 +89,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "integer")
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", slog.String("name", name), slog.String("kind", "integer"))
 				continue
 			}
 			return nil, err
@@ -106,7 +107,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, c flagger.Config, reg
 		feature, _, err := registry.GetByString(name)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
-				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", "name", name, "kind", "object")
+				settings.Logger().WarnContext(ctx, "skipping unknown feature flag", slog.String("name", name), slog.String("kind", "object"))
 				continue
 			}
 			return nil, err

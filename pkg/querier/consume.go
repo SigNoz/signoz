@@ -12,16 +12,20 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
-	// to be considered as final result (or target)
+	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -30,7 +34,7 @@ var (
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData
+// * Distribution- *qbtypes.DistributionData.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -69,7 +73,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
-	stepMs := uint64(step.Duration.Milliseconds())
+	stepMs := uint64(step.Milliseconds())
 
 	// Helper function to check if a timestamp represents a partial value
 	isPartialValue := func(timestamp int64) bool {
@@ -393,11 +397,16 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-			// Post-process JSON columns: normalize into String value
+			// Post-process JSON columns: unmarshal bytes into map[string]any
 			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
 				switch x := val.(type) {
 				case []byte:
-					val = string(x)
+					var m map[string]any
+					err := sonic.Unmarshal(x, &m)
+					if err != nil {
+						return nil, errors.WrapInternalf(err, CodeFailUnmarshalJSONColumn, "failed to unmarshal JSON column %s", name)
+					}
+					val = m
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}
@@ -431,7 +440,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// numericAsFloat converts numeric types to float64 efficiently
+// numericAsFloat converts numeric types to float64 efficiently.
 func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:

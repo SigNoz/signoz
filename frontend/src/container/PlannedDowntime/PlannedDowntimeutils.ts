@@ -1,21 +1,19 @@
 import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { DefaultOptionType } from 'antd/es/select';
-import createDowntimeSchedule from 'api/plannedDowntime/createDowntimeSchedule';
-import { DeleteSchedulePayloadProps } from 'api/plannedDowntime/deleteDowntimeSchedule';
-import {
-	DowntimeSchedules,
-	Recurrence,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
-import updateDowntimeSchedule, {
-	DowntimeScheduleUpdatePayload,
-	PayloadProps,
-} from 'api/plannedDowntime/updateDowntimeSchedule';
-import { showErrorNotification } from 'components/ExplorerCard/utils';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import type {
+	DeleteDowntimeScheduleByIDPathParameters,
+	RenderErrorResponseDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
+import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { isEmpty, isEqual } from 'lodash-es';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import dayjs, { Dayjs } from 'dayjs';
+import { isEmpty } from 'lodash-es';
+import APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
 
@@ -40,14 +38,20 @@ export const getDuration = (
 	return `${hours} hours`;
 };
 
-export const formatDateTime = (dateTimeString?: string | null): string => {
+export const formatDateTime = (
+	dateTimeString?: string | Dayjs | null,
+	timezone?: string,
+): string => {
 	if (!dateTimeString) {
 		return 'N/A';
 	}
 
-	return dayjs(dateTimeString.slice(0, 19)).format(
-		DATE_TIME_FORMATS.MONTH_DATETIME,
-	);
+	let dt = dayjs(dateTimeString);
+	if (timezone) {
+		dt = dt.tz(timezone);
+	}
+
+	return dt.format(DATE_TIME_FORMATS.MONTH_DATETIME);
 };
 
 export const getAlertOptionsFromIds = (
@@ -61,47 +65,53 @@ export const getAlertOptionsFromIds = (
 			alertIds?.includes(alert.value as string),
 	);
 
-export const recurrenceInfo = (recurrence?: Recurrence | null): string => {
+export const recurrenceInfo = (
+	recurrence?: AlertmanagertypesRecurrenceDTO | null,
+	timezone?: string,
+): string => {
 	if (!recurrence) {
 		return 'No';
 	}
 
 	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
 
-	const formattedStartTime = startTime ? formatDateTime(startTime) : '';
-	const formattedEndTime = endTime ? `to ${formatDateTime(endTime)}` : '';
+	const formattedStartTime = startTime
+		? formatDateTime(startTime, timezone)
+		: '';
+	const formattedEndTime = endTime
+		? `to ${formatDateTime(endTime, timezone)}`
+		: '';
 	const weeklyRepeatString = repeatOn ? `on ${repeatOn.join(', ')}` : '';
 	const durationString = duration ? `- Duration: ${duration}` : '';
 
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defautlInitialValues: Partial<
-	DowntimeSchedules & { editMode: boolean }
-> = {
-	name: '',
-	description: '',
-	schedule: {
-		timezone: '',
-		endTime: '',
-		recurrence: null,
-		startTime: '',
-	},
-	alertIds: [],
-	createdAt: '',
-	createdBy: '',
-	editMode: false,
-};
+export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> =
+	{
+		name: '',
+		description: '',
+		schedule: {
+			timezone: '',
+			endTime: undefined,
+			recurrence: undefined,
+			startTime: undefined,
+		},
+		alertIds: [],
+		createdAt: undefined,
+		createdBy: undefined,
+	};
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
-		DeleteSchedulePayloadProps,
-		Error,
-		number
+		void,
+		ErrorType<RenderErrorResponseDTO>,
+		{ pathParams: DeleteDowntimeScheduleByIDPathParameters }
 	>;
 	notifications: NotificationInstance;
+	showErrorModal: (error: APIError) => void;
 	refetchAllSchedules: VoidFunction;
-	deleteId?: number;
+	deleteId?: string;
 	hideDeleteDowntimeScheduleModal: () => void;
 	clearSearch: () => void;
 };
@@ -113,38 +123,31 @@ export const deleteDowntimeHandler = ({
 	hideDeleteDowntimeScheduleModal,
 	clearSearch,
 	notifications,
+	showErrorModal,
 }: DeleteDowntimeScheduleProps): void => {
 	if (!deleteId) {
-		const errorMsg = new Error('Something went wrong');
 		console.error('Unable to delete, please provide correct deleteId');
-		showErrorNotification(notifications, errorMsg);
+		notifications.error({ message: 'Something went wrong' });
 	} else {
-		deleteDowntimeScheduleAsync(deleteId, {
-			onSuccess: () => {
-				hideDeleteDowntimeScheduleModal();
-				clearSearch();
-				notifications.success({
-					message: 'Downtime schedule Deleted Successfully',
-				});
-				refetchAllSchedules();
+		deleteDowntimeScheduleAsync(
+			{ pathParams: { id: String(deleteId) } },
+			{
+				onSuccess: () => {
+					hideDeleteDowntimeScheduleModal();
+					clearSearch();
+					notifications.success({
+						message: 'Downtime schedule Deleted Successfully',
+					});
+					refetchAllSchedules();
+				},
+				onError: (err) => {
+					showErrorModal(
+						convertToApiError(err as AxiosError<RenderErrorResponseDTO>) as APIError,
+					);
+				},
 			},
-			onError: (err) => {
-				showErrorNotification(notifications, err);
-			},
-		});
+		);
 	}
-};
-
-export const createEditDowntimeSchedule = async (
-	props: DowntimeScheduleUpdatePayload,
-): Promise<
-	| SuccessResponse<PayloadProps>
-	| ErrorResponse<{ code: string; message: string } | string>
-> => {
-	if (props.id) {
-		return updateDowntimeSchedule({ ...props });
-	}
-	return createDowntimeSchedule({ ...props.data });
 };
 
 export const recurrenceOptions = {
@@ -212,73 +215,6 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 	recurrenceOptions.monthly,
 ];
 
-export const getRecurrenceOptionFromValue = (
-	value?: string | Option | null,
-): Option | null | undefined => {
-	if (!value) {
-		return null;
-	}
-	if (typeof value === 'string') {
-		return Object.values(recurrenceOptions).find(
-			(option) => option.value === value,
-		);
-	}
-	return value;
-};
-
-export const getEndTime = ({
-	kind,
-	schedule,
-}: Partial<
-	DowntimeSchedules & {
-		editMode: boolean;
-	}
->): string | dayjs.Dayjs => {
-	if (kind === 'fixed') {
-		return schedule?.endTime || '';
-	}
-
-	return schedule?.recurrence?.endTime || '';
-};
-
 export const isScheduleRecurring = (
-	schedule?: DowntimeSchedules['schedule'],
+	schedule?: AlertmanagertypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
-
-function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {
-	const sign = offsetMinutes >= 0 ? '+' : '-';
-	const absOffset = Math.abs(offsetMinutes);
-	const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
-	const minutes = String(absOffset % 60).padStart(2, '0');
-	return `${sign}${hours}:${minutes}`;
-}
-
-export function formatWithTimezone(
-	dateValue?: string | dayjs.Dayjs,
-	timezone?: string,
-): string {
-	const parsedDate =
-		typeof dateValue === 'string' ? dateValue : dateValue?.format();
-
-	// Get the target timezone offset
-	const targetOffset = convertUtcOffsetToTimezoneOffset(
-		dayjs(dateValue).tz(timezone).utcOffset(),
-	);
-
-	return `${parsedDate?.substring(0, 19)}${targetOffset}`;
-}
-
-export function handleTimeConversion(
-	dateValue: string | dayjs.Dayjs,
-	timezoneInit?: string,
-	timezone?: string,
-	shouldKeepLocalTime?: boolean,
-): string {
-	const timezoneChanged = !isEqual(timezoneInit, timezone);
-	const initialTime = dayjs(dateValue).tz(timezoneInit);
-
-	const formattedTime = formatWithTimezone(initialTime, timezone);
-	return timezoneChanged
-		? formattedTime
-		: dayjs(dateValue).tz(timezone, shouldKeepLocalTime).format();
-}

@@ -18,10 +18,23 @@
 }
 
 .live-logs-list {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+
+	.ant-card,
+	.ant-card-body {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+		flex-direction: column;
+	}
+
 	.live-logs-list-loading {
 		padding: 16px;
 		text-align: center;
-		color: var(--text-vanilla-100);
+		color: var(--l1-foreground);
 	}
 
 	.live-logs-list-loading {
@@ -36,19 +49,13 @@
 			align-items: flex-start;
 			flex-direction: column;
 
+			.ant-typography {
+				color: var(--l1-foreground);
+			}
+
 			.loading-gif {
 				height: 72px;
 				margin-left: -24px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.live-logs-list-loading {
-		.loading-live-logs-content {
-			.ant-typography {
-				color: var(--text-ink-500);
 			}
 		}
 	}

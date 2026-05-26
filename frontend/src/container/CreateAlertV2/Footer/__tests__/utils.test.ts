@@ -401,15 +401,16 @@ describe('Footer utils', () => {
 
 	describe('buildCreateThresholdAlertRulePayload', () => {
 		const mockCreateAlertContextState = createMockAlertContextState();
-		const INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS: BuildCreateAlertRulePayloadArgs = {
-			basicAlertState: mockCreateAlertContextState.alertState,
-			thresholdState: mockCreateAlertContextState.thresholdState,
-			advancedOptions: mockCreateAlertContextState.advancedOptions,
-			evaluationWindow: mockCreateAlertContextState.evaluationWindow,
-			notificationSettings: mockCreateAlertContextState.notificationSettings,
-			query: initialQueriesMap.metrics,
-			alertType: mockCreateAlertContextState.alertType,
-		};
+		const INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS: BuildCreateAlertRulePayloadArgs =
+			{
+				basicAlertState: mockCreateAlertContextState.alertState,
+				thresholdState: mockCreateAlertContextState.thresholdState,
+				advancedOptions: mockCreateAlertContextState.advancedOptions,
+				evaluationWindow: mockCreateAlertContextState.evaluationWindow,
+				notificationSettings: mockCreateAlertContextState.notificationSettings,
+				query: initialQueriesMap.metrics,
+				alertType: mockCreateAlertContextState.alertType,
+			};
 
 		it('verify buildCreateThresholdAlertRulePayload', () => {
 			const props = buildCreateThresholdAlertRulePayload(
@@ -474,9 +475,9 @@ describe('Footer utils', () => {
 						spec: [
 							{
 								channels: [],
-								matchType: '1',
+								matchType: 'at_least_once',
 								name: 'critical',
-								op: '1',
+								op: 'above',
 								target: 0,
 								targetUnit: '',
 							},
@@ -520,5 +521,33 @@ describe('Footer utils', () => {
 			expect(props.condition.compositeQuery.queryType).toBe('promql');
 			expect(props.ruleType).toBe('promql_rule');
 		});
+
+		// Backward compatibility: a rule loaded with a legacy op/matchType
+		// serialization ("1", ">", "eq", "above_or_equal", ...) must round-trip
+		// back to the backend unchanged when the user hasn't touched those
+		// fields. If the submit payload silently rewrites them, existing rules
+		// would drift away from their persisted form on every edit.
+		it.each([
+			['numeric', '1', '1'],
+			['symbol', '>', 'at_least_once'],
+			['literal', 'above', 'at_least_once'],
+			['short', 'eq', 'avg'],
+			['UI-unexposed', 'above_or_equal', 'at_least_once'],
+		])(
+			'round-trips %s op/matchType unchanged through the submit payload (%s / %s)',
+			(_desc, op, matchType) => {
+				const args: BuildCreateAlertRulePayloadArgs = {
+					...INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS,
+					thresholdState: {
+						...INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS.thresholdState,
+						operator: op,
+						matchType,
+					},
+				};
+				const props = buildCreateThresholdAlertRulePayload(args);
+				expect(props.condition.thresholds?.spec[0].op).toBe(op);
+				expect(props.condition.thresholds?.spec[0].matchType).toBe(matchType);
+			},
+		);
 	});
 });

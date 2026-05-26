@@ -2,7 +2,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import InfraMonitoringHosts from 'container/InfraMonitoringHosts';
 import InfraMonitoringK8s from 'container/InfraMonitoringK8s';
-import { Inbox } from 'lucide-react';
+import { Inbox } from '@signozhq/icons';
 
 export const Hosts: TabRoutes = {
 	Component: (): JSX.Element => <InfraMonitoringHosts />,

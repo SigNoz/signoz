@@ -3,7 +3,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, PopoverProps } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { BookOpenText, ChevronsDown, TriangleAlert } from 'lucide-react';
+import { BookOpenText, ChevronsDown, TriangleAlert } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { Warning } from 'types/api';
 

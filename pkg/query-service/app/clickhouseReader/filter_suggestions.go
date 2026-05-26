@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
@@ -78,7 +79,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		)
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
-			r.logger.ErrorContext(ctx, "could not find attribute values for creating example query", "error", err)
+			r.logger.ErrorContext(ctx, "could not find attribute values for creating example query", errorsV2.Attr(err))
 		} else {
 
 			// add example queries for as many attributes as possible.
@@ -183,7 +184,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 
 	rows, err := r.db.Query(ctx, query, tagKeyQueryArgs...)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "couldn't query attrib values for suggestions", "error", err)
+		r.logger.ErrorContext(ctx, "couldn't query attrib values for suggestions", errorsV2.Attr(err))
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't query attrib values for suggestions: %w", err,
 		))

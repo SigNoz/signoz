@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
-	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
+	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var opAmpServer *Server
@@ -72,7 +74,7 @@ func (srv *Server) Start(listener string) error {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
 		if err != nil {
 			srv.logger.Error(
-				"could not roll out latest config recommendation to connected agents", "error", err,
+				"could not roll out latest config recommendation to connected agents", errors.Attr(err),
 			)
 		}
 	})
@@ -115,7 +117,7 @@ func (srv *Server) OnMessage(ctx context.Context, conn types.Connection, msg *pr
 	// agents sends the effective config when we processStatusUpdate.
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID.String(), conn, orgID)
 	if err != nil {
-		srv.logger.Error("failed to find or create agent", "agent_id", agentID.String(), "error", err)
+		srv.logger.Error("failed to find or create agent", "agent_id", agentID.String(), errors.Attr(err))
 
 		// Return error response according to OpAMP protocol
 		return &protobufs.ServerToAgent{

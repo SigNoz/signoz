@@ -1,20 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { getMetricsListFilterValues } from 'api/metricsExplorer/getMetricsListFilterValues';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	GetK8sEntityToAggregateAttribute,
-	K8sCategory,
+	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useGetMetricsListFilterKeys } from 'hooks/metricsExplorer/useGetMetricsListFilterKeys';
 import useDebounceValue from 'hooks/useDebounce';
 import { cloneDeep, isEqual, uniqWith, unset } from 'lodash-es';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -54,7 +52,7 @@ export const useFetchKeysAndValues = (
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
-	entity?: K8sCategory | null,
+	entity?: InfraMonitoringEntity | null,
 	isMetricsExplorer?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
@@ -152,21 +150,8 @@ export const useFetchKeysAndValues = (
 		},
 	);
 
-	const {
-		data: metricsListFilterKeysData,
-		isFetching: isFetchingMetricsListFilterKeys,
-		status: fetchingMetricsListFilterKeysStatus,
-	} = useGetMetricsListFilterKeys(
-		{
-			searchText: searchKey,
-		},
-		{
-			enabled: isMetricsExplorer && isQueryEnabled && !shouldUseSuggestions,
-			queryKey: [searchKey],
-		},
-	);
-
 	function isAttributeValuesResponse(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		payload: any,
 	): payload is IAttributeValuesResponse {
 		return (
@@ -177,14 +162,6 @@ export const useFetchKeysAndValues = (
 				payload.numberAttributeValues === null ||
 				Array.isArray(payload.boolAttributeValues) ||
 				payload.boolAttributeValues === null)
-		);
-	}
-
-	function isMetricsListFilterValuesData(
-		payload: any,
-	): payload is { filterValues: string[] } {
-		return (
-			payload && 'filterValues' in payload && Array.isArray(payload.filterValues)
 		);
 	}
 
@@ -227,19 +204,10 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
-			} else if (isMetricsExplorer) {
-				const response = await getMetricsListFilterValues({
-					searchText: searchKey,
-					filterKey: filterAttributeKey?.key ?? tagKey,
-					filterAttributeKeyDataType:
-						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
-					limit: 10,
-				});
-				payload = response.payload?.data;
 			} else {
 				const response = await getAttributesValues({
 					aggregateOperator: query.aggregateOperator || '',
@@ -250,24 +218,17 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
 			}
 
-			if (payload) {
-				if (isAttributeValuesResponse(payload)) {
-					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
-					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
-					setResults(key ? payload[key] || [] : []);
-					return;
-				}
-
-				if (isMetricsExplorer && isMetricsListFilterValuesData(payload)) {
-					setResults(payload.filterValues || []);
-					return;
-				}
+			if (payload && isAttributeValuesResponse(payload)) {
+				const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				setResults(key ? payload[key] || [] : []);
+				return;
 			}
 		} catch (e) {
 			console.error(e);
@@ -304,32 +265,6 @@ export const useFetchKeysAndValues = (
 			setKeys([]);
 		}
 	}, [data?.payload?.attributeKeys, status]);
-
-	useEffect(() => {
-		if (
-			isMetricsExplorer &&
-			fetchingMetricsListFilterKeysStatus === 'success' &&
-			!isFetchingMetricsListFilterKeys &&
-			metricsListFilterKeysData?.payload?.data?.attributeKeys
-		) {
-			setKeys(metricsListFilterKeysData.payload.data.attributeKeys);
-			setSourceKeys((prevState) =>
-				uniqWith(
-					[
-						...(metricsListFilterKeysData.payload.data.attributeKeys ?? []),
-						...prevState,
-					],
-					isEqual,
-				),
-			);
-		}
-	}, [
-		metricsListFilterKeysData?.payload?.data?.attributeKeys,
-		fetchingMetricsListFilterKeysStatus,
-		isMetricsExplorer,
-		metricsListFilterKeysData,
-		isFetchingMetricsListFilterKeys,
-	]);
 
 	useEffect(() => {
 		if (

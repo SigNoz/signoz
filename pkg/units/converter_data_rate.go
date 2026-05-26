@@ -1,7 +1,7 @@
 package units
 
 const (
-	// base 10 (SI prefixes)
+	// base 10 (SI prefixes).
 	BitPerSecond      float64 = 1e0
 	KilobitPerSecond          = BitPerSecond * 1e3
 	MegabitPerSecond          = BitPerSecond * 1e6
@@ -22,7 +22,7 @@ const (
 	ZettabytePerSecond = BytePerSecond * 1e21
 	YottabytePerSecond = BytePerSecond * 1e24
 
-	// base 2 (IEC prefixes)
+	// base 2 (IEC prefixes).
 	KibibitPerSecond = BitPerSecond * 1024
 	MebibitPerSecond = KibibitPerSecond * 1024
 	GibibitPerSecond = MebibitPerSecond * 1024
@@ -42,7 +42,7 @@ const (
 	YobibytePerSecond = ZebibytePerSecond * 1024
 )
 
-// dataRateConverter is a Converter implementation for data rates
+// dataRateConverter is a Converter implementation for data rates.
 type dataRateConverter struct {
 }
 
@@ -59,7 +59,7 @@ func (*dataRateConverter) Name() string {
 // kibi = Ki, mebi = Mi, gibi = Gi, tebi = Ti, pibi = Pi
 // kilo = k, mega = M, giga = G, tera = T, peta = P
 // exa = E, zetta = Z, yotta = Y
-// byte = By, bit = bit
+// byte = By, bit = bit.
 func FromDataRateUnit(u Unit) float64 {
 	// See https://github.com/SigNoz/signoz/blob/5a81f5f90b34845f5b4b3bdd46acf29d04bf3987/frontend/src/container/NewWidget/RightContainer/dataFormatCategories.ts#L62-L85
 	switch u {

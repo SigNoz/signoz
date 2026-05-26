@@ -1,12 +1,18 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { authzCheck } from 'api/generated/services/authz';
 import type {
-	AuthtypesObjectDTO,
+	CoretypesObjectDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { AuthZCheckResponse, BrandedPermission, UseAuthZResult } from './types';
+import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
+import {
+	AuthZCheckResponse,
+	BrandedPermission,
+	UseAuthZOptions,
+	UseAuthZResult,
+} from './types';
 import {
 	gettableTransactionToPermission,
 	permissionToTransactionDto,
@@ -14,8 +20,6 @@ import {
 
 let ctx: Promise<AuthZCheckResponse> | null;
 let pendingPermissions: BrandedPermission[] = [];
-const SINGLE_FLIGHT_WAIT_TIME_MS = 50;
-const AUTHZ_CACHE_TIME = 20_000;
 
 function dispatchPermission(
 	permission: BrandedPermission,
@@ -30,7 +34,7 @@ function dispatchPermission(
 		});
 
 		setTimeout(() => {
-			const copiedPermissions = pendingPermissions.slice();
+			const copiedPermissions = [...pendingPermissions];
 			pendingPermissions = [];
 			ctx = null;
 
@@ -46,9 +50,9 @@ async function fetchManyPermissions(
 ): Promise<AuthZCheckResponse> {
 	const payload: AuthtypesTransactionDTO[] = permissions.map((permission) => {
 		const dto = permissionToTransactionDto(permission);
-		const object: AuthtypesObjectDTO = {
+		const object: CoretypesObjectDTO = {
 			resource: {
-				name: dto.object.resource.name,
+				kind: dto.object.resource.kind,
 				type: dto.object.resource.type,
 			},
 			selector: dto.object.selector,
@@ -70,7 +74,12 @@ async function fetchManyPermissions(
 	}, {} as AuthZCheckResponse);
 }
 
-export function useAuthZ(permissions: BrandedPermission[]): UseAuthZResult {
+export function useAuthZ(
+	permissions: BrandedPermission[],
+	options?: UseAuthZOptions,
+): UseAuthZResult {
+	const { enabled } = options ?? { enabled: true };
+
 	const queryResults = useQueries(
 		permissions.map((permission) => {
 			return {
@@ -80,6 +89,7 @@ export function useAuthZ(permissions: BrandedPermission[]): UseAuthZResult {
 				refetchIntervalInBackground: false,
 				refetchOnWindowFocus: false,
 				refetchOnReconnect: true,
+				enabled,
 				queryFn: async (): Promise<AuthZCheckResponse> => {
 					const response = await dispatchPermission(permission);
 
@@ -93,9 +103,15 @@ export function useAuthZ(permissions: BrandedPermission[]): UseAuthZResult {
 		}),
 	);
 
-	const isLoading = useMemo(() => queryResults.some((q) => q.isLoading), [
-		queryResults,
-	]);
+	const isLoading = useMemo(
+		() => queryResults.some((q) => q.isLoading),
+		[queryResults],
+	);
+	const isFetching = useMemo(
+		() => queryResults.some((q) => q.isFetching),
+		[queryResults],
+	);
+
 	const error = useMemo(
 		() =>
 			!isLoading
@@ -121,9 +137,17 @@ export function useAuthZ(permissions: BrandedPermission[]): UseAuthZResult {
 		}, {} as AuthZCheckResponse);
 	}, [isLoading, error, queryResults]);
 
+	const refetchPermissions = useCallback(() => {
+		for (const query of queryResults) {
+			query.refetch();
+		}
+	}, [queryResults]);
+
 	return {
 		isLoading,
+		isFetching,
 		error,
 		permissions: data ?? null,
+		refetchPermissions,
 	};
 }

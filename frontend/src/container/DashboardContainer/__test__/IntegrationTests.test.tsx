@@ -47,13 +47,14 @@ const mockDashboard = {
 };
 
 // Mock the dashboard provider with stable functions to prevent infinite loops
-const mockSetSelectedDashboard = jest.fn();
+const mockSetDashboardData = jest.fn();
 const mockUpdateLocalStorageDashboardVariables = jest.fn();
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
-		selectedDashboard: mockDashboard,
-		setSelectedDashboard: mockSetSelectedDashboard,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
+		dashboardData: mockDashboard,
+		setDashboardData: mockSetDashboardData,
+		updateLocalStorageDashboardVariables:
+			mockUpdateLocalStorageDashboardVariables,
 	}),
 }));
 

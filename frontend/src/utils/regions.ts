@@ -27,6 +27,11 @@ const regions: Region[] = [
 				displayName: 'Canada (Central)',
 			},
 			{ id: 'ca-west-1', name: 'ca-west-1', displayName: 'Canada (West)' },
+			{
+				id: 'mx-central-1',
+				name: 'mx-central-1',
+				displayName: 'Mexico (Central)',
+			},
 		],
 	},
 	{
@@ -44,6 +49,11 @@ const regions: Region[] = [
 				id: 'ap-east-1',
 				name: 'ap-east-1',
 				displayName: 'Asia Pacific (Hong Kong)',
+			},
+			{
+				id: 'ap-east-2',
+				name: 'ap-east-2',
+				displayName: 'Asia Pacific (Taipei)',
 			},
 			{
 				id: 'ap-northeast-1',
@@ -93,7 +103,17 @@ const regions: Region[] = [
 			{
 				id: 'ap-southeast-5',
 				name: 'ap-southeast-5',
-				displayName: 'Asia Pacific (Auckland)',
+				displayName: 'Asia Pacific (Malaysia)',
+			},
+			{
+				id: 'ap-southeast-6',
+				name: 'ap-southeast-6',
+				displayName: 'Asia Pacific (New Zealand)',
+			},
+			{
+				id: 'ap-southeast-7',
+				name: 'ap-southeast-7',
+				displayName: 'Asia Pacific (Thailand)',
 			},
 		],
 	},

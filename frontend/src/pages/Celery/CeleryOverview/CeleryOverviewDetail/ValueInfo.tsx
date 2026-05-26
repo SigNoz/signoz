@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { FileSearchOutlined } from '@ant-design/icons';
+import { FileSearch } from '@signozhq/icons';
 import { Button, Card, Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
@@ -156,7 +156,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -191,7 +191,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {
@@ -239,7 +239,7 @@ export default function ValueInfo({
 					</div>
 					<Button
 						type="primary"
-						icon={<FileSearchOutlined />}
+						icon={<FileSearch size="md" />}
 						className="trace-button"
 						disabled={isLoading}
 						onClick={(): void => {

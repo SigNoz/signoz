@@ -1,78 +1,66 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { Space } from 'antd';
-import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useListRules } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
-import { isUndefined } from 'lodash-es';
 
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import ListAlert from './ListAlert';
 
 function ListAlertRules(): JSX.Element {
 	const { t } = useTranslation('common');
-	const { data, isError, isLoading, refetch, status } = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
+	const { data, isError, isLoading, refetch, error } = useListRules({
+		query: { cacheTime: 0 },
 	});
 
+	const rules = data?.data ?? [];
+	const hasLoaded = !isLoading && data !== undefined;
 	const logEventCalledRef = useRef(false);
 
 	const { notifications } = useNotifications();
 
+	const apiError = useMemo(
+		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
+		[error],
+	);
+
 	useEffect(() => {
-		if (!logEventCalledRef.current && !isUndefined(data?.payload)) {
+		if (!logEventCalledRef.current && hasLoaded) {
 			logEvent('Alert: List page visited', {
-				number: data?.payload?.length,
+				number: rules.length,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [data?.payload]);
+	}, [hasLoaded, rules.length]);
 
 	useEffect(() => {
-		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {
+		if (isError) {
 			notifications.error({
-				message: data?.error || t('something_went_wrong'),
+				message: apiError?.getErrorMessage() || t('something_went_wrong'),
 			});
 		}
-	}, [data?.error, data?.statusCode, status, t, notifications]);
+	}, [isError, apiError, t, notifications]);
 
-	// api failed to load the data
 	if (isError) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
+		return <div>{apiError?.getErrorMessage() || t('something_went_wrong')}</div>;
 	}
 
-	// api is successful but error is present
-	if (status === 'success' && data.statusCode >= 400) {
-		return (
-			<ListAlert
-				{...{
-					allAlertRules: [],
-					refetch,
-				}}
-			/>
-		);
-	}
-
-	if (status === 'success' && !data.payload?.length) {
-		return <AlertsEmptyState />;
-	}
-
-	// in case of loading
-	if (isLoading || !data?.payload) {
+	if (isLoading || !data) {
 		return <Spinner height="75vh" tip="Loading Rules..." />;
+	}
+
+	if (rules.length === 0) {
+		return <AlertsEmptyState />;
 	}
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<ListAlert
-				{...{
-					allAlertRules: data.payload,
-					refetch,
-				}}
-			/>
+			<ListAlert allAlertRules={rules} refetch={refetch} />
 		</Space>
 	);
 }

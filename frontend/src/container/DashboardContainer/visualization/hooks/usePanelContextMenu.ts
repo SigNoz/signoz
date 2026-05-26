@@ -21,11 +21,13 @@ interface UseTimeSeriesContextMenuParams {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	enableDrillDown?: boolean;
 }
 
 export const usePanelContextMenu = ({
 	widget,
 	queryResponse,
+	enableDrillDown = false,
 }: UseTimeSeriesContextMenuParams): {
 	coordinates: { x: number; y: number } | null;
 	popoverPosition: PopoverPosition | null;
@@ -61,6 +63,9 @@ export const usePanelContextMenu = ({
 
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
+			if (!enableDrillDown) {
+				return;
+			}
 			const [
 				xValue,
 				_yvalue,
@@ -104,17 +109,22 @@ export const usePanelContextMenu = ({
 			}
 
 			if (data && data?.record?.queryName) {
-				onClick(data.coord, { ...data.record, label: data.label, timeRange });
+				onClick(data.coord, {
+					...data.record,
+					label: data.label,
+					seriesColor: data.seriesColor,
+					timeRange,
+				});
 			}
 		},
-		[onClick, queryResponse],
+		[enableDrillDown, onClick, queryResponse],
 	);
 
 	return {
 		coordinates,
 		popoverPosition,
 		onClose,
-		menuItemsConfig,
+		menuItemsConfig: enableDrillDown ? menuItemsConfig : {},
 		clickHandlerWithContextMenu,
 	};
 };

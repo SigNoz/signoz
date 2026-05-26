@@ -5,11 +5,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/uptrace/bun"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun"
 )
 
 type provider struct {
@@ -79,7 +80,7 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
@@ -240,4 +241,3 @@ func isSQLiteIdentifierChar(ch byte) bool {
 		(ch >= '0' && ch <= '9') ||
 		ch == '_'
 }
-

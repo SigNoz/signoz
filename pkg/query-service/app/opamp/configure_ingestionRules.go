@@ -5,12 +5,13 @@ import (
 	"crypto/sha256"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
-	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	model "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
+	"github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig"
 )
 
 var (
@@ -53,7 +54,7 @@ func UpsertControlProcessors(ctx context.Context, signal string,
 	for _, agent := range agents {
 		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
-			slog.Error("failed to push ingestion rules config to agent", "agent_id", agent.AgentID, "error", err)
+			slog.Error("failed to push ingestion rules config to agent", "agent_id", agent.AgentID, errors.Attr(err))
 			continue
 		}
 
@@ -82,7 +83,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 	// add ingestion control spec
 	err = makeIngestionControlSpec(agentConf, Signal(signal), processors)
 	if err != nil {
-		slog.Error("failed to prepare ingestion control processors for agent", "agent_id", agent.AgentID, "error", err)
+		slog.Error("failed to prepare ingestion control processors for agent", "agent_id", agent.AgentID, errors.Attr(err))
 		return confHash, err
 	}
 
@@ -133,7 +134,7 @@ func makeIngestionControlSpec(agentConf *confmap.Conf, signal Signal, processors
 	// merge tracesPipelinePlan with current pipeline
 	mergedPipeline, err := buildPipeline(signal, currentPipeline)
 	if err != nil {
-		slog.Error("failed to build pipeline", "signal", string(signal), "error", err)
+		slog.Error("failed to build pipeline", "signal", string(signal), errors.Attr(err))
 		return err
 	}
 

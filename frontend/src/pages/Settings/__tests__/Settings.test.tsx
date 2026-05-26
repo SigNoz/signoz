@@ -53,10 +53,10 @@ describe('SettingsPage nav sections', () => {
 			'billing',
 			'roles',
 			'members',
-			'api-keys',
 			'sso',
 			'integrations',
 			'ingestion',
+			'mcp-server',
 		])('renders "%s" element', (id) => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
@@ -78,16 +78,20 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['workspace', 'account'])('renders "%s" element', (id) => {
-			expect(screen.getByTestId(id)).toBeInTheDocument();
-		});
-
-		it.each(['billing', 'roles', 'api-keys'])(
-			'does not render "%s" element',
+		it.each(['workspace', 'account', 'roles', 'service-accounts'])(
+			'renders "%s" element',
 			(id) => {
-				expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+				expect(screen.getByTestId(id)).toBeInTheDocument();
 			},
 		);
+
+		it.each(['billing'])('does not render "%s" element', (id) => {
+			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+		});
+
+		it('renders "mcp-server" element', () => {
+			expect(screen.getByTestId('mcp-server')).toBeInTheDocument();
+		});
 	});
 
 	describe('Self-hosted Admin', () => {
@@ -99,12 +103,16 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['roles', 'members', 'api-keys', 'integrations', 'sso', 'ingestion'])(
-			'renders "%s" element',
-			(id) => {
-				expect(screen.getByTestId(id)).toBeInTheDocument();
-			},
-		);
+		it.each([
+			'roles',
+			'members',
+			'integrations',
+			'sso',
+			'ingestion',
+			'mcp-server',
+		])('renders "%s" element', (id) => {
+			expect(screen.getByTestId(id)).toBeInTheDocument();
+		});
 	});
 
 	describe('section structure', () => {

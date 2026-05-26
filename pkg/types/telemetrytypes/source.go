@@ -7,11 +7,13 @@ type Source struct {
 }
 
 var (
+	SourceAudit       = Source{valuer.NewString("audit")}
 	SourceMeter       = Source{valuer.NewString("meter")}
 	SourceUnspecified = Source{valuer.NewString("")}
 )
 
 // Enum returns the acceptable values for Source.
+// TODO: Add SourceAudit once the frontend is ready for consumption.
 func (Source) Enum() []any {
 	return []any{
 		SourceMeter,

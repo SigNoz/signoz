@@ -7,7 +7,8 @@ import {
 	useState,
 } from 'react';
 import type { InputRef } from 'antd';
-import { AutoComplete, Input, Typography } from 'antd';
+import { AutoComplete, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
@@ -135,6 +136,7 @@ export default function GeneralSettingsSection({
 						rootClassName="general-settings__name-input"
 						ref={inputRef}
 						onSelect={handleInputCursor}
+						data-testid="panel-name-input"
 						onClick={handleInputCursor}
 						onBlur={(): void => setAutoCompleteOpen(false)}
 					/>
@@ -145,6 +147,7 @@ export default function GeneralSettingsSection({
 					bordered
 					allowClear
 					value={description}
+					data-testid="panel-description-input"
 					onChange={(event): void =>
 						onChangeHandler(setDescription, event.target.value)
 					}

@@ -6,6 +6,7 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -282,5 +283,69 @@ describe('CustomMultiSelect Component', () => {
 
 		// When all options are selected, component shows ALL tag instead
 		expect(screen.getByText('ALL')).toBeInTheDocument();
+	});
+
+	describe('section visibility when ALL is selected', () => {
+		it('keeps group headers visible when every grouped value is selected', async () => {
+			const user = userEvent.setup();
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockGroupedOptions}
+					value={['g1-option1', 'g1-option2', 'g2-option1', 'g2-option2']}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+
+			await waitFor(() => {
+				expect(screen.getByText('Group 1')).toBeInTheDocument();
+				expect(screen.getByText('Group 2')).toBeInTheDocument();
+			});
+		});
+
+		it('keeps every grouped option visible within its section when all are selected', async () => {
+			const user = userEvent.setup();
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockGroupedOptions}
+					value={['g1-option1', 'g1-option2', 'g2-option1', 'g2-option2']}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+
+			await waitFor(() => {
+				const group1Region = screen.getByRole('group', {
+					name: 'Group 1 options',
+				});
+				const group2Region = screen.getByRole('group', {
+					name: 'Group 2 options',
+				});
+
+				// Each option stays inside its original section rather than being
+				// hoisted into a flat selected-first list.
+				expect(group1Region).toHaveTextContent('Group 1 - Option 1');
+				expect(group1Region).toHaveTextContent('Group 1 - Option 2');
+				expect(group2Region).toHaveTextContent('Group 2 - Option 1');
+				expect(group2Region).toHaveTextContent('Group 2 - Option 2');
+			});
+		});
+
+		it('keeps group headers visible when value is the ALL sentinel', async () => {
+			const user = userEvent.setup();
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockGroupedOptions}
+					value={'__ALL__' as unknown as string[]}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+
+			await waitFor(() => {
+				expect(screen.getByText('Group 1')).toBeInTheDocument();
+				expect(screen.getByText('Group 2')).toBeInTheDocument();
+			});
+		});
 	});
 });

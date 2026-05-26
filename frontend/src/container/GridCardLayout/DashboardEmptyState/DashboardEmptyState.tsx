@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
@@ -8,10 +9,17 @@ import { VariablesSettingsTab } from 'container/DashboardContainer/DashboardDesc
 import DashboardSettings from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+
+import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
+import landscapeUrl from '@/assets/Icons/landscape.svg';
+import toolsUrl from '@/assets/Icons/tools.svg';
 
 import './DashboardEmptyState.styles.scss';
 
@@ -20,12 +28,12 @@ export default function DashboardEmptyState(): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { dashboardData } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
-		false,
-	);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
+		useState<boolean>(false);
 
 	const { user } = useAppContext();
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -35,7 +43,7 @@ export default function DashboardEmptyState(): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -44,9 +52,9 @@ export default function DashboardEmptyState(): JSX.Element {
 	const onEmptyWidgetHandler = useCallback(() => {
 		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: selectedDashboard?.data.widgets?.length,
+			dashboardId: dashboardData?.id,
+			dashboardName: dashboardData?.data.title,
+			numberOfPanels: dashboardData?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setIsPanelTypeSelectionModalOpen]);
@@ -68,7 +76,7 @@ export default function DashboardEmptyState(): JSX.Element {
 			<div className="dashboard-content">
 				<section className="heading">
 					<img
-						src="/Icons/dashboard_emoji.svg"
+						src={dashboardEmojiUrl}
 						alt="header-image"
 						style={{ height: '32px', width: '32px' }}
 					/>
@@ -84,7 +92,7 @@ export default function DashboardEmptyState(): JSX.Element {
 						<div className="actions-configure">
 							<div className="actions-configure-text">
 								<img
-									src="/Icons/tools.svg"
+									src={toolsUrl}
 									alt="header-image"
 									style={{ height: '14px', width: '14px' }}
 								/>
@@ -96,7 +104,7 @@ export default function DashboardEmptyState(): JSX.Element {
 								Give it a name, add description, tags and variables
 							</Typography.Text>
 						</div>
-						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the 
+						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the
 						whole dashboard page instead of confined to this Empty State */}
 						<Button
 							type="text"
@@ -117,11 +125,11 @@ export default function DashboardEmptyState(): JSX.Element {
 							/>
 						</SettingsDrawer>
 					</div>
-					<div className="actions-1">
+					<div className="actions-2">
 						<div className="actions-add-panel">
 							<div className="actions-panel-text">
 								<img
-									src="/Icons/landscape.svg"
+									src={landscapeUrl}
 									alt="header-image"
 									style={{ height: '14px', width: '14px' }}
 								/>
@@ -135,7 +143,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							<Button
 								className="add-panel-btn"
 								onClick={onEmptyWidgetHandler}
-								icon={<PlusOutlined />}
+								icon={<Plus size="md" />}
 								type="primary"
 								data-testid="add-panel"
 							>

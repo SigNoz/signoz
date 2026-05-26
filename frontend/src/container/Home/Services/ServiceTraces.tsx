@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -8,7 +8,7 @@ import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
@@ -16,6 +16,10 @@ import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
+
+import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -65,12 +69,14 @@ export default function ServiceTraces({
 		[services],
 	);
 
-	const servicesExist = useMemo(() => sortedServices.length > 0, [
-		sortedServices,
-	]);
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const servicesExist = useMemo(
+		() => sortedServices.length > 0,
+		[sortedServices],
+	);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (servicesExist && !loadingUserPreferences) {
@@ -102,7 +108,7 @@ export default function ServiceTraces({
 				<div className="empty-state-content-container">
 					<div className="empty-state-content">
 						<img
-							src="/Icons/triangle-ruler.svg"
+							src={triangleRulerUrl}
 							alt="empty-alert-icon"
 							className="empty-state-icon"
 						/>
@@ -130,11 +136,7 @@ export default function ServiceTraces({
 									) {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
-										window?.open(
-											DOCS_LINKS.ADD_DATA_SOURCE,
-											'_blank',
-											'noopener noreferrer',
-										);
+										openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 									}
 								}}
 							>
@@ -173,13 +175,15 @@ export default function ServiceTraces({
 						dataSource={top5Services}
 						pagination={false}
 						className="services-table"
-						onRow={(record): { onClick: () => void } => ({
-							onClick: (): void => {
+						onRow={(record: ServicesList): Record<string, unknown> => ({
+							onClick: (event: React.MouseEvent): void => {
 								logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
+									newTab: isModifierKeyPressed(event),
+								});
 							},
 						})}
 					/>

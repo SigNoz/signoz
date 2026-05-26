@@ -7,7 +7,12 @@ export const topTracesTableColumns = [
 		dataIndex: 'trace_id',
 		key: 'trace_id',
 		render: (traceId: string): JSX.Element => (
-			<Link to={`/trace/${traceId}`} className="trace-id-cell">
+			<Link
+				to={`/trace/${traceId}`}
+				className="trace-id-cell"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
 				{traceId}
 			</Link>
 		),

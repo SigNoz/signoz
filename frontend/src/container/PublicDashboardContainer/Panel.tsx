@@ -42,11 +42,19 @@ function Panel({
 			};
 		}
 
-		updatedQuery.builder.queryData[0].pageSize = 10;
 		const initialDataSource = updatedQuery.builder.queryData[0].dataSource;
+		const updatedQueryForList = {
+			...updatedQuery,
+			builder: {
+				...updatedQuery.builder,
+				queryData: updatedQuery.builder.queryData.map((qd, i) =>
+					i === 0 ? { ...qd, pageSize: 10 } : qd,
+				),
+			},
+		};
 
 		return {
-			query: updatedQuery,
+			query: updatedQueryForList,
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			tableParams: {

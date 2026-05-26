@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/uptrace/bun"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun"
 )
 
 type provider struct {
@@ -113,7 +114,7 @@ WHERE
 
 	defer func() {
 		if err := constraintsRows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
@@ -174,7 +175,7 @@ WHERE
 
 	defer func() {
 		if err := foreignKeyConstraintsRows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 
@@ -243,7 +244,7 @@ ORDER BY index_name, column_position`, string(name))
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "error closing rows", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "error closing rows", errors.Attr(err))
 		}
 	}()
 

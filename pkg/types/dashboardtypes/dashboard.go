@@ -9,16 +9,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
-)
-
-var (
-	TypeableMetaResourceDashboard       = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard"))
-	TypeableMetaResourcePublicDashboard = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("public-dashboard"))
-	TypeableMetaResourcesDashboards     = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards"))
 )
 
 var (
@@ -26,6 +19,8 @@ var (
 	ErrCodeDashboardNotFound           = errors.MustNewCode("dashboard_not_found")
 	ErrCodeDashboardInvalidData        = errors.MustNewCode("dashboard_invalid_data")
 	ErrCodeDashboardInvalidWidgetQuery = errors.MustNewCode("dashboard_invalid_widget_query")
+	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
+	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
 )
 
 type StorableDashboard struct {
@@ -37,6 +32,7 @@ type StorableDashboard struct {
 	Data   StorableDashboardData `bun:"data,type:text,notnull"`
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`
+	Source Source                `bun:"source,type:text,notnull"`
 }
 
 type Dashboard struct {
@@ -47,6 +43,7 @@ type Dashboard struct {
 	Data   StorableDashboardData `json:"data"`
 	Locked bool                  `json:"locked"`
 	OrgID  valuer.UUID           `json:"org_id"`
+	Source Source                `json:"source"`
 }
 
 type LockUnlockDashboard struct {
@@ -71,6 +68,10 @@ func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid")
 	}
 
+	if !dashboard.Source.IsValid() {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", dashboard.Source.StringValue())
+	}
+
 	return &StorableDashboard{
 		Identifiable: types.Identifiable{
 			ID: dashboardID,
@@ -86,10 +87,15 @@ func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard
 		OrgID:  dashboard.OrgID,
 		Data:   dashboard.Data,
 		Locked: dashboard.Locked,
+		Source: dashboard.Source,
 	}, nil
 }
 
-func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData StorableDashboardData) (*Dashboard, error) {
+func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDashboardData StorableDashboardData) (*Dashboard, error) {
+	if !source.IsValid() {
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source.StringValue())
+	}
+
 	currentTime := time.Now()
 
 	return &Dashboard{
@@ -104,7 +110,8 @@ func NewDashboard(orgID valuer.UUID, createdBy string, storableDashboardData Sto
 		},
 		OrgID:  orgID,
 		Data:   storableDashboardData,
-		Locked: false,
+		Locked: source == SourceIntegration,
+		Source: source,
 	}, nil
 }
 
@@ -122,6 +129,7 @@ func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) *Da
 		OrgID:  storableDashboard.OrgID,
 		Data:   storableDashboard.Data,
 		Locked: storableDashboard.Locked,
+		Source: storableDashboard.Source,
 	}
 }
 
@@ -154,6 +162,7 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 		OrgID:         dashboard.OrgID,
 		Data:          dashboard.Data,
 		Locked:        dashboard.Locked,
+		Source:        dashboard.Source,
 	}, nil
 }
 
@@ -203,11 +212,12 @@ func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[strin
 						for _, queryData := range builderQueryData {
 							data, ok := queryData.(map[string]interface{})
 							if ok {
-								if data["dataSource"] == "traces" {
+								switch data["dataSource"] {
+								case "traces":
 									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
-								} else if data["dataSource"] == "metrics" {
+								case "metrics":
 									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
-								} else if data["dataSource"] == "logs" {
+								case "logs":
 									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
 								}
 							}
@@ -242,6 +252,43 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 		}
 	}
 	return widgetIds
+}
+
+func (dashboard *Dashboard) ErrIfNotMutable() error {
+	if dashboard.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
+	return nil
+}
+
+func (dashboard *Dashboard) ErrIfNotDeletable() error {
+	if err := dashboard.ErrIfNotMutable(); err != nil {
+		return err
+	}
+	if dashboard.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
+	}
+	return nil
+}
+
+func (dashboard *Dashboard) ErrIfNotLockable() error {
+	if err := dashboard.ErrIfNotMutable(); err != nil {
+		return err
+	}
+	if dashboard.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+	}
+	return nil
+}
+
+func (dashboard *Dashboard) ErrIfNotPublishable() error {
+	if err := dashboard.ErrIfNotMutable(); err != nil {
+		return err
+	}
+	if dashboard.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be made public")
+	}
+	return nil
 }
 
 func (dashboard *Dashboard) CanUpdate(ctx context.Context, data StorableDashboardData, diff int) error {
@@ -284,15 +331,15 @@ func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard Updat
 	return nil
 }
 
-func (dashboard *Dashboard) CanLockUnlock(role types.Role, updatedBy string) error {
-	if dashboard.CreatedBy != updatedBy && role != types.RoleAdmin {
+func (dashboard *Dashboard) CanLockUnlock(isAdmin bool, updatedBy string) error {
+	if dashboard.CreatedBy != updatedBy && !isAdmin {
 		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
 	}
 	return nil
 }
 
-func (dashboard *Dashboard) LockUnlock(lock bool, role types.Role, updatedBy string) error {
-	err := dashboard.CanLockUnlock(role, updatedBy)
+func (dashboard *Dashboard) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	err := dashboard.CanLockUnlock(isAdmin, updatedBy)
 	if err != nil {
 		return err
 	}
@@ -349,7 +396,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint6
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
-	if widgetIndex < 0 || int(widgetIndex) >= len(data.Widgets) {
+	if int(widgetIndex) >= len(data.Widgets) {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "widget with index %v doesn't exist", widgetIndex)
 	}
 

@@ -5,7 +5,7 @@
 }
 
 .context-links-text {
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-family: 'Space Mono';
 	font-size: 13px;
 	font-style: normal;
@@ -48,7 +48,7 @@
 
 	.drag-handle-icon {
 		flex-shrink: 0;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 	}
 
 	.context-link-content {
@@ -61,7 +61,7 @@
 	}
 
 	.context-link-label {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 12px;
 		font-weight: 500;
 		white-space: nowrap;
@@ -70,7 +70,7 @@
 	}
 
 	.context-link-url {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 		font-weight: 400;
 		white-space: nowrap;
@@ -100,7 +100,7 @@
 	}
 
 	&:hover {
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 
 		.context-link-actions {
 			opacity: 1;
@@ -110,36 +110,4 @@
 
 .add-context-link-button {
 	width: 100%;
-}
-
-.lightMode {
-	.context-links-text {
-		color: var(--bg-ink-400);
-	}
-
-	.context-link-item {
-		&:hover {
-			background-color: var(--bg-vanilla-200);
-		}
-
-		.context-link-label {
-			color: var(--bg-slate-500);
-		}
-
-		.context-link-url {
-			color: var(--bg-slate-400);
-		}
-
-		.drag-handle-icon {
-			color: var(--bg-slate-400);
-		}
-
-		.delete-context-link-btn {
-			&:hover {
-				color: var(--bg-cherry-500);
-				border-color: var(--bg-cherry-500);
-				background-color: var(--bg-cherry-100);
-			}
-		}
-	}
 }

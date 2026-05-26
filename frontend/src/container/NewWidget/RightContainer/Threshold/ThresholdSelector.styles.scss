@@ -8,7 +8,7 @@
 		cursor: pointer;
 
 		.icon {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			cursor: pointer;
 		}
 
@@ -18,35 +18,16 @@
 			gap: 8px;
 
 			.icon {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 			}
 			.text {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: 0.14px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.threshold-selector-container {
-		.threshold-select {
-			.icon {
-				color: var(--bg-ink-400);
-			}
-
-			.left-section {
-				.icon {
-					color: var(--bg-ink-400);
-				}
-				.text {
-					color: var(--bg-ink-400);
-				}
 			}
 		}
 	}

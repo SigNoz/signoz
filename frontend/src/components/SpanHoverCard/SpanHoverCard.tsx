@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { Popover, Typography } from 'antd';
+import { Popover } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
@@ -26,18 +27,15 @@ function SpanHoverCard({
 	children,
 }: SpanHoverCardProps): JSX.Element {
 	const duration = span.durationNano / 1e6; // Convert nanoseconds to milliseconds
-	const { time: formattedDuration, timeUnitName } = convertTimeToRelevantUnit(
-		duration,
-	);
+	const { time: formattedDuration, timeUnitName } =
+		convertTimeToRelevantUnit(duration);
 
 	const { timezone } = useTimezone();
 
 	// Calculate relative start time from trace start
 	const relativeStartTime = span.timestamp - traceMetadata.startTime;
-	const {
-		time: relativeTime,
-		timeUnitName: relativeTimeUnit,
-	} = convertTimeToRelevantUnit(relativeStartTime);
+	const { time: relativeTime, timeUnitName: relativeTimeUnit } =
+		convertTimeToRelevantUnit(relativeStartTime);
 
 	// Format absolute start time
 	const startTimeFormatted = dayjs(span.timestamp)

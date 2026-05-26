@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/common/model"
 	"log/slog"
 	"time"
+
+	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
@@ -18,8 +19,7 @@ import (
 
 type (
 	// Receiver is the type for the receiver configuration.
-	Receiver                 = config.Receiver
-	ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error)
+	Receiver = config.Receiver
 )
 
 // Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
@@ -50,7 +50,7 @@ func NewReceiver(input string) (Receiver, error) {
 	return receiverWithDefaults, nil
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
+func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -72,7 +72,7 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger)
+	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger, templater)
 	if err != nil {
 		return err
 	}

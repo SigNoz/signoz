@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -17,7 +17,7 @@ import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
@@ -30,6 +30,10 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
+
+import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -50,7 +54,7 @@ const EmptyState = memo(
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
 					<img
-						src="/Icons/triangle-ruler.svg"
+						src={triangleRulerUrl}
 						alt="empty-alert-icon"
 						className="empty-state-icon"
 					/>
@@ -76,11 +80,7 @@ const EmptyState = memo(
 								) {
 									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 								} else {
-									window?.open(
-										DOCS_LINKS.ADD_DATA_SOURCE,
-										'_blank',
-										'noopener noreferrer',
-									);
+									openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 								}
 							}}
 						>
@@ -117,7 +117,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -126,8 +126,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record: ServicesList): Record<string, unknown> => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -249,9 +249,10 @@ function ServiceMetrics({
 		},
 	);
 
-	const isLoading = useMemo(() => dataQueries.some((query) => query.isLoading), [
-		dataQueries,
-	]);
+	const isLoading = useMemo(
+		() => dataQueries.some((query) => query.isLoading),
+		[dataQueries],
+	);
 
 	const services: ServicesList[] = useMemo(
 		() =>
@@ -274,9 +275,10 @@ function ServiceMetrics({
 	);
 
 	const servicesExist = sortedServices.length > 0;
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (!loadingUserPreferences && servicesExist) {
@@ -285,11 +287,13 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
+				newTab: isModifierKeyPressed(event),
+			});
 		},
 		[safeNavigate],
 	);

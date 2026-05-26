@@ -37,7 +37,7 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
 
 	// Calculate the time difference in milliseconds
-	// @ts-ignore
+	// @ts-expect-error
 	const timeDifference = endDate - startDate;
 
 	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
@@ -112,6 +112,12 @@ export function formatEpochTimestamp(epoch: number): string {
  */
 
 export function formatTime(seconds: number): string {
+	seconds = +seconds;
+
+	if (Number.isNaN(seconds)) {
+		return '-';
+	}
+
 	const days = seconds / 86400;
 
 	if (days >= 1) {

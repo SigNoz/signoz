@@ -133,20 +133,18 @@ export function useVariableFetchState(
 export function useIsPanelWaitingOnVariable(variableNames: string[]): boolean {
 	const states = useVariableFetchSelector((s) => s.states);
 	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
-	const variableTypesMap = useDashboardVariablesSelector((s) => s.variableTypes);
 
 	return variableNames.some((name) => {
 		const variableFetchState = states[name];
-		const { selectedValue, allSelected } = dashboardVariables?.[name] || {};
+		const variableData = Object.values(dashboardVariables).find(
+			(v) => v.name === name,
+		);
+		const { selectedValue } = variableData || {};
 
 		const isVariableInFetchingOrWaitingState =
 			variableFetchState === 'loading' ||
 			variableFetchState === 'revalidating' ||
 			variableFetchState === 'waiting';
-
-		if (variableTypesMap[name] === 'DYNAMIC' && allSelected) {
-			return isVariableInFetchingOrWaitingState;
-		}
 
 		return isEmpty(selectedValue) ? isVariableInFetchingOrWaitingState : false;
 	});

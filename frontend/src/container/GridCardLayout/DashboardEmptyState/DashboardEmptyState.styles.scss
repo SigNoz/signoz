@@ -21,7 +21,7 @@
 			}
 
 			.welcome {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -31,7 +31,7 @@
 			}
 
 			.welcome-info {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -45,15 +45,16 @@
 			display: flex;
 			flex-direction: column;
 
-			.actions-1 {
+			.actions-1,
+			.actions-2 {
 				display: flex;
 				width: 560px;
 				padding: 12px;
 				justify-content: space-between;
 				align-items: flex-start;
 				border-radius: 4px 4px 0px 0px;
-				border: 1px solid var(--bg-slate-500);
-				background: var(--bg-ink-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 
 				.configure-button {
 					display: flex;
@@ -64,9 +65,9 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
-					color: var(--bg-vanilla-400);
+					border: 1px solid var(--secondary-border);
+					background: var(--secondary-background);
+					color: var(--secondary-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -85,12 +86,8 @@
 						gap: 8px;
 						align-items: center;
 
-						.icons {
-							color: white;
-						}
-
 						.configure {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 							font-family: Inter;
 							font-size: 14px;
 							font-style: normal;
@@ -99,8 +96,9 @@
 							letter-spacing: -0.07px;
 						}
 					}
+
 					.configure-info {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
@@ -120,10 +118,10 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(---border);
+					background: var(--primary-background);
 					box-shadow: none;
-					color: var(--bg-vanilla-400);
+					color: var(--primary-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -147,7 +145,7 @@
 						}
 
 						.panel {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 							font-family: Inter;
 							font-size: 14px;
 							font-style: normal;
@@ -158,7 +156,7 @@
 					}
 
 					.panel-info {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
@@ -169,75 +167,9 @@
 					}
 				}
 			}
-		}
-	}
-}
 
-.lightMode {
-	.dashboard-empty-state {
-		.dashboard-content {
-			.heading {
-				.icons {
-					color: var(--bg-ink-300);
-				}
-
-				.welcome {
-					color: var(--bg-ink-400);
-				}
-
-				.welcome-info {
-					color: var(--bg-ink-400);
-				}
-			}
-
-			.actions {
-				.actions-1 {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-
-					.configure-button {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-300);
-						color: var(--bg-ink-400);
-					}
-
-					.actions-configure {
-						.actions-configure-text {
-							.icons {
-								color: var(--bg-ink-400);
-							}
-
-							.configure {
-								color: var(--bg-ink-400);
-							}
-						}
-						.configure-info {
-							color: var(--bg-ink-400);
-						}
-					}
-
-					.add-panel-btn {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-300);
-						color: var(--bg-ink-400);
-					}
-
-					.actions-add-panel {
-						.actions-panel-text {
-							.icons {
-								color: var(--bg-ink-300);
-							}
-
-							.panel {
-								color: var(--bg-ink-300);
-							}
-						}
-
-						.panel-info {
-							color: var(--bg-ink-300);
-						}
-					}
-				}
+			.actions-2 {
+				border-top: none;
 			}
 		}
 	}

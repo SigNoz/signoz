@@ -2,8 +2,8 @@ import {
 	Col,
 	Dropdown as DropDownComponent,
 	Input as InputComponent,
-	Typography as TypographyComponent,
 } from 'antd';
+import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const RetentionContainer = styled(Col)`
@@ -77,7 +77,7 @@ export const ToolTipContainer = styled.div`
 
 export const ErrorText = styled(TypographyComponent)`
 	&&& {
-		color: #e89a3c;
+		color: var(--warning-background);
 		font-style: italic;
 	}
 `;

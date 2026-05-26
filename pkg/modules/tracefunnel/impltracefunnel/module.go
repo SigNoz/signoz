@@ -49,7 +49,7 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 
 	// Set created_by if CreatedByUser is present
 	if funnel.CreatedByUser != nil {
-		funnel.CreatedBy = funnel.CreatedByUser.Identifiable.ID.String()
+		funnel.CreatedBy = funnel.CreatedByUser.ID.String()
 	}
 
 	err := module.store.Create(ctx, funnel)
@@ -61,18 +61,18 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 	return funnel, nil
 }
 
-// Get gets a funnel by ID
+// Get gets a funnel by ID.
 func (module *module) Get(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (*traceFunnels.StorableFunnel, error) {
 	return module.store.Get(ctx, funnelID, orgID)
 }
 
-// Update updates a funnel
+// Update updates a funnel.
 func (module *module) Update(ctx context.Context, funnel *traceFunnels.StorableFunnel, userID valuer.UUID) error {
 	funnel.UpdatedBy = userID.String()
 	return module.store.Update(ctx, funnel)
 }
 
-// List lists all funnels for an organization
+// List lists all funnels for an organization.
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnels.StorableFunnel, error) {
 	funnels, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -82,12 +82,12 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunn
 	return funnels, nil
 }
 
-// Delete deletes a funnel
+// Delete deletes a funnel.
 func (module *module) Delete(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) error {
 	return module.store.Delete(ctx, funnelID, orgID)
 }
 
-// GetFunnelMetadata gets metadata for a funnel
+// GetFunnelMetadata gets metadata for a funnel.
 func (module *module) GetFunnelMetadata(ctx context.Context, funnelID valuer.UUID, orgID valuer.UUID) (int64, int64, string, error) {
 	funnel, err := module.store.Get(ctx, funnelID, orgID)
 	if err != nil {

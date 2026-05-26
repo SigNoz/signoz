@@ -6,6 +6,8 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import {
 	MessagingQueuesViewType,
@@ -23,17 +25,13 @@ import '../MessagingQueues.styles.scss';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
-	const [
-		selectedView,
-		setSelectedView,
-	] = useState<MessagingQueuesViewTypeOptions>(
-		MessagingQueuesViewType.consumerLag.value,
-	);
+	const [selectedView, setSelectedView] =
+		useState<MessagingQueuesViewTypeOptions>(
+			MessagingQueuesViewType.consumerLag.value,
+		);
 
-	const [
-		producerLatencyOption,
-		setproducerLatencyOption,
-	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
+	const [producerLatencyOption, setproducerLatencyOption] =
+		useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
 	const mqServiceView = useUrlQuery().get(
 		QueryParams.mqServiceView,
@@ -63,8 +61,14 @@ function MQDetailPage(): JSX.Element {
 		selectedView !== MessagingQueuesViewType.dropRate.value &&
 		selectedView !== MessagingQueuesViewType.metricPage.value;
 
-	const handleBackClick = (): void => {
-		history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+	const handleBackClick = (
+		event?: React.MouseEvent | React.KeyboardEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event as React.MouseEvent)) {
+			openInNewTab(ROUTES.MESSAGING_QUEUES_KAFKA);
+		} else {
+			history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+		}
 	};
 
 	return (
@@ -76,7 +80,7 @@ function MQDetailPage(): JSX.Element {
 						className="message-queue-text"
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter' || e.key === ' ') {
-								handleBackClick();
+								handleBackClick(e);
 							}
 						}}
 						role="button"

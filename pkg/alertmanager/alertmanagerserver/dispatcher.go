@@ -47,7 +47,7 @@ type Dispatcher struct {
 	receiverRoutes      map[string]*dispatch.Route
 }
 
-// We use the upstream Limits interface from Prometheus
+// We use the upstream Limits interface from Prometheus.
 type Limits = dispatch.Limits
 
 // NewDispatcher returns a new Dispatcher.
@@ -74,7 +74,7 @@ func NewDispatcher(
 		route:               r,
 		marker:              mk,
 		timeout:             to,
-		logger:              l.With("component", "signoz-dispatcher"),
+		logger:              l.With(slog.String("component", "signoz-dispatcher")),
 		metrics:             m,
 		limits:              lim,
 		notificationManager: n,
@@ -111,24 +111,24 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			if !ok || alertWrapper == nil {
 				// Iterator exhausted for some reason.
 				if err := it.Err(); err != nil {
-					d.logger.ErrorContext(d.ctx, "Error on alert update", "err", err)
+					d.logger.ErrorContext(d.ctx, "Error on alert update", errors.Attr(err))
 				}
 				return
 			}
 			alert := alertWrapper.Data
 
-			d.logger.DebugContext(d.ctx, "SigNoz Custom Dispatcher: Received alert", "alert", alert)
+			d.logger.DebugContext(d.ctx, "SigNoz Custom Dispatcher: Received alert", slog.Any("alert", alert))
 
 			// Log errors but keep trying.
 			if err := it.Err(); err != nil {
-				d.logger.ErrorContext(d.ctx, "Error on alert update", "err", err)
+				d.logger.ErrorContext(d.ctx, "Error on alert update", errors.Attr(err))
 				continue
 			}
 
 			now := time.Now()
 			channels, err := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
 			if err != nil {
-				d.logger.ErrorContext(d.ctx, "Error on alert match", "err", err)
+				d.logger.ErrorContext(d.ctx, "Error on alert match", errors.Attr(err))
 				continue
 			}
 			for _, channel := range channels {
@@ -273,12 +273,13 @@ type notifyFunc func(context.Context, ...*types.Alert) bool
 
 // processAlert determines in which aggregation group the alert falls
 // and inserts it.
-// no data alert will only have ruleId and no data label
+// no data alert will only have ruleId and no data label.
 func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	ruleId := getRuleIDFromAlert(alert)
 	config, err := d.notificationManager.GetNotificationConfig(d.orgID, ruleId)
 	if err != nil {
-		d.logger.ErrorContext(d.ctx, "error getting alert notification config", "rule_id", ruleId, "error", err)
+		//nolint:sloglint
+		d.logger.ErrorContext(d.ctx, "error getting alert notification config", slog.String("rule.id", ruleId), errors.Attr(err))
 		return
 	}
 	renotifyInterval := config.Renotify.RenotifyInterval
@@ -310,7 +311,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	// If the group does not exist, create it. But check the limit first.
 	if limit := d.limits.MaxNumberOfAggregationGroups(); limit > 0 && d.aggrGroupsNum >= limit {
 		d.metrics.aggrGroupLimitReached.Inc()
-		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", "groups", d.aggrGroupsNum, "limit", limit, "alert", alert.Name())
+		d.logger.ErrorContext(d.ctx, "Too many aggregation groups, cannot create new group for alert", slog.Int("groups", d.aggrGroupsNum), slog.Int("limit", limit), slog.String("alert", alert.Name()))
 		return
 	}
 
@@ -328,7 +329,12 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	go ag.run(func(ctx context.Context, alerts ...*types.Alert) bool {
 		_, _, err := d.stage.Exec(ctx, d.logger, alerts...)
 		if err != nil {
-			logger := d.logger.With("num_alerts", len(alerts), "err", err)
+			receiverName, _ := notify.ReceiverName(ctx)
+			logger := d.logger.With(
+				slog.String("receiver", receiverName),
+				slog.Int("num_alerts", len(alerts)),
+				errors.Attr(err),
+			)
 			if errors.Is(ctx.Err(), context.Canceled) {
 				// It is expected for the context to be canceled on
 				// configuration reload or shutdown. In this case, the
@@ -382,7 +388,7 @@ func newAggrGroup(ctx context.Context, labels model.LabelSet, r *dispatch.Route,
 	}
 	ag.ctx, ag.cancel = context.WithCancel(ctx)
 
-	ag.logger = logger.With("aggr_group", ag)
+	ag.logger = logger.With(slog.Any("aggr_group", ag))
 
 	// Set an initial one-time wait before flushing
 	// the first batch of notifications.
@@ -457,7 +463,7 @@ func (ag *aggrGroup) stop() {
 // insert inserts the alert into the aggregation group.
 func (ag *aggrGroup) insert(alert *types.Alert) {
 	if err := ag.alerts.Set(alert); err != nil {
-		ag.logger.ErrorContext(ag.ctx, "error on set alert", "err", err)
+		ag.logger.ErrorContext(ag.ctx, "error on set alert", errors.Attr(err))
 	}
 
 	// Immediately trigger a flush if the wait duration for this
@@ -497,7 +503,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 	}
 	sort.Stable(alertsSlice)
 
-	ag.logger.DebugContext(ag.ctx, "flushing", "alerts", fmt.Sprintf("%v", alertsSlice))
+	ag.logger.DebugContext(ag.ctx, "flushing", slog.String("alerts", fmt.Sprintf("%v", alertsSlice)))
 
 	if notify(alertsSlice...) {
 		// Delete all resolved alerts as we just sent a notification for them,
@@ -505,12 +511,12 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 		// that each resolved alert has not fired again during the flush as then
 		// we would delete an active alert thinking it was resolved.
 		if err := ag.alerts.DeleteIfNotModified(resolvedSlice); err != nil {
-			ag.logger.ErrorContext(ag.ctx, "error on delete alerts", "err", err)
+			ag.logger.ErrorContext(ag.ctx, "error on delete alerts", errors.Attr(err))
 		}
 	}
 }
 
-// unlimitedLimits provides unlimited aggregation groups for SigNoz
+// unlimitedLimits provides unlimited aggregation groups for SigNoz.
 type unlimitedLimits struct{}
 
 func (u *unlimitedLimits) MaxNumberOfAggregationGroups() int { return 0 }

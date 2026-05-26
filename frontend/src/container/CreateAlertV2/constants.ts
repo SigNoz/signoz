@@ -18,15 +18,16 @@ const defaultAnnotations = {
 		'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 };
 
-const defaultNotificationSettings: PostableAlertRuleV2['notificationSettings'] = {
-	groupBy: [],
-	renotify: {
-		enabled: false,
-		interval: '30m',
-		alertStates: [],
-	},
-	usePolicy: false,
-};
+const defaultNotificationSettings: PostableAlertRuleV2['notificationSettings'] =
+	{
+		groupBy: [],
+		renotify: {
+			enabled: false,
+			interval: '30m',
+			alertStates: [],
+		},
+		usePolicy: false,
+	};
 
 const defaultEvaluation: PostableAlertRuleV2['evaluation'] = {
 	kind: 'rolling',

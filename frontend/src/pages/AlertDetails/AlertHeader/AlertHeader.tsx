@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';
@@ -6,7 +7,6 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
-import { GettableAlert } from 'types/api/alerts/get';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
@@ -16,12 +16,21 @@ import AlertState from './AlertState/AlertState';
 import './AlertHeader.styles.scss';
 
 export type AlertHeaderProps = {
-	alertDetails: GettableAlert | PostableAlertRuleV2;
+	alertDetails: RuletypesRuleDTO | PostableAlertRuleV2;
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const { state, alert: alertName, labels } = alertDetails;
-	const { alertRuleState } = useAlertRule();
-	const [updatedName, setUpdatedName] = useState(alertName);
+	const { alertRuleState, alertRuleName, setAlertRuleName } = useAlertRule();
+
+	useEffect(() => {
+		if (alertRuleName === undefined && alertName) {
+			setAlertRuleName(alertName);
+		}
+	}, [alertRuleName, alertName, setAlertRuleName]);
+
+	useEffect(() => (): void => setAlertRuleName(undefined), [setAlertRuleName]);
+
+	const displayName = alertRuleName ?? alertName;
 
 	const labelsWithoutSeverity = useMemo(() => {
 		if (labels) {
@@ -40,7 +49,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				<div className="alert-title-wrapper">
 					<AlertState state={alertRuleState ?? state ?? ''} />
 					<div className="alert-title">
-						<LineClampedText text={updatedName || alertName} />
+						<LineClampedText text={displayName || ''} />
 					</div>
 				</div>
 			</div>
@@ -64,7 +73,6 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 				<AlertActionButtons
 					alertDetails={alertDetails}
 					ruleId={alertDetails?.id || ''}
-					setUpdatedName={setUpdatedName}
 				/>
 			</div>
 		</div>

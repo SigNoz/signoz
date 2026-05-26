@@ -7,8 +7,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col, Typography } from 'antd';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { Col } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { StyledCol, StyledRow } from 'components/Styled';
 import {
 	IIntervalUnit,
@@ -123,14 +124,14 @@ function Trace(props: TraceProps): JSX.Element {
 	const width = (value * 1e2) / (globalSpread * 1e6);
 	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
 
-	const iconStyles = useMemo(() => getIconStyles(isDarkMode), [isDarkMode]);
+	const iconStyles = useMemo(() => getIconStyles(), []);
 
 	const icon = useMemo(
 		() =>
 			isOpen ? (
-				<CaretDownFilled style={iconStyles} />
+				<ChevronDown size="md" style={iconStyles} />
 			) : (
-				<CaretRightFilled style={iconStyles} />
+				<ChevronRight size="md" style={iconStyles} />
 			),
 		[isOpen, iconStyles],
 	);

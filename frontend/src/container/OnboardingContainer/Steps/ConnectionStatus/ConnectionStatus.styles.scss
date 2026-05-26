@@ -18,7 +18,7 @@
 				font-size: 18px;
 				display: flex;
 				align-items: center;
-				color: #e5e7eb;
+				color: var(--l1-foreground);
 				gap: 16px;
 				margin: 0px;
 			}
@@ -73,24 +73,6 @@
 		svg {
 			width: 16px;
 			height: 16px;
-		}
-	}
-}
-
-$lightModeFontColor: rgb(29, 29, 29);
-
-.lightMode {
-	.connection-status-container {
-		.header .title {
-			color: $lightModeFontColor;
-
-			h1 {
-				color: $lightModeFontColor;
-			}
-		}
-
-		.status-container {
-			color: $lightModeFontColor;
 		}
 	}
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -62,7 +61,6 @@ func TestLastObservedAt_Concurrent(t *testing.T) {
 		&authtypes.Identity{
 			UserID: valuer.GenerateUUID(),
 			OrgID:  orgID,
-			Role:   types.RoleAdmin,
 			Email:  valuer.MustNewEmail("test@test.com"),
 		},
 		map[string]string{},
@@ -74,7 +72,6 @@ func TestLastObservedAt_Concurrent(t *testing.T) {
 		&authtypes.Identity{
 			UserID: valuer.GenerateUUID(),
 			OrgID:  orgID,
-			Role:   types.RoleAdmin,
 			Email:  valuer.MustNewEmail("test@test.com"),
 		},
 		map[string]string{},

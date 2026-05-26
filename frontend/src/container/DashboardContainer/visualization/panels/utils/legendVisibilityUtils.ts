@@ -1,3 +1,6 @@
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import removeLocalStorageKey from 'api/browser/localstorage/remove';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { GraphVisibilityState, SeriesVisibilityItem } from '../types';
@@ -12,7 +15,7 @@ export function getStoredSeriesVisibility(
 	widgetId: string,
 ): SeriesVisibilityItem[] | null {
 	try {
-		const storedData = localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+		const storedData = getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 
 		if (!storedData) {
 			return null;
@@ -29,7 +32,7 @@ export function getStoredSeriesVisibility(
 	} catch (error) {
 		if (error instanceof SyntaxError) {
 			// If the stored data is malformed, remove it
-			localStorage.removeItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+			removeLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 		}
 		// Silently handle parsing errors - fall back to default visibility
 		return null;
@@ -42,7 +45,7 @@ export function updateSeriesVisibilityToLocalStorage(
 ): void {
 	let visibilityStates: GraphVisibilityState[] = [];
 	try {
-		const storedData = localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+		const storedData = getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 		visibilityStates = JSON.parse(storedData || '[]');
 	} catch (error) {
 		if (error instanceof SyntaxError) {
@@ -63,7 +66,7 @@ export function updateSeriesVisibilityToLocalStorage(
 		];
 	}
 
-	localStorage.setItem(
+	setLocalStorageKey(
 		LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 		JSON.stringify(visibilityStates),
 	);

@@ -21,7 +21,7 @@ const (
 	defaultFluxInterval = 5 * time.Minute
 )
 
-// Helper function to create test cache
+// Helper function to create test cache.
 func createTestCache(t *testing.T) cache.Cache {
 	config := cache.Config{
 		Provider: "memory",
@@ -35,7 +35,7 @@ func createTestCache(t *testing.T) cache.Cache {
 	return memCache
 }
 
-// mockQuery implements the Query interface for testing
+// mockQuery implements the Query interface for testing.
 type mockQuery struct {
 	fingerprint string
 	startMs     uint64
@@ -67,7 +67,7 @@ func (m *mockQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}, nil
 }
 
-// createTestBucketCache creates a test bucket cache
+// createTestBucketCache creates a test bucket cache.
 func createTestBucketCache(t *testing.T) *bucketCache {
 	memCache := createTestCache(t)
 	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, cacheTTL, defaultFluxInterval).(*bucketCache)

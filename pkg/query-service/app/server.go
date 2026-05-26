@@ -5,53 +5,43 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	_ "net/http/pprof" // http profiler
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
-	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 	"github.com/gorilla/handlers"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/rs/cors"
+	"github.com/soheilhy/cmux"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
-	"github.com/rs/cors"
-	"github.com/soheilhy/cmux"
+
+	"log/slog"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	"go.opentelemetry.io/otel/propagation"
-	"log/slog"
 )
 
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
-	config      signoz.Config
-	signoz      *signoz.SigNoz
-	ruleManager *rules.Manager
+	config signoz.Config
+	signoz *signoz.SigNoz
 
 	// public http router
 	httpConn     net.Listener
@@ -65,12 +55,7 @@ type Server struct {
 
 // NewServer creates and initializes Server
 func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
-	integrationsController, err := integrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, err
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -98,26 +83,11 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		nil,
 	)
 
-	rm, err := makeRulesManager(
-		reader,
-		signoz.Cache,
-		signoz.Alertmanager,
-		signoz.SQLStore,
-		signoz.TelemetryStore,
-		signoz.TelemetryMetadataStore,
-		signoz.Prometheus,
-		signoz.Modules.OrgGetter,
-		signoz.Querier,
-		signoz.Instrumentation.ToProviderSettings(),
-		signoz.QueryParser,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
+		reader,
+		signoz.Flagger,
 	)
 	if err != nil {
 		return nil, err
@@ -125,12 +95,9 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:                        reader,
-		RuleManager:                   rm,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
-		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
@@ -142,7 +109,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		ruleManager:        rm,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -186,6 +152,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
+	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
@@ -194,7 +161,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		otelmux.WithFilter(func(r *http.Request) bool {
 			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
 		}),
-		otelmux.WithPublicEndpoint(),
 	))
 	r.Use(middleware.NewIdentN(s.signoz.IdentNResolver, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
@@ -202,7 +168,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, s.signoz.Auditor).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
@@ -210,14 +176,12 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
-	api.RegisterCloudIntegrationsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
 	api.RegisterInfraMetricsRoutes(r, am)
 	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
 	api.RegisterThirdPartyApiRoutes(r, am)
-	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
 	err := s.signoz.APIServer.AddToRouter(r)
@@ -238,6 +202,20 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	err = web.AddToRouter(r)
 	if err != nil {
 		return nil, err
+	}
+
+	routePrefix := s.config.Global.ExternalPath()
+	if routePrefix != "" {
+		prefixed := http.StripPrefix(routePrefix, handler)
+		handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			switch req.URL.Path {
+			case "/api/v1/health", "/api/v2/healthz", "/api/v2/readyz", "/api/v2/livez":
+				r.ServeHTTP(w, req)
+				return
+			}
+
+			prefixed.ServeHTTP(w, req)
+		})
 	}
 
 	return &http.Server{
@@ -266,8 +244,6 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
-	s.ruleManager.Start(ctx)
-
 	err := s.initListeners()
 	if err != nil {
 		return err
@@ -285,25 +261,16 @@ func (s *Server) Start(ctx context.Context) error {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
 		default:
-			slog.Error("Could not start HTTP server", "error", err)
+			slog.Error("Could not start HTTP server", errors.Attr(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
-	}()
-
-	go func() {
-		slog.Info("Starting pprof server", "addr", constants.DebugHttpPort)
-
-		err = http.ListenAndServe(constants.DebugHttpPort, nil)
-		if err != nil {
-			slog.Error("Could not start pprof server", "error", err)
-		}
 	}()
 
 	go func() {
 		slog.Info("Starting OpAmp Websocket server", "addr", constants.OpAmpWsEndpoint)
 		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
-			slog.Error("opamp ws server failed to start", "error", err)
+			slog.Error("opamp ws server failed to start", errors.Attr(err))
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
@@ -320,54 +287,5 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	s.opampServer.Stop()
 
-	if s.ruleManager != nil {
-		s.ruleManager.Stop(ctx)
-	}
-
 	return nil
-}
-
-func makeRulesManager(
-	ch interfaces.Reader,
-	cache cache.Cache,
-	alertmanager alertmanager.Alertmanager,
-	sqlstore sqlstore.SQLStore,
-	telemetryStore telemetrystore.TelemetryStore,
-	metadataStore telemetrytypes.MetadataStore,
-	prometheus prometheus.Prometheus,
-	orgGetter organization.Getter,
-	querier querier.Querier,
-	providerSettings factory.ProviderSettings,
-	queryParser queryparser.QueryParser,
-) (*rules.Manager, error) {
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
-	// create manager opts
-	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:   telemetryStore,
-		MetadataStore:    metadataStore,
-		Prometheus:       prometheus,
-		Context:          context.Background(),
-		Reader:           ch,
-		Querier:          querier,
-		Logger:           providerSettings.Logger,
-		Cache:            cache,
-		EvalDelay:        constants.GetEvalDelay(),
-		OrgGetter:        orgGetter,
-		Alertmanager:     alertmanager,
-		RuleStore:        ruleStore,
-		MaintenanceStore: maintenanceStore,
-		SqlStore:         sqlstore,
-		QueryParser:      queryParser,
-	}
-
-	// create Manager
-	manager, err := rules.NewManager(managerOpts)
-	if err != nil {
-		return nil, fmt.Errorf("rule manager error: %v", err)
-	}
-
-	slog.Info("rules manager is ready")
-
-	return manager, nil
 }

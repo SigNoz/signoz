@@ -5,7 +5,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Tag } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
@@ -29,8 +31,8 @@ import {
 	LayoutList,
 	Pyramid,
 	X,
-} from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+} from '@signozhq/icons';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
@@ -84,10 +86,8 @@ function VariableItem({
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
 	);
-	const [
-		hasUserManuallyChangedName,
-		setHasUserManuallyChangedName,
-	] = useState<boolean>(false);
+	const [hasUserManuallyChangedName, setHasUserManuallyChangedName] =
+		useState<boolean>(false);
 	const [variableDescription, setVariableDescription] = useState<string>(
 		variableData.description || '',
 	);
@@ -103,12 +103,10 @@ function VariableItem({
 	const [variableTextboxValue, setVariableTextboxValue] = useState<string>(
 		variableData.textboxValue || '',
 	);
-	const [
-		variableSortType,
-		setVariableSortType,
-	] = useState<TSortVariableValuesType>(
-		variableData.sort || VariableSortTypeArr[0],
-	);
+	const [variableSortType, setVariableSortType] =
+		useState<TSortVariableValuesType>(
+			variableData.sort || VariableSortTypeArr[0],
+		);
 	const [variableMultiSelect, setVariableMultiSelect] = useState<boolean>(
 		variableData.multiSelect || false,
 	);
@@ -122,19 +120,15 @@ function VariableItem({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [
-		dynamicVariablesSelectedValue,
-		setDynamicVariablesSelectedValue,
-	] = useState<{ name: string; value: string }>();
+	const [dynamicVariablesSelectedValue, setDynamicVariablesSelectedValue] =
+		useState<{ name: string; value: string }>();
 
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorAttributeKey, setErrorAttributeKey] = useState<boolean>(false);
-	const [
-		errorAttributeKeyMessage,
-		setErrorAttributeKeyMessage,
-	] = useState<string>('');
+	const [errorAttributeKeyMessage, setErrorAttributeKeyMessage] =
+		useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -239,7 +233,7 @@ function VariableItem({
 
 	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
 
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
 	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
@@ -248,7 +242,7 @@ function VariableItem({
 		} else if (dynamicVariablesSelectedValue?.name) {
 			const widgets = getWidgetsHavingDynamicVariableAttribute(
 				dynamicVariablesSelectedValue?.name,
-				(selectedDashboard?.data?.widgets?.filter(
+				(dashboardData?.data?.widgets?.filter(
 					(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
 				) || []) as Widgets[],
 				variableData.name,
@@ -257,7 +251,7 @@ function VariableItem({
 		}
 	}, [
 		dynamicVariablesSelectedValue?.name,
-		selectedDashboard,
+		dashboardData,
 		variableData.id,
 		variableData.name,
 		widgetsByDynamicVariableId,
@@ -493,7 +487,7 @@ function VariableItem({
 								}}
 							/>
 							<div>
-								<Typography.Text type="warning">{errorNameMessage}</Typography.Text>
+								<Typography.Text color="warning">{errorNameMessage}</Typography.Text>
 							</div>
 						</div>
 					</VariableItemRow>
@@ -770,7 +764,7 @@ function VariableItem({
 									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableMultiSelect}
+									value={variableMultiSelect}
 									onChange={(e): void => {
 										setVariableMultiSelect(e);
 										if (!e) {
@@ -787,7 +781,7 @@ function VariableItem({
 										</Typography>
 									</LabelContainer>
 									<Switch
-										checked={variableShowALLOption}
+										value={variableShowALLOption}
 										onChange={(e): void => setVariableShowALLOption(e)}
 									/>
 								</VariableItemRow>

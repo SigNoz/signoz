@@ -1,5 +1,5 @@
 import { Tag } from 'antd';
-import { GettableAlert } from 'types/api/alerts/get';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 function Status({ status }: StatusProps): JSX.Element {
 	switch (status) {
@@ -26,7 +26,7 @@ function Status({ status }: StatusProps): JSX.Element {
 }
 
 interface StatusProps {
-	status: GettableAlert['state'];
+	status: RuletypesRuleDTO['state'];
 }
 
 export default Status;

@@ -10,7 +10,7 @@ import {
 	Copy,
 	Ellipsis,
 	Pin,
-} from 'lucide-react';
+} from '@signozhq/icons';
 
 interface AttributeRecord {
 	field: string;
@@ -36,12 +36,8 @@ export default function AttributeActions({
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isFilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 
-	const {
-		onAddToQuery,
-		onGroupByAttribute,
-		onCopyFieldName,
-		onCopyFieldValue,
-	} = useTraceActions();
+	const { onAddToQuery, onGroupByAttribute, onCopyFieldName, onCopyFieldValue } =
+		useTraceActions();
 
 	const textToCopy = useMemo(() => {
 		const str = record.value == null ? '' : String(record.value);
@@ -188,6 +184,8 @@ export default function AttributeActions({
 				placement="bottomLeft"
 			>
 				<Button
+					data-testid="attribute-actions-more"
+					aria-label="More attribute actions"
 					icon={<Ellipsis size={14} />}
 					className="filter-btn periscope-btn"
 				/>

@@ -8,11 +8,29 @@ import (
 type Config struct {
 	// Whether the web package is enabled.
 	Enabled bool `mapstructure:"enabled"`
-	// The prefix to serve the files from
-	Prefix string `mapstructure:"prefix"`
-	// The directory containing the static build files. The root of this directory should
-	// have an index.html file.
+
+	// The name of the index file to serve.
+	Index string `mapstructure:"index"`
+
+	// The directory from which to serve the web files.
 	Directory string `mapstructure:"directory"`
+
+	// Web settings configuration.
+	Settings SettingsConfig `mapstructure:"settings"`
+}
+
+// SettingsConfig holds the configuration for web settings.
+type SettingsConfig struct {
+	Posthog PosthogConfig `mapstructure:"posthog"`
+	Appcues AppcuesConfig `mapstructure:"appcues"`
+}
+
+type PosthogConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type AppcuesConfig struct {
+	Enabled bool `mapstructure:"enabled"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -22,8 +40,16 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Enabled:   true,
-		Prefix:    "/",
+		Index:     "index.html",
 		Directory: "/etc/signoz/web",
+		Settings: SettingsConfig{
+			Posthog: PosthogConfig{
+				Enabled: true,
+			},
+			Appcues: AppcuesConfig{
+				Enabled: true,
+			},
+		},
 	}
 }
 

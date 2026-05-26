@@ -62,14 +62,14 @@
 				padding: 4px 6px;
 				align-items: center;
 				gap: 3px;
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 
 			.delete-variable-button {
 				width: 26px;
 				height: 22px;
 				border-radius: 2px;
-				background: rgba(229, 72, 77, 0.1);
+				background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 				display: flex;
 				padding: 4px 6px;
 				align-items: center;
@@ -85,7 +85,7 @@
 				padding: 0px 6px;
 				align-items: center;
 				gap: 3px;
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 		}
 	}
@@ -99,7 +99,7 @@
 	.ant-table-thead {
 		.ant-table-cell {
 			padding: 8px 12px;
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
 			background: unset;
 		}
 
@@ -111,47 +111,13 @@
 	.ant-table-tbody {
 		.ant-table-cell {
 			padding: 14px;
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
 		}
 	}
 
 	.ant-table-row {
 		.ant-table-cell:nth-child(even) {
-			background: rgba(22, 25, 34, 0.4);
-		}
-	}
-}
-
-.lightMode {
-	.dashboard-variable-settings-table {
-		.variable-description-actions {
-			.actions-btns {
-				.edit-variable-button {
-					background: var(--bg-vanilla-300);
-				}
-
-				.apply-to-all-button {
-					background: var(--bg-vanilla-300);
-				}
-			}
-		}
-
-		.ant-table-thead {
-			.ant-table-cell {
-				border: 1px solid var(--bg-vanilla-300);
-			}
-		}
-
-		.ant-table-tbody {
-			.ant-table-cell {
-				border: 1px solid var(--bg-vanilla-300);
-			}
-		}
-
-		.ant-table-row {
-			.ant-table-cell:nth-child(even) {
-				background: var(--bg-vanilla-200);
-			}
+			background: color-mix(in srgb, var(--l1-border) 40%, transparent);
 		}
 	}
 }

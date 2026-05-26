@@ -3,10 +3,12 @@ package v2
 import (
 	"context"
 	"fmt"
-	"github.com/prometheus/prometheus/promql/parser"
 	"strings"
 	"sync"
 
+	"github.com/prometheus/prometheus/promql/parser"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
@@ -283,9 +285,9 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 	switch query.QueryType {
 	case v3.QueryTypePromQL:
 		for _, query := range query.PromQueries {
-			expr, err := parser.ParseExpr(query.Query)
+			expr, err := q.parser.ParseExpr(query.Query)
 			if err != nil {
-				q.logger.DebugContext(ctx, "error parsing promql expression", "query", query.Query, "error", err)
+				q.logger.DebugContext(ctx, "error parsing promql expression", "query", query.Query, errors.Attr(err))
 				continue
 			}
 			parser.Inspect(expr, func(node parser.Node, path []parser.Node) error {
@@ -301,7 +303,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 		}
 		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
 		if err != nil {
-			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", "error", err)
+			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", errors.Attr(err))
 			return
 		}
 		for metricName, metricPresent := range metrics {
@@ -319,7 +321,7 @@ func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQu
 		}
 		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
 		if err != nil {
-			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", "error", err)
+			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", errors.Attr(err))
 			return
 		}
 		for metricName, metricPresent := range metrics {

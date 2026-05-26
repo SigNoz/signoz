@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
 import {
 	apDexToolTipText,
@@ -14,6 +15,7 @@ import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThres
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
+	SERVICE_DETAIL_DRILLDOWN_ENABLED,
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -104,6 +106,7 @@ function ApDexMetrics({
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
 			version={ENTITY_VERSION_V4}
+			enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 		/>
 	);
 }

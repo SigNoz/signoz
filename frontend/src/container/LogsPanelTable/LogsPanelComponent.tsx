@@ -42,8 +42,15 @@ function LogsPanelComponent({
 		setPageSize(value);
 		setOffset(0);
 		setRequestData((prev) => {
-			const newQueryData = { ...prev.query };
-			newQueryData.builder.queryData[0].pageSize = value;
+			const newQueryData = {
+				...prev.query,
+				builder: {
+					...prev.query.builder,
+					queryData: prev.query.builder.queryData.map((qd, i) =>
+						i === 0 ? { ...qd, pageSize: value } : qd,
+					),
+				},
+			};
 			return {
 				...prev,
 				query: newQueryData,

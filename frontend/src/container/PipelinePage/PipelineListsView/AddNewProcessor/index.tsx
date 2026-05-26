@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Divider, Form, Modal } from 'antd';
+import { Button, Form, Modal } from 'antd';
 import {
 	ActionMode,
 	ActionType,
@@ -163,7 +163,6 @@ function AddNewProcessor({
 			onCancel={onCancelModal}
 			destroyOnClose
 		>
-			<Divider plain />
 			<Form
 				name="add-new-processor"
 				layout="vertical"
@@ -178,7 +177,7 @@ function AddNewProcessor({
 					selectedProcessorData={selectedProcessorData}
 					isAdd={isAdd}
 				/>
-				<Divider plain />
+
 				<Form.Item>
 					<ModalButtonWrapper>
 						<Button

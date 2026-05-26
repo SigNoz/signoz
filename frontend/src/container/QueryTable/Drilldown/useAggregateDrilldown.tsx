@@ -22,6 +22,7 @@ export interface AggregateData {
 		endTime: number;
 	};
 	label?: string | React.ReactNode;
+	seriesColor?: string;
 }
 
 const useAggregateDrilldown = ({

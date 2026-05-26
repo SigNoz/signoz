@@ -1,7 +1,7 @@
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/button';
 import { Copy, KeyRound } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 
@@ -17,7 +17,7 @@ function LicenseKeyRow(): JSX.Element | null {
 
 	const handleCopyLicenseKey = (text: string): void => {
 		copyToClipboard(text);
-		toast.success('License key copied to clipboard.', { richColors: true });
+		toast.success('License key copied to clipboard.');
 	};
 
 	return (
@@ -32,7 +32,7 @@ function LicenseKeyRow(): JSX.Element | null {
 				</code>
 				<Button
 					type="button"
-					size="xs"
+					size="sm"
 					aria-label="Copy license key"
 					data-testid="license-key-row-copy-btn"
 					className="license-key-row__copy-btn"

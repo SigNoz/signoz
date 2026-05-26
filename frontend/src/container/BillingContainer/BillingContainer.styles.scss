@@ -12,25 +12,25 @@
 		margin: 24px 0px;
 
 		.ant-table-title {
-			color: var(--bg-vanilla-400);
-			background-color: rgb(27, 28, 32);
+			color: var(--l2-foreground);
+			background-color: var(--l3-background);
 		}
 
 		.ant-table-cell {
-			background-color: var(--bg-ink-400);
-			border-color: var(--bg-slate-500);
+			background-color: var(--l1-background);
+			border-color: var(--l1-border);
 		}
 
 		.ant-table-tbody {
 			td {
-				border-color: var(--bg-slate-500);
+				border-color: var(--l1-border);
 			}
 		}
 	}
 
 	.upgrade-plan-benefits {
 		margin: 0px 8px;
-		border: 1px solid #333;
+		border: 1px solid var(--l1-border);
 		border-radius: 5px;
 		padding: 0 48px;
 		.plan-benefits {
@@ -55,7 +55,7 @@
 	.billing-update-note {
 		text-align: left;
 		font-size: 13px;
-		color: var(--bg-vanilla-200);
+		color: var(--l2-foreground);
 		margin-top: 16px;
 	}
 }
@@ -67,25 +67,4 @@
 
 .ant-skeleton.ant-skeleton-element .ant-skeleton-input {
 	min-width: 100% !important;
-}
-
-.lightMode {
-	.billing-container {
-		.billing-details {
-			.ant-table-cell {
-				background: var(--bg-vanilla-100);
-				border-color: var(--bg-vanilla-200);
-			}
-
-			.ant-table-tbody {
-				td {
-					border-color: var(--bg-vanilla-200);
-				}
-			}
-		}
-
-		.billing-update-note {
-			color: var(--bg-ink-200);
-		}
-	}
 }

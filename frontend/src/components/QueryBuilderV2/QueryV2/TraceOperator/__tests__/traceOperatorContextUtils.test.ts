@@ -29,7 +29,7 @@ describe('traceOperatorContextUtils', () => {
 				null,
 			);
 
-			expect(context).toEqual({
+			expect(context).toStrictEqual({
 				tokenType: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
@@ -62,7 +62,7 @@ describe('traceOperatorContextUtils', () => {
 				false,
 			);
 
-			expect(context).toEqual({
+			expect(context).toStrictEqual({
 				tokenType: TraceOperatorGrammarLexer.IDENTIFIER,
 				text: 'test',
 				start: 0,
@@ -193,7 +193,7 @@ describe('traceOperatorContextUtils', () => {
 		it('should return default context for empty query', () => {
 			const result = getTraceOperatorContextAtCursor('', 0);
 
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				tokenType: -1,
 				text: '',
 				start: 0,
@@ -211,7 +211,7 @@ describe('traceOperatorContextUtils', () => {
 		it('should return default context for null query', () => {
 			const result = getTraceOperatorContextAtCursor(null as any, 0);
 
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				tokenType: -1,
 				text: '',
 				start: 0,
@@ -229,7 +229,7 @@ describe('traceOperatorContextUtils', () => {
 		it('should return default context for undefined query', () => {
 			const result = getTraceOperatorContextAtCursor(undefined as any, 0);
 
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				tokenType: -1,
 				text: '',
 				start: 0,

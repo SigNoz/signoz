@@ -3,12 +3,12 @@
 	overflow: hidden;
 
 	.settings-page-header {
-		border-bottom: 1px solid var(--Slate-500, #161922);
-		background: rgba(11, 12, 14, 0.7);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		backdrop-filter: blur(20px);
 
 		.settings-page-header-title {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 			text-align: center;
 			font-family: Inter;
 			font-size: 13px;
@@ -31,8 +31,8 @@
 		.settings-page-sidenav {
 			width: 240px;
 			height: calc(100vh - 48px);
-			border-right: 1px solid var(--secondary);
-			background: var(--sidebar-primary-foreground);
+			border-right: 1px solid var(--l1-border);
+			background: var(--l1-background);
 			padding-top: var(--padding-1);
 			display: flex;
 			flex-direction: column;
@@ -45,7 +45,7 @@
 			}
 
 			.settings-nav-section--with-divider {
-				border-top: 1px solid var(--secondary);
+				border-top: 1px solid var(--l1-border);
 				padding-top: var(--padding-4);
 			}
 
@@ -66,7 +66,7 @@
 
 				&.active {
 					.nav-item-data .nav-item-label {
-						color: var(--bg-vanilla-100, #fff);
+						color: var(--l1-foreground);
 					}
 				}
 			}
@@ -75,7 +75,7 @@
 		.settings-page-content {
 			flex: 1;
 			height: calc(100vh - 48px);
-			background: var(--Ink-500, #0b0c0e);
+			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
 
@@ -89,59 +89,11 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-slate-300);
+				background: var(--l3-background);
 			}
 
 			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-slate-200);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.settings-page {
-		.settings-page-header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-			background: #fff;
-			backdrop-filter: blur(20px);
-
-			.settings-page-header-title {
-				color: var(--bg-ink-400);
-
-				background: var(--bg-vanilla-100);
-				border-right: 1px solid var(--bg-vanilla-300);
-			}
-		}
-
-		.settings-page-content-container {
-			.settings-page-sidenav {
-				border-right: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-
-				.nav-item {
-					&.active {
-						.nav-item-data .nav-item-label {
-							color: var(--bg-ink-500);
-						}
-					}
-				}
-			}
-
-			.settings-page-content {
-				background: var(--bg-vanilla-100);
-
-				&::-webkit-scrollbar-track {
-					background: transparent;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background: var(--bg-slate-300);
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-slate-200);
-				}
+				background: var(--l3-background);
 			}
 		}
 	}

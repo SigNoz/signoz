@@ -1,8 +1,9 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { PrecisionOption } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from '@signozhq/icons';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
 import { ColumnUnitSelector } from '../../ColumnUnitSelector/ColumnUnitSelector';
@@ -66,6 +67,7 @@ export default function FormattingUnitsSection({
 						options={decimapPrecisionOptions}
 						value={decimalPrecision}
 						className="panel-type-select"
+						data-testid="decimal-precision-selector"
 						defaultValue={decimapPrecisionOptions[0]?.value}
 						onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
 					/>
@@ -77,6 +79,7 @@ export default function FormattingUnitsSection({
 					columnUnits={columnUnits}
 					setColumnUnits={setColumnUnits}
 					isNewDashboard={isNewDashboard}
+					data-testid="column-unit-selector"
 				/>
 			)}
 		</SettingsSection>

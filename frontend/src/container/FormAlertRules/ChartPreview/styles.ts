@@ -29,7 +29,7 @@ export const ChartContainer = styled(Card)`
 		align-items: center;
 		gap: 6px;
 		border-radius: 4px;
-		background: var(--bg-slate-400);
+		background: var(--l3-background);
 		backdrop-filter: blur(6px);
 		width: fit-content;
 	}

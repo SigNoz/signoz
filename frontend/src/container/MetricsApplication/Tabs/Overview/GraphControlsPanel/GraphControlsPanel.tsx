@@ -1,14 +1,15 @@
+import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
-import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
+import { DraftingCompass, ScrollText, Binoculars } from '@signozhq/icons';
 
 import './GraphControlsPanel.styles.scss';
 
 interface GraphControlsPanelProps {
 	id: string;
-	onViewLogsClick?: () => void;
-	onViewTracesClick: () => void;
-	onViewAPIMonitoringClick?: () => void;
+	onViewLogsClick?: (e: React.MouseEvent) => void;
+	onViewTracesClick: (e: React.MouseEvent) => void;
+	onViewAPIMonitoringClick?: (e: React.MouseEvent) => void;
 }
 
 function GraphControlsPanel({

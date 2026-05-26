@@ -1,12 +1,6 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { IDiskType } from 'types/api/disks/getDisks';
 import {
 	PayloadPropsLogs,
@@ -38,7 +32,6 @@ jest.mock('hooks/useComponentPermission', () => ({
 jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(() => ({
 		isCloudUser: false,
-		isEnterpriseSelfHostedUser: false,
 	})),
 }));
 
@@ -116,8 +109,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 	describe('Test 1: S3 Enabled - Only Days in Dropdown', () => {
 		it('should show only Days option for S3 retention and send correct API payload', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -160,8 +151,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			fireEvent.click(document.body);
 
 			// Change S3 retention value to 5 days
-			await user.clear(s3Input);
-			await user.type(s3Input, '5');
+			fireEvent.change(s3Input, { target: { value: '5' } });
 
 			// Find the save button in the Logs row
 			const saveButton = logsRow.querySelector(
@@ -218,8 +208,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 	describe('Test 2: S3 Disabled - Field Hidden', () => {
 		it('should hide S3 retention field and send empty S3 values to API', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -246,7 +234,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const totalDropdown = logsRow.querySelector(
 				'.ant-select-selector',
 			) as HTMLElement;
-			await user.click(totalDropdown);
+			fireEvent.mouseDown(totalDropdown);
 
 			// Wait for dropdown options to appear
 			await waitFor(() => {
@@ -260,11 +248,10 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				opt.textContent?.includes('Days'),
 			);
 			expect(daysOption).toBeInTheDocument();
-			await user.click(daysOption as HTMLElement);
+			fireEvent.click(daysOption as HTMLElement);
 
 			// Now change the value
-			await user.clear(totalInput);
-			await user.type(totalInput, '60');
+			fireEvent.change(totalInput, { target: { value: '60' } });
 
 			// Find the save button
 			const saveButton = logsRow.querySelector(
@@ -278,14 +265,14 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			});
 
 			// Click save button
-			await user.click(saveButton);
+			fireEvent.click(saveButton);
 
 			// Wait for modal to appear
 			const okButton = await screen.findByRole('button', { name: /ok/i });
 			expect(okButton).toBeInTheDocument();
 
 			// Click OK button
-			await user.click(okButton);
+			fireEvent.click(okButton);
 
 			// Verify API was called with empty S3 values (60 days)
 			await waitFor(() => {
@@ -334,8 +321,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 	describe('Test 4: Save Button State with S3 Disabled', () => {
 		it('should disable save button when cold_storage_ttl_days is -1 and no changes made', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -366,8 +351,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const totalInput = inputs[0] as HTMLInputElement;
 
 			// Change total retention value to trigger button enable
-			await user.clear(totalInput);
-			await user.type(totalInput, '60');
+			fireEvent.change(totalInput, { target: { value: '60' } });
 
 			// Button should now be enabled after change
 			await waitFor(() => {
@@ -375,8 +359,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			});
 
 			// Revert to original value (30 days displays as 1 Month)
-			await user.clear(totalInput);
-			await user.type(totalInput, '1');
+			fireEvent.change(totalInput, { target: { value: '1' } });
 
 			// Button should be disabled again (back to original state)
 			await waitFor(() => {
@@ -389,7 +372,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		beforeEach(() => {
 			(useGetTenantLicense as jest.Mock).mockReturnValue({
 				isCloudUser: true,
-				isEnterpriseSelfHostedUser: false,
 			});
 		});
 
@@ -411,15 +393,14 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		});
 	});
 
-	describe('Enterprise Self-Hosted User Rendering', () => {
+	describe('Non-cloud user rendering', () => {
 		beforeEach(() => {
 			(useGetTenantLicense as jest.Mock).mockReturnValue({
 				isCloudUser: false,
-				isEnterpriseSelfHostedUser: true,
 			});
 		});
 
-		it('should render CustomDomainSettings but not GeneralSettingsCloud', () => {
+		it('should not render CustomDomainSettings or GeneralSettingsCloud', () => {
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -432,12 +413,14 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			expect(screen.getByTestId('custom-domain-settings')).toBeInTheDocument();
+			expect(
+				screen.queryByTestId('custom-domain-settings'),
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('general-settings-cloud'),
 			).not.toBeInTheDocument();
 
-			// Save buttons should be visible for self-hosted
+			// Save buttons should be visible for non-cloud users (these are from retentions)
 			const saveButtons = screen.getAllByRole('button', { name: /save/i });
 			expect(saveButtons.length).toBeGreaterThan(0);
 		});

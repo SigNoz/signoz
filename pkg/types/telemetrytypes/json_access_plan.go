@@ -19,7 +19,8 @@ var (
 	BranchJSON    = JSONAccessBranchType{valuer.NewString("json")}
 	BranchDynamic = JSONAccessBranchType{valuer.NewString("dynamic")}
 
-	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
+	CodePlanIndexOutOfBounds     = errors.MustNewCode("plan_index_out_of_bounds")
+	CodePlanFieldDataTypeMissing = errors.MustNewCode("field_data_type_missing")
 )
 
 type JSONColumnMetadata struct {
@@ -35,15 +36,12 @@ type TerminalConfig struct {
 }
 
 // Node is now a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types
+// that precomputes all possible branches and their types.
 type JSONAccessNode struct {
 	// Node information
 	Name       string
 	IsTerminal bool
 	isRoot     bool // marked true for only body_v2 and body_promoted
-
-	// Precomputed type information (single source of truth)
-	AvailableTypes []JSONDataType
 
 	// Array type branches (Array(JSON) vs Array(Dynamic))
 	Branches map[JSONAccessBranchType]*JSONAccessNode
@@ -90,6 +88,11 @@ func (n *JSONAccessNode) FieldPath() string {
 	return n.Parent.Alias() + "." + key
 }
 
+// Returns true if the current node is a non-nested path.
+func (n *JSONAccessNode) IsNonNestedPath() bool {
+	return !strings.Contains(n.FieldPath(), ArraySep)
+}
+
 func (n *JSONAccessNode) BranchesInOrder() []JSONAccessBranchType {
 	return slices.SortedFunc(maps.Keys(n.Branches), func(a, b JSONAccessBranchType) int {
 		return strings.Compare(b.StringValue(), a.StringValue())
@@ -101,10 +104,10 @@ type planBuilder struct {
 	paths      []string // cumulative paths for type cache lookups
 	segments   []string // individual path segments for node names
 	isPromoted bool
-	typeCache  map[string][]JSONDataType
+	typeCache  map[string][]FieldDataType
 }
 
-// buildPlan recursively builds the path plan tree
+// buildPlan recursively builds the path plan tree.
 func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChild bool) (*JSONAccessNode, error) {
 	if index >= len(pb.paths) {
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
@@ -133,34 +136,41 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 	}
 
-	// Use cached types from the batched metadata query
-	types, ok := pb.typeCache[pathSoFar]
-	if !ok {
-		return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
-	}
-
 	// Create node for this path segment
 	node := &JSONAccessNode{
 		Name:            segmentName,
 		IsTerminal:      isTerminal,
-		AvailableTypes:  types,
 		Branches:        make(map[JSONAccessBranchType]*JSONAccessNode),
 		Parent:          parent,
 		MaxDynamicTypes: maxTypes,
 		MaxDynamicPaths: maxPaths,
 	}
 
-	hasJSON := slices.Contains(node.AvailableTypes, ArrayJSON)
-	hasDynamic := slices.Contains(node.AvailableTypes, ArrayDynamic)
-
 	// Configure terminal if this is the last part
 	if isTerminal {
+		// fielddatatype must not be unspecified else expression can not be generated
+		if pb.key.FieldDataType == FieldDataTypeUnspecified {
+			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "field data type is missing for path %s", pathSoFar)
+		}
+
 		node.TerminalConfig = &TerminalConfig{
 			Key:      pb.key,
-			ElemType: *pb.key.JSONDataType,
+			ElemType: pb.key.GetJSONDataType(),
 		}
 	} else {
 		var err error
+		// Use cached types from the batched metadata query
+		types, ok := pb.typeCache[pathSoFar]
+		if !ok {
+			return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
+		}
+
+		hasJSON := slices.Contains(types, FieldDataTypeArrayJSON)
+		hasDynamic := slices.Contains(types, FieldDataTypeArrayDynamic)
+		if !hasJSON && !hasDynamic {
+			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data type missing for path %s", pathSoFar)
+		}
+
 		if hasJSON {
 			node.Branches[BranchJSON], err = pb.buildPlan(index+1, node, false)
 			if err != nil {
@@ -179,8 +189,8 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 }
 
 // buildJSONAccessPlan builds a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types
-func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]JSONDataType,
+// that precomputes all possible branches and their types.
+func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]FieldDataType,
 ) error {
 	// if path is empty, return nil
 	if key.Name == "" {

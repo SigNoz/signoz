@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
@@ -147,16 +148,6 @@ type RuleResponseItem struct {
 	Id        int       `json:"id" db:"id"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 	Data      string    `json:"data" db:"data"`
-}
-
-type TTLStatusItem struct {
-	Id             int       `json:"id" db:"id"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	TableName      string    `json:"table_name" db:"table_name"`
-	TTL            int       `json:"ttl" db:"ttl"`
-	Status         string    `json:"status" db:"status"`
-	ColdStorageTtl int       `json:"cold_storage_ttl" db:"cold_storage_ttl"`
 }
 
 type ChannelItem struct {
@@ -314,6 +305,31 @@ type FlamegraphSpan struct {
 	Events       []Event           `json:"event"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
 	Children     []*FlamegraphSpan `json:"children"`
+	Attributes   map[string]any    `json:"attributes,omitempty"`
+	Resource     map[string]string `json:"resource,omitempty"`
+}
+
+// SetRequestedFields extracts the requested attribute/resource fields from item into s.
+// This can eventually support missing fieldContext by checking both
+func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetrytypes.TelemetryFieldKey) {
+	for _, field := range fields {
+		switch field.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			if v, ok := item.Resources_string[field.Name]; ok && v != "" {
+				if s.Resource == nil {
+					s.Resource = make(map[string]string)
+				}
+				s.Resource[field.Name] = v
+			}
+		case telemetrytypes.FieldContextAttribute:
+			if v := item.AttributeValue(field.Name); v != nil {
+				if s.Attributes == nil {
+					s.Attributes = make(map[string]any)
+				}
+				s.Attributes[field.Name] = v
+			}
+		}
+	}
 }
 
 type GetWaterfallSpansForTraceWithMetadataResponse struct {
@@ -329,6 +345,7 @@ type GetWaterfallSpansForTraceWithMetadataResponse struct {
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	// this is needed for frontend and query service sync
 	UncollapsedSpans []string `json:"uncollapsedSpans"`
+	HasMore          bool     `json:"hasMore"`
 }
 
 type GetFlamegraphSpansForTraceResponse struct {
@@ -336,6 +353,7 @@ type GetFlamegraphSpansForTraceResponse struct {
 	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
 	DurationNano         uint64              `json:"durationNano"`
 	Spans                [][]*FlamegraphSpan `json:"spans"`
+	HasMore              bool                `json:"hasMore"`
 }
 
 type OtelSpanRef struct {
@@ -434,33 +452,9 @@ type SpanAggregatesDBResponseItem struct {
 	GroupBy      string    `ch:"groupBy"`
 }
 
-type SetTTLResponseItem struct {
-	Message string `json:"message"`
-}
-
 type DiskItem struct {
 	Name string `json:"name,omitempty" ch:"name"`
 	Type string `json:"type,omitempty" ch:"type"`
-}
-
-type DBResponseTTL struct {
-	EngineFull string `ch:"engine_full"`
-}
-
-type GetTTLResponseItem struct {
-	MetricsTime             int    `json:"metrics_ttl_duration_hrs,omitempty"`
-	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
-	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
-	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
-	LogsTime                int    `json:"logs_ttl_duration_hrs,omitempty"`
-	LogsMoveTime            int    `json:"logs_move_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
-	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
-	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
-	ExpectedLogsTime        int    `json:"expected_logs_ttl_duration_hrs,omitempty"`
-	ExpectedLogsMoveTime    int    `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
-	Status                  string `json:"status"`
 }
 
 type DBResponseServiceName struct {

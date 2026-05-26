@@ -39,6 +39,7 @@ export function useCopyToClipboard(
 
 	const copyToClipboard = useCallback(
 		(text: string, id?: ID): void => {
+			// oxlint-disable-next-line signoz/no-navigator-clipboard
 			navigator.clipboard.writeText(text).then(() => {
 				if (timeoutRef.current) {
 					clearTimeout(timeoutRef.current);

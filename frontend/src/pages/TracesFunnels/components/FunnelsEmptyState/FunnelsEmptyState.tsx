@@ -1,7 +1,9 @@
 import { Button } from 'antd';
 import LearnMore from 'components/LearnMore/LearnMore';
-import { Plus } from 'lucide-react';
+import { Plus } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
+
+import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';
 
 import './FunnelsEmptyState.styles.scss';
 
@@ -19,7 +21,7 @@ function FunnelsEmptyState({
 			<div className="funnels-empty__content">
 				<section className="funnels-empty__header">
 					<img
-						src="/Icons/alert_emoji.svg"
+						src={alertEmojiUrl}
 						alt="funnels-empty-icon"
 						className="funnels-empty__icon"
 					/>

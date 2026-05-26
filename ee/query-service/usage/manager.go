@@ -15,9 +15,12 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -42,15 +45,18 @@ type Manager struct {
 	zeus zeus.Zeus
 
 	orgGetter organization.Getter
+
+	flagger flagger.Flagger
 }
 
-func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, orgGetter organization.Getter) (*Manager, error) {
+func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, orgGetter organization.Getter, flagger flagger.Flagger) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
 		licenseService: licenseService,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
 		zeus:           zeus,
 		orgGetter:      orgGetter,
+		flagger:        flagger,
 	}
 	return m, nil
 }
@@ -76,14 +82,14 @@ func (lm *Manager) Start(ctx context.Context) error {
 func (lm *Manager) UploadUsage(ctx context.Context) {
 	organizations, err := lm.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to get organizations", "error", err)
+		slog.ErrorContext(ctx, "failed to get organizations", errors.Attr(err))
 		return
 	}
 	for _, organization := range organizations {
 		// check if license is present or not
 		license, err := lm.licenseService.GetActive(ctx, organization.ID)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to get active license", "error", err)
+			slog.ErrorContext(ctx, "failed to get active license", errors.Attr(err))
 			return
 		}
 		if license == nil {
@@ -115,7 +121,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 			dbusages := []model.UsageDB{}
 			err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
 			if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
-				slog.ErrorContext(ctx, "failed to get usage from clickhouse", "error", err)
+				slog.ErrorContext(ctx, "failed to get usage from clickhouse", errors.Attr(err))
 				return
 			}
 			for _, u := range dbusages {
@@ -135,14 +141,14 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 		for _, usage := range usages {
 			usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
 			if err != nil {
-				slog.ErrorContext(ctx, "error while decrypting usage data", "error", err)
+				slog.ErrorContext(ctx, "error while decrypting usage data", errors.Attr(err))
 				return
 			}
 
 			usageData := model.Usage{}
 			err = json.Unmarshal(usageDataBytes, &usageData)
 			if err != nil {
-				slog.ErrorContext(ctx, "error while unmarshalling usage data", "error", err)
+				slog.ErrorContext(ctx, "error while unmarshalling usage data", errors.Attr(err))
 				return
 			}
 
@@ -163,13 +169,20 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 
 		body, errv2 := json.Marshal(payload)
 		if errv2 != nil {
-			slog.ErrorContext(ctx, "error while marshalling usage payload", "error", errv2)
+			slog.ErrorContext(ctx, "error while marshalling usage payload", errors.Attr(errv2))
 			return
 		}
 
-		errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+		evalCtx := featuretypes.NewFlaggerEvaluationContext(organization.ID)
+		useZeus := lm.flagger.BooleanOrEmpty(ctx, flagger.FeaturePutMetersInZeus, evalCtx)
+
+		if useZeus {
+			errv2 = lm.zeus.PutMetersV2(ctx, payload.LicenseKey.String(), body)
+		} else {
+			errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+		}
 		if errv2 != nil {
-			slog.ErrorContext(ctx, "failed to upload usage", "error", errv2)
+			slog.ErrorContext(ctx, "failed to upload usage", errors.Attr(errv2))
 			// not returning error here since it is captured in the failed count
 			return
 		}

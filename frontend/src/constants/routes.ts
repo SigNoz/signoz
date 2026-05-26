@@ -8,6 +8,7 @@ const ROUTES = {
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
+	TRACE_DETAIL_OLD: '/trace-old/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	ONBOARDING: '/onboarding',
 	GET_STARTED: '/get-started',
@@ -28,7 +29,6 @@ const ROUTES = {
 	ALERTS_NEW: '/alerts/new',
 	ALERT_HISTORY: '/alerts/history',
 	ALERT_OVERVIEW: '/alerts/overview',
-	ALERT_TYPE_SELECTION: '/alerts/type-selection',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
@@ -38,7 +38,6 @@ const ROUTES = {
 	SETTINGS: '/settings',
 	MY_SETTINGS: '/settings/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
-	API_KEYS: '/settings/api-keys',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
@@ -66,6 +65,7 @@ const ROUTES = {
 	WORKSPACE_SUSPENDED: '/workspace-suspended',
 	SHORTCUTS: '/settings/shortcuts',
 	INTEGRATIONS: '/integrations',
+	INTEGRATIONS_DETAIL: '/integrations/:integrationId',
 	MESSAGING_QUEUES_BASE: '/messaging-queues',
 	MESSAGING_QUEUES_KAFKA: '/messaging-queues/kafka',
 	MESSAGING_QUEUES_KAFKA_DETAIL: '/messaging-queues/kafka/detail',
@@ -86,6 +86,10 @@ const ROUTES = {
 	METER_EXPLORER_VIEWS: '/meter/explorer/views',
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
+	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
+	AI_ASSISTANT: '/ai-assistant/:conversationId',
+	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
+	MCP_SERVER: '/settings/mcp-server',
 } as const;
 
 export default ROUTES;

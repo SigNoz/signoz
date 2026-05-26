@@ -1,9 +1,16 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import deleteAlerts from 'api/alerts/delete';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { deleteRuleByID } from 'api/generated/services/rules';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
-import { GettableAlert } from 'types/api/alerts/get';
+import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
 
@@ -22,48 +29,31 @@ function DeleteAlert({
 		payload: undefined,
 	});
 
-	const defaultErrorMessage = 'Something went wrong';
+	const { showErrorModal } = useErrorModal();
 
 	const onDeleteHandler = async (id: string): Promise<void> => {
 		try {
-			const response = await deleteAlerts({
-				id,
+			await deleteRuleByID({ id });
+
+			setData((state) => state.filter((alert) => alert.id !== id));
+
+			setDeleteAlertState((state) => ({
+				...state,
+				loading: false,
+			}));
+			notifications.success({
+				message: 'Success',
 			});
-
-			if (response.statusCode === 200) {
-				setData((state) => state.filter((alert) => alert.id !== id));
-
-				setDeleteAlertState((state) => ({
-					...state,
-					loading: false,
-					payload: response.payload,
-				}));
-				notifications.success({
-					message: 'Success',
-				});
-			} else {
-				setDeleteAlertState((state) => ({
-					...state,
-					loading: false,
-					error: true,
-					errorMessage: response.error || defaultErrorMessage,
-				}));
-
-				notifications.error({
-					message: response.error || defaultErrorMessage,
-				});
-			}
 		} catch (error) {
 			setDeleteAlertState((state) => ({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: defaultErrorMessage,
 			}));
 
-			notifications.error({
-				message: defaultErrorMessage,
-			});
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
 		}
 	};
 
@@ -88,8 +78,8 @@ function DeleteAlert({
 }
 
 interface DeleteAlertProps {
-	id: GettableAlert['id'];
-	setData: Dispatch<SetStateAction<GettableAlert[]>>;
+	id: string;
+	setData: Dispatch<SetStateAction<RuletypesRuleDTO[]>>;
 	notifications: NotificationInstance;
 }
 

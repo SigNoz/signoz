@@ -37,7 +37,7 @@ function getPreferredSeriesIndex(
 	const top = e.clientY - bbox.top;
 	// Prefer series explicitly marked as focused
 	for (let i = 1; i < u.series.length; i++) {
-		// @ts-ignore
+		// @ts-expect-error
 		const isSeriesFocused = u.series[i]?._focus === true;
 		const isSeriesShown = u.series[i].show !== false;
 		const seriesValue = u.data[i]?.[timestampIndex];

@@ -8,13 +8,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// QueryFilterAnalyzeRequest represents the request body for query filter analysis
+// QueryFilterAnalyzeRequest represents the request body for query filter analysis.
 type QueryFilterAnalyzeRequest struct {
 	Query     string                        `json:"query"`
 	QueryType querybuildertypesv5.QueryType `json:"queryType"`
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling with validation and normalization
+// UnmarshalJSON implements custom JSON unmarshaling with validation and normalization.
 func (q *QueryFilterAnalyzeRequest) UnmarshalJSON(data []byte) error {
 	// Use a temporary struct to avoid infinite recursion
 	type Alias QueryFilterAnalyzeRequest
@@ -42,7 +42,7 @@ type ColumnInfoResponse struct {
 	Alias string `json:"columnAlias"`
 }
 
-// QueryFilterAnalyzeResponse represents the response body for query filter analysis
+// QueryFilterAnalyzeResponse represents the response body for query filter analysis.
 type QueryFilterAnalyzeResponse struct {
 	MetricNames []string             `json:"metricNames"`
 	Groups      []ColumnInfoResponse `json:"groups"`

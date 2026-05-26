@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 44px); //44px -> trace details top bar
-	border-left: 1px solid var(--bg-slate-400);
+	border-left: 1px solid var(--l1-border);
 	overflow-y: auto !important;
 	&:not(&-docked) {
 		min-width: 450px;
@@ -18,7 +18,7 @@
 		justify-content: space-between;
 		height: 48px;
 		padding: 12px;
-		border-bottom: 1px solid var(--bg-slate-400);
+		border-bottom: 1px solid var(--l1-border);
 
 		.heading {
 			display: flex;
@@ -29,11 +29,11 @@
 				height: 8px;
 				width: 8px;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
+				background: var(--danger-background);
 			}
 
 			.text {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -81,19 +81,19 @@
 					border: none;
 					box-shadow: none;
 					border-radius: 2px;
-					background: var(--bg-slate-400);
+					background: var(--l1-border);
 					padding: 4px;
 					gap: 3px;
 					height: 24px;
 					width: 24px;
 
 					&:hover {
-						background: var(--bg-slate-300);
+						background: var(--l3-background);
 					}
 				}
 			}
 			&:hover {
-				background-color: var(--bg-slate-500);
+				background-color: var(--l1-border);
 				.attribute-actions-wrapper {
 					display: flex;
 				}
@@ -114,10 +114,12 @@
 
 				.span-percentile-value-container {
 					.span-percentile-value {
-						color: var(--text-sakura-400, #f56c87);
+						color: var(--bg-sakura-400);
 						font-variant-numeric: lining-nums tabular-nums stacked-fractions
 							slashed-zero;
-						font-feature-settings: 'dlig' on, 'salt' on;
+						font-feature-settings:
+							'dlig' on,
+							'salt' on;
 
 						border-radius: 0 50px 50px 0;
 
@@ -129,7 +131,7 @@
 						padding-left: 8px;
 						padding-right: 8px;
 
-						border-left: 1px solid var(--bg-slate-400);
+						border-left: 1px solid var(--l1-border);
 
 						cursor: pointer;
 
@@ -141,8 +143,8 @@
 
 					&.span-percentile-value-container-open {
 						.span-percentile-value {
-							border: 1px solid var(--bg-slate-400);
-							background: var(--bg-slate-400);
+							border: 1px solid var(--l1-border);
+							background: var(--l1-border);
 						}
 					}
 				}
@@ -155,15 +157,15 @@
 
 				fill: linear-gradient(
 					139deg,
-					rgba(18, 19, 23, 0.32) 0%,
-					rgba(18, 19, 23, 0.36) 98.68%
+					color-mix(in srgb, var(--card) 32%, transparent) 0%,
+					color-mix(in srgb, var(--card) 36%, transparent) 98.68%
 				);
 
 				stroke-width: 1px;
-				stroke: var(--bg-slate-500, #161922);
+				stroke: var(--l1-border);
 				filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
 				backdrop-filter: blur(20px);
-				border: 1px solid var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
 				border-radius: 4px;
 
 				.span-percentiles-header {
@@ -172,7 +174,7 @@
 					justify-content: space-between;
 					gap: 8px;
 					padding: 8px 12px 8px 12px;
-					border-bottom: 1px solid var(--bg-slate-500);
+					border-bottom: 1px solid var(--l1-border);
 
 					.span-percentiles-header-text {
 						display: flex;
@@ -190,10 +192,12 @@
 
 					.span-percentile-content-title {
 						.span-percentile-value {
-							color: var(--text-sakura-400, #f56c87);
+							color: var(--bg-sakura-400);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on;
 						}
 
 						.span-percentile-value-loader {
@@ -216,9 +220,9 @@
 
 							.ant-select-selector {
 								border-radius: 50px;
-								border: 1px solid var(--bg-slate-400, #1d212d);
-								background: var(--bg-slate-500, #161922);
-								color: var(--bg-vanilla-400);
+								border: 1px solid var(--l1-border);
+								background: var(--l1-background);
+								color: var(--l2-foreground);
 								font-family: Inter;
 								font-size: 12px;
 								font-style: normal;
@@ -239,7 +243,7 @@
 							gap: 8px;
 
 							.span-percentile-values-table-header {
-								color: var(--text-vanilla-400);
+								color: var(--l2-foreground);
 								text-align: right;
 								font-family: Inter;
 								font-size: 11px;
@@ -286,10 +290,12 @@
 
 							.span-percentile-values-table-data-row-key {
 								flex: 0 0 auto;
-								color: var(--text-vanilla-100);
+								color: var(--l1-foreground);
 								text-align: right;
 								font-variant-numeric: lining-nums tabular-nums slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on;
 								font-family: Inter;
 								font-size: 12px;
 								font-style: normal;
@@ -298,10 +304,13 @@
 							}
 
 							.span-percentile-values-table-data-row-value {
-								color: var(--text-vanilla-400);
+								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on, 'ss02' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on,
+									'ss02' on;
 								font-family: Inter;
 								font-size: 12px;
 								font-style: normal;
@@ -313,7 +322,7 @@
 								flex: 1;
 								height: 0; /* line only */
 								margin: 0 8px;
-								border-top: 1px dashed var(--bg-slate-300);
+								border-top: 1px dashed var(--l1-border);
 
 								/* Use border image to control dash length & spacing */
 								border-top-width: 1px;
@@ -331,7 +340,11 @@
 
 						.current-span-percentile-row {
 							border-radius: 2px;
-							background: rgba(78, 116, 248, 0.2);
+							background: color-mix(
+								in srgb,
+								var(--primary-background) 20%,
+								transparent
+							);
 
 							.span-percentile-values-table-data-row-key {
 								color: var(--text-robin-300);
@@ -379,17 +392,13 @@
 							box-shadow: none !important;
 							height: 36px;
 
-							border-bottom: 1px solid var(--bg-slate-400) !important;
+							border-bottom: 1px solid var(--l1-border) !important;
 						}
 					}
 
 					border-radius: 4px;
-					border: 1px solid var(--bg-slate-400, #1d212d);
-					background: linear-gradient(
-						139deg,
-						rgba(18, 19, 23, 1) 0%,
-						rgba(18, 19, 23, 1) 98.68%
-					);
+					border: 1px solid var(--l1-border);
+					background: linear-gradient(139deg, var(--card) 0%, var(--card) 98.68%);
 					box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 					backdrop-filter: blur(20px);
 
@@ -411,11 +420,11 @@
 						}
 
 						&::-webkit-scrollbar-thumb {
-							background: var(--bg-slate-300);
+							background: var(--l3-background);
 						}
 
 						&::-webkit-scrollbar-thumb:hover {
-							background: var(--bg-slate-200);
+							background: var(--l3-background);
 						}
 					}
 
@@ -427,12 +436,12 @@
 
 						.resource-attributes-select-item-checkbox {
 							.ant-checkbox-disabled {
-								background-color: var(--bg-robin-500);
-								color: var(--bg-vanilla-100);
+								background-color: var(--primary-background);
+								color: var(--l1-foreground);
 							}
 
 							.resource-attributes-select-item-value {
-								color: var(--bg-vanilla-100);
+								color: var(--l1-foreground);
 
 								font-family: Inter;
 								font-size: 13px;
@@ -447,7 +456,7 @@
 			}
 
 			.attribute-key {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -464,12 +473,12 @@
 				width: fit-content;
 				max-width: 100%;
 				border-radius: 50px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 
 				.attribute-value {
 					padding: 2px 8px;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: 'Inter';
 					font-size: 14px;
 					font-style: normal;
@@ -486,8 +495,8 @@
 				align-items: center;
 				gap: 8px;
 				border-radius: 50px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 				width: fit-content;
 
 				.dot {
@@ -503,10 +512,10 @@
 					max-width: 100%;
 					border-radius: 0px;
 					border: none;
-					background: var(--bg-slate-500);
+					background: var(--l1-border);
 
 					.service-value {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 						font-family: 'Inter';
 						font-size: 14px;
 						font-style: normal;
@@ -528,7 +537,7 @@
 				.ant-btn.ant-btn-default {
 					padding: 0 15px;
 					&:not(:hover) {
-						border: 1px solid var(--bg-slate-400);
+						border: 1px solid var(--l1-border);
 					}
 				}
 			}
@@ -548,7 +557,7 @@
 			}
 
 			.ant-tabs-nav::before {
-				border-bottom: 1px solid var(--bg-slate-400) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
 			}
 
 			.ant-tabs-tab {
@@ -585,10 +594,12 @@
 					height: 20px;
 					padding: 0 6px;
 					border-radius: 10px;
-					background: rgba(171, 189, 255, 0.1);
-					color: var(--bg-vanilla-400);
+					background: color-mix(in srgb, var(--bg-robin-200) 10%, transparent);
+					color: var(--l2-foreground);
 					font-variant-numeric: lining-nums tabular-nums slashed-zero;
-					font-feature-settings: 'dlig' on, 'salt' on;
+					font-feature-settings:
+						'dlig' on,
+						'salt' on;
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -615,10 +626,12 @@
 	}
 
 	.span-percentile-tooltip-text {
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-variant-numeric: lining-nums tabular-nums stacked-fractions ordinal
 			slashed-zero;
-		font-feature-settings: 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -629,13 +642,15 @@
 		.span-percentile-tooltip-text-percentile {
 			color: var(--text-sakura-500);
 			font-variant-numeric: lining-nums tabular-nums stacked-fractions slashed-zero;
-			font-feature-settings: 'dlig' on, 'salt' on;
+			font-feature-settings:
+				'dlig' on,
+				'salt' on;
 			font-family: Inter;
 			font-size: 12px;
 		}
 
 		.span-percentile-tooltip-text-link {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 			text-align: right;
 			font-family: Inter;
 			font-size: 12px;
@@ -661,285 +676,7 @@
 	&:hover,
 	&[data-resize-handle-state='drag'],
 	&[data-resize-handle-state='hover'] {
-		border-color: rgba(35, 196, 248, 0.2);
-	}
-}
-
-.lightMode {
-	.ant-tabs-content-holder {
-		.bg-border {
-			background: var(--bg-vanilla-300);
-			border-color: var(--bg-vanilla-300);
-		}
-	}
-	.span-details-drawer {
-		border-left: 1px solid var(--bg-vanilla-300);
-
-		.header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.heading {
-				.text {
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-
-		.description {
-			.item {
-				.attribute-actions-wrapper {
-					display: none;
-					gap: 8px;
-					position: absolute;
-					right: 8px;
-					top: 50%;
-					transform: translateY(-50%);
-					border-radius: 4px;
-					padding: 2px;
-
-					.filter-btn {
-						background: var(--bg-vanilla-200);
-						&:hover {
-							background: var(--bg-vanilla-100);
-						}
-					}
-				}
-				&:hover {
-					background-color: var(--bg-vanilla-300);
-					.attribute-actions-wrapper {
-						display: flex;
-					}
-				}
-				.span-name-wrapper {
-					.span-percentile-value-container {
-						&.span-percentile-value-container-open {
-							.span-percentile-value {
-								border: 1px solid var(--bg-vanilla-200);
-								background: var(--bg-vanilla-200);
-							}
-						}
-					}
-
-					.span-percentile-value {
-						color: var(--text-sakura-400, #f56c87);
-						border-left: 1px solid var(--bg-slate-300);
-					}
-				}
-
-				.span-percentiles-container {
-					fill: linear-gradient(
-						139deg,
-						rgba(18, 19, 23, 0.32) 0%,
-						rgba(18, 19, 23, 0.36) 98.68%
-					);
-
-					stroke-width: 1px;
-					stroke: var(--bg-slate-500);
-					filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
-					backdrop-filter: blur(20px);
-					border: 1px solid var(--bg-vanilla-300);
-					border-radius: 4px;
-
-					.span-percentiles-header {
-						border-bottom: 1px solid var(--bg-vanilla-300);
-					}
-
-					.span-percentile-content {
-						.span-percentile-content-title {
-							.span-percentile-value {
-								color: var(--text-sakura-400, #f56c87);
-							}
-						}
-
-						.span-percentile-timerange {
-							.span-percentile-timerange-select {
-								.ant-select-selector {
-									border: 1px solid var(--bg-vanilla-300);
-									background: var(--bg-vanilla-300);
-									color: var(--text-slate-300);
-								}
-							}
-						}
-
-						.span-percentile-values-table {
-							.span-percentile-values-table-header-row {
-								.span-percentile-values-table-header {
-									color: var(--text-vanilla-400);
-								}
-							}
-
-							.span-percentile-values-table-data-row {
-								.span-percentile-values-table-data-row-key {
-									color: var(--text-ink-100);
-								}
-
-								.span-percentile-values-table-data-row-value {
-									color: var(--text-ink-400);
-								}
-
-								.dashed-line {
-									flex: 1;
-									height: 0; /* line only */
-									margin: 0 8px;
-									border-top: 1px dashed var(--bg-slate-300);
-
-									/* Use border image to control dash length & spacing */
-									border-top-width: 1px;
-									border-top-style: solid; /* temporary solid for image */
-									border-image: repeating-linear-gradient(
-											to right,
-											var(--bg-slate-300) 0,
-											var(--bg-slate-300) 10px,
-											transparent 10px,
-											transparent 20px
-										)
-										1 stretch;
-								}
-							}
-
-							.current-span-percentile-row {
-								border-radius: 2px;
-								background: rgba(78, 116, 248, 0.2);
-
-								.span-percentile-values-table-data-row-key {
-									color: var(--text-robin-300, #95acfb);
-								}
-
-								.dashed-line {
-									border-top: 1px dashed #abbdff;
-
-									/* Use border image to control dash length & spacing */
-									border-top-width: 1px;
-									border-top-style: solid; /* temporary solid for image */
-									border-image: repeating-linear-gradient(
-											to right,
-											#abbdff 0,
-											#abbdff 10px,
-											transparent 10px,
-											transparent 20px
-										)
-										1 stretch;
-								}
-
-								.span-percentile-values-table-data-row-value {
-									color: var(--text-robin-400);
-								}
-							}
-						}
-					}
-
-					.resource-attributes-select-container {
-						.resource-attributes-select-container-header {
-							.resource-attributes-select-container-input {
-								border: none !important;
-								box-shadow: none !important;
-								height: 36px;
-
-								border-bottom: 1px solid var(--bg-vanilla-400) !important;
-								background: var(--bg-vanilla-300);
-								color: var(--text-ink-400);
-							}
-						}
-
-						border-radius: 4px;
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-300);
-						box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
-							0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
-						backdrop-filter: blur(20px);
-
-						.resource-attributes-items {
-							&::-webkit-scrollbar-track {
-								background: transparent;
-							}
-
-							&::-webkit-scrollbar-thumb {
-								background: var(--bg-slate-300);
-							}
-
-							&::-webkit-scrollbar-thumb:hover {
-								background: var(--bg-slate-200);
-							}
-						}
-
-						.resource-attributes-select-item {
-							.resource-attributes-select-item-checkbox {
-								.ant-checkbox-disabled {
-									background-color: var(--bg-robin-500);
-									color: var(--text-ink-100);
-								}
-
-								.resource-attributes-select-item-value {
-									color: var(--text-ink-100);
-								}
-							}
-						}
-					}
-				}
-
-				.attribute-key {
-					color: var(--bg-ink-400);
-				}
-
-				.value-wrapper {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
-
-					.attribute-value {
-						color: var(--bg-ink-400);
-					}
-				}
-
-				.service {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
-
-					.value-wrapper {
-						background: var(--bg-vanilla-300);
-						border: none;
-
-						.service-value {
-							color: var(--bg-ink-400);
-						}
-					}
-				}
-
-				.related-signals-section {
-					.related-signals-button-group {
-						.ant-btn.ant-btn-default {
-							&:not(:hover) {
-								border: 1px solid var(--bg-vanilla-400);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		.attributes-events {
-			.details-drawer-tabs {
-				.ant-tabs-nav::before {
-					border-bottom: 1px solid var(--bg-vanilla-300) !important;
-				}
-
-				.ant-tabs-nav-wrap {
-					height: 32px;
-				}
-
-				.ant-tabs-tab {
-					border: none;
-					background-color: var(--bg-vanilla-200);
-
-					.ant-btn {
-						border-bottom: 1px solid var(--bg-vanilla-300);
-					}
-				}
-
-				.ant-tabs-ink-bar {
-					background: #4e74f8 !important;
-				}
-			}
-		}
+		border-color: color-mix(in srgb, var(--bg-aqua-500) 20%, transparent);
 	}
 }
 

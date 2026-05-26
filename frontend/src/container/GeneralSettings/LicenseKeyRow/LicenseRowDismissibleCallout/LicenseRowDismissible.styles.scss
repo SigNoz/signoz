@@ -1,0 +1,31 @@
+.license-key-callout {
+	margin: var(--spacing-4) var(--spacing-6);
+	width: auto;
+
+	.license-key-callout__description {
+		display: flex;
+		align-items: baseline;
+		gap: var(--spacing-2);
+		min-width: 0;
+		flex-wrap: wrap;
+		font-size: 13px;
+	}
+
+	.license-key-callout__link {
+		display: inline-flex;
+		align-items: center;
+		padding: var(--spacing-1) var(--spacing-3);
+		border-radius: 2px;
+		background: var(--callout-primary-background);
+		color: var(--callout-primary-description);
+		font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+		font-size: var(--paragraph-base-400-font-size);
+		text-decoration: none;
+
+		&:hover {
+			background: var(--callout-primary-border);
+			color: var(--callout-primary-icon);
+			text-decoration: none;
+		}
+	}
+}

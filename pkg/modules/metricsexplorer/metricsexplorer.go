@@ -19,6 +19,8 @@ type Handler interface {
 	GetMetricAlerts(http.ResponseWriter, *http.Request)
 	GetMetricDashboards(http.ResponseWriter, *http.Request)
 	GetMetricHighlights(http.ResponseWriter, *http.Request)
+	GetOnboardingStatus(http.ResponseWriter, *http.Request)
+	InspectMetrics(http.ResponseWriter, *http.Request)
 }
 
 // Module represents the metrics module interface.
@@ -33,4 +35,6 @@ type Module interface {
 	GetMetricDashboards(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricDashboardsResponse, error)
 	GetMetricHighlights(ctx context.Context, orgID valuer.UUID, metricName string) (*metricsexplorertypes.MetricHighlightsResponse, error)
 	GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.MetricAttributesRequest) (*metricsexplorertypes.MetricAttributesResponse, error)
+	HasNonSigNozMetrics(ctx context.Context) (bool, error)
+	InspectMetrics(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.InspectMetricsRequest) (*metricsexplorertypes.InspectMetricsResponse, error)
 }

@@ -21,7 +21,7 @@ func NewStore(sqlstore sqlstore.SQLStore) dashboardtypes.Store {
 func (store *store) Create(ctx context.Context, storabledashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(storabledashboard).
 		Exec(ctx)
@@ -184,7 +184,7 @@ func (store *store) UpdatePublic(ctx context.Context, storable *dashboardtypes.S
 func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(dashboardtypes.StorableDashboard)).
 		Where("id = ?", id).
@@ -200,7 +200,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 func (store *store) DeletePublic(ctx context.Context, dashboardID string) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(dashboardtypes.StorablePublicDashboard)).
 		Where("dashboard_id = ?", dashboardID).

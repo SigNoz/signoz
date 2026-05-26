@@ -4,69 +4,105 @@ package telemetrytypes
 // Test JSON Type Set Data Setup
 // ============================================================================
 
-// TestJSONTypeSet returns a map of path->types for testing
-// This represents the type information available in the test JSON structure
-func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
-	types := map[string][]JSONDataType{
-		"user.name":                                           {String},
-		"user.permissions":                                    {ArrayString},
-		"user.age":                                            {Int64, String},
-		"user.height":                                         {Float64},
-		"education":                                           {ArrayJSON},
-		"education[].name":                                    {String},
-		"education[].type":                                    {String, Int64},
-		"education[].internal_type":                           {String},
-		"education[].metadata.location":                       {String},
-		"education[].parameters":                              {ArrayFloat64, ArrayDynamic},
-		"education[].duration":                                {String},
-		"education[].mode":                                    {String},
-		"education[].year":                                    {Int64},
-		"education[].field":                                   {String},
-		"education[].awards":                                  {ArrayDynamic, ArrayJSON},
-		"education[].awards[].name":                           {String},
-		"education[].awards[].rank":                           {Int64},
-		"education[].awards[].medal":                          {String},
-		"education[].awards[].type":                           {String},
-		"education[].awards[].semester":                       {Int64},
-		"education[].awards[].participated":                   {ArrayDynamic, ArrayJSON},
-		"education[].awards[].participated[].type":            {String},
-		"education[].awards[].participated[].field":           {String},
-		"education[].awards[].participated[].project_type":    {String},
-		"education[].awards[].participated[].project_name":    {String},
-		"education[].awards[].participated[].race_type":       {String},
-		"education[].awards[].participated[].team_based":      {Bool},
-		"education[].awards[].participated[].team_name":       {String},
-		"education[].awards[].participated[].team":            {ArrayJSON},
-		"education[].awards[].participated[].members":         {ArrayString},
-		"education[].awards[].participated[].team[].name":     {String},
-		"education[].awards[].participated[].team[].branch":   {String},
-		"education[].awards[].participated[].team[].semester": {Int64},
-		"interests":                                                                  {ArrayJSON},
-		"interests[].type":                                                           {String},
-		"interests[].entities":                                                       {ArrayJSON},
-		"interests[].entities.application_date":                                      {String},
-		"interests[].entities[].reviews":                                             {ArrayJSON},
-		"interests[].entities[].reviews[].given_by":                                  {String},
-		"interests[].entities[].reviews[].remarks":                                   {String},
-		"interests[].entities[].reviews[].weight":                                    {Float64},
-		"interests[].entities[].reviews[].passed":                                    {Bool},
-		"interests[].entities[].reviews[].type":                                      {String},
-		"interests[].entities[].reviews[].analysis_type":                             {Int64},
-		"interests[].entities[].reviews[].entries":                                   {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].subject":                         {String},
-		"interests[].entities[].reviews[].entries[].status":                          {String},
-		"interests[].entities[].reviews[].entries[].metadata":                        {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].company":              {String},
-		"interests[].entities[].reviews[].entries[].metadata[].experience":           {Int64},
-		"interests[].entities[].reviews[].entries[].metadata[].unit":                 {String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions":            {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":     {String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].duration": {Int64, Float64},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].unit":     {String},
-		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings":  {ArrayInt64, ArrayString},
-		"message": {String},
-		"tags":    {ArrayString},
+// TestJSONTypeSet returns a map of path->field data types for testing.
+// This represents the type information available in the test JSON structure.
+func TestJSONTypeSet() (map[string][]FieldDataType, MetadataStore) {
+	types := map[string][]FieldDataType{
+
+		// ── user (primitives) ─────────────────────────────────────────────
+		"user.name":        {FieldDataTypeString},
+		"user.permissions": {FieldDataTypeArrayString},
+		"user.age":         {FieldDataTypeInt64, FieldDataTypeString}, // Int64/String ambiguity
+		"user.height":      {FieldDataTypeFloat64},
+		"user.active":      {FieldDataTypeBool}, // Bool — not IndexSupported
+
+		// Deeper non-array nesting (a.b.c — no array hops)
+		"user.address.zip": {FieldDataTypeInt64},
+
+		// ── education[] ───────────────────────────────────────────────────
+		// Pattern: x[].y
+		"education":              {FieldDataTypeArrayJSON},
+		"education[].name":       {FieldDataTypeString},
+		"education[].type":       {FieldDataTypeString, FieldDataTypeInt64},
+		"education[].year":       {FieldDataTypeInt64},
+		"education[].scores":     {FieldDataTypeArrayInt64},
+		"education[].parameters": {FieldDataTypeArrayFloat64, FieldDataTypeArrayDynamic},
+
+		// Pattern: x[].y[]
+		"education[].awards": {FieldDataTypeArrayDynamic, FieldDataTypeArrayJSON},
+
+		// Pattern: x[].y[].z
+		"education[].awards[].name":     {FieldDataTypeString},
+		"education[].awards[].type":     {FieldDataTypeString},
+		"education[].awards[].semester": {FieldDataTypeInt64},
+
+		// Pattern: x[].y[].z[]
+		"education[].awards[].participated": {FieldDataTypeArrayDynamic, FieldDataTypeArrayJSON},
+
+		// Pattern: x[].y[].z[].w
+		"education[].awards[].participated[].members": {FieldDataTypeArrayString},
+
+		// Pattern: x[].y[].z[].w[]
+		"education[].awards[].participated[].team": {FieldDataTypeArrayJSON},
+
+		// Pattern: x[].y[].z[].w[].v
+		"education[].awards[].participated[].team[].branch": {FieldDataTypeString},
+
+		// ── interests[] ───────────────────────────────────────────────────
+		"interests":                                                                 {FieldDataTypeArrayJSON},
+		"interests[].entities":                                                      {FieldDataTypeArrayJSON},
+		"interests[].entities[].product_codes":                                      {FieldDataTypeArrayDynamic},
+		"interests[].entities[].reviews":                                            {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries":                                  {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata":                       {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata[].positions":           {FieldDataTypeArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":    {FieldDataTypeString},
+		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings": {FieldDataTypeArrayInt64, FieldDataTypeArrayString},
+		"http-events":                     {FieldDataTypeArrayJSON},
+		"http-events[].request-info.host": {FieldDataTypeString},
+
+		// ── top-level primitives ──────────────────────────────────────────
+		"message":     {FieldDataTypeString},
+		"http-status": {FieldDataTypeInt64, FieldDataTypeString}, // hyphen in root key, ambiguous
+
+		// ── top-level nested objects (no array hops) ───────────────────────
+		"response.time-taken": {FieldDataTypeFloat64}, // hyphen inside nested key
 	}
 
 	return types, nil
+}
+
+// TestIndexedPathEntry is a path + JSON type pair representing a field
+// backed by a ClickHouse skip index in the test data.
+//
+// Only non-array paths with IndexSupported types (String, Int64, Float64)
+// are valid entries — arrays and Bool cannot carry a skip index.
+//
+// The ColumnExpression for each entry is computed at test-setup time from
+// the access plan, since it depends on the column name (e.g. body_v2)
+// which is unknown to this package.
+type TestIndexedPathEntry struct {
+	Path string
+	Type JSONDataType
+}
+
+// TestIndexedPaths lists path+type pairs from TestJSONTypeSet that are
+// backed by a JSON data type index. Test setup uses this to populate
+// key.Indexes after calling SetJSONAccessPlan.
+//
+// Intentionally excluded:
+//   - user.active → Bool, IndexSupported=false
+var TestIndexedPaths = []TestIndexedPathEntry{
+	// user primitives
+	{Path: "user.name", Type: String},
+
+	// user.address — deeper non-array nesting
+	{Path: "user.address.zip", Type: Int64},
+
+	// root-level with special characters
+	{Path: "http-status", Type: Int64},
+	{Path: "http-status", Type: String},
+
+	// root-level nested objects (no array hops)
+	{Path: "response.time-taken", Type: Float64},
 }

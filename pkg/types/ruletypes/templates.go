@@ -9,16 +9,15 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
+	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
-	html_template "html/template"
-	text_template "text/template"
+	htmltpl "html/template"
+	texttpl "text/template"
 
 	"golang.org/x/text/cases"
-
-	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
 )
 
 // this file contains all the methods and structs
@@ -52,8 +51,25 @@ func (q tmplQueryResultsByLabelSorter) Swap(i, j int) {
 type TemplateExpander struct {
 	text    string
 	name    string
-	data    interface{}
-	funcMap text_template.FuncMap
+	data    any
+	funcMap texttpl.FuncMap
+}
+
+func NormalizeLabelName(name string) string {
+	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+
+	// Regular expression to match non-alphanumeric characters except underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
+
+	// Replace all non-alphanumeric characters except underscores with underscores
+	normalized := reg.ReplaceAllString(name, "_")
+
+	// If the first character is not a letter or an underscore, prepend an underscore
+	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
+		normalized = "_" + normalized
+	}
+
+	return normalized
 }
 
 // NewTemplateExpander returns a template expander ready to use.
@@ -61,15 +77,14 @@ func NewTemplateExpander(
 	ctx context.Context,
 	text string,
 	name string,
-	data interface{},
-	timestamp times.Time,
+	data any,
 	externalURL *url.URL,
 ) *TemplateExpander {
 	return &TemplateExpander{
 		text: text,
 		name: name,
 		data: data,
-		funcMap: text_template.FuncMap{
+		funcMap: texttpl.FuncMap{
 			"first": func(v tmplQueryResults) (*tmplQueryRecord, error) {
 				if len(v) > 0 {
 					return v[0], nil
@@ -85,8 +100,8 @@ func NewTemplateExpander(
 			"strvalue": func(s *tmplQueryRecord) string {
 				return s.Labels["__value__"]
 			},
-			"args": func(args ...interface{}) map[string]interface{} {
-				result := make(map[string]interface{})
+			"args": func(args ...any) map[string]any {
+				result := make(map[string]any)
 				for i, a := range args {
 					result[fmt.Sprintf("arg%d", i)] = a
 				}
@@ -96,8 +111,8 @@ func NewTemplateExpander(
 				re := regexp.MustCompile(pattern)
 				return re.ReplaceAllString(text, repl)
 			},
-			"safeHtml": func(text string) html_template.HTML {
-				return html_template.HTML(text)
+			"safeHtml": func(text string) htmltpl.HTML {
+				return htmltpl.HTML(text)
 			},
 			"match":   regexp.MatchString,
 			"title":   cases.Title,
@@ -191,7 +206,7 @@ func NewTemplateExpander(
 				if math.IsNaN(v) || math.IsInf(v, 0) {
 					return fmt.Sprintf("%.4g", v)
 				}
-				t := times.TimeFromUnixNano(int64(v * 1e9)).Time().UTC()
+				t := time.Unix(0, int64(v*1e9)).UTC()
 				return fmt.Sprint(t)
 			},
 			"pathPrefix": func() string {
@@ -205,7 +220,7 @@ func NewTemplateExpander(
 }
 
 // AlertTemplateData returns the interface to be used in expanding the template.
-func AlertTemplateData(labels map[string]string, value string, threshold string) interface{} {
+func AlertTemplateData(labels map[string]string, value string, threshold string) any {
 	// This exists here for backwards compatibility.
 	// The labels map passed in no longer contains the normalized labels.
 	// To continue supporting the old way of referencing labels, we need to
@@ -214,7 +229,7 @@ func AlertTemplateData(labels map[string]string, value string, threshold string)
 	newLabels := make(map[string]string)
 	for k, v := range labels {
 		newLabels[k] = v
-		newLabels[common.NormalizeLabelName(k)] = v
+		newLabels[NormalizeLabelName(k)] = v
 	}
 
 	return struct {
@@ -275,7 +290,7 @@ func (te *TemplateExpander) preprocessTemplate() {
 
 // Funcs adds the functions in fm to the Expander's function map.
 // Existing functions will be overwritten in case of conflict.
-func (te TemplateExpander) Funcs(fm text_template.FuncMap) {
+func (te TemplateExpander) Funcs(fm texttpl.FuncMap) {
 	for k, v := range fm {
 		te.funcMap[k] = v
 	}
@@ -297,7 +312,7 @@ func (te TemplateExpander) Expand() (result string, resultErr error) {
 
 	te.preprocessTemplate()
 
-	tmpl, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
+	tmpl, err := texttpl.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
 		return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "error parsing template %v", te.name)
 	}
@@ -321,13 +336,13 @@ func (te TemplateExpander) ExpandHTML(templateFiles []string) (result string, re
 		}
 	}()
 
-	tmpl := html_template.New(te.name).Funcs(html_template.FuncMap(te.funcMap))
+	tmpl := htmltpl.New(te.name).Funcs(htmltpl.FuncMap(te.funcMap))
 	tmpl.Option("missingkey=zero")
-	tmpl.Funcs(html_template.FuncMap{
-		"tmpl": func(name string, data interface{}) (html_template.HTML, error) {
+	tmpl.Funcs(htmltpl.FuncMap{
+		"tmpl": func(name string, data any) (htmltpl.HTML, error) {
 			var buffer bytes.Buffer
 			err := tmpl.ExecuteTemplate(&buffer, name, data)
-			return html_template.HTML(buffer.String()), err
+			return htmltpl.HTML(buffer.String()), err
 		},
 	})
 	tmpl, err := tmpl.Parse(te.text)
@@ -351,7 +366,7 @@ func (te TemplateExpander) ExpandHTML(templateFiles []string) (result string, re
 // ParseTest parses the templates and returns the error if any.
 func (te TemplateExpander) ParseTest() error {
 	te.preprocessTemplate()
-	_, err := text_template.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
+	_, err := texttpl.New(te.name).Funcs(te.funcMap).Option("missingkey=zero").Parse(te.text)
 	if err != nil {
 		return err
 	}

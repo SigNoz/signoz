@@ -17,7 +17,6 @@ import { CreateAlertProvider } from '../../context';
 import ChartPreview from '../ChartPreview/ChartPreview';
 
 const REQUESTS_PER_SEC = 'requests/sec';
-const CHART_PREVIEW_NAME = 'Chart Preview';
 const QUERY_TYPE_TEST_ID = 'query-type';
 const GRAPH_TYPE_TEST_ID = 'graph-type';
 const CHART_PREVIEW_COMPONENT_TEST_ID = 'chart-preview-component';
@@ -34,7 +33,6 @@ jest.mock(
 			return (
 				<div data-testid={CHART_PREVIEW_COMPONENT_TEST_ID}>
 					<div data-testid="headline">{props.headline}</div>
-					<div data-testid="name">{props.name}</div>
 					<div data-testid={QUERY_TYPE_TEST_ID}>{props.query?.queryType}</div>
 					<div data-testid="selected-interval">
 						{props.selectedInterval?.startTime}
@@ -175,12 +173,6 @@ describe('ChartPreview', () => {
 		);
 	});
 
-	it('renders QueryBuilder chart preview with empty name when query type is QUERY_BUILDER', () => {
-		renderChartPreview();
-
-		expect(screen.getByTestId('name')).toHaveTextContent('');
-	});
-
 	it('renders QueryBuilder chart preview with correct props', () => {
 		renderChartPreview();
 
@@ -191,7 +183,6 @@ describe('ChartPreview', () => {
 		expect(screen.getByTestId(GRAPH_TYPE_TEST_ID)).toHaveTextContent(
 			PANEL_TYPES.TIME_SERIES,
 		);
-		expect(screen.getByTestId('name')).toHaveTextContent('');
 		expect(screen.getByTestId('headline')).toBeInTheDocument();
 		expect(screen.getByTestId('selected-interval')).toBeInTheDocument();
 	});
@@ -214,7 +205,6 @@ describe('ChartPreview', () => {
 		expect(
 			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
 		).toBeInTheDocument();
-		expect(screen.getByTestId('name')).toHaveTextContent(CHART_PREVIEW_NAME);
 		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
 			EQueryType.PROM,
 		);
@@ -238,7 +228,6 @@ describe('ChartPreview', () => {
 		expect(
 			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
 		).toBeInTheDocument();
-		expect(screen.getByTestId('name')).toHaveTextContent(CHART_PREVIEW_NAME);
 		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
 			EQueryType.CLICKHOUSE,
 		);

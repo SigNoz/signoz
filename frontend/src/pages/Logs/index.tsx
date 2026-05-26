@@ -56,13 +56,15 @@ function OldLogsExplorer(): JSX.Element {
 		[linesPerRow, handleLinesPerRowChange],
 	);
 
-	const isFormatButtonVisible = useMemo(() => logsOptions.includes(viewMode), [
-		viewMode,
-	]);
+	const isFormatButtonVisible = useMemo(
+		() => logsOptions.includes(viewMode),
+		[viewMode],
+	);
 
-	const selectedViewModeOption = useMemo(() => viewModeOption.value.toString(), [
-		viewModeOption.value,
-	]);
+	const selectedViewModeOption = useMemo(
+		() => viewModeOption.value.toString(),
+		[viewModeOption.value],
+	);
 
 	const onChangeVeiwMode = useCallback(
 		(key: string) => {

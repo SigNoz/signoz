@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"io"
 	"net/http"
 	"time"
+
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
+
+	"log/slog"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -15,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"log/slog"
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +42,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		slog.DebugContext(ctx, "fetching license")
 		license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to fetch license", "error", err)
+			slog.ErrorContext(ctx, "failed to fetch license", signozerrors.Attr(err))
 		} else if license == nil {
 			slog.DebugContext(ctx, "no active license found")
 		} else {
@@ -51,7 +55,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 				// merge featureSet and zeusFeatures in featureSet with higher priority to zeusFeatures
 				featureSet = MergeFeatureSets(zeusFeatures, featureSet)
 			} else {
-				slog.ErrorContext(ctx, "failed to fetch zeus features", "error", err)
+				slog.ErrorContext(ctx, "failed to fetch zeus features", signozerrors.Attr(err))
 			}
 		}
 	}
@@ -62,6 +66,33 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
 		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	bodyJSONQuery := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseJSONBody.String()),
+		Active:     bodyJSONQuery,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	fineGrainedAuthz := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseFineGrainedAuthz, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
+		Active:     fineGrainedAuthz,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	useDashboardV2 := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseDashboardV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
+		Active:     useDashboardV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

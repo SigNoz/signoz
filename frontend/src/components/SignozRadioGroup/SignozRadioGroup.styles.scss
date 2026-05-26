@@ -1,5 +1,5 @@
 .signoz-radio-group.ant-radio-group {
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 
 	&.ant-radio-group-disabled {
 		opacity: 0.5;
@@ -31,60 +31,42 @@
 	}
 
 	.tab {
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		&:hover {
-			color: var(--text-vanilla-100);
+			color: var(--l1-foreground);
 		}
 		&::before {
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 		}
 	}
 
 	.selected_view {
 		&,
 		&:hover {
-			background: var(--bg-slate-300);
-			color: var(--text-vanilla-100);
-			border: 1px solid var(--bg-slate-400);
+			background: var(--l3-background);
+			color: var(--l1-foreground);
+			border: 1px solid var(--l1-border);
 		}
 		&::before {
-			background: var(--bg-slate-400);
+			background: var(--l3-background);
+			border-left: 1px solid var(--l1-border);
 		}
 	}
-}
 
-// Light mode styles
-.lightMode {
-	.signoz-radio-group {
-		&.ant-radio-group-disabled {
-			.tab,
-			.selected_view {
-				background: var(--bg-vanilla-200) !important;
-				border-color: var(--bg-vanilla-400) !important;
-				color: var(--text-ink-400) !important;
-			}
-
-			.tab:hover,
-			.selected_view:hover {
-				background: var(--bg-vanilla-200) !important;
-				border-color: var(--bg-vanilla-400) !important;
-				color: var(--text-ink-400) !important;
-			}
-		}
-
-		.tab {
-			background: var(--bg-vanilla-100);
-		}
-
+	&.ant-radio-group-disabled {
+		.tab,
 		.selected_view {
-			background: var(--bg-vanilla-300);
-			border: 1px solid var(--bg-slate-300);
-			color: var(--text-ink-400);
+			background: var(--l2-background) !important;
+			border-color: var(--l1-border) !important;
+			color: var(--l1-foreground) !important;
 		}
 
-		.selected_view::before {
-			background: var(--bg-vanilla-300);
-			border-left: 1px solid var(--bg-slate-300);
+		.tab:hover,
+		.selected_view:hover {
+			background: var(--l2-background) !important;
+			border-color: var(--l1-border) !important;
+			color: var(--l1-foreground) !important;
 		}
 	}
 }

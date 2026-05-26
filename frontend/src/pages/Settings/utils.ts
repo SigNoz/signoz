@@ -4,19 +4,20 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
 	alertChannels,
-	apiKeys,
 	billingSettings,
 	createAlertChannels,
 	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	mcpServerSettings,
 	membersSettings,
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
 	roleDetails,
 	rolesSettings,
+	serviceAccountsSettings,
 } from './config';
 
 export const getRoutes = (
@@ -61,13 +62,20 @@ export const getRoutes = (
 
 	settings.push(...alertChannels(t));
 
+	// Visible to all authenticated users
+	settings.push(
+		...serviceAccountsSettings(t),
+		...rolesSettings(t),
+		...roleDetails(t),
+	);
+
+	// Admin-only: members management
 	if (isAdmin) {
-		settings.push(...apiKeys(t), ...membersSettings(t));
+		settings.push(...membersSettings(t));
 	}
 
-	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...billingSettings(t), ...rolesSettings(t), ...roleDetails(t));
+		settings.push(...billingSettings(t));
 	}
 
 	settings.push(
@@ -75,6 +83,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...mcpServerSettings(t),
 	);
 
 	return settings;

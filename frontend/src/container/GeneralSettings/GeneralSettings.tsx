@@ -2,9 +2,8 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button } from '@signozhq/button';
-import { Compass, ScrollText } from '@signozhq/icons';
+import { BarChart, Compass, Loader, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
@@ -17,7 +16,6 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
-import { BarChart2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -38,6 +36,7 @@ import {
 } from 'types/api/settings/getRetention';
 import { USER_ROLES } from 'types/roles';
 
+import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
@@ -61,12 +60,10 @@ function GeneralSettings({
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
 
-	const [postApiLoadingMetrics, setPostApiLoadingMetrics] = useState<boolean>(
-		false,
-	);
-	const [postApiLoadingTraces, setPostApiLoadingTraces] = useState<boolean>(
-		false,
-	);
+	const [postApiLoadingMetrics, setPostApiLoadingMetrics] =
+		useState<boolean>(false);
+	const [postApiLoadingTraces, setPostApiLoadingTraces] =
+		useState<boolean>(false);
 	const [postApiLoadingLogs, setPostApiLoadingLogs] = useState<boolean>(false);
 
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
@@ -78,9 +75,8 @@ function GeneralSettings({
 		tracesTtlValuesPayload,
 	);
 
-	const [logsCurrentTTLValues, setLogsCurrentTTLValues] = useState(
-		logsTtlValuesPayload,
-	);
+	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
+		useState(logsTtlValuesPayload);
 
 	const { user, activeLicense } = useAppContext();
 
@@ -89,31 +85,19 @@ function GeneralSettings({
 		user.role,
 	);
 
-	const [
-		metricsTotalRetentionPeriod,
-		setMetricsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		metricsS3RetentionPeriod,
-		setMetricsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesTotalRetentionPeriod,
-		setTracesTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesS3RetentionPeriod,
-		setTracesS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
-	const [
-		logsTotalRetentionPeriod,
-		setLogsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		logsS3RetentionPeriod,
-		setLogsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [logsTotalRetentionPeriod, setLogsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [logsS3RetentionPeriod, setLogsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
 	useEffect(() => {
 		if (metricsCurrentTTLValues) {
@@ -464,20 +448,16 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEnterpriseSelfHostedUser,
-	} = useGetTenantLicense();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const showCustomDomainSettings =
-		(isCloudUserVal || isEnterpriseSelfHostedUser) && isAdmin;
+	const showCustomDomainSettings = isCloudUserVal && isAdmin;
 
 	const renderConfig = [
 		{
 			name: 'Metrics',
 			type: 'metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -498,7 +478,11 @@ function GeneralSettings({
 				saveButtonText:
 					metricsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'metrics' })}
 						</span>
 					) : (
@@ -541,7 +525,11 @@ function GeneralSettings({
 				saveButtonText:
 					tracesTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'traces' })}
 						</span>
 					) : (
@@ -583,7 +571,11 @@ function GeneralSettings({
 				saveButtonText:
 					logsTtlValuesPayload.status === 'pending' ? (
 						<span>
-							<Spin spinning size="small" indicator={<LoadingOutlined spin />} />{' '}
+							<Spin
+								spinning
+								size="small"
+								indicator={<Loader className="animate-spin" />}
+							/>{' '}
 							{t('retention_save_button.pending', { name: 'logs' })}
 						</span>
 					) : (
@@ -687,7 +679,12 @@ function GeneralSettings({
 					{showCustomDomainSettings && activeLicense?.key && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{activeLicense?.key && <LicenseKeyRow />}
+					{activeLicense?.key && (
+						<>
+							<LicenseKeyRow />
+							<LicenseRowDismissibleCallout />
+						</>
+					)}
 				</div>
 			)}
 

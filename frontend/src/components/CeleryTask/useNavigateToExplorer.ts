@@ -7,11 +7,12 @@ import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { withBasePath } from 'utils/basePath';
 
 export interface NavigateToExplorerProps {
 	filters: TagFilterItem[];
@@ -79,7 +80,7 @@ export function useNavigateToExplorer(): (
 	);
 
 	const { getUpdatedQuery } = useUpdatedQuery();
-	const { selectedDashboard } = useDashboard();
+	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(
@@ -111,7 +112,7 @@ export function useNavigateToExplorer(): (
 						panelTypes: PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 					},
-					selectedDashboard,
+					dashboardData,
 				})
 					.then((query) => {
 						preparedQuery = query;
@@ -133,14 +134,14 @@ export function useNavigateToExplorer(): (
 				QueryParams.compositeQuery
 			}=${JSONCompositeQuery}`;
 
-			window.open(newExplorerPath, sameTab ? '_self' : '_blank');
+			window.open(withBasePath(newExplorerPath), sameTab ? '_self' : '_blank');
 		},
 		[
 			prepareQuery,
 			minTime,
 			maxTime,
 			getUpdatedQuery,
-			selectedDashboard,
+			dashboardData,
 			notifications,
 		],
 	);

@@ -16,7 +16,7 @@ export const useIsValidTag = (
 	operatorType: OperatorType,
 	resultLength: number,
 ): boolean =>
-	useMemo(() => validationMapper[operatorType]?.(resultLength), [
-		operatorType,
-		resultLength,
-	]);
+	useMemo(
+		() => validationMapper[operatorType]?.(resultLength),
+		[operatorType, resultLength],
+	);

@@ -15,6 +15,8 @@ import {
 	getEvaluationWindowStateFromAlertDef,
 	getNotificationSettingsStateFromAlertDef,
 	getThresholdStateFromAlertDef,
+	normalizeMatchType,
+	normalizeOperator,
 	parseGoTime,
 } from '../utils';
 
@@ -311,6 +313,137 @@ describe('CreateAlertV2 utils', () => {
 					channels: ['email'],
 				},
 			],
+		});
+	});
+
+	describe('normalizeOperator', () => {
+		it.each([
+			['1', AlertThresholdOperator.IS_ABOVE],
+			['above', AlertThresholdOperator.IS_ABOVE],
+			['>', AlertThresholdOperator.IS_ABOVE],
+			['2', AlertThresholdOperator.IS_BELOW],
+			['below', AlertThresholdOperator.IS_BELOW],
+			['<', AlertThresholdOperator.IS_BELOW],
+			['3', AlertThresholdOperator.IS_EQUAL_TO],
+			['equal', AlertThresholdOperator.IS_EQUAL_TO],
+			['eq', AlertThresholdOperator.IS_EQUAL_TO],
+			['=', AlertThresholdOperator.IS_EQUAL_TO],
+			['4', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['not_equal', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['not_eq', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['!=', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['7', AlertThresholdOperator.ABOVE_BELOW],
+			['outside_bounds', AlertThresholdOperator.ABOVE_BELOW],
+		])('maps backend alias %s to canonical enum', (alias, expected) => {
+			expect(normalizeOperator(alias)).toBe(expected);
+		});
+
+		it.each([
+			['5', 'above_or_equal'],
+			['above_or_equal', 'above_or_equal'],
+			['above_or_eq', 'above_or_equal'],
+			['>=', 'above_or_equal'],
+			['6', 'below_or_equal'],
+			['below_or_equal', 'below_or_equal'],
+			['below_or_eq', 'below_or_equal'],
+			['<=', 'below_or_equal'],
+		])('returns undefined for UI-unexposed alias %s (%s family)', (alias) => {
+			expect(normalizeOperator(alias)).toBeUndefined();
+		});
+
+		it('returns undefined for unknown values', () => {
+			expect(normalizeOperator('gibberish')).toBeUndefined();
+			expect(normalizeOperator(undefined)).toBeUndefined();
+			expect(normalizeOperator('')).toBeUndefined();
+		});
+	});
+
+	describe('normalizeMatchType', () => {
+		it.each([
+			['1', AlertThresholdMatchType.AT_LEAST_ONCE],
+			['at_least_once', AlertThresholdMatchType.AT_LEAST_ONCE],
+			['2', AlertThresholdMatchType.ALL_THE_TIME],
+			['all_the_times', AlertThresholdMatchType.ALL_THE_TIME],
+			['3', AlertThresholdMatchType.ON_AVERAGE],
+			['on_average', AlertThresholdMatchType.ON_AVERAGE],
+			['avg', AlertThresholdMatchType.ON_AVERAGE],
+			['4', AlertThresholdMatchType.IN_TOTAL],
+			['in_total', AlertThresholdMatchType.IN_TOTAL],
+			['sum', AlertThresholdMatchType.IN_TOTAL],
+			['5', AlertThresholdMatchType.LAST],
+			['last', AlertThresholdMatchType.LAST],
+		])('maps backend alias %s to canonical enum', (alias, expected) => {
+			expect(normalizeMatchType(alias)).toBe(expected);
+		});
+
+		it('returns undefined for unknown values', () => {
+			expect(normalizeMatchType('gibberish')).toBeUndefined();
+			expect(normalizeMatchType(undefined)).toBeUndefined();
+			expect(normalizeMatchType('')).toBeUndefined();
+		});
+	});
+
+	describe('getThresholdStateFromAlertDef backward compatibility', () => {
+		const buildDef = (op: string, matchType: string): PostableAlertRuleV2 => ({
+			...defaultPostableAlertRuleV2,
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: 1,
+							targetUnit: UniversalYAxisUnit.MINUTES,
+							channels: [],
+							matchType,
+							op,
+						},
+					],
+				},
+			},
+		});
+
+		// Each row covers a distinct historical serialization shape the backend
+		// may have persisted. The frontend must not rewrite these on load —
+		// otherwise opening and saving an old rule silently changes its op.
+		it.each([
+			['numeric', '1', '1'],
+			['literal', 'above', 'at_least_once'],
+			['symbol', '>', 'at_least_once'],
+			['short form', 'eq', 'avg'],
+			['mixed numeric and literal', '7', 'last'],
+			['UI-unexposed operator', 'above_or_equal', 'at_least_once'],
+			['UI-unexposed numeric operator', '5', 'at_least_once'],
+		])('preserves %s op/matchType verbatim (%s / %s)', (_desc, op, matchType) => {
+			const state = getThresholdStateFromAlertDef(buildDef(op, matchType));
+			expect(state.operator).toBe(op);
+			expect(state.matchType).toBe(matchType);
+		});
+
+		it('falls back to IS_ABOVE / AT_LEAST_ONCE when op and matchType are missing', () => {
+			const def: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: [],
+								matchType: '',
+								op: '',
+							},
+						],
+					},
+				},
+			};
+			const state = getThresholdStateFromAlertDef(def);
+			expect(state.operator).toBe(AlertThresholdOperator.IS_ABOVE);
+			expect(state.matchType).toBe(AlertThresholdMatchType.AT_LEAST_ONCE);
 		});
 	});
 

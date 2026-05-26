@@ -29,6 +29,7 @@ import {
 	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
+import { withBasePath } from 'utils/basePath';
 
 const supportedLogsOrder = [
 	OrderPreferenceItems.ASC,
@@ -37,7 +38,7 @@ const supportedLogsOrder = [
 
 function getLogsOrder(): OrderPreferenceItems {
 	// set the value of order from the URL only when order query param is present and the user is landing on the old logs explorer page
-	if (window.location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
+	if (window.location.pathname === withBasePath(ROUTES.OLD_LOGS_EXPLORER)) {
 		const orderParam = new URLSearchParams(window.location.search).get('order');
 
 		if (orderParam) {

@@ -3,7 +3,7 @@ package telemetrytraces
 import (
 	"strings"
 
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/antlr4-go/antlr/v4"
 )
 
@@ -31,7 +31,7 @@ func ExtractTraceIDsFromFilter(filterExpr string) ([]string, bool) {
 	return extractor.traceIDs, extractor.found
 }
 
-// Visit dispatches to the specific visit method based on node type
+// Visit dispatches to the specific visit method based on node type.
 func (e *traceIDExtractor) Visit(tree antlr.ParseTree) any {
 	if tree == nil {
 		return nil

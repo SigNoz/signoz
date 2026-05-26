@@ -23,15 +23,7 @@
 			font-weight: 500;
 			line-height: 18px;
 
-			color: #fff;
-		}
-	}
-}
-
-.lightMode {
-	.brand-logo {
-		.brand-logo-name {
-			color: black;
+			color: var(--l1-foreground);
 		}
 	}
 }

@@ -1,0 +1,24 @@
+.root {
+	display: flex;
+	padding: 12px;
+	margin: 20px;
+	gap: 12px;
+	align-items: flex-start;
+	border-radius: 4px;
+	background: var(--destructive);
+}
+
+.text,
+.value {
+	color: var(--destructive-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.text {
+	flex-shrink: 0;
+}

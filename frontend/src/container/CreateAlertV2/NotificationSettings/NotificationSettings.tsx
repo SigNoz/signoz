@@ -1,4 +1,5 @@
-import { Input, Select, Typography } from 'antd';
+import { Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -13,10 +14,8 @@ import NotificationMessage from './NotificationMessage';
 import './styles.scss';
 
 function NotificationSettings(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 
 	const repeatNotificationsInput = (
 		<div className="repeat-notifications-input">

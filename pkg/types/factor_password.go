@@ -31,9 +31,8 @@ type PostableResetPassword struct {
 }
 
 type ChangePasswordRequest struct {
-	UserID      valuer.UUID `json:"userId"`
-	OldPassword string      `json:"oldPassword"`
-	NewPassword string      `json:"newPassword"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
 }
 
 type PostableForgotPassword struct {

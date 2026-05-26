@@ -16,9 +16,9 @@ function AverageResolutionCard({
 }: TotalTriggeredCardProps): JSX.Element {
 	return (
 		<StatsCard
-			displayValue={formatTime(currentAvgResolutionTime)}
-			totalCurrentCount={currentAvgResolutionTime}
-			totalPastCount={pastAvgResolutionTime}
+			displayValue={formatTime(+currentAvgResolutionTime)}
+			totalCurrentCount={+currentAvgResolutionTime}
+			totalPastCount={+pastAvgResolutionTime}
 			title="Avg. Resolution Time"
 			timeSeries={timeSeries}
 		/>

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
-import { SyncOutlined } from '@ant-design/icons';
+import { useNavigationType } from 'react-router-dom-v5-compat';
+import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -14,13 +14,15 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
-import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
@@ -51,6 +53,7 @@ import {
 	Time,
 	TimeRange,
 } from './types';
+import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 
@@ -87,32 +90,32 @@ function DateTimeSelection({
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const urlQuery = useUrlQuery();
-	const searchStartTime = urlQuery.get('startTime');
-	const searchEndTime = urlQuery.get('endTime');
-	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
+	const currentSearchParams = getUnstableCurrentSearchParams();
+	const searchStartTime = currentSearchParams.get(QueryParams.startTime);
+	const searchEndTime = currentSearchParams.get(QueryParams.endTime);
+	const relativeTimeFromUrl = currentSearchParams.get(QueryParams.relativeTime);
+	const hasTimeParamsInUrl =
+		(searchStartTime && searchEndTime) || relativeTimeFromUrl;
 
 	// Prioritize props for initial modal time, fallback to URL params
 	let initialModalStartTime = 0;
 	if (modalInitialStartTime !== undefined) {
 		initialModalStartTime = modalInitialStartTime;
 	} else if (searchStartTime) {
-		initialModalStartTime = parseInt(searchStartTime, 10);
+		initialModalStartTime = Number.parseInt(searchStartTime, 10);
 	}
 
 	let initialModalEndTime = 0;
 	if (modalInitialEndTime !== undefined) {
 		initialModalEndTime = modalInitialEndTime;
 	} else if (searchEndTime) {
-		initialModalEndTime = parseInt(searchEndTime, 10);
+		initialModalEndTime = Number.parseInt(searchEndTime, 10);
 	}
 
 	const [modalStartTime, setModalStartTime] = useState<number>(
 		initialModalStartTime,
 	);
 	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
-
-	const [searchParams] = useSearchParams();
 
 	// Effect to update modal time state when props change
 	useEffect(() => {
@@ -124,42 +127,42 @@ function DateTimeSelection({
 		}
 	}, [modalInitialStartTime, modalInitialEndTime]);
 
-	const {
-		localstorageStartTime,
-		localstorageEndTime,
-	} = ((): LocalStorageTimeRange => {
-		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+	const { localstorageStartTime, localstorageEndTime } =
+		((): LocalStorageTimeRange => {
+			const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
-		if (routes !== null) {
-			const routesObject = JSON.parse(routes || '{}');
-			const selectedTime = routesObject[location.pathname];
+			if (routes !== null) {
+				const routesObject = JSON.parse(routes || '{}');
+				const selectedTime = routesObject[location.pathname];
 
-			if (selectedTime) {
-				let parsedSelectedTime: TimeRange;
-				try {
-					parsedSelectedTime = JSON.parse(selectedTime);
-				} catch {
-					parsedSelectedTime = selectedTime;
+				if (selectedTime) {
+					let parsedSelectedTime: TimeRange;
+					try {
+						parsedSelectedTime = JSON.parse(selectedTime);
+					} catch {
+						parsedSelectedTime = selectedTime;
+					}
+
+					if (isObject(parsedSelectedTime)) {
+						return {
+							localstorageStartTime: parsedSelectedTime.startTime,
+							localstorageEndTime: parsedSelectedTime.endTime,
+						};
+					}
+					return { localstorageStartTime: null, localstorageEndTime: null };
 				}
-
-				if (isObject(parsedSelectedTime)) {
-					return {
-						localstorageStartTime: parsedSelectedTime.startTime,
-						localstorageEndTime: parsedSelectedTime.endTime,
-					};
-				}
-				return { localstorageStartTime: null, localstorageEndTime: null };
 			}
-		}
-		return { localstorageStartTime: null, localstorageEndTime: null };
-	})();
+			return { localstorageStartTime: null, localstorageEndTime: null };
+		})();
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
 			const startDate = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
+				new Date(Number.parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
+			const endDate = dayjs(
+				new Date(Number.parseInt(getTimeString(searchEndTime), 10)),
+			);
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
@@ -179,9 +182,8 @@ function DateTimeSelection({
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
-	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
-		false,
-	);
+	const [customDateTimeVisible, setCustomDTPickerVisible] =
+		useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
 
@@ -321,14 +323,15 @@ function DateTimeSelection({
 				return;
 			}
 
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			const urlQuery = getUnstableCurrentSearchParams();
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 
 			urlQuery.set(QueryParams.relativeTime, value);
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			if (searchParams.has(QueryParams.compositeQuery)) {
+			if (urlQuery.has(QueryParams.compositeQuery)) {
 				const updatedCompositeQuery = getUpdatedCompositeQuery();
 				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 			}
@@ -347,13 +350,18 @@ function DateTimeSelection({
 			getUpdatedCompositeQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
-			urlQuery,
-			searchParams,
 		],
 	);
 
+	const isRefreshingQueries = useIsGlobalTimeQueryRefreshing();
+	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTime);
+		invalidateQueries();
+		onSelectHandler(
+			isModalTimeSelection && modalSelectedInterval
+				? modalSelectedInterval
+				: selectedTime,
+		);
 		onLastRefreshHandler();
 	};
 	const handleReset = useCallback(() => {
@@ -405,6 +413,7 @@ function DateTimeSelection({
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
+				const urlQuery = getUnstableCurrentSearchParams();
 				urlQuery.set(
 					QueryParams.startTime,
 					startTime?.toDate().getTime().toString(),
@@ -412,7 +421,7 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				if (searchParams.has(QueryParams.compositeQuery)) {
+				if (urlQuery.has(QueryParams.compositeQuery)) {
 					const updatedCompositeQuery = getUpdatedCompositeQuery();
 					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 				}
@@ -432,8 +441,9 @@ function DateTimeSelection({
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
 
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		const urlQuery = getUnstableCurrentSearchParams();
+		urlQuery.delete(QueryParams.startTime);
+		urlQuery.delete(QueryParams.endTime);
 
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
@@ -586,13 +596,12 @@ function DateTimeSelection({
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
-			(!urlQuery.has(QueryParams.startTime) ||
-				!urlQuery.has(QueryParams.endTime)) &&
-			!urlQuery.has(QueryParams.relativeTime) &&
+			!hasTimeParamsInUrl &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
 				currentRoute === ROUTES.ALERT_HISTORY)
 		) {
 			updateTimeInterval(defaultRelativeTime);
+			const urlQuery = getUnstableCurrentSearchParams();
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -616,9 +625,10 @@ function DateTimeSelection({
 			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 		}
 
+		const urlQuery = getUnstableCurrentSearchParams();
 		if (updatedTime !== 'custom') {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();
@@ -732,7 +742,11 @@ function DateTimeSelection({
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+								<Button
+									icon={<RefreshCw size={16} />}
+									loading={!!isRefreshingQueries}
+									onClick={onRefreshHandler}
+								/>
 							</FormItem>
 
 							<FormItem>

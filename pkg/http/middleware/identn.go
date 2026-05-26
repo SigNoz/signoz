@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -52,7 +53,7 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 		ctx := r.Context()
 		claims := identity.ToClaims()
 		if err := m.sharder.IsMyOwnedKey(ctx, types.NewOrganizationKey(valuer.MustNewUUID(claims.OrgID))); err != nil {
-			m.logger.ErrorContext(ctx, identityCrossOrgMessage, "claims", claims, "error", err)
+			m.logger.ErrorContext(ctx, identityCrossOrgMessage, slog.Any("claims", claims), errors.Attr(err))
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -60,8 +61,10 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 		ctx = authtypes.NewContextWithClaims(ctx, claims)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("identn_provider", claims.IdentNProvider)
+		comment.Set("identn_provider", claims.IdentNProvider.StringValue())
 		comment.Set("user_id", claims.UserID)
+		comment.Set("service_account_id", claims.ServiceAccountID)
+		comment.Set("principal", claims.Principal.StringValue())
 		comment.Set("org_id", claims.OrgID)
 		ctx = ctxtypes.NewContextWithComment(ctx, comment)
 

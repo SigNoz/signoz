@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@signozhq/icons';
 
 import './AuthFooter.styles.scss';
 

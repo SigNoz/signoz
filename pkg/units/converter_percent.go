@@ -1,6 +1,6 @@
 package units
 
-// percentConverter is a converter for percent unit
+// percentConverter is a converter for percent unit.
 type percentConverter struct{}
 
 func NewPercentConverter() Converter {

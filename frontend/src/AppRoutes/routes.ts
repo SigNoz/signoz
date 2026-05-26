@@ -2,9 +2,9 @@ import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 
 import {
+	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
-	AlertTypeSelectionPage,
 	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
@@ -18,7 +18,8 @@ import {
 	ForgotPassword,
 	Home,
 	InfrastructureMonitoring,
-	InstalledIntegrations,
+	Integrations,
+	IntegrationsDetailsPage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -47,6 +48,7 @@ import {
 	StatusPage,
 	SupportPage,
 	TraceDetail,
+	TraceDetailV3,
 	TraceFilter,
 	TracesExplorer,
 	TracesFunnelDetails,
@@ -137,10 +139,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
+	// V3 trace details is gated until release: /trace serves V2 (public),
+	// /trace-old serves V3 (URL-only access). Flip the two `component`
+	// values back to release V3.
+	{
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+		component: TraceDetail,
+		isPrivate: true,
+		key: 'TRACE_DETAIL_OLD',
+	},
 	{
 		path: ROUTES.TRACE_DETAIL,
 		exact: true,
-		component: TraceDetail,
+		component: TraceDetailV3,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
 	},
@@ -199,13 +211,6 @@ const routes: AppRoutes[] = [
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
-	},
-	{
-		path: ROUTES.ALERT_TYPE_SELECTION,
-		exact: true,
-		component: AlertTypeSelectionPage,
-		isPrivate: true,
-		key: 'ALERT_TYPE_SELECTION',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
@@ -390,9 +395,16 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
+		path: ROUTES.INTEGRATIONS_DETAIL,
+		exact: true,
+		component: IntegrationsDetailsPage,
+		isPrivate: true,
+		key: 'INTEGRATIONS_DETAIL',
+	},
+	{
 		path: ROUTES.INTEGRATIONS,
 		exact: true,
-		component: InstalledIntegrations,
+		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},
@@ -488,6 +500,13 @@ const routes: AppRoutes[] = [
 		key: 'API_MONITORING',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.AI_ASSISTANT,
+		exact: true,
+		component: AIAssistantPage,
+		key: 'AI_ASSISTANT',
+		isPrivate: true,
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
@@ -506,27 +525,19 @@ export const LIST_LICENSES: AppRoutes = {
 	key: 'LIST_LICENSES',
 };
 
-export const oldRoutes = [
-	'/pipelines',
-	'/logs-explorer',
-	'/logs-explorer/live',
-	'/logs-save-views',
-	'/traces-save-views',
-	'/settings/access-tokens',
-	'/messaging-queues',
-	'/alerts/edit',
-];
-
 export const oldNewRoutesMapping: Record<string, string> = {
 	'/pipelines': '/logs/pipelines',
 	'/logs-explorer': '/logs/logs-explorer',
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/access-tokens': '/settings/api-keys',
+	'/settings/access-tokens': '/settings/service-accounts',
+	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
+	'/alerts/type-selection': '/alerts/new',
 };
+export const oldRoutes = Object.keys(oldNewRoutesMapping);
 
 export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
 	ROUTES.WORKSPACE_LOCKED,

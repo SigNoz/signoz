@@ -6,7 +6,8 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelMode } from '../../types';
-import { prepareChartData, prepareUPlotConfig } from '../utils';
+import { prepareUPlotConfig } from '../utils';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
@@ -45,7 +46,7 @@ const createApiResponse = (
 	data: {
 		result,
 		resultType: 'matrix',
-		newResult: (null as unknown) as MetricRangePayloadV3,
+		newResult: null as unknown as MetricRangePayloadV3,
 	},
 });
 
@@ -57,7 +58,7 @@ const createWidget = (overrides: Partial<Widgets> = {}): Widgets =>
 		thresholds: [],
 		customLegendColors: {},
 		...overrides,
-	} as Widgets);
+	}) as Widgets;
 
 const defaultTimezone = {
 	name: 'UTC',
@@ -83,7 +84,7 @@ describe('TimeSeriesPanel utils', () => {
 			const data = prepareChartData(apiResponse);
 
 			expect(data).toHaveLength(1);
-			expect(data[0]).toEqual([]);
+			expect(data[0]).toStrictEqual([]);
 		});
 
 		it('returns timestamps and one series of y values for single series', () => {
@@ -102,8 +103,8 @@ describe('TimeSeriesPanel utils', () => {
 			const data = prepareChartData(apiResponse);
 
 			expect(data).toHaveLength(2);
-			expect(data[0]).toEqual([1000, 2000]);
-			expect(data[1]).toEqual([10, 20]);
+			expect(data[0]).toStrictEqual([1000, 2000]);
+			expect(data[1]).toStrictEqual([10, 20]);
 		});
 
 		it('merges timestamps and fills missing values with null for multiple series', () => {
@@ -128,11 +129,11 @@ describe('TimeSeriesPanel utils', () => {
 
 			const data = prepareChartData(apiResponse);
 
-			expect(data[0]).toEqual([1000, 2000, 3000]);
+			expect(data[0]).toStrictEqual([1000, 2000, 3000]);
 			// First series: 1, null, 3
-			expect(data[1]).toEqual([1, null, 3]);
+			expect(data[1]).toStrictEqual([1, null, 3]);
 			// Second series: 10, 20, null
-			expect(data[2]).toEqual([10, 20, null]);
+			expect(data[2]).toStrictEqual([10, 20, null]);
 		});
 	});
 
@@ -173,7 +174,7 @@ describe('TimeSeriesPanel utils', () => {
 			const builder = prepareUPlotConfig({
 				...baseParams,
 				apiResponse,
-				currentQuery: (null as unknown) as Query,
+				currentQuery: null as unknown as Query,
 			});
 
 			expect(getLabelNameMock).toHaveBeenCalled();
@@ -300,6 +301,27 @@ describe('TimeSeriesPanel utils', () => {
 			const seriesConfig = config.series?.[1];
 			expect(seriesConfig).toBeDefined();
 			expect(seriesConfig!.stroke).toBe('#ff0000');
+		});
+
+		it('passes result metric to each series for cross-panel sync', () => {
+			const metric = { host: 'server1', __name__: 'cpu' };
+			const apiResponse = createApiResponse([
+				{
+					metric,
+					queryName: 'Q',
+					values: [
+						[1000, '1'],
+						[2000, '2'],
+					],
+				} as MetricRangePayloadProps['data']['result'][0],
+			]);
+
+			const config = prepareUPlotConfig({
+				...baseParams,
+				apiResponse,
+			}).getConfig();
+
+			expect(config.series?.[1]).toMatchObject({ metric });
 		});
 
 		it('adds multiple series when result has multiple items', () => {

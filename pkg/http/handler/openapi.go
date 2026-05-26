@@ -17,7 +17,7 @@ type OpenAPIExample struct {
 	Value       any
 }
 
-// Def is the definition of an OpenAPI operation
+// Def is the definition of an OpenAPI operation.
 type OpenAPIDef struct {
 	ID                  string
 	Tags                []string
@@ -40,7 +40,7 @@ type OpenAPISecurityScheme struct {
 	Scopes []string
 }
 
-// Collector is a collector for OpenAPI operations
+// OpenAPICollector is a collector for OpenAPI operations.
 type OpenAPICollector struct {
 	collector *openapi.Collector
 }

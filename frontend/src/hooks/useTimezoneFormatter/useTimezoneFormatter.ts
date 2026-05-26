@@ -22,11 +22,7 @@ interface CacheEntry {
 const CACHE_SIZE_LIMIT = 1000;
 const CACHE_CLEANUP_PERCENTAGE = 0.5; // Remove 50% when limit is reached
 
-function useTimezoneFormatter({
-	userTimezone,
-}: {
-	userTimezone: Timezone;
-}): {
+function useTimezoneFormatter({ userTimezone }: { userTimezone: Timezone }): {
 	formatTimezoneAdjustedTimestamp: (
 		input: TimestampInput,
 		format?: string,
