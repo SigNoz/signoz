@@ -16,82 +16,47 @@ func NewFlamegraphTraceFromMinimal(spans []MinimalSpan) *FlamegraphTrace {
 	t := &FlamegraphTrace{
 		nodeByID: make(map[string]*FlamegraphSpan, len(spans)),
 	}
-
 	for i := range spans {
 		node := spans[i].ToFlamegraphSpan()
-		if t.startTime == 0 || node.Timestamp < t.startTime {
-			t.startTime = node.Timestamp
-		}
-		if end := node.Timestamp + node.DurationNano; end > t.endTime {
-			t.endTime = end
-		}
+		t.updateTimeRange(node.Timestamp, node.DurationNano)
 		t.nodeByID[node.SpanID] = node
 	}
-
-	for _, node := range t.nodeByID {
-		if node.ParentSpanID != "" {
-			if parent, ok := t.nodeByID[node.ParentSpanID]; ok {
-				parent.Children = append(parent.Children, node)
-			} else {
-				missing := &FlamegraphSpan{
-					SpanID:       node.ParentSpanID,
-					Name:         "Missing Span",
-					Timestamp:    node.Timestamp,
-					DurationNano: node.DurationNano,
-					Children:     []*FlamegraphSpan{node},
-				}
-				t.nodeByID[missing.SpanID] = missing
-				t.roots = append(t.roots, missing)
-			}
-		} else if flamegraphSpanIndex(t.roots, node.SpanID) == -1 {
-			t.roots = append(t.roots, node)
-		}
-	}
-
-	sort.Slice(t.roots, func(i, j int) bool {
-		if t.roots[i].Timestamp == t.roots[j].Timestamp {
-			return t.roots[i].SpanID < t.roots[j].SpanID
-		}
-		return t.roots[i].Timestamp < t.roots[j].Timestamp
-	})
-
+	t.wireTree()
 	return t
 }
 
-// GetSelectedSpans builds all BFS levels, counts total spans, then either returns all
-// levels unchanged (totalSpans <= effectiveLimit) or applies a level window with
-// sampling for large traces. The bool return is true when windowing was applied.
-func (t *FlamegraphTrace) GetSelectedSpans(
-	selectedSpanID string, effectiveLimit uint,
-	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
-) ([]FlamegraphWindowLevel, bool) {
-	allLevels := t.buildAllLevels()
+func NewFlamegraphTraceFromStorable(spans []StorableSpan) *FlamegraphTrace {
+	t := &FlamegraphTrace{
+		nodeByID: make(map[string]*FlamegraphSpan, len(spans)),
+	}
+	for i := range spans {
+		node := NewFlamegraphSpanFromStorable(&spans[i], 0) // level is set later by BFS
+		t.updateTimeRange(node.Timestamp, node.DurationNano)
+		t.nodeByID[node.SpanID] = node
+	}
+	t.wireTree()
+	return t
+}
 
+func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
+	allLevels := t.buildAllLevels()
+	for _, node := range t.nodeByID {
+		node.Children = nil // children not required after building tree
+	}
+	return allLevels
+}
+
+// GetSelectedLevels returns the level window for selectedSpanID with sampling applied to
+// dense levels. It always applies windowing — callers should only invoke this when the
+// trace is known to exceed the select-all limit.
+// Children are cleared after traversal so the tree can be GC'd.
+func (t *FlamegraphTrace) GetSelectedLevels(
+	selectedSpanID string,
+	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
+) []FlamegraphLevel {
+	allLevels := t.buildAllLevels()
 	for _, node := range t.nodeByID {
 		node.Children = nil
-	}
-
-	var totalSpans uint
-	for _, lvl := range allLevels {
-		totalSpans += uint(len(lvl))
-	}
-
-	if totalSpans <= effectiveLimit {
-		result := make([]FlamegraphWindowLevel, 0, len(allLevels))
-		for _, lvl := range allLevels {
-			if len(lvl) == 0 {
-				continue
-			}
-			spanIDs := make([]string, len(lvl))
-			for i, s := range lvl {
-				spanIDs[i] = s.SpanID
-			}
-			result = append(result, FlamegraphWindowLevel{
-				Level:   lvl[0].Level,
-				SpanIDs: spanIDs,
-			})
-		}
-		return result, false
 	}
 
 	selectedIndex := 0
@@ -122,7 +87,7 @@ func (t *FlamegraphTrace) GetSelectedSpans(
 		lowerLimit = 0
 	}
 
-	result := make([]FlamegraphWindowLevel, 0, upperLimit-lowerLimit)
+	result := make([]FlamegraphLevel, 0, upperLimit-lowerLimit)
 	for i := lowerLimit; i < upperLimit; i++ {
 		lvl := allLevels[i]
 		if len(lvl) == 0 {
@@ -142,32 +107,23 @@ func (t *FlamegraphTrace) GetSelectedSpans(
 		for j, s := range sampled {
 			spanIDs[j] = s.SpanID
 		}
-		result = append(result, FlamegraphWindowLevel{
+		result = append(result, FlamegraphLevel{
 			Level:   sampled[0].Level,
 			SpanIDs: spanIDs,
 		})
 	}
 
-	return result, true
+	return result
 }
 
-// GetNode returns the lean tree node for spanID, if it exists.
-func (t *FlamegraphTrace) GetNode(spanID string) (*FlamegraphSpan, bool) {
-	node, ok := t.nodeByID[spanID]
-	return node, ok
-}
-
-// EnrichWindow hydrates a level window with full span data. For each span ID in the
-// window it looks up the corresponding StorableSpan and converts it; synthesized
-// "Missing Span" placeholders fall back to the lean tree node.
-func (t *FlamegraphTrace) EnrichWindow(window []FlamegraphWindowLevel, fullSpans []StorableSpan) [][]*FlamegraphSpan {
+func (t *FlamegraphTrace) EnrichSelectedSpans(selectedSpans []FlamegraphLevel, fullSpans []StorableSpan) [][]*FlamegraphSpan {
 	fullByID := make(map[string]*StorableSpan, len(fullSpans))
 	for i := range fullSpans {
 		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
 	}
 
-	result := make([][]*FlamegraphSpan, len(window))
-	for i, lvl := range window {
+	result := make([][]*FlamegraphSpan, len(selectedSpans))
+	for i, lvl := range selectedSpans {
 		result[i] = make([]*FlamegraphSpan, 0, len(lvl.SpanIDs))
 		for _, spanID := range lvl.SpanIDs {
 			if full, ok := fullByID[spanID]; ok {
@@ -178,6 +134,44 @@ func (t *FlamegraphTrace) EnrichWindow(window []FlamegraphWindowLevel, fullSpans
 		}
 	}
 	return result
+}
+
+func (t *FlamegraphTrace) updateTimeRange(timestamp, durationNano uint64) {
+	if t.startTime == 0 || timestamp < t.startTime {
+		t.startTime = timestamp
+	}
+	if end := timestamp + durationNano; end > t.endTime {
+		t.endTime = end
+	}
+}
+
+func (t *FlamegraphTrace) wireTree() {
+	for _, node := range t.nodeByID {
+		if node.ParentSpanID != "" {
+			if parent, ok := t.nodeByID[node.ParentSpanID]; ok {
+				parent.Children = append(parent.Children, node)
+			} else {
+				missing := &FlamegraphSpan{
+					SpanID:       node.ParentSpanID,
+					Name:         "Missing Span",
+					Timestamp:    node.Timestamp,
+					DurationNano: node.DurationNano,
+					Children:     []*FlamegraphSpan{node},
+				}
+				t.nodeByID[missing.SpanID] = missing
+				t.roots = append(t.roots, missing)
+			}
+		} else if flamegraphSpanIndex(t.roots, node.SpanID) == -1 {
+			t.roots = append(t.roots, node)
+		}
+	}
+
+	sort.Slice(t.roots, func(i, j int) bool {
+		if t.roots[i].Timestamp == t.roots[j].Timestamp {
+			return t.roots[i].SpanID < t.roots[j].SpanID
+		}
+		return t.roots[i].Timestamp < t.roots[j].Timestamp
+	})
 }
 
 func (t *FlamegraphTrace) buildAllLevels() [][]*FlamegraphSpan {
