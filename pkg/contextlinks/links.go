@@ -227,7 +227,7 @@ func PrepareFilters(labels map[string]string, whereClauseItems []v3.FilterItem, 
 	return filterItems
 }
 
-func PrepareLinksToTracesV5(start, end time.Time, whereClause string) url.Values {
+func PrepareParamsForTracesV5(start, end time.Time, whereClause string) url.Values {
 
 	// Traces list view expects time in nanoseconds
 	tr := URLShareableTimeRange{
@@ -278,7 +278,7 @@ func PrepareLinksToTracesV5(start, end time.Time, whereClause string) url.Values
 	return params
 }
 
-func PrepareLinksToLogsV5(start, end time.Time, whereClause string) url.Values {
+func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
 
 	// Logs list view expects time in milliseconds
 	tr := URLShareableTimeRange{
