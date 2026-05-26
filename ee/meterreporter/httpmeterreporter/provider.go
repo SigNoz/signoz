@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -95,9 +94,7 @@ func newProvider(
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
-	jitterCap := provider.config.ResolvedJitter()
-
-	startDelay := jitter(jitterCap)
+	startDelay := provider.config.NewJitter()
 	provider.settings.Logger().InfoContext(ctx, "scheduling first meter collect", slog.String("delay", startDelay.String()), slog.Int64("delay_ns", startDelay.Nanoseconds()))
 
 	timer := time.NewTimer(startDelay)
@@ -109,19 +106,11 @@ func (provider *Provider) Start(ctx context.Context) error {
 			return nil
 		case <-timer.C:
 			provider.collect(ctx)
-			next := provider.config.Interval - jitter(jitterCap)
+			next := provider.config.Interval - provider.config.NewJitter()
 			timer.Reset(next)
 			provider.settings.Logger().InfoContext(ctx, "scheduled next meter collect", slog.String("delay", next.String()), slog.Int64("delay_ns", next.Nanoseconds()))
 		}
 	}
-}
-
-// jitter returns a uniform random duration in [0, max). Returns 0 if max <= 0.
-func jitter(max time.Duration) time.Duration {
-	if max <= 0 {
-		return 0
-	}
-	return time.Duration(rand.Int64N(int64(max)))
 }
 
 func (provider *Provider) collect(ctx context.Context) {
@@ -162,7 +151,6 @@ func (provider *Provider) collect(ctx context.Context) {
 }
 
 func (provider *Provider) Stop(ctx context.Context) error {
-	provider.settings.Logger().InfoContext(ctx, "stopping meter reporter")
 	close(provider.stopC)
 	return nil
 }
@@ -186,11 +174,6 @@ func (provider *Provider) collectOrg(ctx context.Context, org *types.Organizatio
 
 		start, end, ok := backfillRange(nextByCollector, todayStart)
 		if ok {
-			provider.settings.Logger().InfoContext(ctx, "backfilling sealed days",
-				slog.String("org_id", org.ID.StringValue()),
-				slog.String("start", start.Format("2006-01-02")),
-				slog.String("end", end.Format("2006-01-02")))
-
 			for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
 				eligible := eligibleCollectors(provider.collectorsByName, nextByCollector, day)
 				if len(eligible) == 0 {
@@ -278,10 +261,7 @@ func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license
 		collectedReadings, err := collector.Collect(ctx, orgID, license, window)
 		if err != nil {
 			provider.metrics.collections.Add(ctx, 1, metric.WithAttributes(meterAttr, errors.TypeAttr(err)))
-			provider.settings.Logger().ErrorContext(ctx, "meter collector failed",
-				errors.Attr(err),
-				slog.String("org_id", orgID.StringValue()),
-				slog.String("meter", collector.Name().String()))
+			provider.settings.Logger().ErrorContext(ctx, "meter collector failed", errors.Attr(err), slog.String("org_id", orgID.StringValue()), slog.String("meter", collector.Name().String()))
 			continue
 		}
 
@@ -308,10 +288,7 @@ func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license
 
 	provider.metrics.reports.Add(ctx, 1)
 	provider.metrics.meters.Add(ctx, int64(len(meters)))
-	provider.settings.Logger().InfoContext(ctx, "reported meters to zeus",
-		slog.String("org_id", orgID.StringValue()),
-		slog.String("date", date),
-		slog.Int("meters", len(meters)))
+	provider.settings.Logger().InfoContext(ctx, "reported meters to zeus", slog.String("org_id", orgID.StringValue()), slog.String("date", date), slog.Int("meters", len(meters)))
 	return nil
 }
 

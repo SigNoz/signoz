@@ -1,6 +1,7 @@
 package meterreporter
 
 import (
+	"math/rand/v2"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -49,16 +50,16 @@ func (c Config) Validate() error {
 	return nil
 }
 
-// ResolvedJitter returns the configured Jitter, or
-// min(Interval, defaultJitter) when the sentinel default is still in place.
-func (c Config) ResolvedJitter() time.Duration {
+// NewJitter returns a fresh random duration sampled uniformly from
+// [0, jitter), where jitter is the configured Jitter or, if the sentinel
+// default is still in place, min(Interval, 2h).
+func (c Config) NewJitter() time.Duration {
 	defaultJitter := 2 * time.Hour
 
-	if c.Jitter < 0 {
-		if c.Interval < defaultJitter {
-			return c.Interval
-		}
-		return defaultJitter
+	cap := c.Jitter
+	if cap < 0 {
+		cap = min(c.Interval, defaultJitter)
 	}
-	return c.Jitter
+
+	return time.Duration(rand.Int64N(int64(cap)))
 }
