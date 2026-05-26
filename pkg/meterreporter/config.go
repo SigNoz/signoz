@@ -50,13 +50,15 @@ func (c Config) Validate() error {
 }
 
 // ResolvedJitter returns the configured Jitter, or
-// min(Interval, 2h) when the sentinel default is still in place.
+// min(Interval, defaultJitter) when the sentinel default is still in place.
 func (c Config) ResolvedJitter() time.Duration {
+	defaultJitter := 2 * time.Hour
+
 	if c.Jitter < 0 {
-		if c.Interval < 2*time.Hour {
+		if c.Interval < defaultJitter {
 			return c.Interval
 		}
-		return 2 * time.Hour
+		return defaultJitter
 	}
 	return c.Jitter
 }
