@@ -2401,7 +2401,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -2414,6 +2426,22 @@ components:
         message:
           type: string
       type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
+        policy:
+          $ref: '#/components/schemas/ErrorsResponseretrypolicy'
+      type: object
+    ErrorsResponseretrypolicy:
+      enum:
+      - never
+      - immediate
+      - backoff
+      - after
+      - after_fix
+      - after_auth
+      type: string
     FactoryResponse:
       properties:
         healthy:

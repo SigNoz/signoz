@@ -3,8 +3,10 @@ package errors
 import (
 	"errors" //nolint:depguard
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -57,6 +59,124 @@ func TestAttr(t *testing.T) {
 	attr := Attr(err)
 	assert.Equal(t, "exception", attr.Key)
 	assert.Equal(t, err, attr.Value.Any())
+}
+
+func TestWithSuggestions(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithSuggestions("try this")
+	assert.Equal(t, []string{"try this"}, suggestionsOf(err))
+
+	// WithSuggestions replaces the existing list.
+	err = err.WithSuggestions("try this instead")
+	assert.Equal(t, []string{"try this instead"}, suggestionsOf(err))
+
+	// Variadic form replaces with multiple entries.
+	err = err.WithSuggestions("first", "second")
+	assert.Equal(t, []string{"first", "second"}, suggestionsOf(err))
+}
+
+func TestWithRetryNever(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryNever()
+	assert.Equal(t, RetryNever, retryOf(err).policy)
+}
+
+func TestWithRetryImmediate(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryImmediate()
+	assert.Equal(t, RetryImmediate, retryOf(err).policy)
+}
+
+func TestWithRetryBackoff(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryBackoff()
+	assert.Equal(t, RetryBackoff, retryOf(err).policy)
+}
+
+func TestWithRetryAfter(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfter(5 * time.Microsecond)
+	r := retryOf(err)
+
+	assert.Equal(t, RetryAfter, r.policy)
+	assert.Equal(t, 5, int(r.delay.Microseconds()))
+}
+
+func TestWithRetryAfterFix(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfterFix()
+	assert.Equal(t, RetryAfterFix, retryOf(err).policy)
+}
+
+func TestWithRetryAfterAuth(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfterAuth()
+	assert.Equal(t, RetryAfterAuth, retryOf(err).policy)
+}
+
+func TestWithInvalidReferences(t *testing.T) {
+	// WithInvalidReferences populates the list.
+	err := New(TypeInvalidInput, MustNewCode("bad_ref"), "bad ref").
+		WithInvalidReferences("queries[0]", "queries[1]")
+	assert.Equal(t, []string{"queries[0]", "queries[1]"}, invalidReferencesOf(err))
+
+	// WithInvalidReferences replaces the entire list on each call.
+	err = err.WithInvalidReferences("queries[2]")
+	assert.Equal(t, []string{"queries[2]"}, invalidReferencesOf(err),
+		"WithInvalidReferences must replace the entire list")
+}
+
+func TestAsJSONBaseError(t *testing.T) {
+	err := New(TypeInvalidInput, MustNewCode("bad_input"), "field foo is bad").
+		WithUrl("https://docs/bad_input").
+		WithAdditional("hint1", "hint2").
+		WithSuggestions("try this").
+		WithInvalidReferences("queries[0]")
+
+	j := AsJSON(err)
+
+	assert.Equal(t, "invalid-input", j.Type)
+	assert.Equal(t, "bad_input", j.Code)
+	assert.Equal(t, "field foo is bad", j.Message)
+	assert.Equal(t, "https://docs/bad_input", j.Url)
+	assert.Equal(t, []responseerroradditional{{Message: "hint1"}, {Message: "hint2"}}, j.Errors)
+
+	// InvalidInput auto-applies the after_fix policy via NewInvalidInputf — but
+	// New (bare constructor) does not. The retry block should reflect that.
+	assert.Nil(t, j.Retry, "bare New(...) should not populate a retry block")
+
+	assert.Equal(t, []string{"try this"}, j.Suggestions)
+	assert.Equal(t, []string{"queries[0]"}, j.InvalidReferences)
+}
+
+func TestAsJSONRetryBlock(t *testing.T) {
+	t.Run("RetryAfterIncludesDuration", func(t *testing.T) {
+		err := NewTimeoutf(MustNewCode("slow"), "slow").WithRetryAfter(5 * time.Second)
+		j := AsJSON(err)
+		require.NotNil(t, j.Retry)
+		assert.Equal(t, responseretrypolicy(RetryAfter), j.Retry.Policy)
+		assert.Equal(t, "5s", j.Retry.Delay)
+	})
+
+	t.Run("NonAfterPolicyOmitsDurationField", func(t *testing.T) {
+		// NewInvalidInputf auto-applies retryAfterFix via the constructor helper.
+		err := NewInvalidInputf(MustNewCode("bad"), "bad")
+		j := AsJSON(err)
+		require.NotNil(t, j.Retry)
+		assert.Equal(t, responseretrypolicy(RetryAfterFix), j.Retry.Policy)
+		assert.Empty(t, j.Retry.Delay, "delay must be empty when policy != after")
+	})
+
+	t.Run("BareErrorOmitsRetryBlock", func(t *testing.T) {
+		err := New(TypeInternal, MustNewCode("boom"), "boom")
+		j := AsJSON(err)
+		assert.Nil(t, j.Retry, "bare New(...) without WithRetry* must omit retry")
+	})
+
+	t.Run("NonBaseErrorOmitsRetryBlock", func(t *testing.T) {
+		// Stdlib errors carry no retry metadata; AsJSON omits the retry block.
+		j := AsJSON(errors.New("plain stdlib error"))
+		assert.Nil(t, j.Retry, "non-base errors must omit the retry block")
+	})
+}
+
+func TestAsJSONOptionalFieldsOmittedWhenEmpty(t *testing.T) {
+	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
+	assert.Nil(t, j.Suggestions, "no suggestions set => Suggestions must be nil so json omitempty drops it")
+	assert.Nil(t, j.InvalidReferences, "no invalid references set => InvalidReferences must be nil so json omitempty drops it")
 }
 
 func TestWithStacktrace(t *testing.T) {

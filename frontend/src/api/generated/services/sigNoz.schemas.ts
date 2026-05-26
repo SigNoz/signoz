@@ -2051,6 +2051,19 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
+export enum ErrorsResponseretrypolicyDTO {
+	never = 'never',
+	immediate = 'immediate',
+	backoff = 'backoff',
+	after = 'after',
+	after_fix = 'after_fix',
+	after_auth = 'after_auth',
+}
+export interface ErrorsResponseretryjsonDTO {
+	delay?: TimeDurationDTO;
+	policy?: ErrorsResponseretrypolicyDTO;
+}
+
 export interface ErrorsJSONDTO {
 	/**
 	 * @type string
@@ -2061,9 +2074,22 @@ export interface ErrorsJSONDTO {
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
 	/**
+	 * @type array
+	 */
+	invalidReferences?: string[];
+	/**
 	 * @type string
 	 */
 	message: string;
+	retry?: ErrorsResponseretryjsonDTO;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
+	/**
+	 * @type string
+	 */
+	type?: string;
 	/**
 	 * @type string
 	 */

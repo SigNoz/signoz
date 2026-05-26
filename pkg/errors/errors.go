@@ -4,12 +4,12 @@ import (
 	"errors" //nolint:depguard
 	"fmt"
 	"log/slog"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 )
 
 // base is the fundamental struct that implements the error interface.
-// The order of the struct is 'TCMEUAS'.
 type base struct {
 	// t denotes the custom type of the error.
 	t typ
@@ -22,9 +22,16 @@ type base struct {
 	// u denotes the url for the documentation (if present) for the error.
 	u string
 	// a denotes any additional error messages (if present).
+	// NOTE: use attrs['suggestions'] for additional structured suggestions instead of this field.
 	a []string
 	// s contains the stacktrace captured at error creation time.
 	s fmt.Stringer
+	// r is the retry strategy for the error, if applicable.
+	r *retry
+	// suggestions is a list of user-facing suggestions related to the error, if present.
+	suggestions []string
+	// invalidReferences is a list of references that were invalid and contributed to the error, if present.
+	invalidReferences []string
 }
 
 // Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
@@ -39,13 +46,16 @@ func (b *base) Stacktrace() string {
 // and returns a new base error.
 func (b *base) WithStacktrace(s string) *base {
 	return &base{
-		t: b.t,
-		c: b.c,
-		m: b.m,
-		e: b.e,
-		u: b.u,
-		a: b.a,
-		s: rawStacktrace(s),
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 b.u,
+		a:                 b.a,
+		s:                 rawStacktrace(s),
+		r:                 b.r,
+		suggestions:       b.suggestions,
+		invalidReferences: b.invalidReferences,
 	}
 }
 
@@ -113,13 +123,16 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 		s = original.s
 	}
 	b := &base{
-		t: t,
-		c: c,
-		m: m,
-		e: e,
-		u: u,
-		a: a,
-		s: s,
+		t:                 t,
+		c:                 c,
+		m:                 m,
+		e:                 e,
+		u:                 u,
+		a:                 a,
+		s:                 s,
+		r:                 retryOf(cause),
+		suggestions:       suggestionsOf(cause),
+		invalidReferences: invalidReferencesOf(cause),
 	}
 
 	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
@@ -128,27 +141,111 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 // WithUrl adds a url to the base error and returns a new base error.
 func (b *base) WithUrl(u string) *base {
 	return &base{
-		t: b.t,
-		c: b.c,
-		m: b.m,
-		e: b.e,
-		u: u,
-		a: b.a,
-		s: b.s,
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 u,
+		a:                 b.a,
+		s:                 b.s,
+		r:                 b.r,
+		suggestions:       b.suggestions,
+		invalidReferences: b.invalidReferences,
 	}
 }
 
 // WithAdditional adds additional messages to the base error and returns a new base error.
 func (b *base) WithAdditional(a ...string) *base {
 	return &base{
-		t: b.t,
-		c: b.c,
-		m: b.m,
-		e: b.e,
-		u: b.u,
-		a: a,
-		s: b.s,
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 b.u,
+		a:                 a,
+		s:                 b.s,
+		r:                 b.r,
+		suggestions:       b.suggestions,
+		invalidReferences: b.invalidReferences,
 	}
+}
+
+// withRetry adds retry metadata to the base error and returns a new base error.
+func (b *base) withRetry(r retry) *base {
+	return &base{
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 b.u,
+		a:                 b.a,
+		s:                 b.s,
+		r:                 &r,
+		suggestions:       b.suggestions,
+		invalidReferences: b.invalidReferences,
+	}
+}
+
+// WithSuggestions replaces the list of suggestions on the base error.
+func (b *base) WithSuggestions(suggestions ...string) *base {
+	return &base{
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 b.u,
+		a:                 b.a,
+		s:                 b.s,
+		r:                 b.r,
+		suggestions:       suggestions,
+		invalidReferences: b.invalidReferences,
+	}
+}
+
+// WithInvalidReferences replaces the list of invalid references on the base error.
+func (b *base) WithInvalidReferences(invalidReferences ...string) *base {
+	return &base{
+		t:                 b.t,
+		c:                 b.c,
+		m:                 b.m,
+		e:                 b.e,
+		u:                 b.u,
+		a:                 b.a,
+		s:                 b.s,
+		r:                 b.r,
+		suggestions:       b.suggestions,
+		invalidReferences: invalidReferences,
+	}
+}
+
+// WithRetryNever sets the retry policy to Never.
+func (b *base) WithRetryNever() *base {
+	return b.withRetry(retry{policy: RetryNever})
+}
+
+// WithRetryImmediate sets the retry policy to Immediate.
+func (b *base) WithRetryImmediate() *base {
+	return b.withRetry(retry{policy: RetryImmediate})
+}
+
+// WithRetryBackoff sets the retry policy to Backoff.
+func (b *base) WithRetryBackoff() *base {
+	return b.withRetry(retry{policy: RetryBackoff})
+}
+
+// WithRetryAfter sets the retry policy to After and requires a delay.
+func (b *base) WithRetryAfter(delay time.Duration) *base {
+	return b.withRetry(newRetryAfter(delay))
+}
+
+// WithRetryAfterFix sets the retry policy to AfterFix.
+func (b *base) WithRetryAfterFix() *base {
+	return b.withRetry(retry{policy: RetryAfterFix})
+}
+
+// WithRetryAfterAuth sets the retry policy to AfterAuth.
+func (b *base) WithRetryAfterAuth() *base {
+	return b.withRetry(retry{policy: RetryAfterAuth})
 }
 
 // Unwrapb is a combination of built-in errors.As and type casting.
@@ -198,57 +295,67 @@ func Is(err error, target error) bool {
 
 // WrapNotFoundf is a wrapper around Wrapf with TypeNotFound.
 func WrapNotFoundf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeNotFound, code, format, args...)
+	return Wrapf(cause, TypeNotFound, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // NewNotFoundf is a wrapper around Newf with TypeNotFound.
 func NewNotFoundf(code Code, format string, args ...any) *base {
-	return Newf(TypeNotFound, code, format, args...)
+	return Newf(TypeNotFound, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // WrapInternalf is a wrapper around Wrapf with TypeInternal.
 func WrapInternalf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeInternal, code, format, args...)
+	return Wrapf(cause, TypeInternal, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // NewInternalf is a wrapper around Newf with TypeInternal.
 func NewInternalf(code Code, format string, args ...any) *base {
-	return Newf(TypeInternal, code, format, args...)
+	return Newf(TypeInternal, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // WrapInvalidInputf is a wrapper around Wrapf with TypeInvalidInput.
 func WrapInvalidInputf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeInvalidInput, code, format, args...)
+	return Wrapf(cause, TypeInvalidInput, code, format, args...).withRetry(retry{policy: RetryAfterFix})
 }
 
 // NewInvalidInputf is a wrapper around Newf with TypeInvalidInput.
 func NewInvalidInputf(code Code, format string, args ...any) *base {
-	return Newf(TypeInvalidInput, code, format, args...)
-}
-
-// WrapUnexpectedf is a wrapper around Wrapf with TypeUnexpected.
-func WrapUnexpectedf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeInvalidInput, code, format, args...)
-}
-
-// NewUnexpectedf is a wrapper around Newf with TypeUnexpected.
-func NewUnexpectedf(code Code, format string, args ...any) *base {
-	return Newf(TypeInvalidInput, code, format, args...)
+	return Newf(TypeInvalidInput, code, format, args...).withRetry(retry{policy: RetryAfterFix})
 }
 
 // NewMethodNotAllowedf is a wrapper around Newf with TypeMethodNotAllowed.
 func NewMethodNotAllowedf(code Code, format string, args ...any) *base {
-	return Newf(TypeMethodNotAllowed, code, format, args...)
+	return Newf(TypeMethodNotAllowed, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // WrapTimeoutf is a wrapper around Wrapf with TypeTimeout.
 func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeTimeout, code, format, args...)
+	return Wrapf(cause, TypeTimeout, code, format, args...).withRetry(retry{policy: RetryBackoff})
 }
 
 // NewTimeoutf is a wrapper around Newf with TypeTimeout.
 func NewTimeoutf(code Code, format string, args ...any) *base {
-	return Newf(TypeTimeout, code, format, args...)
+	return Newf(TypeTimeout, code, format, args...).withRetry(retry{policy: RetryBackoff})
+}
+
+// WrapUnauthenticatedf is a wrapper around Wrapf with TypeUnauthenticated.
+func WrapUnauthenticatedf(cause error, code Code, format string, args ...any) *base {
+	return Wrapf(cause, TypeUnauthenticated, code, format, args...).withRetry(retry{policy: RetryAfterAuth})
+}
+
+// NewUnauthenticatedf is a wrapper around Newf with TypeUnauthenticated.
+func NewUnauthenticatedf(code Code, format string, args ...any) *base {
+	return Newf(TypeUnauthenticated, code, format, args...).withRetry(retry{policy: RetryAfterAuth})
+}
+
+// WrapForbiddenf is a wrapper around Wrapf with TypeForbidden.
+func WrapForbiddenf(cause error, code Code, format string, args ...any) *base {
+	return Wrapf(cause, TypeForbidden, code, format, args...).withRetry(retry{policy: RetryNever})
+}
+
+// NewForbiddenf is a wrapper around Newf with TypeForbidden.
+func NewForbiddenf(code Code, format string, args ...any) *base {
+	return Newf(TypeForbidden, code, format, args...).withRetry(retry{policy: RetryNever})
 }
 
 // Attr returns an slog.Attr with a standardized "exception" key for the given error.
@@ -261,4 +368,37 @@ func Attr(err error) slog.Attr {
 func TypeAttr(err error) attribute.KeyValue {
 	t, _, _, _, _, _ := Unwrapb(err)
 	return attribute.String("error.type", t.String())
+}
+
+// RetryAfterOf returns the explicit retry delay
+func RetryDelayOf(err error) time.Duration {
+	base, ok := err.(*base)
+	if !ok || base.r == nil || base.r.policy != RetryAfter {
+		return 0
+	}
+	return base.r.delay
+}
+
+func retryOf(err error) *retry {
+	base, ok := err.(*base)
+	if ok {
+		return base.r
+	}
+	return nil
+}
+
+func suggestionsOf(err error) []string {
+	base, ok := err.(*base)
+	if ok {
+		return base.suggestions
+	}
+	return nil
+}
+
+func invalidReferencesOf(err error) []string {
+	base, ok := err.(*base)
+	if ok {
+		return base.invalidReferences
+	}
+	return nil
 }
