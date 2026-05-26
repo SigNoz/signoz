@@ -80,3 +80,18 @@ func (h *handler) GetTraceAggregations(rw http.ResponseWriter, r *http.Request) 
 
 	render.Success(rw, http.StatusOK, result)
 }
+
+func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
+	req := new(spantypes.PostableFlamegraph)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	result, err := h.module.GetFlamegraph(r.Context(), mux.Vars(r)["traceID"], req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
