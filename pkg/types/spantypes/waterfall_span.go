@@ -107,7 +107,6 @@ type StorableSpan struct {
 	Kind               int8               `ch:"kind"`
 	ServiceName        string             `ch:"resource_string_service$$name"`
 	Name               string             `ch:"name"`
-	References         string             `ch:"references"`
 	AttributesString   map[string]string  `ch:"attributes_string"`
 	AttributesNumber   map[string]float64 `ch:"attributes_number"`
 	AttributesBool     map[string]bool    `ch:"attributes_bool"`

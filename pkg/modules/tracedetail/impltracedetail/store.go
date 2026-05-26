@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 )
 
+const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
 }
@@ -47,7 +49,7 @@ func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary 
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
 			timestamp, duration_nano, span_id, has_error, kind,
-			resource_string_service$$name, name, links as references,
+			resource_string_service$$name, name,
 			attributes_string, attributes_number, attributes_bool, resources_string,
 			events, status_message, status_code_string, kind_string, parent_span_id,
 			flags, is_remote, trace_state, status_code,
@@ -76,7 +78,7 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, start,
 	sb.Select(
 		"DISTINCT ON (span_id) span_id",
 		"parent_span_id", "timestamp", "duration_nano", "has_error",
-		`resource_string_service$$name`,
+		colServiceName,
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(
@@ -103,7 +105,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp",
 		"duration_nano", "span_id", "has_error", "kind",
-		`resource_string_service$$name`, "name", "links as references",
+		colServiceName, "name",
 		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
 		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 		"flags", "is_remote", "trace_state", "status_code",
