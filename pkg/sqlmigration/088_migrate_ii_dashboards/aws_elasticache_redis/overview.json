@@ -1,10 +1,10 @@
 {
-    "description": "",
+    "description": "Overview of ElastiCache CloudWatch metrics. Provides both host-level metrics (for example, CPU usage) and redis engine metrics",
     "id": "overview",
     "layout": [
         {
             "h": 5,
-            "i": "8d22c6a7-b22e-4ad2-b242-e15de32ddc0f",
+            "i": "00d78996-1ba9-42d9-b22b-5818fc3bde4c",
             "moved": false,
             "static": false,
             "w": 6,
@@ -13,7 +13,7 @@
         },
         {
             "h": 5,
-            "i": "94fe032e-3ffc-4cdc-aae6-f851fa47d957",
+            "i": "96c23215-c494-4650-9dc3-ae20858ce1f7",
             "moved": false,
             "static": false,
             "w": 6,
@@ -22,7 +22,7 @@
         },
         {
             "h": 5,
-            "i": "d73f2e63-33d8-40f7-a67b-861a628ba249",
+            "i": "6a56afd1-6205-4afe-90fe-86befc3fb55e",
             "moved": false,
             "static": false,
             "w": 6,
@@ -31,7 +31,7 @@
         },
         {
             "h": 5,
-            "i": "336bca83-50be-4937-b41b-ca8fde150f4d",
+            "i": "af269a1c-95a3-46b3-8d3b-322c194450e2",
             "moved": false,
             "static": false,
             "w": 6,
@@ -40,7 +40,7 @@
         },
         {
             "h": 5,
-            "i": "6807e631-4894-4de8-8a55-686c8fa08d4b",
+            "i": "f9b0f03a-8d78-4c26-a037-daae69650eb6",
             "moved": false,
             "static": false,
             "w": 6,
@@ -49,7 +49,7 @@
         },
         {
             "h": 5,
-            "i": "d599a942-4dbf-4e29-a3ac-a3142399b557",
+            "i": "18798789-b67a-4c90-8127-f6bb63f012b2",
             "moved": false,
             "static": false,
             "w": 6,
@@ -58,7 +58,7 @@
         },
         {
             "h": 5,
-            "i": "31c78945-ea1e-4ae1-b0fb-6f1c9de2c016",
+            "i": "b3cdeb88-6988-419c-9e94-4a6bccfdd467",
             "moved": false,
             "static": false,
             "w": 6,
@@ -67,7 +67,7 @@
         },
         {
             "h": 5,
-            "i": "845ee717-bbd1-424c-8293-f49e76aa43b3",
+            "i": "3604137c-12fe-4205-b7fc-f10d6143583b",
             "moved": false,
             "static": false,
             "w": 6,
@@ -76,7 +76,7 @@
         },
         {
             "h": 5,
-            "i": "c5189b72-1055-4d6a-b18d-fa23bd9c28d6",
+            "i": "5e69ac87-580f-4dc2-becd-943296e5cd1d",
             "moved": false,
             "static": false,
             "w": 6,
@@ -85,7 +85,7 @@
         },
         {
             "h": 5,
-            "i": "ae099f6e-5d6c-4127-ac70-2da9741837d7",
+            "i": "e5c9ccb6-31de-4b80-8f4c-220ea2e874d0",
             "moved": false,
             "static": false,
             "w": 6,
@@ -94,101 +94,57 @@
         },
         {
             "h": 5,
-            "i": "03c1f0bd-6713-4355-b8e3-6ef781af32c2",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 0,
-            "y": 25
-        },
-        {
-            "h": 5,
-            "i": "37aabb43-fd8b-47c5-9444-0cd77f9ac435",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 4,
-            "y": 25
-        },
-        {
-            "h": 5,
-            "i": "c6939628-3c4c-48fb-a2cf-46f6cb358359",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 8,
-            "y": 25
-        },
-        {
-            "h": 5,
-            "i": "7854afc7-0cd5-4792-a760-be98a2e2f96b",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 0,
-            "y": 30
-        },
-        {
-            "h": 5,
-            "i": "8126584b-eaa9-4b79-ba8e-a00c394544d8",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 4,
-            "y": 30
-        },
-        {
-            "h": 5,
-            "i": "3d0a6717-1fd0-4810-b0e9-fe5190d5809f",
-            "moved": false,
-            "static": false,
-            "w": 4,
-            "x": 8,
-            "y": 30
-        },
-        {
-            "h": 5,
-            "i": "ffc39591-288f-4b28-87ee-43456d5d0667",
+            "i": "dccdd9c3-3864-4aef-a98f-6fb0e30baf0c",
             "moved": false,
             "static": false,
             "w": 6,
             "x": 0,
-            "y": 35
+            "y": 25
+        },
+        {
+            "h": 5,
+            "i": "79723065-b871-4c79-83eb-b32f025c7642",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 25
+        },
+        {
+            "h": 5,
+            "i": "8eba8049-2af5-4998-b0e1-cbc2235f9b40",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 30
         }
     ],
     "panelMap": {},
     "tags": [
         "aws",
-        "rds",
-        "postgres"
+        "cache",
+        "redis"
     ],
-    "title": "AWS RDS Postgres",
+    "title": "AWS ElastiCache Redis",
     "uploadedGrafana": false,
-    "uuid": "05e473e2-5733-4877-8b7f-cb311d4e9c0a",
+    "uuid": "5c4832b2-7035-436e-a1c2-cb1f88d238ed",
     "variables": {
-        "5ae02d7b-d201-4481-ad6f-ffb9d53e1b3e": {
+        "50910278-a96b-4bae-a3b4-4c5b9e7cdefc": {
             "allSelected": true,
             "customValue": "",
-            "description": "This is the unique key that identifies a DB instance",
-            "id": "5ae02d7b-d201-4481-ad6f-ffb9d53e1b3e",
-            "modificationUUID": "1ecf21e3-488a-41e7-92f2-7dc75c9de49a",
+            "description": "",
+            "id": "50910278-a96b-4bae-a3b4-4c5b9e7cdefc",
+            "modificationUUID": "635019d8-0e8f-48bc-8912-240c995a5251",
             "multiSelect": true,
-            "name": "dbinstance_identifier",
+            "name": "cache_cluster_id",
             "order": 0,
-            "queryValue": "SELECT JSONExtractString(labels, 'dbinstance_identifier') as dbinstance_identifier\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like 'aws_rds_database_connections_average'\nGROUP BY dbinstance_identifier",
+            "queryValue": "SELECT JSONExtractString(labels, 'cache_cluster_id') as cache_cluster_id\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name like 'aws_elasticache_%'\nGROUP BY cache_cluster_id",
             "selectedValue": [
-                "integration-db-instance-instance-1",
-                "integration-db-instance-instance-2",
-                "integration-db-instance-instance-3",
-                "integration-test-postgres-instance-1",
-                "integration-test-postgres-instance-2",
-                "integration-test-postgres-instance-3",
-                "integration-testing-db-instance-1",
-                "integration-testing-db-instance-2",
-                "integration-testing-db-instance-3"
+                ""
             ],
             "showALLOption": true,
-            "sort": "ASC",
+            "sort": "DISABLED",
             "textboxValue": "",
             "type": "QUERY"
         }
@@ -196,399 +152,9 @@
     "version": "v5",
     "widgets": [
         {
-            "description": "The number of client network connections to the database instance.",
-            "fillSpans": false,
-            "id": "94fe032e-3ffc-4cdc-aae6-f851fa47d957",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_database_connections_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "b6816e82-3e9b-4dc6-9fc0-047ef50e47d4",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "DatabaseConnections",
-            "yAxisUnit": "short"
-        },
-        {
-            "description": "The percentage of CPU utilization.",
-            "fillSpans": false,
-            "id": "8d22c6a7-b22e-4ad2-b242-e15de32ddc0f",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_cpuutilization_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "0318116a-ba6b-405c-b2c0-8dfb321f3ad0",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "CPUUtilization",
-            "yAxisUnit": "percent"
-        },
-        {
-            "description": "The amount of available random access memory. This metric reports the value of the MemAvailable field of /proc/meminfo",
-            "fillSpans": false,
-            "id": "d599a942-4dbf-4e29-a3ac-a3142399b557",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_freeable_memory_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "5a1e0e0d-3190-4a38-8030-b48d24ebe0f1",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "FreeableMemory",
-            "yAxisUnit": "decbytes"
-        },
-        {
             "description": "",
             "fillSpans": false,
-            "id": "c6939628-3c4c-48fb-a2cf-46f6cb358359",
+            "id": "96c23215-c494-4650-9dc3-ae20858ce1f7",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -599,7 +165,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_read_latency_average",
+                                    "metricName": "aws_elasticache_engine_cpuutilization_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -610,23 +176,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -643,7 +209,7 @@
                         "query": ""
                     }
                 ],
-                "id": "794a5db3-b75c-4354-a509-ab24b5daeba4",
+                "id": "f31a92eb-aefb-4468-b163-95c2d29e3eaa",
                 "promql": [
                     {
                         "disabled": false,
@@ -712,13 +278,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "ReadLatency",
+            "title": "Engine CPU Utilization",
             "yAxisUnit": "none"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "03c1f0bd-6713-4355-b8e3-6ef781af32c2",
+            "id": "b3cdeb88-6988-419c-9e94-4a6bccfdd467",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -729,7 +295,267 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_read_throughput_average",
+                                    "metricName": "aws_elasticache_database_memory_usage_percentage_average",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "cache_cluster_id--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "cache_cluster_id",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "{{cache_cluster_id}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "c863166f-7958-4f6c-a956-d5044c846973",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Database Memory Usage Percentage",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "18798789-b67a-4c90-8127-f6bb63f012b2",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "aws_elasticache_database_capacity_usage_percentage_average",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "cache_cluster_id--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "cache_cluster_id",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "b659e4ed-5b6b-4ec8-911c-b906580b1ab5",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Database Capacity Usage Percentage",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "af269a1c-95a3-46b3-8d3b-322c194450e2",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "aws_elasticache_cache_hits_sum",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -740,23 +566,22 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "dataType": "",
+                                    "id": "cache_cluster_id------false",
                                     "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
+                                    "key": "cache_cluster_id",
+                                    "type": ""
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -773,13 +598,13 @@
                         "query": ""
                     }
                 ],
-                "id": "6915105d-17eb-4863-8ccd-88c6a56d9ad7",
+                "id": "f2bc46b8-8d90-4d31-8e38-df61f7b58f55",
                 "promql": [
                     {
                         "disabled": false,
                         "legend": "",
                         "name": "A",
-                        "query": "aws_rds_read_throughput_average"
+                        "query": ""
                     }
                 ],
                 "queryType": "builder"
@@ -842,13 +667,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "ReadThroughput",
-            "yAxisUnit": "decbytes"
+            "title": "Cache Hit Rate",
+            "yAxisUnit": "none"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "37aabb43-fd8b-47c5-9444-0cd77f9ac435",
+            "id": "f9b0f03a-8d78-4c26-a037-daae69650eb6",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -859,7 +684,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_read_iops_average",
+                                    "metricName": "aws_elasticache_memory_fragmentation_ratio_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "avg",
                                     "temporality": null,
@@ -870,23 +695,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -903,7 +728,7 @@
                         "query": ""
                     }
                 ],
-                "id": "0ab52186-6617-4f8b-a3fc-3778c09b6faf",
+                "id": "50b499c5-36dd-49e9-aae7-f1c225219434",
                 "promql": [
                     {
                         "disabled": false,
@@ -972,13 +797,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "ReadIOPS",
+            "title": "Memory Fragmentation Ratio",
             "yAxisUnit": "none"
         },
         {
-            "description": "The amount of available storage space.",
+            "description": "",
             "fillSpans": false,
-            "id": "6807e631-4894-4de8-8a55-686c8fa08d4b",
+            "id": "dccdd9c3-3864-4aef-a98f-6fb0e30baf0c",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -989,7 +814,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_free_storage_space_average",
+                                    "metricName": "aws_elasticache_swap_usage_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1000,23 +825,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -1033,7 +858,7 @@
                         "query": ""
                     }
                 ],
-                "id": "b7f7c9e9-0fdf-462e-b465-57025785e98f",
+                "id": "221b1817-b059-439e-bfaf-39089520344d",
                 "promql": [
                     {
                         "disabled": false,
@@ -1102,13 +927,143 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "FreeStorageSpace",
+            "title": "Swap Usage",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "3604137c-12fe-4205-b7fc-f10d6143583b",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "aws_elasticache_freeable_memory_average",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "cache_cluster_id--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "cache_cluster_id",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "cb158f83-72aa-4c36-bd26-9efc03d6ad15",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Freeable Memory",
             "yAxisUnit": "decbytes"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "7854afc7-0cd5-4792-a760-be98a2e2f96b",
+            "id": "5e69ac87-580f-4dc2-becd-943296e5cd1d",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -1119,7 +1074,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_write_throughput_average",
+                                    "metricName": "aws_elasticache_network_bytes_in_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1130,23 +1085,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -1163,7 +1118,7 @@
                         "query": ""
                     }
                 ],
-                "id": "d6be5165-c686-412f-80f7-4a81a28cae7d",
+                "id": "a0114277-cb86-40b2-b002-71b021f81e39",
                 "promql": [
                     {
                         "disabled": false,
@@ -1232,13 +1187,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "WriteThroughput",
+            "title": "Network Bytes In",
             "yAxisUnit": "decbytes"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "8126584b-eaa9-4b79-ba8e-a00c394544d8",
+            "id": "e5c9ccb6-31de-4b80-8f4c-220ea2e874d0",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -1249,7 +1204,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_write_iops_average",
+                                    "metricName": "aws_elasticache_network_bytes_out_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -1260,23 +1215,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -1293,7 +1248,7 @@
                         "query": ""
                     }
                 ],
-                "id": "253e440a-b13d-411c-a069-d4da1f4c84d7",
+                "id": "51fd65b6-84f3-4ffd-81c3-5d581892cbad",
                 "promql": [
                     {
                         "disabled": false,
@@ -1362,842 +1317,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "WriteIOPS",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "ffc39591-288f-4b28-87ee-43456d5d0667",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "table",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_network_transmit_throughput_average",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "sum"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": true,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "n/w transmit",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        },
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_network_receive_throughput_average",
-                                    "reduceTo": "sum",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "sum"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": true,
-                            "expression": "B",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "n/w receive",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "B",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": [
-                        {
-                            "disabled": false,
-                            "expression": "A/1024/1024",
-                            "legend": "n/w transmit (mb)",
-                            "queryName": "F1"
-                        },
-                        {
-                            "disabled": false,
-                            "expression": "B/1024/1024",
-                            "legend": "n/w receive (mb)",
-                            "queryName": "F2"
-                        }
-                    ]
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "60b5a712-ac27-4b2e-a8d7-a180b389c780",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "Network transmit/receive",
-            "yAxisUnit": "Bps"
-        },
-        {
-            "description": "The number of outstanding I/Os (read/write requests) waiting to access the disk.",
-            "fillSpans": false,
-            "id": "845ee717-bbd1-424c-8293-f49e76aa43b3",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_disk_queue_depth_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "afe73a96-1c56-451e-bca6-2c41c62d47a8",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "DiskQueueDepth",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The percentage of throughput credits remaining in the burst bucket of your RDS database. ",
-            "fillSpans": false,
-            "id": "ae099f6e-5d6c-4127-ac70-2da9741837d7",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_ebsiobalance__average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "1d8b8b67-0646-4ebc-aa8b-1c10643ddfa0",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "EBSByteBalance%",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "The percentage of I/O credits remaining in the burst bucket of your RDS database.",
-            "fillSpans": false,
-            "id": "31c78945-ea1e-4ae1-b0fb-6f1c9de2c016",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_ebsiobalance__average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "a0f7c676-ae5f-4db9-bb73-26dbb9db7fab",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "EBSIOBalance%",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "3d0a6717-1fd0-4810-b0e9-fe5190d5809f",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_write_latency_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "sum",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "7533cf12-7ee3-49e8-8fcd-c1f82ea317ab",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "WriteLatency",
-            "yAxisUnit": "none"
-        },
-        {
-            "description": "",
-            "fillSpans": false,
-            "id": "c5189b72-1055-4d6a-b18d-fa23bd9c28d6",
-            "isStacked": false,
-            "nullZeroValues": "zero",
-            "opacity": "1",
-            "panelTypes": "graph",
-            "query": {
-                "builder": {
-                    "queryData": [
-                        {
-                            "aggregations": [
-                                {
-                                    "metricName": "aws_rds_swap_usage_average",
-                                    "reduceTo": "avg",
-                                    "spaceAggregation": "avg",
-                                    "temporality": null,
-                                    "timeAggregation": "avg"
-                                }
-                            ],
-                            "dataSource": "metrics",
-                            "disabled": false,
-                            "expression": "A",
-                            "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
-                            },
-                            "functions": [],
-                            "groupBy": [
-                                {
-                                    "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
-                                    "isColumn": false,
-                                    "isJSON": false,
-                                    "key": "dbinstance_identifier",
-                                    "type": "tag"
-                                }
-                            ],
-                            "having": {
-                                "expression": ""
-                            },
-                            "legend": "{{dbinstance_identifier}}",
-                            "limit": null,
-                            "orderBy": [],
-                            "queryName": "A",
-                            "stepInterval": 60
-                        }
-                    ],
-                    "queryFormulas": []
-                },
-                "clickhouse_sql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "id": "61ecb019-0fbf-44f1-a9db-995b86ee4805",
-                "promql": [
-                    {
-                        "disabled": false,
-                        "legend": "",
-                        "name": "A",
-                        "query": ""
-                    }
-                ],
-                "queryType": "builder"
-            },
-            "selectedLogFields": [
-                {
-                    "dataType": "string",
-                    "name": "body",
-                    "type": ""
-                },
-                {
-                    "dataType": "string",
-                    "name": "timestamp",
-                    "type": ""
-                }
-            ],
-            "selectedTracesFields": [
-                {
-                    "dataType": "string",
-                    "id": "serviceName--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "serviceName",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "name--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "name",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "float64",
-                    "id": "durationNano--float64--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "durationNano",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "httpMethod--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "httpMethod",
-                    "type": "tag"
-                },
-                {
-                    "dataType": "string",
-                    "id": "responseStatusCode--string--tag--true",
-                    "isColumn": true,
-                    "isJSON": false,
-                    "key": "responseStatusCode",
-                    "type": "tag"
-                }
-            ],
-            "softMax": 0,
-            "softMin": 0,
-            "thresholds": [],
-            "timePreferance": "GLOBAL_TIME",
-            "title": "SwapUsage",
+            "title": "Network Bytes Out",
             "yAxisUnit": "decbytes"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "336bca83-50be-4937-b41b-ca8fde150f4d",
+            "id": "6a56afd1-6205-4afe-90fe-86befc3fb55e",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -2208,7 +1334,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_checkpoint_lag_average",
+                                    "metricName": "aws_elasticache_curr_connections_average",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2219,23 +1345,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -2252,7 +1378,7 @@
                         "query": ""
                     }
                 ],
-                "id": "187a2eae-4fe4-4e47-b544-20404532cbb2",
+                "id": "1ee12dc9-a2f0-4c19-90ec-269cbece6fee",
                 "promql": [
                     {
                         "disabled": false,
@@ -2321,13 +1447,13 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "CheckpointLag",
+            "title": "Current Connections",
             "yAxisUnit": "none"
         },
         {
             "description": "",
             "fillSpans": false,
-            "id": "d73f2e63-33d8-40f7-a67b-861a628ba249",
+            "id": "8eba8049-2af5-4998-b0e1-cbc2235f9b40",
             "isStacked": false,
             "nullZeroValues": "zero",
             "opacity": "1",
@@ -2338,7 +1464,7 @@
                         {
                             "aggregations": [
                                 {
-                                    "metricName": "aws_rds_replica_lag_average",
+                                    "metricName": "aws_elasticache_replication_lag_maximum",
                                     "reduceTo": "avg",
                                     "spaceAggregation": "sum",
                                     "temporality": null,
@@ -2349,23 +1475,23 @@
                             "disabled": false,
                             "expression": "A",
                             "filter": {
-                                "expression": "dbinstance_identifier IN $dbinstance_identifier"
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
                             },
                             "functions": [],
                             "groupBy": [
                                 {
                                     "dataType": "string",
-                                    "id": "dbinstance_identifier--string--tag--false",
+                                    "id": "cache_cluster_id--string--tag--false",
                                     "isColumn": false,
                                     "isJSON": false,
-                                    "key": "dbinstance_identifier",
+                                    "key": "cache_cluster_id",
                                     "type": "tag"
                                 }
                             ],
                             "having": {
                                 "expression": ""
                             },
-                            "legend": "{{dbinstance_identifier}}",
+                            "legend": "{{cache_cluster_id}}",
                             "limit": null,
                             "orderBy": [],
                             "queryName": "A",
@@ -2382,7 +1508,7 @@
                         "query": ""
                     }
                 ],
-                "id": "53e6ee05-bcbc-4f01-b061-a358371d92ff",
+                "id": "95afdad6-29c3-4248-859f-bf142ad68f6a",
                 "promql": [
                     {
                         "disabled": false,
@@ -2451,7 +1577,267 @@
             "softMin": 0,
             "thresholds": [],
             "timePreferance": "GLOBAL_TIME",
-            "title": "ReplicaLag",
+            "title": "Replication Lag",
+            "yAxisUnit": "s"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "79723065-b871-4c79-83eb-b32f025c7642",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "aws_elasticache_evictions_average",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "cache_cluster_id--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "cache_cluster_id",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "{{cache_cluster_id}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "713cd286-0072-4c2b-b3cf-6631ca7c4958",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "Evictions",
+            "yAxisUnit": "none"
+        },
+        {
+            "description": "",
+            "fillSpans": false,
+            "id": "00d78996-1ba9-42d9-b22b-5818fc3bde4c",
+            "isStacked": false,
+            "nullZeroValues": "zero",
+            "opacity": "1",
+            "panelTypes": "graph",
+            "query": {
+                "builder": {
+                    "queryData": [
+                        {
+                            "aggregations": [
+                                {
+                                    "metricName": "aws_elasticache_cpuutilization_average",
+                                    "reduceTo": "avg",
+                                    "spaceAggregation": "sum",
+                                    "temporality": null,
+                                    "timeAggregation": "avg"
+                                }
+                            ],
+                            "dataSource": "metrics",
+                            "disabled": false,
+                            "expression": "A",
+                            "filter": {
+                                "expression": "cache_cluster_id IN $cache_cluster_id"
+                            },
+                            "functions": [],
+                            "groupBy": [
+                                {
+                                    "dataType": "string",
+                                    "id": "cache_cluster_id--string--tag--false",
+                                    "isColumn": false,
+                                    "isJSON": false,
+                                    "key": "cache_cluster_id",
+                                    "type": "tag"
+                                }
+                            ],
+                            "having": {
+                                "expression": ""
+                            },
+                            "legend": "{{cache_cluster_id}}",
+                            "limit": null,
+                            "orderBy": [],
+                            "queryName": "A",
+                            "stepInterval": 60
+                        }
+                    ],
+                    "queryFormulas": []
+                },
+                "clickhouse_sql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "id": "794f841f-4281-4e02-8b2d-97641b356e60",
+                "promql": [
+                    {
+                        "disabled": false,
+                        "legend": "",
+                        "name": "A",
+                        "query": ""
+                    }
+                ],
+                "queryType": "builder"
+            },
+            "selectedLogFields": [
+                {
+                    "dataType": "string",
+                    "name": "body",
+                    "type": ""
+                },
+                {
+                    "dataType": "string",
+                    "name": "timestamp",
+                    "type": ""
+                }
+            ],
+            "selectedTracesFields": [
+                {
+                    "dataType": "string",
+                    "id": "serviceName--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "serviceName",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "name--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "name",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "float64",
+                    "id": "durationNano--float64--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "durationNano",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "httpMethod--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "httpMethod",
+                    "type": "tag"
+                },
+                {
+                    "dataType": "string",
+                    "id": "responseStatusCode--string--tag--true",
+                    "isColumn": true,
+                    "isJSON": false,
+                    "key": "responseStatusCode",
+                    "type": "tag"
+                }
+            ],
+            "softMax": 0,
+            "softMin": 0,
+            "thresholds": [],
+            "timePreferance": "GLOBAL_TIME",
+            "title": "CPU Utilization",
             "yAxisUnit": "none"
         }
     ]
