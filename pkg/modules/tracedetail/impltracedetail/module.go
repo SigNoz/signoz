@@ -72,14 +72,14 @@ func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.W
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
 // visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
-	effectiveLimit := min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans)
+	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
-		return m.getWindowedWaterfall(ctx, traceID, req, summary, effectiveLimit)
+		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, effectiveLimit, summary)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
 }
@@ -105,7 +105,7 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
-func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall, summary *spantypes.TraceSummary, effectiveLimit uint) (*spantypes.GettableWaterfallTrace, error) {
+func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, effectiveLimit uint, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window
 	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary)
 	if err != nil {
@@ -122,8 +122,8 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID string, req *
 	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
 
 	selectedSpans, uncollapsedSpans := waterfallTrace.GetSelectedSpans(
-		req.UncollapsedSpans,
-		req.SelectedSpanID,
+		uncollapsedSpans,
+		selectedSpanID,
 		m.config.Waterfall.SpanPageSize,
 		m.config.Waterfall.MaxDepthToAutoExpand,
 	)

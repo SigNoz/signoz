@@ -51,7 +51,7 @@ func (h *handler) GetWaterfallV4(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetWaterfallV4(r.Context(), mux.Vars(r)["traceID"], req)
+	result, err := h.module.GetWaterfallV4(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.UncollapsedSpans, req.Limit)
 	if err != nil {
 		render.Error(rw, err)
 		return

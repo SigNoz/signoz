@@ -12,9 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 )
 
-// The $$$$ becomes $$ since go-sqlbuilder escapes $ sign.
-const serviceNameCol = "resource_string_service$$$$name"
-
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
 }
@@ -78,7 +75,7 @@ func (s *traceStore) GetMinimalSpans(ctx context.Context, traceID string, summar
 	sb.Select(
 		"DISTINCT ON (span_id) span_id",
 		"parent_span_id", "timestamp", "duration_nano", "has_error",
-		serviceNameCol,
+		`resource_string_service$$name`,
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	sb.Where(
@@ -105,7 +102,7 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sum
 	sb.Select(
 		"DISTINCT ON (span_id) timestamp",
 		"duration_nano", "span_id", "trace_id", "has_error", "kind",
-		serviceNameCol, "name", "links as references",
+		`resource_string_service$$name`, "name", "links as references",
 		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
 		"events", "status_message", "status_code_string", "kind_string", "parent_span_id",
 		"flags", "is_remote", "trace_state", "status_code",

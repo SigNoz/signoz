@@ -34,8 +34,8 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 		handler.OpenAPIDef{
 			ID:                  "GetWaterfallV4",
 			Tags:                []string{"tracedetail"},
-			Summary:             "Get waterfall view for a trace (OOM-safe)",
-			Description:         "Two-step fetch: minimal fields for all spans to build the tree, full fields only for the visible window. Aggregations are not included in the response.",
+			Summary:             "Get waterfall view for a trace",
+			Description:         "Returns the waterfall view of spans including all spans if total spans are under a limit, a max count otherwise. Aggregations are dropped compared to v3",
 			Request:             new(spantypes.PostableWaterfall),
 			RequestContentType:  "application/json",
 			Response:            new(spantypes.GettableWaterfallTrace),
