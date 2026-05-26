@@ -89,6 +89,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		Description: maintenance.Description,
 		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
+		Scope:       maintenance.Scope,
 	}
 
 	maintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -123,7 +124,6 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 				NewInsert().
 				Model(&maintenanceRules).
 				Exec(ctx)
-
 			if err != nil {
 				return err
 			}
@@ -141,6 +141,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		Description: storablePlannedMaintenance.Description,
 		Schedule:    storablePlannedMaintenance.Schedule,
 		RuleIDs:     maintenance.AlertIds,
+		Scope:       maintenance.Scope,
 		CreatedAt:   storablePlannedMaintenance.CreatedAt,
 		CreatedBy:   storablePlannedMaintenance.CreatedBy,
 		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,
@@ -189,6 +190,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		Description: maintenance.Description,
 		Schedule:    maintenance.Schedule,
 		OrgID:       claims.OrgID,
+		Scope:       maintenance.Scope,
 	}
 
 	storablePlannedMaintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -224,7 +226,6 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
 			Where("planned_maintenance_id = ?", storablePlannedMaintenance.ID.StringValue()).
 			Exec(ctx)
-
 		if err != nil {
 			return err
 		}
@@ -241,7 +242,6 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		}
 
 		return nil
-
 	})
 	if err != nil {
 		return err

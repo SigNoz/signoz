@@ -2,6 +2,7 @@ package routerweb
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -18,6 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func expectedHTML(baseHref string, settings web.Settings) string {
+	settingsJSON, _ := json.Marshal(settings)
+	return `<html><head><base href="` + baseHref + `" /></head><body><script>window.signozBootData={settings:` + string(settingsJSON) + `}</script>Welcome to test data!!!</body></html>`
+}
 
 func startServer(t *testing.T, config web.Config, globalConfig global.Config) string {
 	t.Helper()
@@ -54,53 +60,79 @@ func httpGet(t *testing.T, url string) string {
 func TestServeTemplatedIndex(t *testing.T) {
 	t.Parallel()
 
+	emptySettings := web.Settings{}
+
 	testCases := []struct {
 		name         string
 		path         string
 		globalConfig global.Config
+		webConfig    web.Config
 		expected     string
 	}{
 		{
 			name:         "RootBaseHrefAtRoot",
 			path:         "/",
 			globalConfig: global.Config{},
-			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/", emptySettings),
 		},
 		{
 			name:         "RootBaseHrefAtNonExistentPath",
 			path:         "/does-not-exist",
 			globalConfig: global.Config{},
-			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/", emptySettings),
 		},
 		{
 			name:         "RootBaseHrefAtDirectory",
 			path:         "/assets",
 			globalConfig: global.Config{},
-			expected:     `<html><head><base href="/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/", emptySettings),
 		},
 		{
 			name:         "SubPathBaseHrefAtRoot",
 			path:         "/",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/signoz/", emptySettings),
 		},
 		{
 			name:         "SubPathBaseHrefAtNonExistentPath",
 			path:         "/does-not-exist",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/signoz/", emptySettings),
 		},
 		{
 			name:         "SubPathBaseHrefAtDirectory",
 			path:         "/assets",
 			globalConfig: global.Config{ExternalURL: &url.URL{Scheme: "https", Host: "example.com", Path: "/signoz"}},
-			expected:     `<html><head><base href="/signoz/" /></head><body>Welcome to test data!!!</body></html>`,
+			webConfig:    web.Config{Index: "valid_template.html", Directory: "testdata"},
+			expected:     expectedHTML("/signoz/", emptySettings),
+		},
+		{
+			name:         "WithPopulatedSettings",
+			path:         "/",
+			globalConfig: global.Config{},
+			webConfig: web.Config{
+				Index:     "valid_template.html",
+				Directory: "testdata",
+				Settings: web.SettingsConfig{
+					Posthog: web.PosthogConfig{Enabled: true},
+					Appcues: web.AppcuesConfig{Enabled: true},
+				},
+			},
+			expected: expectedHTML("/", web.Settings{
+				Posthog: web.Posthog{Enabled: true},
+				Appcues: web.Appcues{Enabled: true},
+			}),
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, testCase.globalConfig)
+			base := startServer(t, testCase.webConfig, testCase.globalConfig)
 
 			assert.Equal(t, testCase.expected, strings.TrimSuffix(httpGet(t, base+testCase.path), "\n"))
 		})
