@@ -21,8 +21,8 @@ type FlamegraphSpan struct {
 	Children     []*FlamegraphSpan `json:"-"` // internal tree use only
 }
 
-// FlamegraphWindowLevel groups span IDs at a single level within the selected window.
-type FlamegraphWindowLevel struct {
+// FlamegraphLevel groups span IDs at a single level within the selected window.
+type FlamegraphLevel struct {
 	Level   int64
 	SpanIDs []string
 }
@@ -68,7 +68,7 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64) *FlamegraphSpan
 }
 
 // FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
-func FlamegraphWindowSpanIDs(window []FlamegraphWindowLevel) []string {
+func FlamegraphWindowSpanIDs(window []FlamegraphLevel) []string {
 	total := 0
 	for _, lvl := range window {
 		total += len(lvl.SpanIDs)
