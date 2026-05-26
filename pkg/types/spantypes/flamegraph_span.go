@@ -29,8 +29,20 @@ type FlamegraphWindowLevel struct {
 
 type PostableFlamegraph struct {
 	SelectedSpanID string                             `json:"selectedSpanId"`
-	Limit          uint                               `json:"limit"`
 	SelectFields   []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
+}
+
+// FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
+func FlamegraphWindowSpanIDs(window []FlamegraphWindowLevel) []string {
+	total := 0
+	for _, lvl := range window {
+		total += len(lvl.SpanIDs)
+	}
+	ids := make([]string, 0, total)
+	for _, lvl := range window {
+		ids = append(ids, lvl.SpanIDs...)
+	}
+	return ids
 }
 
 // GettableFlamegraphTrace is the response for the v3 flamegraph API.
