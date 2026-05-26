@@ -1370,6 +1370,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 }
 
 func (m *module) computeSamplesTreemapFastPath(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
+
 	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemapFastPath")
 
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
@@ -1392,7 +1393,6 @@ func (m *module) computeSamplesTreemapFastPath(ctx context.Context, req *metrics
 	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
 	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
-	totalSamplesSB.Where("NOT startsWith(metric_name, 'signoz')")
 
 	sampleCountsSB := sqlbuilder.NewSelectBuilder()
 	sampleCountsSB.Select(
@@ -1401,7 +1401,6 @@ func (m *module) computeSamplesTreemapFastPath(ctx context.Context, req *metrics
 	)
 	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("NOT startsWith(metric_name, 'signoz')")
 	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 	sampleCountsSB.GroupBy("metric_name")
 
