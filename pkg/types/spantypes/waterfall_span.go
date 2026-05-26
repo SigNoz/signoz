@@ -164,6 +164,18 @@ func (item *MinimalSpan) ToWaterfallSpan(traceID string) *WaterfallSpan {
 	}
 }
 
+func (item *MinimalSpan) ToFlamegraphSpan() *FlamegraphSpan {
+	return &FlamegraphSpan{
+		SpanID:       item.SpanID,
+		ParentSpanID: item.ParentSpanID,
+		Timestamp:    uint64(item.StartTime.UnixNano()),
+		DurationNano: item.DurationNano,
+		HasError:     item.HasError,
+		ServiceName:  item.ServiceName,
+		Children:     make([]*FlamegraphSpan, 0),
+	}
+}
+
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
 func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{
