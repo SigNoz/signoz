@@ -74,6 +74,14 @@ type Module interface {
 	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
 
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	CreateView(ctx context.Context, orgID valuer.UUID, createdBy string, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
+
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error)
+
+	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -119,4 +127,12 @@ type Handler interface {
 	UnpinV2(http.ResponseWriter, *http.Request)
 
 	DeleteV2(http.ResponseWriter, *http.Request)
+
+	CreateView(http.ResponseWriter, *http.Request)
+
+	ListViews(http.ResponseWriter, *http.Request)
+
+	UpdateView(http.ResponseWriter, *http.Request)
+
+	DeleteView(http.ResponseWriter, *http.Request)
 }

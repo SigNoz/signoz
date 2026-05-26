@@ -49,4 +49,17 @@ type Store interface {
 	PinForUser(ctx context.Context, pd *PinnedDashboard) error
 
 	UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// Dashboard saved view methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateDashboardView(ctx context.Context, view *DashboardView) error
+
+	GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*DashboardView, error)
+
+	ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*DashboardView, error)
+
+	UpdateDashboardView(ctx context.Context, view *DashboardView) error
+
+	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

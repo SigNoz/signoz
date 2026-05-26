@@ -469,3 +469,85 @@ func (store *store) UnpinForUser(ctx context.Context, userID valuer.UUID, dashbo
 		Exec(ctx)
 	return err
 }
+
+func (store *store) CreateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(view).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "dashboard view with id %s already exists", view.ID)
+	}
+	return nil
+}
+
+func (store *store) GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardView, error) {
+	view := new(dashboardtypes.DashboardView)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(view).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
+	}
+	return view, nil
+}
+
+func (store *store) ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.DashboardView, error) {
+	views := make([]*dashboardtypes.DashboardView, 0)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&views).
+		Where("org_id = ?", orgID).
+		OrderExpr("updated_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return views, nil
+}
+
+func (store *store) UpdateDashboardView(ctx context.Context, view *dashboardtypes.DashboardView) error {
+	res, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(view).
+		WherePK().
+		Where("org_id = ?", view.OrgID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", view.ID)
+	}
+	return nil
+}
+
+func (store *store) DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(dashboardtypes.DashboardView)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
+	}
+	return nil
+}
