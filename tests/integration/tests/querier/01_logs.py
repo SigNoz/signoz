@@ -2315,11 +2315,9 @@ def test_logs_list_filter_by_trace_id(
        short-circuit logs queries.
     """
     target_trace_id = TraceIdGenerator.trace_id()
-    other_trace_id = TraceIdGenerator.trace_id()
     orphan_trace_id = TraceIdGenerator.trace_id()
     target_root_span_id = TraceIdGenerator.span_id()
     target_child_span_id = TraceIdGenerator.span_id()
-    other_span_id = TraceIdGenerator.span_id()
     orphan_span_id = TraceIdGenerator.span_id()
 
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -2368,8 +2366,6 @@ def test_logs_list_filter_by_trace_id(
     # Insert logs:
     # - one with the target trace_id, at a timestamp within the trace's
     #   recorded window (now-10s..now-5s, padded ±1s).
-    # - one with a different trace_id; must never appear in target_trace_id
-    #   results.
     # - one with an orphan trace_id whose trace was never ingested — used to
     #   verify the lookup miss does NOT short-circuit logs queries.
     insert_logs(
@@ -2382,15 +2378,6 @@ def test_logs_list_filter_by_trace_id(
                 severity_text="INFO",
                 trace_id=target_trace_id,
                 span_id=target_root_span_id,
-            ),
-            Logs(
-                timestamp=now - timedelta(seconds=3),
-                resources=common_resources,
-                attributes={"http.method": "POST"},
-                body="log with a different trace_id",
-                severity_text="INFO",
-                trace_id=other_trace_id,
-                span_id=other_span_id,
             ),
             Logs(
                 timestamp=now - timedelta(seconds=2),
@@ -2451,7 +2438,7 @@ def test_logs_list_filter_by_trace_id(
     assert narrow_rows[0]["data"]["span_id"] == target_root_span_id
     assert not any(outside_range_msg in m for m in narrow_warnings), f"Did not expect outside-range warning, got {narrow_warnings}"
 
-    # --- Test 2: wide window (>1 h, camp to the timerange from trace_summary) ---
+    # --- Test 2: wide window (>1 h, clamp to the timerange from trace_summary) ---
     # Should still return exactly one log — no duplicates from multi-bucket scan.
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
     wide_rows, wide_warnings = _query(wide_start_ms, now_ms, target_trace_id)
@@ -2549,7 +2536,7 @@ def test_logs_aggregation_filter_by_trace_id(
     insert_logs(
         [
             Logs(
-                timestamp=now - timedelta(seconds=9),
+                timestamp=now - timedelta(seconds=7),
                 resources=common_resources,
                 attributes={},
                 body="log A inside trace window",

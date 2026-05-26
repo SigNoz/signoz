@@ -256,11 +256,11 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 	}
 
 	finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
-	traceStart, traceEnd, isPresent, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 	if err != nil {
 		return fromMS, toMS, true, ""
 	}
-	if !isPresent {
+	if !exists {
 		if q.spec.Signal == telemetrytypes.SignalTraces {
 			q.logger.DebugContext(ctx, "trace_id not found in trace_summary; short-circuiting traces query to empty",
 				slog.Any("trace_ids", traceIDs))

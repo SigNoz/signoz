@@ -21,12 +21,12 @@ func NewTraceTimeRangeFinder(telemetryStore telemetrystore.TelemetryStore) *Trac
 	}
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, isPresent bool, error error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, exists bool, error error) {
 	traceIDs := []string{traceID}
 	return f.GetTraceTimeRangeMulti(ctx, traceIDs)
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, isPresent bool, error error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, exists bool, error error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "trace-time-range",
