@@ -25,7 +25,7 @@ type BaseRule struct {
 	id             string
 	name           string
 	orgID          valuer.UUID
-	externalURL    string
+	externalURL    *url.URL
 	handledRestart bool
 
 	// Type of the rule
@@ -140,12 +140,13 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 	}
 }
 
-// WithExternalURL injects the alertmanager external URL
+// WithExternalURL injects the alertmanager external URL. It is sourced from
+// SIGNOZ_ALERTMANAGER_SIGNOZ_EXTERNAL__URL via [alertmanager.Alertmanager.Config]
+// and used as the base for rule-related URLs (generator URL and related
+// logs/traces links) in alert notifications.
 func WithExternalURL(externalURL *url.URL) RuleOption {
 	return func(r *BaseRule) {
-		if externalURL != nil {
-			r.externalURL = strings.TrimRight(externalURL.String(), "/")
-		}
+		r.externalURL = externalURL
 	}
 }
 
@@ -251,14 +252,24 @@ func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	return fmt.Sprintf("%s/alerts/overview?ruleId=%s", r.ExternalURLHost(), r.ID())
+	if r.externalURL == nil {
+		return ""
+	}
+	u := r.externalURL.JoinPath("alerts", "overview")
+	q := u.Query()
+	q.Set("ruleId", r.ID())
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
-// ExternalURLHost returns the configured alertmanager external URL.
-// It is used as the host portion of rule-related URLs (generator URL and
-// related logs/traces links) in alert notifications.
+// ExternalURLHost returns the configured alertmanager external URL as a string
+// (trailing slash trimmed). It is used as the host portion of rule-related URLs
+// (e.g. related logs/traces links) in alert notifications.
 func (r *BaseRule) ExternalURLHost() string {
-	return r.externalURL
+	if r.externalURL == nil {
+		return ""
+	}
+	return strings.TrimRight(r.externalURL.String(), "/")
 }
 
 func (r *BaseRule) SelectedQuery(ctx context.Context) string {

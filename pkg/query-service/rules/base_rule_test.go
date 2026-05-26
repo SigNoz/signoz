@@ -769,6 +769,12 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 		want        string
 	}{
 		{
+			name:        "nil URL returns empty",
+			ruleID:      "abc",
+			externalURL: nil,
+			want:        "",
+		},
+		{
 			name:        "configured external URL",
 			ruleID:      "abc",
 			externalURL: mustParse("https://signoz.example.com"),
@@ -779,6 +785,12 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 			ruleID:      "abc",
 			externalURL: mustParse("http://localhost:8080"),
 			want:        "http://localhost:8080/alerts/overview?ruleId=abc",
+		},
+		{
+			name:        "external URL with base path is preserved",
+			ruleID:      "abc",
+			externalURL: mustParse("https://signoz.example.com/signoz"),
+			want:        "https://signoz.example.com/signoz/alerts/overview?ruleId=abc",
 		},
 	}
 

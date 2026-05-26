@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -105,6 +106,50 @@ func (_c *MockAlertmanager_Collect_Call) Return(stringToV map[string]any, err er
 }
 
 func (_c *MockAlertmanager_Collect_Call) RunAndReturn(run func(context1 context.Context, uUID valuer.UUID) (map[string]any, error)) *MockAlertmanager_Collect_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Config provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) Config() alertmanager.Config {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Config")
+	}
+
+	var r0 alertmanager.Config
+	if returnFunc, ok := ret.Get(0).(func() alertmanager.Config); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(alertmanager.Config)
+	}
+	return r0
+}
+
+// MockAlertmanager_Config_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Config'
+type MockAlertmanager_Config_Call struct {
+	*mock.Call
+}
+
+// Config is a helper method to define mock.On call
+func (_e *MockAlertmanager_Expecter) Config() *MockAlertmanager_Config_Call {
+	return &MockAlertmanager_Config_Call{Call: _e.mock.On("Config")}
+}
+
+func (_c *MockAlertmanager_Config_Call) Run(run func()) *MockAlertmanager_Config_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_Config_Call) Return(config alertmanager.Config) *MockAlertmanager_Config_Call {
+	_c.Call.Return(config)
+	return _c
+}
+
+func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanager.Config) *MockAlertmanager_Config_Call {
 	_c.Call.Return(run)
 	return _c
 }

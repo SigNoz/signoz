@@ -2,7 +2,6 @@ package signozruler
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
@@ -42,7 +41,6 @@ func NewFactory(
 	ruleStateHistoryModule rulestatehistory.Module,
 	querier querier.Querier,
 	queryParser queryparser.QueryParser,
-	externalURL *url.URL,
 	prepareTaskFunc func(rules.PrepareTaskOptions) (rules.Task, error),
 	prepareTestRuleFunc func(rules.PrepareTestRuleOptions) (int, error),
 ) factory.ProviderFactory[ruler.Ruler, ruler.Config] {
@@ -59,7 +57,7 @@ func NewFactory(
 			Logger:                 providerSettings.Logger,
 			Cache:                  cache,
 			EvalDelay:              valuer.MustParseTextDuration(config.EvalDelay.String()),
-			ExternalURL:            externalURL,
+			ExternalURL:            alertmanager.Config().Signoz.ExternalURL,
 			PrepareTaskFunc:        prepareTaskFunc,
 			PrepareTestRuleFunc:    prepareTestRuleFunc,
 			Alertmanager:           alertmanager,

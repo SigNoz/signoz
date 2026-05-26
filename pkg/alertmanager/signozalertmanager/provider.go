@@ -235,6 +235,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return channel, nil
 }
 
+func (provider *provider) Config() alertmanager.Config {
+	return provider.config
+}
+
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {
 	return provider.configStore.Set(ctx, config)
 }

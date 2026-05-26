@@ -48,6 +48,11 @@ type Alertmanager interface {
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error
 
+	// Config returns the alertmanager provider configuration. It exposes
+	// global settings (e.g. the external URL) to consumers like the rule
+	// manager so they do not need the value to be wired through main.
+	Config() Config
+
 	// SetConfig sets the config for the organization.
 	SetConfig(context.Context, *alertmanagertypes.Config) error
 
