@@ -4616,61 +4616,6 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	updatedBy?: string;
 }
 
-export interface DashboardtypesGettableDashboardWithPinDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	image?: string;
-	/**
-	 * @type boolean
-	 */
-	locked: boolean;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type boolean
-	 */
-	pinned?: boolean;
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	source: DashboardtypesSourceDTO;
-	spec: DashboardtypesDashboardSpecDTO;
-	/**
-	 * @type array,null
-	 */
-	tags: TagtypesPostableTagDTO[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
@@ -4728,11 +4673,66 @@ export type DashboardtypesJSONPatchDocumentDTO =
 	| DashboardtypesJSONPatchOperationDTO[]
 	| null;
 
+export interface DashboardtypesListedDashboardV2SpecDTO {
+	display?: CommonDisplayDTO;
+}
+
+export interface DashboardtypesListedDashboardV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type boolean
+	 */
+	pinned: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesPostableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export interface DashboardtypesListableDashboardV2DTO {
 	/**
 	 * @type array
 	 */
-	dashboards: DashboardtypesGettableDashboardWithPinDTO[];
+	dashboards: DashboardtypesListedDashboardV2DTO[];
 	/**
 	 * @type integer
 	 * @format int64
@@ -9537,6 +9537,9 @@ export type CreateDashboardV2201 = {
 	status: string;
 };
 
+export type DeleteDashboardV2PathParameters = {
+	id: string;
+};
 export type GetDashboardV2PathParameters = {
 	id: string;
 };
