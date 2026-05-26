@@ -32,25 +32,21 @@ type PostableFlamegraph struct {
 	SelectFields   []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
 }
 
-// FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
-func FlamegraphWindowSpanIDs(window []FlamegraphWindowLevel) []string {
-	total := 0
-	for _, lvl := range window {
-		total += len(lvl.SpanIDs)
-	}
-	ids := make([]string, 0, total)
-	for _, lvl := range window {
-		ids = append(ids, lvl.SpanIDs...)
-	}
-	return ids
-}
-
 // GettableFlamegraphTrace is the response for the v3 flamegraph API.
 type GettableFlamegraphTrace struct {
 	Spans                [][]*FlamegraphSpan `json:"spans"`
 	StartTimestampMillis int64               `json:"startTimestampMillis"`
 	EndTimestampMillis   int64               `json:"endTimestampMillis"`
 	HasMore              bool                `json:"hasMore"`
+}
+
+func NewGettableFlamegraphTrace(spans [][]*FlamegraphSpan, startMs, endMs int64, hasMore bool) *GettableFlamegraphTrace {
+	return &GettableFlamegraphTrace{
+		Spans:                spans,
+		StartTimestampMillis: startMs,
+		EndTimestampMillis:   endMs,
+		HasMore:              hasMore,
+	}
 }
 
 func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64) *FlamegraphSpan {
@@ -69,4 +65,17 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64) *FlamegraphSpan
 		Attributes:   s.Attributes(),
 		Resource:     resources,
 	}
+}
+
+// FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
+func FlamegraphWindowSpanIDs(window []FlamegraphWindowLevel) []string {
+	total := 0
+	for _, lvl := range window {
+		total += len(lvl.SpanIDs)
+	}
+	ids := make([]string, 0, total)
+	for _, lvl := range window {
+		ids = append(ids, lvl.SpanIDs...)
+	}
+	return ids
 }
