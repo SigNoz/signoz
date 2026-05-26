@@ -22,4 +22,4 @@ docker run <your-image-name>
 
 &nbsp;
 
-To see some examples for instrumented applications, you can checkout [this link](https://signoz.io/docs/instrumentation/elixir/#sample-examples)
+To see some examples for instrumented applications, you can checkout [this link](https://signoz.io/docs/instrumentation/opentelemetry-elixir/)

@@ -3,7 +3,7 @@ Set up the OpenTelemetry Collector on a Virtual Machine (VM). The setup is compa
 
 ## Download and Install the OpenTelemetry Collector Binary
 
-Please visit [Documentation For VM](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) which  provides further guidance on a VM installation. 
+Please visit [Documentation For VM](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/) which  provides further guidance on a VM installation. 
 
 &nbsp;
 

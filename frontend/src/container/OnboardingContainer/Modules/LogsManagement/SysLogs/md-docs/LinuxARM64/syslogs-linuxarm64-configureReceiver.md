@@ -14,7 +14,7 @@ receivers:
      from: attributes.message
      to: body
 ```
-Here we are collecting the logs and moving message from attributes to body using operators that are available. You can read more about operators [here](https://signoz.io/docs/userguide/logs/#operators-for-parsing-and-manipulating-logs).
+Here we are collecting the logs and moving message from attributes to body using operators that are available. You can read more about operators [here](https://signoz.io/docs/userguide/logs_query_builder/).
 For more configurations that are available for syslog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/syslogreceiver).
 
 ### Step 2: Include syslog receiver in the pipeline

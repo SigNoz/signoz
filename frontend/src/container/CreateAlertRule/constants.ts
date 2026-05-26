@@ -32,7 +32,7 @@ export const ALERT_TYPE_URL_MAP: Record<
 	},
 	[AlertTypes.ANOMALY_BASED_ALERT]: {
 		selection:
-			'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples',
+			'https://signoz.io/docs/alerts-management/anomaly-based-alerts/',
 		creation:
 			'https://signoz.io/docs/alerts-management/anomaly-based-alerts/?utm_source=product&utm_medium=alert-creation-page',
 	},

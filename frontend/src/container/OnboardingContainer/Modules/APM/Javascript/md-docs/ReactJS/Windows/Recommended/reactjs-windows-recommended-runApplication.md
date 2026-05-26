@@ -40,4 +40,4 @@ yarn start
 
 &nbsp;
 
-To view more detailed documentation, checkout this [link](https://signoz.io/docs/instrumentation/javascript/)
+To view more detailed documentation, checkout this [link](https://signoz.io/docs/instrumentation/javascript/opentelemetry-nodejs/)

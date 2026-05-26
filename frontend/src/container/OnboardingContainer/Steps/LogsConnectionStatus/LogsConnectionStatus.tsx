@@ -166,7 +166,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						entity="kubernetes"
 						heading="Collecting Kubernetes Pod logs"
 						imgURL={kubernetesSvgUrl}
-						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#collect-kubernetes-pod-logs-in-signoz-cloud"
+						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#setup"
 						imgClassName="supported-logs-type-img"
 					/>
 				);

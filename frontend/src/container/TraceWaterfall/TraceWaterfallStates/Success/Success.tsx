@@ -549,7 +549,7 @@ function Success(props: ISuccessProps): JSX.Element {
 						type="text"
 						onClick={(): WindowProxy | null =>
 							window.open(
-								'https://signoz.io/docs/userguide/traces/#missing-spans',
+								'https://signoz.io/docs/traces-management/troubleshooting/faqs/#q-why-are-some-spans-missing-from-a-trace',
 								'_blank',
 							)
 						}

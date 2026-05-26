@@ -44,7 +44,7 @@ export OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}}
 
 OTel Collector binary helps to collect logs, hostmetrics, resource and infra attributes. It is recommended to install Otel Collector binary to collect and send traces to SigNoz cloud. You can correlate signals and have rich contextual data through this way.
 
-You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Java application.
+You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Java application.
 
 Step 1. Download OTel java binary agent
 ```bash
@@ -68,7 +68,7 @@ export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/<path>/opentelemetry-javaagent.
   
 ### Applications Deployed on Kubernetes
 
-For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
+For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
@@ -92,4 +92,4 @@ export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/<path>/opentelemetry-javaagent.
 
 Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
 
-You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](https://signoz.io/docs/instrumentation/tomcat/#validating-instrumentation-by-checking-for-traces).
+You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](https://signoz.io/docs/instrumentation/java/opentelemetry-tomcat/).

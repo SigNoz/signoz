@@ -9,7 +9,7 @@ const DOCLINKS = {
 	EXTERNAL_API_MONITORING:
 		'https://signoz.io/docs/external-api-monitoring/overview/',
 	QUERY_CLICKHOUSE_TRACES:
-		'https://signoz.io/docs/userguide/writing-clickhouse-traces-query/#timestamp-bucketing-for-distributed_signoz_index_v3',
+		'https://signoz.io/docs/userguide/writing-clickhouse-traces-query/#timestamp-bucketing',
 	QUERY_CLICKHOUSE_LOGS:
 		'https://signoz.io/docs/userguide/logs_clickhouse_queries/',
 	QUERY_CLICKHOUSE_METRICS:

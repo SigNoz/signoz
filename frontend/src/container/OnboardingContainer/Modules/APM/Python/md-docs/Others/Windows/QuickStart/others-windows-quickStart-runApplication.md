@@ -20,4 +20,4 @@ opentelemetry-instrument <your_run_command>
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/python/#troubleshooting-your-signoz-installation) for assistance.
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/opentelemetry-python/) for assistance.

@@ -11,7 +11,7 @@ go get go.opentelemetry.io/otel \
   go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
 ```
 
-**Note:** We are assuming you are using gin request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
+**Note:** We are assuming you are using gin request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/opentelemetry-golang/#library-instrumentation).
 &nbsp;
 &nbsp;
 

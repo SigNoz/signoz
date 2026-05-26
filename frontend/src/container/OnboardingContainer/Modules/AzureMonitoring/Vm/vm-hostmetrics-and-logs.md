@@ -11,7 +11,7 @@ The [SSH Keys Guide](https://learn.microsoft.com/en-us/azure/virtual-machines/ss
 
 ### Install OpenTelemetry Collector
 
-Follow the [OpenTelemetry SigNoz documentation](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) to install the OpenTelemetry Collector. 
+Follow the [OpenTelemetry SigNoz documentation](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/) to install the OpenTelemetry Collector. 
 
 &nbsp;
 
@@ -130,5 +130,5 @@ Once we are done with the above configurations, we can now run the collector ser
 
 Once the collector is running, you can access the SigNoz dashboard to view the logs and metrics from your Azure VM.
 
-Please refer to the [Hostmetrics Dashboard](https://signoz.io/docs/userguide/hostmetrics/) for information on how to import and use the dashboard.
+Please refer to the [Hostmetrics Dashboard](https://signoz.io/docs/infrastructure-monitoring/hostmetrics/) for information on how to import and use the dashboard.
 

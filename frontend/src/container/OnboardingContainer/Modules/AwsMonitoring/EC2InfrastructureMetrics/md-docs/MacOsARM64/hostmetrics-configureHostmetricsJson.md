@@ -12,4 +12,4 @@ Once you click on the **`Done`** button at the bottom right corner, you'll be ta
 In SigNoZ UI, go to dashboards section and click New Dashboard button and select the import JSON option and upload/paste the `hostmetrics-with-variables.json` file data that you downloaded/copied in last step.
 
 
-To know more detailed instructions, checkout the link [here](https://signoz.io/docs/userguide/hostmetrics/)
+To know more detailed instructions, checkout the link [here](https://signoz.io/docs/infrastructure-monitoring/hostmetrics/)

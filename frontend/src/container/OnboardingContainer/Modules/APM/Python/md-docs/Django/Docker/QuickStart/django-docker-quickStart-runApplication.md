@@ -26,4 +26,4 @@ docker run -d -p 5000:5000 <your-image-name>
 
 **Note**
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/django/#troubleshooting-your-installation) for assistance.
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/opentelemetry-python/) for assistance.

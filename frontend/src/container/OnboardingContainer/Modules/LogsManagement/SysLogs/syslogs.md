@@ -1,6 +1,6 @@
 ## Collect Syslogs in SigNoz cloud
 
-- Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/).
+- Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/).
 
 - Add the syslog reciever to `config.yaml` to otel-collector.
 
@@ -18,7 +18,7 @@
   ```
 
   Here we are collecting the logs and moving message from attributes to body using operators that are available.
-  You can read more about operators [here](https://signoz.io/docs/userguide/logs/#operators-for-parsing-and-manipulating-logs).
+  You can read more about operators [here](https://signoz.io/docs/userguide/logs_query_builder/).
 
   For more configurations that are available for syslog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/syslogreceiver).
 
