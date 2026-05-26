@@ -8,7 +8,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
@@ -111,18 +111,18 @@ func (_c *MockAlertmanager_Collect_Call) RunAndReturn(run func(context1 context.
 }
 
 // Config provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) Config() alertmanager.Config {
+func (_mock *MockAlertmanager) Config() alertmanagerserver.Config {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Config")
 	}
 
-	var r0 alertmanager.Config
-	if returnFunc, ok := ret.Get(0).(func() alertmanager.Config); ok {
+	var r0 alertmanagerserver.Config
+	if returnFunc, ok := ret.Get(0).(func() alertmanagerserver.Config); ok {
 		r0 = returnFunc()
 	} else {
-		r0 = ret.Get(0).(alertmanager.Config)
+		r0 = ret.Get(0).(alertmanagerserver.Config)
 	}
 	return r0
 }
@@ -144,12 +144,12 @@ func (_c *MockAlertmanager_Config_Call) Run(run func()) *MockAlertmanager_Config
 	return _c
 }
 
-func (_c *MockAlertmanager_Config_Call) Return(config alertmanager.Config) *MockAlertmanager_Config_Call {
+func (_c *MockAlertmanager_Config_Call) Return(config alertmanagerserver.Config) *MockAlertmanager_Config_Call {
 	_c.Call.Return(config)
 	return _c
 }
 
-func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanager.Config) *MockAlertmanager_Config_Call {
+func (_c *MockAlertmanager_Config_Call) RunAndReturn(run func() alertmanagerserver.Config) *MockAlertmanager_Config_Call {
 	_c.Call.Return(run)
 	return _c
 }

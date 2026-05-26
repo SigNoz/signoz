@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -81,11 +80,6 @@ type ManagerOptions struct {
 
 	EvalDelay valuer.TextDuration
 
-	// ExternalURL is the alertmanager external URL.
-	// Rules use it as the host for generator URLs and related logs/traces
-	// links in alert notifications.
-	ExternalURL *url.URL
-
 	RuleStateHistoryModule rulestatehistory.Module
 
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
@@ -156,12 +150,12 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Rule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
-			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			return task, err
@@ -181,11 +175,11 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			opts.Rule,
 			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
 			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
-			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 		if err != nil {
 			return task, err

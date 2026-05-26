@@ -49,12 +49,12 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 			parsedRule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
-			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {
@@ -71,12 +71,12 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 			parsedRule,
 			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			WithSendAlways(),
 			WithSendUnmatched(),
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
-			WithExternalURL(opts.ManagerOpts.ExternalURL),
 		)
 
 		if err != nil {

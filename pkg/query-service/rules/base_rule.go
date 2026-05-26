@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -140,17 +139,13 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 	}
 }
 
-// WithExternalURL injects the alertmanager external URL. It is sourced from
-// SIGNOZ_ALERTMANAGER_SIGNOZ_EXTERNAL__URL via [alertmanager.Alertmanager.Config]
-// and used as the base for rule-related URLs (generator URL and related
-// logs/traces links) in alert notifications.
-func WithExternalURL(externalURL *url.URL) RuleOption {
-	return func(r *BaseRule) {
-		r.externalURL = externalURL
-	}
-}
-
-func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts ...RuleOption) (*BaseRule, error) {
+func NewBaseRule(
+	id string,
+	orgID valuer.UUID,
+	p *ruletypes.PostableRule,
+	externalURL *url.URL,
+	opts ...RuleOption,
+) (*BaseRule, error) {
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -163,6 +158,7 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts .
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,
+		externalURL:       externalURL,
 		name:              p.AlertName,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
@@ -252,24 +248,17 @@ func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	if r.externalURL == nil {
-		return ""
-	}
-	u := r.externalURL.JoinPath("alerts", "overview")
-	q := u.Query()
-	q.Set("ruleId", r.ID())
-	u.RawQuery = q.Encode()
-	return u.String()
+	params := url.Values{}
+	params.Set("ruleId", r.id)
+	return r.ExternalURL("alerts/overview", params)
 }
 
-// ExternalURLHost returns the configured alertmanager external URL as a string
-// (trailing slash trimmed). It is used as the host portion of rule-related URLs
-// (e.g. related logs/traces links) in alert notifications.
-func (r *BaseRule) ExternalURLHost() string {
-	if r.externalURL == nil {
-		return ""
+func (r *BaseRule) ExternalURL(path string, params url.Values) string {
+	u := r.externalURL.JoinPath(path)
+	if len(params) > 0 {
+		u.RawQuery = params.Encode()
 	}
-	return strings.TrimRight(r.externalURL.String(), "/")
+	return u.String()
 }
 
 func (r *BaseRule) SelectedQuery(ctx context.Context) string {

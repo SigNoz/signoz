@@ -57,7 +57,6 @@ func NewFactory(
 			Logger:                 providerSettings.Logger,
 			Cache:                  cache,
 			EvalDelay:              valuer.MustParseTextDuration(config.EvalDelay.String()),
-			ExternalURL:            alertmanager.Config().Signoz.ExternalURL,
 			PrepareTaskFunc:        prepareTaskFunc,
 			PrepareTestRuleFunc:    prepareTestRuleFunc,
 			Alertmanager:           alertmanager,

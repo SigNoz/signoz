@@ -19,6 +19,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+func mustParseURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+	u, err := url.Parse(raw)
+	require.NoError(t, err)
+	return u
+}
+
 // createTestSeries creates a *qbtypes.TimeSeries with the given labels and optional points
 // so we don't exactly need the points in the series because the labels are used to determine if the series is new or old
 // we use the labels to create a lookup key for the series and then check the first_seen timestamp for the series in the metadata table
@@ -682,7 +689,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			}
 
 			// Create BaseRule using NewBaseRule
-			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, WithQueryParser(queryParser), WithLogger(logger), WithMetadataStore(mockMetadataStore))
+			rule, err := NewBaseRule(
+				"test-rule",
+				valuer.GenerateUUID(),
+				&postableRule,
+				mustParseURL(t, "http://localhost:8080"),
+				WithQueryParser(queryParser),
+				WithLogger(logger),
+				WithMetadataStore(mockMetadataStore),
+			)
 			require.NoError(t, err)
 
 			filteredSeries, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
@@ -724,44 +739,31 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 	}
 }
 
-func TestBaseRule_ExternalURLHost(t *testing.T) {
-	mustParse := func(raw string) *url.URL {
-		u, err := url.Parse(raw)
-		require.NoError(t, err)
-		return u
-	}
+func TestBaseRule_ExternalURL(t *testing.T) {
 
 	tests := []struct {
 		name        string
 		externalURL *url.URL
 		want        string
 	}{
-		{name: "nil URL returns empty", externalURL: nil, want: ""},
-		{name: "default value returned as-is", externalURL: mustParse("http://localhost:8080"), want: "http://localhost:8080"},
-		{name: "configured https host", externalURL: mustParse("https://signoz.example.com"), want: "https://signoz.example.com"},
-		{name: "configured host with port", externalURL: mustParse("http://signoz.internal:3301"), want: "http://signoz.internal:3301"},
-		{name: "trailing slash is trimmed", externalURL: mustParse("https://signoz.example.com/"), want: "https://signoz.example.com"},
+		{name: "default value returned as-is", externalURL: mustParseURL(t, "http://localhost:8080"), want: "http://localhost:8080"},
+		{name: "configured https host", externalURL: mustParseURL(t, "https://signoz.example.com"), want: "https://signoz.example.com"},
+		{name: "configured host with port", externalURL: mustParseURL(t, "http://signoz.internal:3301"), want: "http://signoz.internal:3301"},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := createPostableRule(&ruletypes.AlertCompositeQuery{})
-			r, err := NewBaseRule("some-id", valuer.GenerateUUID(), &p, WithExternalURL(tc.externalURL))
+			r, err := NewBaseRule("some-id", valuer.GenerateUUID(), &p, tc.externalURL)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
-			require.Equal(t, tc.want, r.ExternalURLHost())
+			require.Equal(t, tc.want, r.ExternalURL("", nil))
 		})
 	}
 }
 
 func TestBaseRule_GeneratorURL(t *testing.T) {
-	mustParse := func(raw string) *url.URL {
-		u, err := url.Parse(raw)
-		require.NoError(t, err)
-		return u
-	}
-
 	tests := []struct {
 		name        string
 		ruleID      string
@@ -769,27 +771,21 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 		want        string
 	}{
 		{
-			name:        "nil URL returns empty",
-			ruleID:      "abc",
-			externalURL: nil,
-			want:        "",
-		},
-		{
 			name:        "configured external URL",
 			ruleID:      "abc",
-			externalURL: mustParse("https://signoz.example.com"),
+			externalURL: mustParseURL(t, "https://signoz.example.com"),
 			want:        "https://signoz.example.com/alerts/overview?ruleId=abc",
 		},
 		{
 			name:        "default external URL is used as-is",
 			ruleID:      "abc",
-			externalURL: mustParse("http://localhost:8080"),
+			externalURL: mustParseURL(t, "http://localhost:8080"),
 			want:        "http://localhost:8080/alerts/overview?ruleId=abc",
 		},
 		{
 			name:        "external URL with base path is preserved",
 			ruleID:      "abc",
-			externalURL: mustParse("https://signoz.example.com/signoz"),
+			externalURL: mustParseURL(t, "https://signoz.example.com/signoz"),
 			want:        "https://signoz.example.com/signoz/alerts/overview?ruleId=abc",
 		},
 	}
@@ -797,7 +793,7 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			p := createPostableRule(&ruletypes.AlertCompositeQuery{})
-			r, err := NewBaseRule(tc.ruleID, valuer.GenerateUUID(), &p, WithExternalURL(tc.externalURL))
+			r, err := NewBaseRule(tc.ruleID, valuer.GenerateUUID(), &p, tc.externalURL)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

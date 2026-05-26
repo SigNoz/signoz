@@ -5,6 +5,7 @@ import (
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -48,10 +49,8 @@ type Alertmanager interface {
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error
 
-	// Config returns the alertmanager provider configuration. It exposes
-	// global settings (e.g. the external URL) to consumers like the rule
-	// manager so they do not need the value to be wired through main.
-	Config() Config
+	// Config returns the alertmanagerserver configuration.
+	Config() alertmanagerserver.Config
 
 	// SetConfig sets the config for the organization.
 	SetConfig(context.Context, *alertmanagertypes.Config) error
