@@ -20,6 +20,8 @@ func (HostStatus) Enum() []any {
 	}
 }
 
+const HostNameAttrKey = "host.name"
+
 const (
 	HostsOrderByCPU       = "cpu"
 	HostsOrderByMemory    = "memory"
@@ -34,4 +36,5 @@ var HostsValidOrderByKeys = []string{
 	HostsOrderByWait,
 	HostsOrderByDiskUsage,
 	HostsOrderByLoad15,
+	HostNameAttrKey,
 }

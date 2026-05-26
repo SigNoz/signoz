@@ -24,6 +24,10 @@ type Sample struct {
 	RecoveryTarget *float64
 
 	TargetUnit string
+
+	// CompareOperator and MatchType carry the threshold evaluation context
+	CompareOperator CompareOperator
+	MatchType       MatchType
 }
 
 func (s Sample) String() string {
