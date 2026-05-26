@@ -37,7 +37,7 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
-	JSONPlan     JSONAccessPlan               `json:"-"`
+	PlanBuilder  *FieldPlanBuilder            `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
@@ -120,7 +120,7 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.FieldDataType = src.FieldDataType
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
-	f.JSONPlan = src.JSONPlan
+	f.PlanBuilder = src.PlanBuilder
 	f.Evolutions = src.Evolutions
 }
 

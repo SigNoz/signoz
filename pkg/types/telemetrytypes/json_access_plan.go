@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -27,8 +28,6 @@ type JSONColumnMetadata struct {
 	BaseColumn     string
 	PromotedColumn string
 }
-
-type JSONAccessPlan = []*JSONAccessNode
 
 type TerminalConfig struct {
 	Key      *TelemetryFieldKey
@@ -99,23 +98,48 @@ func (n *JSONAccessNode) BranchesInOrder() []JSONAccessBranchType {
 	})
 }
 
-type planBuilder struct {
+// FieldPlanBuilder builds JSON access nodes on demand for a specific field key.
+// It holds all necessary metadata (key, column info, type cache) and produces
+// the correct root node per column, dispatching between base and promoted plans
+// by column name — without any external "is promoted?" flag.
+type FieldPlanBuilder struct {
 	key        *TelemetryFieldKey
+	columnInfo JSONColumnMetadata
+	typeCache  map[string][]FieldDataType
 	paths      []string // cumulative paths for type cache lookups
 	segments   []string // individual path segments for node names
-	isPromoted bool
-	typeCache  map[string][]FieldDataType
+}
+
+func NewFieldPlanBuilder(key *TelemetryFieldKey, info JSONColumnMetadata, typeCache map[string][]FieldDataType) *FieldPlanBuilder {
+	return &FieldPlanBuilder{key: key, columnInfo: info, typeCache: typeCache}
+}
+
+// Build dispatches by column name — called by JSONConditionBuilder in field_mapper.
+func (b *FieldPlanBuilder) Build(column schemamigrator.Column) (*JSONAccessNode, error) {
+	if column.Name == b.columnInfo.BaseColumn {
+		return b.build(NewRootJSONAccessNode(b.columnInfo.BaseColumn, 32, 0))
+	}
+	return b.build(NewRootJSONAccessNode(b.columnInfo.PromotedColumn, 32, 1024))
+}
+
+func (b *FieldPlanBuilder) build(root *JSONAccessNode) (*JSONAccessNode, error) {
+	if b.key.Name == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "path is empty")
+	}
+	b.paths = b.key.ArrayParentPaths()
+	b.segments = b.key.ArrayPathSegments()
+	return b.buildPlan(0, root, false)
 }
 
 // buildPlan recursively builds the path plan tree.
-func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChild bool) (*JSONAccessNode, error) {
-	if index >= len(pb.paths) {
+func (b *FieldPlanBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChild bool) (*JSONAccessNode, error) {
+	if index >= len(b.paths) {
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
 	}
 
-	pathSoFar := pb.paths[index]      // cumulative path for type cache lookup
-	segmentName := pb.segments[index] // segment name for node
-	isTerminal := index == len(pb.paths)-1
+	pathSoFar := b.paths[index]      // cumulative path for type cache lookup
+	segmentName := b.segments[index] // segment name for node
+	isTerminal := index == len(b.paths)-1
 
 	// Calculate progression parameters based on parent's values
 	var maxTypes, maxPaths int
@@ -149,18 +173,18 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 	// Configure terminal if this is the last part
 	if isTerminal {
 		// fielddatatype must not be unspecified else expression can not be generated
-		if pb.key.FieldDataType == FieldDataTypeUnspecified {
+		if b.key.FieldDataType == FieldDataTypeUnspecified {
 			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "field data type is missing for path %s", pathSoFar)
 		}
 
 		node.TerminalConfig = &TerminalConfig{
-			Key:      pb.key,
-			ElemType: pb.key.GetJSONDataType(),
+			Key:      b.key,
+			ElemType: b.key.GetJSONDataType(),
 		}
 	} else {
 		var err error
 		// Use cached types from the batched metadata query
-		types, ok := pb.typeCache[pathSoFar]
+		types, ok := b.typeCache[pathSoFar]
 		if !ok {
 			return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
 		}
@@ -172,13 +196,13 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 
 		if hasJSON {
-			node.Branches[BranchJSON], err = pb.buildPlan(index+1, node, false)
+			node.Branches[BranchJSON], err = b.buildPlan(index+1, node, false)
 			if err != nil {
 				return nil, err
 			}
 		}
 		if hasDynamic {
-			node.Branches[BranchDynamic], err = pb.buildPlan(index+1, node, true)
+			node.Branches[BranchDynamic], err = b.buildPlan(index+1, node, true)
 			if err != nil {
 				return nil, err
 			}
@@ -186,46 +210,4 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 	}
 
 	return node, nil
-}
-
-// buildJSONAccessPlan builds a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types.
-func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]FieldDataType,
-) error {
-	// if path is empty, return nil
-	if key.Name == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "path is empty")
-	}
-
-	pb := &planBuilder{
-		key:        key,
-		paths:      key.ArrayParentPaths(),
-		segments:   key.ArrayPathSegments(),
-		isPromoted: key.Materialized,
-		typeCache:  typeCache,
-	}
-
-	node, err := pb.buildPlan(0,
-		NewRootJSONAccessNode(columnInfo.BaseColumn,
-			32, 0),
-		false,
-	)
-	if err != nil {
-		return err
-	}
-	key.JSONPlan = append(key.JSONPlan, node)
-
-	if pb.isPromoted {
-		node, err := pb.buildPlan(0,
-			NewRootJSONAccessNode(columnInfo.PromotedColumn,
-				32, 1024),
-			true,
-		)
-		if err != nil {
-			return err
-		}
-		key.JSONPlan = append(key.JSONPlan, node)
-	}
-
-	return nil
 }

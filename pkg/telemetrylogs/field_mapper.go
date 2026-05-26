@@ -10,6 +10,7 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -76,7 +77,7 @@ func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
 	return &fieldMapper{fl: fl}
 }
 
-func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *fieldMapper) getColumns(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
@@ -245,7 +246,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 }
 
 func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	columns, err := m.getColumn(ctx, key)
+	columns, err := m.getColumns(ctx, key)
 	if err != nil {
 		return "", err
 	}
@@ -287,12 +288,14 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					return "", qbtypes.ErrColumnNotFound
 				}
 
-				expr, err := m.buildFieldForJSON(key)
-				if err != nil {
-					return "", err
-				}
+				for _, column := range columns {
+					expr, err := m.buildFieldForJSON(key, column)
+					if err != nil {
+						return "", err
+					}
 
-				exprs = append(exprs, expr)
+					exprs = append(exprs, expr)
+				}
 			default:
 				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
@@ -348,7 +351,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 }
 
 func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	return m.getColumn(ctx, key)
+	return m.getColumns(ctx, key)
 }
 
 func (m *fieldMapper) ColumnExpressionFor(
@@ -403,16 +406,13 @@ func (m *fieldMapper) ColumnExpressionFor(
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.
-func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	plan := key.JSONPlan
-	if len(plan) == 0 {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
-			"Could not find any valid paths for: %s", key.Name)
+func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey, column *schemamigrator.Column) (string, error) {
+	node, err := key.PlanBuilder.Build(*column)
+	if err != nil {
+		return "", err
 	}
 
-	if plan[0].IsTerminal {
-		node := plan[0]
-
+	if node.IsTerminal {
 		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
 		// TODO(Piyush): Promoted path logic commented out. Materialized now means type hint
 		// promotion will be extracted from key field evolution
@@ -450,7 +450,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 	}
 
 	// Build arrayConcat pattern directly from the tree structure
-	arrayConcatExpr, err := m.buildArrayConcat(plan)
+	arrayConcatExpr, err := m.buildArrayConcat(node)
 	if err != nil {
 		return "", err
 	}
@@ -459,23 +459,18 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 }
 
 // buildArrayConcat builds the arrayConcat pattern directly from the tree structure.
-func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (string, error) {
-	if len(plan) == 0 {
-		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
-	}
-
+func (m *fieldMapper) buildArrayConcat(node *telemetrytypes.JSONAccessNode) (string, error) {
 	// Build arrayMap expressions for ALL available branches at the root level.
 	// Iterate branches in deterministic order (JSON then Dynamic)
 	var arrayMapExpressions []string
-	for _, node := range plan {
-		for _, branchType := range node.BranchesInOrder() {
-			expr, err := m.buildArrayMap(node, branchType)
-			if err != nil {
-				return "", err
-			}
-			arrayMapExpressions = append(arrayMapExpressions, expr)
+	for _, branchType := range node.BranchesInOrder() {
+		expr, err := m.buildArrayMap(node, branchType)
+		if err != nil {
+			return "", err
 		}
+		arrayMapExpressions = append(arrayMapExpressions, expr)
 	}
+
 	if len(arrayMapExpressions) == 0 {
 		return "", errors.Newf(errors.TypeInternal, CodeArrayMapExpressionsEmpty, "array map expressions are empty while building arrayConcat")
 	}

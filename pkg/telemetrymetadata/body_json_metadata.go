@@ -85,26 +85,15 @@ func (t *telemetryMetaStore) enrichJSONKeys(ctx context.Context, selectors []*te
 		key.Indexes = indexes[key.Name]
 	}
 
-	// build JSON access plans using the pre-fetched parent type cache
-	return t.buildJSONPlans(filteredKeys, parentTypeCache)
-}
-
-// buildJSONPlans builds JSON access plans for the given keys
-// using the provided parent type cache (pre-fetched in the main UNION query).
-func (t *telemetryMetaStore) buildJSONPlans(keys []*telemetrytypes.TelemetryFieldKey, typeCache map[string][]telemetrytypes.FieldDataType) error {
-	if len(keys) == 0 {
-		return nil
-	}
-
+	// attach a lazy PlanBuilder so field_mapper can build plans on demand
 	columnMeta := t.jsonColumnMetadata[telemetrytypes.SignalLogs][telemetrytypes.FieldContextBody]
-	for _, key := range keys {
-		if err := key.SetJSONAccessPlan(columnMeta, typeCache); err != nil {
-			return err
-		}
+	for _, key := range filteredKeys {
+		key.PlanBuilder = telemetrytypes.NewFieldPlanBuilder(key, columnMeta, parentTypeCache)
 	}
 
 	return nil
 }
+
 
 func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
 	filteredPaths := []string{}

@@ -33,31 +33,41 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 }
 
 // BuildCondition builds the full WHERE condition for body_v2 JSON paths.
-func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	baseCond, err := c.emitPlannedCondition(operator, value, sb)
-	if err != nil {
-		return "", err
-	}
-
-	// path index
-	if operator.AddDefaultExistsFilter() {
-		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
-		return sb.And(baseCond, pathIndex), nil
-	}
-
-	return baseCond, nil
-}
-
-func (c *jsonConditionBuilder) emitPlannedCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	// Build traversal + terminal recursively per-hop
-	conditions := []string{}
-	for _, node := range c.key.JSONPlan {
-		condition, err := c.recurseArrayHops(node, operator, value, sb)
+func (c *jsonConditionBuilder) buildJSONCondition(columns []schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	if len(columns) == 1 {
+		baseCond, err := c.emitPlannedCondition(columns[0], operator, value, sb)
 		if err != nil {
 			return "", err
 		}
-		conditions = append(conditions, condition)
+
+		// path index
+		if operator.AddDefaultExistsFilter() {
+			pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+			return sb.And(baseCond, pathIndex), nil
+		}
+
+		return baseCond, nil
 	}
+
+	
+}
+
+func (c *jsonConditionBuilder) emitPlannedCondition(column schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	if c.key.PlanBuilder == nil {
+		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no plan builder for key %s", c.key.Name)
+	}
+
+	var conditions []string
+
+	node, err := c.key.PlanBuilder.Build(column)
+	if err != nil {
+		return "", err
+	}
+	cond, err := c.recurseArrayHops(node, operator, value, sb)
+	if err != nil {
+		return "", err
+	}
+	conditions = append(conditions, cond)
 
 	return sb.Or(conditions...), nil
 }
