@@ -1,14 +1,14 @@
-import { BellDot, ChevronDown, ChevronRight } from '@signozhq/icons';
+import { BellDot } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
-import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import AlertStatusTag from './components/AlertStatusTag';
 import LabelColumn from 'components/Alerts/LabelColumn';
 import styles from './TriggeredAlerts.module.scss';
 import type { Alert, GroupedAlert } from './types';
+import { GroupTagsCell } from 'container/TriggeredAlerts/components/GroupTagsCell';
 
 export function getAlertColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
@@ -111,37 +111,12 @@ export const groupedColumns: TableColumnDef<GroupedAlert>[] = [
 		enableMove: false,
 		pin: 'left',
 		cell: ({ row: groupRow, isExpanded, toggleExpanded }): JSX.Element => {
-			const tags = Object.entries(groupRow.groupLabels)
-				.filter(([, v]) => v)
-				.map(([k, v]) => `${k}:${v}`);
-
 			return (
-				<div className={styles.groupCell}>
-					<Button
-						variant="ghost"
-						color="secondary"
-						size="icon"
-						onClick={(e): void => {
-							e.stopPropagation();
-							toggleExpanded();
-						}}
-						prefix={
-							isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
-						}
-					/>
-					<div className={styles.tagsContainer}>
-						{tags.map((tag) => (
-							<Badge color="error" key={tag} variant="outline">
-								{tag}
-							</Badge>
-						))}
-						{tags.length === 0 ? (
-							<Badge color="secondary" variant="outline">
-								{'<no-value>'}
-							</Badge>
-						) : null}
-					</div>
-				</div>
+				<GroupTagsCell
+					groupRow={groupRow}
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				/>
 			);
 		},
 	},
