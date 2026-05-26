@@ -10220,6 +10220,17 @@ export type GetWaterfall200 = {
 	status: string;
 };
 
+export type GetWaterfallV4PathParameters = {
+	traceID: string;
+};
+export type GetWaterfallV4200 = {
+	data: SpantypesGettableWaterfallTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type QueryRangeV5200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
