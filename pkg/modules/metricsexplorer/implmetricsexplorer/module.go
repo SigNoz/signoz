@@ -219,13 +219,14 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 		return nil, err
 	}
 
-	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
-
 	var (
 		metricStats []metricsexplorertypes.Stat
 		total       uint64
 		err         error
 	)
+
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+
 	if hasFilter {
 		var filterWhereClause *sqlbuilder.WhereClause
 		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
@@ -236,6 +237,7 @@ func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsex
 	} else {
 		metricStats, total, err = m.fetchMetricsStatsWithSamplesFastPath(ctx, req, false, req.OrderBy)
 	}
+
 	if err != nil {
 		return nil, err
 	}
