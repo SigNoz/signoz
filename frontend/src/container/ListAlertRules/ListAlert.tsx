@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { Button, Flex, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Plus } from '@signozhq/icons';
+import { Ellipsis, Plus } from '@signozhq/icons';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -15,7 +16,6 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
-import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -321,55 +321,67 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'id',
 			key: 'action',
 			width: 10,
-			render: (id: RuletypesRuleDTO['id'], record): JSX.Element => (
-				<div data-testid="alert-actions">
-					<DropDown
-						onDropDownItemClick={(item): void =>
-							alertActionLogEvent(item.key, record)
+			render: (id: RuletypesRuleDTO['id'], record): JSX.Element => {
+				const actionItems = [
+					<ToggleAlertState
+						key="1"
+						disabled={record.disabled ?? false}
+						setData={setData}
+						id={id ?? ''}
+					/>,
+					<ColumnButton
+						key="2"
+						onClick={(e: React.MouseEvent): void =>
+							onEditHandler(record, { newTab: isModifierKeyPressed(e) })
 						}
-						element={[
-							<ToggleAlertState
-								key="1"
-								disabled={record.disabled ?? false}
-								setData={setData}
-								id={id ?? ''}
-							/>,
-							<ColumnButton
-								key="2"
-								onClick={(e: React.MouseEvent): void =>
-									onEditHandler(record, { newTab: isModifierKeyPressed(e) })
-								}
+						type="link"
+						loading={editLoader}
+					>
+						Edit
+					</ColumnButton>,
+					<ColumnButton
+						key="3-new-tab"
+						onClick={(): void => onEditHandler(record, { newTab: true })}
+						type="link"
+						loading={editLoader}
+					>
+						Edit in New Tab
+					</ColumnButton>,
+					<ColumnButton
+						key="3-clone"
+						onClick={onCloneHandler(record)}
+						type="link"
+						loading={cloneLoader}
+					>
+						Clone
+					</ColumnButton>,
+					<DeleteAlert
+						key="4"
+						notifications={notificationsApi}
+						setData={setData}
+						id={id ?? ''}
+					/>,
+				];
+				return (
+					<div data-testid="alert-actions">
+						<DropdownMenuSimple
+							menu={{
+								items: actionItems.map((element, index) => ({
+									key: String(index),
+									label: element,
+									onClick: ({ key }): void => alertActionLogEvent(key, record),
+								})),
+							}}
+						>
+							<Button
 								type="link"
-								loading={editLoader}
-							>
-								Edit
-							</ColumnButton>,
-							<ColumnButton
-								key="3"
-								onClick={(): void => onEditHandler(record, { newTab: true })}
-								type="link"
-								loading={editLoader}
-							>
-								Edit in New Tab
-							</ColumnButton>,
-							<ColumnButton
-								key="3"
-								onClick={onCloneHandler(record)}
-								type="link"
-								loading={cloneLoader}
-							>
-								Clone
-							</ColumnButton>,
-							<DeleteAlert
-								key="4"
-								notifications={notificationsApi}
-								setData={setData}
-								id={id ?? ''}
-							/>,
-						]}
-					/>
-				</div>
-			),
+								style={{ color: 'var(--l1-foreground)' }}
+								icon={<Ellipsis size={16} />}
+							/>
+						</DropdownMenuSimple>
+					</div>
+				);
+			},
 		});
 	}
 

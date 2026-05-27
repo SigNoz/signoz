@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
