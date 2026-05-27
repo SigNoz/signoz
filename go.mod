@@ -39,7 +39,7 @@ require (
 	github.com/open-telemetry/opamp-go v0.22.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.144.0
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20
-	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251202173232-1e8bf16f1dce
+	github.com/openfga/language/pkg/go v0.2.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/perses/perses v0.53.1
 	github.com/pkg/errors v0.9.1
@@ -73,7 +73,7 @@ require (
 	go.opentelemetry.io/collector/pdata v1.54.0
 	go.opentelemetry.io/contrib/config v0.10.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.63.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/metric v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
@@ -81,7 +81,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.49.0
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
+	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
@@ -92,7 +92,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.35.3
-	modernc.org/sqlite v1.47.0
+	modernc.org/sqlite v1.48.2
 )
 
 require (
@@ -229,7 +229,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/cel-go v0.27.0 // indirect
+	github.com/google/cel-go v0.28.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.18.0 // indirect
@@ -288,7 +288,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.148.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.148.0 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.148.0 // indirect
-	github.com/openfga/openfga v1.14.0
+	github.com/openfga/openfga v1.14.1
 	github.com/paulmach/orb v0.12.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.25 // indirect
@@ -381,7 +381,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.42.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.43.0 // indirect
 	go.opentelemetry.io/otel/exporters/prometheus v0.60.0
 	go.opentelemetry.io/otel/exporters/stdout/stdoutlog v0.14.0 // indirect
@@ -394,12 +394,12 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/tools v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d
 	google.golang.org/grpc v1.80.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	k8s.io/client-go v0.35.3 // indirect
