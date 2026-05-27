@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
@@ -12,27 +12,33 @@ export default function DisconnectValuesModeToggle({
 	onChange,
 }: DisconnectValuesModeToggleProps): JSX.Element {
 	return (
-		<ToggleGroup
+		<ToggleGroupSimple
 			type="single"
 			value={value}
 			size="lg"
-			onChange={(newValue): void => {
+			onChange={(newValue: string): void => {
 				if (newValue) {
 					onChange(newValue as DisconnectedValuesMode);
 				}
 			}}
-		>
-			<ToggleGroupItem value={DisconnectedValuesMode.Never} aria-label="Never">
-				<Typography.Text className="section-heading-small">Never</Typography.Text>
-			</ToggleGroupItem>
-			<ToggleGroupItem
-				value={DisconnectedValuesMode.Threshold}
-				aria-label="Threshold"
-			>
-				<Typography.Text className="section-heading-small">
-					Threshold
-				</Typography.Text>
-			</ToggleGroupItem>
-		</ToggleGroup>
+			items={[
+				{
+					value: DisconnectedValuesMode.Never,
+					'aria-label': 'Never',
+					label: (
+						<Typography.Text className="section-heading-small">Never</Typography.Text>
+					),
+				},
+				{
+					value: DisconnectedValuesMode.Threshold,
+					'aria-label': 'Threshold',
+					label: (
+						<Typography.Text className="section-heading-small">
+							Threshold
+						</Typography.Text>
+					),
+				},
+			]}
+		/>
 	);
 }
