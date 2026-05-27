@@ -136,6 +136,7 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
+	// TODO: migrate to WithAsync() — https://github.com/SigNoz/engineering-pod/issues/5093
 	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...) //nolint:staticcheck
 
 	event.Err = err
