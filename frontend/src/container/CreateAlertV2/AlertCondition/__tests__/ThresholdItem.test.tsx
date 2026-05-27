@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
@@ -66,7 +66,7 @@ const mockChannels: Channels[] = [
 	{ id: TEST_CONSTANTS.CHANNEL_3, name: 'PagerDuty Channel' } as any,
 ];
 
-const mockUnits: DefaultOptionType[] = [
+const mockUnits: ComboboxSimpleItem[] = [
 	{ label: 'Bytes', value: 'bytes' },
 	{ label: 'KB', value: 'kb' },
 	{ label: 'MB', value: 'mb' },

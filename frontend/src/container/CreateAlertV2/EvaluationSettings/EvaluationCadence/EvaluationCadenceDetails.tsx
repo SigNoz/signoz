@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, DatePicker, Input, Select } from 'antd';
+import { Button, DatePicker, Input } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
@@ -41,10 +42,6 @@ function EvaluationCadenceDetails({
 			startAt: dayjs().format('HH:mm:ss'),
 		},
 	});
-
-	const [searchTimezoneString, setSearchTimezoneString] = useState('');
-	const [occurenceSearchString, setOccurenceSearchString] = useState('');
-	const [repeatEverySearchString, setRepeatEverySearchString] = useState('');
 
 	const tabs = [
 		{
@@ -93,45 +90,39 @@ function EvaluationCadenceDetails({
 		<div className="editor-view" data-testid="editor-view">
 			<div className="select-group">
 				<Typography.Text>REPEAT EVERY</Typography.Text>
-				<Select
-					options={EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS}
-					value={evaluationCadence.custom.repeatEvery || null}
+				<ComboboxSimple
+					items={EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS}
+					value={evaluationCadence.custom.repeatEvery || undefined}
 					onChange={(value): void =>
 						setEvaluationCadence({
 							...evaluationCadence,
 							custom: {
 								...evaluationCadence.custom,
-								repeatEvery: value,
+								repeatEvery: value as string,
 								occurence: [],
 							},
 						})
 					}
 					placeholder="Select repeat every"
-					showSearch
-					searchValue={repeatEverySearchString}
-					onSearch={setRepeatEverySearchString}
 				/>
 			</div>
 			{evaluationCadence.custom.repeatEvery !== 'day' && (
 				<div className="select-group">
 					<Typography.Text>ON DAY(S)</Typography.Text>
-					<Select
-						options={occurenceOptions}
-						value={evaluationCadence.custom.occurence || null}
-						mode="multiple"
+					<ComboboxSimple
+						items={occurenceOptions}
+						value={evaluationCadence.custom.occurence || []}
+						multiple
 						onChange={(value): void =>
 							setEvaluationCadence({
 								...evaluationCadence,
 								custom: {
 									...evaluationCadence.custom,
-									occurence: value,
+									occurence: value as string[],
 								},
 							})
 						}
 						placeholder="Select day(s)"
-						showSearch
-						searchValue={occurenceSearchString}
-						onSearch={setOccurenceSearchString}
 					/>
 				</div>
 			)}
@@ -152,22 +143,19 @@ function EvaluationCadenceDetails({
 			</div>
 			<div className="select-group">
 				<Typography.Text>TIMEZONE</Typography.Text>
-				<Select
-					options={TIMEZONE_DATA}
-					value={evaluationCadence.custom.timezone || null}
+				<ComboboxSimple
+					items={TIMEZONE_DATA}
+					value={evaluationCadence.custom.timezone || undefined}
 					onChange={(value): void =>
 						setEvaluationCadence({
 							...evaluationCadence,
 							custom: {
 								...evaluationCadence.custom,
-								timezone: value,
+								timezone: value as string,
 							},
 						})
 					}
 					placeholder="Select timezone"
-					onSearch={setSearchTimezoneString}
-					searchValue={searchTimezoneString}
-					showSearch
 				/>
 			</div>
 		</div>

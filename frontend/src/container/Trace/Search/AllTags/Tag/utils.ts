@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { AutoCompleteProps } from 'antd';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
 import { OperatorValues, Tags } from 'types/reducer/trace';
@@ -13,7 +13,7 @@ export type TagValueTypes = string | number | boolean;
  */
 export const extractTagFilters = (
 	payload: TagKeyPayload,
-): DefaultOptionType[] => {
+): ComboboxSimpleItem[] => {
 	const tagFilters: string[] = [];
 	payload.stringTagKeys.forEach((element) => {
 		tagFilters.push(`${element}.(string)`);
@@ -166,7 +166,7 @@ export function getTagValueOptions(
 
 export function getTagKeyOptions(
 	payload: TagKeyPayload | null | undefined,
-): DefaultOptionType[] {
+): ComboboxSimpleItem[] {
 	if (payload === null) {
 		return [
 			{

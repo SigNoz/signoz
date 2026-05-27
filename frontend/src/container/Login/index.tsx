@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { Form, Input, Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Form, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
@@ -339,17 +340,18 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<Label htmlFor="orgId">Organization Name</Label>
 							<FormContainer.Item name="orgId">
-								<Select
+								<SelectSimple
 									id="orgId"
-									data-testid="orgId"
+									testId="orgId"
 									className="login-form-input login-form-select-no-border"
 									placeholder="Select your organization"
-									options={sessionsContext.orgs.map((org) => ({
+									items={sessionsContext.orgs.map((org) => ({
 										value: org.id,
 										label: org.name || 'default',
 									}))}
-									onChange={(value: string): void => {
-										setSessionsOrgId(value);
+									onChange={(value): void => {
+										setSessionsOrgId(value as string);
+										form.setFieldValue('orgId', value);
 									}}
 								/>
 							</FormContainer.Item>

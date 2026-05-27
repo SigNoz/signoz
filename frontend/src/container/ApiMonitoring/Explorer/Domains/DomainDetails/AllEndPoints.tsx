@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Select } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {
@@ -115,11 +115,11 @@ function AllEndPoints({
 
 	// --- GROUP BY STATE SYNC (existing) ---
 	const handleGroupByChange = useCallback(
-		(value: IBuilderQuery['groupBy']) => {
+		(value: string[]) => {
 			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = value[index] as unknown as string;
+				const element = value[index];
 
 				// Check if the key exists in our cached options first
 				if (allAvailableGroupByOptions[element]) {
@@ -242,17 +242,14 @@ function AllEndPoints({
 			</div>
 			<div className="group-by-container">
 				<div className="group-by-label"> Group by </div>
-				<Select
+				<ComboboxSimple
 					className="group-by-select"
 					loading={isLoadingGroupByFilters}
-					mode="multiple"
-					value={groupBy}
-					allowClear
-					maxTagCount="responsive"
+					multiple
+					value={groupBy.map((g) => g.key)}
 					placeholder="Search for attribute"
-					options={groupByOptions}
-					onChange={handleGroupByChange}
-					onSearch={(value: string): void => setGroupBySearchValue(value)}
+					items={groupByOptions}
+					onChange={(value): void => handleGroupByChange(value as string[])}
 				/>{' '}
 			</div>
 			<div className="endpoints-table-container">

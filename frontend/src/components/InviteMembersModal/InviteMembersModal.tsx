@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
-import { ChevronDown, Plus, Trash2, X } from '@signozhq/icons';
+import { Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
+import { SelectSimple } from '@signozhq/ui/select';
 import { toast } from '@signozhq/ui/sonner';
-import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
@@ -15,7 +15,6 @@ import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';
-import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import './InviteMembersModal.styles.scss';
@@ -254,18 +253,17 @@ function InviteMembersModal({
 										)}
 									</div>
 									<div className="team-member-cell role-cell">
-										<Select
+										<SelectSimple
 											value={row.role || undefined}
 											onChange={(role): void => updateRole(row.id, role as ROLES)}
 											className="team-member-role-select"
 											placeholder="Select roles"
-											suffixIcon={<ChevronDown size={14} />}
-											getPopupContainer={popupContainer}
-										>
-											<Select.Option value="VIEWER">Viewer</Select.Option>
-											<Select.Option value="EDITOR">Editor</Select.Option>
-											<Select.Option value="ADMIN">Admin</Select.Option>
-										</Select>
+											items={[
+												{ value: 'VIEWER', label: 'Viewer' },
+												{ value: 'EDITOR', label: 'Editor' },
+												{ value: 'ADMIN', label: 'Admin' },
+											]}
+										/>
 									</div>
 									<div className="team-member-cell action-cell">
 										{rows.length > 1 && (

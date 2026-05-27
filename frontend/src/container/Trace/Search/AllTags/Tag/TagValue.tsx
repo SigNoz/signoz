@@ -9,14 +9,11 @@ import {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Select } from 'antd';
-import type { BaseOptionType } from 'antd/es/select';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import getTagValue from 'api/trace/getTagValue';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
-
-import { SelectComponent } from './styles';
 import {
 	disableTagValue,
 	extractTagKey,
@@ -24,7 +21,6 @@ import {
 	getInitialLocalValue,
 	getTagValueOptions,
 	onTagValueChange,
-	selectOptions,
 	separateTagValues,
 	TagValueTypes,
 } from './utils';
@@ -113,34 +109,33 @@ function TagValue(props: TagValueProps): JSX.Element {
 		[index, setLocalSelectedTags, selectedKey],
 	);
 
-	const getFilterOptions = useCallback(
-		(inputValue: string, option?: BaseOptionType): boolean => {
-			if (typeof option?.label === 'string') {
-				return option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1;
-			}
-			return false;
-		},
-		[],
-	);
+	const items: ComboboxSimpleItem[] = useMemo(() => {
+		const tagValueOptions = getTagValueOptions(data?.payload, tagType);
+		if (!tagValueOptions) {
+			return [];
+		}
+		return tagValueOptions.map((option) => ({
+			value: String(option.value),
+			label: String(option.label),
+		}));
+	}, [data?.payload, tagType]);
+
+	// Note: ComboboxSimple does not support disabled prop natively
+	// When disabled or loading, we render with pointer-events disabled
+	const isDisabled = isLoading || tagValueDisabled;
 
 	return (
-		<SelectComponent
-			loading={isLoading}
-			options={getTagValueOptions(data?.payload, tagType)}
-			mode="tags"
-			allowClear
-			showSearch
-			filterOption={getFilterOptions}
-			disabled={isLoading || tagValueDisabled}
-			value={localTagValue}
-			onChange={onChangeHandler}
-		>
-			{selectOptions(data?.payload, tagType)?.map((suggestion) => (
-				<Select.Option key={suggestion.toString()} value={suggestion}>
-					{suggestion}
-				</Select.Option>
-			))}
-		</SelectComponent>
+		<ComboboxSimple
+			multiple
+			allowCreate
+			value={localTagValue.map(String)}
+			onChange={(v): void => onChangeHandler(v)}
+			items={items}
+			style={{
+				width: '100%',
+				...(isDisabled && { pointerEvents: 'none', opacity: 0.5 }),
+			}}
+		/>
 	);
 }
 

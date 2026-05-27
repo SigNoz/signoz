@@ -1,8 +1,9 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { Form, Select } from 'antd';
+import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
@@ -132,11 +133,13 @@ function AccountSettingsModal({
 								},
 							]}
 						>
-							<Select
-								mode="tags"
+							<ComboboxSimple
+								multiple
+								allowCreate
+								items={[]}
 								value={resourceGroups}
 								onChange={(values): void => {
-									setResourceGroups(values);
+									setResourceGroups(values as string[]);
 									form.setFieldValue('resourceGroups', values);
 								}}
 							/>

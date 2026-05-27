@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Info } from '@signozhq/icons';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { SelectSimple, SelectSimpleItem } from '@signozhq/ui/select';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	Button,
 	DatePicker,
@@ -8,13 +11,8 @@ import {
 	FormInstance,
 	Input,
 	Modal,
-	Select,
-	SelectProps,
-	Spin,
 	Tooltip,
 } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createDowntimeSchedule,
@@ -65,15 +63,29 @@ const TIME_FORMAT = DATE_TIME_FORMATS.TIME;
 const DATE_FORMAT = DATE_TIME_FORMATS.ORDINAL_DATE;
 const ORDINAL_FORMAT = DATE_TIME_FORMATS.ORDINAL_ONLY;
 
-const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
+const TZ_OPTIONS: ComboboxSimpleItem[] = ALL_TIME_ZONES.map(
 	(timezone: string) => ({
 		label: timezone,
 		value: timezone,
-		key: timezone,
 	}),
 );
 
 type AlertRuleScope = 'all' | 'specific';
+
+const DURATION_UNIT_OPTIONS: SelectSimpleItem[] = [
+	{ value: 'm', label: 'Mins' },
+	{ value: 'h', label: 'Hours' },
+];
+
+const WEEKLY_OPTIONS: ComboboxSimpleItem[] = Object.values(
+	recurrenceWeeklyOptions,
+);
+
+const RECURRENCE_OPTIONS: ComboboxSimpleItem[] =
+	recurrenceOptionWithSubmenu.map((opt) => ({
+		value: opt.value,
+		label: opt.label,
+	}));
 
 interface PlannedDowntimeFormData {
 	name: string;
@@ -81,7 +93,7 @@ interface PlannedDowntimeFormData {
 	endTime: dayjs.Dayjs | null;
 	recurrence?: AlertmanagertypesRecurrenceDTO;
 	alertRuleScope: AlertRuleScope;
-	alertRules: DefaultOptionType[];
+	alertRules: ComboboxSimpleItem[];
 	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
 	scope?: string;
@@ -91,7 +103,7 @@ const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO>;
-	alertOptions: DefaultOptionType[];
+	alertOptions: ComboboxSimpleItem[];
 	isError: boolean;
 	isLoading: boolean;
 	isOpen: boolean;
@@ -116,7 +128,7 @@ export function PlannedDowntimeForm(
 		form,
 	} = props;
 
-	const [selectedTags, setSelectedTags] = React.useState<DefaultOptionType[]>(
+	const [selectedTags, setSelectedTags] = React.useState<ComboboxSimpleItem[]>(
 		[],
 	);
 	const alertRuleFormName = 'alertRules';
@@ -151,12 +163,12 @@ export function PlannedDowntimeForm(
 		) : null;
 
 	const saveHandler = useCallback(
-		async (values: PlannedDowntimeFormData) => {
+		async (values: Omit<PlannedDowntimeFormData, 'alertRules'>) => {
 			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
 				alertIds:
-					values.alertRuleScope === 'all'
+					alertRuleScope === 'all'
 						? []
-						: (values.alertRules
+						: (selectedTags
 								.map((alert) => alert.value)
 								.filter((alert) => alert !== undefined) as string[]),
 				name: values.name,
@@ -192,10 +204,12 @@ export function PlannedDowntimeForm(
 			setSaveLoading(false);
 		},
 		[
+			alertRuleScope,
 			initialValues.id,
 			isEditMode,
 			notifications,
 			refetchAllSchedules,
+			selectedTags,
 			setIsOpen,
 			showErrorModal,
 		],
@@ -258,19 +272,22 @@ export function PlannedDowntimeForm(
 
 	const handleCancel = (): void => setIsOpen(false);
 
-	const handleAlertRulesChange: SelectProps['onChange'] = (_value, options) => {
-		form.setFieldValue(alertRuleFormName, options);
-		setSelectedTags(Array.isArray(options) ? options : [options]);
+	const handleAlertRulesChange = (value: string | string[]): void => {
+		const values = Array.isArray(value) ? value : [value];
+		const newOptions = alertOptions.filter((opt) => values.includes(opt.value));
+		form.setFieldValue(alertRuleFormName, values);
+		setSelectedTags(newOptions);
 	};
 
-	const noTagRenderer: SelectProps['tagRender'] = () => <></>;
-
-	const handleClose = (removedTag: DefaultOptionType['value']): void => {
+	const handleClose = (removedTag: string | undefined): void => {
 		if (!removedTag) {
 			return;
 		}
 		const newTags = selectedTags.filter((tag) => tag.value !== removedTag);
-		form.setFieldValue(alertRuleFormName, newTags);
+		form.setFieldValue(
+			alertRuleFormName,
+			newTags.map((tag) => tag.value),
+		);
 		setSelectedTags(newTags);
 	};
 
@@ -303,7 +320,10 @@ export function PlannedDowntimeForm(
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
 		setAlertRuleScope(formattedInitialValues.alertRuleScope);
-		form.setFieldsValue({ ...formattedInitialValues });
+		form.setFieldsValue({
+			...formattedInitialValues,
+			alertRules: formattedInitialValues.alertRules.map((rule) => rule.value),
+		});
 	}, [form, formattedInitialValues, initialValues]);
 
 	const startTimeText = useMemo((): string => {
@@ -343,6 +363,11 @@ export function PlannedDowntimeForm(
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
 	}, [formData, recurrenceType]);
+
+	const selectedAlertRuleValues = useMemo(
+		() => selectedTags.map((tag) => tag.value),
+		[selectedTags],
+	);
 
 	return (
 		<Modal
@@ -395,9 +420,9 @@ export function PlannedDowntimeForm(
 					name={['recurrence', 'repeatType']}
 					rules={requiredFieldRule}
 				>
-					<Select
+					<ComboboxSimple
 						placeholder="Select option..."
-						options={recurrenceOptionWithSubmenu}
+						items={RECURRENCE_OPTIONS}
 					/>
 				</Form.Item>
 				{recurrenceType === recurrenceOptions.weekly.value && (
@@ -406,10 +431,10 @@ export function PlannedDowntimeForm(
 						name={['recurrence', 'repeatOn']}
 						rules={requiredFieldRule}
 					>
-						<Select
+						<ComboboxSimple
 							placeholder="Select option..."
-							mode="multiple"
-							options={Object.values(recurrenceWeeklyOptions)}
+							multiple
+							items={WEEKLY_OPTIONS}
 						/>
 					</Form.Item>
 				)}
@@ -422,14 +447,12 @@ export function PlannedDowntimeForm(
 						>
 							<Input
 								addonAfter={
-									<Select
+									<SelectSimple
+										items={DURATION_UNIT_OPTIONS}
 										defaultValue="m"
 										value={durationUnit}
-										onChange={(value): void => setDurationUnit(value)}
-									>
-										<Select.Option value="m">Mins</Select.Option>
-										<Select.Option value="h">Hours</Select.Option>
-									</Select>
+										onChange={(value): void => setDurationUnit(value as string)}
+									/>
 								}
 								className="duration-input"
 								type="number"
@@ -440,7 +463,7 @@ export function PlannedDowntimeForm(
 						</Form.Item>
 					)}
 				<Form.Item label="Timezone" name="timezone" rules={requiredFieldRule}>
-					<Select options={TZ_OPTIONS} placeholder="Select timezone" showSearch />
+					<ComboboxSimple items={TZ_OPTIONS} placeholder="Select timezone" />
 				</Form.Item>
 				<Form.Item
 					label="Ends on"
@@ -491,7 +514,7 @@ export function PlannedDowntimeForm(
 									{
 										validator: async (
 											_rule,
-											value: DefaultOptionType[] | undefined,
+											value: string[] | undefined,
 										): Promise<void> => {
 											if (!value || value.length === 0) {
 												throw new Error(
@@ -502,36 +525,17 @@ export function PlannedDowntimeForm(
 									},
 								]}
 							>
-								<Select
+								<ComboboxSimple
 									placeholder="Search for alert rules or groups..."
-									mode="multiple"
-									status={isError ? 'error' : undefined}
+									multiple
 									loading={isLoading}
-									tagRender={noTagRenderer}
 									onChange={handleAlertRulesChange}
-									showSearch
-									options={alertOptions}
-									filterOption={(input, option): boolean =>
-										(option?.label as string)
-											?.toLowerCase()
-											?.includes(input.toLowerCase())
-									}
-									notFoundContent={
-										isLoading ? (
-											<span>
-												<Spin size="small" /> Loading...
-											</span>
-										) : (
-											<span>No alert available.</span>
-										)
-									}
-								>
-									{alertOptions?.map((option) => (
-										<Select.Option key={option.value} value={option.value}>
-											{option.label}
-										</Select.Option>
-									))}
-								</Select>
+									value={selectedAlertRuleValues}
+									items={alertOptions}
+									emptyPlaceholder={isLoading ? 'Loading...' : 'No alert available.'}
+									className={isError ? 'has-error' : undefined}
+									maxDisplayedPills={2}
+								/>
 							</Form.Item>
 						</>
 					)}

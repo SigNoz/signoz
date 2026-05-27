@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SolidXCircle } from '@signozhq/icons';
+// oxlint-disable-next-line signoz/no-antd-components Wait until we have qbv5 to replace this select
 import { Button, Select, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,

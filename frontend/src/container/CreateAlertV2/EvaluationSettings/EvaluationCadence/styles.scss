@@ -1,5 +1,9 @@
 .evaluation-cadence-container {
 	border-bottom: 1px solid var(--l1-border);
+
+	--select-trigger-background-color: var(--l3-background);
+	--select-trigger-border-color: var(--l3-border);
+
 	.evaluation-cadence-item {
 		border-bottom: none !important;
 	}
@@ -155,24 +159,6 @@
 						color: var(--l1-foreground);
 						font-size: 13px;
 						font-weight: 500;
-					}
-
-					.ant-select {
-						border: 1px solid var(--l1-border);
-
-						.ant-select-selector {
-							background-color: var(--l2-background);
-							border: 1px solid var(--l1-border);
-							color: var(--l1-foreground);
-
-							&:hover {
-								border-color: var(--l1-border);
-							}
-
-							&:focus {
-								border-color: var(--l1-border);
-							}
-						}
 					}
 
 					.ant-picker {

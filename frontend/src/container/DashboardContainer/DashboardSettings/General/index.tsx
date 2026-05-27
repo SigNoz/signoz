@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Col, Input, Select, Space, Tooltip } from 'antd';
+import { Col, Input, Space, Tooltip } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
@@ -21,8 +22,6 @@ import { Base64Icons } from './utils';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 import { getAbsoluteUrl } from 'utils/basePath';
-
-const { Option } = Select;
 
 function GeneralDashboardSettings(): JSX.Element {
 	const { dashboardData, setDashboardData } = useDashboardStore();
@@ -131,24 +130,22 @@ function GeneralDashboardSettings(): JSX.Element {
 					<div>
 						<Typography className={styles.dashboardName}>Dashboard Name</Typography>
 						<section className={styles.nameIconInput}>
-							<Select
-								defaultActiveFirstOption
+							<SelectSimple
 								data-testid="dashboard-image"
-								suffixIcon={null}
-								rootClassName={styles.dashboardImageInput}
+								className={styles.dashboardImageInput}
 								value={updatedImage}
-								onChange={(value: string): void => setUpdatedImage(value)}
-							>
-								{Base64Icons.map((icon) => (
-									<Option value={icon} key={icon}>
+								onChange={(value): void => setUpdatedImage(value as string)}
+								items={Base64Icons.map((icon) => ({
+									value: icon,
+									label: (
 										<img
 											src={icon}
 											alt="dashboard-icon"
 											className={styles.listItemImage}
 										/>
-									</Option>
-								))}
-							</Select>
+									),
+								}))}
+							/>
 							<Input
 								data-testid="dashboard-name"
 								className={styles.dashboardNameInput}

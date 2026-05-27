@@ -24,6 +24,8 @@
 	.metrics-treemap-title {
 		justify-content: space-between;
 
+		--select-trigger-width: auto;
+
 		.metrics-treemap-title-left {
 			display: flex;
 			align-items: center;

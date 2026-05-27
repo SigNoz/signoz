@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Input, Select } from 'antd';
+import { Input } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
@@ -19,7 +20,7 @@ function EvaluationWindowDetails({
 	const currentHourOptions = useMemo(() => {
 		const options = [];
 		for (let i = 0; i < 60; i++) {
-			options.push({ label: i.toString(), value: i });
+			options.push({ label: i.toString(), value: i.toString() });
 		}
 		return options;
 	}, []);
@@ -27,7 +28,7 @@ function EvaluationWindowDetails({
 	const currentMonthOptions = useMemo(() => {
 		const options = [];
 		for (let i = 1; i <= 31; i++) {
-			options.push({ label: i.toString(), value: i });
+			options.push({ label: i.toString(), value: i.toString() });
 		}
 		return options;
 	}, []);
@@ -123,10 +124,10 @@ function EvaluationWindowDetails({
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING AT MINUTE</Typography.Text>
-					<Select
-						options={currentHourOptions}
-						value={evaluationWindow.startingAt.number || null}
-						onChange={handleNumberChange}
+					<SelectSimple
+						items={currentHourOptions}
+						value={evaluationWindow.startingAt.number || undefined}
+						onChange={(value): void => handleNumberChange(value as string)}
 						placeholder="Select starting at"
 						data-testid="evaluation-window-details-starting-at-select"
 					/>
@@ -151,10 +152,10 @@ function EvaluationWindowDetails({
 				</div>
 				<div className="select-group">
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
-					<Select
-						options={TIMEZONE_DATA}
-						value={evaluationWindow.startingAt.timezone || null}
-						onChange={handleTimezoneChange}
+					<SelectSimple
+						items={TIMEZONE_DATA}
+						value={evaluationWindow.startingAt.timezone || undefined}
+						onChange={(value): void => handleTimezoneChange(value as string)}
 						placeholder="Select timezone"
 						data-testid="evaluation-window-details-timezone-select"
 					/>
@@ -172,10 +173,10 @@ function EvaluationWindowDetails({
 				<Typography.Text>{displayText}</Typography.Text>
 				<div className="select-group">
 					<Typography.Text>STARTING ON DAY</Typography.Text>
-					<Select
-						options={currentMonthOptions}
-						value={evaluationWindow.startingAt.number || null}
-						onChange={handleNumberChange}
+					<SelectSimple
+						items={currentMonthOptions}
+						value={evaluationWindow.startingAt.number || undefined}
+						onChange={(value): void => handleNumberChange(value as string)}
 						placeholder="Select starting at"
 						data-testid="evaluation-window-details-starting-at-select"
 					/>
@@ -189,10 +190,10 @@ function EvaluationWindowDetails({
 				</div>
 				<div className="select-group">
 					<Typography.Text>SELECT TIMEZONE</Typography.Text>
-					<Select
-						options={TIMEZONE_DATA}
-						value={evaluationWindow.startingAt.timezone || null}
-						onChange={handleTimezoneChange}
+					<SelectSimple
+						items={TIMEZONE_DATA}
+						value={evaluationWindow.startingAt.timezone || undefined}
+						onChange={(value): void => handleTimezoneChange(value as string)}
 						placeholder="Select timezone"
 						data-testid="evaluation-window-details-timezone-select"
 					/>
@@ -221,10 +222,10 @@ function EvaluationWindowDetails({
 			</div>
 			<div className="select-group time-select-group">
 				<Typography.Text>UNIT</Typography.Text>
-				<Select
-					options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
-					value={evaluationWindow.startingAt.unit || null}
-					onChange={handleUnitChange}
+				<SelectSimple
+					items={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
+					value={evaluationWindow.startingAt.unit || undefined}
+					onChange={(value): void => handleUnitChange(value as string)}
 					placeholder="Select unit"
 					data-testid="evaluation-window-details-custom-rolling-window-unit-select"
 				/>

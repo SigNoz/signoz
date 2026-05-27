@@ -1,4 +1,4 @@
-import { SelectProps } from 'antd';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
@@ -60,7 +60,7 @@ export const getSelectedQueryOptions = (
 		| IClickHouseQuery
 		| IPromQLQuery
 	>,
-): SelectProps['options'] =>
+): ComboboxSimpleItem[] =>
 	queries
 		.filter((query) => !query.disabled)
 		.map((query) => ({

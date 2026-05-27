@@ -5,7 +5,8 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
-import { Button, FormInstance, SelectProps } from 'antd';
+import { Button, FormInstance } from 'antd';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -208,7 +209,7 @@ function FormAlertRules({
 		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
 			currentQuery.builder.queryTraceOperator,
 		);
-		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
+		const queryConfig: Record<EQueryType, () => ComboboxSimpleItem[]> = {
 			[EQueryType.QUERY_BUILDER]: () => [
 				...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
 					(option) =>

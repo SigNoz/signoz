@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
-import { Select } from 'antd';
 import styled from 'styled-components';
 
 export function PipelineIndexIcon({
@@ -40,8 +39,4 @@ export const FormWrapper = styled.div`
 
 export const ProcessorType = styled.span`
 	padding-bottom: 0.5rem;
-`;
-
-export const StyledSelect = styled(Select)`
-	width: 12.5rem;
 `;

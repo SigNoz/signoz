@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Select } from 'antd';
+import { Button, Input } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
@@ -228,15 +229,16 @@ function InviteTeamMembers({
 										)
 									}
 								/>
-								<Select
+								<SelectSimple
 									defaultValue={member.role}
-									onChange={(value): void => handleRoleChange(value, member)}
+									onChange={(value): void => handleRoleChange(value as string, member)}
 									className="team-member-role-select"
-								>
-									<Select.Option value="VIEWER">Viewer</Select.Option>
-									<Select.Option value="EDITOR">Editor</Select.Option>
-									<Select.Option value="ADMIN">Admin</Select.Option>
-								</Select>
+									items={[
+										{ value: 'VIEWER', label: 'Viewer' },
+										{ value: 'EDITOR', label: 'Editor' },
+										{ value: 'ADMIN', label: 'Admin' },
+									]}
+								/>
 
 								{teamMembersToInvite?.length > 1 && (
 									<Button

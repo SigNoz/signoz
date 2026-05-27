@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Search } from '@signozhq/icons';
-import { Input, Spin } from 'antd';
+import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -26,24 +26,25 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 		<AddColumnWrapper direction="vertical">
 			<FieldTitle>{t('options_menu.addColumn')}</FieldTitle>
 
-			<Input.Group compact>
+			<Flex>
 				<AddColumnSelect
 					loading={config.isFetching}
-					size="small"
-					mode="multiple"
+					multiple
 					placeholder="Search"
-					options={config.options}
+					items={config.options}
 					value={[]}
-					onSelect={config.onSelect}
-					onSearch={config.onSearch}
-					onFocus={config.onFocus}
-					onBlur={config.onBlur}
-					notFoundContent={config.isFetching ? <Spin size="small" /> : null}
+					onChange={(value): void => {
+						const values = value as string[];
+						if (values.length > 0) {
+							config.onSelect(values[values.length - 1]);
+						}
+					}}
+					emptyPlaceholder={config.isFetching ? 'Loading...' : 'No results'}
 				/>
 				<SearchIconWrapper $isDarkMode={isDarkMode}>
 					<Search size="md" />
 				</SearchIconWrapper>
-			</Input.Group>
+			</Flex>
 
 			{config.value?.map(({ name }) => (
 				<AddColumnItem direction="horizontal" key={name}>

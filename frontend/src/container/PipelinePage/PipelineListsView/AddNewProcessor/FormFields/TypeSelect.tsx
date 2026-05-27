@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 
 import { DEFAULT_PROCESSOR_TYPE, processorTypes } from '../config';
 import {
@@ -7,27 +7,27 @@ import {
 	ProcessorType,
 	ProcessorTypeContainer,
 	ProcessorTypeWrapper,
-	StyledSelect,
 } from '../styles';
 
 function TypeSelect({ onChange, value }: TypeSelectProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
+
+	const items = processorTypes.map(({ value, label }) => ({
+		value,
+		label,
+	}));
 
 	return (
 		<ProcessorTypeWrapper>
 			<PipelineIndexIcon>1</PipelineIndexIcon>
 			<ProcessorTypeContainer>
 				<ProcessorType>{t('processor_type')}</ProcessorType>
-				<StyledSelect
-					onChange={(value: string | unknown): void => onChange(value)}
+				<SelectSimple
+					onChange={(value: string | string[]): void => onChange(value)}
 					value={value}
-				>
-					{processorTypes.map(({ value, label }) => (
-						<Select.Option key={value + label} value={value}>
-							{label}
-						</Select.Option>
-					))}
-				</StyledSelect>
+					items={items}
+					style={{ width: '12.5rem' }}
+				/>
 			</ProcessorTypeContainer>
 		</ProcessorTypeWrapper>
 	);

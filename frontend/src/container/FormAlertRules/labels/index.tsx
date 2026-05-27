@@ -1,7 +1,9 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, CircleX } from '@signozhq/icons';
-import { Button, Input, message, Modal } from 'antd';
+import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { Typography } from '@signozhq/ui/typography';
+import { Button, Input, message } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import { Labels } from 'types/api/alerts/def';
@@ -33,6 +35,7 @@ function LabelSelect({
 		initialValues ? flattenLabels(initialValues) : [],
 	);
 	const [step, setStep] = useState<LabelStep>('Idle');
+	const [showClearConfirm, setShowClearConfirm] = useState(false);
 
 	const dispatchChanges = (updatedRecs: ILabelRecord[]): void => {
 		onSetLabels(prepareLabels(updatedRecs, initialValues));
@@ -120,19 +123,16 @@ function LabelSelect({
 	};
 
 	const handleClearAll = (): void => {
-		Modal.confirm({
-			title: 'Confirm',
-			icon: <CircleAlert size="md" />,
-			content: t('remove_label_confirm'),
-			onOk() {
-				send('RESET');
-				dispatchChanges([]);
-				setStaging([]);
-				message.success(t('remove_label_success'));
-			},
-			okText: t('button_yes'),
-			cancelText: t('button_no'),
-		});
+		setShowClearConfirm(true);
+	};
+
+	const handleConfirmClear = (): void => {
+		send('RESET');
+		dispatchChanges([]);
+		setStaging([]);
+		setCurrentVal('');
+		message.success(t('remove_label_success'));
+		setShowClearConfirm(false);
 	};
 	const renderPlaceholder = useCallback((): string => {
 		if (step === 'LabelKey') {
@@ -187,6 +187,23 @@ function LabelSelect({
 					/>
 				) : null}
 			</div>
+
+			<ConfirmDialog
+				open={showClearConfirm}
+				onOpenChange={(next): void => {
+					if (!next) {
+						setShowClearConfirm(false);
+					}
+				}}
+				title={t('title_confirm')}
+				titleIcon={<CircleAlert size={14} />}
+				confirmText={t('button_yes')}
+				cancelText={t('button_no')}
+				onConfirm={handleConfirmClear}
+				onCancel={(): void => setShowClearConfirm(false)}
+			>
+				<Typography>{t('remove_label_confirm')}</Typography>
+			</ConfirmDialog>
 		</SearchContainer>
 	);
 }

@@ -93,16 +93,16 @@
 			gap: 8px;
 
 			.ant-input {
-				background-color: var(--l2-background);
-				border: 1px solid var(--l1-border);
-				color: var(--l1-foreground);
+				background-color: var(--l3-background);
+				border: 1px solid var(--l3-border);
+				color: var(--l2-foreground);
 
 				&:hover {
-					border-color: var(--l1-border);
+					border-color: var(--l3-border);
 				}
 
 				&:focus {
-					border-color: var(--l1-border);
+					border-color: var(--l3-border);
 					box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 				}
 			}

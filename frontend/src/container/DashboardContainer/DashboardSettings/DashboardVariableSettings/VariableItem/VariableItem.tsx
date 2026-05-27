@@ -5,8 +5,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Tag } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { Button, Collapse, Input, Tag } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
@@ -56,7 +57,11 @@ import { WidgetSelector } from './WidgetSelector';
 
 import './VariableItem.styles.scss';
 
-const { Option } = Select;
+const SORT_ITEMS = [
+	{ value: VariableSortTypeArr[0], label: 'Disabled' },
+	{ value: VariableSortTypeArr[1], label: 'Ascending' },
+	{ value: VariableSortTypeArr[2], label: 'Descending' },
+];
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -743,19 +748,14 @@ function VariableItem({
 									<Typography className="typography-variables">Sort Values</Typography>
 								</LabelContainer>
 
-								<Select
-									defaultActiveFirstOption
-									defaultValue={VariableSortTypeArr[0]}
+								<SelectSimple
 									value={variableSortType}
-									onChange={(value: TSortVariableValuesType): void =>
-										setVariableSortType(value)
+									onChange={(value): void =>
+										setVariableSortType(value as TSortVariableValuesType)
 									}
 									className="sort-input"
-								>
-									<Option value={VariableSortTypeArr[0]}>Disabled</Option>
-									<Option value={VariableSortTypeArr[1]}>Ascending</Option>
-									<Option value={VariableSortTypeArr[2]}>Descending</Option>
-								</Select>
+									items={SORT_ITEMS}
+								/>
 							</VariableItemRow>
 							<VariableItemRow className="multiple-values-section">
 								<LabelContainer>
@@ -798,10 +798,10 @@ function VariableItem({
 								<CustomSelect
 									placeholder="Select a default value"
 									value={variableDefaultValue}
-									onChange={(value): void => setVariableDefaultValue(value)}
-									options={previewValues.map((value) => ({
-										label: value,
-										value,
+									onChange={(value): void => setVariableDefaultValue(value ?? '')}
+									options={previewValues.map((val) => ({
+										label: val,
+										value: val,
 									}))}
 								/>
 							</VariableItemRow>

@@ -1,9 +1,11 @@
 import { memo, useMemo } from 'react';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { IOption } from 'hooks/useResourceAttribute/types';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { useOrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/useOrderByFilter';
 import { selectStyle } from 'container/QueryBuilder/filters/QueryBuilderSearch/config';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { uniqWith } from 'lodash-es';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { StringOperators } from 'types/common/queryBuilder';
 
@@ -15,7 +17,6 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 		generateOptions,
 		createOptions,
 		handleChange,
-		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange });
 
 	const { data, isFetching } = useGetAggregateKeys(
@@ -54,18 +55,42 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 		query.aggregateOperator,
 	]);
 
+	const items: ComboboxSimpleItem[] = useMemo(() => {
+		const merged: IOption[] = [...selectedValue, ...options];
+		const unique = uniqWith(merged, (a, b) => a.value === b.value);
+		return unique.map((opt) => ({
+			label: opt.label,
+			displayValue: opt.label,
+			value: opt.value,
+		}));
+	}, [selectedValue, options]);
+
+	const value = useMemo(
+		() => selectedValue.map((item) => item.value),
+		[selectedValue],
+	);
+
+	const handleComboboxChange = (next: string | string[]): void => {
+		const values = (next as string[]) || [];
+		const asOptions: IOption[] = values.map((v) => {
+			const found = items.find((item) => item.value === v);
+			return {
+				label: typeof found?.label === 'string' ? found.label : v,
+				value: v,
+			};
+		});
+		handleChange(asOptions);
+	};
+
 	return (
-		<Select
-			mode="tags"
+		<ComboboxSimple
+			multiple
+			allowCreate
+			loading={isFetching}
 			style={selectStyle}
-			onSearch={handleSearchKeys}
-			showSearch
-			showArrow={false}
-			value={selectedValue}
-			labelInValue
-			options={options}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
-			onChange={handleChange}
+			items={items}
+			value={value}
+			onChange={handleComboboxChange}
 		/>
 	);
 }

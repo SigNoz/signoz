@@ -9,6 +9,7 @@ import {
 	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
+// oxlint-disable-next-line signoz/no-antd-components This component for now is too complex to be migrated in one PR
 import { Select, Tag, Tooltip } from 'antd';
 import {
 	OPERATORS,

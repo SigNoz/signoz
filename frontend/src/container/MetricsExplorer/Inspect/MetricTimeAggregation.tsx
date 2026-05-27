@@ -1,10 +1,10 @@
 import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import classNames from 'classnames';
 
 import { TIME_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep } from './types';
+import { InspectionStep, TimeAggregationOptions } from './types';
 import { MetricTimeAggregationProps } from './types';
 import { getDefaultTimeAggregationInterval } from './utils';
 
@@ -29,12 +29,12 @@ function MetricTimeAggregation({
 			<div className="metric-time-aggregation-content">
 				<div className="inspect-metrics-input-group">
 					<Typography.Text>Align with</Typography.Text>
-					<Select
+					<SelectSimple
 						value={currentMetricInspectionOptions.timeAggregationOption}
 						onChange={(value): void => {
 							dispatchMetricInspectionOptions({
 								type: 'SET_TIME_AGGREGATION_OPTION',
-								payload: value,
+								payload: value as TimeAggregationOptions,
 							});
 							// set the time aggregation interval to the default value if it is not set
 							if (!currentMetricInspectionOptions.timeAggregationInterval) {
@@ -48,13 +48,11 @@ function MetricTimeAggregation({
 						}}
 						style={{ width: 130 }}
 						placeholder="Select option"
-					>
-						{Object.entries(TIME_AGGREGATION_OPTIONS).map(([key, value]) => (
-							<Select.Option key={key} value={key}>
-								{value}
-							</Select.Option>
-						))}
-					</Select>
+						items={Object.entries(TIME_AGGREGATION_OPTIONS).map(([key, value]) => ({
+							value: key,
+							label: value,
+						}))}
+					/>
 				</div>
 				<div className="inspect-metrics-input-group">
 					<Typography.Text>aggregated every</Typography.Text>

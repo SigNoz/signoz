@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -17,7 +17,7 @@ export const useCeleryFilterOptions = (
 	searchText: string;
 	handleSearch: (value: string) => void;
 	isFetching: boolean;
-	options: DefaultOptionType[];
+	options: ComboboxSimpleItem[];
 } => {
 	const [searchText, setSearchText] = useState<string>('');
 	const { isFetching, options } = useGetAllFilters({

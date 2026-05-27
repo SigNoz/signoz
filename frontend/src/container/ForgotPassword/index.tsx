@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { ArrowLeft, ArrowRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Form, Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Form } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useForgotPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
@@ -168,15 +169,18 @@ function ForgotPassword({
 								name="orgId"
 								rules={[{ required: true, message: 'Please select your organization' }]}
 							>
-								<Select
+								<SelectSimple
 									id="orgId"
-									data-testid="orgId"
+									testId="orgId"
 									className="login-form-input login-form-select-no-border"
 									placeholder="Select your organization"
-									options={orgs.map((org) => ({
+									items={orgs.map((org) => ({
 										value: org.id,
 										label: org.name || 'default',
 									}))}
+									onChange={(value): void => {
+										form.setFieldValue('orgId', value);
+									}}
 								/>
 							</Form.Item>
 						</div>

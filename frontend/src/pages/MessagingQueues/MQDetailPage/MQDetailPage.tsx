@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -88,16 +88,16 @@ function MQDetailPage(): JSX.Element {
 					>
 						Kafka / views /
 					</div>
-					<Select
+					<SelectSimple
 						className="messaging-queue-options"
 						defaultValue={MessagingQueuesViewType.consumerLag.value}
-						popupClassName="messaging-queue-options-popup"
 						onChange={(value): void => {
-							setSelectedView(value);
-							updateUrlQuery({ [QueryParams.mqServiceView]: value });
+							const next = value as MessagingQueuesViewTypeOptions;
+							setSelectedView(next);
+							updateUrlQuery({ [QueryParams.mqServiceView]: next });
 						}}
 						value={selectedView}
-						options={[
+						items={[
 							{
 								label: MessagingQueuesViewType.consumerLag.label,
 								value: MessagingQueuesViewType.consumerLag.value,

@@ -5,6 +5,7 @@
 		border: none !important;
 		margin-left: 0px !important;
 		padding: 0px !important;
+		border-radius: 0 !important;
 
 		.nav-btns {
 			display: flex;
@@ -19,11 +20,13 @@
 		}
 		.ant-btn-default {
 			border-color: transparent;
+			border-radius: 0;
 		}
 	}
 	.ant-tabs-tab-active {
 		.nav-btns {
-			background: var(--l1-border) !important;
+			background: var(--l3-border) !important;
+			border-radius: 0;
 		}
 	}
 
@@ -35,10 +38,10 @@
 		border-bottom: none !important;
 	}
 	.ant-tabs-nav-list {
-		border: 1px solid var(--l1-border);
+		border: 1px solid var(--l3-border);
 	}
 	.ant-tabs-tab + .ant-tabs-tab {
-		border-left: 1px solid var(--l1-border) !important;
+		border-left: 1px solid var(--l3-border) !important;
 	}
 
 	.stage-run-query {
@@ -52,8 +55,26 @@
 }
 
 .alert-query-section-container {
+	border-color: var(--l1-border);
+
+	--query-builder-v2-color: var(--l2-foreground);
+	--query-builder-v2-background-color: var(--l3-background);
+	--query-builder-v2-border-color: var(--l3-border);
+	--query-builder-v2-selection-background-color: var(--l2-background);
+	--query-builder-v2-chip-decorator-background-color: var(--l2-background);
+	--query-builder-v2-placeholder-color: var(--l3-foreground);
+	--query-builder-v2-selected-background-color: var(--l3-foreground);
+	--query-search-background-color: var(--l3-background);
+	--query-search-background-color-selection: var(--l3-background);
+	--input-with-label-border-color: var(--l3-border);
+	--input-with-label-background-color: var(--l3-background);
+	--input-with-label-color: var(--l2-foreground);
+
+	--combobox-pill-background: var(--l2-background);
+
 	.ant-card-body {
 		padding: 0px;
+		background-color: var(--l2-background);
 
 		.alert-tabs {
 			padding: 0px;

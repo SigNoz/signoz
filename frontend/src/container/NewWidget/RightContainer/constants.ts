@@ -1,14 +1,14 @@
-import type { DefaultOptionType } from 'antd/es/select';
+import type { SelectSimpleItem } from '@signozhq/ui/select';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
-export const operatorOptions: DefaultOptionType[] = [
+export const operatorOptions: SelectSimpleItem[] = [
 	{ value: '>', label: '>' },
 	{ value: '>=', label: '>=' },
 	{ value: '<', label: '<' },
 	{ value: '<=', label: '<=' },
 ];
 
-export const showAsOptions: DefaultOptionType[] = [
+export const showAsOptions: SelectSimpleItem[] = [
 	{ value: 'Text', label: 'Text' },
 	{ value: 'Background', label: 'Background' },
 ];

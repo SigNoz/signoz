@@ -18,8 +18,9 @@ import {
 	RefreshCw,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
+// oxlint-disable-next-line signoz/no-antd-components This component for now is too complex to be migrated in one PR
+import { Button, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';

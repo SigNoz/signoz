@@ -1,32 +1,8 @@
-import { useCallback, useMemo, useRef } from 'react';
-import type { SelectProps } from 'antd';
-import { Tag, Tooltip } from 'antd';
-import type { BaseOptionType } from 'antd/es/select';
+import { useCallback, useMemo } from 'react';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
-import { Container, Select } from './styles';
-
-function TextOverflowTooltip({
-	option,
-}: {
-	option: BaseOptionType;
-}): JSX.Element {
-	const contentRef = useRef<HTMLDivElement | null>(null);
-	const isOverflow = contentRef.current
-		? contentRef.current?.offsetWidth < contentRef.current?.scrollWidth
-		: false;
-	return (
-		<Tooltip
-			placement="left"
-			title={option.value}
-			{...(!isOverflow ? { open: false } : {})}
-		>
-			<div className="ant-select-item-option-content" ref={contentRef}>
-				{option.value}
-			</div>
-		</Tooltip>
-	);
-}
+import { Container } from './styles';
 
 function Filter({
 	onSelectedFilterChange,
@@ -74,49 +50,34 @@ function Filter({
 		return [...allLabelsSet];
 	}, [allAlerts]);
 
-	const options = uniqueLabels.map((e) => ({
-		value: e,
-		title: '',
-	}));
-
-	const getTags: SelectProps['tagRender'] = (props): JSX.Element => {
-		const { closable, onClose, label } = props;
-
-		return (
-			<Tag
-				color="magenta"
-				closable={closable}
-				onClose={onClose}
-				style={{ marginRight: 3 }}
-			>
-				{label}
-			</Tag>
-		);
-	};
+	const items: ComboboxSimpleItem[] = useMemo(
+		() =>
+			uniqueLabels.map((e) => ({
+				value: e,
+				label: e,
+			})),
+		[uniqueLabels],
+	);
 
 	return (
 		<Container>
-			<Select
-				allowClear
-				onChange={onChangeSelectedFilterHandler}
-				mode="tags"
+			<ComboboxSimple
+				multiple
+				allowCreate
+				onChange={(v): void => onChangeSelectedFilterHandler(v)}
 				value={selectedFilter.map((e) => e.value)}
 				placeholder="Filter by Tags - e.g. severity:warning, alertname:Sample Alert"
-				tagRender={(props): JSX.Element => getTags(props)}
-				options={[]}
+				items={[]}
+				style={{ minWidth: 350 }}
 			/>
-			<Select
-				allowClear
-				onChange={onChangeSelectGroupHandler}
-				mode="tags"
-				defaultValue={selectedGroup.map((e) => e.value)}
-				showArrow
+			<ComboboxSimple
+				multiple
+				allowCreate
+				onChange={(v): void => onChangeSelectGroupHandler(v)}
+				value={selectedGroup.map((e) => e.value)}
 				placeholder="Group by any tag"
-				tagRender={(props): JSX.Element => getTags(props)}
-				options={options}
-				optionRender={(option): JSX.Element => (
-					<TextOverflowTooltip option={option} />
-				)}
+				items={items}
+				style={{ minWidth: 350 }}
 			/>
 		</Container>
 	);

@@ -1,4 +1,7 @@
 .celery-overview-container {
+	--combobox-trigger-border-color: var(--l2-border);
+	--combobox-trigger-background-color: var(--l2-background);
+
 	.celery-overview-content {
 		display: flex;
 		flex-direction: column;

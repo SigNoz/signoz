@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Button, Flex, Select } from 'antd';
+import { Button, Flex } from 'antd';
 import cx from 'classnames';
+import { SelectSimple } from '@signozhq/ui/select';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
 import {
 	logsQueryFunctionOptions,
 	metricQueryFunctionOptions,
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -32,7 +32,6 @@ export default function Function({
 	handleUpdateFunctionName,
 	handleDeleteFunction,
 }: FunctionProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
 	const { showInput, disabled } =
@@ -68,26 +67,22 @@ export default function Function({
 		return <></>;
 	}
 
+	const items = functionOptions.map((opt) => ({
+		value: opt.value,
+		label: opt.label,
+	}));
+
 	return (
 		<Flex className="query-function">
-			<Select
+			<SelectSimple
 				className={cx('query-function-name-selector', showInput ? 'showInput' : '')}
 				value={normalizedFunctionName}
 				disabled={disabled}
 				style={{ minWidth: '100px' }}
 				onChange={(value): void => {
-					handleUpdateFunctionName(funcData, index, value);
+					handleUpdateFunctionName(funcData, index, value as string);
 				}}
-				dropdownStyle={{
-					minWidth: 200,
-					borderRadius: '4px',
-					border: isDarkMode
-						? '1px solid var(--bg-slate-400)'
-						: '1px solid var(--bg-vanilla-300)',
-					boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
-				}}
-				placement="bottomRight"
-				options={functionOptions}
+				items={items}
 			/>
 
 			{showInput && (

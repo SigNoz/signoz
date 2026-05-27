@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { green } from '@ant-design/colors';
 import { Pause, Play, EllipsisVertical } from '@signozhq/icons';
-import { Button, Flex, Popover, Select, Space } from 'antd';
+import { Button, Flex, Popover, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -165,24 +165,22 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 	const OptionsPopOverContent = useMemo(
 		() => (
 			<TimePickerSelect
-				getPopupContainer={popupContainer}
 				disabled={liveTail === 'PLAYING'}
-				value={liveTailStartRange}
+				value={String(liveTailStartRange)}
 				onChange={(value): void => {
-					if (typeof value === 'number') {
+					const numValue = Number(value);
+					if (!Number.isNaN(numValue)) {
 						dispatch({
 							type: SET_LIVE_TAIL_START_TIME,
-							payload: value,
+							payload: numValue,
 						});
 					}
 				}}
-			>
-				{TIME_PICKER_OPTIONS.map((optionData) => (
-					<Select.Option key={optionData.label} value={optionData.value}>
-						Last {optionData.label}
-					</Select.Option>
-				))}
-			</TimePickerSelect>
+				items={TIME_PICKER_OPTIONS.map((optionData) => ({
+					value: String(optionData.value),
+					label: `Last ${optionData.label}`,
+				}))}
+			/>
 		),
 		[dispatch, liveTail, liveTailStartRange],
 	);

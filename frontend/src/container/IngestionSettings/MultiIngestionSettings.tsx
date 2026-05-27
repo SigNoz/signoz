@@ -5,6 +5,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { SelectSimple } from '@signozhq/ui/select';
 import {
 	Col,
 	Collapse,
@@ -14,7 +15,6 @@ import {
 	InputNumber,
 	Modal,
 	Row,
-	Select,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
@@ -84,7 +84,18 @@ import { getDaysUntilExpiry } from 'utils/timeUtils';
 
 import './IngestionSettings.styles.scss';
 
-const { Option } = Select;
+const SIZE_UNIT_ITEMS = [
+	{ value: 'TiB', label: 'TiB' },
+	{ value: 'GiB', label: 'GiB' },
+	{ value: 'MiB', label: 'MiB' },
+	{ value: 'KiB', label: 'KiB' },
+];
+
+const COUNT_UNIT_ITEMS = [
+	{ value: 'thousand', label: 'Thousand' },
+	{ value: 'million', label: 'Million' },
+	{ value: 'billion', label: 'Billion' },
+];
 
 const BYTES = 1073741824;
 
@@ -1212,12 +1223,11 @@ function MultiIngestionSettings(): JSX.Element {
 																							<InputNumber
 																								disabled={!activeSignal?.config?.day?.enabled}
 																								addonAfter={
-																									<Select defaultValue="GiB" disabled>
-																										<Option value="TiB">TiB</Option>
-																										<Option value="GiB">GiB</Option>
-																										<Option value="MiB">MiB</Option>
-																										<Option value="KiB">KiB</Option>
-																									</Select>
+																									<SelectSimple
+																										defaultValue="GiB"
+																										disabled
+																										items={SIZE_UNIT_ITEMS}
+																									/>
 																								}
 																							/>
 																						</Form.Item>
@@ -1240,15 +1250,12 @@ function MultiIngestionSettings(): JSX.Element {
 																										noStyle
 																										initialValue="million"
 																									>
-																										<Select
+																										<SelectSimple
 																											style={{
 																												width: 90,
 																											}}
-																										>
-																											<Option value="thousand">Thousand</Option>
-																											<Option value="million">Million</Option>
-																											<Option value="billion">Billion</Option>
-																										</Select>
+																											items={COUNT_UNIT_ITEMS}
+																										/>
 																									</Form.Item>
 																								}
 																							/>
@@ -1301,12 +1308,11 @@ function MultiIngestionSettings(): JSX.Element {
 																							<InputNumber
 																								disabled={!activeSignal?.config?.second?.enabled}
 																								addonAfter={
-																									<Select defaultValue="GiB" disabled>
-																										<Option value="TiB">TiB</Option>
-																										<Option value="GiB">GiB</Option>
-																										<Option value="MiB">MiB</Option>
-																										<Option value="KiB">KiB</Option>
-																									</Select>
+																									<SelectSimple
+																										defaultValue="GiB"
+																										disabled
+																										items={SIZE_UNIT_ITEMS}
+																									/>
 																								}
 																							/>
 																						</Form.Item>
@@ -1329,15 +1335,12 @@ function MultiIngestionSettings(): JSX.Element {
 																										noStyle
 																										initialValue="million"
 																									>
-																										<Select
+																										<SelectSimple
 																											style={{
 																												width: 90,
 																											}}
-																										>
-																											<Option value="thousand">Thousand</Option>
-																											<Option value="million">Million</Option>
-																											<Option value="billion">Billion</Option>
-																										</Select>
+																											items={COUNT_UNIT_ITEMS}
+																										/>
 																									</Form.Item>
 																								}
 																							/>

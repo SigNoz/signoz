@@ -1,14 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
 import { X } from '@signozhq/icons';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { Container, IconContainer, SelectComponent } from './styles';
+import { Container, IconContainer } from './styles';
 import TagsKey from './TagKey';
 import TagValue from './TagValue';
 import { mapOperators } from './utils';
-
-const { Option } = Select;
 
 type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
 const StringBoolNumber = ['string', 'number', 'bool'];
@@ -131,19 +129,15 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				tag={tag}
 				setLocalSelectedTags={setLocalSelectedTags}
 			/>
-			<SelectComponent
+			<SelectSimple
 				onChange={onChangeOperatorHandler}
 				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
-			>
-				{
-					// filter out the operator that does not include supported type of the selected key
-					mapOperators(selectedKey).map((e) => (
-						<Option key={e.value} value={e.key}>
-							{e.value}
-						</Option>
-					))
-				}
-			</SelectComponent>
+				items={mapOperators(selectedKey).map((e) => ({
+					value: e.key as string,
+					label: e.value,
+				}))}
+				style={{ width: '100%' }}
+			/>
 
 			{selectedKey ? (
 				<TagValue
@@ -153,7 +147,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 					tagKey={selectedKey}
 				/>
 			) : (
-				<SelectComponent />
+				<SelectSimple items={[]} style={{ width: '100%' }} />
 			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>

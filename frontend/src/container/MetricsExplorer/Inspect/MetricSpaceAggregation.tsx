@@ -1,10 +1,13 @@
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
-import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { SPACE_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep } from './types';
-import { MetricSpaceAggregationProps } from './types';
+import {
+	InspectionStep,
+	MetricSpaceAggregationProps,
+	SpaceAggregationOptions,
+} from './types';
 
 function MetricSpaceAggregation({
 	spaceAggregationLabels,
@@ -26,45 +29,43 @@ function MetricSpaceAggregation({
 			</div>
 			<div className="metric-space-aggregation-content">
 				<div className="metric-space-aggregation-content-left">
-					<Select
+					<SelectSimple
 						value={currentMetricInspectionOptions.spaceAggregationOption}
 						placeholder="Select option"
 						onChange={(value): void => {
+							if (Array.isArray(value)) {
+								return;
+							}
 							dispatchMetricInspectionOptions({
 								type: 'SET_SPACE_AGGREGATION_OPTION',
-								payload: value,
+								payload: value as SpaceAggregationOptions,
 							});
 						}}
 						style={{ width: 130 }}
 						disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
-					>
-						{/* eslint-disable-next-line sonarjs/no-identical-functions */}
-						{Object.entries(SPACE_AGGREGATION_OPTIONS).map(([key, value]) => (
-							<Select.Option key={key} value={key}>
-								{value}
-							</Select.Option>
-						))}
-					</Select>
+						items={Object.entries(SPACE_AGGREGATION_OPTIONS).map(([key, value]) => ({
+							value: key,
+							label: value,
+						}))}
+					/>
 				</div>
-				<Select
-					mode="multiple"
+				<SelectSimple
+					multiple
 					style={{ width: '100%' }}
 					placeholder="Search for attributes..."
 					value={currentMetricInspectionOptions.spaceAggregationLabels}
 					onChange={(value): void => {
 						dispatchMetricInspectionOptions({
 							type: 'SET_SPACE_AGGREGATION_LABELS',
-							payload: value,
+							payload: value as string[],
 						});
 					}}
 					disabled={inspectionStep === InspectionStep.TIME_AGGREGATION}
-				>
-					{spaceAggregationLabels.map((label) => (
-						<Select.Option key={label} value={label}>
-							{label}
-						</Select.Option>
-					))}
-				</Select>
+					items={spaceAggregationLabels.map((label) => ({
+						value: label,
+						label,
+					}))}
+				/>
 			</div>
 		</div>
 	);

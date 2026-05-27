@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Row, Select, Spin } from 'antd';
+import { Row } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
 } from 'components/CeleryTask/CeleryUtils';
 import { useCeleryFilterOptions } from 'components/CeleryTask/useCeleryFilterOptions';
-import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 
@@ -48,7 +48,7 @@ export function FilterSelect({
 			: getValuesFromQueryParams(queryParam, urlQuery) || [];
 
 	// Memoize options to include the typed value if not present
-	const mergedOptions = useMemo(() => {
+	const mergedOptions = useMemo<ComboboxSimpleItem[]>(() => {
 		if (
 			!!searchValue.trim().length &&
 			!options.some((opt) => opt.value === searchValue)
@@ -84,35 +84,16 @@ export function FilterSelect({
 		],
 	);
 
-	// Update searchValue on user input
-	const handleSearchInput = (input: string): void => {
-		setSearchValue(input);
-		handleSearch(input);
-	};
-
 	return (
-		<Select
+		<ComboboxSimple
 			key={filterType.toString()}
 			placeholder={placeholder}
-			showSearch
-			{...(isMultiple ? { mode: 'multiple' } : {})}
-			options={mergedOptions}
+			multiple={isMultiple}
+			items={mergedOptions}
 			loading={isFetching}
 			className="config-select-option"
-			onSearch={handleSearchInput}
-			maxTagCount={4}
-			allowClear
-			maxTagPlaceholder={SelectMaxTagPlaceholder}
 			value={selectValue}
-			notFoundContent={
-				isFetching ? (
-					<span>
-						<Spin size="small" /> Loading...
-					</span>
-				) : (
-					<span>No {placeholder} found</span>
-				)
-			}
+			emptyPlaceholder={`No ${placeholder} found`}
 			onChange={handleSelectChange}
 		/>
 	);

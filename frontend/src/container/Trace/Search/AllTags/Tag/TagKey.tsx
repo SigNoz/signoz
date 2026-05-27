@@ -8,7 +8,7 @@ import {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { AutoComplete, Input } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import getTagFilters from 'api/trace/getTagFilter';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -27,7 +27,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const { isLoading, data } = useQuery(
+	const { data } = useQuery(
 		[
 			'getTagKeys',
 			globalTime.minTime,
@@ -51,39 +51,40 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	const options = useMemo(() => getTagKeyOptions(data?.payload), [data]);
 
-	const onSelectHandler = useCallback(
-		(value: unknown) =>
+	const comboboxItems: ComboboxSimpleItem[] = useMemo(
+		() =>
+			options?.map((e) => ({
+				label: e.label?.toString() ?? '',
+				value: e.value as string,
+			})) ?? [],
+		[options],
+	);
+
+	const handleChange = useCallback(
+		(value: string | string[]): void => {
+			const stringValue = value as string;
+			setSelectedKey(stringValue);
 			onTagKeySelect(
-				value,
+				stringValue,
 				options,
 				setSelectedKey,
 				setLocalSelectedTags,
 				index,
 				tag,
-			),
+			);
+		},
 		[index, options, setLocalSelectedTags, tag],
 	);
 
 	return (
-		<AutoComplete
+		<ComboboxSimple
 			style={{ width: '100%' }}
 			value={selectedKey}
-			allowClear
-			disabled={isLoading}
-			notFoundContent="No tags available"
-			showSearch
-			options={options?.map((e) => ({
-				label: e.label?.toString(),
-				value: e.value,
-			}))}
-			filterOption={(inputValue, option): boolean =>
-				option?.label?.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-			}
-			onChange={(e): void => setSelectedKey(e)}
-			onSelect={onSelectHandler}
-		>
-			<Input placeholder="Please select" />
-		</AutoComplete>
+			items={comboboxItems}
+			emptyPlaceholder="No tags available"
+			placeholder="Please select"
+			onChange={handleChange}
+		/>
 	);
 }
 

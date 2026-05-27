@@ -1,6 +1,7 @@
-import { Input, Select, Skeleton } from 'antd';
+import { Input, Skeleton } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Button } from '@signozhq/ui/button';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -18,10 +19,7 @@ const DEFAULT_RESOURCE_ATTRIBUTES = {
 	name: 'name',
 };
 
-const timerangeOptions = [1, 2, 4, 6, 12, 24].map((hours) => ({
-	label: `${hours}h`,
-	value: hours,
-}));
+const TIMERANGE_HOURS = [1, 2, 4, 6, 12, 24];
 
 interface SpanPercentilePanelProps {
 	selectedSpan: SpanV3;
@@ -143,25 +141,24 @@ function SpanPercentilePanel({
 				</Typography.Text>
 
 				<div className={styles.timerange}>
-					<Select
-						labelInValue
+					<ComboboxSimple
 						placeholder="Select timerange"
 						className={styles.timerangeSelect}
-						getPopupContainer={(trigger): HTMLElement =>
-							trigger.parentElement || document.body
-						}
-						value={{
-							label: `${selectedTimeRange}h : ${dayjs(selectedSpan.timestamp)
+						value={String(selectedTimeRange)}
+						onChange={(value): void => {
+							setSelectedTimeRange(Number(value));
+						}}
+						items={TIMERANGE_HOURS.map((hours) => ({
+							label: `${hours}h`,
+							value: String(hours),
+						}))}
+						displayValue={(): string =>
+							`${selectedTimeRange}h : ${dayjs(selectedSpan.timestamp)
 								.subtract(selectedTimeRange, 'hour')
 								.format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)} - ${dayjs(
 								selectedSpan.timestamp,
-							).format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)}`,
-							value: selectedTimeRange,
-						}}
-						onChange={(value): void => {
-							setSelectedTimeRange(Number(value.value));
-						}}
-						options={timerangeOptions}
+							).format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)}`
+						}
 					/>
 				</div>
 

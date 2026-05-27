@@ -1,11 +1,18 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from '@signozhq/icons';
-import { Button, Form, FormInstance, Input, Select, Space } from 'antd';
+import { Button, Form, FormInstance, Input, Space } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../utils';
-import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
+import { SpaceContainer, TitleWrapper } from './styles';
+
+const ROLE_ITEMS = [
+	{ value: 'ADMIN', label: 'ADMIN' },
+	{ value: 'VIEWER', label: 'VIEWER' },
+	{ value: 'EDITOR', label: 'EDITOR' },
+];
 
 function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
@@ -43,11 +50,11 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 										<Input placeholder={t('name_placeholder')} />
 									</Form.Item>
 									<Form.Item name={[name, 'role']} initialValue="VIEWER">
-										<SelectDrawer data-testid="role-select">
-											<Select.Option value="ADMIN">ADMIN</Select.Option>
-											<Select.Option value="VIEWER">VIEWER</Select.Option>
-											<Select.Option value="EDITOR">EDITOR</Select.Option>
-										</SelectDrawer>
+										<SelectSimple
+											data-testid="role-select"
+											items={ROLE_ITEMS}
+											style={{ width: 120 }}
+										/>
 									</Form.Item>
 									<Button
 										type="text"

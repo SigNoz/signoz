@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
-import { Col, Input, Row, Select } from 'antd';
+import { Col, Input, Row } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { LEGEND } from 'constants/global';
 // ** Components
@@ -15,7 +16,6 @@ import {
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
@@ -220,18 +220,14 @@ export function Formula({
 					{isQBV2 && (
 						<Col span={24}>
 							<div className="formula-qbv2-container">
-								<div className="periscope-input-with-label">
+								<div className="periscope-input-with-label periscope-input-with-label-no-close">
 									<div className="label">Order By</div>
 									<div className="input">
-										<Select
-											getPopupContainer={popupContainer}
-											showSearch
-											filterOption={false}
-											showArrow={false}
+										<ComboboxSimple
 											placeholder="Select order by"
-											options={qbV2OrderByOptions}
-											onChange={handleQBV2OrderByChange}
-											value={qbV2OrderByValue}
+											items={qbV2OrderByOptions as ComboboxSimpleItem[]}
+											onChange={(value): void => handleQBV2OrderByChange(value as string)}
+											value={qbV2OrderByValue || ''}
 											style={{ width: '100%' }}
 										/>
 									</div>
@@ -242,6 +238,7 @@ export function Formula({
 									onChange={(value): void => handleChangeLimit(Number(value))}
 									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
+									className="formula-qbv2-limit-input"
 								/>
 							</div>
 						</Col>

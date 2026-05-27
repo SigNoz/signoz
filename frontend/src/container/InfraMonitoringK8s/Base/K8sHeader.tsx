@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Select } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import logEvent from 'api/common/logEvent';
 import { TableColumnDef } from 'components/TanStackTableView';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -185,17 +185,17 @@ function K8sHeader<TData>({
 
 				<div className={styles.k8SAttributeSearchContainer}>
 					<div className={styles.groupByLabel}> Group by </div>
-					<Select
+					<ComboboxSimple
 						className={styles.groupBySelect}
 						loading={isLoadingGroupByFilters}
-						mode="multiple"
-						value={groupBy}
-						allowClear
-						maxTagCount="responsive"
+						multiple
+						value={groupBy.map((g) => g.key)}
 						placeholder="Search for attribute"
 						style={{ width: '100%' }}
-						options={groupByOptions}
-						onChange={handleGroupByChange}
+						items={groupByOptions}
+						onChange={(value): void =>
+							handleGroupByChange(value as unknown as IBuilderQuery['groupBy'])
+						}
 					/>
 				</div>
 			</div>

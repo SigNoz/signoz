@@ -8,4 +8,9 @@
 	grid-template-columns: 60% 35%;
 	justify-content: space-between;
 	gap: 16px;
+
+	.formula-qbv2-limit-input .ant-input {
+		border-right-width: 1px;
+		border-right-style: solid;
+	}
 }

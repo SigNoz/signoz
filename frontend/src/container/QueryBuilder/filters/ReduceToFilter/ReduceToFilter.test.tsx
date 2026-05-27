@@ -28,7 +28,7 @@ describe('ReduceToFilter', () => {
 	it('initializes with default avg when no reduceTo is set', () => {
 		render(<ReduceToFilter query={baseQuery()} onChange={mockOnChange} />);
 
-		expect(screen.getByTestId('reduce-to')).toBeInTheDocument();
+		expect(screen.getByRole('combobox')).toBeInTheDocument();
 		expect(
 			screen.getByText('Average of values in timeframe'),
 		).toBeInTheDocument();

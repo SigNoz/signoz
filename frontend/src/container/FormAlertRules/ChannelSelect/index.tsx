@@ -1,14 +1,16 @@
-import { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@signozhq/icons';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
-import { StyledCreateChannelOption, StyledSelect } from './styles';
+import { StyledCreateChannelOption } from './styles';
+
+const ADD_NEW_CHANNEL_VALUE = 'add-new-channel';
 
 export interface ChannelSelectProps {
 	disabled?: boolean;
@@ -38,12 +40,13 @@ function ChannelSelect({
 
 	const { notifications } = useNotifications();
 
-	const handleChange = (value: string[]): void => {
-		if (value.includes('add-new-channel')) {
+	const handleChange = (value: string | string[]): void => {
+		const arr = Array.isArray(value) ? value : [value];
+		if (arr.includes(ADD_NEW_CHANNEL_VALUE)) {
 			handleCreateNewChannels();
 			return;
 		}
-		onSelectChannels(value);
+		onSelectChannels(arr);
 	};
 
 	if (hasError) {
@@ -59,57 +62,55 @@ function ChannelSelect({
 		user.role,
 	);
 
-	const renderOptions = (): ReactNode[] => {
-		const children: ReactNode[] = [];
+	const items = useMemo<ComboboxSimpleItem[]>(() => {
+		const result: ComboboxSimpleItem[] = [];
 
 		if (!isLoading && addNewChannelPermission) {
-			children.push(
-				<Select.Option key="add-new-channel" value="add-new-channel">
+			result.push({
+				value: ADD_NEW_CHANNEL_VALUE,
+				label: (
 					<StyledCreateChannelOption>
 						<Plus size="md" />
 						Create a new channel
 					</StyledCreateChannelOption>
-				</Select.Option>,
-			);
+				),
+				displayValue: 'Create a new channel',
+			});
 		}
 
-		if (isLoading || channels.length === 0) {
-			return children;
+		if (!isLoading && channels.length > 0) {
+			channels.forEach((o) => {
+				result.push({
+					value: o.name,
+					label: o.name,
+				});
+			});
 		}
 
-		channels.forEach((o) => {
-			children.push(
-				<Select.Option key={o.id} value={o.name}>
-					{o.name}
-				</Select.Option>,
-			);
-		});
-
-		return children;
-	};
+		return result;
+	}, [isLoading, addNewChannelPermission, channels]);
 
 	return (
-		<StyledSelect
+		<ComboboxSimple
+			multiple
+			style={{
+				width: '100%',
+				borderRadius: 4,
+			}}
 			disabled={disabled}
-			status={hasError ? 'error' : ''}
-			mode="multiple"
-			style={{ width: '100%' }}
+			className={hasError ? 'channel-select-error' : undefined}
 			placeholder={t('placeholder_channel_select')}
-			data-testid="alert-channel-select"
+			testId="alert-channel-select"
 			value={currentValue}
-			notFoundContent={isLoading && <Spin size="small" />}
-			onDropdownVisibleChange={(open): void => {
-				if (open) {
-					onDropdownOpen();
-				}
-			}}
+			loading={isLoading}
+			items={items}
 			onChange={(value): void => {
-				handleChange(value as string[]);
+				// ComboboxSimple has no onOpen callback, so we fire onDropdownOpen
+				// (the refetch trigger) on the first interaction via onChange.
+				onDropdownOpen();
+				handleChange(value);
 			}}
-			optionLabelProp="label"
-		>
-			{renderOptions()}
-		</StyledSelect>
+		/>
 	);
 }
 

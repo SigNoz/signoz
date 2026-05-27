@@ -1,11 +1,5 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import styled from 'styled-components';
-
-export const SpaceComponent = styled(Space)`
-	&&& {
-		width: 100%;
-	}
-`;
 
 export const Container = styled(Space)`
 	&&& {
@@ -29,10 +23,4 @@ export const IconContainer = styled.div`
 	cursor: pointer;
 
 	margin-left: 1.125rem;
-`;
-
-export const SelectComponent = styled(Select)`
-	&&& {
-		width: 100%;
-	}
 `;

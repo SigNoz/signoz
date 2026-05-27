@@ -6,7 +6,8 @@ import {
 	RadioGroupItem,
 	RadioGroupLabel,
 } from '@signozhq/ui/radio-group';
-import { Select, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 
 import {
 	buildConfig,
@@ -106,14 +107,13 @@ function ResourceRow({
 
 					{config.scope === PermissionScope.ONLY_SELECTED && showOnlySelected && (
 						<div className="psp-resource__select-wrapper">
-							<Select
-								mode="tags"
-								open={false}
-								allowClear
-								suffixIcon={null}
+							<ComboboxSimple
+								multiple
+								allowCreate
+								items={[]}
 								value={config.selectedIds}
-								onChange={(vals: string[]): void =>
-									onSelectedIdsChange(resource.id, vals)
+								onChange={(vals): void =>
+									onSelectedIdsChange(resource.id, vals as string[])
 								}
 								placeholder="Type and press Enter to add..."
 								className="psp-resource__select"

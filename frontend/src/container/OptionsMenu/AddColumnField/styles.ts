@@ -1,6 +1,6 @@
-import { FunctionComponent } from 'react';
 import { Trash2 } from '@signozhq/icons';
-import { Card, Select, SelectProps, Space } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Card, Space } from 'antd';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
@@ -18,9 +18,7 @@ export const SearchIconWrapper = styled(Card)<{ $isDarkMode: boolean }>`
 	}
 `;
 
-export const AddColumnSelect: FunctionComponent<SelectProps> = styled(
-	Select,
-)<SelectProps>`
+export const AddColumnSelect = styled(ComboboxSimple)`
 	width: 85%;
 `;
 

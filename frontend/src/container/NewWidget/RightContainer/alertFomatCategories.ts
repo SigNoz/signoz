@@ -1,4 +1,4 @@
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 
 import {
 	BooleanFormats,
@@ -107,7 +107,7 @@ export const alertsCategory = [
 
 export const getCategorySelectOptionByName = (
 	name?: CategoryNames | string,
-): DefaultOptionType[] =>
+): ComboboxSimpleItem[] =>
 	alertsCategory
 		.find((category) => category.name === name)
 		?.formats.map((format) => ({

@@ -825,5 +825,13 @@ body.ai-assistant-panel-open {
 // overrides
 :root {
 	--input-focus-outline-width: 0;
+	--select-trigger-height: 2rem;
+	--select-trigger-box-shadow: none;
+	--combobox-trigger-box-shadow: none;
 	--radius-2: 4px;
+}
+
+// override until we migrate all components to signozhq/ui
+body > div[data-radix-popper-content-wrapper=''] {
+	z-index: 1001 !important;
 }

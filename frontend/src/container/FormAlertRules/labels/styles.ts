@@ -9,12 +9,12 @@ interface SearchContainerProps {
 
 export const SearchContainer = styled.div<SearchContainerProps>`
 	border-radius: 4px;
-	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
+	background: var(--l3-background);
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	padding: 0.2rem;
-	border: 1px solid #ccc5;
+	border: 1px solid var(--l3-border);
 	${({ disabled }): string => (disabled ? `cursor: not-allowed;` : '')}
 `;
 

@@ -1,6 +1,6 @@
 import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
@@ -56,8 +56,8 @@ export const formatDateTime = (
 
 export const getAlertOptionsFromIds = (
 	alertIds: string[],
-	alertOptions: DefaultOptionType[],
-): DefaultOptionType[] =>
+	alertOptions: ComboboxSimpleItem[],
+): ComboboxSimpleItem[] =>
 	alertOptions.filter(
 		(alert) =>
 			alert !== undefined &&

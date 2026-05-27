@@ -11,7 +11,7 @@
 		.alert-condition-tabs {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--l1-border);
+			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
@@ -26,19 +26,19 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--l1-border);
-				border-bottom: 0.5px solid var(--l1-border);
+				border-left: 0.5px solid var(--l2-border);
+				border-bottom: 0.5px solid var(--l2-border);
 				width: 120px;
 				height: 36px;
 
 				gap: 8px;
 
 				&.active-tab {
-					background-color: var(--l1-background);
+					background-color: var(--l2-background);
 					border-bottom: none;
 
 					&:hover {
-						background-color: var(--l1-background) !important;
+						background-color: var(--l2-background-hover) !important;
 					}
 				}
 
@@ -54,7 +54,7 @@
 				&:hover {
 					background-color: transparent !important;
 					border-left: 1px solid transparent !important;
-					color: var(--l1-foreground);
+					color: var(--l3-foreground);
 				}
 			}
 		}
@@ -65,9 +65,15 @@
 .anomaly-threshold-container {
 	padding: 24px;
 	padding-right: 72px;
-	background-color: var(--l1-background);
-	border: 1px solid var(--l1-border);
+	background-color: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	width: 100%;
+
+	--select-trigger-background-color: var(--l3-background);
+	--select-trigger-border-color: var(--l3-border);
+
+	--combobox-trigger-background-color: var(--l3-background);
+	--combobox-trigger-border-color: var(--l3-border);
 
 	.alert-condition-sentences {
 		display: flex;
@@ -87,34 +93,6 @@
 				display: flex;
 				align-items: center;
 				gap: 8px;
-			}
-
-			.ant-select {
-				width: 240px;
-
-				.ant-select-selector {
-					background-color: var(--l2-background);
-					border: 1px solid var(--l1-border);
-					color: var(--muted-foreground);
-					font-family: 'Space Mono';
-
-					&:hover {
-						border-color: var(--l1-border);
-					}
-
-					&:focus {
-						border-color: var(--l1-border);
-						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-					}
-				}
-
-				.ant-select-selection-item {
-					color: var(--l1-foreground);
-				}
-
-				.ant-select-arrow {
-					color: var(--muted-foreground);
-				}
 			}
 		}
 	}
@@ -151,9 +129,9 @@
 					flex-wrap: wrap;
 
 					.ant-input {
-						background-color: var(--card);
-						border: 1px solid var(--l1-border);
-						color: var(--l1-foreground);
+						background-color: var(--l3-background);
+						border: 1px solid var(--l3-border);
+						color: var(--l2-foreground);
 						height: 32px;
 
 						&::placeholder {
@@ -161,28 +139,28 @@
 						}
 
 						&:hover {
-							border-color: var(--l1-border);
+							border-color: var(--l3-border);
 						}
 
 						&:focus {
-							border-color: var(--l1-border);
+							border-color: var(--l3-border);
 							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 						}
 					}
 
 					.ant-select {
 						.ant-select-selector {
-							background-color: var(--card);
-							border: 1px solid var(--l1-border);
-							color: var(--l1-foreground);
+							background-color: var(--l3-background);
+							border: 1px solid var(--l3-border);
+							color: var(--l2-foreground);
 							height: 32px;
 
 							&:hover {
-								border-color: var(--l1-border);
+								border-color: var(--l2-border);
 							}
 
 							&:focus {
-								border-color: var(--l1-border);
+								border-color: var(--l2-border);
 								box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 							}
 
@@ -192,21 +170,23 @@
 						}
 
 						.ant-select-selection-item {
-							color: var(--l1-foreground);
+							color: var(--l2-foreground);
 						}
 
 						.ant-select-arrow {
-							color: var(--muted-foreground);
+							color: var(--l2-foreground);
 						}
 					}
 
 					.icon-btn {
-						color: var(--muted-foreground);
-						border: 1px solid var(--l1-border);
+						color: var(--l2-foreground);
+						border: 1px solid var(--l3-border);
+						background-color: var(--l3-background);
 						border-radius: 4px;
 						display: flex;
 						align-items: center;
 						justify-content: center;
+						box-shadow: none;
 					}
 				}
 			}
@@ -226,8 +206,8 @@
 					pointer-events: none;
 					cursor: default;
 					color: var(--muted-foreground);
-					background-color: var(--card) !important;
-					border: 1px solid var(--l1-border);
+					background-color: var(--l3-background) !important;
+					border: 1px solid var(--l3-border);
 					border-radius: 4px;
 					display: flex;
 					align-items: center;
@@ -235,9 +215,9 @@
 				}
 
 				.ant-input {
-					background-color: var(--card);
-					border: 1px solid var(--l1-border);
-					color: var(--l1-foreground);
+					background-color: var(--l3-background);
+					border: 1px solid var(--l3-border);
+					color: var(--l2-foreground);
 					height: 32px;
 
 					&::placeholder {
@@ -245,11 +225,11 @@
 					}
 
 					&:hover {
-						border-color: var(--l1-border);
+						border-color: var(--l3-border);
 					}
 
 					&:focus {
-						border-color: var(--l1-border);
+						border-color: var(--l2-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 				}
@@ -258,7 +238,7 @@
 
 		.add-threshold-btn {
 			margin-top: 8px;
-			border: 1px dashed var(--l1-border);
+			border: 1px dashed var(--l3-border);
 			color: var(--l2-foreground);
 			background-color: transparent;
 			border-radius: 4px;
@@ -267,10 +247,11 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			box-shadow: none;
 
 			&:hover {
-				border-color: var(--l1-border);
-				color: var(--l1-foreground);
+				border-color: var(--l2-border);
+				color: var(--l3-foreground);
 			}
 
 			.anticon {
@@ -339,8 +320,9 @@
 		min-width: 240px;
 		width: auto;
 		justify-content: space-between;
-		background-color: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		background-color: var(--l3-background);
+		border: 1px solid var(--l3-border);
+		box-shadow: none;
 
 		.evaluate-alert-conditions-button-left {
 			color: var(--l2-foreground);
@@ -358,7 +340,7 @@
 			.evaluate-alert-conditions-button-right-text {
 				font-size: 12px;
 				font-weight: 500;
-				background-color: var(--l1-border);
+				background-color: var(--l3-border);
 				padding: 1px 4px;
 			}
 		}

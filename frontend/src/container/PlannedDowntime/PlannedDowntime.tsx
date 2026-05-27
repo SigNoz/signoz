@@ -29,6 +29,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 
 dayjs.locale('en');
 
@@ -53,12 +54,15 @@ export function PlannedDowntime(): JSX.Element {
 		);
 
 	const downtimeSchedules = useListDowntimeSchedules();
-	const alertOptions = React.useMemo(
+	const alertOptions: ComboboxSimpleItem[] = React.useMemo(
 		() =>
-			alertsData?.data?.map((i) => ({
-				label: i.alert,
-				value: i.id,
-			})),
+			alertsData?.data?.map(
+				(i) =>
+					({
+						label: i.alert,
+						value: i.id,
+					}) satisfies ComboboxSimpleItem,
+			) || [],
 		[alertsData],
 	);
 

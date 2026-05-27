@@ -1,5 +1,2 @@
-import { SelectProps } from 'antd';
-
-export const popupContainer: SelectProps['getPopupContainer'] = (
-	trigger,
-): HTMLElement => trigger.parentNode;
+export const popupContainer = (trigger: HTMLElement): HTMLElement =>
+	trigger.parentNode as HTMLElement;

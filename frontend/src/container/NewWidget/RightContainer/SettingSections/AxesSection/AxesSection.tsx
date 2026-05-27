@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Select } from 'antd';
+import { InputNumber } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Axis3D, ChartLine, Spline } from '@signozhq/icons';
 
@@ -9,8 +10,6 @@ enum LogScale {
 	LINEAR = 'linear',
 	LOGARITHMIC = 'logarithmic',
 }
-
-const { Option } = Select;
 
 interface AxesSectionProps {
 	allowSoftMinMax: boolean;
@@ -69,29 +68,35 @@ export default function AxesSection({
 			{allowLogScale && (
 				<section className="log-scale control-container">
 					<Typography.Text className="section-heading">Y Axis Scale</Typography.Text>
-					<Select
+					<SelectSimple
 						onChange={(value): void => setIsLogScale(value === LogScale.LOGARITHMIC)}
 						value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
 						className="panel-type-select"
-						defaultValue={LogScale.LINEAR}
-					>
-						<Option value={LogScale.LINEAR}>
-							<div className="select-option">
-								<div className="icon">
-									<ChartLine size={16} />
-								</div>
-								<Typography.Text className="display">Linear</Typography.Text>
-							</div>
-						</Option>
-						<Option value={LogScale.LOGARITHMIC}>
-							<div className="select-option">
-								<div className="icon">
-									<Spline size={16} />
-								</div>
-								<Typography.Text className="display">Logarithmic</Typography.Text>
-							</div>
-						</Option>
-					</Select>
+						items={[
+							{
+								value: LogScale.LINEAR,
+								label: (
+									<div className="select-option">
+										<div className="icon">
+											<ChartLine size={16} />
+										</div>
+										<Typography.Text className="display">Linear</Typography.Text>
+									</div>
+								),
+							},
+							{
+								value: LogScale.LOGARITHMIC,
+								label: (
+									<div className="select-option">
+										<div className="icon">
+											<Spline size={16} />
+										</div>
+										<Typography.Text className="display">Logarithmic</Typography.Text>
+									</div>
+								),
+							},
+						]}
+					/>
 				</section>
 			)}
 		</SettingsSection>

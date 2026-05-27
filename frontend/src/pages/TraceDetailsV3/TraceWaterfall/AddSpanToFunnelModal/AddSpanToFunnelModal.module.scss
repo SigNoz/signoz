@@ -211,7 +211,7 @@
 	:global(.funnel-configuration__steps) {
 		padding: 0;
 
-		:global(.funnel-step__content .filters__service-and-span .ant-select) {
+		:global(.filters__service-and-span .config-select-option) {
 			width: 170px;
 		}
 

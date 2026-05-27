@@ -3,6 +3,7 @@ import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
+import { Button } from '@signozhq/ui/button';
 
 function LabelsInput({
 	labels,
@@ -144,14 +145,16 @@ function LabelsInput({
 			)}
 
 			{!isAdding ? (
-				<button
+				<Button
 					className="labels-input__add-button"
 					type="button"
+					variant="outlined"
+					color="secondary"
 					onClick={handleAddLabelsClick}
 					data-testid="alert-add-label-button"
 				>
 					+ Add labels
-				</button>
+				</Button>
 			) : (
 				<div className="labels-input__input-container">
 					<input

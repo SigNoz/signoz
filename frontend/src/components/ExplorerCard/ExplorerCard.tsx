@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Col, Popover, Row, Select, Space } from 'antd';
+import { Button, Col, Popover, Row, Space } from 'antd';
 import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
@@ -23,11 +24,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { ExploreHeaderToolTip, SaveButtonText } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
-import {
-	DropDownOverlay,
-	ExplorerCardHeadContainer,
-	OffSetCol,
-} from './styles';
+import { ExplorerCardHeadContainer, OffSetCol } from './styles';
 import { ExplorerCardProps } from './types';
 import { deleteViewHandler } from './utils';
 import { Ellipsis, Save, Share2, Trash2 } from '@signozhq/icons';
@@ -156,6 +153,26 @@ function ExplorerCard({
 
 	const showSaveView = false;
 
+	const viewItems = useMemo(
+		() =>
+			(viewsData?.data.data ?? []).map((view) => ({
+				value: view.name,
+				label: (
+					<MenuItemGenerator
+						viewName={view.name}
+						viewKey={viewKey}
+						createdBy={view.createdBy}
+						uuid={view.id}
+						refetchAllView={refetchAllView}
+						viewData={viewsData?.data.data ?? []}
+						sourcePage={sourcepage}
+					/>
+				),
+				displayValue: view.name,
+			})),
+		[refetchAllView, sourcepage, viewKey, viewsData?.data.data],
+	);
+
 	return (
 		<>
 			{showSaveView && (
@@ -175,30 +192,12 @@ function ExplorerCard({
 							<Space size="large">
 								{viewsData?.data.data && viewsData?.data.data.length && (
 									<Space>
-										<Select
-											getPopupContainer={popupContainer}
+										<ComboboxSimple
 											loading={isLoading || isRefetching}
-											showSearch
 											placeholder="Select a view"
-											dropdownStyle={DropDownOverlay}
-											dropdownMatchSelectWidth={false}
-											optionLabelProp="value"
+											items={viewItems}
 											value={viewName || undefined}
-										>
-											{viewsData?.data.data.map((view) => (
-												<Select.Option key={view.id} value={view.name}>
-													<MenuItemGenerator
-														viewName={view.name}
-														viewKey={viewKey}
-														createdBy={view.createdBy}
-														uuid={view.id}
-														refetchAllView={refetchAllView}
-														viewData={viewsData.data.data}
-														sourcePage={sourcepage}
-													/>
-												</Select.Option>
-											))}
-										</Select>
+										/>
 									</Space>
 								)}
 								{isQueryUpdated && (

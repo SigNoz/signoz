@@ -1,9 +1,7 @@
-import { Dispatch, SetStateAction } from 'react';
-import { Color } from '@signozhq/design-tokens';
-import { Form, Select } from 'antd';
-import { ChevronDown } from '@signozhq/icons';
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Form } from 'antd';
+import { SelectSimple, SelectSimpleItem } from '@signozhq/ui/select';
 import { Region } from 'utils/regions';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { RegionSelector } from './RegionForm/RegionSelector';
 
@@ -17,6 +15,17 @@ function RegionDeploymentSection({
 	handleRegionChange: (value: string) => void;
 	isFormDisabled: boolean;
 }): JSX.Element {
+	const regionItems = useMemo<SelectSimpleItem[]>(
+		() =>
+			regions.flatMap((region) =>
+				region.subRegions.map((subRegion) => ({
+					value: subRegion.id,
+					label: subRegion.displayName,
+				})),
+			),
+		[regions],
+	);
+
 	return (
 		<div className="cloud-account-setup-form__form-group">
 			<div className="cloud-account-setup-form__title">
@@ -30,22 +39,13 @@ function RegionDeploymentSection({
 				rules={[{ required: true, message: 'Please select a region' }]}
 				className="cloud-account-setup-form__form-item"
 			>
-				<Select
+				<SelectSimple
 					placeholder="e.g. US East (N. Virginia)"
-					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 					className="cloud-account-setup-form__select integrations-select"
-					onChange={handleRegionChange}
+					onChange={(value): void => handleRegionChange(value as string)}
 					disabled={isFormDisabled}
-					getPopupContainer={popupContainer}
-				>
-					{regions.flatMap((region) =>
-						region.subRegions.map((subRegion) => (
-							<Select.Option key={subRegion.id} value={subRegion.id}>
-								{subRegion.displayName}
-							</Select.Option>
-						)),
-					)}
-				</Select>
+					items={regionItems}
+				/>
 			</Form.Item>
 		</div>
 	);

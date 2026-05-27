@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
@@ -144,12 +144,12 @@ function SpanScopeSelector({
 	};
 
 	return (
-		<Select
+		<SelectSimple
 			value={selectedScope}
 			className="span-scope-selector"
-			data-testid="span-scope-selector"
-			onChange={handleScopeChange}
-			options={SELECT_OPTIONS}
+			testId="span-scope-selector"
+			onChange={(value): void => handleScopeChange(value as SpanScope)}
+			items={SELECT_OPTIONS}
 		/>
 	);
 }

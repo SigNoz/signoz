@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { Link } from 'react-router-dom';
-import { Button, Select, Skeleton, Table } from 'antd';
+import { Button, Skeleton, Table } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
@@ -220,10 +221,14 @@ export default function ServiceTraces({
 					<div className="services-header home-data-card-header">
 						Services
 						<div className="services-header-actions">
-							<Select
-								value={timeRange.selectedInterval}
-								onChange={handleTimeIntervalChange}
-								options={TIME_PICKER_OPTIONS}
+							<ComboboxSimple
+								value={timeRange.selectedInterval.toString()}
+								onChange={(value): void => handleTimeIntervalChange(Number(value))}
+								items={TIME_PICKER_OPTIONS.map((opt) => ({
+									value: opt.value.toString(),
+									label: opt.label,
+									displayValue: opt.label,
+								}))}
 								className="services-header-select"
 							/>
 						</div>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
@@ -113,15 +113,11 @@ function OptionsMenu({
 
 	function handleColumnSelection(
 		currentIndex: number,
-		optionsData: DefaultOptionType[],
+		optionsData: ComboboxSimpleItem[],
 	): void {
-		const currentItem = optionsData[currentIndex];
 		const itemLength = optionsData.length;
-		if (addColumn && addColumn?.onSelect) {
-			addColumn?.onSelect(selectedValue, {
-				label: currentItem.label,
-				disabled: false,
-			});
+		if (addColumn && addColumn?.onSelect && selectedValue) {
+			addColumn?.onSelect(selectedValue);
 
 			// if the last element is selected then select the previous one
 			if (currentIndex === itemLength - 1) {
@@ -175,7 +171,7 @@ function OptionsMenu({
 			}
 			case 'Enter':
 				e.preventDefault();
-				handleColumnSelection(currentIndex, optionsData);
+				handleColumnSelection(currentIndex, optionsData as ComboboxSimpleItem[]);
 				break;
 			default:
 				break;
@@ -317,7 +313,10 @@ function OptionsMenu({
 									}}
 									onClick={(eve): void => {
 										eve.stopPropagation();
-										handleColumnSelection(index, addColumn?.options || []);
+										handleColumnSelection(
+											index,
+											(addColumn?.options || []) as ComboboxSimpleItem[],
+										);
 									}}
 								>
 									<div className="name">

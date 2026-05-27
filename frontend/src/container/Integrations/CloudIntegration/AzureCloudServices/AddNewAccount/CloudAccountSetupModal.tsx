@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { ClipboardEvent, useCallback, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
@@ -8,9 +8,11 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Tabs } from '@signozhq/ui/tabs';
-import { Form, Select, Spin } from 'antd';
+import { Form, Spin } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
 import CodeBlock from 'components/CodeBlock/CodeBlock';
@@ -22,7 +24,6 @@ import {
 	IntegrationModalProps,
 	ModalStateEnum,
 } from 'container/Integrations/HeroSection/types';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { useIntegrationModal } from '../../../../../hooks/integration/azure/useIntegrationModal';
 import RenderConnectionFields from '../../AmazonWebServices/RegionForm/RenderConnectionParams';
@@ -33,6 +34,65 @@ const AZURE_CLI_DESC =
 	'Paste the following command if you have Azure CLI setup locally on your machine or use BASH CloudShell on Azure portal with above mentioned permissions.';
 const AZURE_POWERSHELL_DESC =
 	'Paste the following command in PowerShell CloudShell on Azure portal, you can switch to PowerShell on Azure portal.';
+
+interface ResourceGroupsComboboxProps {
+	value?: string[];
+	onChange?: (value: string[]) => void;
+	disabled?: boolean;
+}
+
+/**
+ * Wrapper that adapts ComboboxSimple to antd Form.Item and re-implements
+ * the antd `tokenSeparators={[',']}` paste behavior the original Select had.
+ */
+function ResourceGroupsCombobox({
+	value,
+	onChange,
+	disabled,
+}: ResourceGroupsComboboxProps): JSX.Element {
+	const current = value ?? [];
+
+	const handlePaste = (event: ClipboardEvent<HTMLDivElement>): void => {
+		const pasted = event.clipboardData?.getData('text');
+		if (!pasted || !pasted.includes(',')) {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		const tokens = pasted
+			.split(',')
+			.map((token) => token.trim())
+			.filter(Boolean);
+		if (tokens.length === 0) {
+			return;
+		}
+		const merged = Array.from(new Set([...current, ...tokens]));
+		onChange?.(merged);
+	};
+
+	return (
+		<div onPaste={disabled ? undefined : handlePaste} style={{ width: '100%' }}>
+			<ComboboxSimple
+				multiple
+				allowCreate
+				items={[]}
+				placeholder="e.g. prod-platform-rg"
+				value={current}
+				onChange={(v): void => onChange?.(v as string[])}
+				style={{
+					width: '100%',
+					...(disabled && { pointerEvents: 'none', opacity: 0.5 }),
+				}}
+			/>
+		</div>
+	);
+}
+
+ResourceGroupsCombobox.defaultProps = {
+	value: undefined,
+	onChange: undefined,
+	disabled: false,
+};
 
 function CloudAccountSetupModal({
 	onClose,
@@ -264,13 +324,12 @@ function CloudAccountSetupModal({
 								rules={[{ required: true, message: 'Please select a region' }]}
 								className="cloud-account-setup-form__form-item"
 							>
-								<Select
+								<SelectSimple
 									placeholder="e.g. East US"
-									options={AZURE_REGIONS.map((region) => ({
+									items={AZURE_REGIONS.map((region) => ({
 										label: `${region.label} (${region.value})`,
 										value: region.value,
 									}))}
-									getPopupContainer={popupContainer}
 									disabled={modalState === ModalStateEnum.WAITING}
 								/>
 							</Form.Item>
@@ -295,10 +354,7 @@ function CloudAccountSetupModal({
 								]}
 								className="cloud-account-setup-form__form-item"
 							>
-								<Select
-									mode="tags"
-									placeholder="e.g. prod-platform-rg"
-									tokenSeparators={[',']}
+								<ResourceGroupsCombobox
 									disabled={modalState === ModalStateEnum.WAITING}
 								/>
 							</Form.Item>

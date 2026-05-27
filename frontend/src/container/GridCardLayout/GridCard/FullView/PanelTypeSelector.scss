@@ -12,24 +12,23 @@
 		line-height: 16px;
 		white-space: nowrap;
 	}
+}
 
-	.panel-type-select {
-		.view-panel-select-option {
-			display: flex;
-			align-items: center;
-			gap: 8px;
+.view-panel-select-option {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
 
-			.icon {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
+	.icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-			.display {
-				font-size: 14px;
-				line-height: 20px;
-			}
-		}
+	.display {
+		font-size: 14px;
+		line-height: 20px;
 	}
 }
 

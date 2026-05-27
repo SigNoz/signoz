@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Input, Select, Tooltip } from 'antd';
+import { Input, Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Info } from '@signozhq/icons';
 
@@ -79,8 +80,8 @@ function EvaluationCadence(): JSX.Element {
 								}
 								data-testid="evaluation-cadence-duration-input"
 							/>
-							<Select
-								options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
+							<SelectSimple
+								items={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
 								placeholder="Select time unit"
 								style={{ width: 120 }}
 								value={advancedOptions.evaluationCadence.default.timeUnit}
@@ -91,7 +92,7 @@ function EvaluationCadence(): JSX.Element {
 											...advancedOptions.evaluationCadence,
 											default: {
 												...advancedOptions.evaluationCadence.default,
-												timeUnit: value,
+												timeUnit: value as string,
 											},
 										},
 									})

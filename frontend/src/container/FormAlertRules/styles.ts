@@ -1,4 +1,4 @@
-import { Button, Card, Col, Form, Input, Select } from 'antd';
+import { Button, Card, Col, Form, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
@@ -53,17 +53,6 @@ export const StepHeading = styled.p`
 	font-weight: bold;
 `;
 
-export const InlineSelect = styled(Select)`
-	display: inline-block;
-	width: 10% !important;
-	margin-left: 0.3em;
-	margin-right: 0.3em;
-`;
-
-export const SeveritySelect = styled(Select)`
-	width: 25% !important;
-`;
-
 export const VerticalLine = styled.div`
 	border-left: 2px solid #e8e8e8; /* Adjust color and thickness as desired */
 	padding-left: 20px; /* Adjust spacing to content as needed */
@@ -80,9 +69,45 @@ export const FormContainer = styled(Card)`
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
+	border-color: var(--l2-border);
 
 	.ant-card-body {
 		padding: 12px;
+		background-color: var(--l2-background);
+	}
+
+	--combobox-trigger-width: auto;
+	--combobox-trigger-display: inline-flex;
+	--combobox-trigger-border-color: var(--l3-border);
+	--combobox-trigger-background-color: var(--l3-background);
+
+	--select-trigger-width: auto;
+	--select-trigger-display: inline-flex;
+	--select-trigger-border-color: var(--l3-border);
+	--select-trigger-background-color: var(--l3-background);
+
+	--typography-text-display: inline-flex;
+
+	&.rule-options-container {
+		[data-slot='combobox-trigger'],
+		[data-slot='select-trigger'] {
+			margin: 0 8px;
+		}
+
+		[data-slot='typography'] {
+			align-items: center;
+		}
+	}
+
+	.ant-input {
+		color: var(--l2-foreground);
+		background-color: var(--l3-background);
+		border-color: var(--l3-border);
+		border-width: 1px;
+
+		&:placeholder {
+			color: var(--l3-foreground);
+		}
 	}
 `;
 

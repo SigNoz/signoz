@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { IOption } from 'hooks/useResourceAttribute/types';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { uniqWith } from 'lodash-es';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
+import styles from './OrderByFilter.module.scss';
 
 export function OrderByFilter({
 	query,
@@ -23,7 +25,6 @@ export function OrderByFilter({
 		generateOptions,
 		createOptions,
 		handleChange,
-		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange, entityVersion });
 
 	const { data, isFetching } = useGetAggregateKeys(
@@ -76,21 +77,48 @@ export function OrderByFilter({
 
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
+	const items: ComboboxSimpleItem[] = useMemo(() => {
+		const merged: IOption[] = [...selectedValue, ...optionsData];
+		const unique = uniqWith(merged, (a, b) => a.value === b.value);
+		return unique.map((opt) => ({
+			label: opt.label,
+			displayValue: opt.label,
+			value: opt.value,
+		}));
+	}, [selectedValue, optionsData]);
+
+	const value = useMemo(
+		() => selectedValue.map((item) => item.value),
+		[selectedValue],
+	);
+
+	const handleComboboxChange = (next: string | string[]): void => {
+		const values = (next as string[]) || [];
+		const asOptions: IOption[] = values.map((v) => {
+			const found = items.find((item) => item.value === v);
+			return {
+				label: typeof found?.label === 'string' ? found.label : v,
+				value: v,
+			};
+		});
+		handleChange(asOptions);
+	};
+
+	const isDisabled = isMetricsDataSource && isDisabledSelect;
+
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			mode="tags"
-			style={selectStyle}
-			onSearch={handleSearchKeys}
-			showSearch
-			disabled={isMetricsDataSource && isDisabledSelect}
-			showArrow={false}
-			value={selectedValue}
-			labelInValue
-			filterOption={false}
-			options={optionsData}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
-			onChange={handleChange}
+		<ComboboxSimple
+			multiple
+			allowCreate
+			loading={isFetching}
+			style={{
+				...selectStyle,
+			}}
+			disabled={isDisabled}
+			items={items}
+			value={value}
+			onChange={handleComboboxChange}
+			className={styles.filter}
 		/>
 	);
 }

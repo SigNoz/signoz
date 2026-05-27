@@ -1,4 +1,5 @@
-import { InputNumberProps, RadioProps, SelectProps } from 'antd';
+import { InputNumberProps, RadioProps } from 'antd';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LogViewMode } from 'container/LogsTable';
 
@@ -33,10 +34,12 @@ export type OptionsMenuConfig = {
 	};
 	maxLines?: Pick<InputNumberProps, 'value' | 'onChange'>;
 	fontSize?: FontSizeProps;
-	addColumn?: Pick<
-		SelectProps,
-		'options' | 'onSelect' | 'onFocus' | 'onSearch' | 'onBlur'
-	> & {
+	addColumn?: {
+		options: ComboboxSimpleItem[];
+		onSelect: (value: string) => void;
+		onFocus?: () => void;
+		onBlur?: () => void;
+		onSearch?: (value: string) => void;
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;

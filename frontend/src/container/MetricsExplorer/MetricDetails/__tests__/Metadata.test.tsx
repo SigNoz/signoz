@@ -18,30 +18,29 @@ import { MetricMetadata } from '../types';
 import { transformMetricMetadata } from '../utils';
 import { getMockMetricMetadataData, MOCK_METRIC_NAME } from './testUtlls';
 
-// Mock antd select for testing
-jest.mock('antd', () => ({
-	...jest.requireActual('antd'),
-	Select: ({
+// Mock SelectSimple for testing
+jest.mock('@signozhq/ui/select', () => ({
+	SelectSimple: ({
 		children,
 		onChange,
 		value,
 		'data-testid': dataTestId,
-		options,
+		items,
 	}: {
 		children: React.ReactNode;
 		onChange: (value: string) => void;
 		value: string;
 		'data-testid': string;
-		options: SelectOption<string, string>[];
+		items: SelectOption<string, string>[];
 	}): JSX.Element => (
 		<select
 			data-testid={dataTestId}
 			value={value}
 			onChange={(e): void => onChange?.(e.target.value)}
 		>
-			{options?.map((option: SelectOption<string, string>) => (
-				<option key={option.value} value={option.value}>
-					{option.label}
+			{items?.map((item: SelectOption<string, string>) => (
+				<option key={item.value} value={item.value}>
+					{item.label}
 				</option>
 			))}
 			{children}
