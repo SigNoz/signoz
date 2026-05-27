@@ -102,25 +102,6 @@ func (migration *fixChangelogOperationType) Up(ctx context.Context, db *bun.DB) 
 		sqls = append(sqls, createTableSQLs...)
 	}
 
-	// 2. Fix tuple table condition columns for PG (types were swapped in 054).
-	// These columns are always NULL since SigNoz does not use FGA conditions.
-	if migration.sqlstore.BunDB().Dialect().Name() == dialect.PG {
-		tupleTable, tupleUniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("tuple"))
-		if err != nil {
-			return err
-		}
-
-		alterConditionNameSQLs := migration.sqlschema.Operator().AlterColumn(tupleTable, tupleUniqueConstraints, &sqlschema.Column{
-			Name: "condition_name", DataType: sqlschema.DataTypeText, Nullable: true,
-		})
-		sqls = append(sqls, alterConditionNameSQLs...)
-
-		alterConditionContextSQLs := migration.sqlschema.Operator().AlterColumn(tupleTable, tupleUniqueConstraints, &sqlschema.Column{
-			Name: "condition_context", DataType: sqlschema.DataTypeBytea, Nullable: true,
-		})
-		sqls = append(sqls, alterConditionContextSQLs...)
-	}
-
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
