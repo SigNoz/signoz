@@ -66,7 +66,7 @@ function TriggeredAlerts(): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
-		rowHeight: 42,
+		rowHeight: 46,
 	});
 
 	const { page, limit, setLimit, orderBy } = useTableParams(
