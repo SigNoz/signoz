@@ -10,7 +10,7 @@ import logEvent from 'api/common/logEvent';
 
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents } from '../events';
+import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
@@ -65,7 +65,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					startNewConversation();
 					setShowHistory(false);
 					void logEvent(AIAssistantEvents.Opened, {
-						source: 'shortcut',
+						source: AIAssistantOpenSource.Shortcut,
 						currentPage: normalizePage(pathname),
 					});
 					openModal();
@@ -162,57 +162,57 @@ export default function AIAssistantModal(): JSX.Element | null {
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
 									className={showHistory ? styles.toggleBtnActive : ''}
-								>
-									<History size={14} />
-								</Button>
+									prefix={<History size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="New conversation">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleNew}
 									aria-label="New conversation"
-								>
-									<Plus size={14} />
-								</Button>
+									prefix={<Plus size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Open full screen">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleExpand}
 									disabled={!activeConversationId}
 									aria-label="Open full screen"
-								>
-									<Maximize2 size={14} />
-								</Button>
+									prefix={<Maximize2 size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Minimize to side panel">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleMinimize}
 									aria-label="Minimize to side panel"
-								>
-									<Minus size={14} />
-								</Button>
+									prefix={<Minus size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Close">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={closeModal}
 									aria-label="Close"
-								>
-									<X size={14} />
-								</Button>
+									prefix={<X size={14} />}
+								/>
 							</TooltipSimple>
 						</div>
 					</div>
