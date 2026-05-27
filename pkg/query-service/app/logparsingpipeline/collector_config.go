@@ -87,10 +87,9 @@ func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, er
 // required order:
 //
 //  1. memory_limiter processors (any processor named "memory_limiter" or "memory_limiter/<id>")
-//  2. other existing processors (in their original order), which may include signoz processors
-//     that are not user-pipeline processors
-//  3. signoz user-pipeline processors
-//  4. batch processors (any processor named "batch" or "batch/<id>")
+//  2. signoz user-pipeline processors (in the order given by signozPipelineProcessorNames)
+//  3. custom processors (non-signoz, non-memory_limiter, non-batch processors from the current config)
+//  4. batch processors (any processor named "batch" or "batch/<id>") and anything after them
 func buildCollectorPipelineProcessorsList(
 	currentCollectorProcessors []string,
 	signozPipelineProcessorNames []string,
@@ -98,57 +97,40 @@ func buildCollectorPipelineProcessorsList(
 	lockLogsPipelineSpec.Lock()
 	defer lockLogsPipelineSpec.Unlock()
 
-	// Build a set of the desired signoz processors so we can drop any stale version
-	// of them (regardless of how they got into the current config) without
-	// accidentally duplicating them in the output.
-	desiredUserPipelineSet := make(map[string]struct{}, len(signozPipelineProcessorNames))
+	// Build a set of user pipeline names so custom processors can skip duplicates.
+	userPipelineSet := make(map[string]struct{}, len(signozPipelineProcessorNames))
 	for _, p := range signozPipelineProcessorNames {
-		desiredUserPipelineSet[p] = struct{}{}
+		userPipelineSet[p] = struct{}{}
+	}
+
+	var memoryLimiters []string
+	var customProcessors []string
+	batchIdx := -1
+
+	for idx, p := range currentCollectorProcessors {
+		switch {
+		case p == batchProcessor || strings.HasPrefix(p, batchProcessorPrefix):
+			batchIdx = idx
+		case p == memoryLimiterProcessor || strings.HasPrefix(p, memoryLimiterProcessorPrefix):
+			memoryLimiters = append(memoryLimiters, p)
+		case hasSignozPipelineProcessorPrefix(p):
+			// stale signoz pipeline processor — dropped; signozPipelineProcessorNames is authoritative
+		default:
+			if _, inUserPipelines := userPipelineSet[p]; !inUserPipelines {
+				customProcessors = append(customProcessors, p)
+			}
+		}
+		if batchIdx >= 0 {
+			break
+		}
 	}
 
 	result := make([]string, 0, len(currentCollectorProcessors)+len(signozPipelineProcessorNames))
-
-	// Note: logic assumes there'll be only one batch processor
-	var batchProcIdx int
-	var batchProcFound bool
-iteration:
-	for idx, p := range currentCollectorProcessors {
-		_, inDesiredSet := desiredUserPipelineSet[p]
-		switch {
-		// same processor exist; retain the location of pre-existing location
-		case p == memoryLimiterProcessor || strings.HasPrefix(p, memoryLimiterProcessorPrefix):
-			result = append(result, p)
-		case hasSignozPipelineProcessorPrefix(p):
-			// this processor has been dropped
-			if !inDesiredSet {
-				continue iteration
-			} else {
-				result = append(result, p)
-			}
-		case p == batchProcessor || strings.HasPrefix(p, batchProcessorPrefix):
-			batchProcIdx = idx
-			batchProcFound = true
-			break iteration
-		default:
-			result = append(result, p)
-		}
-
-		if inDesiredSet {
-			// delete from desired pipeline set so they're not added twice
-			delete(desiredUserPipelineSet, p)
-		}
-	}
-	// add user pipelines
-	for _, proc := range signozPipelineProcessorNames {
-		_, add := desiredUserPipelineSet[proc]
-		if add {
-			result = append(result, proc)
-		}
-	}
-
-	// add batch processor and rest
-	if batchProcFound {
-		result = append(result, currentCollectorProcessors[batchProcIdx:]...)
+	result = append(result, memoryLimiters...)
+	result = append(result, signozPipelineProcessorNames...)
+	result = append(result, customProcessors...)
+	if batchIdx >= 0 {
+		result = append(result, currentCollectorProcessors[batchIdx:]...)
 	}
 	return result, nil
 }
