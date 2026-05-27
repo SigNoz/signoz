@@ -589,20 +589,3 @@ func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UU
 	}
 	return nil
 }
-
-// enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID.
-// TODO: remove this hack and send idiomatic response to client.
-func (module *module) enrichDashboardIDs(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
-	for i, d := range serviceDefinition.Assets.Dashboards {
-		slug := cloudintegrationtypes.CloudIntegrationDashboardSlug(provider, serviceID, d.ID)
-		row, err := module.store.GetIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
-		if err != nil {
-			if errors.Ast(err, errors.TypeNotFound) {
-				continue
-			}
-			return err
-		}
-		serviceDefinition.Assets.Dashboards[i].ID = row.DashboardID
-	}
-	return nil
-}
