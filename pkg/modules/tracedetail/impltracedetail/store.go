@@ -187,10 +187,21 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 	if err != nil {
 		return nil, err
 	}
-	// query: deduplicate → window function for adding non-overlapping duration per field.
-	// The window tracks the running max end time of preceding spans within each field_value
-	// partition (ordered by start).
+
 	query := fmt.Sprintf(`
+		-- query field with start time and duration
+		WITH field_duration AS (
+			SELECT DISTINCT ON (span_id)
+				%s AS field_value,
+				toUnixTimestamp64Nano(timestamp) AS start_ns,
+				duration_nano
+			FROM %s.%s
+			WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
+			HAVING field_value != ''
+			ORDER BY timestamp ASC, name ASC
+		)
+
+		-- running window of non-overlapping duration
 		SELECT field_value, sum(multiIf(
 			start_ns >= prev_max_end_ns,                    duration_nano,
 			start_ns + duration_nano > prev_max_end_ns,     start_ns + duration_nano - prev_max_end_ns,
@@ -204,16 +215,7 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 					ORDER BY start_ns
 					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
 				), 0) AS prev_max_end_ns
-			FROM (
-				SELECT DISTINCT ON (span_id)
-					%[1]s AS field_value,
-					toUnixTimestamp64Nano(timestamp) AS start_ns,
-					duration_nano
-				FROM %[2]s.%[3]s
-				WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
-				ORDER BY toUnixTimestamp64Nano(timestamp) ASC, name ASC
-			)
-			WHERE field_value != ''
+			FROM field_duration
 		)
 		GROUP BY field_value`,
 		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
