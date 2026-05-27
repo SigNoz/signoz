@@ -4,7 +4,7 @@ import { Button, Flex } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import Input from 'components/Input';
 
-import './Tags.styles.scss';
+import './Badges.styles.scss';
 
 function Badges({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');

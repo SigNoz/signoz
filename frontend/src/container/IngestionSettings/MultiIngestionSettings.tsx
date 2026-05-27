@@ -40,7 +40,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import Badges from 'components/Tags/Tags';
+import Badges from 'components/Badges/Badges';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

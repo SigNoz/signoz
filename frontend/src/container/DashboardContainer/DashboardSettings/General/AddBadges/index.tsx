@@ -3,7 +3,7 @@ import { Col, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import Input from 'components/Input';
 
-import styles from './AddTags.module.scss';
+import styles from './AddBadges.module.scss';
 
 function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
