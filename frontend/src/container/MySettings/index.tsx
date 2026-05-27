@@ -8,7 +8,7 @@ import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
-import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import { THEME_MODE, ThemeMode } from 'hooks/useDarkMode/constant';
 import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from '@signozhq/icons';
@@ -92,7 +92,9 @@ function MySettings(): JSX.Element {
 	});
 
 	const handleThemeChange = (event: RadioChangeEvent): void => {
-		const { value } = event.target;
+		// Radio options below are all THEME_MODE values, so antd's `any`-typed
+		// target.value is safe to narrow here.
+		const value = event.target.value as ThemeMode;
 		logEvent('Account Settings: Theme Changed', { theme: value });
 		selectTheme(value);
 	};

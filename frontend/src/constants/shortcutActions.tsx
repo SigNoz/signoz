@@ -1,7 +1,7 @@
 import React from 'react';
 import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
-import { THEME_MODE } from 'hooks/useDarkMode/constant';
+import { THEME_MODE, ThemeMode } from 'hooks/useDarkMode/constant';
 import {
 	BarChart,
 	BellDot,
@@ -34,7 +34,7 @@ export type CmdAction = {
 
 type ActionDeps = {
 	navigate: (path: string) => void;
-	handleThemeChange: (mode: string) => void;
+	handleThemeChange: (mode: ThemeMode) => void;
 	/**
 	 * Provided only when the AI Assistant feature is available for the current
 	 * tenant. When present, the palette surfaces an "Open AI Assistant" entry

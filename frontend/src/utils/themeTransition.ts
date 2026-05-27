@@ -33,6 +33,11 @@ const releaseWipeClass = (root: HTMLElement): void => {
 	}
 };
 
+// Identity of the transition we most recently started. Used to skip the
+// .animate() call on a stale transition whose .ready resolved after a newer
+// transition has already taken over the ::view-transition-new pseudo-element.
+let currentTransition: ViewTransition | null = null;
+
 export function canAnimateThemeTransition(): boolean {
 	const doc = document as DocumentWithVT;
 	if (typeof doc.startViewTransition !== 'function') {
@@ -73,11 +78,20 @@ export function runThemeTransition(applyChange: () => void): void {
 		return;
 	}
 
+	currentTransition = transition;
+
 	const from = 'polygon(0 0, 0 0, 0 100%, 0 100%)';
 	const to = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
 
 	transition.ready
-		.then(() =>
+		.then(() => {
+			// If a newer transition has superseded this one between
+			// startViewTransition() and `ready` resolving, the browser has
+			// already cancelled our pseudo-element. Calling .animate() on it now
+			// would race with the newer transition's own animation.
+			if (currentTransition !== transition) {
+				return;
+			}
 			root.animate(
 				{ clipPath: [from, to] },
 				{
@@ -85,13 +99,16 @@ export function runThemeTransition(applyChange: () => void): void {
 					easing: WIPE_EASING,
 					pseudoElement: '::view-transition-new(root)',
 				},
-			),
-		)
+			);
+		})
 		.catch(() => {
 			// Transition cancelled — applyChange has already run.
 		});
 
 	const cleanup = (): void => {
+		if (currentTransition === transition) {
+			currentTransition = null;
+		}
 		releaseWipeClass(root);
 	};
 	transition.finished.then(cleanup).catch(cleanup);

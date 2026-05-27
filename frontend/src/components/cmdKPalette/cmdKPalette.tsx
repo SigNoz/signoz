@@ -20,6 +20,7 @@ import {
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { ThemeMode } from 'hooks/useDarkMode/constant';
 import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import history from 'lib/history';
@@ -82,7 +83,7 @@ export function CmdKPalette({
 
 	useEffect(cmdKEffect, [setOpen]);
 
-	function handleThemeChange(value: string): void {
+	function handleThemeChange(value: ThemeMode): void {
 		logEvent('Account Settings: Theme Changed', { theme: value });
 		// Close the palette inside the same flushSync batch as the theme change
 		// so its dismissal is part of the captured "new" frame of the wipe;

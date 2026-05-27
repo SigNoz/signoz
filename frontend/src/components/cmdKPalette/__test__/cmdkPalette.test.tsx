@@ -116,7 +116,13 @@ jest.mock('hooks/useNotifications', (): unknown => ({
 }));
 
 // mock theme hook
+//
+// We spread jest.requireActual so additions to hooks/useDarkMode (new hooks,
+// re-exports, contexts) keep working in this test without needing the mock to
+// re-enumerate every export. We only override the hooks the palette actually
+// calls.
 jest.mock('hooks/useDarkMode', (): unknown => {
+	const actual = jest.requireActual('hooks/useDarkMode');
 	const useThemeModeMock = (): {
 		setAutoSwitch: jest.Mock;
 		setTheme: jest.Mock;
@@ -131,6 +137,7 @@ jest.mock('hooks/useDarkMode', (): unknown => {
 		autoSwitch: false,
 	});
 	return {
+		...actual,
 		__esModule: true,
 		default: useThemeModeMock,
 		useThemeMode: useThemeModeMock,

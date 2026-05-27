@@ -5,9 +5,9 @@ import {
 } from 'utils/themeTransition';
 
 import useThemeMode, { useSystemTheme } from './index';
-import { THEME_MODE } from './constant';
+import { THEME_MODE, ThemeMode } from './constant';
 
-type SelectTheme = (value: string, onApplied?: () => void) => void;
+type SelectTheme = (value: ThemeMode, onApplied?: () => void) => void;
 
 // Centralises the "apply a theme selection" flow used by MySettings and the
 // command palette: figures out whether the visible (dark↔light) theme is
@@ -26,36 +26,39 @@ export function useThemeSelection(): SelectTheme {
 			const currentIsDark = theme === THEME_MODE.DARK;
 
 			// When switching to SYSTEM, the visible theme flips iff the OS preference
-			// differs from what we're currently rendering.
+			// differs from what we're currently rendering. For explicit LIGHT/DARK,
+			// resolvedTargetIsDark is just (value === DARK).
 			const resolvedTargetIsDark =
 				value === THEME_MODE.SYSTEM
 					? systemTheme === THEME_MODE.DARK
 					: value === THEME_MODE.DARK;
-			const willFlipDarkMode = resolvedTargetIsDark !== currentIsDark;
+			const isSystem = value === THEME_MODE.SYSTEM;
 
-			const applyChange = (): void => {
-				if (value === THEME_MODE.SYSTEM) {
-					// Also push the resolved light/dark value through setTheme so the
-					// View Transition snapshot reflects the new theme synchronously.
-					// Otherwise the flip would only land via ThemeProvider's effect
-					// (setAutoSwitch → re-render → effect → setThemeState), which
-					// isn't guaranteed to run inside this flushSync batch and would
-					// cause the wipe to capture old → old followed by a post-animation snap.
-					setAutoSwitch(true);
-					setTheme(resolvedTargetIsDark ? THEME_MODE.DARK : THEME_MODE.LIGHT);
-				} else {
-					setAutoSwitch(false);
-					setTheme(value);
-				}
+			// Always push the resolved LIGHT/DARK through setTheme synchronously so
+			// the View Transition snapshot reflects the new theme. If we relied on
+			// ThemeProvider's effect (setAutoSwitch → re-render → effect →
+			// setThemeState), the flip wouldn't be guaranteed to run inside this
+			// flushSync batch and the wipe would capture old → old, then snap.
+			const resolvedTheme = resolvedTargetIsDark
+				? THEME_MODE.DARK
+				: THEME_MODE.LIGHT;
+
+			// runThemeTransition needs a zero-arg callback, so this closure is
+			// unavoidable. It allocates once per selection — cheap enough that
+			// micro-optimising it would just obscure the flow.
+			const apply = (): void => {
+				setAutoSwitch(isSystem);
+				setTheme(resolvedTheme);
 				onApplied?.();
 			};
 
+			const willFlipDarkMode = resolvedTargetIsDark !== currentIsDark;
 			if (!willFlipDarkMode || !canAnimateThemeTransition()) {
-				applyChange();
+				apply();
 				return;
 			}
 
-			runThemeTransition(applyChange);
+			runThemeTransition(apply);
 		},
 		[theme, systemTheme, setTheme, setAutoSwitch],
 	);

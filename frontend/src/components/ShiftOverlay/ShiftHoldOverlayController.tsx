@@ -14,7 +14,9 @@ export function ShiftHoldOverlayController({
 
 	const actions = createShortcutActions({
 		navigate: noop,
-		handleThemeChange: noop,
+		// Overlay is read-only — actions never fire — so we only need a no-op
+		// that satisfies the typed signature.
+		handleThemeChange: (): void => undefined,
 	});
 
 	const visible = useShiftHoldOverlay({
