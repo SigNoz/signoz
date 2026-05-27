@@ -355,26 +355,32 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, service
 
 	var integrationService *cloudintegrationtypes.CloudIntegrationService
 
-	if !cloudIntegrationID.IsZero() {
-		storedService, err := module.store.GetServiceByServiceID(ctx, cloudIntegrationID, serviceID)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
-		if storedService != nil {
-			serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedService.Config)
-			if err != nil {
-				return nil, err
-			}
-
-			integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
-		}
-
-		if err := module.enrichDashboardIDs(ctx, orgID, provider, serviceID, serviceDefinition); err != nil {
-			return nil, err
-		}
+	if cloudIntegrationID.IsZero() {
+		return cloudintegrationtypes.NewService(provider, serviceDefinition, nil, nil), nil
 	}
 
-	return cloudintegrationtypes.NewService(*serviceDefinition, integrationService), nil
+	storedService, err := module.store.GetServiceByServiceID(ctx, cloudIntegrationID, serviceID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+	if storedService == nil {
+		return cloudintegrationtypes.NewService(provider, serviceDefinition, nil, nil), nil
+	}
+
+	serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedService.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
+
+	slugPrefix := cloudintegrationtypes.CloudIntegrationDashboardSlugPrefix(provider, serviceID)
+	integrationDashboards, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudintegrationtypes.NewService(provider, serviceDefinition, integrationService, integrationDashboards), nil
 }
 
 func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {

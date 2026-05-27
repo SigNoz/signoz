@@ -870,14 +870,6 @@ components:
       - timestampMillis
       - data
       type: object
-    CloudintegrationtypesAssets:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
-          nullable: true
-          type: array
-      type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
         deploymentRegion:
@@ -1024,17 +1016,6 @@ components:
       - sigNozApiKey
       - ingestionUrl
       - ingestionKey
-      type: object
-    CloudintegrationtypesDashboard:
-      properties:
-        definition:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        description:
-          type: string
-        id:
-          type: string
-        title:
-          type: string
       type: object
     CloudintegrationtypesDataCollected:
       properties:
@@ -1209,7 +1190,7 @@ components:
     CloudintegrationtypesService:
       properties:
         assets:
-          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+          $ref: '#/components/schemas/CloudintegrationtypesServiceAssets'
         cloudIntegrationService:
           $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
@@ -1222,8 +1203,6 @@ components:
           type: string
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
-        telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -1234,8 +1213,17 @@ components:
       - assets
       - supportedSignals
       - dataCollected
-      - telemetryCollectionStrategy
       - cloudIntegrationService
+      type: object
+    CloudintegrationtypesServiceAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
+          nullable: true
+          type: array
+      required:
+      - dashboards
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -1243,6 +1231,15 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+      type: object
+    CloudintegrationtypesServiceDashboard:
+      properties:
+        description:
+          type: string
+        id:
+          type: string
+        title:
+          type: string
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1284,13 +1281,6 @@ components:
           type: boolean
         metrics:
           type: boolean
-      type: object
-    CloudintegrationtypesTelemetryCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-        azure:
-          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
