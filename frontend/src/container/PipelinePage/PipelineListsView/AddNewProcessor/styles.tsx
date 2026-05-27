@@ -1,14 +1,27 @@
-import { Avatar, Select } from 'antd';
+import { ReactNode } from 'react';
+import { Avatar } from '@signozhq/ui/avatar';
+import { Select } from 'antd';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
-export const PipelineIndexIcon = styled(Avatar)`
-	background-color: ${themeColors.navyBlue};
-	height: 1.5rem;
-	width: 1.5rem;
-	font-size: 0.875rem;
-	line-height: 1.375rem;
-`;
+export function PipelineIndexIcon({
+	children,
+}: {
+	children: ReactNode;
+}): JSX.Element {
+	return (
+		<Avatar
+			size="sm"
+			style={{
+				backgroundColor: themeColors.navyBlue,
+				fontSize: '0.875rem',
+				lineHeight: '1.375rem',
+			}}
+		>
+			{children}
+		</Avatar>
+	);
+}
 
 export const ProcessorTypeWrapper = styled.div`
 	display: flex;

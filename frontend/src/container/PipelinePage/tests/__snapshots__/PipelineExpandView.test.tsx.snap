@@ -2,7 +2,7 @@
 
 exports[`PipelinePage should render PipelineExpandView section 1`] = `
 <DocumentFragment>
-  .c2 {
+  .c1 {
   margin: 0.125rem;
   padding: 0.313rem;
   border: none;
@@ -10,15 +10,6 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
   font-weight: 400;
   font-size: 0.75rem;
   line-height: 1.25rem;
-}
-
-.c1 {
-  background-color: #1668DC;
-  height: 1rem;
-  width: 1rem;
-  font-size: 0.75rem;
-  line-height: 0.813rem;
-  font-weight: 400;
 }
 
 .c0 .ant-table-tbody > tr > td {
@@ -72,11 +63,14 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="_avatar_2ffxl_1"
+                        data-shape="circle"
+                        data-size="sm"
+                        data-slot="avatar"
+                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
                       >
                         <span
-                          class="ant-avatar-string"
-                          style="transform: scale(1) translateX(-50%);"
+                          class="_fallback_2ffxl_76"
                         >
                           1
                         </span>
@@ -87,7 +81,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c2"
+                        class="c1"
                       >
                         grok use common asd
                       </div>
@@ -103,11 +97,14 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="_avatar_2ffxl_1"
+                        data-shape="circle"
+                        data-size="sm"
+                        data-slot="avatar"
+                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
                       >
                         <span
-                          class="ant-avatar-string"
-                          style="transform: scale(1) translateX(-50%);"
+                          class="_fallback_2ffxl_76"
                         >
                           2
                         </span>
@@ -118,7 +115,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c2"
+                        class="c1"
                       >
                         rename auth
                       </div>
@@ -134,11 +131,14 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="_avatar_2ffxl_1"
+                        data-shape="circle"
+                        data-size="sm"
+                        data-slot="avatar"
+                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
                       >
                         <span
-                          class="ant-avatar-string"
-                          style="transform: scale(1) translateX(-50%);"
+                          class="_fallback_2ffxl_76"
                         >
                           3
                         </span>
@@ -149,7 +149,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: left;"
                     >
                       <div
-                        class="c2"
+                        class="c1"
                       >
                         json parser
                       </div>

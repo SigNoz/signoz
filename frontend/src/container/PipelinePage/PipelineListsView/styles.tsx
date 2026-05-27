@@ -1,4 +1,6 @@
-import { Avatar, Button, Table, TableProps } from 'antd';
+import { ReactNode } from 'react';
+import { Avatar } from '@signozhq/ui/avatar';
+import { Button, Table, TableProps } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
@@ -34,14 +36,27 @@ export const ListDataStyle = styled.div`
 	line-height: 1.25rem;
 `;
 
-export const ProcessorIndexIcon = styled(Avatar)`
-	background-color: ${themeColors.navyBlue};
-	height: 1rem;
-	width: 1rem;
-	font-size: 0.75rem;
-	line-height: 0.813rem;
-	font-weight: 400;
-`;
+export function ProcessorIndexIcon({
+	children,
+}: {
+	children: ReactNode;
+}): JSX.Element {
+	return (
+		<Avatar
+			size="sm"
+			style={{
+				width: '1rem',
+				height: '1rem',
+				fontSize: '0.75rem',
+				lineHeight: '0.813rem',
+				fontWeight: 400,
+				backgroundColor: themeColors.navyBlue,
+			}}
+		>
+			{children}
+		</Avatar>
+	);
+}
 
 export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =
 	styled(Table)`
