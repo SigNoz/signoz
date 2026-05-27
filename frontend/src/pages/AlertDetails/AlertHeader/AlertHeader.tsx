@@ -47,7 +47,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
 	const ruleId = alertDetails?.id || '';
-	const { activeMutes } = useActiveMutes(ruleId);
+	const { activeMutes, refetch } = useActiveMutes(ruleId);
 	const effectiveState = alertRuleState ?? state ?? '';
 	const isDisabled = effectiveState === 'disabled';
 	const showMutedBanner = !isDisabled && Boolean(activeMutes.length);
@@ -86,7 +86,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 			</div>
 			{showMutedBanner && (
 				<div className="alert-info__banner">
-					<MutedBanner activeMute={activeMutes[0]} />
+					<MutedBanner activeMute={activeMutes[0]} onExpire={refetch} />
 				</div>
 			)}
 			{showDisabledBanner && (

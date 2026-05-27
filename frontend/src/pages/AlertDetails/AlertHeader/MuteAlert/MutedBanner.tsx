@@ -10,10 +10,7 @@ import './StateBanners.styles.scss';
 
 const PLANNED_DOWNTIMES_URL = `${ROUTES.LIST_ALL_ALERT}?tab=Configuration&subTab=planned-downtime`;
 
-const formatRemaining = (endTime: string | undefined): string | null => {
-	if (!endTime) {
-		return null;
-	}
+const formatRemaining = (endTime: string): string | null => {
 	const end = dayjs(endTime);
 	const now = dayjs();
 	const diffMs = end.diff(now);
@@ -37,22 +34,29 @@ const formatRemaining = (endTime: string | undefined): string | null => {
 
 interface MutedBannerProps {
 	activeMute: ActiveMute;
+	onExpire?: () => void;
 }
 
-function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
-	const endTime = activeMute.end ?? undefined;
-	const [remaining, setRemaining] = useState(formatRemaining(endTime));
+function MutedBanner({ activeMute, onExpire }: MutedBannerProps): JSX.Element {
+	const endTime = activeMute.end;
+	const [remaining, setRemaining] = useState(
+		endTime ? formatRemaining(endTime) : null,
+	);
 
 	useEffect(() => {
 		if (!endTime) {
 			return;
 		}
-		const interval = setInterval(
-			() => setRemaining(formatRemaining(endTime)),
-			60_000,
-		);
+		const interval = setInterval(() => {
+			const next = formatRemaining(endTime);
+			setRemaining(next);
+			if (next === null) {
+				clearInterval(interval);
+				onExpire?.();
+			}
+		}, 60_000);
 		return (): void => clearInterval(interval);
-	}, [endTime]);
+	}, [endTime, onExpire]);
 
 	const titleText = useMemo(() => {
 		if (!endTime) {
@@ -79,7 +83,7 @@ function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
 				</div>
 				<div className="state-banner__meta">
 					<span>
-						Rule is still evaluating — fires will appear in <strong>History</strong>.
+						Rule is still evaluating — fires will appear in <strong>History</strong>
 					</span>
 					{reason && (
 						<>
