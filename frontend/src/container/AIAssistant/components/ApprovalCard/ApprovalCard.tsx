@@ -11,6 +11,7 @@ import {
 	DialogTitle,
 } from '@signozhq/ui/dialog';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
@@ -100,16 +101,16 @@ export default function ApprovalCard({
 				<div className={styles.diffSection}>
 					<div className={styles.diffHeader}>
 						<span className={styles.diffHeaderLabel}>Diff</span>
-						<Button
-							variant="link"
-							size="sm"
-							color="secondary"
-							onClick={(): void => setDiffExpanded(true)}
-							title="Expand diff"
-							aria-label="Expand diff"
-						>
-							<Maximize2 size={12} />
-						</Button>
+						<TooltipSimple title="Expand diff">
+							<Button
+								variant="link"
+								size="sm"
+								color="secondary"
+								onClick={(): void => setDiffExpanded(true)}
+								aria-label="Expand diff"
+								prefix={<Maximize2 size={12} />}
+							/>
+						</TooltipSimple>
 					</div>
 					<DiffView diff={approval.diff} />
 				</div>
@@ -119,6 +120,8 @@ export default function ApprovalCard({
 				<DialogContent
 					className={styles.diffDialog}
 					style={{ width: '80vw', maxWidth: '80vw', height: '70vh' }}
+					// Skip auto-focus — otherwise the first Copy button opens its tooltip on dialog open.
+					onOpenAutoFocus={(e): void => e.preventDefault()}
 				>
 					<DialogHeader>
 						<DialogTitle>Approval diff</DialogTitle>
@@ -462,15 +465,16 @@ function CopyButton({ text, label }: CopyButtonProps): JSX.Element {
 	};
 
 	return (
-		<Button
-			variant="ghost"
-			size="sm"
-			color="secondary"
-			onClick={handleCopy}
-			title={copied ? `Copied ${label}` : `Copy ${label}`}
-			aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
-		>
-			{copied ? <Check size={12} /> : <Copy size={12} />}
-		</Button>
+		<TooltipSimple title={copied ? `Copied ${label}` : `Copy ${label}`}>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				onClick={handleCopy}
+				aria-label={copied ? `Copied ${label}` : `Copy ${label}`}
+			>
+				{copied ? <Check size={12} /> : <Copy size={12} />}
+			</Button>
+		</TooltipSimple>
 	);
 }

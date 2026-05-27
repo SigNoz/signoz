@@ -893,7 +893,7 @@ function Success(props: ISuccessProps): JSX.Element {
 					/>
 					{/* Left panel - table with horizontal scroll */}
 					<ResizableBox
-						direction="horizontal"
+						handle="right"
 						defaultWidth={DEFAULT_SIDEBAR_WIDTH}
 						minWidth={MIN_SIDEBAR_WIDTH}
 						maxWidth={MAX_SIDEBAR_WIDTH}

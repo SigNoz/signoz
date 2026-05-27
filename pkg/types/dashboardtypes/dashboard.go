@@ -33,6 +33,7 @@ type StorableDashboard struct {
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`
 	Source Source                `bun:"source,type:text,notnull"`
+	Name   string                `bun:"name,type:text,notnull"`
 }
 
 type Dashboard struct {

@@ -42,7 +42,14 @@ func (m *MaintenanceMuter) Mutes(ctx context.Context, lset model.LabelSet) bool 
 	}
 	now := time.Now()
 	for _, mw := range m.getMaintenances(ctx) {
-		if mw.ShouldSkip(ruleID, now) {
+		skip, err := mw.ShouldSkip(ruleID, now, lset)
+		if err != nil {
+			m.logger.ErrorContext(ctx, "failed to test maintenance window skip condition",
+				slog.String("maintenance_id", mw.ID.StringValue()),
+				slog.String("scope", mw.Scope),
+				slog.Any("error", err),
+			)
+		} else if skip {
 			return true
 		}
 	}
@@ -61,7 +68,14 @@ func (m *MaintenanceMuter) MutedBy(ctx context.Context, lset model.LabelSet) []s
 	var ids []string
 	now := time.Now()
 	for _, mw := range m.getMaintenances(ctx) {
-		if mw.ShouldSkip(ruleID, now) {
+		skip, err := mw.ShouldSkip(ruleID, now, lset)
+		if err != nil {
+			m.logger.ErrorContext(ctx, "failed to test maintenance window skip condition",
+				slog.String("maintenance_id", mw.ID.StringValue()),
+				slog.String("scope", mw.Scope),
+				slog.Any("error", err),
+			)
+		} else if skip {
 			ids = append(ids, mw.ID.String())
 		}
 	}

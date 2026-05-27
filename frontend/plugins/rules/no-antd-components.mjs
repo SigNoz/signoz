@@ -21,6 +21,7 @@ const BANNED_COMPONENTS = {
 	Radio:
 		'Use @signozhq/ui/radio-group RadioGroup (dots) or @signozhq/ui/toggle-group ToggleGroup (segmented buttons) instead of antd Radio.',
 	Progress: 'Use @signozhq/ui/progress instead of antd Progress.',
+	Avatar: 'Use @signozhq/ui/avatar instead of antd Avatar.',
 };
 
 export default {

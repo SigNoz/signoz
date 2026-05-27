@@ -20,73 +20,66 @@ type TraceSummary struct {
 
 // WaterfallTrace holds processed trace data with childern populated in spans.
 type WaterfallTrace struct {
-	StartTime                     uint64                    `json:"startTime"`
-	EndTime                       uint64                    `json:"endTime"`
-	TotalSpans                    uint64                    `json:"totalSpans"`
-	TotalErrorSpans               uint64                    `json:"totalErrorSpans"`
-	ServiceNameToTotalDurationMap map[string]uint64         `json:"serviceNameToTotalDurationMap"`
-	SpanIDToSpanNodeMap           map[string]*WaterfallSpan `json:"spanIdToSpanNodeMap"`
-	TraceRoots                    []*WaterfallSpan          `json:"traceRoots"`
-	HasMissingSpans               bool                      `json:"hasMissingSpans"`
+	StartTime           uint64                    `json:"startTime"`
+	EndTime             uint64                    `json:"endTime"`
+	TotalSpans          uint64                    `json:"totalSpans"`
+	TotalErrorSpans     uint64                    `json:"totalErrorSpans"`
+	SpanIDToSpanNodeMap map[string]*WaterfallSpan `json:"spanIdToSpanNodeMap"`
+	TraceRoots          []*WaterfallSpan          `json:"traceRoots"`
+	HasMissingSpans     bool                      `json:"hasMissingSpans"`
 }
 
 // GettableWaterfallTrace is the response for the v3 waterfall API.
 type GettableWaterfallTrace struct {
-	StartTimestampMillis  uint64 `json:"startTimestampMillis"`
-	EndTimestampMillis    uint64 `json:"endTimestampMillis"`
-	RootServiceName       string `json:"rootServiceName"`
-	RootServiceEntryPoint string `json:"rootServiceEntryPoint"`
-	TotalSpansCount       uint64 `json:"totalSpansCount"`
-	TotalErrorSpansCount  uint64 `json:"totalErrorSpansCount"`
-	// Deprecated: use Aggregations with SpanAggregationExecutionTimePercentage on the service.name field instead.
-	ServiceNameToTotalDurationMap map[string]uint64       `json:"serviceNameToTotalDurationMap"`
-	Spans                         []*WaterfallSpan        `json:"spans"`
-	HasMissingSpans               bool                    `json:"hasMissingSpans"`
-	UncollapsedSpans              []string                `json:"uncollapsedSpans"`
-	HasMore                       bool                    `json:"hasMore"`
-	Aggregations                  []SpanAggregationResult `json:"aggregations"`
+	StartTimestampMillis  uint64                  `json:"startTimestampMillis"`
+	EndTimestampMillis    uint64                  `json:"endTimestampMillis"`
+	RootServiceName       string                  `json:"rootServiceName"`
+	RootServiceEntryPoint string                  `json:"rootServiceEntryPoint"`
+	TotalSpansCount       uint64                  `json:"totalSpansCount"`
+	TotalErrorSpansCount  uint64                  `json:"totalErrorSpansCount"`
+	Spans                 []*WaterfallSpan        `json:"spans"`
+	HasMissingSpans       bool                    `json:"hasMissingSpans"`
+	UncollapsedSpans      []string                `json:"uncollapsedSpans"`
+	HasMore               bool                    `json:"hasMore"`
+	Aggregations          []SpanAggregationResult `json:"aggregations"`
 }
 
 // NewWaterfallTrace constructs a WaterfallTrace from processed span data.
 func NewWaterfallTrace(
 	startTime, endTime, totalSpans, totalErrorSpans uint64,
 	spanIDToSpanNodeMap map[string]*WaterfallSpan,
-	serviceNameToTotalDurationMap map[string]uint64,
 	traceRoots []*WaterfallSpan,
 	hasMissingSpans bool,
 ) *WaterfallTrace {
 	return &WaterfallTrace{
-		StartTime:                     startTime,
-		EndTime:                       endTime,
-		TotalSpans:                    totalSpans,
-		TotalErrorSpans:               totalErrorSpans,
-		SpanIDToSpanNodeMap:           spanIDToSpanNodeMap,
-		ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
-		TraceRoots:                    traceRoots,
-		HasMissingSpans:               hasMissingSpans,
+		StartTime:           startTime,
+		EndTime:             endTime,
+		TotalSpans:          totalSpans,
+		TotalErrorSpans:     totalErrorSpans,
+		SpanIDToSpanNodeMap: spanIDToSpanNodeMap,
+		TraceRoots:          traceRoots,
+		HasMissingSpans:     hasMissingSpans,
 	}
 }
 
-func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
+// NewWaterfallTraceFromSpans requires WaterfallSpan nodes with only below fields:
+// SpanID, ParentSpanID, TimeUnix, DurationNano, HasError, and ServiceName.
+func NewWaterfallTraceFromSpans(nodes []*WaterfallSpan) *WaterfallTrace {
 	var (
 		startTime, endTime, totalErrorSpans uint64
-		spanIDToSpanNodeMap                 = make(map[string]*WaterfallSpan, len(spans))
+		spanIDToSpanNodeMap                 = make(map[string]*WaterfallSpan, len(nodes))
 		traceRoots                          []*WaterfallSpan
 		hasMissingSpans                     bool
 	)
 
-	for _, item := range spans {
-		span := item.ToWaterfallSpan()
-		startTimeUnixNano := uint64(item.StartTime.UnixNano())
-		if startTime == 0 || startTimeUnixNano < startTime {
-			startTime = startTimeUnixNano
+	for _, span := range nodes {
+		if startTime == 0 || span.TimeUnix < startTime {
+			startTime = span.TimeUnix
 		}
-		endTime = max(endTime, startTimeUnixNano+span.DurationNano)
-
+		endTime = max(endTime, span.TimeUnix+span.DurationNano)
 		if span.HasError {
 			totalErrorSpans++
 		}
-
 		spanIDToSpanNodeMap[span.SpanID] = span
 	}
 
@@ -121,10 +114,9 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	return NewWaterfallTrace(
 		startTime,
 		endTime,
-		uint64(len(spans)),
+		uint64(len(nodes)),
 		totalErrorSpans,
 		spanIDToSpanNodeMap,
-		calculateServiceTime(spanIDToSpanNodeMap),
 		traceRoots,
 		hasMissingSpans,
 	)
@@ -206,23 +198,19 @@ func (wt *WaterfallTrace) CalculateUncollapsedSpanIDs(uncollapsedSpanIDs []strin
 }
 
 func (wt *WaterfallTrace) Clone() cachetypes.Cacheable {
-	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
-	maps.Copy(copyOfServiceNameToTotalDurationMap, wt.ServiceNameToTotalDurationMap)
-
 	copyOfSpanIDToSpanNodeMap := make(map[string]*WaterfallSpan)
 	maps.Copy(copyOfSpanIDToSpanNodeMap, wt.SpanIDToSpanNodeMap)
 
 	copyOfTraceRoots := make([]*WaterfallSpan, len(wt.TraceRoots))
 	copy(copyOfTraceRoots, wt.TraceRoots)
 	return &WaterfallTrace{
-		StartTime:                     wt.StartTime,
-		EndTime:                       wt.EndTime,
-		TotalSpans:                    wt.TotalSpans,
-		TotalErrorSpans:               wt.TotalErrorSpans,
-		ServiceNameToTotalDurationMap: copyOfServiceNameToTotalDurationMap,
-		SpanIDToSpanNodeMap:           copyOfSpanIDToSpanNodeMap,
-		TraceRoots:                    copyOfTraceRoots,
-		HasMissingSpans:               wt.HasMissingSpans,
+		StartTime:           wt.StartTime,
+		EndTime:             wt.EndTime,
+		TotalSpans:          wt.TotalSpans,
+		TotalErrorSpans:     wt.TotalErrorSpans,
+		SpanIDToSpanNodeMap: copyOfSpanIDToSpanNodeMap,
+		TraceRoots:          copyOfTraceRoots,
+		HasMissingSpans:     wt.HasMissingSpans,
 	}
 }
 
@@ -257,11 +245,6 @@ func NewGettableWaterfallTrace(
 		rootServiceEntryPoint = traceData.TraceRoots[0].Name
 	}
 
-	serviceDurationsMillis := make(map[string]uint64, len(traceData.ServiceNameToTotalDurationMap))
-	for svc, dur := range traceData.ServiceNameToTotalDurationMap {
-		serviceDurationsMillis[svc] = dur / 1_000_000
-	}
-
 	// convert start timestamp to millis because client is expecting it in millis
 	for _, span := range selectedSpans {
 		span.TimeUnix = span.TimeUnix / 1_000_000
@@ -277,18 +260,17 @@ func NewGettableWaterfallTrace(
 	}
 
 	return &GettableWaterfallTrace{
-		Spans:                         selectedSpans,
-		UncollapsedSpans:              uncollapsedSpans,
-		StartTimestampMillis:          traceData.StartTime / 1_000_000,
-		EndTimestampMillis:            traceData.EndTime / 1_000_000,
-		TotalSpansCount:               traceData.TotalSpans,
-		TotalErrorSpansCount:          traceData.TotalErrorSpans,
-		RootServiceName:               rootServiceName,
-		RootServiceEntryPoint:         rootServiceEntryPoint,
-		ServiceNameToTotalDurationMap: serviceDurationsMillis,
-		HasMissingSpans:               traceData.HasMissingSpans,
-		HasMore:                       !selectAllSpans,
-		Aggregations:                  aggregations,
+		Spans:                 selectedSpans,
+		UncollapsedSpans:      uncollapsedSpans,
+		StartTimestampMillis:  traceData.StartTime / 1_000_000,
+		EndTimestampMillis:    traceData.EndTime / 1_000_000,
+		TotalSpansCount:       traceData.TotalSpans,
+		TotalErrorSpansCount:  traceData.TotalErrorSpans,
+		RootServiceName:       rootServiceName,
+		RootServiceEntryPoint: rootServiceEntryPoint,
+		HasMissingSpans:       traceData.HasMissingSpans,
+		HasMore:               !selectAllSpans,
+		Aggregations:          aggregations,
 	}
 }
 
@@ -309,21 +291,6 @@ func windowAroundIndex(selectedIndex, total int, spanLimitPerRequest float64) (s
 	}
 	start = max(start, 0)
 	return
-}
-
-func calculateServiceTime(spanIDToSpanNodeMap map[string]*WaterfallSpan) map[string]uint64 {
-	serviceSpans := make(map[string][]*WaterfallSpan)
-	for _, span := range spanIDToSpanNodeMap {
-		if span.ServiceName != "" {
-			serviceSpans[span.ServiceName] = append(serviceSpans[span.ServiceName], span)
-		}
-	}
-
-	totalTimes := make(map[string]uint64)
-	for service, spans := range serviceSpans {
-		totalTimes[service] = mergeSpanIntervals(spans)
-	}
-	return totalTimes
 }
 
 // mergeSpanIntervals computes non-overlapping execution time for a set of spans.
