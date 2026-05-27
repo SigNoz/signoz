@@ -6,7 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Button, Collapse, Divider } from 'antd';
+import { Button, Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 
 import { DurationSection } from './DurationSection';
 import {

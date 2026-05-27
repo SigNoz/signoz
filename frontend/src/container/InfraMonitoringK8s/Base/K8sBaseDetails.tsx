@@ -8,7 +8,8 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Button, Drawer, Radio, Tooltip } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';

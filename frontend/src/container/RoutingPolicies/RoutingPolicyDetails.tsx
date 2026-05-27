@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Divider, Flex, Form, Input, Modal, Select } from 'antd';
+import { Button, Flex, Form, Input, Modal, Select } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Dropdown, MenuProps, Tooltip } from 'antd';
+import { Dropdown, MenuProps, Tooltip } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';

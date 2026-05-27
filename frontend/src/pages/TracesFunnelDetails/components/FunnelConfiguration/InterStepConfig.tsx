@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';

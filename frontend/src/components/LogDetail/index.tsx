@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Drawer, Radio, Tooltip } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';

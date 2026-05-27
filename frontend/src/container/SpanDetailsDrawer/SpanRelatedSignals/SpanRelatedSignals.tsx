@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, RadioChangeEvent } from 'antd';
+import { Button, Drawer, RadioChangeEvent } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
