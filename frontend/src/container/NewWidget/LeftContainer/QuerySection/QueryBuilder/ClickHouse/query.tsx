@@ -1,6 +1,7 @@
-import { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
+import { Fullscreen, Minimize } from '@signozhq/icons';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -10,6 +11,8 @@ import { EQueryType } from 'types/common/dashboard';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import QueryHeader from '../QueryHeader';
+
+import './ClickHouse.styles.scss';
 
 interface IClickHouseQueryBuilderProps {
 	queryData: IClickHouseQuery;
@@ -73,6 +76,28 @@ function ClickHouseQueryBuilder({
 
 	const isDarkMode = useIsDarkMode();
 
+	// Fullscreen editor state
+	const [isFullscreen, setIsFullscreen] = useState(false);
+
+	// Handle Escape key to close fullscreen
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent): void => {
+			if (e.key === 'Escape' && isFullscreen) {
+				setIsFullscreen(false);
+			}
+		};
+
+		if (isFullscreen) {
+			document.addEventListener('keydown', handleKeyDown);
+			document.body.style.overflow = 'hidden';
+		}
+
+		return () => {
+			document.removeEventListener('keydown', handleKeyDown);
+			document.body.style.overflow = '';
+		};
+	}, [isFullscreen]);
+
 	function setEditorTheme(monaco: Monaco): void {
 		monaco.editor.defineTheme('my-theme', {
 			base: 'vs-dark',
@@ -87,46 +112,107 @@ function ClickHouseQueryBuilder({
 		});
 	}
 
+	const editorOptions = {
+		scrollbar: {
+			alwaysConsumeMouseWheel: false,
+		},
+		minimap: {
+			enabled: isFullscreen,
+		},
+		fontSize: 14,
+		fontFamily: 'Space Mono',
+		wordWrap: 'on' as const,
+		lineNumbers: 'on' as const,
+		scrollBeyondLastLine: false,
+		automaticLayout: true,
+	};
+
 	return (
-		<QueryHeader
-			name={queryData?.name}
-			disabled={queryData?.disabled}
-			onDisable={handleDisable}
-			onDelete={handleRemoveQuery}
-			deletable={deletable}
-		>
-			<MEditor
-				language="sql"
-				height="200px"
-				onChange={handleUpdateEditor}
-				value={queryData?.query}
-				onMount={(_, monaco): void => {
-					document.fonts.ready.then(() => {
-						monaco.editor.remeasureFonts();
-					});
-				}}
-				options={{
-					scrollbar: {
-						alwaysConsumeMouseWheel: false,
-					},
-					minimap: {
-						enabled: false,
-					},
-					fontSize: 14,
-					fontFamily: 'Space Mono',
-				}}
-				theme={isDarkMode ? 'my-theme' : 'light'}
-				beforeMount={setEditorTheme}
-			/>
-			<Input
-				onChange={handleUpdateInput}
-				name="legend"
-				size="middle"
-				defaultValue={queryData?.legend}
-				value={queryData?.legend}
-				addonBefore="Legend Format"
-			/>
-		</QueryHeader>
+		<>
+			<QueryHeader
+				name={queryData?.name}
+				disabled={queryData?.disabled}
+				onDisable={handleDisable}
+				onDelete={handleRemoveQuery}
+				deletable={deletable}
+			>
+				<div className="clickhouse-query-editor-wrapper">
+					<MEditor
+						language="sql"
+						height="200px"
+						onChange={handleUpdateEditor}
+						value={queryData?.query}
+						onMount={(_, monaco): void => {
+							document.fonts.ready.then(() => {
+								monaco.editor.remeasureFonts();
+							});
+						}}
+						options={editorOptions}
+						theme={isDarkMode ? 'my-theme' : 'light'}
+						beforeMount={setEditorTheme}
+					/>
+					<button
+						type="button"
+						className="clickhouse-fullscreen-btn"
+						onClick={(): void => setIsFullscreen(true)}
+						data-testid="clickhouse-expand-editor"
+						title="Expand editor to fullscreen"
+					>
+						<Fullscreen size={16} />
+					</button>
+				</div>
+				<Input
+					onChange={handleUpdateInput}
+					name="legend"
+					size="middle"
+					defaultValue={queryData?.legend}
+					value={queryData?.legend}
+					addonBefore="Legend Format"
+				/>
+			</QueryHeader>
+
+			{/* Fullscreen editor modal */}
+			{isFullscreen && (
+				<div className="clickhouse-fullscreen-overlay">
+					<div className="clickhouse-fullscreen-container">
+						<div className="clickhouse-fullscreen-header">
+							<span className="clickhouse-fullscreen-title">
+								ClickHouse Query Editor
+							</span>
+							<button
+								type="button"
+								className="clickhouse-fullscreen-close-btn"
+								onClick={(): void => setIsFullscreen(false)}
+								data-testid="clickhouse-collapse-editor"
+							>
+								<Minimize size={18} />
+								<span>Collapse</span>
+							</button>
+						</div>
+						<div className="clickhouse-fullscreen-editor">
+							<MEditor
+								language="sql"
+								height="100%"
+								onChange={handleUpdateEditor}
+								value={queryData?.query}
+								onMount={(_, monaco): void => {
+									document.fonts.ready.then(() => {
+										monaco.editor.remeasureFonts();
+									});
+								}}
+								options={{
+									...editorOptions,
+									minimap: { enabled: true },
+									fontSize: 15,
+								}}
+								theme={isDarkMode ? 'my-theme' : 'light'}
+								beforeMount={setEditorTheme}
+							/>
+						</div>
+					</div>
+				</div>
+			)}
+		</>
 	);
 }
 
