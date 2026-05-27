@@ -1,12 +1,15 @@
 package spantypes
 
 import (
+	"regexp"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+var validAggregationFieldName = regexp.MustCompile(`^[a-zA-Z0-9._\-]+$`)
 
 const maxAggregationItems = 10
 
@@ -62,10 +65,12 @@ func (p *PostableTraceAggregations) Validate() error {
 		if !a.Aggregation.isValid() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
 		}
-		fc := a.Field.FieldContext
-		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
-				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
+		if a.Field.FieldContext != telemetrytypes.FieldContextResource {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q, got %q",
+				telemetrytypes.FieldContextResource, a.Field.FieldContext)
+		}
+		if !validAggregationFieldName.MatchString(a.Field.Name) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid field name: %q", a.Field.Name)
 		}
 	}
 	return nil

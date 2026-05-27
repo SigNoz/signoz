@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"regexp"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -17,8 +16,14 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
-// validFieldName only allows characters safe to embed as ClickHouse map subscript literals.
-var validFieldName = regexp.MustCompile(`^[a-zA-Z0-9._\-]+$`)
+func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
+	switch fieldKey.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		// String cast required — Variant/Dynamic is rejected by GROUP BY.
+		return fmt.Sprintf("resource.`%s`::String", fieldKey.Name), nil
+	}
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
+}
 
 type spanCountRow struct {
 	FieldValue string `ch:"field_value"`
@@ -182,9 +187,9 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 	if err != nil {
 		return nil, err
 	}
-	// 3-level query: deduplicate → window function → sum non-overlapping per field.
+	// query: deduplicate → window function for adding non-overlapping duration per field.
 	// The window tracks the running max end time of preceding spans within each field_value
-	// partition (ordered by start). Each span contributes only its non-overlapping end
+	// partition (ordered by start).
 	query := fmt.Sprintf(`
 		SELECT field_value, sum(multiIf(
 			start_ns >= prev_max_end_ns,                    duration_nano,
@@ -224,31 +229,4 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 		result[r.FieldValue] = r.TotalNs
 	}
 	return result, nil
-}
-
-func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
-	if !validFieldName.MatchString(fieldKey.Name) {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid field name: %q", fieldKey.Name)
-	}
-	n := fieldKey.Name
-	switch fieldKey.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return fmt.Sprintf("resource.`%s`::String", n), nil
-	case telemetrytypes.FieldContextAttribute:
-		switch fieldKey.FieldDataType {
-		case telemetrytypes.FieldDataTypeString:
-			return fmt.Sprintf("attributes_string['%s']", n), nil
-		case telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeNumber:
-			return fmt.Sprintf("if(mapContains(attributes_number,'%[1]s'),toString(attributes_number['%[1]s']),'')", n), nil
-		case telemetrytypes.FieldDataTypeBool:
-			return fmt.Sprintf("if(mapContains(attributes_bool,'%[1]s'),toString(attributes_bool['%[1]s']),'')", n), nil
-		default:
-			return fmt.Sprintf(
-				"multiIf(mapContains(attributes_string,'%[1]s'),attributes_string['%[1]s'],"+
-					"mapContains(attributes_number,'%[1]s'),toString(attributes_number['%[1]s']),"+
-					"mapContains(attributes_bool,'%[1]s'),toString(attributes_bool['%[1]s']),'')",
-				n), nil
-		}
-	}
-	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
 }
