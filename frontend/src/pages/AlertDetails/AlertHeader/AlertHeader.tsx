@@ -14,7 +14,7 @@ import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';
 import DisabledBanner from './MuteAlert/DisabledBanner';
 import MutedBanner from './MuteAlert/MutedBanner';
-import { useActiveMute } from './MuteAlert/useActiveMute';
+import { useActiveMutes } from './MuteAlert/useActiveMutes';
 
 import './AlertHeader.styles.scss';
 
@@ -47,10 +47,10 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
 	const ruleId = alertDetails?.id || '';
-	const { activeMute } = useActiveMute(ruleId);
+	const { activeMutes } = useActiveMutes(ruleId);
 	const effectiveState = alertRuleState ?? state ?? '';
 	const isDisabled = effectiveState === 'disabled';
-	const showMutedBanner = !isDisabled && Boolean(activeMute);
+	const showMutedBanner = !isDisabled && Boolean(activeMutes.length);
 	const showDisabledBanner = isDisabled;
 
 	const CreateAlertV1Header = (
@@ -84,9 +84,9 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 					<AlertActionButtons alertDetails={alertDetails} ruleId={ruleId} />
 				</div>
 			</div>
-			{showMutedBanner && activeMute && (
+			{showMutedBanner && (
 				<div className="alert-info__banner">
-					<MutedBanner activeMute={activeMute} />
+					<MutedBanner activeMute={activeMutes[0]} />
 				</div>
 			)}
 			{showDisabledBanner && (

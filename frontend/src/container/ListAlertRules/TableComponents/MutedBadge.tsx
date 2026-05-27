@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 
 import './MutedBadge.styles.scss';
 
-const formatRemaining = (endTime: string | undefined): string | null => {
+const formatRemaining = (endTime: string | undefined | null): string | null => {
 	if (!endTime) {
 		return null;
 	}
@@ -27,7 +27,7 @@ const formatRemaining = (endTime: string | undefined): string | null => {
 };
 
 interface MutedBadgeProps {
-	muteEndTime?: string;
+	muteEndTime: string | undefined | null;
 }
 
 function MutedBadge({ muteEndTime }: MutedBadgeProps): JSX.Element | null {

@@ -21,7 +21,7 @@ import AlertStateSegmented, {
 } from '../MuteAlert/AlertStateSegmented';
 import MutePopover from '../MuteAlert/MutePopover';
 import MuteSchedulerDrawer from '../MuteAlert/MuteSchedulerDrawer';
-import { useActiveMute } from '../MuteAlert/useActiveMute';
+import { useActiveMutes } from '../MuteAlert/useActiveMutes';
 import { useMuteAlertRule } from '../MuteAlert/useMuteAlertRule';
 import RenameModal from './RenameModal';
 
@@ -129,17 +129,17 @@ function AlertActionButtons({
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => (): void => setAlertRuleState(undefined), []);
 
-	const { activeMute, refetch: refetchActiveMute } = useActiveMute(ruleId);
+	const { activeMutes, refetch: refetchActiveMute } = useActiveMutes(ruleId);
 
 	const segmentedState: AlertSegmentedState = useMemo(() => {
 		if (isAlertRuleDisabled) {
 			return 'disabled';
 		}
-		if (activeMute) {
+		if (activeMutes.length) {
 			return 'muted';
 		}
 		return 'active';
-	}, [isAlertRuleDisabled, activeMute]);
+	}, [isAlertRuleDisabled, activeMutes]);
 
 	const [isMutePopoverOpen, setIsMutePopoverOpen] = useState<boolean>(false);
 	const [isMuteDrawerOpen, setIsMuteDrawerOpen] = useState<boolean>(false);

@@ -1,17 +1,17 @@
 import { useMemo } from 'react';
 import { useGetRuleByID } from 'api/generated/services/rules';
-import type { RuletypesActiveMuteInfoDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesActiveMuteDTO } from 'api/generated/services/sigNoz.schemas';
 
-export type ActiveMute = RuletypesActiveMuteInfoDTO;
+export type ActiveMute = RuletypesActiveMuteDTO;
 
 type UseActiveMuteResult = {
-	activeMute: ActiveMute | undefined;
+	activeMutes: ActiveMute[];
 	isLoading: boolean;
 	isFetching: boolean;
 	refetch: () => void;
 };
 
-export const useActiveMute = (
+export const useActiveMutes = (
 	ruleId: string | undefined,
 ): UseActiveMuteResult => {
 	const { data, isLoading, isFetching, refetch } = useGetRuleByID(
@@ -24,14 +24,7 @@ export const useActiveMute = (
 		},
 	);
 
-	const activeMute = useMemo(() => data?.data?.activeMute ?? undefined, [data]);
+	const activeMutes = useMemo(() => data?.data?.mutes ?? [], [data]);
 
-	return {
-		activeMute,
-		isLoading,
-		isFetching,
-		refetch: () => {
-			void refetch();
-		},
-	};
+	return { activeMutes, isLoading, isFetching, refetch };
 };

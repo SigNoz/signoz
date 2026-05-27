@@ -4,7 +4,7 @@ import { BellOff } from '@signozhq/icons';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 
-import type { ActiveMute } from './useActiveMute';
+import type { ActiveMute } from './useActiveMutes';
 
 import './StateBanners.styles.scss';
 
@@ -40,7 +40,7 @@ interface MutedBannerProps {
 }
 
 function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
-	const endTime = activeMute.effectiveEndTime ?? undefined;
+	const endTime = activeMute.end ?? undefined;
 	const [remaining, setRemaining] = useState(formatRemaining(endTime));
 
 	useEffect(() => {

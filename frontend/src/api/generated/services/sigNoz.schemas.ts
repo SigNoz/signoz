@@ -6082,7 +6082,7 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	state: RuletypesAlertStateDTO;
 }
 
-export interface RuletypesActiveMuteInfoDTO {
+export interface RuletypesActiveMuteDTO {
 	/**
 	 * @type string
 	 */
@@ -6091,12 +6091,7 @@ export interface RuletypesActiveMuteInfoDTO {
 	 * @type string,null
 	 * @format date-time
 	 */
-	effectiveEndTime?: string | null;
-	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	effectiveStartTime?: string | null;
+	end?: string | null;
 	/**
 	 * @type string
 	 */
@@ -6105,6 +6100,11 @@ export interface RuletypesActiveMuteInfoDTO {
 	 * @type string
 	 */
 	name?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	start?: string;
 }
 
 export enum RuletypesPanelTypeDTO {
@@ -6431,7 +6431,6 @@ export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
 export interface RuletypesRuleDTO {
-	activeMute?: RuletypesActiveMuteInfoDTO;
 	/**
 	 * @type string
 	 */
@@ -6476,6 +6475,10 @@ export interface RuletypesRuleDTO {
 	 * @type object
 	 */
 	labels?: RuletypesRuleDTOLabels;
+	/**
+	 * @type array,null
+	 */
+	mutes?: RuletypesActiveMuteDTO[] | null;
 	notificationSettings?: RuletypesNotificationSettingsDTO;
 	/**
 	 * @type array

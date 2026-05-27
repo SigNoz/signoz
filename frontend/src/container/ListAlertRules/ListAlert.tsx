@@ -277,12 +277,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onEditHandler(record, { newTab: isModifierKeyPressed(e) });
 				};
 
-				const muteEndTime = record.activeMute?.effectiveEndTime ?? undefined;
+				const isMuted = Boolean(record.mutes?.length);
 
 				return (
 					<span className="alert-list-name-cell">
 						<Typography.Link onClick={onClickHandler}>{value}</Typography.Link>
-						<MutedBadge muteEndTime={muteEndTime} />
+						{isMuted && <MutedBadge muteEndTime={record.mutes![0].end} />}
 					</span>
 				);
 			},
