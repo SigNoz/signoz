@@ -449,9 +449,8 @@ meterreporter:
   interval: 6h
   # Whether to backfill sealed days from the license creation day.
   backfill: true
-  # Random jitter applied to the first collect and to every subsequent cycle so
-  # that deployments don't all report at the same instant. The first collect
-  # fires at a random time in [0, jitter); each cycle then takes
+  # Random jitter applied to the first collect and to every subsequent cycle.
+  # The first collect fires at a random time in [0, jitter); each cycle then takes
   # interval - random(0, jitter). Must be between 10m and interval. Defaults to
   # min(interval, 2h) when unset.
   jitter: 2h
