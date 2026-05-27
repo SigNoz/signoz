@@ -18,7 +18,7 @@ export function getAlertColumns(
 			id: 'status',
 			header: 'Status',
 			accessorFn: (row) => row.status?.state,
-			width: { min: 120, default: 120 },
+			width: { fixed: '100px' },
 			enableSort: false,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => (
@@ -29,18 +29,20 @@ export function getAlertColumns(
 			id: 'alertName',
 			header: 'Alert Name',
 			accessorFn: (row) => row.labels?.alertname ?? '',
-			width: { min: 200, default: 330 },
+			width: { default: '100%' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
+				<TanStackTable.Text title={value}>
+					{String(value ?? '-')}
+				</TanStackTable.Text>
 			),
 		},
 		{
 			id: 'severity',
 			header: 'Severity',
 			accessorFn: (row) => row.labels?.severity ?? '',
-			width: { min: 150, default: 150 },
+			width: { fixed: '120px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => {
@@ -77,7 +79,7 @@ export function getAlertColumns(
 			id: 'labels',
 			header: 'Labels',
 			accessorKey: 'labels',
-			width: { min: 200, default: 300 },
+			width: { default: '100%' },
 			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;

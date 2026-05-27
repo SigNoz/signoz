@@ -239,6 +239,7 @@ function TriggeredAlerts(): JSX.Element {
 						}}
 						paginationClassname={styles.paginationContainer}
 						enableAlternatingRowColors
+						plainTextCellLineClamp={2}
 					/>
 				)}
 			</div>

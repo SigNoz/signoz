@@ -71,6 +71,7 @@ function ExpandedAlertsTable({
 				}}
 				paginationClassname={styles.expandedPagination}
 				enableAlternatingRowColors
+				plainTextCellLineClamp={2}
 			/>
 		</div>
 	);
