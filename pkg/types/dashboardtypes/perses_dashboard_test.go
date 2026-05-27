@@ -521,7 +521,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoz/NumberPanel",
-								"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+								"spec": {"thresholds": [{"value": 100, "operator": "above", "color": "Red", "format": "Color"}]}
 							}
 						}
 					}
@@ -699,17 +699,17 @@ func TestValidateRequiredFields(t *testing.T) {
 		},
 		{
 			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": ">", "format": "text", "color": "Red"}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": ""}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"value": 100, "operator": "above", "format": "text", "color": ""}]}`),
 			wantContain: "Color",
 		},
 		{
 			name:        "TableThreshold missing columnName",
-			data:        wrapPanel("signoz/TablePanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": "Red", "columnName": ""}]}`),
+			data:        wrapPanel("signoz/TablePanel", `{"thresholds": [{"value": 100, "operator": "above", "format": "text", "color": "Red", "columnName": ""}]}`),
 			wantContain: "ColumnName",
 		},
 		{
@@ -799,7 +799,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 	spec := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
 
 	require.Len(t, spec.Thresholds, 1, "expected 1 threshold")
-	require.Equal(t, ">", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default >")
+	require.Equal(t, "above", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default above")
 	require.Equal(t, "text", spec.Thresholds[0].Format.ValueOrDefault(), "expected ThresholdFormat default text")
 
 	// Marshal back and verify defaults in JSON output.
@@ -807,10 +807,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 	require.NoError(t, err, "marshal dashboard failed")
 	outputStr := string(output)
 	assert.Contains(t, outputStr, `"format":"text"`, "expected stored/response JSON to contain format:text")
-	// Go's json.Marshal escapes ">" as "\u003e", so check for both forms.
-	assert.True(t,
-		strings.Contains(outputStr, `"operator":">"`) || strings.Contains(outputStr, `"operator":"\u003e"`),
-		"expected stored/response JSON to contain operator:>, got: %s", outputStr)
+	assert.Contains(t, outputStr, `"operator":"above"`, "expected stored/response JSON to contain operator:above")
 }
 
 // TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
@@ -880,7 +877,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "global_time", tsSpec.Visualization.TimePreference.ValueOrDefault())
 	assert.Equal(t, "bottom", tsSpec.Legend.Position.ValueOrDefault())
 	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	assert.Equal(t, ">", numSpec.Thresholds[0].Operator.ValueOrDefault())
+	assert.Equal(t, "above", numSpec.Thresholds[0].Operator.ValueOrDefault())
 	assert.Equal(t, "text", numSpec.Thresholds[0].Format.ValueOrDefault())
 
 	// Step 2: Marshal to JSON (simulates writing to DB).
@@ -900,7 +897,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "global_time", tsLoaded.Visualization.TimePreference.ValueOrDefault(), "after load")
 	assert.Equal(t, "bottom", tsLoaded.Legend.Position.ValueOrDefault(), "after load")
 	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	assert.Equal(t, ">", numLoaded.Thresholds[0].Operator.ValueOrDefault(), "after load")
+	assert.Equal(t, "above", numLoaded.Thresholds[0].Operator.ValueOrDefault(), "after load")
 	assert.Equal(t, "text", numLoaded.Thresholds[0].Format.ValueOrDefault(), "after load")
 
 	// Step 4: Marshal again (simulates API response) and verify defaults.
@@ -920,10 +917,113 @@ func TestStorageRoundTrip(t *testing.T) {
 		assert.Contains(t, responseStr, `"`+field+`":`+want, "expected %s:%s after storage round-trip", field, want)
 	}
 
-	// Verify operator default (Go escapes ">" as "\u003e").
-	assert.True(t,
-		strings.Contains(responseStr, `"operator":">"`) || strings.Contains(responseStr, `"operator":"\u003e"`),
-		"expected operator:> after storage round-trip")
+	assert.Contains(t, responseStr, `"operator":"above"`, "expected operator:above after storage round-trip")
+}
+
+func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
+	const validSpec = `"spec": {"panels": {}, "layouts": []}`
+
+	tests := []struct {
+		scenario     string
+		body         string
+		wantErr      bool
+		wantErrMatch string
+		wantName     string
+		wantDisplay  string
+	}{
+		{
+			scenario:    "flag true with display.name derives name on conversion",
+			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[]}}`,
+			wantName:    "",
+			wantDisplay: "My Dashboard!",
+		},
+		{
+			scenario:     "flag true with non-empty name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"panels":{},"layouts":[]}}`,
+			wantErr:      true,
+			wantErrMatch: "name must be empty when generateName is true",
+		},
+		{
+			scenario:     "flag true with empty display.name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `","generateName":true,` + validSpec + `}`,
+			wantErr:      true,
+			wantErrMatch: "spec.display.name is required",
+		},
+		{
+			scenario:    "flag false",
+			body:        `{"schemaVersion":"` + SchemaVersion + `","name":"my-dashboard",` + validSpec + `}`,
+			wantName:    "my-dashboard",
+			wantDisplay: "my-dashboard",
+		},
+		{
+			scenario:     "flag false with missing name is rejected",
+			body:         `{"schemaVersion":"` + SchemaVersion + `",` + validSpec + `}`,
+			wantErr:      true,
+			wantErrMatch: "name is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			var p PostableDashboardV2
+			err := json.Unmarshal([]byte(tt.body), &p)
+			if tt.wantErr {
+				require.Error(t, err, "expected validation error")
+				assert.Contains(t, err.Error(), tt.wantErrMatch)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantName, p.Name)
+			assert.Equal(t, tt.wantDisplay, p.Spec.Display.Name)
+		})
+	}
+}
+
+func TestGenerateDashboardName(t *testing.T) {
+	tests := []struct {
+		scenario   string
+		input      string
+		wantPrefix string // expected slug prefix before the "-<suffix>" tail (empty if prefix is dropped)
+	}{
+		{scenario: "simple words with spaces", input: "My Dashboard", wantPrefix: "my-dashboard"},
+		{scenario: "punctuation collapses", input: "Hello, World!", wantPrefix: "hello-world"},
+		{scenario: "leading and trailing whitespace", input: "  hello  ", wantPrefix: "hello"},
+		{scenario: "leading and trailing hyphens", input: "---abc---", wantPrefix: "abc"},
+		{scenario: "consecutive non-alphanumerics collapse", input: "a___b...c", wantPrefix: "a-b-c"},
+		{scenario: "digits are preserved", input: "Region us-east-1", wantPrefix: "region-us-east-1"},
+		{scenario: "no alphanumerics drops prefix and returns suffix only", input: "!!! ???", wantPrefix: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			got := generateDashboardName(tt.input)
+			require.NotEmpty(t, got)
+			require.LessOrEqual(t, len(got), 63)
+			require.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
+
+			if tt.wantPrefix == "" {
+				assert.Len(t, got, dashboardNameSuffixLen, "expected the bare random suffix")
+				return
+			}
+			expectedPrefix := tt.wantPrefix + "-"
+			assert.True(t, strings.HasPrefix(got, expectedPrefix), "expected prefix %q, got %q", expectedPrefix, got)
+			assert.Len(t, got, len(expectedPrefix)+dashboardNameSuffixLen)
+		})
+	}
+
+	t.Run("prefix is truncated to leave room for the suffix", func(t *testing.T) {
+		input := strings.Repeat("a", 100)
+		got := generateDashboardName(input)
+		require.LessOrEqual(t, len(got), 63)
+		require.Empty(t, validation.IsDNS1123Label(got))
+		assert.Equal(t, len(got), 63, "expected the result to be padded to the max DNS-1123 length")
+	})
+
+	t.Run("suffix differs across calls", func(t *testing.T) {
+		first := generateDashboardName("collision-test")
+		second := generateDashboardName("collision-test")
+		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
+	})
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
