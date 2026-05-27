@@ -31,9 +31,6 @@ interface MutedBadgeProps {
 }
 
 function MutedBadge({ muteEndTime }: MutedBadgeProps): JSX.Element | null {
-	if (!muteEndTime) {
-		return null;
-	}
 	const remaining = formatRemaining(muteEndTime);
 	return (
 		<span className="alert-list-muted-badge">

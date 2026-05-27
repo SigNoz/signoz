@@ -35,44 +35,31 @@ const formatRemaining = (endTime: string | undefined): string | null => {
 	return `${minutes}m LEFT`;
 };
 
-const isIndefinite = (endTime: string | undefined): boolean => {
-	if (!endTime) {
-		return true;
-	}
-	// If end is more than 5 years away, treat as indefinite (matches "Forever" sentinel).
-	return dayjs(endTime).diff(dayjs(), 'year') >= 5;
-};
-
 interface MutedBannerProps {
 	activeMute: ActiveMute;
 }
 
 function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
 	const endTime = activeMute.effectiveEndTime ?? undefined;
-	const indefinite = isIndefinite(endTime);
-	const [remaining, setRemaining] = useState<string | null>(
-		indefinite ? null : formatRemaining(endTime),
-	);
+	const [remaining, setRemaining] = useState(formatRemaining(endTime));
 
 	useEffect(() => {
-		if (indefinite) {
-			return undefined;
+		if (!endTime) {
+			return;
 		}
-		const interval = setInterval(() => {
-			setRemaining(formatRemaining(endTime));
-		}, 60_000);
+		const interval = setInterval(
+			() => setRemaining(formatRemaining(endTime)),
+			60_000,
+		);
 		return (): void => clearInterval(interval);
-	}, [endTime, indefinite]);
+	}, [endTime]);
 
 	const titleText = useMemo(() => {
-		if (indefinite) {
-			return 'Notifications muted indefinitely';
-		}
 		if (!endTime) {
 			return 'Notifications muted';
 		}
 		return `Notifications muted until ${dayjs(endTime).format('MMM D, h:mm A')}`;
-	}, [endTime, indefinite]);
+	}, [endTime]);
 
 	const reason = activeMute.description || activeMute.name;
 
@@ -84,7 +71,7 @@ function MutedBanner({ activeMute }: MutedBannerProps): JSX.Element {
 			<div className="state-banner__body">
 				<div className="state-banner__title">
 					<span>{titleText}</span>
-					{!indefinite && remaining && (
+					{remaining && (
 						<span className="state-banner__pill state-banner__pill--muted">
 							{remaining}
 						</span>
