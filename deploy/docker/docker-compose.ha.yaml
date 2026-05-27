@@ -10,7 +10,7 @@ x-common: &common
 x-clickhouse-defaults: &clickhouse-defaults
   !!merge <<: *common
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
-  image: clickhouse/clickhouse-server:25.5.6
+  image: docker.io/clickhouse/clickhouse-server:25.5.6
   tty: true
   labels:
     signoz.io/scrape: "true"
@@ -44,7 +44,7 @@ x-clickhouse-defaults: &clickhouse-defaults
     - CLICKHOUSE_SKIP_USER_SETUP=1
 x-zookeeper-defaults: &zookeeper-defaults
   !!merge <<: *common
-  image: signoz/zookeeper:3.7.1
+  image: docker.io/signoz/zookeeper:3.7.1
   user: root
   labels:
     signoz.io/scrape: "true"
@@ -69,7 +69,7 @@ x-db-depend: &db-depend
 services:
   init-clickhouse:
     !!merge <<: *common
-    image: clickhouse/clickhouse-server:25.5.6
+    image: docker.io/clickhouse/clickhouse-server:25.5.6
     container_name: signoz-init-clickhouse
     command:
       - bash
@@ -181,7 +181,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:${VERSION:-v0.125.1}
+    image: docker.io/signoz/signoz:${VERSION:-v0.125.1}
     container_name: signoz
     ports:
       - "8080:8080" # signoz port
@@ -204,7 +204,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.4}
+    image: docker.io/signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.4}
     container_name: signoz-otel-collector
     entrypoint:
       - /bin/sh
@@ -229,7 +229,7 @@ services:
       - "4318:4318" # OTLP HTTP receiver
   signoz-telemetrystore-migrator:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.4}
+    image: docker.io/signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.4}
     container_name: signoz-telemetrystore-migrator
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000
