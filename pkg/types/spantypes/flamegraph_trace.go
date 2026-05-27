@@ -21,7 +21,7 @@ func NewFlamegraphTraceFromMinimal(spans []MinimalSpan) *FlamegraphTrace {
 		t.updateTimeRange(node.Timestamp, node.DurationNano)
 		t.nodeByID[node.SpanID] = node
 	}
-	t.wireTree()
+	t.buildSpanTree()
 	return t
 }
 
@@ -34,7 +34,7 @@ func NewFlamegraphTraceFromStorable(spans []StorableSpan) *FlamegraphTrace {
 		t.updateTimeRange(node.Timestamp, node.DurationNano)
 		t.nodeByID[node.SpanID] = node
 	}
-	t.wireTree()
+	t.buildSpanTree()
 	return t
 }
 
@@ -145,7 +145,7 @@ func (t *FlamegraphTrace) updateTimeRange(timestamp, durationNano uint64) {
 	}
 }
 
-func (t *FlamegraphTrace) wireTree() {
+func (t *FlamegraphTrace) buildSpanTree() {
 	for _, node := range t.nodeByID {
 		if node.ParentSpanID != "" {
 			if parent, ok := t.nodeByID[node.ParentSpanID]; ok {
@@ -225,10 +225,7 @@ func sampleFlamegraphLevel(
 
 	var sampled []*FlamegraphSpan
 
-	topK := topLatencyCount
-	if topK > len(sorted) {
-		topK = len(sorted)
-	}
+	topK := min(topLatencyCount, len(sorted))
 	sampled = append(sampled, sorted[:topK]...)
 
 	if isSelectedLevel {
