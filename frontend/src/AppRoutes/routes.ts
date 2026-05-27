@@ -501,7 +501,7 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.AI_ASSISTANT,
+		path: [ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
 		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',

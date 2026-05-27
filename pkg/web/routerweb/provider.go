@@ -44,7 +44,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", config.Index)
 	}
 
-	settingsJSON, err := json.Marshal(config.Settings)
+	webSettings := web.NewSettings(config)
+	settingsJSON, err := json.Marshal(webSettings)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "cannot marshal web settings to JSON")
 	}

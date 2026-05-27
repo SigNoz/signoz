@@ -18,11 +18,15 @@ import type {
 } from 'react-query';
 
 import type {
+	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
+	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
 	DeletePublicDashboardPathParameters,
+	GetDashboardV2200,
+	GetDashboardV2PathParameters,
 	GetPublicDashboard200,
 	GetPublicDashboardData200,
 	GetPublicDashboardDataPathParameters,
@@ -623,6 +627,190 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getGetPublicDashboardWidgetQueryRangeQueryKey({ id, idx }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint creates a dashboard in the v2 format that follows Perses spec.
+ * @summary Create dashboard (v2)
+ */
+export const createDashboardV2 = (
+	dashboardtypesPostableDashboardV2DTO?: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateDashboardV2201>({
+		url: `/api/v2/dashboards`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: dashboardtypesPostableDashboardV2DTO,
+		signal,
+	});
+};
+
+export const getCreateDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createDashboardV2>>,
+		TError,
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createDashboardV2>>,
+	TError,
+	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	TContext
+> => {
+	const mutationKey = ['createDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createDashboardV2>>,
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createDashboardV2(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof createDashboardV2>>
+>;
+export type CreateDashboardV2MutationBody =
+	| BodyType<DashboardtypesPostableDashboardV2DTO>
+	| undefined;
+export type CreateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create dashboard (v2)
+ */
+export const useCreateDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createDashboardV2>>,
+		TError,
+		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createDashboardV2>>,
+	TError,
+	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	TContext
+> => {
+	return useMutation(getCreateDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint returns a v2-shape dashboard.
+ * @summary Get dashboard (v2)
+ */
+export const getDashboardV2 = (
+	{ id }: GetDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetDashboardV2200>({
+		url: `/api/v2/dashboards/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetDashboardV2QueryKey = ({
+	id,
+}: GetDashboardV2PathParameters) => {
+	return [`/api/v2/dashboards/${id}`] as const;
+};
+
+export const getGetDashboardV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getDashboardV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetDashboardV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getDashboardV2>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetDashboardV2QueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboardV2>>> = ({
+		signal,
+	}) => getDashboardV2({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getDashboardV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetDashboardV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getDashboardV2>>
+>;
+export type GetDashboardV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get dashboard (v2)
+ */
+
+export function useGetDashboardV2<
+	TData = Awaited<ReturnType<typeof getDashboardV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetDashboardV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getDashboardV2>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetDashboardV2QueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get dashboard (v2)
+ */
+export const invalidateGetDashboardV2 = async (
+	queryClient: QueryClient,
+	{ id }: GetDashboardV2PathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetDashboardV2QueryKey({ id }) },
 		options,
 	);
 
