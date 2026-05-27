@@ -210,12 +210,12 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 					PARTITION BY field_value
 					ORDER BY start_ns
 					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-				), 0) AS prev_max_end_ns
+				), toUInt64(0)) AS prev_max_end_ns
 			FROM field_duration
 		)
 
 		-- add only duration that is extending over previous spans
-		SELECT field_value, sum(greatest(end_ns - greatest(start_ns, prev_max_end_ns), 0)) AS total_ns
+		SELECT field_value, sum(toUInt64(greatest(end_ns - greatest(start_ns, prev_max_end_ns), 0))) AS total_ns
 		FROM max_end_time
 		GROUP BY field_value`,
 		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
