@@ -63,17 +63,13 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_avatar_2ffxl_1"
-                        data-shape="circle"
-                        data-size="sm"
-                        data-slot="avatar"
-                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
+                        class="_badge_1etd5_1"
+                        data-capitalize="false"
+                        data-color="robin"
+                        data-slot="badge"
+                        data-variant="default"
                       >
-                        <span
-                          class="_fallback_2ffxl_76"
-                        >
-                          1
-                        </span>
+                        1
                       </span>
                     </td>
                     <td
@@ -97,17 +93,13 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_avatar_2ffxl_1"
-                        data-shape="circle"
-                        data-size="sm"
-                        data-slot="avatar"
-                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
+                        class="_badge_1etd5_1"
+                        data-capitalize="false"
+                        data-color="robin"
+                        data-slot="badge"
+                        data-variant="default"
                       >
-                        <span
-                          class="_fallback_2ffxl_76"
-                        >
-                          2
-                        </span>
+                        2
                       </span>
                     </td>
                     <td
@@ -131,17 +123,13 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_avatar_2ffxl_1"
-                        data-shape="circle"
-                        data-size="sm"
-                        data-slot="avatar"
-                        style="width: 1rem; height: 1rem; font-size: 0.75rem; line-height: 0.813rem; font-weight: 400; background-color: rgb(22, 104, 220);"
+                        class="_badge_1etd5_1"
+                        data-capitalize="false"
+                        data-color="robin"
+                        data-slot="badge"
+                        data-variant="default"
                       >
-                        <span
-                          class="_fallback_2ffxl_76"
-                        >
-                          3
-                        </span>
+                        3
                       </span>
                     </td>
                     <td

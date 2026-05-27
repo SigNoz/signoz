@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
-import { Avatar } from '@signozhq/ui/avatar';
+import { Badge } from '@signozhq/ui/badge';
 import { Select } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export function PipelineIndexIcon({
@@ -9,18 +8,7 @@ export function PipelineIndexIcon({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	return (
-		<Avatar
-			size="sm"
-			style={{
-				backgroundColor: themeColors.navyBlue,
-				fontSize: '0.875rem',
-				lineHeight: '1.375rem',
-			}}
-		>
-			{children}
-		</Avatar>
-	);
+	return <Badge color="robin">{children}</Badge>;
 }
 
 export const ProcessorTypeWrapper = styled.div`

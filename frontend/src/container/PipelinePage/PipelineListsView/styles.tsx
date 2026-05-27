@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Avatar } from '@signozhq/ui/avatar';
+import { Badge } from '@signozhq/ui/badge';
 import { Button, Table, TableProps } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
@@ -41,21 +41,7 @@ export function ProcessorIndexIcon({
 }: {
 	children: ReactNode;
 }): JSX.Element {
-	return (
-		<Avatar
-			size="sm"
-			style={{
-				width: '1rem',
-				height: '1rem',
-				fontSize: '0.75rem',
-				lineHeight: '0.813rem',
-				fontWeight: 400,
-				backgroundColor: themeColors.navyBlue,
-			}}
-		>
-			{children}
-		</Avatar>
-	);
+	return <Badge color="robin">{children}</Badge>;
 }
 
 export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =
