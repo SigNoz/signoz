@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { CircleOff } from '@signozhq/icons';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
@@ -13,6 +14,18 @@ interface DisabledBannerProps {
 
 function DisabledBanner({ rule }: DisabledBannerProps): JSX.Element {
 	const updatedAt = rule.updatedAt ? dayjs(rule.updatedAt) : null;
+	const [fromNow, setFromNow] = useState(updatedAt?.fromNow() ?? null);
+
+	useEffect(() => {
+		if (!rule.updatedAt) {
+			return;
+		}
+		const interval = setInterval(
+			() => setFromNow(dayjs(rule.updatedAt).fromNow()),
+			60_000,
+		);
+		return (): void => clearInterval(interval);
+	}, [rule.updatedAt]);
 
 	return (
 		<div className="state-banner state-banner--disabled" role="status">
@@ -27,11 +40,11 @@ function DisabledBanner({ rule }: DisabledBannerProps): JSX.Element {
 					</span>
 				</div>
 				<div className="state-banner__meta">
-					<span>Evaluation paused — no fires will be recorded.</span>
-					{updatedAt && (
+					<span>Evaluation paused — no alerts will be recorded</span>
+					{fromNow && (
 						<>
 							{' · '}
-							<span>{updatedAt.fromNow()}</span>
+							<span>{fromNow}</span>
 						</>
 					)}
 				</div>

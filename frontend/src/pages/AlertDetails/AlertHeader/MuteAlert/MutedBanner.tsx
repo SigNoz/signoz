@@ -82,9 +82,7 @@ function MutedBanner({ activeMute, onExpire }: MutedBannerProps): JSX.Element {
 					)}
 				</div>
 				<div className="state-banner__meta">
-					<span>
-						Rule is still evaluating — fires will appear in <strong>History</strong>
-					</span>
+					<span>Rule is still evaluating — alerts will appear in History</span>
 					{reason && (
 						<>
 							{' · '}
