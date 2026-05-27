@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Button, Flex, Form, Input, Modal, Select } from 'antd';
-import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
@@ -97,7 +96,6 @@ function RoutingPolicyDetails({
 			footer={null}
 			maskClosable={false}
 		>
-			<Divider plain />
 			<Form<RoutingPolicyDetailsFormState>
 				form={form}
 				initialValues={initialFormState}
