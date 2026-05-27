@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import store from 'store';
 import {
 	UPDATE_SELECTED_FUNCTION,
@@ -11,9 +11,9 @@ import { extractTagFilters } from '../Search/AllTags/Tag/utils';
 import { functions, groupBy } from './config';
 
 export function groupByValues(
-	tagFilters: DefaultOptionType[],
-): DefaultOptionType[] {
-	const result: DefaultOptionType[] = [...groupBy];
+	tagFilters: ComboboxSimpleItem[],
+): ComboboxSimpleItem[] {
+	const result: ComboboxSimpleItem[] = [...groupBy];
 	tagFilters.forEach((e) => {
 		result.push(e);
 	});
@@ -22,14 +22,14 @@ export function groupByValues(
 
 export function initOptions(
 	payload: PayloadProps | null | undefined,
-): DefaultOptionType[] {
+): ComboboxSimpleItem[] {
 	if (payload) {
 		return groupByValues(extractTagFilters(payload));
 	}
 	return groupBy;
 }
 
-export function onClickSelectedGroupByHandler(options: DefaultOptionType[]) {
+export function onClickSelectedGroupByHandler(options: ComboboxSimpleItem[]) {
 	return (ev: unknown): void => {
 		const { dispatch } = store;
 		if (typeof ev === 'string' && options) {
@@ -64,7 +64,7 @@ export function onClickSelectedFunctionHandler(value: unknown): void {
 
 export function selectedGroupByValue(
 	selectedGroupBy: string,
-	options: DefaultOptionType[],
+	options: ComboboxSimpleItem[],
 ): ReactNode {
 	const optionValue = options.find((e) => selectedGroupBy === e.value)?.label;
 	if (optionValue) {
@@ -73,13 +73,13 @@ export function selectedGroupByValue(
 	return selectedGroupBy;
 }
 
-export function getSelectedValue(selectedFunction: string): unknown {
-	return functions.find((e) => selectedFunction === e.key)?.displayValue;
+export function getSelectedValue(selectedFunction: string): string {
+	return selectedFunction;
 }
 
 export function filterGroupBy(
 	inputValue: string,
-	option: DefaultOptionType | undefined,
+	option: ComboboxSimpleItem | undefined,
 ): boolean {
 	return (
 		option?.label?.toString().toUpperCase().indexOf(inputValue.toUpperCase()) !==

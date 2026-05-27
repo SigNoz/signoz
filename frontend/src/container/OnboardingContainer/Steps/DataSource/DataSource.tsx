@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Blocks, Check, LoaderCircle } from '@signozhq/icons';
-import { Button, Card, Form, Input, Select, Space } from 'antd';
+import { Button, Card, Form, Input, Space } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -22,7 +23,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isModifierKeyPressed } from 'utils/app';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import './DataSource.styles.scss';
 
@@ -226,13 +226,15 @@ export default function DataSource(): JSX.Element {
 											name="selectFramework"
 											rules={[{ required: true, message: 'Please select framework' }]}
 										>
-											<Select
-												value={selectedFramework}
-												getPopupContainer={popupContainer}
+											<SelectSimple
+												value={selectedFramework ?? undefined}
 												style={{ width: 300 }}
 												placeholder="Select Framework"
-												onChange={(value): void => updateSelectedFramework(value)}
-												options={supportedframeworks}
+												onChange={(value): void => updateSelectedFramework(value as string)}
+												items={supportedframeworks.map((f) => ({
+													value: f.id || f.name,
+													label: f.label || f.name,
+												}))}
 											/>
 										</Form.Item>
 									</div>

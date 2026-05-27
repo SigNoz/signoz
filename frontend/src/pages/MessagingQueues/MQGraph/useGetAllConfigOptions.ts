@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -10,7 +10,7 @@ export interface ConfigOptions {
 }
 
 export interface GetAllConfigOptionsResponse {
-	options: DefaultOptionType[];
+	options: ComboboxSimpleItem[];
 	isFetching: boolean;
 }
 
@@ -22,7 +22,7 @@ export function useGetAllConfigOptions(
 
 	const { data, isLoading } = useQuery(
 		['attributesValues', attributeKey, searchText],
-		async (): Promise<DefaultOptionType[]> => {
+		async (): Promise<ComboboxSimpleItem[]> => {
 			const { payload } = await getAttributesValues({
 				aggregateOperator: 'avg',
 				dataSource: DataSource.METRICS,
@@ -37,7 +37,7 @@ export function useGetAllConfigOptions(
 
 			if (payload) {
 				const values = payload.stringAttributeValues || [];
-				const options: DefaultOptionType[] = values.map((val: string) => ({
+				const options: ComboboxSimpleItem[] = values.map((val: string) => ({
 					label: val,
 					value: val,
 				}));

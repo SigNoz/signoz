@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
-import { Select, Tooltip } from 'antd';
+import { ClipboardEvent, useCallback, useState } from 'react';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Tooltip } from 'antd';
 
 import './EmailTagInput.styles.scss';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TOKEN_SEPARATOR_REGEX = /[,\s]+/;
 
 interface EmailTagInputProps {
 	value?: string[];
@@ -33,6 +35,30 @@ function EmailTagInput({
 		[onChange, value],
 	);
 
+	// Replicates antd `tokenSeparators={[',', ' ']}` for pasted text.
+	// ComboboxSimple has no native equivalent, so split the clipboard
+	// payload here and merge into the existing values.
+	const handlePaste = useCallback(
+		(event: ClipboardEvent<HTMLDivElement>): void => {
+			const pasted = event.clipboardData?.getData('text');
+			if (!pasted || !TOKEN_SEPARATOR_REGEX.test(pasted)) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			const tokens = pasted
+				.split(TOKEN_SEPARATOR_REGEX)
+				.map((token) => token.trim())
+				.filter(Boolean);
+			if (tokens.length === 0) {
+				return;
+			}
+			const merged = Array.from(new Set([...value, ...tokens]));
+			handleChange(merged);
+		},
+		[handleChange, value],
+	);
+
 	return (
 		<div className="email-tag-input">
 			<Tooltip
@@ -40,16 +66,17 @@ function EmailTagInput({
 				open={!!validationError}
 				placement="topRight"
 			>
-				<Select
-					mode="tags"
-					value={value}
-					onChange={handleChange}
-					placeholder={placeholder}
-					tokenSeparators={[',', ' ']}
-					className="email-tag-input__select"
-					allowClear
-					status={validationError ? 'error' : undefined}
-				/>
+				<div onPaste={handlePaste}>
+					<ComboboxSimple
+						multiple
+						allowCreate
+						items={[]}
+						value={value}
+						onChange={(v): void => handleChange(v as string[])}
+						placeholder={placeholder}
+						className="email-tag-input__select"
+					/>
+				</div>
 			</Tooltip>
 		</div>
 	);

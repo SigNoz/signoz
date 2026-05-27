@@ -1,7 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
-import { Button, Input, InputNumber, Select, Space } from 'antd';
+import { Button, Input, InputNumber, Space } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
@@ -104,7 +106,10 @@ function Threshold({
 		setIsEditMode(true);
 	};
 
-	const handleOperatorChange = (value: string | number): void => {
+	const handleOperatorChange = (value: string | string[]): void => {
+		if (Array.isArray(value)) {
+			return;
+		}
 		setOperator(value);
 	};
 
@@ -119,10 +124,11 @@ function Threshold({
 		setUnit(value);
 	};
 
-	const handlerFormatChange = (
-		value: ThresholdProps['thresholdFormat'],
-	): void => {
-		setFormat(value);
+	const handlerFormatChange = (value: string | string[]): void => {
+		if (Array.isArray(value)) {
+			return;
+		}
+		setFormat(value as ThresholdProps['thresholdFormat']);
 	};
 
 	const handleTableOptionsChange = (value: string): void => {
@@ -268,26 +274,23 @@ function Threshold({
 								<div>
 									{selectedGraph === PANEL_TYPES.TABLE && (
 										<Space style={wrapStyle}>
-											<Select
-												defaultValue={tableSelectedOption}
-												options={tableOptions}
-												bordered={!isDarkMode}
-												showSearch
-												onChange={handleTableOptionsChange}
-												rootClassName="operator-input-root"
+											<ComboboxSimple
+												value={tableSelectedOption}
+												items={tableOptions as ComboboxSimpleItem[]}
+												onChange={(value): void =>
+													handleTableOptionsChange(value as string)
+												}
 												className="operator-input"
-												data-testid="table-operator-input-selector"
+												testId="table-operator-input-selector"
 											/>
 											<Typography.Text className="typography">is</Typography.Text>
 										</Space>
 									)}
-									<Select
-										defaultValue={operator}
-										options={operatorOptions}
+									<SelectSimple
+										value={operator as string}
+										items={operatorOptions}
 										onChange={handleOperatorChange}
-										bordered={!isDarkMode}
 										style={{ marginLeft: '10px' }}
-										rootClassName="operator-input-root"
 										className="operator-input"
 										data-testid="operator-input-selector"
 									/>
@@ -350,12 +353,12 @@ function Threshold({
 							<div className="color-selector">
 								<ColorSelector setColor={setColor} thresholdColor={color} />
 							</div>
-							<Select
-								defaultValue={format}
-								options={showAsOptions}
+							<SelectSimple
+								value={format}
+								items={showAsOptions}
 								onChange={handlerFormatChange}
 								data-testid="threshold-color-selector"
-								rootClassName="color-format"
+								className="color-format"
 							/>
 						</>
 					) : (

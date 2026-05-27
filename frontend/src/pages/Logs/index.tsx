@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { Button, Col, Popover, Row, Select, Space } from 'antd';
+import { Button, Col, Popover, Row, Space } from 'antd';
+import { SelectSimple, SelectSimpleItem } from '@signozhq/ui/select';
 import { Divider } from '@signozhq/ui/divider';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
@@ -86,6 +87,24 @@ function OldLogsExplorer(): JSX.Element {
 		history.push({ search: params.toString() });
 	};
 
+	const viewModeItems = useMemo<SelectSimpleItem[]>(
+		() =>
+			viewModeOptionList.map((option) => ({
+				value: option.value,
+				label: option.label,
+			})),
+		[viewModeOptionList],
+	);
+
+	const orderSelectItems = useMemo<SelectSimpleItem[]>(
+		() =>
+			orderItems.map((item) => ({
+				value: item.enum,
+				label: item.name,
+			})),
+		[],
+	);
+
 	return (
 		<div className="old-logs-explorer">
 			<SpaceContainer
@@ -105,16 +124,12 @@ function OldLogsExplorer(): JSX.Element {
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
-								<Select
-									getPopupContainer={popupContainer}
+								<SelectSimple
 									style={defaultSelectStyle}
 									value={selectedViewModeOption}
-									onChange={onChangeVeiwMode}
-								>
-									{viewModeOptionList.map((option) => (
-										<Select.Option key={option.value}>{option.label}</Select.Option>
-									))}
-								</Select>
+									onChange={(value): void => onChangeVeiwMode(value as string)}
+									items={viewModeItems}
+								/>
 
 								{isFormatButtonVisible && (
 									<Popover
@@ -126,16 +141,14 @@ function OldLogsExplorer(): JSX.Element {
 									</Popover>
 								)}
 
-								<Select
-									getPopupContainer={popupContainer}
+								<SelectSimple
 									style={defaultSelectStyle}
 									defaultValue={order}
-									onChange={handleChangeOrder}
-								>
-									{orderItems.map((item) => (
-										<Select.Option key={item.enum}>{item.name}</Select.Option>
-									))}
-								</Select>
+									onChange={(value): void =>
+										handleChangeOrder(value as OrderPreferenceItems)
+									}
+									items={orderSelectItems}
+								/>
 							</Space>
 						</Col>
 

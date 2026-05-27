@@ -3,7 +3,8 @@ import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Button, Select, Skeleton, Table } from 'antd';
+import { Button, Skeleton, Table } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -326,10 +327,14 @@ function ServiceMetrics({
 						{' '}
 						Services
 						<div className="services-header-actions">
-							<Select
-								value={timeRange.selectedInterval}
-								onChange={handleTimeIntervalChange}
-								options={TIME_PICKER_OPTIONS}
+							<ComboboxSimple
+								value={timeRange.selectedInterval.toString()}
+								onChange={(value): void => handleTimeIntervalChange(Number(value))}
+								items={TIME_PICKER_OPTIONS.map((opt) => ({
+									value: opt.value.toString(),
+									label: opt.label,
+									displayValue: opt.label,
+								}))}
 								className="services-header-select"
 							/>
 						</div>

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Button, Collapse, Input, Select, Spin } from 'antd';
+import { Button, Collapse, Input, Spin } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
@@ -138,14 +139,14 @@ function Metadata({
 
 			if (field.key === TableFields.TYPE) {
 				return (
-					<Select
+					<SelectSimple
 						data-testid="metric-type-select"
-						options={METRIC_METADATA_TYPE_OPTIONS}
+						items={METRIC_METADATA_TYPE_OPTIONS}
 						value={metricMetadataState.type}
 						onChange={(value): void => {
 							setMetricMetadataState((prev) => ({
 								...prev,
-								type: value,
+								type: value as MetrictypesTypeDTO,
 							}));
 						}}
 					/>
@@ -169,14 +170,14 @@ function Metadata({
 						? undefined
 						: metricMetadataState.temporality;
 				return (
-					<Select
+					<SelectSimple
 						data-testid="temporality-select"
-						options={METRIC_METADATA_TEMPORALITY_OPTIONS}
+						items={METRIC_METADATA_TEMPORALITY_OPTIONS}
 						value={temporalityValue}
 						onChange={(value): void => {
 							setMetricMetadataState((prev) => ({
 								...prev,
-								temporality: value,
+								temporality: value as MetrictypesTemporalityDTO,
 							}));
 						}}
 					/>

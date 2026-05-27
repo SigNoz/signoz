@@ -263,7 +263,6 @@ function EndPointDetails({
 						setSelectedEndPointName={setSelectedEndPointName}
 						endPointDropDownDataQuery={endPointDropDownDataQuery}
 						parentContainerDiv=".endpoint-details-filters-container"
-						dropdownStyle={{ width: 'calc(100% - 36px)' }}
 					/>
 				</div>
 				<div className="endpoint-details-filters-container-search">

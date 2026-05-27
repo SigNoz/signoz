@@ -1,4 +1,5 @@
-import { Card, Select } from 'antd';
+import { Card } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import styled from 'styled-components';
 
 export const TimePickerCard = styled(Card)`
@@ -8,7 +9,7 @@ export const TimePickerCard = styled(Card)`
 	}
 `;
 
-export const TimePickerSelect = styled(Select)`
+export const TimePickerSelect = styled(SelectSimple)`
 	min-width: 100px;
 `;
 

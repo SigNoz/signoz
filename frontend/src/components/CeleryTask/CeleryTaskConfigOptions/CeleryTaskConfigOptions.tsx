@@ -1,7 +1,6 @@
 import { useHistory, useLocation } from 'react-router-dom';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
-import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 
@@ -27,30 +26,18 @@ function CeleryTaskConfigOptions(): JSX.Element {
 				<Typography.Text style={{ whiteSpace: 'nowrap' }}>
 					Task Name
 				</Typography.Text>
-				<Select
+				<ComboboxSimple
 					placeholder="Task Name"
-					showSearch
-					mode="multiple"
-					options={options}
+					multiple
+					items={options}
 					loading={isFetching}
 					className="config-select-option"
-					onSearch={handleSearch}
-					maxTagCount={4}
-					maxTagPlaceholder={SelectMaxTagPlaceholder}
 					value={getValuesFromQueryParams(QueryParams.taskName, urlQuery) || []}
-					notFoundContent={
-						isFetching ? (
-							<span>
-								<Spin size="small" /> Loading...
-							</span>
-						) : (
-							<span>No Task Name found</span>
-						)
-					}
+					emptyPlaceholder="No Task Name found"
 					onChange={(value): void => {
 						handleSearch('');
 						setQueryParamsFromOptions(
-							value,
+							value as string[],
 							urlQuery,
 							history,
 							location,

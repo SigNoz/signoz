@@ -2,8 +2,8 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Select, Skeleton } from 'antd';
-import { SelectProps } from 'antd/lib';
+import { Skeleton } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import logEvent from 'api/common/logEvent';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
 import cx from 'classnames';
@@ -13,7 +13,7 @@ import {
 	IntegrationType,
 } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
+import { Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';
@@ -41,7 +41,7 @@ function AccountActionsRenderer({
 	accounts: IntegrationCloudAccount[] | undefined;
 	isLoading: boolean;
 	activeAccount: IntegrationCloudAccount | null;
-	selectOptions: SelectProps['options'];
+	selectOptions: ComboboxSimpleItem[];
 	onAccountChange: (value: string) => void;
 	onIntegrationModalOpen: () => void;
 	onAccountSettingsModalOpen: () => void;
@@ -65,16 +65,14 @@ function AccountActionsRenderer({
 					<div className="account-selector-label">Account:</div>
 
 					<span className="account-selector">
-						<Select
-							value={activeAccount?.providerAccountId}
-							options={selectOptions}
-							rootClassName={cx('cloud-account-selector', {
+						<ComboboxSimple
+							value={activeAccount?.providerAccountId ?? ''}
+							items={selectOptions}
+							className={cx('cloud-account-selector', {
 								[type.toLowerCase()]: type,
 							})}
-							popupMatchSelectWidth={false}
 							placeholder={`Select ${type} Account`}
-							suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-							onChange={onAccountChange}
+							onChange={(value): void => onAccountChange(value as string)}
 						/>
 					</span>
 				</div>
@@ -218,7 +216,7 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 		}
 	}, [activeAccount, type]);
 
-	const selectOptions: SelectProps['options'] = useMemo(
+	const selectOptions: ComboboxSimpleItem[] = useMemo(
 		() =>
 			accounts?.length
 				? accounts.map((account) => ({

@@ -1,4 +1,5 @@
-import { Input, Select } from 'antd';
+import { Input } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 
 import { useCreateAlertState } from '../context';
@@ -38,31 +39,31 @@ function NotificationSettings(): JSX.Element {
 				}}
 				data-testid="repeat-notifications-time-input"
 			/>
-			<Select
-				value={notificationSettings.reNotification.unit || null}
+			<SelectSimple
+				value={notificationSettings.reNotification.unit || undefined}
 				placeholder="Select unit"
 				disabled={!notificationSettings.reNotification.enabled}
-				options={RE_NOTIFICATION_TIME_UNIT_OPTIONS}
+				items={RE_NOTIFICATION_TIME_UNIT_OPTIONS}
 				onChange={(value): void => {
 					setNotificationSettings({
 						type: 'SET_RE_NOTIFICATION',
 						payload: {
 							enabled: notificationSettings.reNotification.enabled,
 							value: notificationSettings.reNotification.value,
-							unit: value,
+							unit: value as string,
 							conditions: notificationSettings.reNotification.conditions,
 						},
 					});
 				}}
-				data-testid="repeat-notifications-unit-select"
+				testId="repeat-notifications-unit-select"
 			/>
 			<Typography.Text>while</Typography.Text>
-			<Select
-				mode="multiple"
-				value={notificationSettings.reNotification.conditions || null}
+			<SelectSimple
+				multiple
+				value={notificationSettings.reNotification.conditions || []}
 				placeholder="Select conditions"
 				disabled={!notificationSettings.reNotification.enabled}
-				options={RE_NOTIFICATION_CONDITION_OPTIONS}
+				items={RE_NOTIFICATION_CONDITION_OPTIONS}
 				onChange={(value): void => {
 					setNotificationSettings({
 						type: 'SET_RE_NOTIFICATION',
@@ -70,11 +71,11 @@ function NotificationSettings(): JSX.Element {
 							enabled: notificationSettings.reNotification.enabled,
 							value: notificationSettings.reNotification.value,
 							unit: notificationSettings.reNotification.unit,
-							conditions: value,
+							conditions: value as ('firing' | 'nodata')[],
 						},
 					});
 				}}
-				data-testid="repeat-notifications-conditions-select"
+				testId="repeat-notifications-conditions-select"
 			/>
 		</div>
 	);

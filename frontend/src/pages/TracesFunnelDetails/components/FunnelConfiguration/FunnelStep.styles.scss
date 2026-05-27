@@ -147,8 +147,11 @@
 					color: var(--l2-foreground);
 				}
 
-				.ant-select {
-					width: 100%;
+				.config-select-option span {
+					max-width: 170px;
+					white-space: nowrap;
+					text-overflow: ellipsis;
+					display: inline;
 				}
 			}
 			&__where-filter {

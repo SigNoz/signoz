@@ -1,7 +1,8 @@
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, FormInstance, Input, Select } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { Form, FormInstance, Input } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import type { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
@@ -95,40 +96,20 @@ function FormAlertChannels({
 				</Form.Item>
 
 				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
-					<Select
+					<SelectSimple
 						disabled={editing}
-						onChange={onTypeChangeHandler}
+						onChange={(value): void => onTypeChangeHandler(value as ChannelType)}
 						value={type}
-						data-testid="channel-type-select"
-					>
-						<Select.Option value="slack" key="slack" data-testid="select-option">
-							Slack
-						</Select.Option>
-						<Select.Option value="webhook" key="webhook" data-testid="select-option">
-							Webhook
-						</Select.Option>
-						<Select.Option
-							value="pagerduty"
-							key="pagerduty"
-							data-testid="select-option"
-						>
-							Pagerduty
-						</Select.Option>
-						<Select.Option
-							value="opsgenie"
-							key="opsgenie"
-							data-testid="select-option"
-						>
-							Opsgenie
-						</Select.Option>
-						<Select.Option value="email" key="email" data-testid="select-option">
-							Email
-						</Select.Option>
-
-						<Select.Option value="msteams" key="msteams" data-testid="select-option">
-							Microsoft Teams
-						</Select.Option>
-					</Select>
+						testId="channel-type-select"
+						items={[
+							{ value: 'slack', label: 'Slack' },
+							{ value: 'webhook', label: 'Webhook' },
+							{ value: 'pagerduty', label: 'Pagerduty' },
+							{ value: 'opsgenie', label: 'Opsgenie' },
+							{ value: 'email', label: 'Email' },
+							{ value: 'msteams', label: 'Microsoft Teams' },
+						]}
+					/>
 				</Form.Item>
 
 				<Form.Item>{renderSettings()}</Form.Item>

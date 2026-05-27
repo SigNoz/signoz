@@ -39,24 +39,20 @@
 
 	&__input.title {
 		background-color: transparent;
-		color: var(--l1-foreground);
+		background: var(--l2-background);
+		color: var(--l2-foreground);
 		width: 100%;
 		min-width: 300px;
+
+		&:hover {
+			background: var(--l2-background);
+		}
 	}
 
 	&__input.description {
 		font-size: 13px;
 		background-color: transparent;
 		color: var(--l2-foreground);
-	}
-
-	.ant-btn {
-		display: flex;
-		gap: 4px;
-		align-items: center;
-		color: var(--l1-foreground);
-		border: 1px solid var(--l1-border);
-		margin-right: 16px;
 	}
 }
 
@@ -66,19 +62,7 @@
 	gap: 8px;
 
 	&__add-button {
-		width: fit-content;
-		font-size: 13px;
-		color: var(--l2-foreground);
-		border: 1px solid var(--l1-border);
-		background-color: transparent;
-		cursor: pointer;
-		padding: 4px 8px;
-		border-radius: 4px;
-
-		&:hover {
-			border-color: var(--l1-border);
-			color: var(--l1-foreground);
-		}
+		width: 80px;
 	}
 
 	&__existing-labels {
@@ -121,6 +105,7 @@
 		align-items: center;
 		background-color: transparent;
 		border: none;
+		border: 1px solid var(--l2-border);
 	}
 
 	&__input {

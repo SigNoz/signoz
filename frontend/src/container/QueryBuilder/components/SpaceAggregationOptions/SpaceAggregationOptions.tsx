@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 
 interface SpaceAggregationOptionsProps {
@@ -20,24 +20,29 @@ export default function SpaceAggregationOptions({
 	operators,
 	qbVersion,
 }: SpaceAggregationOptionsProps): JSX.Element {
+	const items = operators.map((operator) => ({
+		value: operator.value,
+		label: `${operator.label}${
+			panelType !== PANEL_TYPES.VALUE && qbVersion === 'v2' ? ' By' : ''
+		}`,
+	}));
+
+	const handleChange = (value: string | string[]): void => {
+		onSelect(value as string);
+	};
+
 	return (
 		<div
 			className="spaceAggregationOptionsContainer"
 			key={aggregatorAttributeType}
 		>
-			<Select
+			<SelectSimple
 				defaultValue={selectedValue}
 				style={{ minWidth: '5.625rem' }}
 				disabled={disabled}
-				onChange={onSelect}
-			>
-				{operators.map((operator) => (
-					<Select.Option key={operator.value} value={operator.value}>
-						{operator.label}{' '}
-						{panelType !== PANEL_TYPES.VALUE && qbVersion === 'v2' ? ' By' : ''}
-					</Select.Option>
-				))}
-			</Select>
+				onChange={handleChange}
+				items={items}
+			/>
 		</div>
 	);
 }

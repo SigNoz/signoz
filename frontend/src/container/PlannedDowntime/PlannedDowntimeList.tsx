@@ -3,7 +3,7 @@ import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
@@ -32,9 +32,9 @@ import './PlannedDowntime.styles.scss';
 const { Panel } = Collapse;
 
 interface AlertRuleTagsProps {
-	selectedTags: DefaultOptionType | DefaultOptionType[];
+	selectedTags: ComboboxSimpleItem[];
 	closable: boolean;
-	handleClose?: (removedTag: DefaultOptionType['value']) => void;
+	handleClose?: (removedTag: ComboboxSimpleItem['value']) => void;
 	classname?: string;
 }
 export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
@@ -45,7 +45,7 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 			style={{ marginBottom: 8 }}
 			className={cx('alert-rule-tags', classname)}
 		>
-			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
+			{selectedTags?.map((tag: ComboboxSimpleItem, index: number) => {
 				const isLongTag = (tag?.label as string)?.length > 20;
 				const tagElem = (
 					<Tag
@@ -136,7 +136,7 @@ export function CollapseListContent({
 	schedule?: AlertmanagertypesScheduleDTO;
 	updated_at?: string;
 	updated_by_name?: string;
-	alertOptions?: DefaultOptionType[];
+	alertOptions?: ComboboxSimpleItem[];
 }): JSX.Element {
 	const repeats = schedule?.recurrence;
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
@@ -283,7 +283,7 @@ export function CustomCollapseList(
 
 export type DowntimeSchedulesTableData =
 	AlertmanagertypesPlannedMaintenanceDTO & {
-		alertOptions: DefaultOptionType[];
+		alertOptions: ComboboxSimpleItem[];
 	};
 
 export function PlannedDowntimeList({
@@ -299,7 +299,7 @@ export function PlannedDowntimeList({
 		ListDowntimeSchedules200,
 		ErrorType<RenderErrorResponseDTO>
 	>;
-	alertOptions: DefaultOptionType[];
+	alertOptions: ComboboxSimpleItem[];
 	setInitialValues: React.Dispatch<
 		React.SetStateAction<Partial<AlertmanagertypesPlannedMaintenanceDTO>>
 	>;

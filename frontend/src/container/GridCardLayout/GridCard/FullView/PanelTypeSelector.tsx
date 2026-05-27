@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,8 +9,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import './PanelTypeSelector.scss';
-
-const { Option } = Select;
 
 interface PanelTypeSelectorProps {
 	selectedPanelType: PANEL_TYPES;
@@ -28,7 +26,11 @@ function PanelTypeSelector({
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const handleChange = useCallback(
-		(newPanelType: PANEL_TYPES): void => {
+		(value: string | string[]): void => {
+			if (Array.isArray(value)) {
+				return;
+			}
+			const newPanelType = value as PANEL_TYPES;
 			// Transform the query for the new panel type using handleQueryChange
 			const transformedQuery = handleQueryChange(
 				newPanelType as any,
@@ -52,23 +54,23 @@ function PanelTypeSelector({
 
 	return (
 		<div className="panel-type-selector">
-			<Select
+			<SelectSimple
 				onChange={handleChange}
 				value={selectedPanelType}
 				style={{ width: '100%' }}
 				className="panel-type-select"
 				data-testid="panel-change-select"
 				disabled={disabled}
-			>
-				{PanelTypesWithData.map((item) => (
-					<Option key={item.name} value={item.name}>
+				items={PanelTypesWithData.map((item) => ({
+					value: item.name,
+					label: (
 						<div className="view-panel-select-option">
 							<div className="icon">{item.icon}</div>
 							<Typography.Text className="display">{item.display}</Typography.Text>
 						</div>
-					</Option>
-				))}
-			</Select>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

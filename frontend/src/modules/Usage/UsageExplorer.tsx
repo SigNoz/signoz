@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
@@ -15,8 +16,6 @@ import MetricReducer from 'types/reducer/metrics';
 import { isOnboardingSkipped } from 'utils/app';
 
 import { Card } from './styles';
-
-const { Option } = Select;
 
 interface UsageExplorerProps {
 	usageData: UsageDataItem[];
@@ -108,55 +107,52 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		<>
 			<Space style={{ marginTop: 40, marginLeft: 20 }}>
 				<Space>
-					<Select
-						onSelect={(value): void => {
+					<SelectSimple
+						onChange={(value): void => {
 							setSelectedTime(
 								// eslint-disable-next-line eqeqeq
 								timeDaysOptions.filter((item) => item.value == parseInt(value))[0],
 							);
 						}}
-						value={selectedTime.label}
-					>
-						{timeDaysOptions.map(({ value, label }) => (
-							<Option key={value} value={value}>
-								{label}
-							</Option>
-						))}
-					</Select>
+						value={String(selectedTime.value)}
+						items={timeDaysOptions.map(({ value, label }) => ({
+							value: String(value),
+							label,
+						}))}
+					/>
 				</Space>
 				<Space>
-					<Select
-						onSelect={(value): void => {
+					<SelectSimple
+						onChange={(value): void => {
 							setSelectedInterval(
 								interval.filter((item) => item.value === parseInt(value))[0],
 							);
 						}}
-						value={selectedInterval.label}
-					>
-						{interval
+						value={String(selectedInterval.value)}
+						items={interval
 							.filter((interval) => interval.applicableOn.includes(selectedTime))
-							.map((item) => (
-								<Option key={item.label} value={item.value}>
-									{item.label}
-								</Option>
-							))}
-					</Select>
+							.map((item) => ({
+								value: String(item.value),
+								label: item.label,
+							}))}
+					/>
 				</Space>
 
 				<Space>
-					<Select
-						onSelect={(value): void => {
+					<SelectSimple
+						onChange={(value): void => {
 							setSelectedService(value);
 						}}
-						value={selectedService || 'All Services'}
-					>
-						<Option value="">All Services</Option>
-						{services?.map((service) => (
-							<Option key={service.serviceName} value={service.serviceName}>
-								{service.serviceName}
-							</Option>
-						))}
-					</Select>
+						value={selectedService || ''}
+						placeholder="All Services"
+						items={[
+							{ value: '', label: 'All Services' },
+							...(services?.map((service) => ({
+								value: service.serviceName,
+								label: service.serviceName,
+							})) || []),
+						]}
+					/>
 				</Space>
 
 				{isOnboardingSkipped() && totalCount === 0 ? (

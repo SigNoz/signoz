@@ -1,7 +1,6 @@
 import { memo } from 'react';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
 // ** Helpers
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
@@ -15,9 +14,9 @@ const exploreDataSourceMap = [DataSource.LOGS, DataSource.TRACES];
 export const DataSourceDropdown = memo(function DataSourceDropdown(
 	props: QueryLabelProps,
 ): JSX.Element {
-	const { onChange, value, style, isListViewPanel = false } = props;
+	const { onChange, value, style, isListViewPanel = false, className } = props;
 
-	const dataSourceOptions: SelectOption<DataSource, string>[] = isListViewPanel
+	const items = isListViewPanel
 		? exploreDataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,
@@ -27,14 +26,19 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 				value: source,
 			}));
 
+	const handleChange = (val: string | string[]): void => {
+		onChange(val as DataSource);
+	};
+
 	return (
-		<Select
-			defaultValue={dataSourceOptions[0].value}
-			options={dataSourceOptions}
-			onChange={onChange}
-			data-testid={props['data-testid']}
+		<SelectSimple
+			defaultValue={items[0].value}
+			items={items}
+			onChange={handleChange}
+			testId={props['data-testid']}
 			value={value}
 			style={style}
+			className={className}
 		/>
 	);
 });

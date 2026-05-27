@@ -1,4 +1,4 @@
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 
 interface Dropdown {
 	key: string;
@@ -6,7 +6,7 @@ interface Dropdown {
 	yAxisUnit?: string;
 }
 
-export const groupBy: DefaultOptionType[] = [
+export const groupBy: ComboboxSimpleItem[] = [
 	{
 		label: 'None',
 		value: 'none',

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Select } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,8 +14,6 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import { timePreferance } from '../../timeItems';
-
-const { Option } = Select;
 
 interface VisualizationSettingsSectionProps {
 	selectedGraph: PANEL_TYPES;
@@ -69,22 +67,27 @@ export default function VisualizationSettingsSection({
 		>
 			<section className="panel-type control-container">
 				<Typography.Text className="section-heading">Panel Type</Typography.Text>
-				<Select
-					onChange={setGraphHandler}
+				<SelectSimple
+					onChange={(value: string | string[]): void => {
+						if (Array.isArray(value)) {
+							return;
+						}
+						setGraphHandler(value as PANEL_TYPES);
+					}}
 					value={selectedGraph}
 					className="panel-type-select"
 					data-testid="panel-change-select"
 					data-stacking-state={stackedBarChart ? 'true' : 'false'}
-				>
-					{graphTypes.map((item) => (
-						<Option key={item.name} value={item.name}>
+					items={graphTypes.map((item) => ({
+						value: item.name,
+						label: (
 							<div className="select-option">
 								<div className="icon">{item.icon}</div>
 								<Typography.Text className="display">{item.display}</Typography.Text>
 							</div>
-						</Option>
-					))}
-				</Select>
+						),
+					}))}
+				/>
 			</section>
 
 			{allowPanelTimePreference && (

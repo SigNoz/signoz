@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import type { UseQueryResult } from 'react-query';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Layers } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
@@ -9,8 +9,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import LegendColors from '../../LegendColors/LegendColors';
-
-const { Option } = Select;
 
 interface LegendSectionProps {
 	allowLegendPosition: boolean;
@@ -39,23 +37,34 @@ export default function LegendSection({
 			{allowLegendPosition && (
 				<section className="legend-position control-container">
 					<Typography.Text className="section-heading">Position</Typography.Text>
-					<Select
-						onChange={(value: LegendPosition): void => setLegendPosition(value)}
+					<SelectSimple
+						onChange={(value: string | string[]): void => {
+							if (Array.isArray(value)) {
+								return;
+							}
+							setLegendPosition(value as LegendPosition);
+						}}
 						value={legendPosition}
 						className="panel-type-select"
-						defaultValue={LegendPosition.BOTTOM}
-					>
-						<Option value={LegendPosition.BOTTOM}>
-							<div className="select-option">
-								<Typography.Text className="display">Bottom</Typography.Text>
-							</div>
-						</Option>
-						<Option value={LegendPosition.RIGHT}>
-							<div className="select-option">
-								<Typography.Text className="display">Right</Typography.Text>
-							</div>
-						</Option>
-					</Select>
+						items={[
+							{
+								value: LegendPosition.BOTTOM,
+								label: (
+									<div className="select-option">
+										<Typography.Text className="display">Bottom</Typography.Text>
+									</div>
+								),
+							},
+							{
+								value: LegendPosition.RIGHT,
+								label: (
+									<div className="select-option">
+										<Typography.Text className="display">Right</Typography.Text>
+									</div>
+								),
+							},
+						]}
+					/>
 				</section>
 			)}
 

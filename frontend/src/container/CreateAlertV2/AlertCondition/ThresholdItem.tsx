@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Button, Input, Select, Tooltip } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
 import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
-import { NotificationChannelsNotFoundContent } from './utils';
 
 function ThresholdItem({
 	threshold,
@@ -18,36 +18,38 @@ function ThresholdItem({
 	channels,
 	units,
 	isErrorChannels,
-	refreshChannels,
 	isLoadingChannels,
 }: ThresholdItemProps): JSX.Element {
-	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
 		let component = (
-			<Select
+			<SelectSimple
 				placeholder="Unit"
-				value={threshold.unit ? threshold.unit : null}
-				onChange={(value): void => updateThreshold(threshold.id, 'unit', value)}
+				value={threshold.unit ? threshold.unit : undefined}
+				onChange={(value): void =>
+					updateThreshold(threshold.id, 'unit', value as string)
+				}
 				style={{ width: 150 }}
-				options={units}
+				items={units}
 				disabled={units.length === 0}
-				data-testid="threshold-unit-select"
+				testId="threshold-unit-select"
 			/>
 		);
 		if (units.length === 0) {
 			component = (
 				<Tooltip trigger="hover" title="No compatible units available">
-					<Select
+					<SelectSimple
 						placeholder="Unit"
-						value={threshold.unit ? threshold.unit : null}
-						onChange={(value): void => updateThreshold(threshold.id, 'unit', value)}
+						value={threshold.unit ? threshold.unit : undefined}
+						onChange={(value): void =>
+							updateThreshold(threshold.id, 'unit', value as string)
+						}
 						style={{ width: 150 }}
-						options={units}
+						items={units}
 						disabled={units.length === 0}
-						data-testid="threshold-unit-select"
+						testId="threshold-unit-select"
 					/>
 				</Tooltip>
 			);
@@ -117,37 +119,22 @@ function ThresholdItem({
 					{!notificationSettings.routingPolicies && (
 						<>
 							<Typography.Text className="sentence-text">send to</Typography.Text>
-							<Select
+							<ComboboxSimple
 								value={threshold.channels}
 								onChange={(value): void =>
-									updateThreshold(threshold.id, 'channels', value)
+									updateThreshold(threshold.id, 'channels', value as string[])
 								}
-								data-testid="threshold-notification-channel-select"
+								testId="threshold-notification-channel-select"
 								style={{ width: 350 }}
-								options={channels.map((channel) => ({
+								items={channels.map((channel) => ({
 									value: channel.name,
 									label: channel.name,
-									'data-testid': `threshold-notification-channel-option-${threshold.label}`,
 								}))}
-								mode="multiple"
+								multiple
 								placeholder="Select notification channels"
-								showSearch
-								maxTagCount={2}
-								maxTagPlaceholder={(omittedValues): string =>
-									`+${omittedValues.length} more`
-								}
-								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
-								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
-								notFoundContent={
-									<NotificationChannelsNotFoundContent
-										user={user}
-										refreshChannels={refreshChannels}
-									/>
-								}
+								loading={isLoadingChannels}
+								className={isErrorChannels ? 'error' : undefined}
+								emptyPlaceholder="No channels found"
 							/>
 						</>
 					)}

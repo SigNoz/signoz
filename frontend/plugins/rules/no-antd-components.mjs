@@ -25,6 +25,8 @@ const BANNED_COMPONENTS = {
 	Progress: 'Use @signozhq/ui/progress instead of antd Progress.',
 	Avatar: 'Use @signozhq/ui/avatar instead of antd Avatar.',
 	Divider: 'Use @signozhq/ui/divider Divider instead of antd Divider.',
+	Select:
+		'Use SelectSimple / ComboboxSimple from @signozhq/ui/select or @signozhq/ui/combobox instead of antd Select.',
 };
 
 export default {

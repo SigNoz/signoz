@@ -1,11 +1,9 @@
 import {
-	CSSProperties,
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
 	useMemo,
-	useRef,
 	useState,
 } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -24,10 +22,9 @@ import {
 	ColorPicker,
 	Input,
 	Modal,
-	RefSelectProps,
-	Select,
 	Tooltip,
 } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -58,7 +55,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
@@ -108,8 +104,6 @@ function ExplorerOptions({
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const { notifications } = useNotifications();
 	const history = useHistory();
-	const ref = useRef<RefSelectProps>(null);
-	const isDarkMode = useIsDarkMode();
 	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
 
 	const isLogsExplorer = sourcepage === DataSource.LOGS;
@@ -493,10 +487,16 @@ function ExplorerOptions({
 		);
 	};
 
-	const handleSelect = (
-		value: string,
-		option: { key: string; value: string },
-	): void => {
+	const handleSelect = (value: string | string[]): void => {
+		const selectedId = value as string;
+		const selectedView = viewsData?.data?.data?.find(
+			(view) => view.id === selectedId,
+		);
+		const option = {
+			key: selectedId,
+			value: selectedView?.name ?? '',
+		};
+
 		onMenuItemSelectHandler({
 			key: option.key,
 		});
@@ -530,10 +530,6 @@ function ExplorerOptions({
 			options,
 			handleOptionsChange,
 		);
-
-		if (ref.current) {
-			ref.current.blur();
-		}
 	};
 
 	const removeCurrentViewFromLocalStorage = (): void => {
@@ -639,23 +635,41 @@ function ExplorerOptions({
 		}
 	};
 
-	// TODO: Remove this and move this to scss file
-	const dropdownStyle: CSSProperties = useMemo(
-		() => ({
-			borderRadius: '4px',
-			border: isDarkMode
-				? `1px solid ${Color.BG_SLATE_400}`
-				: `1px solid ${Color.BG_VANILLA_300}`,
-			background: isDarkMode
-				? 'var(--bg-gradient-dark-shadow)'
-				: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
-			boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
-			backdropFilter: 'blur(20px)',
-			bottom: '74px',
-			width: '191px',
-		}),
-		[isDarkMode],
+	const viewSelectItems = useMemo<ComboboxSimpleItem[]>(
+		() =>
+			viewsData?.data?.data?.map((view) => {
+				const extraData = view.extraData !== '' ? JSON.parse(view.extraData) : '';
+				let bgColor = getRandomColor();
+				if (extraData !== '') {
+					bgColor = extraData.color;
+				}
+				return {
+					value: view.id,
+					label: (
+						<div className="render-options">
+							<span
+								className="dot"
+								style={{
+									background: bgColor,
+									boxShadow: `0px 0px 6px 0px ${bgColor}`,
+								}}
+							/>{' '}
+							{view.name}
+						</div>
+					),
+					displayValue: view.name,
+					keywords: [view.name],
+				};
+			}) ?? [],
+		[viewsData?.data?.data],
 	);
+
+	const viewSelectValue = useMemo<string | undefined>(() => {
+		if (!viewName) {
+			return undefined;
+		}
+		return viewsData?.data?.data?.find((view) => view.name === viewName)?.id;
+	}, [viewName, viewsData?.data?.data]);
 
 	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
@@ -735,37 +749,32 @@ function ExplorerOptions({
 
 	const CreateAlertButton = useMemo(() => {
 		if (isOneChartPerQuery) {
-			const selectLabel = (
-				<Button
-					disabled={disabled}
-					shape="round"
-					icon={<ConciergeBell size={16} />}
-				>
-					Create an Alert
-				</Button>
-			);
 			return (
-				<Select
+				<Dropdown
 					disabled={disabled}
-					className="multi-alert-button"
-					placeholder={selectLabel}
-					value={selectLabel}
-					suffixIcon={null}
-					onSelect={(e): void => {
-						const selectedQuery = splitedQueries.find(
-							(query) => query.id === (e as unknown as string),
-						);
-						if (selectedQuery) {
-							onCreateAlertsHandler(selectedQuery);
-						}
+					trigger={['click']}
+					overlayClassName="multi-alert-button"
+					menu={{
+						items: splitedQueries.map((splittedQuery) => ({
+							key: splittedQuery.id,
+							label: getQueryName(splittedQuery),
+						})),
+						onClick: ({ key }): void => {
+							const selectedQuery = splitedQueries.find((query) => query.id === key);
+							if (selectedQuery) {
+								onCreateAlertsHandler(selectedQuery);
+							}
+						},
 					}}
 				>
-					{splitedQueries.map((splittedQuery) => (
-						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
-							{getQueryName(splittedQuery)}
-						</Select.Option>
-					))}
-				</Select>
+					<Button
+						disabled={disabled}
+						shape="round"
+						icon={<ConciergeBell size={16} />}
+					>
+						Create an Alert
+					</Button>
+				</Dropdown>
 			);
 		}
 		return (
@@ -788,43 +797,36 @@ function ExplorerOptions({
 
 	const AddToDashboardButton = useMemo(() => {
 		if (isOneChartPerQuery) {
-			const selectLabel = (
-				<Button
-					type="primary"
-					disabled={disabled}
-					shape="round"
-					onClick={onAddToDashboard}
-					icon={<Plus size={16} />}
-				>
-					Add to Dashboard
-				</Button>
-			);
 			return (
-				<Select
+				<Dropdown
 					disabled={disabled}
-					className="multi-dashboard-button"
-					placeholder={selectLabel}
-					value={selectLabel}
-					suffixIcon={null}
-					onSelect={(e): void => {
-						const selectedQuery = splitedQueries.find(
-							(query) => query.id === (e as unknown as string),
-						);
-						if (selectedQuery) {
-							setQueryToExport(() => {
-								onAddToDashboard();
-								return selectedQuery;
-							});
-						}
+					trigger={['click']}
+					overlayClassName="multi-dashboard-button"
+					menu={{
+						items: splitedQueries.map((splittedQuery) => ({
+							key: splittedQuery.id,
+							label: getQueryName(splittedQuery),
+						})),
+						onClick: ({ key }): void => {
+							const selectedQuery = splitedQueries.find((query) => query.id === key);
+							if (selectedQuery) {
+								setQueryToExport(() => {
+									onAddToDashboard();
+									return selectedQuery;
+								});
+							}
+						},
 					}}
 				>
-					{/* eslint-disable-next-line sonarjs/no-identical-functions */}
-					{splitedQueries.map((splittedQuery) => (
-						<Select.Option key={splittedQuery.id} value={splittedQuery.id}>
-							{getQueryName(splittedQuery)}
-						</Select.Option>
-					))}
-				</Select>
+					<Button
+						type="primary"
+						disabled={disabled}
+						shape="round"
+						icon={<Plus size={16} />}
+					>
+						Add to Dashboard
+					</Button>
+				</Dropdown>
 			);
 		}
 		return (
@@ -898,48 +900,24 @@ function ExplorerOptions({
 					}}
 				>
 					<div className="view-options">
-						<Select<string, { key: string; value: string }>
-							showSearch
+						<ComboboxSimple
 							placeholder="Select a view"
 							loading={viewsIsLoading || isRefetching}
-							value={viewName || undefined}
-							onSelect={handleSelect}
+							value={viewSelectValue}
+							onChange={handleSelect}
 							style={{
 								minWidth: 170,
 							}}
-							dropdownStyle={dropdownStyle}
 							className="views-dropdown"
-							allowClear={false}
-							ref={ref}
-						>
-							{viewsData?.data?.data?.map((view) => {
-								const extraData =
-									view.extraData !== '' ? JSON.parse(view.extraData) : '';
-								let bgColor = getRandomColor();
-								if (extraData !== '') {
-									bgColor = extraData.color;
-								}
-								return (
-									<Select.Option key={view.id} value={view.name}>
-										<div className="render-options">
-											<span
-												className="dot"
-												style={{
-													background: bgColor,
-													boxShadow: `0px 0px 6px 0px ${bgColor}`,
-												}}
-											/>{' '}
-											{view.name}
-										</div>
-									</Select.Option>
-								);
-							})}
-						</Select>
+							items={viewSelectItems}
+						/>
 
 						<Button
 							shape="round"
 							onClick={handleSaveViewModalToggle}
-							className={isEditDeleteSupported ? '' : 'hidden'}
+							className={
+								isEditDeleteSupported ? 'views-save-button' : 'views-save-button hidden'
+							}
 							disabled={viewsIsLoading || isRefetching}
 							icon={<Disc3 size={16} />}
 						>

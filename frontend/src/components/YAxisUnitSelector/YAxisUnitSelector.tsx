@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
-import { Select, Tooltip } from 'antd';
-import type { DefaultOptionType } from 'antd/es/select';
+import {
+	ComboboxSimple,
+	ComboboxSimpleGroup,
+	ComboboxSimpleItem,
+} from '@signozhq/ui/combobox';
+import { Tooltip } from 'antd';
 import classNames from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';
@@ -42,69 +46,53 @@ function YAxisUnitSelector({
 		return '';
 	}, [initialValue, value, loading]);
 
-	const handleSearch = (
-		searchTerm: string,
-		currentOption: DefaultOptionType | undefined,
-	): boolean => {
-		if (!currentOption?.value) {
-			return false;
-		}
+	const categoriesToRender = useMemo(
+		() => categoriesOverride || getYAxisCategories(source),
+		[categoriesOverride, source],
+	);
 
-		const search = searchTerm.toLowerCase();
-		const unitId = currentOption.value.toString().toLowerCase();
-		const unitLabel = currentOption.children?.toString().toLowerCase() || '';
+	const groups: ComboboxSimpleGroup[] = useMemo(
+		() =>
+			categoriesToRender.map((category) => ({
+				heading: category.name,
+				items: category.units.map((unit): ComboboxSimpleItem => {
+					const aliases = Array.from(
+						UniversalYAxisUnitMappings[unit.id as UniversalYAxisUnit] ?? [],
+					);
+					return {
+						value: unit.id,
+						label: unit.name,
+						keywords: aliases,
+					};
+				}),
+			})),
+		[categoriesToRender],
+	);
 
-		// Check label and id
-		if (unitId.includes(search) || unitLabel.includes(search)) {
-			return true;
-		}
-
-		// Check aliases (from the mapping) using array iteration
-		const aliases = Array.from(
-			UniversalYAxisUnitMappings[currentOption.value as UniversalYAxisUnit] ?? [],
-		);
-
-		return aliases.some((alias) => alias.toLowerCase().includes(search));
+	const handleChange = (val: string | string[]): void => {
+		onChange(val as UniversalYAxisUnit);
 	};
-
-	const categoriesToRender = useMemo(() => {
-		return categoriesOverride || getYAxisCategories(source);
-	}, [categoriesOverride, source]);
 
 	return (
 		<div
 			className={classNames('y-axis-unit-selector-component', containerClassName)}
 		>
-			<Select
-				showSearch
-				value={universalUnit}
-				onChange={onChange}
+			<ComboboxSimple
+				value={universalUnit ?? undefined}
+				onChange={handleChange}
 				placeholder={placeholder}
-				filterOption={(input, option): boolean => handleSearch(input, option)}
 				loading={loading}
-				suffixIcon={
-					incompatibleUnitMessage ? (
-						<Tooltip title={incompatibleUnitMessage}>
-							<SolidAlertTriangle role="img" aria-label="warning" size="md" />
-						</Tooltip>
-					) : undefined
-				}
 				className={classNames({
-					'warning-state': incompatibleUnitMessage,
+					'warning-state': !!incompatibleUnitMessage,
 				})}
-				data-testid={dataTestId}
-				allowClear
-			>
-				{categoriesToRender.map((category) => (
-					<Select.OptGroup key={category.name} label={category.name}>
-						{category.units.map((unit) => (
-							<Select.Option key={unit.id} value={unit.id}>
-								{unit.name}
-							</Select.Option>
-						))}
-					</Select.OptGroup>
-				))}
-			</Select>
+				testId={dataTestId}
+				groups={groups}
+			/>
+			{incompatibleUnitMessage && (
+				<Tooltip title={incompatibleUnitMessage}>
+					<SolidAlertTriangle role="img" aria-label="warning" size="md" />
+				</Tooltip>
+			)}
 		</div>
 	);
 }

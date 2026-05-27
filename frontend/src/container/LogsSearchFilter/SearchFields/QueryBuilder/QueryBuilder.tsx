@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { SquareX, X } from '@signozhq/icons';
-import { Button, Input, Select } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Button, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
 	ConditionalOperators,
@@ -17,8 +19,6 @@ import { QueryFieldContainer } from '../styles';
 import { QueryFields } from '../utils';
 import { Container, QueryWrapper } from './styles';
 
-const { Option } = Select;
-
 function QueryConditionField({
 	query,
 	queryIndex,
@@ -26,7 +26,7 @@ function QueryConditionField({
 }: QueryConditionFieldProps): JSX.Element {
 	const allOptions = Object.values(ConditionalOperators);
 	return (
-		<Select
+		<SelectSimple
 			defaultValue={
 				(query as QueryFields).value &&
 				(
@@ -35,15 +35,10 @@ function QueryConditionField({
 				).toUpperCase()
 			}
 			onChange={(e): void => {
-				onUpdate({ ...query, value: e }, queryIndex);
+				onUpdate({ ...query, value: e as string }, queryIndex);
 			}}
-		>
-			{allOptions.map((cond) => (
-				<Option key={cond} value={cond} label={cond}>
-					{cond}
-				</Option>
-			))}
-		</Select>
+			items={allOptions.map((cond) => ({ value: cond, label: cond }))}
+		/>
 	);
 }
 
@@ -59,8 +54,6 @@ function QueryField({
 	onUpdate,
 	onDelete,
 }: QueryFieldProps): JSX.Element | null {
-	const [isDropDownOpen, setIsDropDownOpen] = useState(false);
-
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -113,40 +106,33 @@ function QueryField({
 			<div style={{ flex: 1, minWidth: 100 }}>
 				<FieldKey name={(query[0] && query[0].value) as string} type={fieldType} />
 			</div>
-			<Select
-				defaultActiveFirstOption={false}
+			<SelectSimple
 				placeholder="Select Operator"
 				defaultValue={
 					query[1] && query[1].value
 						? (query[1].value as string).toUpperCase()
-						: null
+						: undefined
 				}
-				onChange={(e): void => handleChange(1, e)}
+				onChange={(e): void => handleChange(1, e as string)}
 				style={{ minWidth: 150 }}
-			>
-				{Object.values({
+				items={Object.values({
 					...QueryOperatorsMultiVal,
 					...QueryOperatorsSingleVal,
-				}).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
+				}).map((cond) => ({ value: cond, label: cond }))}
+			/>
 			<div style={{ flex: 2 }}>
 				{Array.isArray(query[2].value) ||
 				Object.values(QueryOperatorsMultiVal).some(
 					(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
 				) ? (
-					<Select
-						mode="tags"
+					<ComboboxSimple
+						multiple
+						allowCreate
 						style={{ width: '100%' }}
-						open={isDropDownOpen}
-						onChange={(e): void => handleChange(2, e as never)}
-						defaultValue={(query[2] && query[2].value) || []}
-						notFoundContent={null}
-						onInputKeyDown={(): void => setIsDropDownOpen(true)}
-						onSelect={(): void => setIsDropDownOpen(false)}
+						onChange={(v): void => handleChange(2, v as never)}
+						value={((query[2] && query[2].value) || []) as string[]}
+						items={[]}
+						emptyPlaceholder=""
 					/>
 				) : (
 					<Input

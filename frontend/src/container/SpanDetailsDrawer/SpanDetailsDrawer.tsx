@@ -14,12 +14,12 @@ import {
 	Checkbox,
 	Input,
 	Modal,
-	Select,
 	Skeleton,
 	Tabs,
 	TabsProps,
 	Tooltip,
 } from 'antd';
+import { SelectSimple, SelectSimpleItem } from '@signozhq/ui/select';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -68,30 +68,30 @@ interface ISpanDetailsDrawerProps {
 	traceEndTime: number;
 }
 
-const timerangeOptions = [
+const timerangeOptions: SelectSimpleItem[] = [
 	{
 		label: '1 hour',
-		value: 1,
+		value: '1',
 	},
 	{
 		label: '2 hours',
-		value: 2,
+		value: '2',
 	},
 	{
 		label: '3 hours',
-		value: 3,
+		value: '3',
 	},
 	{
 		label: '6 hours',
-		value: 6,
+		value: '6',
 	},
 	{
 		label: '12 hours',
-		value: 12,
+		value: '12',
 	},
 	{
 		label: '24 hours',
-		value: 24,
+		value: '24',
 	},
 ];
 
@@ -737,22 +737,21 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 												</Typography.Text>
 
 												<div className="span-percentile-timerange">
-													<Select
-														labelInValue
+													<SelectSimple
 														placeholder="Select timerange"
 														className="span-percentile-timerange-select"
-														value={{
-															label: `${selectedTimeRange}h : ${dayjs(selectedSpan?.timestamp)
+														value={String(selectedTimeRange)}
+														displayValue={(): string =>
+															`${selectedTimeRange}h : ${dayjs(selectedSpan?.timestamp)
 																.subtract(selectedTimeRange, 'hour')
 																.format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)} - ${dayjs(
 																selectedSpan?.timestamp,
-															).format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)}`,
-															value: selectedTimeRange,
-														}}
+															).format(DATE_TIME_FORMATS.TIME_SPAN_PERCENTILE)}`
+														}
 														onChange={(value): void => {
-															handleTimeRangeChange(Number(value.value));
+															handleTimeRangeChange(Number(value as string));
 														}}
-														options={timerangeOptions}
+														items={timerangeOptions}
 													/>
 												</div>
 

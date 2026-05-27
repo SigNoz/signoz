@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Select } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { getFormattedEndPointDropDownData } from 'container/ApiMonitoring/utils';
 import { SuccessResponse } from 'types/api';
 
@@ -22,40 +22,33 @@ function EndPointsDropDown({
 	selectedEndPointName,
 	setSelectedEndPointName,
 	endPointDropDownDataQuery,
-	parentContainerDiv,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	parentContainerDiv: _parentContainerDiv,
 	dropdownStyle,
 }: EndPointsDropDownProps): JSX.Element {
 	const { data, isLoading, isFetching } = endPointDropDownDataQuery;
 
-	const handleChange = (value: string): void => {
-		setSelectedEndPointName(value);
+	const handleChange = (value: string | string[]): void => {
+		setSelectedEndPointName(value as string);
 	};
 
 	const formattedData = useMemo(
 		() =>
-			getFormattedEndPointDropDownData(data?.payload.data.result[0].table.rows),
+			getFormattedEndPointDropDownData(
+				data?.payload.data.result[0].table.rows,
+			) as ComboboxSimpleItem[],
 		[data?.payload.data.result],
 	);
 
 	return (
-		<Select
+		<ComboboxSimple
 			value={selectedEndPointName || undefined}
 			placeholder="Select endpoint"
 			loading={isLoading || isFetching}
-			style={{ width: '100%' }}
+			style={{ width: '100%', ...dropdownStyle }}
 			onChange={handleChange}
-			options={formattedData}
-			getPopupContainer={
-				parentContainerDiv
-					? (): HTMLElement =>
-							document.querySelector(parentContainerDiv) as HTMLElement
-					: (triggerNode): HTMLElement => triggerNode.parentNode as HTMLElement
-			}
-			dropdownStyle={dropdownStyle}
-			allowClear
-			onClear={(): void => {
-				setSelectedEndPointName('');
-			}}
+			items={formattedData}
+			virtualized
 		/>
 	);
 }

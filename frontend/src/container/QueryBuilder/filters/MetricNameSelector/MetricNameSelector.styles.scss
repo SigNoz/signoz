@@ -1,6 +1,16 @@
 .metric-name-selector {
+	width: 100%;
+
+	.ant-select-selector.ant-select-selector {
+		background-color: var(
+			--query-builder-v2-background-color,
+			var(--l2-background)
+		);
+		border-color: var(--query-builder-v2-border-color, var(--l2-border));
+	}
+
 	.ant-select-selection-placeholder {
-		color: var(--l3-foreground);
+		color: var(--query-builder-v2-placeholder-color, var(--l3-foreground));
 		font-style: italic;
 	}
 }

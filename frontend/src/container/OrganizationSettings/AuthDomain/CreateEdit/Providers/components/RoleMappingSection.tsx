@@ -11,12 +11,13 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import { Collapse, Form, Select, Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Collapse, Form, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import './RoleMappingSection.styles.scss';
 
-const ROLE_OPTIONS = [
+const ROLE_ITEMS = [
 	{ value: 'VIEWER', label: 'VIEWER' },
 	{ value: 'EDITOR', label: 'EDITOR' },
 	{ value: 'ADMIN', label: 'ADMIN' },
@@ -117,9 +118,9 @@ function RoleMappingSection({
 								className="role-mapping-section__form-item"
 								initialValue="VIEWER"
 							>
-								<Select
+								<SelectSimple
 									id="default-role"
-									options={ROLE_OPTIONS}
+									items={ROLE_ITEMS}
 									className="role-mapping-section__select"
 								/>
 							</Form.Item>
@@ -176,8 +177,8 @@ function RoleMappingSection({
 														rules={[{ required: true, message: 'Role is required' }]}
 														initialValue="VIEWER"
 													>
-														<Select
-															options={ROLE_OPTIONS}
+														<SelectSimple
+															items={ROLE_ITEMS}
 															className="role-mapping-section__select"
 														/>
 													</Form.Item>

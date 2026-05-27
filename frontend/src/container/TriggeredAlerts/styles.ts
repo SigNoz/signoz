@@ -1,11 +1,4 @@
-import { Select as SelectComponent } from 'antd';
 import styled from 'styled-components';
-
-export const Select = styled(SelectComponent)`
-	&&& {
-		min-width: 350px;
-	}
-`;
 
 export const Container = styled.div`
 	&&& {
@@ -14,6 +7,8 @@ export const Container = styled.div`
 		align-items: center;
 		margin-top: 1rem;
 	}
+
+	--combobox-trigger-width: auto;
 `;
 
 export const TableContainer = styled.div`

@@ -118,7 +118,6 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										value={queryAggregation.timeAggregation || ''}
 										onChange={handleChangeOperator}
 										operators={operators}
-										className="metrics-operators-select"
 									/>
 								</div>
 							</div>

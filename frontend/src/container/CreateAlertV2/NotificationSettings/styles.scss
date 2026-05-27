@@ -3,6 +3,9 @@
 	flex-direction: column;
 	margin: 0 16px;
 
+	--select-trigger-background-color: var(--l3-background);
+	--select-trigger-border-color: var(--l3-border);
+
 	.notification-message-container {
 		display: flex;
 		flex-direction: column;
@@ -54,8 +57,8 @@
 
 		textarea {
 			height: 150px;
-			background: var(--l2-background);
-			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
+			border: 1px solid var(--l3-border);
 			border-radius: 4px;
 			color: var(--l2-foreground) !important;
 			font-family: Inter;
@@ -77,8 +80,9 @@
 			gap: 8px;
 
 			.ant-input {
-				width: 120px;
-				border: 1px solid var(--l1-border);
+				width: 190px;
+				border: 1px solid var(--l3-border);
+				background-color: var(--l3-background);
 			}
 
 			.ant-select {

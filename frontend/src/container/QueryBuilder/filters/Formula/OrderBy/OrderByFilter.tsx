@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { IOption } from 'hooks/useResourceAttribute/types';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import { uniqWith } from 'lodash-es';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../../QueryBuilderSearch/config';
 import { OrderByProps } from './types';
@@ -18,7 +19,6 @@ function OrderByFilter({
 		createOptions,
 		aggregationOptions,
 		handleChange,
-		handleSearchKeys,
 		selectedValue,
 		generateOptions,
 	} = useOrderByFormulaFilter({
@@ -62,21 +62,47 @@ function OrderByFilter({
 		!query.aggregateAttribute?.key ||
 		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
+	const items: ComboboxSimpleItem[] = useMemo(() => {
+		const merged: IOption[] = [...selectedValue, ...optionsData];
+		const unique = uniqWith(merged, (a, b) => a.value === b.value);
+		return unique.map((opt) => ({
+			label: opt.label,
+			displayValue: opt.label,
+			value: opt.value,
+		}));
+	}, [selectedValue, optionsData]);
+
+	const value = useMemo(
+		() => selectedValue.map((item) => item.value),
+		[selectedValue],
+	);
+
+	const handleComboboxChange = (next: string | string[]): void => {
+		const values = (next as string[]) || [];
+		const asOptions: IOption[] = values.map((v) => {
+			const found = items.find((item) => item.value === v);
+			return {
+				label: typeof found?.label === 'string' ? found.label : v,
+				value: v,
+			};
+		});
+		handleChange(asOptions);
+	};
+
+	// Note: ComboboxSimple does not support disabled prop natively;
+	// when disabled we render with pointer-events: none + reduced opacity.
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			mode="tags"
-			style={selectStyle}
-			onSearch={handleSearchKeys}
-			showSearch
-			disabled={isDisabledSelect}
-			showArrow={false}
-			value={selectedValue}
-			labelInValue
-			filterOption={false}
-			options={optionsData}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
-			onChange={handleChange}
+		<ComboboxSimple
+			multiple
+			allowCreate
+			loading={isFetching}
+			style={{
+				...selectStyle,
+				...(isDisabledSelect && { pointerEvents: 'none', opacity: 0.5 }),
+			}}
+			items={items}
+			value={value}
+			onChange={handleComboboxChange}
 		/>
 	);
 }

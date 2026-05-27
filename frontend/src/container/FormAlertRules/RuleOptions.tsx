@@ -5,12 +5,11 @@ import {
 	Form,
 	InputNumber,
 	InputNumberProps,
-	Select,
-	SelectProps,
 	Space,
 } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { SelectSimple, SelectSimpleItem } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
-import type { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -25,15 +24,9 @@ import {
 	defaultSeasonality,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { AlertDetectionTypes } from '.';
-import {
-	FormContainer,
-	InlineSelect,
-	StepHeading,
-	VerticalLine,
-} from './styles';
+import { FormContainer, StepHeading, VerticalLine } from './styles';
 
 import './RuleOptions.styles.scss';
 
@@ -49,7 +42,7 @@ function RuleOptions({
 
 	const { ruleType } = alertDef;
 
-	const handleMatchOptChange = (value: string | unknown): void => {
+	const handleMatchOptChange = (value: string | string[]): void => {
 		const m = (value as string) || alertDef.condition?.matchType;
 		setAlertDef({
 			...alertDef,
@@ -74,13 +67,26 @@ function RuleOptions({
 		});
 	};
 
+	const compareOpItems: SelectSimpleItem[] = [
+		{ value: '1', label: t('option_above') },
+		{ value: '2', label: t('option_below') },
+		...(ruleType !== 'anomaly_rule'
+			? [
+					{ value: '3', label: t('option_equal') },
+					{ value: '4', label: t('option_notequal') },
+				]
+			: []),
+		...(ruleType === 'anomaly_rule'
+			? [{ value: '7', label: t('option_above_below') }]
+			: []),
+	];
+
 	const renderCompareOps = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultCompareOp}
 			value={alertDef.condition?.op}
-			style={{ minWidth: '120px' }}
-			onChange={(value: string | unknown): void => {
+			items={compareOpItems}
+			onChange={(value): void => {
 				const newOp = (value as string) || '';
 
 				setAlertDef({
@@ -91,47 +97,31 @@ function RuleOptions({
 					},
 				});
 			}}
-		>
-			<Select.Option value="1">{t('option_above')}</Select.Option>
-			<Select.Option value="2">{t('option_below')}</Select.Option>
-
-			{/* hide equal and not eqaul in case of analmoy based alert */}
-
-			{ruleType !== 'anomaly_rule' && (
-				<>
-					<Select.Option value="3">{t('option_equal')}</Select.Option>
-					<Select.Option value="4">{t('option_notequal')}</Select.Option>
-				</>
-			)}
-			{/* the value 5 and 6 are reserved for above or equal and below or equal */}
-			{ruleType === 'anomaly_rule' && (
-				<Select.Option value="7">{t('option_above_below')}</Select.Option>
-			)}
-		</InlineSelect>
+		/>
 	);
+
+	const matchOptItems: SelectSimpleItem[] = [
+		{ value: '1', label: t('option_atleastonce') },
+		{ value: '2', label: t('option_allthetimes') },
+		...(ruleType !== 'anomaly_rule'
+			? [
+					{ value: '3', label: t('option_onaverage') },
+					{ value: '4', label: t('option_intotal') },
+					{ value: '5', label: t('option_last') },
+				]
+			: []),
+	];
 
 	const renderMatchOpts = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultMatchType}
-			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
-			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
-		>
-			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
-			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
-
-			{ruleType !== 'anomaly_rule' && (
-				<>
-					<Select.Option value="3">{t('option_onaverage')}</Select.Option>
-					<Select.Option value="4">{t('option_intotal')}</Select.Option>
-					<Select.Option value="5">{t('option_last')}</Select.Option>
-				</>
-			)}
-		</InlineSelect>
+			items={matchOptItems}
+			onChange={handleMatchOptChange}
+		/>
 	);
 
-	const onChangeEvalWindow = (value: string | unknown): void => {
+	const onChangeEvalWindow = (value: string | string[]): void => {
 		const ew = (value as string) || alertDef.evalWindow;
 		setAlertDef({
 			...alertDef,
@@ -139,7 +129,7 @@ function RuleOptions({
 		});
 	};
 
-	const onChangeAlgorithm = (value: string | unknown): void => {
+	const onChangeAlgorithm = (value: string | string[]): void => {
 		const alg = (value as string) || alertDef.condition.algorithm;
 		setAlertDef({
 			...alertDef,
@@ -150,7 +140,7 @@ function RuleOptions({
 		});
 	};
 
-	const onChangeSeasonality = (value: string | unknown): void => {
+	const onChangeSeasonality = (value: string | string[]): void => {
 		const seasonality = (value as string) || alertDef.condition.seasonality;
 		setAlertDef({
 			...alertDef,
@@ -170,97 +160,91 @@ function RuleOptions({
 		});
 	};
 
+	const evalWindowItems: SelectSimpleItem[] = [
+		{ value: '5m0s', label: t('option_5min') },
+		{ value: '10m0s', label: t('option_10min') },
+		{ value: '15m0s', label: t('option_15min') },
+		{ value: '1h0m0s', label: t('option_60min') },
+		{ value: '4h0m0s', label: t('option_4hours') },
+		{ value: '24h0m0s', label: t('option_24hours') },
+	];
+
 	const renderEvalWindows = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultEvalWindow}
-			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
+			items={evalWindowItems}
 			onChange={onChangeEvalWindow}
-		>
-			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
-			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
-			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
-			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
-			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
-			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
-		</InlineSelect>
+		/>
 	);
 
+	const promEvalWindowItems: SelectSimpleItem[] = [
+		{ value: '5m0s', label: t('option_5min') },
+		{ value: '10m0s', label: t('option_10min') },
+		{ value: '15m0s', label: t('option_15min') },
+	];
+
 	const renderPromEvalWindows = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultEvalWindow}
-			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
+			items={promEvalWindowItems}
 			onChange={onChangeEvalWindow}
-		>
-			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
-			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
-			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
-		</InlineSelect>
+		/>
 	);
 
 	const renderAlgorithms = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultAlgorithm}
-			style={{ minWidth: '120px' }}
 			value={alertDef.condition.algorithm}
+			items={[{ value: 'standard', label: 'Standard' }]}
 			onChange={onChangeAlgorithm}
-		>
-			<Select.Option value="standard">Standard</Select.Option>
-		</InlineSelect>
+		/>
 	);
+
+	const deviationItems: SelectSimpleItem[] = [1, 2, 3, 4, 5, 6, 7].map((n) => ({
+		value: String(n),
+		label: String(n),
+	}));
 
 	const renderDeviationOpts = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
-			defaultValue={3}
-			style={{ minWidth: '120px' }}
-			value={alertDef.condition.target}
-			onChange={(value: number | unknown): void => {
-				if (typeof value === 'number') {
-					onChangeDeviation(value);
+		<SelectSimple
+			defaultValue="3"
+			value={alertDef.condition.target ? String(alertDef.condition.target) : '3'}
+			items={deviationItems}
+			onChange={(value): void => {
+				const n = Number(value);
+				if (!Number.isNaN(n)) {
+					onChangeDeviation(n);
 				}
 			}}
-		>
-			<Select.Option value={1}>1</Select.Option>
-			<Select.Option value={2}>2</Select.Option>
-			<Select.Option value={3}>3</Select.Option>
-			<Select.Option value={4}>4</Select.Option>
-			<Select.Option value={5}>5</Select.Option>
-			<Select.Option value={6}>6</Select.Option>
-			<Select.Option value={7}>7</Select.Option>
-		</InlineSelect>
+		/>
 	);
 
+	const seasonalityItems: SelectSimpleItem[] = [
+		{ value: 'hourly', label: 'Hourly' },
+		{ value: 'daily', label: 'Daily' },
+		{ value: 'weekly', label: 'Weekly' },
+	];
+
 	const renderSeasonality = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultSeasonality}
-			style={{ minWidth: '120px' }}
 			value={alertDef.condition.seasonality}
+			items={seasonalityItems}
 			onChange={onChangeSeasonality}
-		>
-			<Select.Option value="hourly">Hourly</Select.Option>
-			<Select.Option value="daily">Daily</Select.Option>
-			<Select.Option value="weekly">Weekly</Select.Option>
-		</InlineSelect>
+		/>
 	);
 
 	const renderThresholdRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')}
-				<InlineSelect
-					getPopupContainer={popupContainer}
-					allowClear
-					showSearch
-					options={queryOptions}
+				<ComboboxSimple
+					items={queryOptions}
 					placeholder={t('selected_query_placeholder')}
-					value={alertDef.condition.selectedQueryName}
-					onChange={onChangeSelectedQueryName}
+					value={alertDef.condition.selectedQueryName || ''}
+					onChange={(value): void => onChangeSelectedQueryName(value as string)}
 				/>
 				<Typography.Text>is</Typography.Text>
 				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
@@ -273,14 +257,11 @@ function RuleOptions({
 		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')}
-				<InlineSelect
-					getPopupContainer={popupContainer}
-					allowClear
-					showSearch
-					options={queryOptions}
+				<ComboboxSimple
+					items={queryOptions}
 					placeholder={t('selected_query_placeholder')}
-					value={alertDef.condition.selectedQueryName}
-					onChange={onChangeSelectedQueryName}
+					value={alertDef.condition.selectedQueryName || ''}
+					onChange={(value): void => onChangeSelectedQueryName(value as string)}
 				/>
 				<Typography.Text>is</Typography.Text>
 				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}
@@ -301,7 +282,7 @@ function RuleOptions({
 		});
 	};
 
-	const onChangeAlertUnit: SelectProps['onChange'] = (value) => {
+	const onChangeAlertUnit = (value: string | string[]): void => {
 		setAlertDef({
 			...alertDef,
 			condition: {
@@ -311,7 +292,7 @@ function RuleOptions({
 		});
 	};
 
-	const onChangeFrequency = (value: string | unknown): void => {
+	const onChangeFrequency = (value: string | string[]): void => {
 		const freq = (value as string) || alertDef.frequency;
 		setAlertDef({
 			...alertDef,
@@ -323,14 +304,11 @@ function RuleOptions({
 		<Form.Item>
 			<Typography.Text className="rule-definition">
 				{t('text_condition1_anomaly')}
-				<InlineSelect
-					getPopupContainer={popupContainer}
-					allowClear
-					showSearch
-					options={queryOptions}
+				<ComboboxSimple
+					items={queryOptions}
 					placeholder={t('selected_query_placeholder')}
-					value={alertDef.condition.selectedQueryName}
-					onChange={onChangeSelectedQueryName}
+					value={alertDef.condition.selectedQueryName || ''}
+					onChange={(value): void => onChangeSelectedQueryName(value as string)}
 				/>
 				{t('text_condition3')} {renderEvalWindows()}
 				<Typography.Text>is</Typography.Text>
@@ -345,25 +323,26 @@ function RuleOptions({
 		</Form.Item>
 	);
 
+	const frequencyItems: SelectSimpleItem[] = [
+		{ value: '1m0s', label: t('option_1min') },
+		{ value: '5m0s', label: t('option_5min') },
+		{ value: '10m0s', label: t('option_10min') },
+		{ value: '15m0s', label: t('option_15min') },
+		{ value: '30m0s', label: t('option_30min') },
+		{ value: '1h0m0s', label: t('option_60min') },
+		{ value: '3h0m0s', label: t('option_3hours') },
+		{ value: '6h0m0s', label: t('option_6hours') },
+		{ value: '12h0m0s', label: t('option_12hours') },
+		{ value: '24h0m0s', label: t('option_24hours') },
+	];
+
 	const renderFrequency = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
+		<SelectSimple
 			defaultValue={defaultFrequency}
-			style={{ minWidth: '120px' }}
 			value={alertDef.frequency}
+			items={frequencyItems}
 			onChange={onChangeFrequency}
-		>
-			<Select.Option value="1m0s">{t('option_1min')}</Select.Option>
-			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
-			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
-			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
-			<Select.Option value="30m0s">{t('option_30min')}</Select.Option>
-			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
-			<Select.Option value="3h0m0s">{t('option_3hours')}</Select.Option>
-			<Select.Option value="6h0m0s">{t('option_6hours')}</Select.Option>
-			<Select.Option value="12h0m0s">{t('option_12hours')}</Select.Option>
-			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
-		</InlineSelect>
+		/>
 	);
 
 	const selectedCategory = getCategoryByOptionId(yAxisUnit);
@@ -375,7 +354,7 @@ function RuleOptions({
 	return (
 		<>
 			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
-			<FormContainer>
+			<FormContainer className="rule-options-container">
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
 					ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
@@ -400,15 +379,12 @@ function RuleOptions({
 							</Form.Item>
 
 							<Form.Item noStyle>
-								<Select
+								<ComboboxSimple
 									className="rule-unit-selector"
-									getPopupContainer={popupContainer}
-									allowClear
-									showSearch
-									options={categorySelectOptions}
+									items={categorySelectOptions as ComboboxSimpleItem[]}
 									placeholder={t('field_unit')}
-									value={alertDef.condition.targetUnit}
-									onChange={onChangeAlertUnit}
+									value={alertDef.condition.targetUnit || ''}
+									onChange={(value): void => onChangeAlertUnit(value as string)}
 								/>
 							</Form.Item>
 						</Space>
@@ -514,7 +490,7 @@ interface RuleOptionsProps {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
-	queryOptions: DefaultOptionType[];
+	queryOptions: ComboboxSimpleItem[];
 	yAxisUnit: string;
 }
 export default RuleOptions;

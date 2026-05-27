@@ -1,5 +1,8 @@
 .y-axis-unit-selector-component {
-	.ant-select {
+	--combobox-trigger-background-color: var(--l2-background);
+	--combobox-trigger-border-color: var(--l2-border);
+
+	[data-slot='combobox-trigger'] {
 		width: 220px;
 	}
 }

@@ -17,7 +17,7 @@ import {
 	Title,
 	Wrapper,
 } from './styles';
-import { filterOptions, getSelectOptions } from './utils';
+import { getSelectOptions } from './utils';
 
 function ExportPanelContainer({
 	isLoading,
@@ -91,13 +91,13 @@ function ExportPanelContainer({
 			<SelectWrapper direction="horizontal">
 				<DashboardSelect
 					placeholder="Select Dashboard"
-					options={options}
-					showSearch
+					items={options}
 					loading={isDashboardLoading}
-					disabled={isDashboardLoading}
-					value={dashboardId}
-					onSelect={handleSelect}
-					filterOption={filterOptions}
+					style={
+						isDashboardLoading ? { pointerEvents: 'none', opacity: 0.5 } : undefined
+					}
+					value={dashboardId || ''}
+					onChange={(value): void => handleSelect(value as string)}
 				/>
 				<Button
 					type="primary"

@@ -3,7 +3,8 @@ import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { toast } from '@signozhq/ui/sonner';
-import { Button, Select } from 'antd';
+import { Button } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
@@ -270,12 +271,12 @@ function PublicDashboardSetting(): JSX.Element {
 							Default time range
 						</Typography.Text>
 					</div>
-					<Select
+					<SelectSimple
 						placeholder="Select default time range"
-						options={TIME_RANGE_PRESETS_OPTIONS}
+						items={TIME_RANGE_PRESETS_OPTIONS}
 						value={defaultTimeRange}
-						onChange={handleDefaultTimeRange}
-						data-testid="default-time-range-select-dropdown"
+						onChange={(value): void => handleDefaultTimeRange(value as string)}
+						testId="default-time-range-select-dropdown"
 						className="default-time-range-select-dropdown"
 					/>
 				</div>

@@ -1,12 +1,10 @@
 import { CircleAlert, RefreshCw } from '@signozhq/icons';
-import { Select } from 'antd';
-import { Checkbox } from '@signozhq/ui/checkbox';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import APIError from 'types/api/error';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import './RolesSelect.styles.scss';
 
@@ -75,7 +73,6 @@ interface BaseProps {
 	id?: string;
 	placeholder?: string;
 	className?: string;
-	getPopupContainer?: (trigger: HTMLElement) => HTMLElement;
 	roles?: AuthtypesRoleDTO[];
 	loading?: boolean;
 	isError?: boolean;
@@ -113,14 +110,13 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 	});
 
 	const roles = externalRoles ?? data?.data ?? [];
-	const options = getRoleOptions(roles);
+	const items: ComboboxSimpleItem[] = getRoleOptions(roles);
 
 	const {
 		mode,
 		id,
 		placeholder = 'Select role',
 		className,
-		getPopupContainer = popupContainer,
 		loading = internalLoading,
 		isError = internalError,
 		error = convertToApiError(internalErrorObj),
@@ -128,54 +124,47 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		disabled,
 	} = props;
 
-	const notFoundContent = isError ? (
-		<ErrorContent error={error} onRefetch={onRefetch} />
-	) : undefined;
+	const emptyPlaceholder = isError
+		? error?.message || 'Failed to load roles'
+		: 'No roles available';
 
 	if (mode === 'multiple') {
 		const { value = [], onChange } = props as MultipleProps;
 		return (
-			<Select
-				id={id}
-				mode="multiple"
-				value={value}
-				onChange={onChange}
-				placeholder={placeholder}
-				className={cx('roles-select', className)}
-				loading={loading}
-				notFoundContent={notFoundContent}
-				options={options}
-				optionFilterProp="label"
-				optionRender={(option): JSX.Element => (
-					<div style={{ pointerEvents: 'none' }}>
-						<Checkbox value={value.includes(option.value as string)}>
-							{option.label}
-						</Checkbox>
-					</div>
-				)}
-				getPopupContainer={getPopupContainer}
-				disabled={disabled}
-			/>
+			<>
+				<ComboboxSimple
+					id={id}
+					multiple
+					value={value}
+					onChange={(v): void => onChange?.(v as string[])}
+					placeholder={placeholder}
+					className={cx('roles-select', className)}
+					loading={loading}
+					emptyPlaceholder={emptyPlaceholder}
+					items={items}
+					style={disabled ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+				/>
+				{isError && <ErrorContent error={error} onRefetch={onRefetch} />}
+			</>
 		);
 	}
 
-	const { value, onChange, allowClear = true } = props as SingleProps;
+	const { value, onChange } = props as SingleProps;
 	return (
-		<Select
-			id={id}
-			showSearch
-			value={value || undefined}
-			onChange={onChange}
-			placeholder={placeholder}
-			allowClear={allowClear}
-			className={cx('roles-single-select', className)}
-			loading={loading}
-			notFoundContent={notFoundContent}
-			options={options}
-			optionFilterProp="label"
-			getPopupContainer={getPopupContainer}
-			disabled={disabled}
-		/>
+		<>
+			<ComboboxSimple
+				id={id}
+				value={value || undefined}
+				onChange={(v): void => onChange?.((v as string) || undefined)}
+				placeholder={placeholder}
+				className={cx('roles-single-select', className)}
+				loading={loading}
+				emptyPlaceholder={emptyPlaceholder}
+				items={items}
+				style={disabled ? { pointerEvents: 'none', opacity: 0.5 } : undefined}
+			/>
+			{isError && <ErrorContent error={error} onRefetch={onRefetch} />}
+		</>
 	);
 }
 

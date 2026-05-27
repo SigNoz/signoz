@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Button, Select, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -231,15 +232,18 @@ function AlertThreshold({
 					<Typography.Text className="sentence-text">
 						Send a notification when
 					</Typography.Text>
-					<Select
+					<SelectSimple
 						value={thresholdState.selectedQuery}
-						onChange={handleSelectedQueryChange}
+						onChange={(value): void => handleSelectedQueryChange(value as string)}
 						style={{ width: 80 }}
-						options={queryNames}
+						items={queryNames.map((q) => ({
+							value: String(q.value),
+							label: q.label as React.ReactNode,
+						}))}
 						data-testid="alert-threshold-query-select"
 					/>
 					<Typography.Text className="sentence-text">is</Typography.Text>
-					<Select
+					<SelectSimple
 						value={
 							(normalizeOperator(thresholdState.operator) ??
 								thresholdState.operator) as AlertThresholdOperator
@@ -247,17 +251,17 @@ function AlertThreshold({
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_OPERATOR',
-								payload: value,
+								payload: value as AlertThresholdOperator,
 							});
 						}}
 						style={{ width: 180 }}
-						options={THRESHOLD_OPERATOR_OPTIONS}
+						items={THRESHOLD_OPERATOR_OPTIONS}
 						data-testid="alert-threshold-operator-select"
 					/>
 					<Typography.Text className="sentence-text">
 						the threshold(s)
 					</Typography.Text>
-					<Select
+					<SelectSimple
 						value={
 							(normalizeMatchType(thresholdState.matchType) ??
 								thresholdState.matchType) as AlertThresholdMatchType
@@ -265,11 +269,11 @@ function AlertThreshold({
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_MATCH_TYPE',
-								payload: value,
+								payload: value as AlertThresholdMatchType,
 							});
 						}}
 						style={{ width: 180 }}
-						options={matchTypeOptionsWithTooltips}
+						items={matchTypeOptionsWithTooltips}
 						data-testid="alert-threshold-match-type-select"
 					/>
 					<Typography.Text className="sentence-text">

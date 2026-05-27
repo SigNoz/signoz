@@ -1,40 +1,27 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Input, Select } from 'antd';
+import { Input } from 'antd';
+import {
+	Combobox,
+	ComboboxCommand,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxItem,
+	ComboboxList,
+	ComboboxTrigger,
+} from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 
 import './DropRateView.styles.scss';
 
-const { Option } = Select;
-
-interface SelectDropdownRenderProps {
-	menu: React.ReactNode;
-	inputValue: string;
-	handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-	handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-	handleAddCustomValue: () => void;
-}
-
-function SelectDropdownRender({
-	menu,
-	inputValue,
-	handleInputChange,
-	handleAddCustomValue,
-	handleKeyDown,
-}: SelectDropdownRenderProps): JSX.Element {
-	return (
-		<>
-			{menu}
-			<Input
-				placeholder="Enter custom time (ms)"
-				value={inputValue}
-				onChange={handleInputChange}
-				onKeyDown={handleKeyDown}
-				onBlur={handleAddCustomValue}
-				className="select-dropdown-render"
-			/>
-		</>
-	);
-}
+const INTERVAL_OPTIONS = [
+	'10ms',
+	'20ms',
+	'50ms',
+	'100ms',
+	'150ms',
+	'200ms',
+	'500ms',
+];
 
 function EvaluationTimeSelector({
 	setInterval,
@@ -58,6 +45,9 @@ function EvaluationTimeSelector({
 	};
 
 	const handleAddCustomValue = (): void => {
+		if (!inputValue) {
+			return;
+		}
 		setSelectedInterval(inputValue);
 		setInputValue(inputValue);
 		setDropdownOpen(false);
@@ -71,16 +61,6 @@ function EvaluationTimeSelector({
 		}
 	};
 
-	const renderDropdown = (menu: React.ReactNode): JSX.Element => (
-		<SelectDropdownRender
-			menu={menu}
-			inputValue={inputValue}
-			handleInputChange={handleInputChange}
-			handleAddCustomValue={handleAddCustomValue}
-			handleKeyDown={handleKeyDown}
-		/>
-	);
-
 	useEffect(() => {
 		if (selectedInterval) {
 			setInterval(() => selectedInterval);
@@ -92,23 +72,38 @@ function EvaluationTimeSelector({
 			<Typography.Text className="eval-title">
 				Evaluation Interval:
 			</Typography.Text>
-			<Select
-				style={{ width: 220 }}
-				placeholder="Select time interval (ms)"
-				value={selectedInterval}
-				onChange={handleSelectChange}
-				open={dropdownOpen}
-				onDropdownVisibleChange={setDropdownOpen}
-				dropdownRender={renderDropdown}
-			>
-				<Option value="10ms">10ms</Option>
-				<Option value="20ms">20ms</Option>
-				<Option value="50ms">50ms</Option>
-				<Option value="100ms">100ms</Option>
-				<Option value="150ms">150ms</Option>
-				<Option value="200ms">200ms</Option>
-				<Option value="500ms">500ms</Option>
-			</Select>
+			<Combobox open={dropdownOpen} onOpenChange={setDropdownOpen}>
+				<ComboboxTrigger
+					style={{ width: 220 }}
+					placeholder="Select time interval (ms)"
+					value={selectedInterval ?? undefined}
+				/>
+				<ComboboxContent>
+					<ComboboxCommand shouldFilter={false}>
+						<ComboboxList>
+							{INTERVAL_OPTIONS.map((option) => (
+								<ComboboxItem
+									key={option}
+									value={option}
+									isSelected={selectedInterval === option}
+									onSelect={(): void => handleSelectChange(option)}
+								>
+									{option}
+								</ComboboxItem>
+							))}
+							<ComboboxEmpty>No results found.</ComboboxEmpty>
+						</ComboboxList>
+						<Input
+							placeholder="Enter custom time (ms)"
+							value={inputValue}
+							onChange={handleInputChange}
+							onKeyDown={handleKeyDown}
+							onBlur={handleAddCustomValue}
+							className="select-dropdown-render"
+						/>
+					</ComboboxCommand>
+				</ComboboxContent>
+			</Combobox>
 		</div>
 	);
 }

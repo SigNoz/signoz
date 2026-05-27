@@ -9,8 +9,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { SelectSimple } from '@signozhq/ui/select';
+
 import { functions } from './config';
-import { SelectComponent } from './styles';
 import {
 	filterGroupBy,
 	getSelectedValue,
@@ -19,8 +20,6 @@ import {
 	onClickSelectedGroupByHandler,
 	selectedGroupByValue,
 } from './utils';
-
-const { Option } = SelectComponent;
 
 function TraceGraphFilter(): JSX.Element {
 	const { selectedFunction, selectedGroupBy } = useSelector<
@@ -63,20 +62,14 @@ function TraceGraphFilter(): JSX.Element {
 		<Space>
 			<label htmlFor="selectedFunction">Function</label>
 
-			<SelectComponent
-				getPopupContainer={popupContainer}
-				dropdownMatchSelectWidth
-				data-testid="selectedFunction"
+			<SelectSimple
+				testId="selectedFunction"
 				id="selectedFunction"
 				value={getSelectedValue(selectedFunction)}
-				onChange={onClickSelectedFunctionHandler}
-			>
-				{functions.map((value) => (
-					<Option value={value.key} key={value.key}>
-						{value.displayValue}
-					</Option>
-				))}
-			</SelectComponent>
+				onChange={(value): void => onClickSelectedFunctionHandler(value as string)}
+				items={functions.map((fn) => ({ value: fn.key, label: fn.displayValue }))}
+				style={{ minWidth: '12rem' }}
+			/>
 
 			<label htmlFor="selectedGroupBy">Group By</label>
 			<AutoComplete

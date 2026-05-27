@@ -7,8 +7,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Input as SignozInput } from '@signozhq/ui/input';
-import { Col, Row, Select } from 'antd';
+import { Col, Row } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';
@@ -25,8 +26,6 @@ import {
 	TimeUnits,
 	TimeUnitsValues,
 } from './utils';
-
-const { Option } = Select;
 
 function Retention({
 	type,
@@ -78,11 +77,10 @@ function Retention({
 		}
 	}, [initialTimeUnitValue]);
 
-	const menuItems = availableUnits.map((option) => (
-		<Option key={option.value} value={option.value}>
-			{option.key}
-		</Option>
-	));
+	const menuItems = availableUnits.map((option) => ({
+		value: option.value,
+		label: option.key,
+	}));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
 		const selectedValue = find(availableUnits, (e) => e.value === option)?.value;
@@ -136,13 +134,12 @@ function Retention({
 					disabled={isCloudUserVal}
 					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 				/>
-				<Select
+				<SelectSimple
 					value={selectedTimeUnit}
-					onChange={currentSelectedOption}
+					onChange={(value): void => currentSelectedOption(value as SettingPeriod)}
 					disabled={isCloudUserVal}
-				>
-					{menuItems}
-				</Select>
+					items={menuItems}
+				/>
 			</div>
 		);
 	}
@@ -161,14 +158,13 @@ function Retention({
 							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 							style={{ width: 75 }}
 						/>
-						<Select
+						<SelectSimple
 							value={selectedTimeUnit}
-							onChange={currentSelectedOption}
+							onChange={(value): void => currentSelectedOption(value as SettingPeriod)}
 							disabled={isCloudUserVal}
 							style={{ width: 100 }}
-						>
-							{menuItems}
-						</Select>
+							items={menuItems}
+						/>
 					</RetentionFieldInputContainer>
 				</Row>
 			</Row>

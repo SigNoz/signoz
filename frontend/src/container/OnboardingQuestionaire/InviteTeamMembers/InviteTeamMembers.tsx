@@ -3,7 +3,7 @@ import { useMutation } from 'react-query';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
@@ -12,7 +12,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce } from 'lodash-es';
 import {
 	ArrowRight,
-	ChevronDown,
 	CircleAlert,
 	LoaderCircle,
 	Plus,
@@ -304,17 +303,19 @@ function InviteTeamMembers({
 												)}
 										</div>
 										<div className="team-member-cell role-cell">
-											<Select
+											<SelectSimple
 												value={member.role || undefined}
-												onChange={(value): void => handleRoleChange(value, member)}
+												onChange={(value): void =>
+													handleRoleChange(value as string, member)
+												}
 												className="team-member-role-select"
 												placeholder="Select roles"
-												suffixIcon={<ChevronDown size={14} />}
-											>
-												<Select.Option value="VIEWER">Viewer</Select.Option>
-												<Select.Option value="EDITOR">Editor</Select.Option>
-												<Select.Option value="ADMIN">Admin</Select.Option>
-											</Select>
+												items={[
+													{ value: 'VIEWER', label: 'Viewer' },
+													{ value: 'EDITOR', label: 'Editor' },
+													{ value: 'ADMIN', label: 'Admin' },
+												]}
+											/>
 										</div>
 										<div className="team-member-cell action-cell">
 											{teamMembersToInvite && teamMembersToInvite.length > 1 && (

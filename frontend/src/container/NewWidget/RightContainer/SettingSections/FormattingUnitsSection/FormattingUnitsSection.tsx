@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction } from 'react';
-import { Select } from 'antd';
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
-import { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
 import { SlidersHorizontal } from '@signozhq/icons';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
@@ -39,6 +39,26 @@ export default function FormattingUnitsSection({
 	allowPanelColumnPreference,
 	decimapPrecisionOptions,
 }: FormattingUnitsSectionProps): JSX.Element {
+	const precisionItems = useMemo(
+		() =>
+			decimapPrecisionOptions.map((opt) => ({
+				value: String(opt.value),
+				label: opt.label,
+			})),
+		[decimapPrecisionOptions],
+	);
+
+	const handlePrecisionChange = (value: string | string[]): void => {
+		if (Array.isArray(value)) {
+			return;
+		}
+		const parsedValue =
+			value === PrecisionOptionsEnum.FULL
+				? PrecisionOptionsEnum.FULL
+				: (Number(value) as PrecisionOption);
+		setDecimalPrecision(parsedValue);
+	};
+
 	return (
 		<SettingsSection
 			title="Formatting & Units"
@@ -63,13 +83,12 @@ export default function FormattingUnitsSection({
 					<Typography.Text className="section-heading">
 						Decimal Precision
 					</Typography.Text>
-					<Select
-						options={decimapPrecisionOptions}
-						value={decimalPrecision}
+					<SelectSimple
+						items={precisionItems}
+						value={String(decimalPrecision)}
 						className="panel-type-select"
 						data-testid="decimal-precision-selector"
-						defaultValue={decimapPrecisionOptions[0]?.value}
-						onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
+						onChange={handlePrecisionChange}
 					/>
 				</section>
 			)}

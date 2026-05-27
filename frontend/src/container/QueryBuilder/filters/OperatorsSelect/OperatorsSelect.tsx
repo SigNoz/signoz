@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Select } from 'antd';
+import { CSSProperties, memo, useMemo } from 'react';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 
 // ** Types
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -10,17 +10,27 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 	value,
 	onChange,
 	className,
+	disabled,
+	style,
 	...props
 }: OperatorsSelectProps): JSX.Element {
+	const combinedStyle: CSSProperties = useMemo(
+		() => ({
+			...selectStyle,
+			...style,
+			...(disabled ? { opacity: 0.5, pointerEvents: 'none' as const } : {}),
+		}),
+		[disabled, style],
+	);
+
 	return (
-		<Select
-			options={operators}
-			value={value}
-			onChange={onChange}
-			style={selectStyle}
-			showSearch
+		<ComboboxSimple
+			items={operators as ComboboxSimpleItem[]}
+			value={value || ''}
+			onChange={(newValue): void => onChange(newValue as string)}
+			style={combinedStyle}
+			className={className}
 			{...props}
-			popupClassName={className}
 		/>
 	);
 });

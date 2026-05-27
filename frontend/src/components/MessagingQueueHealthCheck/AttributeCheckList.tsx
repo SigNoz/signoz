@@ -10,7 +10,8 @@ import {
 	Loader,
 	X,
 } from '@signozhq/icons';
-import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
+import { Modal, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -181,8 +182,8 @@ function AttributeCheckList({
 	const [filter, setFilter] = useState<AttributesFilters>(AttributesFilters.ALL);
 	const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
 
-	const handleFilterChange = (value: AttributesFilters): void => {
-		setFilter(value);
+	const handleFilterChange = (value: string | string[]): void => {
+		setFilter(value as AttributesFilters);
 	};
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const history = useHistory();
@@ -237,11 +238,11 @@ function AttributeCheckList({
 				</div>
 			) : (
 				<div className="modal-content">
-					<Select
+					<SelectSimple
 						defaultValue={AttributesFilters.ALL}
 						className="attribute-select"
 						onChange={handleFilterChange}
-						options={[
+						items={[
 							{
 								value: AttributesFilters.ALL,
 								label: AttributeLabels({ title: 'Attributes: All' }),

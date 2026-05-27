@@ -20,9 +20,9 @@
 		padding: 0px 8px;
 
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l2-border);
-		background: var(--l2-background);
-		color: var(--l2-foreground);
+		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+		background: var(--input-with-label-background-color, var(--l2-background));
+		color: var(--input-with-label-color, var(--l2-foreground));
 
 		display: flex;
 		justify-content: flex-start;
@@ -35,21 +35,28 @@
 		min-width: 150px;
 		font-family: 'Space Mono', monospace !important;
 
-		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l1-border);
-		background: var(--l2-background);
+		border-radius: 2px;
+		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+		background: var(--input-with-label-background-color, var(--l2-background));
+		color: var(--input-with-label-color, var(--l2-foreground));
 
-		border-right: none;
-		border-left: none;
-		border-top-right-radius: 0px;
-		border-bottom-right-radius: 0px;
-		border-top-left-radius: 0px;
-		border-bottom-left-radius: 0px;
 		font-size: 12px !important;
-		line-height: 27px;
+		line-height: 25px;
+
+		&.input__has-label-after {
+			border-left: none;
+			border-top-left-radius: 0px;
+			border-bottom-left-radius: 0px;
+		}
+
+		&.input__has-close-button {
+			border-right: none;
+			border-top-right-radius: 0px;
+			border-bottom-right-radius: 0px;
+		}
 
 		&::placeholder {
-			color: var(--l2-foreground) !important;
+			color: var(--input-with-label-color, var(--l3-foreground)) !important;
 			font-size: 12px !important;
 		}
 		&[type='number']::-webkit-inner-spin-button,
@@ -63,25 +70,24 @@
 
 	.close-btn {
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l2-border);
-		background: var(--l2-background);
-		height: 38px;
+		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+		background: var(--input-with-label-background-color, var(--l2-background));
+		height: 100%;
 		width: 38px;
 	}
 
 	&.labelAfter {
 		.input {
-			border-radius: 0px 2px 2px 0px;
-			border: 1px solid var(--l1-border);
-			background: var(--l2-background);
+			border-radius: 2px;
+			border: 1px solid var(--input-with-label-border-color, var(--l2-border));
+			background: var(--input-with-label-background-color, var(--l2-background));
 			border-top-right-radius: 0px;
 			border-bottom-right-radius: 0px;
 		}
 
 		.label {
 			border-left: none;
-			border-top-left-radius: 0px;
-			border-bottom-left-radius: 0px;
+			border-radius: 0px 2px 2px 0px;
 		}
 	}
 }

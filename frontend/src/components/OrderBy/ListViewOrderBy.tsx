@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { Select, Spin } from 'antd';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
@@ -13,47 +13,24 @@ interface ListViewOrderByProps {
 	dataSource: DataSource;
 }
 
-// Loader component for the dropdown when loading or no results
-function Loader({ isLoading }: { isLoading: boolean }): JSX.Element {
-	return (
-		<div className="order-by-loading-container">
-			{isLoading ? <Spin size="default" /> : 'No results found'}
-		</div>
-	);
-}
-
 function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
 }: ListViewOrderByProps): JSX.Element {
-	const [searchInput, setSearchInput] = useState('');
-	const [debouncedInput, setDebouncedInput] = useState('');
-	const [selectOptions, setSelectOptions] = useState<
-		{ label: string; value: string }[]
-	>([]);
-	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [selectOptions, setSelectOptions] = useState<ComboboxSimpleItem[]>([]);
 
-	// Fetch key suggestions based on debounced input
+	// Fetch key suggestions once; ComboboxSimple handles local filtering.
 	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
+		queryKey: ['orderByKeySuggestions', dataSource],
 		queryFn: async () => {
 			const response = await getKeySuggestions({
 				signal: dataSource,
-				searchText: debouncedInput,
+				searchText: '',
 			});
 			return response.data;
 		},
 	});
-
-	useEffect(
-		() => (): void => {
-			if (debounceTimer.current) {
-				clearTimeout(debounceTimer.current);
-			}
-		},
-		[],
-	);
 
 	// Update options when API data changes
 	useEffect(() => {
@@ -62,52 +39,33 @@ function ListViewOrderBy({
 			: [];
 
 		const keyNames = rawKeys.map((key) => key.name);
-		const uniqueKeys = [
-			...new Set(searchInput ? keyNames : ['timestamp', ...keyNames]),
-		];
+		const uniqueKeys = [...new Set(['timestamp', ...keyNames])];
 
-		const updatedOptions = uniqueKeys.flatMap((key) => [
+		const updatedOptions: ComboboxSimpleItem[] = uniqueKeys.flatMap((key) => [
 			{ label: `${key} (desc)`, value: `${key}:desc` },
 			{ label: `${key} (asc)`, value: `${key}:asc` },
 		]);
 
 		setSelectOptions(updatedOptions);
-	}, [data, searchInput]);
+	}, [data]);
 
-	// Handle search input with debounce
-	const handleSearch = (input: string): void => {
-		setSearchInput(input);
-
-		// Filter current options for instant client-side match
-		const filteredOptions = selectOptions.filter((option) =>
-			option.value.toLowerCase().includes(input.trim().toLowerCase()),
-		);
-
-		// If no match found or input is empty, trigger debounced fetch
-		if (filteredOptions.length === 0 || input === '') {
-			if (debounceTimer.current) {
-				clearTimeout(debounceTimer.current);
-			}
-
-			debounceTimer.current = setTimeout(() => {
-				setDebouncedInput(input);
-			}, 100);
-		}
-	};
+	const handleChange = useMemo(
+		() =>
+			(val: string | string[]): void => {
+				onChange(val as string);
+			},
+		[onChange],
+	);
 
 	return (
-		<Select
-			showSearch
+		<ComboboxSimple
 			value={value}
-			onChange={onChange}
-			onSearch={handleSearch}
-			notFoundContent={<Loader isLoading={isLoading} />}
+			onChange={handleChange}
+			loading={isLoading}
 			placeholder="Select a field"
 			style={{ width: 200 }}
-			options={selectOptions}
-			filterOption={(input, option): boolean =>
-				(option?.value ?? '').toLowerCase().includes(input.trim().toLowerCase())
-			}
+			items={selectOptions}
+			emptyPlaceholder="No results found"
 		/>
 	);
 }

@@ -1,7 +1,7 @@
-import { Button, Flex, SelectProps } from 'antd';
+import { Button, Flex } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
-import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
@@ -22,11 +22,11 @@ import { openInNewTab } from 'utils/navigation';
 import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
 
-export function getQueryNames(currentQuery: Query): BaseOptionType[] {
+export function getQueryNames(currentQuery: Query): ComboboxSimpleItem[] {
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
 		currentQuery.builder.queryTraceOperator,
 	);
-	const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
+	const queryConfig: Record<EQueryType, () => ComboboxSimpleItem[]> = {
 		[EQueryType.QUERY_BUILDER]: () => [
 			...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
 				(option) =>
@@ -52,7 +52,7 @@ export function getCategoryByOptionId(id: string): string | undefined {
 
 export function getCategorySelectOptionByName(
 	name: string | undefined,
-): DefaultOptionType[] {
+): ComboboxSimpleItem[] {
 	if (!name) {
 		return [];
 	}
@@ -68,7 +68,6 @@ export function getCategorySelectOptionByName(
 			?.units.map((unit) => ({
 				label: unit.name,
 				value: unit.id,
-				'data-testid': `threshold-unit-select-option-${unit.id}`,
 			})) || []
 	);
 }

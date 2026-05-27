@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Select, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from '@signozhq/icons';
@@ -87,16 +88,15 @@ function MultipleNotifications(): JSX.Element {
 			: 'No grouping fields available';
 		let input = (
 			<div>
-				<Select
-					options={spaceAggregationOptions}
-					onChange={onSelectChange}
-					value={notificationSettings.multipleNotifications}
-					mode="multiple"
+				<SelectSimple
+					items={spaceAggregationOptions}
+					onChange={(value): void => onSelectChange(value as string[])}
+					value={notificationSettings.multipleNotifications || []}
+					multiple
 					placeholder={placeholder}
 					disabled={!isMultipleNotificationsEnabled}
-					aria-disabled={!isMultipleNotificationsEnabled}
-					maxTagCount={3}
-					data-testid="multiple-notifications-select"
+					maxDisplayedPills={3}
+					testId="multiple-notifications-select"
 				/>
 				{isMultipleNotificationsEnabled && (
 					<Typography.Text className="multiple-notifications-select-description">

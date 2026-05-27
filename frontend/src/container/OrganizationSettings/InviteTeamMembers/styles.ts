@@ -1,9 +1,5 @@
-import { Select, Space } from 'antd';
+import { Space } from 'antd';
 import styled from 'styled-components';
-
-export const SelectDrawer = styled(Select)`
-	width: 120px;
-`;
 
 export const TitleWrapper = styled.div`
 	display: flex;

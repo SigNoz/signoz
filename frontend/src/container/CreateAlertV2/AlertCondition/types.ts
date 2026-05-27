@@ -1,4 +1,4 @@
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Channels } from 'types/api/channels/getAll';
 
 import {
@@ -23,7 +23,7 @@ export interface ThresholdItemProps {
 	showRemoveButton: boolean;
 	channels: Channels[];
 	isLoadingChannels: boolean;
-	units: DefaultOptionType[];
+	units: ComboboxSimpleItem[];
 	isErrorChannels: boolean;
 	refreshChannels: () => void;
 }

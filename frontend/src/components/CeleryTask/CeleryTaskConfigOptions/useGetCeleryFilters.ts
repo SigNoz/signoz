@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -21,7 +21,7 @@ export interface Filters {
 }
 
 export interface GetAllFiltersResponse {
-	options: DefaultOptionType[];
+	options: ComboboxSimpleItem[];
 	isFetching: boolean;
 }
 

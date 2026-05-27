@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Plus } from '@signozhq/icons';
-import { Button, Flex, Form, Select, Tooltip } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { Button, Flex, Form, Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -17,7 +18,6 @@ import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { openInNewTab } from 'utils/navigation';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
@@ -25,14 +25,11 @@ import {
 	FormContainer,
 	FormItemMedium,
 	InputSmall,
-	SeveritySelect,
 	StepHeading,
 	TextareaMedium,
 } from './styles';
 
 import './FormAlertRules.styles.scss';
-
-const { Option } = Select;
 
 interface BasicInfoProps {
 	isNewRule: boolean;
@@ -116,10 +113,9 @@ function BasicInfo({
 					labelAlign="left"
 					name={['labels', 'severity']}
 				>
-					<SeveritySelect
-						getPopupContainer={popupContainer}
+					<SelectSimple
 						defaultValue="critical"
-						onChange={(value: unknown | string): void => {
+						onChange={(value): void => {
 							const s = (value as string) || 'critical';
 							setAlertDef({
 								...alertDef,
@@ -129,12 +125,14 @@ function BasicInfo({
 								},
 							});
 						}}
-					>
-						<Option value="critical">{t('option_critical')}</Option>
-						<Option value="error">{t('option_error')}</Option>
-						<Option value="warning">{t('option_warning')}</Option>
-						<Option value="info">{t('option_info')}</Option>
-					</SeveritySelect>
+						items={[
+							{ value: 'critical', label: t('option_critical') },
+							{ value: 'error', label: t('option_error') },
+							{ value: 'warning', label: t('option_warning') },
+							{ value: 'info', label: t('option_info') },
+						]}
+						style={{ width: '25%' }}
+					/>
 				</Form.Item>
 
 				<Form.Item

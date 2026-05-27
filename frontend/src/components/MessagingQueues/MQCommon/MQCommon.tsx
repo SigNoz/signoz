@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import type { DefaultOptionType } from 'antd/es/select';
+import type { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Info } from '@signozhq/icons';
 
 import './MQCommon.styles.scss';
@@ -35,7 +35,7 @@ export function ComingSoon(): JSX.Element {
 }
 
 export function SelectMaxTagPlaceholder(
-	omittedValues: Partial<DefaultOptionType>[],
+	omittedValues: Partial<ComboboxSimpleItem>[],
 ): JSX.Element {
 	return (
 		<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>

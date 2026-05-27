@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select, Spin, Tooltip } from 'antd';
-import type { DefaultOptionType } from 'antd/es/select';
-import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
+import { Button, Tooltip } from 'antd';
+import { ComboboxSimple, type ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -38,7 +37,7 @@ const useConfigOptions = (
 	searchText: string;
 	handleSearch: (value: string) => void;
 	isFetching: boolean;
-	options: DefaultOptionType[];
+	options: ComboboxSimpleItem[];
 } => {
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -118,32 +117,21 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 	return (
 		<div className="mq-config">
 			<div className="config-options">
-				<Select
+				<ComboboxSimple
 					placeholder={getPlaceholder('group')}
-					showSearch
-					mode="multiple"
-					options={consumerGrpOptions}
+					multiple
+					items={consumerGrpOptions}
 					loading={isFetchingConsumerGrp}
 					className="config-select-option"
-					onSearch={handleConsumerGrpSearch}
-					maxTagCount={4}
-					maxTagPlaceholder={SelectMaxTagPlaceholder}
+					maxDisplayedPills={4}
+					emptyPlaceholder="No Consumer Groups found"
 					value={
 						getConfigValuesFromQueryParams(QueryParams.consumerGrp, urlQuery) || []
-					}
-					notFoundContent={
-						isFetchingConsumerGrp ? (
-							<span>
-								<Spin size="small" /> Loading...
-							</span>
-						) : (
-							<span>No Consumer Groups found</span>
-						)
 					}
 					onChange={(value): void => {
 						handleConsumerGrpSearch('');
 						setQueryParamsForConfigOptions(
-							value,
+							value as string[],
 							urlQuery,
 							history,
 							location,
@@ -152,30 +140,19 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 						resetTabularConfigDetailsOnChange();
 					}}
 				/>
-				<Select
+				<ComboboxSimple
 					placeholder={getPlaceholder('topic')}
-					showSearch
-					mode="multiple"
-					options={topicOptions}
+					multiple
+					items={topicOptions}
 					loading={isFetchingTopic}
-					onSearch={handleTopicSearch}
 					className="config-select-option"
-					maxTagCount={4}
+					maxDisplayedPills={4}
+					emptyPlaceholder="No Topics found"
 					value={getConfigValuesFromQueryParams(QueryParams.topic, urlQuery) || []}
-					maxTagPlaceholder={SelectMaxTagPlaceholder}
-					notFoundContent={
-						isFetchingTopic ? (
-							<span>
-								<Spin size="small" /> Loading...
-							</span>
-						) : (
-							<span>No Topics found</span>
-						)
-					}
 					onChange={(value): void => {
 						handleTopicSearch('');
 						setQueryParamsForConfigOptions(
-							value,
+							value as string[],
 							urlQuery,
 							history,
 							location,
@@ -184,32 +161,21 @@ function MessagingQueuesConfigOptions(): JSX.Element {
 						resetTabularConfigDetailsOnChange();
 					}}
 				/>
-				<Select
+				<ComboboxSimple
 					placeholder={getPlaceholder('partition')}
-					showSearch
-					mode="multiple"
-					options={partitionOptions}
+					multiple
+					items={partitionOptions}
 					loading={isFetchingPartition}
 					className="config-select-option"
-					onSearch={handlePartitionSearch}
-					maxTagCount={4}
+					maxDisplayedPills={4}
+					emptyPlaceholder="No Partitions found"
 					value={
 						getConfigValuesFromQueryParams(QueryParams.partition, urlQuery) || []
-					}
-					maxTagPlaceholder={SelectMaxTagPlaceholder}
-					notFoundContent={
-						isFetchingPartition ? (
-							<span>
-								<Spin size="small" /> Loading...
-							</span>
-						) : (
-							<span>No Partitions found</span>
-						)
 					}
 					onChange={(value): void => {
 						handlePartitionSearch('');
 						setQueryParamsForConfigOptions(
-							value,
+							value as string[],
 							urlQuery,
 							history,
 							location,

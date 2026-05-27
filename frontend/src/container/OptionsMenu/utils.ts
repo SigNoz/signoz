@@ -1,10 +1,10 @@
-import { SelectProps } from 'antd';
+import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { TelemetryFieldKey } from 'api/v5/v5';
 
 export const getOptionsFromKeys = (
 	keys: TelemetryFieldKey[],
 	selectedKeys: (string | undefined)[],
-): SelectProps['options'] => {
+): ComboboxSimpleItem[] => {
 	const options = keys.map(({ name }) => ({
 		label: name,
 		value: name,

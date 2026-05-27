@@ -8,6 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// oxlint-disable-next-line signoz/no-antd-components This component is too much complex to migrate to the current Select/Combobox
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import {
@@ -52,7 +53,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
 import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
@@ -1017,7 +1017,11 @@ function QueryBuilderSearchV2(
 				)}
 				rootClassName={cx('query-builder-search', rootClassName)}
 				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
-				style={selectStyle}
+				style={{
+					width: '100%',
+					height: '100%',
+					minWidth: '7.7rem',
+				}}
 				onSearch={handleSearch}
 				onSelect={handleDropdownSelect}
 				onInputKeyDown={onInputKeyDownHandler}

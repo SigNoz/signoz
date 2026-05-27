@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import CustomSelect from 'components/NewSelect/CustomSelect';
 import TextToolTip from 'components/TextToolTip';
@@ -204,10 +204,9 @@ function DynamicVariable({
 						}
 					/>
 				</span>
-				<Select
+				<SelectSimple
 					placeholder="Source"
-					defaultValue={AttributeSource.ALL_TELEMETRY}
-					options={sources.map((source) => ({ label: source, value: source }))}
+					items={sources.map((source) => ({ label: source, value: source }))}
 					onChange={(value): void => setAttributeSource(value as AttributeSource)}
 					value={attributeSource || dynamicVariablesSelectedValue?.value}
 				/>

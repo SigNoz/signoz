@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Select, Skeleton } from 'antd';
+import {
+	ClipboardEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Skeleton } from 'antd';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -95,6 +102,30 @@ function S3BucketsSelector({
 		[onChange],
 	);
 
+	// Replicates antd `tokenSeparators={[',']}` for pasted text.
+	const handleRegionPaste = useCallback(
+		(region: string) =>
+			(event: ClipboardEvent<HTMLDivElement>): void => {
+				const pasted = event.clipboardData?.getData('text');
+				if (!pasted || !pasted.includes(',')) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				const tokens = pasted
+					.split(',')
+					.map((token) => token.trim())
+					.filter(Boolean);
+				if (tokens.length === 0) {
+					return;
+				}
+				const existing = bucketsByRegion[region] ?? [];
+				const merged = Array.from(new Set([...existing, ...tokens]));
+				handleRegionBucketsChange(region, merged);
+			},
+		[bucketsByRegion, handleRegionBucketsChange],
+	);
+
 	// Show loading state while fetching account data
 	if (isLoading || !activeAccount) {
 		return <Skeleton active />;
@@ -106,6 +137,7 @@ function S3BucketsSelector({
 			<div className="s3-buckets-selector-content">
 				{allRegions.map((region) => {
 					const isRegionUnavailable = isRegionDisabled(region);
+					const isRegionFieldDisabled = isSelectorDisabled || isRegionUnavailable;
 
 					return (
 						<div key={region} className="s3-buckets-selector-region">
@@ -118,19 +150,26 @@ function S3BucketsSelector({
 									</div>
 								)}
 							</div>
-							<div className="s3-buckets-selector-region-select">
-								<Select
-									mode="tags"
+							<div
+								className="s3-buckets-selector-region-select"
+								onPaste={isRegionFieldDisabled ? undefined : handleRegionPaste(region)}
+							>
+								<ComboboxSimple
+									multiple
+									allowCreate
+									items={[]}
 									placeholder={`Enter S3 bucket names for ${region}`}
 									value={bucketsByRegion[region] || []}
-									onChange={(value): void => handleRegionBucketsChange(region, value)}
-									tokenSeparators={[',']}
-									allowClear
-									disabled={isSelectorDisabled || isRegionUnavailable}
-									suffixIcon={null}
-									notFoundContent={null}
-									filterOption={false}
-									showSearch
+									onChange={(v): void =>
+										handleRegionBucketsChange(region, v as string[])
+									}
+									style={{
+										width: '100%',
+										...(isRegionFieldDisabled && {
+											pointerEvents: 'none',
+											opacity: 0.5,
+										}),
+									}}
 								/>
 							</div>
 						</div>

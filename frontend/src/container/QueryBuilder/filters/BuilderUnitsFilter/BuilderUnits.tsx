@@ -1,13 +1,16 @@
-import { Select, SelectProps, Space } from 'antd';
+import { Space } from 'antd';
+import {
+	ComboboxSimple,
+	ComboboxSimpleGroup,
+	ComboboxSimpleItem,
+} from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
 import { selectStyles } from './styles';
 import { IBuilderUnitsFilterProps } from './types';
-import { filterOption } from './utils';
 
 function BuilderUnitsFilter({
 	onChange,
@@ -17,17 +20,18 @@ function BuilderUnitsFilter({
 
 	const selectedValue = yAxisUnit || currentQuery?.unit;
 
-	const allOptions = categoryToSupport.map((category) => ({
-		label: category,
-		options: getCategorySelectOptionByName(category),
+	const groups: ComboboxSimpleGroup[] = categoryToSupport.map((category) => ({
+		heading: category,
+		items: getCategorySelectOptionByName(category) as ComboboxSimpleItem[],
 	}));
 
-	const onChangeHandler: SelectProps['onChange'] = (value): void => {
+	const onChangeHandler = (value: string | string[]): void => {
+		const stringValue = value as string;
 		if (onChange) {
-			onChange(value);
+			onChange(stringValue);
 		}
 
-		handleOnUnitsChange(value);
+		handleOnUnitsChange(stringValue);
 	};
 
 	return (
@@ -35,17 +39,12 @@ function BuilderUnitsFilter({
 			<Typography.Text className="builder-units-filter-label">
 				Y-axis unit
 			</Typography.Text>
-			<Select
-				getPopupContainer={popupContainer}
+			<ComboboxSimple
 				style={selectStyles}
 				onChange={onChangeHandler}
-				value={selectedValue}
-				options={allOptions}
-				allowClear
-				showSearch
-				optionFilterProp="label"
+				value={selectedValue || ''}
+				groups={groups}
 				placeholder="Select unit"
-				filterOption={filterOption}
 			/>
 		</Space>
 	);

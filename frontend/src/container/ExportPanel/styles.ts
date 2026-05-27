@@ -1,11 +1,9 @@
-import { FunctionComponent } from 'react';
-import { Button, Select, SelectProps, Space } from 'antd';
+import { Button, Space } from 'antd';
+import { ComboboxSimple } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
-export const DashboardSelect: FunctionComponent<SelectProps> = styled(
-	Select,
-)<SelectProps>`
+export const DashboardSelect = styled(ComboboxSimple)`
 	width: 100%;
 `;
 

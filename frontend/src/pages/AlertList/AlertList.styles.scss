@@ -18,10 +18,6 @@
 				margin-left: 16px;
 			}
 
-			&:not(:first-of-type) {
-				margin-left: 24px !important;
-			}
-
 			[aria-selected='false'] {
 				.periscope-tab {
 					color: var(--l2-foreground);

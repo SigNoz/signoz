@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Empty, Select, Skeleton, Tooltip } from 'antd';
+import { Empty, Skeleton, Tooltip } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -200,10 +201,12 @@ function MetricsTreemap({
 						<Info size={16} />
 					</Tooltip>
 				</div>
-				<Select
-					options={TREEMAP_VIEW_OPTIONS}
+				<SelectSimple
+					items={TREEMAP_VIEW_OPTIONS}
 					value={viewType}
-					onChange={setHeatmapView}
+					onChange={(value): void =>
+						setHeatmapView(value as MetricsexplorertypesTreemapModeDTO)
+					}
 					disabled={isLoading}
 				/>
 			</div>

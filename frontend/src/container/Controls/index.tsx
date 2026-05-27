@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
-import { Button, Flex, Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
+import { Button, Flex } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';
 import { Container } from './styles';
@@ -59,20 +59,18 @@ function Controls({
 			</Button>
 
 			{showSizeChanger && (
-				<Select<Pagination['limit']>
+				<SelectSimple
 					style={defaultSelectStyle}
-					loading={isLoading}
-					value={countPerPage}
-					onChange={handleCountItemsPerPageChange}
-					getPopupContainer={popupContainer}
-				>
-					{perPageOptions.map((count) => (
-						<Select.Option
-							key={count}
-							value={count}
-						>{`${count} / page`}</Select.Option>
-					))}
-				</Select>
+					disabled={isLoading}
+					value={String(countPerPage)}
+					onChange={(value): void =>
+						handleCountItemsPerPageChange(Number(value) as Pagination['limit'])
+					}
+					items={perPageOptions.map((count) => ({
+						value: String(count),
+						label: `${count} / page`,
+					}))}
+				/>
 			)}
 		</Container>
 	);

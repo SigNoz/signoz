@@ -75,8 +75,8 @@
 	gap: 16px;
 	z-index: 1;
 
-	.ant-select-selector {
-		padding: 0 !important;
+	.views-dropdown {
+		--combobox-trigger-border-color: transparent;
 	}
 
 	hr {
@@ -98,29 +98,17 @@
 		align-items: center;
 		gap: 8px;
 
-		.ant-select-focused {
-			border-color: transparent !important;
-
-			.ant-select-selector {
-				border-color: transparent !important;
-				box-shadow: none !important;
-			}
-		}
-
-		.ant-select-selector {
-			border: transparent !important;
-			background-color: transparent !important;
-
-			.ant-select-selection-placeholder {
-				margin-left: 12px;
-			}
+		button {
+			display: flex;
+			align-items: center;
+			justify-content: center;
 		}
 	}
 	.hidden {
 		display: none;
 	}
 
-	button {
+	.views-save-button {
 		display: flex;
 		align-items: center;
 		justify-content: center;

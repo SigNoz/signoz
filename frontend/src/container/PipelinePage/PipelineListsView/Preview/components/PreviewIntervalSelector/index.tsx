@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { SelectSimple } from '@signozhq/ui/select';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -12,9 +12,15 @@ function PreviewIntervalSelector({
 	value,
 	onChange,
 }: PreviewIntervalSelectorProps): JSX.Element {
-	const onSelectInterval = (value: unknown): void => onChange(value as Time);
+	const onSelectInterval = (value: string | string[]): void =>
+		onChange(value as Time);
 
 	const isEmptyFilter = (previewFilter?.items?.length || 0) < 1;
+
+	const items = RelativeDurationOptions.map(({ value, label }) => ({
+		value,
+		label,
+	}));
 
 	return (
 		<div className="logs-filter-preview-time-interval-summary">
@@ -22,13 +28,7 @@ function PreviewIntervalSelector({
 				<LogsCountInInterval filter={previewFilter} timeInterval={value} />
 			)}
 			<div>
-				<Select value={value} onSelect={onSelectInterval}>
-					{RelativeDurationOptions.map(({ value, label }) => (
-						<Select.Option key={value + label} value={value}>
-							{label}
-						</Select.Option>
-					))}
-				</Select>
+				<SelectSimple value={value} onChange={onSelectInterval} items={items} />
 			</div>
 		</div>
 	);

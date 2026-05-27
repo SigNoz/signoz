@@ -9,6 +9,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+// oxlint-disable-next-line signoz/no-antd-components After https://github.com/SigNoz/engineering-pod/issues/3996 this entire component can be removed
 import { Button, Select, Spin, Tag, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -54,7 +55,6 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureKeys } from '../../../../constants/features';
 import { useAppContext } from '../../../../providers/App/App';
-import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import OptionRenderer from './OptionRenderer';
@@ -410,7 +410,11 @@ function QueryBuilderSearch({
 				)}
 				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
-				style={selectStyle}
+				style={{
+					width: '100%',
+					height: '100%',
+					minWidth: '7.7rem',
+				}}
 				onSearch={handleSearch}
 				onChange={onChangeHandler}
 				onSelect={handleSelect}

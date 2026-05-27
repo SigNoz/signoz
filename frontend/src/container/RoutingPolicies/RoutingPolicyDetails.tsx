@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { Button, Flex, Form, Input, Modal, Select } from 'antd';
+import { Button, Flex, Form, Input, Modal } from 'antd';
+import { Check, Loader, X } from '@signozhq/icons';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
-import { Check, Loader, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
@@ -58,8 +59,17 @@ function RoutingPolicyDetails({
 		});
 	};
 
-	const notificationChannelsNotFoundContent = (
-		<Flex justify="space-between">
+	const channelItems: ComboboxSimpleItem[] = useMemo(
+		() =>
+			channels.map((channel) => ({
+				value: channel.name,
+				label: channel.name,
+			})),
+		[channels],
+	);
+
+	const noChannelsHelper = (
+		<Flex justify="space-between" className="routing-policy-no-channels">
 			<Flex gap={4} align="center">
 				<Typography.Text>No channels yet.</Typography.Text>
 				{user?.role === USER_ROLES.ADMIN ? (
@@ -162,27 +172,16 @@ function RoutingPolicyDetails({
 								},
 							]}
 						>
-							<Select
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-								}))}
-								mode="multiple"
+							<ComboboxSimple
+								items={channelItems}
+								multiple
 								placeholder="Select notification channels"
-								showSearch
-								maxTagCount={3}
-								maxTagPlaceholder={(omittedValues): string =>
-									`+${omittedValues.length} more`
-								}
-								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
-								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
-								notFoundContent={notificationChannelsNotFoundContent}
+								loading={isLoadingChannels}
+								emptyPlaceholder="No channels yet."
+								className={isErrorChannels ? 'has-error' : undefined}
 							/>
 						</Form.Item>
+						{channels.length === 0 && !isLoadingChannels && noChannelsHelper}
 					</div>
 				</div>
 				<Flex className="create-policy-footer" justify="space-between">

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input, Select, Space } from 'antd';
+import { Form, Input, Space } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
+import { SelectSimple } from '@signozhq/ui/select';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -8,7 +9,7 @@ import { formValidationRules } from '../config';
 import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
-import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
+import { FormWrapper, PipelineIndexIcon } from './styles';
 
 import './styles.scss';
 
@@ -45,15 +46,11 @@ function ProcessorFieldInput({
 
 	let inputField;
 	if (fieldData?.options) {
-		inputField = (
-			<StyledSelect>
-				{fieldData.options.map(({ value, label }) => (
-					<Select.Option key={value + label} value={value}>
-						{label}
-					</Select.Option>
-				))}
-			</StyledSelect>
-		);
+		const items = fieldData.options.map(({ value, label }) => ({
+			value,
+			label,
+		}));
+		inputField = <SelectSimple items={items} style={{ width: '12.5rem' }} />;
 	} else if (Array.isArray(fieldData?.initialValue)) {
 		inputField = <CSVInput placeholder={t(fieldData.placeholder)} />;
 	} else if (fieldData?.name === 'enable_flattening') {

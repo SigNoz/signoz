@@ -16,6 +16,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
+// oxlint-disable-next-line signoz/no-antd-components This component for now is too complex to be migrated in one PR
 import { Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';

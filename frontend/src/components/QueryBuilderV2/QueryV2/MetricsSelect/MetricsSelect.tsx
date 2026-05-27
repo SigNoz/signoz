@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Select } from 'antd';
+import { SelectSimple, type SelectSimpleItem } from '@signozhq/ui/select';
 import {
 	initialQueriesMap,
 	initialQueryMeterWithType,
@@ -10,7 +10,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
 
 import {
 	getPreviousQueryFromKey,
@@ -21,7 +20,7 @@ import {
 
 import './MetricsSelect.styles.scss';
 
-export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
+export const SOURCE_OPTIONS: SelectSimpleItem[] = [
 	{ value: 'metrics', label: 'Metrics' },
 	{ value: 'meter', label: 'Meter' },
 ];
@@ -140,14 +139,14 @@ export const MetricsSelect = memo(function MetricsSelect({
 	return (
 		<div className="metrics-source-select-container">
 			{signalSourceChangeEnabled && (
-				<Select
+				<SelectSimple
 					className="source-selector"
 					placeholder="Source"
-					options={SOURCE_OPTIONS}
+					items={SOURCE_OPTIONS}
 					value={source}
 					defaultValue="metrics"
-					data-testid={`metrics-source-selector-${index}`}
-					onChange={handleSignalSourceChange}
+					testId={`metrics-source-selector-${index}`}
+					onChange={(value): void => handleSignalSourceChange(value as string)}
 				/>
 			)}
 
