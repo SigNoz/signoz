@@ -21,7 +21,7 @@
 	background-color: var(--l1-background);
 }
 
-.expandedTable {
+.expandedTable[data-has-page='true'] {
 	min-height: 290px;
 }
 

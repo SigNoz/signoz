@@ -48,7 +48,10 @@ function ExpandedAlertsTable({
 	}, [sortedAlerts, page]);
 
 	return (
-		<div className={styles.expandedRowContainer}>
+		<div
+			className={styles.expandedRowContainer}
+			data-has-page={alerts.length > EXPANDED_PAGE_SIZE}
+		>
 			<TanStackTable<Alert>
 				className={styles.expandedTable}
 				data={paginatedAlerts}
