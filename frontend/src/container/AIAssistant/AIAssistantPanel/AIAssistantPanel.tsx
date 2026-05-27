@@ -150,9 +150,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={(): void => setShowHistory((v) => !v)}
 								aria-label="Toggle conversations"
-							>
-								<History size={14} />
-							</Button>
+								prefix={<History size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="New conversation">
@@ -162,9 +161,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={handleNew}
 								aria-label="New conversation"
-							>
-								<Plus size={14} />
-							</Button>
+								prefix={<Plus size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="Open full screen">
@@ -175,9 +173,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
-							>
-								<Maximize2 size={14} />
-							</Button>
+								prefix={<Maximize2 size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="Close">
@@ -187,9 +184,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={closeDrawer}
 								aria-label="Close panel"
-							>
-								<X size={14} />
-							</Button>
+								prefix={<X size={14} />}
+							/>
 						</TooltipSimple>
 					</div>
 				</div>

@@ -28,6 +28,13 @@ type Config struct {
 
 	// Configuration for the notification log.
 	NFLog NFLogConfig `mapstructure:"nflog"`
+
+	// Templates is the list of globs from which SigNoz's alertmanager notification
+	// templates are loaded (e.g. the email.signoz.html layout). This mirrors the
+	// upstream alertmanager `templates` config option (https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/config/config.go#L412).
+	// The upstream default templates (default.tmpl, email.tmpl) are always loaded
+	// from the embedded alertmanager assets, so only SigNoz's own templates are listed here.
+	Templates []string `mapstructure:"templates"`
 }
 
 type AlertsConfig struct {
@@ -100,5 +107,6 @@ func NewConfig() Config {
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
 		},
+		Templates: []string{"/root/templates/alertmanager/*.gotmpl"},
 	}
 }
