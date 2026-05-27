@@ -2,7 +2,7 @@ import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import {
@@ -60,30 +60,21 @@ function KeyFormPhase({
 						name="expiryMode"
 						control={control}
 						render={({ field }): JSX.Element => (
-							<ToggleGroup
+							<ToggleGroupSimple
 								type="single"
 								value={field.value}
-								onChange={(val): void => {
+								onChange={(val: string): void => {
 									if (val) {
 										field.onChange(val);
 									}
 								}}
 								size="sm"
 								className="add-key-modal__expiry-toggle"
-							>
-								<ToggleGroupItem
-									value={ExpiryMode.NONE}
-									className="add-key-modal__expiry-toggle-btn"
-								>
-									No Expiration
-								</ToggleGroupItem>
-								<ToggleGroupItem
-									value={ExpiryMode.DATE}
-									className="add-key-modal__expiry-toggle-btn"
-								>
-									Set Expiration Date
-								</ToggleGroupItem>
-							</ToggleGroup>
+								items={[
+									{ value: ExpiryMode.NONE, label: 'No Expiration' },
+									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
+								]}
+							/>
 						)}
 					/>
 				</div>
