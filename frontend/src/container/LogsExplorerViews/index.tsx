@@ -160,7 +160,7 @@ function LogsExplorerViewsContainer({
 		'custom',
 	);
 
-	const { data, isLoading, isFetching, isError, isSuccess, error } =
+	const { data, isLoading, isFetching, isError, error } =
 		useGetExplorerQueryRange(
 			requestData,
 			selectedPanelType,
@@ -437,10 +437,6 @@ function LogsExplorerViewsContainer({
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
 						orderBy={orderBy}
 						setOrderBy={setOrderBy}
-						isFetching={isFetching}
-						isLoading={isLoading}
-						isError={isError}
-						isSuccess={isSuccess}
 					/>
 				)}
 
