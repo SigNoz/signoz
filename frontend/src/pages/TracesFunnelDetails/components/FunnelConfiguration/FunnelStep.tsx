@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Button, Divider, Form, Space, Tooltip } from 'antd';
+import { Button, Form, Space, Tooltip } from 'antd';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';

@@ -7,12 +7,13 @@ import {
 	DropResult,
 } from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Input, Tooltip } from 'antd';
+import { Button, Input, Tooltip } from 'antd';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuTrigger,
 } from '@signozhq/ui/dropdown-menu';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { FieldDataType } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';

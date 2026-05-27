@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer } from 'antd';
+import { Button, Drawer } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
