@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Drawer, RadioChangeEvent } from 'antd';
+import { Button, Drawer } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
@@ -83,8 +83,8 @@ function SpanRelatedSignals({
 		isDrawerOpen: isOpen,
 	});
 
-	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleTabChange = useCallback((value: string): void => {
+		setSelectedView(value as RelatedSignalsViews);
 	}, []);
 
 	const tabOptions = useMemo(() => {

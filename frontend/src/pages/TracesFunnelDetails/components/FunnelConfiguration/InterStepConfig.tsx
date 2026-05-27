@@ -33,10 +33,10 @@ function InterStepConfig({
 					disabled={!hasEditPermission}
 					onChange={
 						hasEditPermission
-							? (e): void =>
+							? (value): void =>
 									onStepChange(index, {
 										...step,
-										latency_type: e.target.value,
+										latency_type: value as LatencyOptions,
 									})
 							: (): void => {}
 					}
