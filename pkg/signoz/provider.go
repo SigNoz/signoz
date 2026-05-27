@@ -208,6 +208,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateCloudIntegrationDashboardsFactory(sqlstore),
 		sqlmigration.NewAddScopeToPlannedMaintenanceFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateInstalledIntegrationDashboardsFactory(sqlstore),
+		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
 	)
 }
 

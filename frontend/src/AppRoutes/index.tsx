@@ -229,18 +229,18 @@ function App(): JSX.Element {
 		}
 
 		setRoutes((prev) => {
-			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
+			const hasAi = prev.some((r) => r.key === 'AI_ASSISTANT');
 			if (isAIAssistantEnabled === hasAi) {
 				return prev;
 			}
 			if (isAIAssistantEnabled) {
-				const aiRoute = defaultRoutes.find((r) => r.path === ROUTES.AI_ASSISTANT);
+				const aiRoute = defaultRoutes.find((r) => r.key === 'AI_ASSISTANT');
 				if (!aiRoute) {
 					return prev;
 				}
-				return [...prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT), aiRoute];
+				return [...prev.filter((r) => r.key !== 'AI_ASSISTANT'), aiRoute];
 			}
-			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
+			return prev.filter((r) => r.key !== 'AI_ASSISTANT');
 		});
 	}, [isLoggedInState, isAIAssistantEnabled]);
 
@@ -254,6 +254,7 @@ function App(): JSX.Element {
 		if (
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/') ||
+			pathname === '/ai-assistant' ||
 			pathname.startsWith('/ai-assistant/')
 		) {
 			window.Pylon?.('hideChatBubble');
