@@ -188,42 +188,55 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`
-		WITH
+	// CTE 1: all span with start and end timestamps.
+	allSpansSB := sqlbuilder.NewSelectBuilder()
+	allSpansSB.Select(
+		"DISTINCT ON (span_id) "+fieldExpr+" AS field_value",
+		"toUnixTimestamp64Nano(timestamp) AS start_ns",
+		"start_ns + duration_nano AS end_ns",
+	)
+	allSpansSB.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	allSpansSB.Where(
+		allSpansSB.E("trace_id", traceID),
+		allSpansSB.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		allSpansSB.LE("ts_bucket_start", summary.End.Unix()),
+		"notEmpty(field_value)",
+	)
+	allSpansSB.OrderByAsc("timestamp")
+	allSpansSB.OrderByAsc("name")
 
-		-- query minimum span fields
-		field_duration AS (
-			SELECT DISTINCT ON (span_id)
-				%s AS field_value,
-				toUnixTimestamp64Nano(timestamp) AS start_ns,
-				start_ns + duration_nano AS end_ns
-			FROM %s.%s
-			WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=? AND notEmpty(field_value)
-			ORDER BY timestamp ASC, name ASC
-		),
-
-		-- calculate max end time of preceding spans
-		max_end_time AS (
-			SELECT
-				field_value, start_ns, end_ns,
-				ifNull(max(end_ns) OVER (
+	// CTE 2: find max end time of all preceding spans.
+	effectiveStartSB := sqlbuilder.NewSelectBuilder()
+	effectiveStartSB.Select(
+		"field_value", "end_ns",
+		`greatest(
+			start_ns,
+			ifNull(
+				max(end_ns) OVER (
 					PARTITION BY field_value
 					ORDER BY start_ns
 					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-				), toUInt64(0)) AS prev_max_end_ns
-			FROM field_duration
-		)
-
-		-- add only duration that is extending over previous spans
-		SELECT field_value, sum(toUInt64(greatest(end_ns - greatest(start_ns, prev_max_end_ns), 0))) AS total_ns
-		FROM max_end_time
-		GROUP BY field_value`,
-		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
+				),
+				toUInt64(0)
+			)
+		) AS effective_start_ns`,
 	)
+	effectiveStartSB.From("all_spans")
+
+	// Final SELECT: each span contributes only the tail past its effective start.
+	sb := sqlbuilder.With(
+		sqlbuilder.CTEQuery("all_spans").As(allSpansSB),
+		sqlbuilder.CTEQuery("effective_start").As(effectiveStartSB),
+	).Select(
+		"field_value",
+		"sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns",
+	)
+	sb.From("effective_start")
+	sb.GroupBy("field_value")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	var rows []spanDurationRow
-	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query,
-		traceID, summary.Start.Unix()-1800, summary.End.Unix(),
-	); err != nil {
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying span duration by field")
 	}
 	result := make(map[string]uint64, len(rows))
