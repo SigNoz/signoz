@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -369,10 +367,6 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 
 	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
-	}
-
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 
 	deleter, err := module.store.GetUser(ctx, valuer.MustNewUUID(deletedBy))

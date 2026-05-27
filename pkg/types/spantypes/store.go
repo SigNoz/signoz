@@ -2,6 +2,7 @@ package spantypes
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -26,4 +27,6 @@ type SpanMapperStore interface {
 type TraceStore interface {
 	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
 	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
+	GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]MinimalSpan, error)
+	GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
 }

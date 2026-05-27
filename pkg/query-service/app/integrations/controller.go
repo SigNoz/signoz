@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -16,8 +16,8 @@ type Controller struct {
 	mgr *Manager
 }
 
-func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
-	mgr, err := NewManager(sqlStore)
+func NewController(sqlStore sqlstore.SQLStore, dashboardModule dashboard.Module) (*Controller, error) {
+	mgr, err := NewManager(sqlStore, dashboardModule)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create integrations manager: %w", err)
 	}
@@ -74,9 +74,9 @@ type InstallIntegrationRequest struct {
 	Config        map[string]interface{} `json:"config"`
 }
 
-func (c *Controller) Install(ctx context.Context, orgId string, req *InstallIntegrationRequest) (*IntegrationsListItem, *model.ApiError) {
+func (c *Controller) Install(ctx context.Context, orgId string, req *InstallIntegrationRequest, createdBy string, creator valuer.UUID) (*IntegrationsListItem, *model.ApiError) {
 	res, apiErr := c.mgr.InstallIntegration(
-		ctx, orgId, req.IntegrationId, req.Config,
+		ctx, orgId, req.IntegrationId, req.Config, createdBy, creator,
 	)
 	if apiErr != nil {
 		return nil, apiErr
@@ -108,16 +108,4 @@ func (c *Controller) Uninstall(ctx context.Context, orgId string, req *Uninstall
 
 func (c *Controller) GetPipelinesForInstalledIntegrations(ctx context.Context, orgId string) ([]pipelinetypes.GettablePipeline, error) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx, orgId)
-}
-
-func (c *Controller) GetDashboardsForInstalledIntegrations(ctx context.Context, orgId valuer.UUID) ([]*dashboardtypes.Dashboard, *model.ApiError) {
-	return c.mgr.GetDashboardsForInstalledIntegrations(ctx, orgId)
-}
-
-func (c *Controller) GetInstalledIntegrationDashboardById(ctx context.Context, orgId valuer.UUID, dashboardUuid string) (*dashboardtypes.Dashboard, *model.ApiError) {
-	return c.mgr.GetInstalledIntegrationDashboardById(ctx, orgId, dashboardUuid)
-}
-
-func (c *Controller) IsInstalledIntegrationDashboardID(dashboardUuid string) bool {
-	return c.mgr.IsInstalledIntegrationDashboardUuid(dashboardUuid)
 }
