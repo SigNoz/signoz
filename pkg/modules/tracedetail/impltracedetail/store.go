@@ -166,7 +166,7 @@ func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, su
 		sb.E("trace_id", traceID),
 		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
 		sb.LE("ts_bucket_start", summary.End.Unix()),
-		fieldExpr+" != ''",
+		"notEmpty("+fieldExpr+")",
 	)
 	sb.GroupBy("field_value")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -198,8 +198,7 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 				toUnixTimestamp64Nano(timestamp) AS start_ns,
 				start_ns + duration_nano AS end_ns
 			FROM %s.%s
-			WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
-			HAVING field_value != ''
+			WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=? AND notEmpty(field_value)
 			ORDER BY timestamp ASC, name ASC
 		),
 
