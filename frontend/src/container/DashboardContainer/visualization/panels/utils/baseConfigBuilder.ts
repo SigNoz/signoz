@@ -88,6 +88,7 @@ export function buildBaseConfig({
 		time: true,
 		min: minTimeScale,
 		max: maxTimeScale,
+		stepInterval,
 		logBase: isLogScale ? 10 : undefined,
 		distribution: isLogScale
 			? DistributionType.Logarithmic

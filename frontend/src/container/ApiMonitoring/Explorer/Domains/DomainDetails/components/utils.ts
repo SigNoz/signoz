@@ -2,6 +2,7 @@ import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
+import { resolveBarChartStepInterval } from 'container/DashboardContainer/visualization/panels/utils/stepInterval';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -41,7 +42,12 @@ export const prepareStatusCodeBarChartsConfig = ({
 		'data.newResult.meta.stepIntervals',
 		{},
 	);
-	const minStepInterval = Math.min(...Object.values(stepIntervals));
+	const seriesList: QueryData[] = apiResponse?.data?.result || [];
+	const barStepInterval = resolveBarChartStepInterval({
+		metaStepIntervals: stepIntervals,
+		seriesList,
+		builderStepInterval: query?.builder?.queryData?.[0]?.stepInterval,
+	});
 
 	const config = buildBaseConfig({
 		id: v4(),
@@ -53,11 +59,10 @@ export const prepareStatusCodeBarChartsConfig = ({
 		onClick,
 		minTimeScale,
 		maxTimeScale,
-		stepInterval: minStepInterval,
+		stepInterval: barStepInterval,
 		panelType: PANEL_TYPES.BAR,
 	});
 
-	const seriesList: QueryData[] = apiResponse?.data?.result || [];
 	seriesList.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,
@@ -67,7 +72,8 @@ export const prepareStatusCodeBarChartsConfig = ({
 
 		const label = query ? getLegend(series, query, baseLabelName) : baseLabelName;
 
-		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+		const currentStepInterval =
+			get(stepIntervals, series.queryName, undefined) ?? barStepInterval;
 
 		config.addSeries({
 			scaleKey: 'y',

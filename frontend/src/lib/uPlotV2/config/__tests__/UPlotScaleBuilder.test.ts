@@ -44,7 +44,7 @@ describe('UPlotScaleBuilder', () => {
 		expect(adjustSpy).toHaveBeenCalledWith(null, null, undefined, undefined);
 	});
 
-	it('handles time scales using explicit min/max and rounds max down to the previous minute', () => {
+	it('handles time scales using explicit min/max and aligns max to the step interval', () => {
 		const min = 1_700_000_000; // seconds
 		const max = 1_700_000_600; // seconds
 
@@ -54,6 +54,7 @@ describe('UPlotScaleBuilder', () => {
 				time: true,
 				min,
 				max,
+				stepInterval: 60,
 			}),
 		);
 
@@ -66,17 +67,29 @@ describe('UPlotScaleBuilder', () => {
 
 		const [resolvedMin, resolvedMax] = xScale.range as [number, number];
 
-		// min is passed through
 		expect(resolvedMin).toBe(min);
+		expect(resolvedMax).toBe(
+			scaleUtils.alignTimeScaleMaxSeconds(max, 60),
+		);
+	});
 
-		// max is coerced to "endTime - 1 minute" and rounded down to minute precision
-		const oneMinuteAgoTimestamp = (max - 60) * 1000;
-		const currentDate = new Date(oneMinuteAgoTimestamp);
-		currentDate.setSeconds(0);
-		currentDate.setMilliseconds(0);
-		const expectedMax = Math.floor(currentDate.getTime() / 1000);
+	it('aligns time scale max using a sub-minute step interval', () => {
+		const min = 1_700_000_000;
+		const max = 1_700_000_605;
 
-		expect(resolvedMax).toBe(expectedMax);
+		const builder = new UPlotScaleBuilder(
+			createScaleProps({
+				scaleKey: 'x',
+				time: true,
+				min,
+				max,
+				stepInterval: 5,
+			}),
+		);
+
+		const [, resolvedMax] = builder.getConfig().x.range as [number, number];
+
+		expect(resolvedMax).toBe(scaleUtils.alignTimeScaleMaxSeconds(max, 5));
 	});
 
 	it('falls back to getFallbackMinMaxTimeStamp when time scale has no min/max', () => {
