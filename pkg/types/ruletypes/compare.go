@@ -77,6 +77,28 @@ func (c CompareOperator) Normalize() CompareOperator {
 	}
 }
 
+// Literal returns the canonical literal (string) form of the operator.
+func (c CompareOperator) Literal() string {
+	switch c.Normalize() {
+	case ValueIsAbove:
+		return ValueIsAboveLiteral.StringValue()
+	case ValueIsBelow:
+		return ValueIsBelowLiteral.StringValue()
+	case ValueIsEq:
+		return ValueIsEqLiteral.StringValue()
+	case ValueIsNotEq:
+		return ValueIsNotEqLiteral.StringValue()
+	case ValueAboveOrEq:
+		return ValueAboveOrEqLiteral.StringValue()
+	case ValueBelowOrEq:
+		return ValueBelowOrEqLiteral.StringValue()
+	case ValueOutsideBounds:
+		return ValueOutsideBoundsLiteral.StringValue()
+	default:
+		return c.StringValue()
+	}
+}
+
 func (c CompareOperator) Validate() error {
 	switch c {
 	case ValueIsAbove,
