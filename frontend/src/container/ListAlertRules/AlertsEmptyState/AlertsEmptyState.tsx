@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
+import { Divider } from '@signozhq/ui/divider';
 import { Plus, RefreshCw } from '@signozhq/icons';
-import { Divider } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';

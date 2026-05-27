@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import {
-	Button,
-	Col,
-	Dropdown,
-	MenuProps,
-	Popover,
-	Row,
-	Select,
-	Space,
-} from 'antd';
+import { Button, Col, Popover, Row, Select, Space } from 'antd';
+import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
@@ -241,9 +233,9 @@ function ExplorerCard({
 								</Popover>
 								<Share2 onClick={onCopyUrlHandler} size="md" />
 								{viewKey && (
-									<Dropdown trigger={['click']} menu={moreOptionMenu}>
-										<Ellipsis size="md" />
-									</Dropdown>
+									<DropdownMenuSimple menu={moreOptionMenu}>
+										<Button type="text" size="small" icon={<Ellipsis size="md" />} />
+									</DropdownMenuSimple>
 								)}
 							</Space>
 						</OffSetCol>
