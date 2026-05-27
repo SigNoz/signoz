@@ -119,4 +119,75 @@ describe('runThemeTransition', () => {
 			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
 		).toBe(false);
 	});
+
+	it('keeps the wipe-active class through overlapping transitions', async () => {
+		let resolveA: () => void = (): void => {};
+		let resolveB: () => void = (): void => {};
+		let callIndex = 0;
+		installStartViewTransition((cb) => {
+			cb();
+			callIndex += 1;
+			if (callIndex === 1) {
+				return {
+					ready: Promise.resolve(),
+					finished: new Promise<void>((resolve) => {
+						resolveA = resolve;
+					}),
+				};
+			}
+			return {
+				ready: Promise.resolve(),
+				finished: new Promise<void>((resolve) => {
+					resolveB = resolve;
+				}),
+			};
+		});
+
+		runThemeTransition(() => undefined);
+		runThemeTransition(() => undefined);
+
+		expect(
+			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
+		).toBe(true);
+
+		// First transition finishes — class must stay because B is still in flight.
+		resolveA();
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(
+			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
+		).toBe(true);
+
+		resolveB();
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(
+			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
+		).toBe(false);
+	});
+
+	it('falls back to applyChange and releases the class when startViewTransition throws before its callback runs', () => {
+		installStartViewTransition(() => {
+			throw new Error('boom');
+		});
+		const applyChange = jest.fn();
+		runThemeTransition(applyChange);
+		expect(applyChange).toHaveBeenCalledTimes(1);
+		expect(
+			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
+		).toBe(false);
+	});
+
+	it('does not double-invoke applyChange when startViewTransition throws after its callback runs', () => {
+		installStartViewTransition((cb) => {
+			cb();
+			throw new Error('post-cb');
+		});
+		const applyChange = jest.fn();
+		runThemeTransition(applyChange);
+		expect(applyChange).toHaveBeenCalledTimes(1);
+		expect(
+			document.documentElement.classList.contains(THEME_WIPE_ACTIVE_CLASS),
+		).toBe(false);
+	});
 });

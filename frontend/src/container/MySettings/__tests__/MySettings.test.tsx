@@ -147,6 +147,10 @@ describe('MySettings Flows', () => {
 					},
 				);
 			});
+
+			// Lock in that the new selectTheme flow does not call toggleTheme;
+			// otherwise we'd double-flip on top of the explicit setTheme call.
+			expect(toggleThemeFunction).not.toHaveBeenCalled();
 		});
 	});
 

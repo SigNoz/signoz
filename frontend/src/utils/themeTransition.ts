@@ -16,6 +16,23 @@ type DocumentWithVT = Document & {
 	startViewTransition?: (callback: () => void) => ViewTransition;
 };
 
+// Rapid theme switches cancel the in-flight transition and immediately start a
+// new one; if we removed the class on the first transition's settled promise,
+// we'd strip the CSS override mid-way through the next wipe and the user
+// would briefly see the UA crossfade. Refcount so the class only comes off
+// once every transition we started has settled.
+let wipeActiveRefCount = 0;
+const acquireWipeClass = (root: HTMLElement): void => {
+	wipeActiveRefCount += 1;
+	root.classList.add(THEME_WIPE_ACTIVE_CLASS);
+};
+const releaseWipeClass = (root: HTMLElement): void => {
+	wipeActiveRefCount = Math.max(0, wipeActiveRefCount - 1);
+	if (wipeActiveRefCount === 0) {
+		root.classList.remove(THEME_WIPE_ACTIVE_CLASS);
+	}
+};
+
 export function canAnimateThemeTransition(): boolean {
 	const doc = document as DocumentWithVT;
 	if (typeof doc.startViewTransition !== 'function') {
@@ -36,11 +53,25 @@ export function runThemeTransition(applyChange: () => void): void {
 	}
 
 	const root = document.documentElement;
-	root.classList.add(THEME_WIPE_ACTIVE_CLASS);
+	acquireWipeClass(root);
 
-	const transition = doc.startViewTransition(() => {
-		flushSync(applyChange);
-	});
+	// Some Chromium versions throw if startViewTransition is called while
+	// another transition is in setup. Track whether the callback ran so we
+	// don't double-apply if the throw happens mid-callback.
+	let applied = false;
+	let transition: ViewTransition;
+	try {
+		transition = doc.startViewTransition(() => {
+			applied = true;
+			flushSync(applyChange);
+		});
+	} catch {
+		releaseWipeClass(root);
+		if (!applied) {
+			applyChange();
+		}
+		return;
+	}
 
 	const from = 'polygon(0 0, 0 0, 0 100%, 0 100%)';
 	const to = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
@@ -61,7 +92,7 @@ export function runThemeTransition(applyChange: () => void): void {
 		});
 
 	const cleanup = (): void => {
-		root.classList.remove(THEME_WIPE_ACTIVE_CLASS);
+		releaseWipeClass(root);
 	};
 	transition.finished.then(cleanup).catch(cleanup);
 }
