@@ -45,7 +45,7 @@ function ListAlertRules(): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
-		rowHeight: 42,
+		rowHeight: 46,
 	});
 
 	const { orderBy, page, limit, setLimit } = useTableParams(
@@ -185,6 +185,7 @@ function ListAlertRules(): JSX.Element {
 						}}
 						paginationClassname={styles.paginationContainer}
 						enableAlternatingRowColors
+						plainTextCellLineClamp={2}
 					/>
 				)}
 			</div>

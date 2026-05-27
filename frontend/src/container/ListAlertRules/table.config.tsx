@@ -22,7 +22,7 @@ export function getAlertRuleColumns(
 			id: 'state',
 			header: 'Status',
 			accessorKey: 'state',
-			width: { default: '100%' },
+			width: { fixed: '100px' },
 			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
@@ -48,14 +48,16 @@ export function getAlertRuleColumns(
 			enableRemove: false,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
+				<TanStackTable.Text title={value}>
+					{String(value ?? '-')}
+				</TanStackTable.Text>
 			),
 		},
 		{
 			id: 'severity',
 			header: 'Severity',
 			accessorFn: (row) => row.labels?.severity ?? '',
-			width: { default: '100%' },
+			width: { fixed: '120px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => {
