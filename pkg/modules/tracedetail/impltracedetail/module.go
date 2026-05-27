@@ -46,6 +46,33 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantype
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
 }
 
+// GetWaterfallV4 is the OOM-safe V4 waterfall.
+// For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
+// minimal fields for all spans to build the tree, then full fields for the
+// visible window only. Aggregations are not returned.
+func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
+	if summary.NumSpans > uint64(effectiveLimit) {
+		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
+	}
+	return m.getFullWaterfall(ctx, traceID, summary)
+}
+
+func (m *module) GetFlamegraph(ctx context.Context, traceID string, req *spantypes.PostableFlamegraph) (*spantypes.GettableFlamegraphTrace, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
+		return m.getFullFlamegraph(ctx, traceID, summary)
+	}
+	return m.getWindowedFlamegraph(ctx, traceID, req.SelectedSpanID, summary)
+}
+
 // getTraceData fetches all spans for a trace and builds the WaterfallTrace.
 func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
@@ -69,22 +96,6 @@ func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.W
 	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
 }
 
-// GetWaterfallV4 is the OOM-safe V4 waterfall.
-// For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
-// minimal fields for all spans to build the tree, then full fields for the
-// visible window only. Aggregations are not returned.
-func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
-	if summary.NumSpans > uint64(effectiveLimit) {
-		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
-	}
-	return m.getFullWaterfall(ctx, traceID, summary)
-}
-
 func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
 	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
 	if err != nil {
@@ -103,64 +114,6 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	selectedSpans := waterfallTrace.GetAllSpans()
 
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
-}
-
-func (m *module) GetFlamegraph(ctx context.Context, traceID string, req *spantypes.PostableFlamegraph) (*spantypes.GettableFlamegraphTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
-		return m.getFullFlamegraph(ctx, traceID, summary)
-	}
-	return m.getWindowedFlamegraph(ctx, traceID, req.SelectedSpanID, summary)
-}
-
-func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableFlamegraphTrace, error) {
-	fullSpans, err := m.store.GetTraceSpans(ctx, traceID, summary)
-	if err != nil {
-		return nil, err
-	}
-	if len(fullSpans) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-	flamegraphTrace := spantypes.NewFlamegraphTraceFromStorable(fullSpans)
-	return spantypes.NewGettableFlamegraphTrace(
-		flamegraphTrace.GetAllLevels(),
-		summary.Start.UnixMilli(), summary.End.UnixMilli(), false,
-	), nil
-}
-
-// getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span
-func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, summary *spantypes.TraceSummary) (*spantypes.GettableFlamegraphTrace, error) {
-	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary.Start, summary.End)
-	if err != nil {
-		return nil, err
-	}
-	if len(minimalSpans) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	flamegraphTrace := spantypes.NewFlamegraphTraceFromMinimal(minimalSpans)
-	minimalSpans = nil
-
-	cfg := m.config.Flamegraph
-	selectedSpans := flamegraphTrace.GetSelectedLevels(selectedSpanID,
-		cfg.MaxSelectedLevels, cfg.MaxSpansPerLevel, cfg.SamplingTopLatencySpansCount, cfg.SamplingBucketCount)
-	if len(selectedSpans) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, summary.Start, summary.End,
-		spantypes.FlamegraphWindowSpanIDs(selectedSpans))
-	if err != nil {
-		return nil, err
-	}
-
-	return spantypes.NewGettableFlamegraphTrace(
-		flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans),
-		summary.Start.UnixMilli(), summary.End.UnixMilli(), true,
-	), nil
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
@@ -201,5 +154,52 @@ func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpan
 
 	return spantypes.NewGettableWaterfallTrace(
 		waterfallTrace, selectedSpans, uncollapsedSpans, false, nil,
+	), nil
+}
+
+func (m *module) getFullFlamegraph(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableFlamegraphTrace, error) {
+	fullSpans, err := m.store.GetTraceSpans(ctx, traceID, summary)
+	if err != nil {
+		return nil, err
+	}
+	if len(fullSpans) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+	flamegraphTrace := spantypes.NewFlamegraphTraceFromStorable(fullSpans)
+	return spantypes.NewGettableFlamegraphTrace(
+		flamegraphTrace.GetAllLevels(),
+		summary.Start.UnixMilli(), summary.End.UnixMilli(), false,
+	), nil
+}
+
+// getWindowedFlamegraph returns a window of a max levels and max sampled spans per level around the selected span.
+func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpanID string, summary *spantypes.TraceSummary) (*spantypes.GettableFlamegraphTrace, error) {
+	minimalSpans, err := m.store.GetMinimalSpans(ctx, traceID, summary.Start, summary.End)
+	if err != nil {
+		return nil, err
+	}
+	if len(minimalSpans) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+
+	flamegraphTrace := spantypes.NewFlamegraphTraceFromMinimal(minimalSpans)
+	minimalSpans = nil //nolint:ineffassign // release backing array before further db calls
+
+	cfg := m.config.Flamegraph
+	selectedSpans := flamegraphTrace.GetSelectedLevels(selectedSpanID,
+		cfg.MaxSelectedLevels, cfg.MaxSpansPerLevel, cfg.SamplingTopLatencySpansCount, cfg.SamplingBucketCount)
+	if len(selectedSpans) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+
+	fullSpans, err := m.store.GetTraceSpansByIDs(ctx, traceID, summary.Start, summary.End,
+		spantypes.FlamegraphWindowSpanIDs(selectedSpans))
+	if err != nil {
+		return nil, err
+	}
+
+	return spantypes.NewGettableFlamegraphTrace(
+		flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans),
+		summary.Start.UnixMilli(), summary.End.UnixMilli(), true,
 	), nil
 }
