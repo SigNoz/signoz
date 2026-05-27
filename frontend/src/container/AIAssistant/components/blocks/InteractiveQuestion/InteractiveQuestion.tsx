@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
+import logEvent from 'api/common/logEvent';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
-import { Checkbox } from 'antd';
 
 import { AIAssistantEvents } from '../../../events';
 import { useAIAssistantAnalyticsContext } from '../../../hooks/useAIAssistantAnalyticsContext';
@@ -11,7 +12,6 @@ import { useMessageContext } from '../../MessageContext';
 
 import blockStyles from '../Block.module.scss';
 import styles from './InteractiveQuestion.module.scss';
-import logEvent from 'api/common/logEvent';
 
 interface Option {
 	value: string;
@@ -101,16 +101,24 @@ export default function InteractiveQuestion({
 				</RadioGroup>
 			) : (
 				<>
-					<Checkbox.Group
-						className={cx(styles.options, styles.checkbox)}
-						onChange={(vals): void => setSelected(vals as string[])}
-					>
+					<div className={cx(styles.options, styles.checkbox)}>
 						{normalized.map((opt) => (
-							<Checkbox key={opt.value} value={opt.value} className={styles.option}>
+							<Checkbox
+								key={opt.value}
+								value={selected.includes(opt.value)}
+								onChange={(checked): void => {
+									setSelected((prev) =>
+										checked === true
+											? [...prev, opt.value]
+											: prev.filter((v) => v !== opt.value),
+									);
+								}}
+								className={styles.option}
+							>
 								{opt.label}
 							</Checkbox>
 						))}
-					</Checkbox.Group>
+					</div>
 					<Button
 						variant="solid"
 						size="sm"

@@ -4,9 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Check, ChevronDown } from '@signozhq/icons';
-import { Button, Checkbox, Popover } from 'antd';
+import { Button, Popover } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
-import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
@@ -132,8 +132,8 @@ function AutoRefresh({
 	);
 
 	const onChangeAutoRefreshHandler = useCallback(
-		(event: CheckboxChangeEvent) => {
-			const { checked } = event.target;
+		(value: boolean | 'indeterminate') => {
+			const checked = value === true;
 			if (!checked) {
 				// remove the path from localstorage
 				set(
@@ -168,7 +168,7 @@ function AutoRefresh({
 				<div className="auto-refresh-menu">
 					<Checkbox
 						onChange={onChangeAutoRefreshHandler}
-						checked={isAutoRefreshEnabled}
+						value={isAutoRefreshEnabled}
 						disabled={isDisabled}
 						className="auto-refresh-checkbox"
 					>
