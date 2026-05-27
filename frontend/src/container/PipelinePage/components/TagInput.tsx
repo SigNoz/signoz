@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CircleAlert, CircleX, X } from '@signozhq/icons';
+import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, InputRef, message, Modal, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 
@@ -91,21 +91,25 @@ function TagInput({
 		}
 		const isLongTag = tag.length > 20;
 		const tagElem = (
-			<Badge key={tag} color="vanilla" style={{ userSelect: 'none' }}>
+			<Badge
+				key={tag}
+				color="vanilla"
+				style={{ userSelect: 'none' }}
+				closable
+				onClose={(e): void => {
+					e.preventDefault();
+					handleClose(tag)();
+				}}
+			>
 				<span
-					onDoubleClick={(e): void => {
+					onDoubleClick={(ev): void => {
 						setEditInputIndex(index);
 						setEditInputValue(tag);
-						e.preventDefault();
+						ev.preventDefault();
 					}}
 				>
 					{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 				</span>
-				<X
-					size={12}
-					style={{ cursor: 'pointer', marginInlineStart: 4 }}
-					onClick={handleClose(tag)}
-				/>
 			</Badge>
 		);
 		return isLongTag ? (

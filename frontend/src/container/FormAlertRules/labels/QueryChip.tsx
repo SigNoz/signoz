@@ -1,5 +1,5 @@
-import { X } from '@signozhq/icons';
-import { QueryChipContainer, QueryChipItem } from './styles';
+import { Badge } from '@signozhq/ui/badge';
+import { QueryChipContainer } from './styles';
 import { ILabelRecord } from './types';
 
 interface QueryChipProps {
@@ -12,18 +12,19 @@ export default function QueryChip({
 	onRemove,
 }: QueryChipProps): JSX.Element {
 	const { key, value } = queryData;
+	const isClosable = key !== 'severity' && key !== 'description';
 	return (
 		<QueryChipContainer>
-			<QueryChipItem color="vanilla">
+			<Badge
+				color="vanilla"
+				closable={isClosable}
+				onClose={(e): void => {
+					e.preventDefault();
+					onRemove(key);
+				}}
+			>
 				{key}: {value}
-				{key !== 'severity' && key !== 'description' && (
-					<X
-						size={12}
-						style={{ cursor: 'pointer', marginInlineStart: 4 }}
-						onClick={(): void => onRemove(key)}
-					/>
-				)}
-			</QueryChipItem>
+			</Badge>
 		</QueryChipContainer>
 	);
 }

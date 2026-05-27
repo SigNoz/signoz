@@ -6,7 +6,7 @@ import Input from 'components/Input';
 
 import './Tags.styles.scss';
 
-function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
+function Badges({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [inputVisible, setInputVisible] = useState<boolean>(false);
 
@@ -47,13 +47,17 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 	return (
 		<div className="tags-container">
 			{tags.map<React.ReactNode>((tag) => (
-				<Badge key={tag} color="vanilla" style={{ userSelect: 'none' }}>
-					<span>{tag}</span>
-					<X
-						size={12}
-						style={{ cursor: 'pointer', marginInlineStart: 4 }}
-						onClick={(): void => handleClose(tag)}
-					/>
+				<Badge
+					key={tag}
+					color="vanilla"
+					style={{ userSelect: 'none' }}
+					closable
+					onClose={(e): void => {
+						e.preventDefault();
+						handleClose(tag);
+					}}
+				>
+					{tag}
 				</Badge>
 			))}
 
@@ -114,4 +118,4 @@ interface AddTagsProps {
 	setTags: Dispatch<SetStateAction<string[]>>;
 }
 
-export default Tags;
+export default Badges;

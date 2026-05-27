@@ -16,7 +16,7 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2, X } from '@signozhq/icons';
+import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -57,19 +57,15 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 							{ 'red-tag': index % 2 },
 							{ 'non-closable-tag': !closable },
 						)}
+						closable={closable}
+						onClose={(e): void => {
+							e.preventDefault();
+							handleClose?.(tag?.value);
+						}}
 					>
-						<span>
-							{isLongTag
-								? `${(tag?.label as string | null)?.slice(0, 20)}...`
-								: tag?.label}
-						</span>
-						{closable && (
-							<X
-								size={12}
-								style={{ cursor: 'pointer', marginInlineStart: 4 }}
-								onClick={(): void => handleClose?.(tag?.value)}
-							/>
-						)}
+						{isLongTag
+							? `${(tag?.label as string | null)?.slice(0, 20)}...`
+							: tag?.label}
 					</Badge>
 				);
 				return isLongTag ? (
@@ -210,7 +206,9 @@ export function CollapseListContent({
 						selectedTags={alertOptions}
 					/>
 				) : (
-					<Tag className="all-alerts-tag">All alert rules</Tag>
+					<Badge className="all-alerts-tag" color="vanilla">
+						All alert rules
+					</Badge>
 				),
 			)}
 		</Flex>

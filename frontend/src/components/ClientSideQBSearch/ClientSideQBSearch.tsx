@@ -37,7 +37,7 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isArray, isEmpty, isEqual, isObject } from 'lodash-es';
-import { ChevronDown, ChevronUp, X } from '@signozhq/icons';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -548,7 +548,15 @@ function ClientSideQBSearch(
 
 		return (
 			<span className="qb-search-bar-tokenised-tags">
-				<Badge color="vanilla" className={tagDetails?.key?.type || ''}>
+				<Badge
+					color="vanilla"
+					className={tagDetails?.key?.type || ''}
+					closable={!searchValue && closable}
+					onClose={(e): void => {
+						e.preventDefault();
+						onCloseHandler();
+					}}
+				>
 					<Tooltip title={chipValue}>
 						<TypographyText
 							$isInNin={isInNin}
@@ -563,14 +571,6 @@ function ClientSideQBSearch(
 							{chipValue}
 						</TypographyText>
 					</Tooltip>
-					{!searchValue && closable && (
-						<X
-							size={12}
-							className="close-icon"
-							style={{ cursor: 'pointer' }}
-							onClick={onCloseHandler}
-						/>
-					)}
 				</Badge>
 			</span>
 		);

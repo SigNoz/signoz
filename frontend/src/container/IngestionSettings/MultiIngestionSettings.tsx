@@ -40,7 +40,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import Tags from 'components/Tags/Tags';
+import Badges from 'components/Tags/Tags';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -1836,7 +1836,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">
-						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+						<Badges tags={updatedTags} setTags={setUpdatedTags} />
 					</Form.Item>
 
 					<Form.Item
@@ -1926,7 +1926,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">
-						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+						<Badges tags={updatedTags} setTags={setUpdatedTags} />
 					</Form.Item>
 				</Form>
 			</Modal>

@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { X } from '@signozhq/icons';
 import type { SelectProps } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Tooltip } from 'antd';
@@ -85,15 +84,16 @@ function Filter({
 		const { closable, onClose, label } = props;
 
 		return (
-			<Badge color="sakura" style={{ marginRight: 3 }}>
+			<Badge
+				color="sakura"
+				style={{ marginRight: 3 }}
+				closable={closable}
+				onClose={(e): void => {
+					e.preventDefault();
+					onClose();
+				}}
+			>
 				{label}
-				{closable && (
-					<X
-						size={12}
-						style={{ cursor: 'pointer', marginInlineStart: 4 }}
-						onClick={(): void => onClose()}
-					/>
-				)}
 			</Badge>
 		);
 	};

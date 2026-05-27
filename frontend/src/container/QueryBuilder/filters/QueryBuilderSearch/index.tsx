@@ -38,7 +38,6 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
-	X,
 } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
@@ -201,7 +200,14 @@ function QueryBuilderSearch({
 		const isDisabled = !!searchValue;
 
 		return (
-			<Badge color="vanilla">
+			<Badge
+				color="vanilla"
+				closable={!searchValue && closable}
+				onClose={(e): void => {
+					e.preventDefault();
+					onCloseHandler();
+				}}
+			>
 				<Tooltip title={chipValue}>
 					<TypographyText
 						$isInNin={isInNin}
@@ -215,13 +221,6 @@ function QueryBuilderSearch({
 						{chipValue}
 					</TypographyText>
 				</Tooltip>
-				{!searchValue && closable && (
-					<X
-						size={12}
-						style={{ cursor: 'pointer', marginInlineStart: 4 }}
-						onClick={onCloseHandler}
-					/>
-				)}
 			</Badge>
 		);
 	};

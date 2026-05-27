@@ -3,7 +3,10 @@ import { Badge } from '@signozhq/ui/badge';
 
 import { getLabelRenderingValue } from './utils';
 
-function TagWithToolTip({ label, value }: TagWithToolTipProps): JSX.Element {
+function BadgeWithTooltip({
+	label,
+	value,
+}: BadgeWithTooltipProps): JSX.Element {
 	const tooltipTitle =
 		value && value[label] ? `${label}: ${value[label]}` : label;
 	return (
@@ -17,15 +20,15 @@ function TagWithToolTip({ label, value }: TagWithToolTipProps): JSX.Element {
 	);
 }
 
-type TagWithToolTipProps = {
+type BadgeWithTooltipProps = {
 	label: string;
 	value?: {
 		[key: string]: string;
 	};
 };
 
-TagWithToolTip.defaultProps = {
+BadgeWithTooltip.defaultProps = {
 	value: undefined,
 };
 
-export default TagWithToolTip;
+export default BadgeWithTooltip;

@@ -4,7 +4,7 @@ exports[`PipelinePage container test should render Tags section 1`] = `
 <DocumentFragment>
   <span>
     <span
-      class="_badge_1jqif_1"
+      class="_badge_1etd5_1"
       data-capitalize="false"
       data-color="sakura"
       data-slot="badge"
@@ -13,7 +13,7 @@ exports[`PipelinePage container test should render Tags section 1`] = `
       server
     </span>
     <span
-      class="_badge_1jqif_1"
+      class="_badge_1etd5_1"
       data-capitalize="false"
       data-color="sakura"
       data-slot="badge"

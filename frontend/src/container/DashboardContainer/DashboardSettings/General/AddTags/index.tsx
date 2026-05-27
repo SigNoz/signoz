@@ -1,11 +1,9 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { X } from '@signozhq/icons';
 import { Col, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import Input from 'components/Input';
 
-import { InputContainer, NewTagContainer, TagsContainer } from './styles';
-
-import './AddTags.styles.scss';
+import styles from './AddTags.module.scss';
 
 function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
@@ -40,11 +38,11 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	};
 
 	return (
-		<TagsContainer>
+		<div className={styles.badgesContainer}>
 			{tags.map((tag, index) => {
 				if (editInputIndex === index) {
 					return (
-						<Col key={tag} lg={4} className="edit-input">
+						<Col key={tag} lg={4} className={styles.editInput}>
 							<Input
 								size="small"
 								value={editInputValue}
@@ -61,7 +59,16 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer key={tag} color="vanilla" className="tag-container">
+					<Badge
+						key={tag}
+						color="vanilla"
+						className={styles.badgeContainer}
+						closable
+						onClose={(e): void => {
+							e.preventDefault();
+							handleClose(tag);
+						}}
+					>
 						<span
 							onDoubleClick={(e): void => {
 								setEditInputIndex(index);
@@ -71,12 +78,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 						>
 							{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 						</span>
-						<X
-							size={12}
-							style={{ cursor: 'pointer', marginInlineStart: 4 }}
-							onClick={(): void => handleClose(tag)}
-						/>
-					</NewTagContainer>
+					</Badge>
 				);
 
 				return isLongTag ? (
@@ -88,11 +90,11 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 				);
 			})}
 
-			<InputContainer>
+			<Col className={styles.inputContainer}>
 				<Input
 					type="text"
 					value={inputValue}
-					rootClassName="tags-input"
+					rootClassName={styles.tagsInput}
 					placeholder="Start typing your tag name"
 					onChangeHandler={(event): void =>
 						onChangeHandler(event.target.value, setInputValue)
@@ -100,8 +102,8 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 					onBlurHandler={handleInputConfirm}
 					onPressEnterHandler={handleInputConfirm}
 				/>
-			</InputContainer>
-		</TagsContainer>
+			</Col>
+		</div>
 	);
 }
 

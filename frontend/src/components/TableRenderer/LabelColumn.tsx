@@ -2,7 +2,7 @@ import { Popover } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 
 import { LabelColumnProps } from './TableRenderer.types';
-import TagWithToolTip from './TagWithToolTip';
+import BadgeWithTooltip from './TagWithToolTip';
 import { getLabelAndValueContent } from './utils';
 
 import './LabelColumn.styles.scss';
@@ -15,7 +15,7 @@ function LabelColumn({ labels, value }: LabelColumnProps): JSX.Element {
 		<div className="label-column">
 			{newLabels.map(
 				(label: string): JSX.Element => (
-					<TagWithToolTip key={label} label={label} value={value} />
+					<BadgeWithTooltip key={label} label={label} value={value} />
 				),
 			)}
 			{remainingLabels.length > 0 && (

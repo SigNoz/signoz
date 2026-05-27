@@ -27,6 +27,9 @@ export const QueryChipContainer = styled.span`
 			background: ${grey.primary}44;
 		}
 	}
+	[data-slot='badge'] {
+		margin-right: 0.1rem;
+	}
 `;
 
 export const QueryChipItem = styled(Badge)`
