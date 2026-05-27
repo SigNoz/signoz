@@ -2,13 +2,10 @@ package logparsingpipeline
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
 	"gopkg.in/yaml.v3"
-
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -24,6 +21,13 @@ var (
 	CodeCollectorConfigServiceMarshalFailed   = errors.MustNewCode("collector_config_service_marshal_failed")
 	CodeCollectorConfigServiceUnmarshalFailed = errors.MustNewCode("collector_config_service_unmarshal_failed")
 	CodeCollectorConfigLogsPipelineNotFound   = errors.MustNewCode("collector_config_logs_pipeline_not_found")
+)
+
+const (
+	memoryLimiterProcessor       = "memory_limiter"
+	memoryLimiterProcessorPrefix = "memory_limiter/"
+	batchProcessor               = "batch"
+	batchProcessorPrefix         = "batch/"
 )
 
 // check if the processors already exist
@@ -79,6 +83,13 @@ func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, er
 	return &p, nil
 }
 
+// buildCollectorPipelineProcessorsList assembles the final processor list in the
+// required order:
+//
+//  1. memory_limiter processors (any processor named "memory_limiter" or "memory_limiter/<id>")
+//  2. signoz user-pipeline processors (in the order given by signozPipelineProcessorNames)
+//  3. custom processors (non-signoz, non-memory_limiter, non-batch processors from the current config)
+//  4. batch processors (any processor named "batch" or "batch/<id>") and anything after them
 func buildCollectorPipelineProcessorsList(
 	currentCollectorProcessors []string,
 	signozPipelineProcessorNames []string,
@@ -86,90 +97,42 @@ func buildCollectorPipelineProcessorsList(
 	lockLogsPipelineSpec.Lock()
 	defer lockLogsPipelineSpec.Unlock()
 
-	exists := map[string]struct{}{}
-	for _, v := range signozPipelineProcessorNames {
-		exists[v] = struct{}{}
+	// Build a set of user pipeline names so custom processors can skip duplicates.
+	userPipelineSet := make(map[string]struct{}, len(signozPipelineProcessorNames))
+	for _, p := range signozPipelineProcessorNames {
+		userPipelineSet[p] = struct{}{}
 	}
 
-	// removed the old processors which are not used
-	var pipeline []string
-	for _, procName := range currentCollectorProcessors {
-		_, isInDesiredPipelineProcs := exists[procName]
-		if isInDesiredPipelineProcs || !hasSignozPipelineProcessorPrefix(procName) {
-			pipeline = append(pipeline, procName)
-		}
-	}
+	var memoryLimiters []string
+	var customProcessors []string
+	batchIdx := -1
 
-	// create a reverse map of existing config processors and their position
-	existing := map[string]int{}
-	for i, p := range pipeline {
-		name := p
-		existing[name] = i
-	}
-
-	// create mapping from our logsParserPipeline to position in existing processors (from current config)
-	// this means, if "batch" holds position 3 in the current effective config, and 2 in our config, the map will be [2]: 3
-	specVsExistingMap := map[int]int{}
-	existingVsSpec := map[int]int{}
-
-	// go through plan and map its elements to current positions in effective config
-	for i, m := range signozPipelineProcessorNames {
-		if loc, ok := existing[m]; ok {
-			specVsExistingMap[i] = loc
-			existingVsSpec[loc] = i
-		}
-	}
-
-	lastMatched := 0
-	newPipeline := []string{}
-
-	for i := 0; i < len(signozPipelineProcessorNames); i++ {
-		m := signozPipelineProcessorNames[i]
-		if loc, ok := specVsExistingMap[i]; ok {
-			for j := lastMatched; j < loc; j++ {
-				if hasSignozPipelineProcessorPrefix(pipeline[j]) {
-					delete(specVsExistingMap, existingVsSpec[j])
-				} else {
-					newPipeline = append(newPipeline, pipeline[j])
-				}
+	for idx, p := range currentCollectorProcessors {
+		switch {
+		case p == batchProcessor || strings.HasPrefix(p, batchProcessorPrefix):
+			batchIdx = idx
+		case p == memoryLimiterProcessor || strings.HasPrefix(p, memoryLimiterProcessorPrefix):
+			memoryLimiters = append(memoryLimiters, p)
+		case hasSignozPipelineProcessorPrefix(p):
+			// stale signoz pipeline processor — dropped; signozPipelineProcessorNames is authoritative
+		default:
+			if _, inUserPipelines := userPipelineSet[p]; !inUserPipelines {
+				customProcessors = append(customProcessors, p)
 			}
-			newPipeline = append(newPipeline, pipeline[loc])
-			lastMatched = loc + 1
-		} else {
-			newPipeline = append(newPipeline, m)
 		}
-
-	}
-	if lastMatched < len(pipeline) {
-		newPipeline = append(newPipeline, pipeline[lastMatched:]...)
-	}
-
-	if checkDuplicateString(newPipeline) {
-		// duplicates are most likely because the processor sequence in effective config conflicts
-		// with the planned sequence as per planned pipeline
-		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
-	}
-
-	return newPipeline, nil
-}
-
-func checkDuplicateString(pipeline []string) bool {
-	exists := make(map[string]bool, len(pipeline))
-	slog.Debug("checking duplicate processors in the pipeline", "pipeline", pipeline)
-	for _, processor := range pipeline {
-		name := processor
-		if _, ok := exists[name]; ok {
-			slog.Error(
-				"duplicate processor name detected in generated collector config for log pipelines",
-				"processor", processor,
-				"pipeline", pipeline,
-			)
-			return true
+		if batchIdx >= 0 {
+			break
 		}
-
-		exists[name] = true
 	}
-	return false
+
+	result := make([]string, 0, len(currentCollectorProcessors)+len(signozPipelineProcessorNames))
+	result = append(result, memoryLimiters...)
+	result = append(result, signozPipelineProcessorNames...)
+	result = append(result, customProcessors...)
+	if batchIdx >= 0 {
+		result = append(result, currentCollectorProcessors[batchIdx:]...)
+	}
+	return result, nil
 }
 
 func GenerateCollectorConfigWithPipelines(config []byte, pipelines []pipelinetypes.GettablePipeline) ([]byte, error) {

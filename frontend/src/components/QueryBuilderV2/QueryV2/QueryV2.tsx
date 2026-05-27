@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Dropdown } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -195,7 +195,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<Dropdown
+								<DropdownMenuSimple
 									className="query-actions-dropdown"
 									menu={{
 										items: [
@@ -217,10 +217,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 												: []),
 										],
 									}}
-									placement="bottomRight"
+									align="end"
 								>
 									<Ellipsis size={16} />
-								</Dropdown>
+								</DropdownMenuSimple>
 							)}
 						</div>
 					</div>

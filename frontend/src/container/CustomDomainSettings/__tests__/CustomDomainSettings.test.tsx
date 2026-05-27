@@ -1,4 +1,5 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
@@ -142,12 +143,13 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('shows all workspace URLs as links in the dropdown', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
 		await screen.findByText(/custom-host\.test\.cloud/i);
 
 		// Open the URL dropdown
-		fireEvent.click(
+		await user.click(
 			screen.getByRole('button', { name: /custom-host\.test\.cloud/i }),
 		);
 
