@@ -1,6 +1,6 @@
 import { grey } from '@ant-design/colors';
-import { Checkbox, ConfigProvider } from 'antd';
-import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { CSSProperties } from 'react';
 
 import { CheckBoxProps } from '../types';
 
@@ -11,30 +11,22 @@ function CustomCheckBox({
 	checkBoxOnChangeHandler,
 	disabled = false,
 }: CheckBoxProps): JSX.Element {
-	const onChangeHandler = (e: CheckboxChangeEvent): void => {
-		checkBoxOnChangeHandler(e, index);
-	};
-
 	const color = data[index]?.stroke?.toString() || grey[0];
-
 	const isChecked = graphVisibilityState[index] || false;
 
+	const colorStyle = {
+		'--checkbox-checked-background': color,
+		'--checkbox-border-color': color,
+	} as CSSProperties;
+
 	return (
-		<ConfigProvider
-			theme={{
-				token: {
-					colorPrimary: color,
-					colorBorder: color,
-					colorBgContainer: color,
-				},
-			}}
-		>
+		<span style={colorStyle}>
 			<Checkbox
-				onChange={onChangeHandler}
-				checked={isChecked}
+				onChange={(checked): void => checkBoxOnChangeHandler(checked, index)}
+				value={isChecked}
 				disabled={disabled}
 			/>
-		</ConfigProvider>
+		</span>
 	);
 }
 
