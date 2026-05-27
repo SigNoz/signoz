@@ -189,8 +189,10 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 	}
 
 	query := fmt.Sprintf(`
-		-- query field with start time and duration
-		WITH field_duration AS (
+		WITH
+
+		-- query minimum span fields
+		field_duration AS (
 			SELECT DISTINCT ON (span_id)
 				%s AS field_value,
 				toUnixTimestamp64Nano(timestamp) AS start_ns,
@@ -199,15 +201,10 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 			WHERE trace_id=? AND ts_bucket_start>=? AND ts_bucket_start<=?
 			HAVING field_value != ''
 			ORDER BY timestamp ASC, name ASC
-		)
+		),
 
-		-- running window of non-overlapping duration
-		SELECT field_value, sum(multiIf(
-			start_ns >= prev_max_end_ns,                    duration_nano,
-			start_ns + duration_nano > prev_max_end_ns,     start_ns + duration_nano - prev_max_end_ns,
-			0
-		)) AS total_ns
-		FROM (
+		-- calculate max end time of preceding spans
+		max_end_time AS (
 			SELECT
 				field_value, start_ns, duration_nano,
 				ifNull(max(start_ns + duration_nano) OVER (
@@ -217,6 +214,12 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 				), 0) AS prev_max_end_ns
 			FROM field_duration
 		)
+
+		-- calculate non-overlapping sum: add duration that is extending over last span
+		SELECT field_value, sum(greatest(
+			start_ns + duration_nano - greatest(start_ns, prev_max_end_ns), 0
+		)) AS total_ns
+		FROM max_end_time
 		GROUP BY field_value`,
 		fieldExpr, spantypes.TraceDB, spantypes.TraceTable,
 	)
