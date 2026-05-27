@@ -81,6 +81,20 @@
 		}
 	}
 
+	.alert-rule-scope {
+		margin-bottom: 12px;
+
+		.ant-radio-wrapper {
+			color: var(--l1-foreground);
+		}
+	}
+
+	.alert-rule-all-warning {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--l2-foreground);
+	}
+
 	.formItemWithBullet {
 		margin-bottom: 0;
 	}

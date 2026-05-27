@@ -16,11 +16,12 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
-import history from 'lib/history';
+import history, { hasInAppHistory } from 'lib/history';
 import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
+	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
@@ -96,13 +97,7 @@ function TraceDetailsHeader({
 	}, [traceID]);
 
 	const handlePreviousBtnClick = useCallback((): void => {
-		const isSpaNavigate =
-			document.referrer &&
-			// oxlint-disable-next-line signoz/no-raw-absolute-path
-			new URL(document.referrer).origin === window.location.origin;
-		const hasBackHistory = window.history.length > 1;
-
-		if (isSpaNavigate && hasBackHistory) {
+		if (hasInAppHistory()) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
@@ -123,13 +118,14 @@ function TraceDetailsHeader({
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				{!isFilterExpanded && (
-					<>
+					<div className={styles.traceIdSection}>
 						<Button
 							variant="solid"
 							color="secondary"
 							size="md"
 							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
+							aria-label="Back"
 						>
 							<ArrowLeft size={14} />
 						</Button>
@@ -138,20 +134,39 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
-					</>
+					</div>
 				)}
 				{isDataLoaded && (
-					<>
+					<div
+						className={cx(
+							styles.filterSection,
+							isFilterExpanded && styles.isExpanded,
+						)}
+					>
 						{!isFilterExpanded && (
-							<>
-								<TooltipProvider>
+							<TooltipProvider>
+								<div className={styles.headerActions}>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className={styles.analyticsBtn}
+												aria-label="Switch to legacy trace view"
+												onClick={handleSwitchToOldView}
+											>
+												<CornerUpLeft size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Switch to legacy trace view</TooltipContent>
+									</TooltipRoot>
+									<TooltipRoot>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
+												aria-label="Analytics"
 												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 											>
 												<ChartPie size={14} />
@@ -159,15 +174,18 @@ function TraceDetailsHeader({
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
 									</TooltipRoot>
-								</TooltipProvider>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+									<TraceOptionsMenu
+										showTraceDetails={showTraceDetails}
+										onToggleTraceDetails={handleToggleTraceDetails}
+										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									/>
+								</div>
+							</TooltipProvider>
 						)}
-						<div className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}>
+						<div
+							key="filter"
+							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
+						>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
@@ -178,18 +196,7 @@ function TraceDetailsHeader({
 								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						{!isFilterExpanded && (
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								className={styles.oldViewBtn}
-								onClick={handleSwitchToOldView}
-							>
-								Legacy View
-							</Button>
-						)}
-					</>
+					</div>
 				)}
 			</div>
 

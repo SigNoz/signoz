@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
 import {
 	TabsContent,
 	TabsList,
@@ -7,19 +6,11 @@ import {
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
 import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
-import {
 	Bookmark,
 	CalendarClock,
 	ChartColumnBig,
-	Dock,
 	Link2,
 	List,
-	PanelBottom,
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
@@ -61,6 +52,7 @@ import {
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
+import DockModeSwitcher from './DockModeSwitcher';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
@@ -492,31 +484,14 @@ function SpanDetailsPanel({
 		];
 
 		if (onVariantChange) {
-			const isDocked = variant === SpanDetailVariant.DOCKED;
 			actions.push({
-				key: 'dock-toggle',
+				key: 'dock-mode',
 				component: (
-					<TooltipProvider>
-						<TooltipRoot>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									onClick={(): void =>
-										onVariantChange(
-											isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
-										)
-									}
-								>
-									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className={styles.dockToggleTooltip}>
-								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
-							</TooltipContent>
-						</TooltipRoot>
-					</TooltipProvider>
+					<DockModeSwitcher
+						value={variant}
+						onChange={onVariantChange}
+						tooltipClassName={styles.dockToggleTooltip}
+					/>
 				),
 			});
 		}
@@ -553,7 +528,10 @@ function SpanDetailsPanel({
 		</>
 	);
 
-	if (variant === SpanDetailVariant.DOCKED) {
+	if (
+		variant === SpanDetailVariant.DOCKED ||
+		variant === SpanDetailVariant.DOCKED_RIGHT
+	) {
 		return <div className={styles.root}>{content}</div>;
 	}
 
