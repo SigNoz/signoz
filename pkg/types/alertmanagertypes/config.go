@@ -59,12 +59,55 @@ type Config struct {
 
 	// storeableConfig is the representation of the config in the store
 	storeableConfig *StoreableConfig
+
+	// customConfigs holds the SigNoz-native notifier configs (which the upstream
+	// config.Receiver cannot carry) keyed by receiver name. It runs in parallel
+	// with alertmanagerConfig.Receivers (which holds the upstream base); the two
+	// halves are zipped back together by GetReceiver and serialized together by
+	// newRawFromConfig.
+	customConfigs map[string]customReceiverConfigs
+}
+
+// customReceiverConfigs is the per-receiver sidecar for SigNoz-native notifier
+// configs that the upstream config.Receiver cannot carry. To add another
+// native notifier, mirror the GoogleChat field below: declare a typed slice
+// here, add the matching field on Receiver, and extend customConfigsOf and
+// isEmpty. The serialization (storedConfig) and in-memory plumbing
+// (CreateReceiver / GetReceiver / newRawFromConfig) need no further changes.
+type customReceiverConfigs struct {
+	GoogleChat []*GoogleChatReceiverConfig
+}
+
+func (c customReceiverConfigs) isEmpty() bool {
+	return len(c.GoogleChat) == 0
+}
+
+// customConfigsOf extracts the SigNoz-native configs carried on a Receiver.
+func customConfigsOf(receiver *Receiver) customReceiverConfigs {
+	return customReceiverConfigs{
+		GoogleChat: receiver.GoogleChatConfigs,
+	}
+}
+
+// storedConfig is the serialization unit persisted to StoreableConfig.Config.
+// Embedding *config.Config emits every upstream field (global, route,
+// inhibit_rules, templates, ...); the outer Receivers field shadows the
+// embedded config.Config.Receivers — both marshal to the JSON key "receivers"
+// and the shallower outer field dominates per encoding/json's visibility
+// rules — so the receivers are emitted as the extended *Receiver. When the
+// first SigNoz-native notifier field is added to Receiver, it round-trips
+// through this unit automatically, with no further changes here.
+type storedConfig struct {
+	*config.Config
+	Receivers []*Receiver `json:"receivers"`
 }
 
 func NewConfig(c *config.Config, orgID string) *Config {
-	raw := string(newRawFromConfig(c))
+	customConfigs := make(map[string]customReceiverConfigs)
+	raw := string(newRawFromConfig(c, customConfigs))
 	return &Config{
 		alertmanagerConfig: c,
+		customConfigs:      customConfigs,
 		storeableConfig: &StoreableConfig{
 			Identifiable: types.Identifiable{
 				ID: valuer.GenerateUUID(),
@@ -81,13 +124,14 @@ func NewConfig(c *config.Config, orgID string) *Config {
 }
 
 func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
-	alertmanagerConfig, err := newConfigFromString(sc.Config)
+	alertmanagerConfig, customConfigs, err := newConfigFromString(sc.Config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
+		customConfigs:      customConfigs,
 		storeableConfig:    sc,
 	}, nil
 }
@@ -113,32 +157,49 @@ func NewDefaultConfig(globalConfig GlobalConfig, routeConfig RouteConfig, orgID 
 	}, orgID), nil
 }
 
-func newConfigFromString(s string) (*config.Config, error) {
-	config := new(config.Config)
-	err := json.Unmarshal([]byte(s), config)
-	if err != nil {
-		return nil, err
+func newConfigFromString(s string) (*config.Config, map[string]customReceiverConfigs, error) {
+	stored := storedConfig{Config: new(config.Config)}
+	if err := json.Unmarshal([]byte(s), &stored); err != nil {
+		return nil, nil, err
 	}
 
-	for i, receiver := range config.Receivers {
-		bytes, err := json.Marshal(receiver)
-		if err != nil {
-			return nil, err
-		}
+	amConfig := stored.Config
+	amConfig.Receivers = make([]config.Receiver, len(stored.Receivers))
+	customConfigs := make(map[string]customReceiverConfigs)
 
-		receiver, err := NewReceiver(string(bytes))
+	// Re-run each receiver through NewReceiver so upstream defaults are
+	// applied (mirrors the create path) and native fields are pulled off the
+	// embed at the same time.
+	for i, rcv := range stored.Receivers {
+		rcvJSON, err := json.Marshal(rcv)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-
-		config.Receivers[i] = receiver
+		parsed, err := NewReceiver(string(rcvJSON))
+		if err != nil {
+			return nil, nil, err
+		}
+		amConfig.Receivers[i] = *parsed.Receiver
+		if custom := customConfigsOf(parsed); !custom.isEmpty() {
+			customConfigs[parsed.Name] = custom
+		}
 	}
 
-	return config, nil
+	return amConfig, customConfigs, nil
 }
 
-func newRawFromConfig(c *config.Config) []byte {
-	b, err := json.Marshal(c)
+func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverConfigs) []byte {
+	receivers := make([]*Receiver, len(c.Receivers))
+	for i := range c.Receivers {
+		base := c.Receivers[i]
+		custom := customConfigs[base.Name]
+		receivers[i] = &Receiver{
+			Receiver:          &base,
+			GoogleChatConfigs: custom.GoogleChat,
+		}
+	}
+
+	b, err := json.Marshal(storedConfig{Config: c, Receivers: receivers})
 	if err != nil {
 		// Taking inspiration from the upstream. This is never expected to happen.
 		return []byte(fmt.Sprintf("<error creating config string: %s>", err))
@@ -149,6 +210,16 @@ func newRawFromConfig(c *config.Config) []byte {
 
 func newConfigHash(s string) [16]byte {
 	return md5.Sum([]byte(s))
+}
+
+// flush re-serializes the config into the storeable representation and
+// refreshes its hash and timestamp. Call it after every mutation of
+// alertmanagerConfig or customConfigs.
+func (c *Config) flush() {
+	raw := string(newRawFromConfig(c.alertmanagerConfig, c.customConfigs))
+	c.storeableConfig.Config = raw
+	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(raw))
+	c.storeableConfig.UpdatedAt = time.Now()
 }
 
 func (c *Config) CopyWithReset() (*Config, error) {
@@ -179,9 +250,7 @@ func (c *Config) SetGlobalConfig(globalConfig GlobalConfig) error {
 	globalConfig.SMTPRequireTLS = smtpRequireTLS
 
 	c.alertmanagerConfig.Global = &globalConfig
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -193,9 +262,7 @@ func (c *Config) SetRouteConfig(routeConfig RouteConfig) error {
 	}
 	c.alertmanagerConfig.Route = route
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -207,9 +274,7 @@ func (c *Config) AddInhibitRules(rules []config.InhibitRule) error {
 
 	c.alertmanagerConfig.InhibitRules = append(c.alertmanagerConfig.InhibitRules, rules...)
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -222,7 +287,7 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
 }
 
-func (c *Config) CreateReceiver(receiver config.Receiver) error {
+func (c *Config) CreateReceiver(receiver *Receiver) error {
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
@@ -236,33 +301,41 @@ func (c *Config) CreateReceiver(receiver config.Receiver) error {
 	}
 
 	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
-	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, receiver)
+	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, *receiver.Receiver)
+	c.setCustomConfigs(receiver)
 
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return err
 	}
+	c.applyNativeDefaults()
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 	return nil
 }
 
-func (c *Config) GetReceiver(name string) (Receiver, error) {
-	for _, receiver := range c.alertmanagerConfig.Receivers {
-		if receiver.Name == name {
-			return receiver, nil
+func (c *Config) GetReceiver(name string) (*Receiver, error) {
+	for i := range c.alertmanagerConfig.Receivers {
+		if c.alertmanagerConfig.Receivers[i].Name == name {
+			// Copy out of the slice to avoid handing the caller a pointer
+			// into a slice that may later be reallocated by append.
+			base := c.alertmanagerConfig.Receivers[i]
+			custom := c.customConfigs[name]
+			return &Receiver{
+				Receiver:          &base,
+				GoogleChatConfigs: custom.GoogleChat,
+			}, nil
 		}
 	}
 
-	return Receiver{}, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
+	return nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "channel with name %q not found", name)
 }
 
-func (c *Config) UpdateReceiver(receiver config.Receiver) error {
+func (c *Config) UpdateReceiver(receiver *Receiver) error {
 	// find and update receiver
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
 		if existingReceiver.Name == receiver.Name {
-			c.alertmanagerConfig.Receivers[i] = receiver
+			c.alertmanagerConfig.Receivers[i] = *receiver.Receiver
+			c.setCustomConfigs(receiver)
 			break
 		}
 	}
@@ -270,10 +343,9 @@ func (c *Config) UpdateReceiver(receiver config.Receiver) error {
 	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
 		return err
 	}
+	c.applyNativeDefaults()
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -298,11 +370,46 @@ func (c *Config) DeleteReceiver(name string) error {
 		}
 	}
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	delete(c.customConfigs, name)
+
+	c.flush()
 
 	return nil
+}
+
+// setCustomConfigs records (or clears) the SigNoz-native configs for a
+// receiver in the in-memory sidecar.
+func (c *Config) setCustomConfigs(receiver *Receiver) {
+	if custom := customConfigsOf(receiver); !custom.isEmpty() {
+		c.customConfigs[receiver.Name] = custom
+	} else {
+		delete(c.customConfigs, receiver.Name)
+	}
+}
+
+// applyNativeDefaults threads global-scoped defaults (currently:
+// Global.HTTPConfig) into each SigNoz-native notifier config that has not
+// supplied its own. This mirrors the corresponding loop in upstream's
+// config.Config.UnmarshalYAML, which does
+//
+//	wh.HTTPConfig = cmp.Or(wh.HTTPConfig, c.Global.HTTPConfig)
+//
+// for each upstream notifier config. Call it from mutation paths after the
+// upstream UnmarshalYAML pass has run. Extend it when adding another native
+// notifier type that needs anything threaded from Global.
+func (c *Config) applyNativeDefaults() {
+	if c.alertmanagerConfig.Global == nil {
+		return
+	}
+	httpDefault := c.alertmanagerConfig.Global.HTTPConfig
+
+	for _, custom := range c.customConfigs {
+		for _, gc := range custom.GoogleChat {
+			if gc.HTTPConfig == nil {
+				gc.HTTPConfig = httpDefault
+			}
+		}
+	}
 }
 
 func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) error {
@@ -318,9 +425,7 @@ func (c *Config) CreateRuleIDMatcher(ruleID string, receiverNames []string) erro
 		}
 	}
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -339,9 +444,7 @@ func (c *Config) DeleteRuleIDInhibitor(ruleID string) error {
 		}
 	}
 	c.alertmanagerConfig.InhibitRules = filteredRules
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
@@ -362,9 +465,7 @@ func (c *Config) DeleteRuleIDMatcher(ruleID string) error {
 		}
 	}
 
-	c.storeableConfig.Config = string(newRawFromConfig(c.alertmanagerConfig))
-	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(c.storeableConfig.Config))
-	c.storeableConfig.UpdatedAt = time.Now()
+	c.flush()
 
 	return nil
 }
