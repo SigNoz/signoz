@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
 import { Badge } from '@signozhq/ui/badge';
@@ -26,7 +32,11 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { AIAssistantEvents, getBrowserInfo } from '../../events';
+import {
+	AIAssistantEvents,
+	VoiceInputSource,
+	getBrowserInfo,
+} from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
@@ -142,6 +152,10 @@ function autoContextCategory(ctx: MessageContext): string {
 
 const MAX_INPUT_LENGTH = 20000;
 const WARNING_THRESHOLD = 15000;
+// Cap for the auto-growing composer. Past this, the textarea stops growing
+// and starts scrolling internally so the message list above doesn't get
+// squeezed in tighter container variants (e.g. the floating panel).
+const TEXTAREA_MAX_HEIGHT_PX = 200;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 /** sessionStorage key for the "voice input failed this tab" flag. */
 const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
@@ -224,6 +238,18 @@ export default function ChatInput({
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
 	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+	// Refs to each category tab so we can move DOM focus to the newly-active
+	// tab on ArrowUp/ArrowDown. Without this the roving-tabindex pattern
+	// stalls: focus stays on the original button (whose closure has the old
+	// category), so subsequent arrow keys never advance past the second tab.
+	const categoryTabRefs = useRef(
+		new Map<ContextCategory, HTMLButtonElement | null>(),
+	);
+	// Refs to each entity row in the active tab panel, so we can cross from
+	// the category tablist (ArrowRight) into the panel and step through
+	// entities with ArrowUp/Down. Array is rewritten each render — there's
+	// only ever one tab panel mounted so stale indices clear naturally.
+	const entityRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const queryClient = useQueryClient();
 
 	// When the picker was opened by typing `@` in the textarea, this holds the
@@ -303,10 +329,91 @@ export default function ChatInput({
 		[mentionRange, selectedContexts, text],
 	);
 
+	const focusCategory = useCallback((category: ContextCategory) => {
+		setActiveContextCategory(category);
+		setPickerSearchQuery('');
+		categoryTabRefs.current.get(category)?.focus();
+	}, []);
+
+	const handleCategoryKeyDown = useCallback(
+		(
+			e: React.KeyboardEvent<HTMLButtonElement>,
+			category: ContextCategory,
+		): void => {
+			const total = CONTEXT_CATEGORIES.length;
+			const idx = CONTEXT_CATEGORIES.indexOf(category);
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[(idx + 1) % total]);
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[(idx - 1 + total) % total]);
+			} else if (e.key === 'Home') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[0]);
+			} else if (e.key === 'End') {
+				e.preventDefault();
+				focusCategory(CONTEXT_CATEGORIES[total - 1]);
+			} else if (e.key === 'ArrowRight') {
+				// Cross from tablist into entity panel.
+				e.preventDefault();
+				entityRefs.current[0]?.focus();
+			}
+		},
+		[focusCategory],
+	);
+
+	const handleEntityKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLButtonElement>, index: number): void => {
+			const count = entityRefs.current.length;
+			if (count === 0) {
+				return;
+			}
+			const focusAt = (i: number): void => {
+				e.preventDefault();
+				entityRefs.current[i]?.focus();
+			};
+			switch (e.key) {
+				case 'ArrowDown':
+					focusAt((index + 1) % count);
+					break;
+				case 'ArrowUp':
+					focusAt((index - 1 + count) % count);
+					break;
+				case 'Home':
+					focusAt(0);
+					break;
+				case 'End':
+					focusAt(count - 1);
+					break;
+				case 'ArrowLeft':
+					// Cross back to tablist.
+					e.preventDefault();
+					categoryTabRefs.current.get(activeContextCategory)?.focus();
+					break;
+				default:
+			}
+		},
+		[activeContextCategory],
+	);
+
 	// Focus the textarea when this component mounts (panel/modal open)
 	useEffect(() => {
 		textareaRef.current?.focus();
 	}, []);
+
+	// Auto-grow the textarea so long prompts aren't trapped in a 2-line
+	// scrolling porthole. Reset to `auto` first to let the field shrink back
+	// down when the user deletes content, then snap to scrollHeight capped at
+	// TEXTAREA_MAX_HEIGHT_PX (overflow-y: auto in CSS handles the rest).
+	useLayoutEffect(() => {
+		const el = textareaRef.current;
+		if (!el) {
+			return;
+		}
+		el.style.height = 'auto';
+		el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT_PX)}px`;
+	}, [text]);
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
@@ -382,7 +489,7 @@ export default function ChatInput({
 	// start time so we can attribute `durationMs` on the Voice input used
 	// event regardless of which control ended the session.
 	const voiceStartedAtRef = useRef<number | null>(null);
-	const voiceSourceRef = useRef<'button' | 'shortcut' | null>(null);
+	const voiceSourceRef = useRef<VoiceInputSource | null>(null);
 	// Set to true after a `network`, `not-allowed`, or `not-supported` failure
 	// so we hide the mic button for the rest of the tab session — silent
 	// retries don't help, and Chromium derivatives without the Google Speech
@@ -459,7 +566,7 @@ export default function ChatInput({
 	const showMic = isSupported && micPermission !== 'denied' && !voiceUnavailable;
 
 	const startVoiceInput = useCallback(
-		(source: 'button' | 'shortcut') => {
+		(source: VoiceInputSource) => {
 			// Defense in depth: the button is hidden when `voiceUnavailable` is
 			// true, but the PTT shortcut listener can still call us. Bailing here
 			// keeps a single source of truth and prevents repeat `Voice input
@@ -536,7 +643,7 @@ export default function ChatInput({
 				return; // ignore auto-repeat
 			}
 			pttActiveRef.current = true;
-			startVoiceInput('shortcut');
+			startVoiceInput(VoiceInputSource.Shortcut);
 		};
 
 		const handleKeyUp = (e: KeyboardEvent): void => {
@@ -724,6 +831,12 @@ export default function ChatInput({
 				entity.value.toLowerCase().includes(activeQuery),
 			)
 		: contextEntitiesByCategory[activeContextCategory];
+	// Truncate the ref array to match the current entity count so that
+	// switching from a large category (e.g. 100 dashboards) to a smaller one
+	// doesn't leave stale `null` slots from earlier renders. Keyboard nav math
+	// already uses `filteredContextOptions.length` for the modulo, so stale
+	// slots wouldn't be reached — this is purely housekeeping.
+	entityRefs.current.length = filteredContextOptions.length;
 	const { isLoading: isActiveContextLoading, isError: isActiveContextError } =
 		contextCategoryStateByCategory[activeContextCategory];
 	const currentLength = text.length;
@@ -830,7 +943,7 @@ export default function ChatInput({
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
 					maxLength={MAX_INPUT_LENGTH}
-					rows={2}
+					rows={3}
 				/>
 			</div>
 			{showTextWarning && (
@@ -877,15 +990,37 @@ export default function ChatInput({
 							sideOffset={8}
 						>
 							<div className={styles.contextPopoverContent}>
-								<div className={styles.contextPopoverCategories}>
+								<div
+									className={styles.contextPopoverCategories}
+									role="tablist"
+									aria-orientation="vertical"
+									aria-label="Context categories"
+								>
 									{CONTEXT_CATEGORIES.map((category) => {
 										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										const isActive = activeContextCategory === category;
 										return (
-											<div
+											<Button
 												key={category}
+												ref={(el): void => {
+													categoryTabRefs.current.set(category, el);
+												}}
+												type="button"
+												variant="ghost"
+												color="secondary"
+												size="sm"
 												role="tab"
-												tabIndex={0}
+												id={`ai-context-tab-${category}`}
+												// Single stable panel id shared by every tab: only the
+												// active category's tabpanel is rendered, so per-category
+												// `aria-controls` ids would point at nonexistent nodes
+												// for the two inactive tabs. APG allows a single
+												// dynamic panel whose `aria-labelledby` swaps to the
+												// active tab.
+												aria-controls="ai-context-tabpanel"
+												// Roving tabindex: only the active tab participates in
+												// the Tab sequence; arrow keys move between tabs.
+												tabIndex={isActive ? 0 : -1}
 												aria-selected={isActive}
 												className={cx(styles.contextPopoverCategoryItem, {
 													[styles.active]: isActive,
@@ -894,22 +1029,21 @@ export default function ChatInput({
 													setActiveContextCategory(category);
 													setPickerSearchQuery('');
 												}}
-												onKeyDown={(e): void => {
-													if (e.key === 'Enter' || e.key === ' ') {
-														e.preventDefault();
-														setActiveContextCategory(category);
-														setPickerSearchQuery('');
-													}
-												}}
+												onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
+												prefix={<CategoryIcon size={13} />}
 											>
-												<CategoryIcon size={13} />
 												<span>{category}</span>
-											</div>
+											</Button>
 										);
 									})}
 								</div>
 
-								<div className={styles.contextPopoverRight}>
+								<div
+									className={styles.contextPopoverRight}
+									role="tabpanel"
+									id="ai-context-tabpanel"
+									aria-labelledby={`ai-context-tab-${activeContextCategory}`}
+								>
 									<div className={styles.contextPopoverSearch}>
 										<Input
 											type="text"
@@ -939,7 +1073,7 @@ export default function ChatInput({
 												No matching entities
 											</div>
 										) : (
-											filteredContextOptions.map((option) => {
+											filteredContextOptions.map((option, index) => {
 												const isSelected = selectedContexts.some(
 													(item) =>
 														item.category === activeContextCategory &&
@@ -947,8 +1081,16 @@ export default function ChatInput({
 												);
 
 												return (
-													<div
+													<Button
 														key={option.id}
+														ref={(el): void => {
+															entityRefs.current[index] = el;
+														}}
+														type="button"
+														variant="ghost"
+														color="secondary"
+														size="sm"
+														aria-pressed={isSelected}
 														className={cx(styles.contextPopoverEntityItem, {
 															[styles.selected]: isSelected,
 														})}
@@ -959,11 +1101,12 @@ export default function ChatInput({
 																option.value,
 															)
 														}
+														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
 													>
 														<span className={styles.contextPopoverEntityItemText}>
 															{option.value}
 														</span>
-													</div>
+													</Button>
 												);
 											})
 										)}
@@ -977,14 +1120,24 @@ export default function ChatInput({
 				<div className={styles.rightActions}>
 					{showMic &&
 						(isListening ? (
-							<div className={styles.micRecording}>
-								<div
-									className={cx(styles.micDiscard, styles.secondary)}
-									onClick={handleDiscard}
-									aria-label="Discard recording"
-								>
-									<X size={12} />
-								</div>
+							<div
+								className={styles.micRecording}
+								role="status"
+								aria-live="polite"
+								aria-label="Recording voice input"
+							>
+								<TooltipSimple title="Discard recording">
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										color="secondary"
+										className={cx(styles.micDiscard, styles.secondary)}
+										onClick={handleDiscard}
+										aria-label="Discard recording"
+										prefix={<X size={12} />}
+									/>
+								</TooltipSimple>
 								<span className={styles.micWaves} aria-hidden="true">
 									<span />
 									<span />
@@ -995,26 +1148,30 @@ export default function ChatInput({
 									<span />
 									<span />
 								</span>
-								<div
-									className={cx(styles.micStop, styles.destructive)}
-									onClick={handleStopAndSend}
-									aria-label="Stop and send"
-								>
-									<Square size={9} fill="currentColor" strokeWidth={0} />
-								</div>
+								<TooltipSimple title="Stop and send">
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										color="destructive"
+										className={cx(styles.micStop, styles.destructive)}
+										onClick={handleStopAndSend}
+										aria-label="Stop and send"
+										prefix={<Square size={9} fill="currentColor" strokeWidth={0} />}
+									/>
+								</TooltipSimple>
 							</div>
 						) : (
 							<TooltipSimple title="Voice input">
 								<Button
 									variant="ghost"
 									size="icon"
-									onClick={(): void => startVoiceInput('button')}
+									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
 									disabled={disabled}
 									aria-label="Start voice input"
 									className={styles.micBtn}
-								>
-									<Mic size={14} />
-								</Button>
+									prefix={<Mic size={14} />}
+								/>
 							</TooltipSimple>
 						))}
 
@@ -1026,21 +1183,21 @@ export default function ChatInput({
 								color="destructive"
 								onClick={onCancel}
 								aria-label="Stop generating"
-							>
-								<Square size={10} fill="currentColor" strokeWidth={0} />
-							</Button>
+								prefix={<Square size={10} fill="currentColor" strokeWidth={0} />}
+							/>
 						</TooltipSimple>
 					) : (
-						<Button
-							variant="solid"
-							size="icon"
-							color="primary"
-							onClick={isListening ? handleStopAndSend : handleSend}
-							disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
-							aria-label="Send message"
-						>
-							<Send size={14} />
-						</Button>
+						<TooltipSimple title="Send message">
+							<Button
+								variant="solid"
+								size="icon"
+								color="primary"
+								onClick={isListening ? handleStopAndSend : handleSend}
+								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
+								aria-label="Send message"
+								prefix={<Send size={14} />}
+							/>
+						</TooltipSimple>
 					)}
 				</div>
 			</div>
