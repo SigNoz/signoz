@@ -19,6 +19,7 @@ const BANNED_COMPONENTS = {
 	Switch: 'Use @signozhq/ui/switch Switch instead of antd Switch.',
 	Badge: 'Use @signozhq/ui/badge instead of antd Badge.',
 	Progress: 'Use @signozhq/ui/progress instead of antd Progress.',
+	Avatar: 'Use @signozhq/ui/avatar instead of antd Avatar.',
 	Tag: 'Use @signozhq/ui/badge Bagde instead of antd Tag.',
 };
 

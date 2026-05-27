@@ -76,9 +76,7 @@ function ProcessorFieldInput({
 			}
 		>
 			{!fieldData?.compact && (
-				<PipelineIndexIcon size="small">
-					{Number(fieldData.id) + 1}
-				</PipelineIndexIcon>
+				<PipelineIndexIcon>{Number(fieldData.id) + 1}</PipelineIndexIcon>
 			)}
 			<FormWrapper>
 				{fieldData.name === 'enable_flattening' ? (

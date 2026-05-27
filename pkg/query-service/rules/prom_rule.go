@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"time"
 
 	"github.com/prometheus/prometheus/model/labels"
@@ -34,11 +35,12 @@ func NewPromRule(
 	postableRule *ruletypes.PostableRule,
 	logger *slog.Logger,
 	prometheus prometheus.Prometheus,
+	externalURL *url.URL,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 	opts = append(opts, WithLogger(logger))
 
-	baseRule, err := NewBaseRule(id, orgID, postableRule, opts...)
+	baseRule, err := NewBaseRule(id, orgID, postableRule, externalURL, opts...)
 	if err != nil {
 		return nil, err
 	}

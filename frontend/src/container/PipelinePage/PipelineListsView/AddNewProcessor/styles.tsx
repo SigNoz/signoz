@@ -1,14 +1,15 @@
-import { Avatar, Select } from 'antd';
-import { themeColors } from 'constants/theme';
+import { ReactNode } from 'react';
+import { Badge } from '@signozhq/ui/badge';
+import { Select } from 'antd';
 import styled from 'styled-components';
 
-export const PipelineIndexIcon = styled(Avatar)`
-	background-color: ${themeColors.navyBlue};
-	height: 1.5rem;
-	width: 1.5rem;
-	font-size: 0.875rem;
-	line-height: 1.375rem;
-`;
+export function PipelineIndexIcon({
+	children,
+}: {
+	children: ReactNode;
+}): JSX.Element {
+	return <Badge color="robin">{children}</Badge>;
+}
 
 export const ProcessorTypeWrapper = styled.div`
 	display: flex;
