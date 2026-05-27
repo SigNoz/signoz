@@ -15,7 +15,7 @@ function TypeSelect({ onChange, value }: TypeSelectProps): JSX.Element {
 
 	return (
 		<ProcessorTypeWrapper>
-			<PipelineIndexIcon size="small">1</PipelineIndexIcon>
+			<PipelineIndexIcon>1</PipelineIndexIcon>
 			<ProcessorTypeContainer>
 				<ProcessorType>{t('processor_type')}</ProcessorType>
 				<StyledSelect
