@@ -24,11 +24,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req dashboardtypes.PostableDashboardV2
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
@@ -55,11 +51,7 @@ func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
