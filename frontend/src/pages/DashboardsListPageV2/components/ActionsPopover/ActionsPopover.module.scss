@@ -1,0 +1,121 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	padding: 4px;
+}
+
+// Flat custom row: fixed-width icon slot + label.
+// Using a fixed icon slot ensures every label starts at the same x, regardless
+// of each icon's intrinsic width — antd Button's `icon` prop doesn't guarantee
+// that alignment.
+.actionItem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 8px 12px;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: var(--l2-foreground);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-normal);
+	text-align: left;
+	cursor: pointer;
+	transition: background 120ms ease;
+
+	// The popover panel itself is ~80% card on a gradient, so a card-tinted
+	// overlay disappears against it. Use a foreground-tinted overlay instead
+	// — it always provides contrast against the gradient.
+	&:hover:not(:disabled),
+	&:focus-visible:not(:disabled) {
+		background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+		outline: none;
+	}
+
+	&:active:not(:disabled) {
+		background: color-mix(in srgb, var(--l1-foreground) 18%, transparent);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	// Match the Delete dashboard treatment used on the dashboard details page.
+	// That page wraps the antd Button in `.delete-dashboard`, which has a
+	// global override (Description.styles.scss):
+	//     .delete-dashboard .ant-btn { color: var(--bg-cherry-400) !important; }
+	// So we use `--bg-cherry-400` (a lighter shade than --danger-background =
+	// cherry-500) and a top divider to separate the destructive action.
+	&[data-variant='danger'] {
+		color: var(--bg-cherry-400) !important;
+		margin-top: 4px;
+		border-top: 1px solid var(--l1-border);
+		border-radius: 0;
+
+		.actionIcon {
+			color: var(--bg-cherry-400);
+		}
+	}
+}
+
+.actionIcon {
+	display: inline-flex;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 16px;
+	align-items: center;
+	justify-content: center;
+}
+
+.actionLabel {
+	flex: 1;
+	min-width: 0;
+}
+
+.triggerIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-left: 12px;
+	padding: 0;
+	flex: 0 0 auto;
+	background: transparent;
+	border: none;
+	border-radius: 4px;
+	color: inherit;
+	cursor: pointer;
+	transition: background 120ms ease;
+
+	&:hover,
+	&:focus-visible {
+		background: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
+		outline: none;
+	}
+
+	&:active,
+	&[aria-expanded='true'] {
+		background: color-mix(in srgb, var(--l1-foreground) 20%, transparent);
+	}
+}
+
+:global(.dashboardActionsPopover) {
+	:global(.ant-popover-inner) {
+		width: 200px;
+		height: auto;
+		flex-shrink: 0;
+		border-radius: 4px;
+		border: 1px solid var(--l1-border);
+		background: linear-gradient(
+			139deg,
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+		);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+		padding: 0px;
+	}
+}
