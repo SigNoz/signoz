@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
@@ -11,7 +11,10 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowRight } from '@signozhq/icons';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';
@@ -30,6 +33,23 @@ type FormValues = {
 };
 
 function SignUp(): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const invitationToken = urlQuery.get('token');
+
+	// Redirect to login if an invalid/expired invitation token is present in the URL.
+	// The /signup?token= flow is stale — new invites use /password-reset?token= instead.
+	// When users open an old or invalid invite link, they should see a clear error
+	// on the login page rather than a broken signup form.
+	useEffect(() => {
+		if (invitationToken) {
+			history.push(
+				`${ROUTES.LOGIN}?callbackauthnerr=true&message=${encodeURIComponent(
+					'Your invite link is no longer valid. Please contact your admin.',
+				)}`,
+			);
+		}
+	}, [invitationToken]);
+
 	const [loading, setLoading] = useState(false);
 	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
 
