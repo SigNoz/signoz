@@ -187,6 +187,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	case RepeatTypeMonthly:
 		return m.checkMonthly(now, loc)
 	default:
+		// unreachable: invalid repeat type
 		return false
 	}
 }
