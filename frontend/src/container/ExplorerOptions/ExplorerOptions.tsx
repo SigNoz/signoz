@@ -874,7 +874,9 @@ function ExplorerOptions({
 						<>
 							<Divider
 								type="vertical"
-								className={isEditDeleteSupported ? '' : 'hidden'}
+								className={cx('explorer-options-container__divider', {
+									hidden: !isEditDeleteSupported,
+								})}
 							/>
 							<Tooltip title="Update this view" placement="top">
 								<Button
