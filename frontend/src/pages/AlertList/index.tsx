@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
@@ -10,10 +10,14 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
+import { CalendarClock, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 
-import { AlertListSubTabs, AlertListTabs } from './types';
+import {
+	AlertListTabs,
+	LEGACY_CONFIGURATION_TAB,
+	LEGACY_SUB_TABS,
+} from './types';
 
 import './AlertList.styles.scss';
 
@@ -27,39 +31,29 @@ function AllAlertList(): JSX.Element {
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
 
-	const handleConfigurationTabChange = useCallback(
-		(subTab: string): void => {
-			const queryParams = new URLSearchParams();
+	// Redirect legacy ?tab=Configuration&subTab=... URLs to the flat top-level
+	// tab so existing bookmarks and docs continue to work.
+	useEffect(() => {
+		if (tab !== LEGACY_CONFIGURATION_TAB) {
+			return;
+		}
+		const nextTab =
+			subTab === LEGACY_SUB_TABS.ROUTING_POLICIES
+				? AlertListTabs.ROUTING_POLICIES
+				: AlertListTabs.PLANNED_DOWNTIME;
+		const queryParams = new URLSearchParams();
+		queryParams.set('tab', nextTab);
+		safeNavigate(`/alerts?${queryParams.toString()}`);
+	}, [tab, subTab, safeNavigate]);
 
-			queryParams.set('tab', AlertListTabs.CONFIGURATION);
-			queryParams.set('subTab', subTab);
-			safeNavigate(`/alerts?${queryParams.toString()}`);
-		},
-		[safeNavigate],
-	);
-
-	const configurationTab = useMemo(() => {
-		const tabs = [
-			{
-				label: 'Planned Downtime',
-				key: AlertListSubTabs.PLANNED_DOWNTIME,
-				children: <PlannedDowntime />,
-			},
-			{
-				label: 'Routing Policies',
-				key: AlertListSubTabs.ROUTING_POLICIES,
-				children: <RoutingPolicies />,
-			},
-		];
-		return (
-			<Tabs
-				className="configuration-tabs"
-				activeKey={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
-				items={tabs}
-				onChange={handleConfigurationTabChange}
-			/>
-		);
-	}, [subTab, handleConfigurationTabChange]);
+	const activeKey = useMemo(() => {
+		if (tab === LEGACY_CONFIGURATION_TAB) {
+			return subTab === LEGACY_SUB_TABS.ROUTING_POLICIES
+				? AlertListTabs.ROUTING_POLICIES
+				: AlertListTabs.PLANNED_DOWNTIME;
+		}
+		return tab || AlertListTabs.ALERT_RULES;
+	}, [tab, subTab]);
 
 	const items: TabsProps['items'] = [
 		{
@@ -89,12 +83,22 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon width={14} height={14} />
-					Configuration
+					<CalendarClock size={14} />
+					Planned Downtime
 				</div>
 			),
-			key: AlertListTabs.CONFIGURATION,
-			children: configurationTab,
+			key: AlertListTabs.PLANNED_DOWNTIME,
+			children: <PlannedDowntime />,
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<ConfigureIcon width={14} height={14} />
+					Routing Policies
+				</div>
+			),
+			key: AlertListTabs.ROUTING_POLICIES,
+			children: <RoutingPolicies />,
 		},
 	];
 
@@ -102,21 +106,10 @@ function AllAlertList(): JSX.Element {
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={tab || AlertListTabs.ALERT_RULES}
+			activeKey={activeKey}
 			onChange={(tab): void => {
 				const queryParams = new URLSearchParams();
-
 				queryParams.set('tab', tab);
-
-				// If navigating to Configuration tab, set default subTab
-				if (tab === AlertListTabs.CONFIGURATION) {
-					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
-					queryParams.set('subTab', currentSubTab);
-				} else {
-					// Clear subTab when navigating out of Configuration tab
-					queryParams.delete('subTab');
-				}
-
 				safeNavigate(`/alerts?${queryParams.toString()}`);
 			}}
 			className={`alerts-container ${
