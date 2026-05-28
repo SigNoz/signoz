@@ -1,0 +1,64 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 320px;
+	padding: 105px 141px;
+	margin-top: 16px;
+	justify-content: center;
+	align-items: flex-start;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+}
+
+.image {
+	width: 32px;
+	height: 32px;
+}
+
+.copy {
+	margin-top: 4px;
+}
+
+.noDashboard {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.info {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.actions {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	margin-top: 24px;
+}
+
+.learnMore {
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+	padding: 0px;
+}
+
+.learnMoreArrow {
+	margin-left: -20px;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+}
