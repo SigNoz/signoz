@@ -122,7 +122,7 @@ function AlertActionButtons({
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" />
+				<Divider type="vertical" className="alert-action-buttons__divider" />
 
 				<DropdownMenuSimple menu={{ items: menuItems }}>
 					<span className="dropdown-trigger-wrapper">

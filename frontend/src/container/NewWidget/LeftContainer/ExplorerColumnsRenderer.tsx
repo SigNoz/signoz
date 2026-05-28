@@ -234,7 +234,7 @@ function ExplorerColumnsRenderer({
 					</Tooltip>
 				)}
 			</div>
-			<Divider />
+			<Divider className="explorer-columns-renderer__divider" />
 			{!isError && (
 				<div className="explorer-columns-contents">
 					<DragDropContext onDragEnd={onDragEnd}>

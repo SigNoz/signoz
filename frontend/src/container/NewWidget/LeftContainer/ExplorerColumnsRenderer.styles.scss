@@ -19,9 +19,9 @@
 		letter-spacing: 0.5px;
 	}
 
-	.ant-divider {
-		margin: 8px 0 !important;
-		border: 0.5px solid var(--l1-border);
+	&__divider {
+		--divider-color: var(--l1-border);
+		--divider-margin: 8px 0;
 	}
 
 	.explorer-columns-contents {
