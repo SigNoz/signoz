@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
@@ -179,7 +179,10 @@ function SpanRelatedSignals({
 			width="50%"
 			title={
 				<>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className="span-related-signals-drawer__divider"
+					/>
 					<Typography.Text className="title">
 						Related Signals - {selectedSpan.name}
 					</Typography.Text>
@@ -194,7 +197,7 @@ function SpanRelatedSignals({
 			}}
 			className="span-related-signals-drawer"
 			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			closeIcon={<X size={16} />}
 		>
 			{selectedSpan && (
 				<div className="span-related-signals-drawer__content">

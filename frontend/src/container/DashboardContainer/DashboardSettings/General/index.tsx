@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Col, Input, Select, Space, Tooltip } from 'antd';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
-import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
+import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddBadges';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
