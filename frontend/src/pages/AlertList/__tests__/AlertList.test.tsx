@@ -192,39 +192,4 @@ describe('AlertList', () => {
 			);
 		});
 	});
-
-	describe('Legacy URL redirect', () => {
-		it('should redirect legacy Configuration + planned-downtime URLs to PlannedDowntime', () => {
-			mockQueryParams({ tab: 'Configuration', subTab: 'planned-downtime' });
-			mockLocation(ALERTS_PATH);
-
-			render(<AlertList />);
-
-			expect(mockSafeNavigate).toHaveBeenCalledWith(
-				`/alerts?tab=${PLANNED_DOWNTIME_TAB}`,
-			);
-		});
-
-		it('should redirect legacy Configuration + routing-policies URLs to RoutingPolicies', () => {
-			mockQueryParams({ tab: 'Configuration', subTab: 'routing-policies' });
-			mockLocation(ALERTS_PATH);
-
-			render(<AlertList />);
-
-			expect(mockSafeNavigate).toHaveBeenCalledWith(
-				`/alerts?tab=${ROUTING_POLICIES_TAB}`,
-			);
-		});
-
-		it('should default legacy Configuration without subTab to PlannedDowntime', () => {
-			mockQueryParams({ tab: 'Configuration' });
-			mockLocation(ALERTS_PATH);
-
-			render(<AlertList />);
-
-			expect(mockSafeNavigate).toHaveBeenCalledWith(
-				`/alerts?tab=${PLANNED_DOWNTIME_TAB}`,
-			);
-		});
-	});
 });

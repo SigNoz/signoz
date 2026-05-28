@@ -1,4 +1,3 @@
-import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
@@ -13,11 +12,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { CalendarClock, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 
-import {
-	AlertListTabs,
-	LEGACY_CONFIGURATION_TAB,
-	LEGACY_SUB_TABS,
-} from './types';
+import { AlertListTabs } from './types';
 
 import './AlertList.styles.scss';
 
@@ -27,33 +22,8 @@ function AllAlertList(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');
-	const subTab = urlQuery.get('subTab');
 	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
 	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
-
-	// Redirect legacy ?tab=Configuration&subTab=... URLs to the flat top-level
-	// tab so existing bookmarks and docs continue to work.
-	useEffect(() => {
-		if (tab !== LEGACY_CONFIGURATION_TAB) {
-			return;
-		}
-		const nextTab =
-			subTab === LEGACY_SUB_TABS.ROUTING_POLICIES
-				? AlertListTabs.ROUTING_POLICIES
-				: AlertListTabs.PLANNED_DOWNTIME;
-		const queryParams = new URLSearchParams();
-		queryParams.set('tab', nextTab);
-		safeNavigate(`/alerts?${queryParams.toString()}`);
-	}, [tab, subTab, safeNavigate]);
-
-	const activeKey = useMemo(() => {
-		if (tab === LEGACY_CONFIGURATION_TAB) {
-			return subTab === LEGACY_SUB_TABS.ROUTING_POLICIES
-				? AlertListTabs.ROUTING_POLICIES
-				: AlertListTabs.PLANNED_DOWNTIME;
-		}
-		return tab || AlertListTabs.ALERT_RULES;
-	}, [tab, subTab]);
 
 	const items: TabsProps['items'] = [
 		{
@@ -106,7 +76,7 @@ function AllAlertList(): JSX.Element {
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={activeKey}
+			activeKey={tab || AlertListTabs.ALERT_RULES}
 			onChange={(tab): void => {
 				const queryParams = new URLSearchParams();
 				queryParams.set('tab', tab);
