@@ -35,6 +35,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
+import { bootSettings } from 'utils/bootData';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -228,18 +229,18 @@ function App(): JSX.Element {
 		}
 
 		setRoutes((prev) => {
-			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
+			const hasAi = prev.some((r) => r.key === 'AI_ASSISTANT');
 			if (isAIAssistantEnabled === hasAi) {
 				return prev;
 			}
 			if (isAIAssistantEnabled) {
-				const aiRoute = defaultRoutes.find((r) => r.path === ROUTES.AI_ASSISTANT);
+				const aiRoute = defaultRoutes.find((r) => r.key === 'AI_ASSISTANT');
 				if (!aiRoute) {
 					return prev;
 				}
-				return [...prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT), aiRoute];
+				return [...prev.filter((r) => r.key !== 'AI_ASSISTANT'), aiRoute];
 			}
-			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
+			return prev.filter((r) => r.key !== 'AI_ASSISTANT');
 		});
 	}, [isLoggedInState, isAIAssistantEnabled]);
 
@@ -253,6 +254,7 @@ function App(): JSX.Element {
 		if (
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/') ||
+			pathname === '/ai-assistant' ||
 			pathname.startsWith('/ai-assistant/')
 		) {
 			window.Pylon?.('hideChatBubble');
@@ -332,7 +334,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (process.env.POSTHOG_KEY) {
+			if (bootSettings.posthog.enabled && process.env.POSTHOG_KEY) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well

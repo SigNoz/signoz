@@ -33,6 +33,7 @@ type StorableDashboard struct {
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`
 	Source Source                `bun:"source,type:text,notnull"`
+	Name   string                `bun:"name,type:text,notnull"`
 }
 
 type Dashboard struct {
@@ -110,7 +111,7 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 		},
 		OrgID:  orgID,
 		Data:   storableDashboardData,
-		Locked: false,
+		Locked: source == SourceIntegration,
 		Source: source,
 	}, nil
 }

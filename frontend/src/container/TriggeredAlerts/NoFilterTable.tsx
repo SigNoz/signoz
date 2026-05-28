@@ -59,9 +59,7 @@ function NoFilterTable({
 					return <Typography>-</Typography>;
 				}
 
-				return (
-					<LabelColumn labels={withOutSeverityKeys} value={labels} color="magenta" />
-				);
+				return <LabelColumn labels={withOutSeverityKeys} value={labels} />;
 			},
 		},
 		{

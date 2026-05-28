@@ -1,0 +1,49 @@
+.badgesContainer {
+	display: flex;
+	align-items: center;
+	flex-flow: wrap;
+	gap: 6px;
+}
+
+.badgeContainer {
+	color: var(--bg-sienna-400);
+	font-family: 'Space Mono';
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 20px;
+	letter-spacing: 0.52px;
+	height: 24px;
+	flex-shrink: 0;
+	border-radius: 50px;
+	border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+	background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
+	padding: 2px 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.inputContainer {
+	> div {
+		margin: 0;
+	}
+	padding-left: 0px !important;
+	padding-right: 0px !important;
+}
+
+.tagsInput {
+	display: flex;
+	border: none;
+	padding: 0px;
+	width: 183px;
+	height: 24px;
+	padding: 3px 1px;
+	flex-shrink: 0;
+}
+
+.editInput {
+	.ant-form-item {
+		margin-bottom: 0px;
+	}
+}

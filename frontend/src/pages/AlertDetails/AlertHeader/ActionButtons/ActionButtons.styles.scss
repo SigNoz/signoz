@@ -8,8 +8,10 @@
 		border-color: var(--l1-border);
 		margin: 0;
 	}
-	.dropdown-icon {
-		margin-right: 4px;
+	.dropdown-trigger-wrapper {
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 }
 .dropdown-menu {

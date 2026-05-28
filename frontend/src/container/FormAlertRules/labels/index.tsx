@@ -7,8 +7,8 @@ import { map } from 'lodash-es';
 import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
 
-import QueryChip from './QueryChip';
-import { QueryChipItem, SearchContainer } from './styles';
+import { Badge } from '@signozhq/ui/badge';
+import { QueryChipContainer, QueryChipItem, SearchContainer } from './styles';
 import { ILabelRecord } from './types';
 import { createQuery, flattenLabels, prepareLabels } from './utils';
 
@@ -147,12 +147,24 @@ function LabelSelect({
 		<SearchContainer isDarkMode={isDarkMode} disabled={false}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
 				{queries.length > 0 &&
-					map(
-						queries,
-						(query): JSX.Element => (
-							<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
-						),
-					)}
+					map(queries, (query): JSX.Element => {
+						const isClosable =
+							query.key !== 'severity' && query.key !== 'description';
+						return (
+							<QueryChipContainer key={query.key}>
+								<Badge
+									color="vanilla"
+									closable={isClosable}
+									onClose={(e): void => {
+										e.preventDefault();
+										handleClose(query.key);
+									}}
+								>
+									{query.key}: {query.value}
+								</Badge>
+							</QueryChipContainer>
+						);
+					})}
 			</div>
 			<div>
 				{map(staging, (item) => (

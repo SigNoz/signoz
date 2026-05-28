@@ -72,6 +72,7 @@ class TraceOperatorQuery:
     return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
+    select_fields: list[TelemetryFieldKey] | None = None
 
     def to_dict(self) -> dict:
         spec: dict[str, Any] = {
@@ -84,6 +85,8 @@ class TraceOperatorQuery:
             spec["limit"] = self.limit
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
+        if self.select_fields:
+            spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
