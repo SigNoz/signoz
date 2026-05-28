@@ -210,27 +210,7 @@ func (m *PlannedMaintenance) ActiveWindow(now time.Time) *Window {
 		return nil
 	}
 
-	startTime := m.Schedule.StartTime
-	endTime := m.Schedule.EndTime
 	recurrence := m.Schedule.Recurrence
-
-	// fixed schedule — only when no recurrence is configured.
-	// When recurrence is set, the recurring check below handles everything;
-	// falling through here would cause the window to match the absolute
-	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
-	// EndTime may be zero, which means the maintenance runs indefinitely
-	// until the user updates or deletes it.
-	if recurrence == nil && !startTime.IsZero() {
-		if endTime.IsZero() {
-			return !now.Before(startTime)
-		}
-		if now.Equal(startTime) || now.Equal(endTime) ||
-			(now.After(startTime) && now.Before(endTime)) {
-			return &Window{startTime, &endTime}
-		}
-	}
-
-	// recurring schedule
 	if recurrence != nil {
 		// Make sure the recurrence has started
 		if now.Before(recurrence.StartTime) {
@@ -250,7 +230,24 @@ func (m *PlannedMaintenance) ActiveWindow(now time.Time) *Window {
 			return m.checkWeekly(currentTime, recurrence, loc)
 		case RepeatTypeMonthly:
 			return m.checkMonthly(currentTime, recurrence, loc)
+		default:
+			// unreachable: invalid repeat type
+			return nil
 		}
+	}
+
+	// Fixed schedule
+	startTime := m.Schedule.StartTime
+	endTime := m.Schedule.EndTime
+
+	if startTime.IsZero() || now.Before(startTime) {
+		// note: startTime should never be zero for fixed schedule
+		return nil
+	}
+
+	if endTime.IsZero() || !now.After(endTime) {
+		// zero endTime means "forever" downtime
+		return &Window{startTime, &endTime}
 	}
 
 	return nil
@@ -353,12 +350,14 @@ func (m *PlannedMaintenance) IsUpcoming() bool {
 	}
 	now := time.Now().In(loc)
 
-	if m.Schedule.Recurrence == nil && !m.Schedule.StartTime.IsZero() {
-		return now.Before(m.Schedule.StartTime)
-	}
 	if m.Schedule.Recurrence != nil {
 		// FIXME(jatinderjit)
 		return now.Before(m.Schedule.Recurrence.StartTime)
+	}
+
+	// Fixed schedule
+	if !m.Schedule.StartTime.IsZero() {
+		return now.Before(m.Schedule.StartTime)
 	}
 	return false
 }

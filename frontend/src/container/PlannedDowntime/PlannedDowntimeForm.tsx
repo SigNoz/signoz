@@ -442,7 +442,7 @@ export function PlannedDowntimeForm(
 					<Select options={TZ_OPTIONS} placeholder="Select timezone" showSearch />
 				</Form.Item>
 				<Form.Item
-					label="Ends on (leave empty for no end)"
+					label="Ends on"
 					name="endTime"
 					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
 				>
