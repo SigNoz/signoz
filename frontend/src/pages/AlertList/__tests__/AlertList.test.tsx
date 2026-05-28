@@ -7,11 +7,10 @@ const TAB_SELECTOR = '.ant-tabs-tab';
 const LIST_ALERT_RULES_TEXT = 'List Alert Rules Component';
 const TRIGGERED_ALERTS_TEXT = 'Triggered Alerts';
 const ALERT_RULES_TEXT = 'Alert Rules';
-const CONFIGURATION_TEXT = 'Configuration';
 const PLANNED_DOWNTIME_TEXT = 'Planned Downtime';
 const ROUTING_POLICIES_TEXT = 'Routing Policies';
-const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
-const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
+const PLANNED_DOWNTIME_TAB = 'PlannedDowntime';
+const ROUTING_POLICIES_TAB = 'RoutingPolicies';
 
 const mockUseLocation = jest.fn();
 jest.mock('react-router-dom', () => ({
@@ -122,7 +121,7 @@ describe('AlertList', () => {
 			expect(screen.getByText(LIST_ALERT_RULES_TEXT)).toBeInTheDocument();
 		});
 
-		it('should render all three main tabs', () => {
+		it('should render all four top-level tabs', () => {
 			mockQueryParams({});
 			mockLocation(ALERTS_PATH);
 
@@ -130,7 +129,8 @@ describe('AlertList', () => {
 
 			expect(screen.getByText(TRIGGERED_ALERTS_TEXT)).toBeInTheDocument();
 			expect(screen.getByText(ALERT_RULES_TEXT)).toBeInTheDocument();
-			expect(screen.getByText(CONFIGURATION_TEXT)).toBeInTheDocument();
+			expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
+			expect(screen.getByText(ROUTING_POLICIES_TEXT)).toBeInTheDocument();
 		});
 	});
 
@@ -153,13 +153,22 @@ describe('AlertList', () => {
 			expect(screen.getByText(LIST_ALERT_RULES_TEXT)).toBeInTheDocument();
 		});
 
-		it('should render Configuration tab with default Planned Downtime sub-tab when tab query param is Configuration', () => {
-			mockQueryParams({ tab: 'Configuration' });
+		it('should render PlannedDowntime tab when tab query param is PlannedDowntime', () => {
+			mockQueryParams({ tab: PLANNED_DOWNTIME_TAB });
 			mockLocation(ALERTS_PATH);
 
 			render(<AlertList />);
 
-			expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
+			expect(screen.getByText('Planned Downtime Component')).toBeInTheDocument();
+		});
+
+		it('should render RoutingPolicies tab when tab query param is RoutingPolicies', () => {
+			mockQueryParams({ tab: ROUTING_POLICIES_TAB });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			expect(screen.getByText('Routing Policies Component')).toBeInTheDocument();
 		});
 
 		it('should navigate to TriggeredAlerts tab when clicked', () => {
@@ -175,89 +184,32 @@ describe('AlertList', () => {
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=TriggeredAlerts');
 		});
 
-		it('should navigate to AlertRules tab when clicked', () => {
-			mockQueryParams({ tab: 'TriggeredAlerts' });
+		it('should navigate to PlannedDowntime tab when clicked', () => {
+			mockQueryParams({ tab: 'AlertRules' });
 			mockLocation(ALERTS_PATH);
 
 			render(<AlertList />);
 
-			clickTab(ALERT_RULES_TEXT);
+			clickTab(PLANNED_DOWNTIME_TEXT);
 
-			expect(mockSet).toHaveBeenCalledWith('tab', 'AlertRules');
-			expect(mockDelete).toHaveBeenCalledWith('subTab');
-			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
-		});
-	});
-
-	describe('Configuration Tab', () => {
-		describe('Rendering', () => {
-			it('should render Configuration tab with default Planned Downtime sub-tab', () => {
-				mockQueryParams({ tab: CONFIGURATION_TEXT });
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
-				expect(screen.getByText(ROUTING_POLICIES_TEXT)).toBeInTheDocument();
-				expect(screen.getByText('Planned Downtime Component')).toBeInTheDocument();
-			});
-
-			it('should render Routing Policies sub-tab when subTab query param is routing-policies', () => {
-				mockQueryParams({
-					tab: CONFIGURATION_TEXT,
-					subTab: ROUTING_POLICIES_SUB_TAB,
-				});
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				expect(screen.getByText('Routing Policies Component')).toBeInTheDocument();
-			});
+			expect(mockSet).toHaveBeenCalledWith('tab', PLANNED_DOWNTIME_TAB);
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=${PLANNED_DOWNTIME_TAB}`,
+			);
 		});
 
-		describe('Navigation', () => {
-			it('should navigate to Configuration tab with default subTab when clicked', () => {
-				mockQueryParams({ tab: 'AlertRules' });
-				mockLocation(ALERTS_PATH);
+		it('should navigate to RoutingPolicies tab when clicked', () => {
+			mockQueryParams({ tab: 'AlertRules' });
+			mockLocation(ALERTS_PATH);
 
-				render(<AlertList />);
+			render(<AlertList />);
 
-				clickTab(CONFIGURATION_TEXT);
+			clickTab(ROUTING_POLICIES_TEXT);
 
-				expect(mockSet).toHaveBeenCalledWith('tab', CONFIGURATION_TEXT);
-				expect(mockSet).toHaveBeenCalledWith('subTab', PLANNED_DOWNTIME_SUB_TAB);
-				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/alerts?tab=Configuration&subTab=${PLANNED_DOWNTIME_SUB_TAB}`,
-				);
-			});
-
-			it('should preserve existing subTab when navigating to Configuration tab', () => {
-				mockQueryParams({ tab: 'AlertRules', subTab: ROUTING_POLICIES_SUB_TAB });
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				clickTab(CONFIGURATION_TEXT);
-
-				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/alerts?tab=Configuration&subTab=${ROUTING_POLICIES_SUB_TAB}`,
-				);
-			});
-
-			it('should clear subTab when navigating away from Configuration tab', () => {
-				mockQueryParams({
-					tab: CONFIGURATION_TEXT,
-					subTab: PLANNED_DOWNTIME_SUB_TAB,
-				});
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				clickTab(ALERT_RULES_TEXT);
-
-				expect(mockDelete).toHaveBeenCalledWith('subTab');
-				expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
-			});
+			expect(mockSet).toHaveBeenCalledWith('tab', ROUTING_POLICIES_TAB);
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=${ROUTING_POLICIES_TAB}`,
+			);
 		});
 	});
 });

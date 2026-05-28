@@ -14,7 +14,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { AlertListTabs } from 'pages/AlertList/types';
-import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
+import { CalendarClock, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -175,11 +175,21 @@ function CreateRules(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<ConfigureIcon width={14} height={14} />
-					Configuration
+					<CalendarClock size={14} />
+					Planned Downtime
 				</div>
 			),
-			key: AlertListTabs.CONFIGURATION,
+			key: AlertListTabs.PLANNED_DOWNTIME,
+			children: null,
+		},
+		{
+			label: (
+				<div className="periscope-tab top-level-tab">
+					<ConfigureIcon width={14} height={14} />
+					Routing Policies
+				</div>
+			),
+			key: AlertListTabs.ROUTING_POLICIES,
 			children: null,
 		},
 	];
