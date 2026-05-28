@@ -218,7 +218,12 @@ func (m *PlannedMaintenance) ActiveWindow(now time.Time) *Window {
 	// When recurrence is set, the recurring check below handles everything;
 	// falling through here would cause the window to match the absolute
 	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
-	if recurrence == nil && !startTime.IsZero() && !endTime.IsZero() {
+	// EndTime may be zero, which means the maintenance runs indefinitely
+	// until the user updates or deletes it.
+	if recurrence == nil && !startTime.IsZero() {
+		if endTime.IsZero() {
+			return !now.Before(startTime)
+		}
 		if now.Equal(startTime) || now.Equal(endTime) ||
 			(now.After(startTime) && now.Before(endTime)) {
 			return &Window{startTime, &endTime}
@@ -348,7 +353,7 @@ func (m *PlannedMaintenance) IsUpcoming() bool {
 	}
 	now := time.Now().In(loc)
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+	if m.Schedule.Recurrence == nil && !m.Schedule.StartTime.IsZero() {
 		return now.Before(m.Schedule.StartTime)
 	}
 	if m.Schedule.Recurrence != nil {
@@ -410,10 +415,10 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 	var kind MaintenanceKind
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
-		kind = MaintenanceKindFixed
-	} else {
+	if m.Schedule.Recurrence != nil {
 		kind = MaintenanceKindRecurring
+	} else {
+		kind = MaintenanceKindFixed
 	}
 
 	return json.Marshal(struct {

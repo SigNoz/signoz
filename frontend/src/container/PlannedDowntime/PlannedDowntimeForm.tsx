@@ -442,14 +442,8 @@ export function PlannedDowntimeForm(
 					<Select options={TZ_OPTIONS} placeholder="Select timezone" showSearch />
 				</Form.Item>
 				<Form.Item
-					label="Ends on"
+					label="Ends on (leave empty for no end)"
 					name="endTime"
-					required={recurrenceType === recurrenceOptions.doesNotRepeat.value}
-					rules={[
-						{
-							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
-						},
-					]}
 					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
 				>
 					<DatePicker

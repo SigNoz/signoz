@@ -182,7 +182,9 @@ export function CollapseListContent({
 			{renderItems(
 				'Timeframe',
 				schedule?.startTime ? (
-					<Typography>{`${startTime} ⎯ ${endTime}`}</Typography>
+					<Typography>
+						{schedule?.endTime ? `${startTime} ⎯ ${endTime}` : `${startTime} onwards`}
+					</Typography>
 				) : (
 					'-'
 				),
