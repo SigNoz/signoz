@@ -3,14 +3,17 @@ import { useHistory } from 'react-router-dom';
 import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/ui/input';
-import { Button, Flex, Form, Tooltip } from 'antd';
+import { Button, Flex, Form, Segmented, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AlertmanagertypesMaintenanceStatusDTO,
+	type AlertmanagertypesPlannedMaintenanceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -23,13 +26,19 @@ import 'dayjs/locale/en';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
-import { PlannedDowntimeList } from './PlannedDowntimeList';
+import { PlannedDowntimeList, type StatusFilter } from './PlannedDowntimeList';
 import {
 	defaultInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+
+const STATUS_FILTER_OPTIONS: { label: string; value: StatusFilter }[] = [
+	{ label: 'Active & Upcoming', value: 'activeAndUpcoming' },
+	{ label: 'Expired', value: AlertmanagertypesMaintenanceStatusDTO.expired },
+	{ label: 'All', value: 'all' },
+];
 
 dayjs.locale('en');
 
@@ -72,6 +81,8 @@ export function PlannedDowntime(): JSX.Element {
 	const [searchValue, setSearchValue] = React.useState<string | number>(
 		urlQuery.get('search') || '',
 	);
+	const [statusFilter, setStatusFilter] =
+		React.useState<StatusFilter>('activeAndUpcoming');
 	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
@@ -163,7 +174,13 @@ export function PlannedDowntime(): JSX.Element {
 						</Button>
 					</Tooltip>
 				</Flex>
-				<br />
+				<Flex className="status-filter">
+					<Segmented
+						value={statusFilter}
+						options={STATUS_FILTER_OPTIONS}
+						onChange={(value): void => setStatusFilter(value as StatusFilter)}
+					/>
+				</Flex>
 				<PlannedDowntimeList
 					downtimeSchedules={downtimeSchedules}
 					alertOptions={alertOptions || []}
@@ -175,6 +192,7 @@ export function PlannedDowntime(): JSX.Element {
 					}}
 					setEditMode={setEditMode}
 					searchValue={searchValue}
+					statusFilter={statusFilter}
 				/>
 				{isOpen && (
 					<PlannedDowntimeForm

@@ -5,11 +5,12 @@ import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
-import type {
-	ListDowntimeSchedules200,
-	RenderErrorResponseDTO,
-	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesScheduleDTO,
+import {
+	AlertmanagertypesMaintenanceStatusDTO,
+	type ListDowntimeSchedules200,
+	type RenderErrorResponseDTO,
+	type AlertmanagertypesPlannedMaintenanceDTO,
+	type AlertmanagertypesScheduleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
@@ -31,6 +32,64 @@ import {
 import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
+
+export type StatusFilter =
+	| 'all'
+	| 'activeAndUpcoming'
+	| AlertmanagertypesMaintenanceStatusDTO.expired;
+
+const STATUS_BADGE_PROPS: Record<
+	AlertmanagertypesMaintenanceStatusDTO,
+	{ color: 'forest' | 'robin' | 'vanilla'; label: string }
+> = {
+	[AlertmanagertypesMaintenanceStatusDTO.active]: {
+		color: 'forest',
+		label: 'Active',
+	},
+	[AlertmanagertypesMaintenanceStatusDTO.upcoming]: {
+		color: 'robin',
+		label: 'Upcoming',
+	},
+	[AlertmanagertypesMaintenanceStatusDTO.expired]: {
+		color: 'vanilla',
+		label: 'Expired',
+	},
+};
+
+const matchesStatusFilter = (
+	status: AlertmanagertypesMaintenanceStatusDTO | undefined,
+	filter: StatusFilter,
+): boolean => {
+	if (filter === 'all') {
+		return true;
+	}
+	if (filter === 'activeAndUpcoming') {
+		return (
+			status === AlertmanagertypesMaintenanceStatusDTO.active ||
+			status === AlertmanagertypesMaintenanceStatusDTO.upcoming
+		);
+	}
+	return status === filter;
+};
+
+function StatusBadge({
+	status,
+}: {
+	status?: AlertmanagertypesMaintenanceStatusDTO;
+}): JSX.Element | null {
+	if (!status) {
+		return null;
+	}
+	const props = STATUS_BADGE_PROPS[status];
+	if (!props) {
+		return null;
+	}
+	return (
+		<Badge color={props.color} variant="outline">
+			{props.label}
+		</Badge>
+	);
+}
 
 interface AlertRuleTagsProps {
 	selectedTags: DefaultOptionType | DefaultOptionType[];
@@ -83,11 +142,13 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 function HeaderComponent({
 	name,
 	duration,
+	status,
 	handleEdit,
 	handleDelete,
 }: {
 	name: string;
 	duration: string;
+	status?: AlertmanagertypesMaintenanceStatusDTO;
 	handleEdit: () => void;
 	handleDelete: () => void;
 }): JSX.Element {
@@ -95,9 +156,10 @@ function HeaderComponent({
 	const isCrudEnabled = user?.role !== USER_ROLES.VIEWER;
 	return (
 		<Flex className="header-content" justify="space-between">
-			<Flex gap={8}>
+			<Flex gap={8} align="center">
 				<Typography>{name}</Typography>
 				<Badge color="vanilla">{duration}</Badge>
+				<StatusBadge status={status} />
 			</Flex>
 
 			{isCrudEnabled && (
@@ -225,6 +287,7 @@ export function CustomCollapseList(
 		createdAt,
 		createdBy,
 		schedule,
+		status,
 		updatedAt,
 		updatedBy,
 		name,
@@ -253,6 +316,7 @@ export function CustomCollapseList(
 									: getDuration(schedule?.startTime || '', schedule?.endTime || '')
 							}
 							name={defaultTo(name, '')}
+							status={status}
 							handleEdit={() => {
 								setInitialValues({ ...props });
 								setModalOpen(true);
@@ -294,6 +358,7 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime,
 	setEditMode,
 	searchValue,
+	statusFilter,
 }: {
 	downtimeSchedules: UseQueryResult<
 		ListDowntimeSchedules200,
@@ -307,6 +372,7 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
+	statusFilter: StatusFilter;
 }): JSX.Element {
 	const columns: TableProps<DowntimeSchedulesTableData>['columns'] = [
 		{
@@ -324,18 +390,30 @@ export function PlannedDowntimeList({
 	];
 	const { notifications } = useNotifications();
 
+	const statusOrder: Record<AlertmanagertypesMaintenanceStatusDTO, number> = {
+		[AlertmanagertypesMaintenanceStatusDTO.active]: 0,
+		[AlertmanagertypesMaintenanceStatusDTO.upcoming]: 1,
+		[AlertmanagertypesMaintenanceStatusDTO.expired]: 2,
+	};
+
 	const tableData = [...(downtimeSchedules.data?.data || [])]
-		.sort((a, b): number => {
-			if (a?.updatedAt && b?.updatedAt) {
-				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
-			}
-			return 0;
-		})
+		.filter((data) => matchesStatusFilter(data.status, statusFilter))
 		.filter(
 			(data) =>
 				data.name.includes(searchValue.toLocaleString()) ||
 				data.id === searchValue.toLocaleString(),
 		)
+		.sort((a, b): number => {
+			const statusDiff =
+				(statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+			if (statusDiff !== 0) {
+				return statusDiff;
+			}
+			if (a?.updatedAt && b?.updatedAt) {
+				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
+			}
+			return 0;
+		})
 		.map((data) => {
 			const specificAlertOptions = getAlertOptionsFromIds(
 				data.alertIds || [],
