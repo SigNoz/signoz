@@ -306,6 +306,22 @@ describe('useUrlSearchState', () => {
 			expect(onDebouncedChange).toHaveBeenCalledWith('second');
 			expect(onDebouncedChange).toHaveBeenCalledTimes(2);
 		});
+
+		it('calls onDebouncedChange immediately when search is cleared', () => {
+			const onDebouncedChange = jest.fn();
+			const { result } = renderHook(
+				() => useUrlSearchState('search', { onDebouncedChange }),
+				{ wrapper: createWrapper('?search=existing') },
+			);
+
+			act(() => {
+				result.current.clearSearch();
+			});
+
+			// clearSearch calls callback immediately (no debounce wait)
+			expect(onDebouncedChange).toHaveBeenCalledWith('');
+			expect(onDebouncedChange).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	describe('different query keys', () => {

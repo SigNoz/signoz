@@ -38,15 +38,16 @@ export function useUrlSearchState(
 
 	// Track what we last synced to URL to detect external changes
 	const lastSyncedToUrl = useRef(searchParam);
+	const onDebouncedChange = options.onDebouncedChange;
 
 	// Sync debounced value to URL (user typing -> URL)
 	useEffect(() => {
 		if (debouncedSearch !== lastSyncedToUrl.current) {
 			lastSyncedToUrl.current = debouncedSearch;
 			void setSearchParam(debouncedSearch || null);
-			options.onDebouncedChange?.(debouncedSearch);
+			onDebouncedChange?.(debouncedSearch);
 		}
-	}, [debouncedSearch, setSearchParam, options]);
+	}, [debouncedSearch, setSearchParam, onDebouncedChange]);
 
 	// Sync URL to local state (browser back/forward -> input)
 	useEffect(() => {
@@ -65,7 +66,8 @@ export function useUrlSearchState(
 
 	const clearSearch = useCallback((): void => {
 		setSearchText('');
-	}, []);
+		onDebouncedChange?.('');
+	}, [onDebouncedChange]);
 
 	return {
 		searchText,
