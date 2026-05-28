@@ -61,15 +61,13 @@ const severyFilters: ComboboxSimpleItem[] = [
 function TriggeredAlerts(): JSX.Element {
 	const [filterValues, setFilterValues] = useTriggeredAlertsFilters();
 	const [selectedGroupBy, setSelectedGroupBy] = useTriggeredAlertsGroupBy();
-	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
-		useUrlSearchState(TRIGGERED_ALERTS_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 46,
 	});
 
-	const { page, limit, setLimit, orderBy } = useTableParams(
+	const { page, limit, setLimit, orderBy, setPage } = useTableParams(
 		QUERY_PARAMS_CONFIG,
 		{
 			page: DEFAULT_PAGE,
@@ -79,6 +77,15 @@ function TriggeredAlerts(): JSX.Element {
 			cleanupOnUnmount: true,
 		},
 	);
+
+	const resetPageOnSearch = useCallback((): void => {
+		setPage(1);
+	}, [setPage]);
+
+	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
+		useUrlSearchState(TRIGGERED_ALERTS_PARAMS.SEARCH, {
+			onDebouncedChange: resetPageOnSearch,
+		});
 
 	const selectedFilter = useMemo(
 		(): FilterValue[] => (filterValues ?? []).map((v: string) => ({ value: v })),

@@ -40,15 +40,13 @@ function ListAlertRules(): JSX.Element {
 	);
 
 	const [filterValues, setFilterValues] = useAlertRulesFilters();
-	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
-		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 46,
 	});
 
-	const { orderBy, page, limit, setLimit } = useTableParams(
+	const { orderBy, page, limit, setLimit, setPage } = useTableParams(
 		QUERY_PARAMS_CONFIG,
 		{
 			page: DEFAULT_PAGE,
@@ -58,6 +56,15 @@ function ListAlertRules(): JSX.Element {
 			cleanupOnUnmount: true,
 		},
 	);
+
+	const resetPageOnSearch = useCallback((): void => {
+		setPage(1);
+	}, [setPage]);
+
+	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
+		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH, {
+			onDebouncedChange: resetPageOnSearch,
+		});
 
 	const { filteredRules, isFetching, isError, allRules, refetch } =
 		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);

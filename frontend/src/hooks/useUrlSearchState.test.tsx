@@ -246,6 +246,68 @@ describe('useUrlSearchState', () => {
 		});
 	});
 
+	describe('onDebouncedChange callback', () => {
+		it('calls onDebouncedChange when debounced value changes', () => {
+			const onDebouncedChange = jest.fn();
+			const { result } = renderHook(
+				() => useUrlSearchState('search', { onDebouncedChange }),
+				{ wrapper: createWrapper() },
+			);
+
+			act(() => {
+				result.current.setSearchText('test');
+			});
+
+			expect(onDebouncedChange).not.toHaveBeenCalled();
+
+			act(() => {
+				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+			});
+
+			expect(onDebouncedChange).toHaveBeenCalledWith('test');
+			expect(onDebouncedChange).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not call onDebouncedChange if value unchanged', () => {
+			const onDebouncedChange = jest.fn();
+			renderHook(() => useUrlSearchState('search', { onDebouncedChange }), {
+				wrapper: createWrapper('?search=existing'),
+			});
+
+			// Initial render with existing value should not trigger callback
+			expect(onDebouncedChange).not.toHaveBeenCalled();
+		});
+
+		it('calls onDebouncedChange on each distinct change', () => {
+			const onDebouncedChange = jest.fn();
+			const { result } = renderHook(
+				() => useUrlSearchState('search', { onDebouncedChange }),
+				{ wrapper: createWrapper() },
+			);
+
+			act(() => {
+				result.current.setSearchText('first');
+			});
+
+			act(() => {
+				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+			});
+
+			expect(onDebouncedChange).toHaveBeenCalledWith('first');
+
+			act(() => {
+				result.current.setSearchText('second');
+			});
+
+			act(() => {
+				jest.advanceTimersByTime(DEFAULT_DEBOUNCE_MS);
+			});
+
+			expect(onDebouncedChange).toHaveBeenCalledWith('second');
+			expect(onDebouncedChange).toHaveBeenCalledTimes(2);
+		});
+	});
+
 	describe('different query keys', () => {
 		it('reads from correct URL param key', () => {
 			const { result } = renderHook(() => useUrlSearchState('mySearch'), {

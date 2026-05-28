@@ -6,6 +6,7 @@ import useDebounce from './useDebounce';
 
 interface UseUrlSearchStateOptions {
 	debounceMs?: number;
+	onDebouncedChange?: (value: string) => void;
 }
 
 interface UseUrlSearchStateReturn {
@@ -43,8 +44,9 @@ export function useUrlSearchState(
 		if (debouncedSearch !== lastSyncedToUrl.current) {
 			lastSyncedToUrl.current = debouncedSearch;
 			void setSearchParam(debouncedSearch || null);
+			options.onDebouncedChange?.(debouncedSearch);
 		}
-	}, [debouncedSearch, setSearchParam]);
+	}, [debouncedSearch, setSearchParam, options]);
 
 	// Sync URL to local state (browser back/forward -> input)
 	useEffect(() => {
