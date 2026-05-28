@@ -25,8 +25,7 @@ export function normalizeToPostable(
 		  }
 		| undefined;
 
-	const resolvedName =
-		(parsed.name as string | undefined) ?? legacyMeta?.name;
+	const resolvedName = (parsed.name as string | undefined) ?? legacyMeta?.name;
 
 	if (hasSpec) {
 		return {
