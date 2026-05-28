@@ -1,0 +1,62 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 320px;
+	padding: 105px 141px;
+	margin-top: 16px;
+	justify-content: center;
+	align-items: flex-start;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+	gap: 4px;
+}
+
+.img {
+	max-width: 100%;
+}
+
+.errorText {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.actionButtons {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	margin-top: 20px;
+}
+
+.retryButton {
+	display: flex;
+	align-items: center;
+	height: 32px;
+	padding: 5.937px 11.875px;
+	justify-content: center;
+	gap: 5.937px;
+	border-radius: 1.484px;
+	background: var(--l1-border);
+	color: var(--l1-foreground);
+}
+
+.learnMore {
+	color: var(--bg-robin-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+	padding: 0px;
+}
+
+.learnMoreArrow {
+	margin-left: -20px;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+}

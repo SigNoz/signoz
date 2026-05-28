@@ -1,0 +1,12 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 320px;
+	gap: 8px;
+	padding: 105px 190px;
+	margin-top: 16px;
+	justify-content: center;
+	align-items: flex-start;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+}
