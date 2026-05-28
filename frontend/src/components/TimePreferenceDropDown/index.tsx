@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
-import { Button, Dropdown } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
@@ -27,20 +28,17 @@ function TimePreference({
 
 	const menu = useMemo(
 		() => ({
-			items: menuItems,
-			onClick: timeMenuItemOnChangeHandler,
+			items: menuItems.map((item) => ({
+				...item,
+				onClick: timeMenuItemOnChangeHandler,
+			})),
 		}),
 		[timeMenuItemOnChangeHandler],
 	);
 
 	return (
-		<Dropdown
-			menu={menu}
-			rootClassName="time-selection-menu"
-			className="time-selection-target"
-			trigger={['click']}
-		>
-			<Button>
+		<DropdownMenuSimple menu={menu} className="time-selection-menu">
+			<Button className="time-selection-target">
 				<div className="button-selected-text">
 					<Globe size={14} />
 					<Typography.Text className="selected-value">
@@ -49,7 +47,7 @@ function TimePreference({
 				</div>
 				<ChevronDown size="md" />
 			</Button>
-		</Dropdown>
+		</DropdownMenuSimple>
 	);
 }
 

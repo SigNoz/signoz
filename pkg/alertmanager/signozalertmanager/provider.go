@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -233,6 +234,10 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	}
 
 	return channel, nil
+}
+
+func (provider *provider) Config() alertmanagerserver.Config {
+	return provider.config.Signoz.Config
 }
 
 func (provider *provider) SetConfig(ctx context.Context, config *alertmanagertypes.Config) error {

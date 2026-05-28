@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"sync"
 	"time"
 
@@ -47,13 +48,14 @@ func NewAnomalyRule(
 	p *ruletypes.PostableRule,
 	querier querier.Querier,
 	logger *slog.Logger,
+	externalURL *url.URL,
 	opts ...baserules.RuleOption,
 ) (*AnomalyRule, error) {
 	logger.Info("creating new AnomalyRule", slog.String("rule.id", id))
 
 	opts = append(opts, baserules.WithLogger(logger))
 
-	baseRule, err := baserules.NewBaseRule(id, orgID, p, opts...)
+	baseRule, err := baserules.NewBaseRule(id, orgID, p, externalURL, opts...)
 	if err != nil {
 		return nil, err
 	}
