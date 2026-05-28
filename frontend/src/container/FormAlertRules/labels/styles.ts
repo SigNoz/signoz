@@ -1,5 +1,5 @@
 import { grey } from '@ant-design/colors';
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
 interface SearchContainerProps {
@@ -27,8 +27,11 @@ export const QueryChipContainer = styled.span`
 			background: ${grey.primary}44;
 		}
 	}
+	[data-slot='badge'] {
+		margin-right: 0.1rem;
+	}
 `;
 
-export const QueryChipItem = styled(Tag)`
+export const QueryChipItem = styled(Badge)`
 	margin-right: 0.1rem;
 `;

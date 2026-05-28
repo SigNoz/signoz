@@ -14,7 +14,7 @@
 			font-size: 12px;
 		}
 
-		:global(.ant-tag .ant-typography) {
+		:global([data-slot='badge'] .ant-typography) {
 			font-size: 12px;
 		}
 	}

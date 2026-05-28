@@ -1,7 +1,8 @@
 import { HTMLAttributes } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { TableColumnsType as ColumnsType, TableProps, Tag } from 'antd';
+import { TableColumnsType as ColumnsType, TableProps } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -70,7 +71,7 @@ function TraceTable(): JSX.Element {
 		if (value.length === 0) {
 			return <Typography>-</Typography>;
 		}
-		return <Tag color="magenta">{value}</Tag>;
+		return <Badge color="sakura">{value}</Badge>;
 	};
 
 	const columns: ColumnsType<TableType> = [
