@@ -163,17 +163,29 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 }
 
 func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
-	_, err := r.sqlstore.
-		BunDB().
-		NewDelete().
-		Model(new(alertmanagertypes.StorablePlannedMaintenance)).
-		Where("id = ?", id.StringValue()).
-		Exec(ctx)
-	if err != nil {
-		return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete planned maintenance because it is referenced by associated rules, remove the rules from the planned maintenance first")
-	}
+	return r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		_, err := r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
+			Where("planned_maintenance_id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(alertmanagertypes.StorablePlannedMaintenance)).
+			Where("id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance *alertmanagertypes.PostablePlannedMaintenance, id valuer.UUID) error {
