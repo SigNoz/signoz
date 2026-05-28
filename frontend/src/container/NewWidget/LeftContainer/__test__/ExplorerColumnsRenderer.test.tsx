@@ -146,6 +146,7 @@ describe('ExplorerColumnsRenderer', () => {
 	});
 
 	it('opens and closes the dropdown', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
 			<Wrapper>
 				<ExplorerColumnsRenderer
@@ -158,12 +159,12 @@ describe('ExplorerColumnsRenderer', () => {
 		);
 
 		const addButton = screen.getByTestId('add-columns-button');
-		await userEvent.click(addButton);
+		await user.click(addButton);
 
 		expect(screen.getByPlaceholderText('Search')).toBeInTheDocument();
 		expect(screen.getByText('attribute1')).toBeInTheDocument();
 
-		await userEvent.click(addButton);
+		await user.click(addButton);
 		await waitFor(() => {
 			expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 		});

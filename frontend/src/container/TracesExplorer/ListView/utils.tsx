@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -107,9 +107,9 @@ export const getListColumns = (
 					) {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Tag data-testid={name} color="magenta">
+								<Badge data-testid={name} color="sakura" variant="outline">
 									{value}
-								</Tag>
+								</Badge>
 							</BlockLink>
 						);
 					}

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { SelectProps } from 'antd';
-import { Tag, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Tooltip } from 'antd';
 import type { BaseOptionType } from 'antd/es/select';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
@@ -83,14 +84,17 @@ function Filter({
 		const { closable, onClose, label } = props;
 
 		return (
-			<Tag
-				color="magenta"
-				closable={closable}
-				onClose={onClose}
+			<Badge
+				color="sakura"
 				style={{ marginRight: 3 }}
+				closable={closable}
+				onClose={(e): void => {
+					e.preventDefault();
+					onClose();
+				}}
 			>
 				{label}
-			</Tag>
+			</Badge>
 		);
 	};
 
