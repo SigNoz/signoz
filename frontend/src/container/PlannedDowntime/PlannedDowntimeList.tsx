@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Badge } from '@signozhq/ui/badge';
+import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -35,7 +35,7 @@ const { Panel } = Collapse;
 
 const STATUS_BADGE_PROPS: Record<
 	AlertmanagertypesMaintenanceStatusDTO,
-	{ color: 'forest' | 'robin' | 'vanilla'; label: string }
+	{ color: BadgeColor; label: string }
 > = {
 	[AlertmanagertypesMaintenanceStatusDTO.active]: {
 		color: 'forest',
