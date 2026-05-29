@@ -76,7 +76,7 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 
 	data, err := json.Marshal(receiver)
 	if err != nil {
-		return nil, err
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "marshal receiver")
 	}
 	channel.Data = string(data)
 
