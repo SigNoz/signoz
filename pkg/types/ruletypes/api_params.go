@@ -642,24 +642,83 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// ActiveMute holds the currently active mute window for an alert rule.
+type ActiveMute struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Start       time.Time  `json:"start,omitempty"`
+	End         *time.Time `json:"end,omitempty"`
+}
+
+// findActiveMutesForRule returns the active mute windows for the rule, if any.
+// Scope expressions are skipped here because we operate at the rule level, and
+// no labels are available.
+func findActiveMutesForRule(ruleID string, maintenances []*alertmanagertypes.PlannedMaintenance) []ActiveMute {
+	mutes := make([]ActiveMute, 0)
+
+	if len(maintenances) == 0 || ruleID == "" {
+		return mutes
+	}
+	now := time.Now()
+
+	for _, m := range maintenances {
+		if !m.AppliesTo(ruleID) {
+			continue
+		}
+
+		if w := m.ActiveWindow(now); w != nil {
+			mutes = append(mutes, ActiveMute{
+				ID:          m.ID.StringValue(),
+				Name:        m.Name,
+				Description: m.Description,
+				Start:       w.Start,
+				End:         w.End,
+			})
+		}
+	}
+
+	// Sort by the furthest end time. nil (forever) wins.
+	slices.SortFunc(mutes, func(a, b ActiveMute) int {
+		if a.End == nil && b.End == nil {
+			return 0
+		}
+		if a.End == nil {
+			return -1
+		}
+		if b.End == nil {
+			return 1
+		}
+		return b.End.Compare(*a.End)
+	})
+
+	return mutes
+}
+
 // Rule is the v2 API read model for an alerting rule. It aligns audit fields
 // with the canonical types.TimeAuditable / types.UserAuditable shape used by
 // PlannedMaintenance and other entities. v1 handlers keep serializing
 // GettableRule directly for back-compat with existing SDK / Terraform clients.
 type Rule struct {
-	Id    string     `json:"id" required:"true"`
-	State AlertState `json:"state" required:"true"`
+	Id    string       `json:"id" required:"true"`
+	State AlertState   `json:"state" required:"true"`
+	Mutes []ActiveMute `json:"mutes"`
 	PostableRule
 	types.TimeAuditable
 	types.UserAuditable
 }
 
-func NewRule(g *GettableRule) *Rule {
+func NewRule(g *GettableRule, maintenances []*alertmanagertypes.PlannedMaintenance) *Rule {
 	r := &Rule{
 		Id:           g.Id,
 		State:        g.State,
 		PostableRule: g.PostableRule,
 	}
+
+	if r.State != StateDisabled {
+		r.Mutes = findActiveMutesForRule(g.Id, maintenances)
+	}
+
 	r.CreatedAt = g.CreatedAt
 	r.UpdatedAt = g.UpdatedAt
 	if g.CreatedBy != nil {

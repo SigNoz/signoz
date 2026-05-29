@@ -43,6 +43,7 @@ import { isModifierKeyPressed } from 'utils/app';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
+import MutedBadge from './TableComponents/MutedBadge';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 import { alertActionLogEvent, filterAlerts } from './utils';
@@ -276,7 +277,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onEditHandler(record, { newTab: isModifierKeyPressed(e) });
 				};
 
-				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;
+				const isMuted = Boolean(record.mutes?.length);
+
+				return (
+					<span className="alert-list-name-cell">
+						<Typography.Link onClick={onClickHandler}>{value}</Typography.Link>
+						{isMuted && <MutedBadge muteEndTime={record.mutes![0].end} />}
+					</span>
+				);
 			},
 			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},

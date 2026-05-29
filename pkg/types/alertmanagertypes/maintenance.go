@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -81,6 +82,11 @@ type PlannedMaintenance struct {
 	Kind        MaintenanceKind   `json:"kind" required:"true"`
 }
 
+type Window struct {
+	Start time.Time
+	End   *time.Time
+}
+
 // PostablePlannedMaintenance is the input payload for creating or updating a
 // planned maintenance. Server-owned fields (id, timestamps, audit users,
 // derived status / kind) are deliberately not accepted from the client.
@@ -148,6 +154,12 @@ type PlannedMaintenanceWithRules struct {
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
+// AppliesTo reports whether this maintenance applies to the given rule.
+// An empty RuleIDs set means the maintenance applies to all rules.
+func (m *PlannedMaintenance) AppliesTo(ruleID string) bool {
+	return len(m.RuleIDs) == 0 || slices.Contains(m.RuleIDs, ruleID)
+}
+
 // HasScheduleRecurrenceBoundsMismatch reports whether a recurring maintenance
 // has different start/end bounds in Schedule and Schedule.Recurrence.
 //
@@ -169,26 +181,7 @@ func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
 }
 
 func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) (bool, error) {
-	// Check if the alert ID is in the maintenance window
-	found := false
-	if len(m.RuleIDs) > 0 {
-		for _, alertID := range m.RuleIDs {
-			if alertID == ruleID {
-				found = true
-				break
-			}
-		}
-	}
-	// If no alert ids, then skip all alerts
-	if len(m.RuleIDs) == 0 {
-		found = true
-	}
-
-	if !found {
-		return false, nil
-	}
-
-	if !m.IsActive(now) {
+	if !m.AppliesTo(ruleID) || !m.IsActive(now) {
 		return false, nil
 	}
 
@@ -206,39 +199,27 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 
 // IsActive reports whether [now] falls inside the maintenance window's schedule.
 func (m *PlannedMaintenance) IsActive(now time.Time) bool {
+	return m.ActiveWindow(now) != nil
+}
+
+// ActiveWindow returns the maintenance window that [now] falls within, if any.
+func (m *PlannedMaintenance) ActiveWindow(now time.Time) *Window {
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
-		return false
+		return nil
 	}
 
-	startTime := m.Schedule.StartTime
-	endTime := m.Schedule.EndTime
 	recurrence := m.Schedule.Recurrence
-
-	// fixed schedule — only when no recurrence is configured.
-	// When recurrence is set, the recurring check below handles everything;
-	// falling through here would cause the window to match the absolute
-	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
-	if recurrence == nil && !startTime.IsZero() && !endTime.IsZero() {
-		if now.Equal(startTime) || now.Equal(endTime) ||
-			(now.After(startTime) && now.Before(endTime)) {
-			return true
-		}
-	}
-
-	// recurring schedule
 	if recurrence != nil {
 		// Make sure the recurrence has started
 		if now.Before(recurrence.StartTime) {
-			return false
+			return nil
 		}
 
 		// Check if recurrence has expired
-		if recurrence.EndTime != nil {
-			if !recurrence.EndTime.IsZero() && now.After(*recurrence.EndTime) {
-				return false
-			}
+		if recurrence.EndTime != nil && !recurrence.EndTime.IsZero() && now.After(*recurrence.EndTime) {
+			return nil
 		}
 
 		currentTime := now.In(loc)
@@ -249,15 +230,32 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 			return m.checkWeekly(currentTime, recurrence, loc)
 		case RepeatTypeMonthly:
 			return m.checkMonthly(currentTime, recurrence, loc)
+		default:
+			// unreachable: invalid repeat type
+			return nil
 		}
 	}
 
-	return false
+	// Fixed schedule
+	startTime := m.Schedule.StartTime
+	endTime := m.Schedule.EndTime
+
+	if startTime.IsZero() || now.Before(startTime) {
+		// note: startTime should never be zero for fixed schedule
+		return nil
+	}
+
+	if endTime.IsZero() || !now.After(endTime) {
+		// zero endTime means "forever" downtime
+		return &Window{startTime, &endTime}
+	}
+
+	return nil
 }
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
-func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) *Window {
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
 		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
@@ -266,13 +264,17 @@ func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, 
 	if candidate.After(currentTime) {
 		candidate = candidate.AddDate(0, 0, -1)
 	}
-	return currentTime.Sub(candidate) <= rec.Duration.Duration()
+	if currentTime.Sub(candidate) <= rec.Duration.Duration() {
+		end := candidate.Add(rec.Duration.Duration())
+		return &Window{candidate, &end}
+	}
+	return nil
 }
 
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
-func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) *Window {
 	// If no days specified, treat as every day (like daily).
 	if len(rec.RepeatOn) == 0 {
 		return m.checkDaily(currentTime, rec, loc)
@@ -296,15 +298,16 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 			candidate = candidate.AddDate(0, 0, -7)
 		}
 		if currentTime.Sub(candidate) <= rec.Duration.Duration() {
-			return true
+			end := candidate.Add(rec.Duration.Duration())
+			return &Window{candidate, &end}
 		}
 	}
-	return false
+	return nil
 }
 
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
-func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) *Window {
 	refDay := rec.StartTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
@@ -333,21 +336,25 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 			)
 		}
 	}
-	return currentTime.Sub(candidate) <= rec.Duration.Duration()
+	if currentTime.Sub(candidate) <= rec.Duration.Duration() {
+		end := candidate.Add(rec.Duration.Duration())
+		return &Window{candidate, &end}
+	}
+	return nil
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
-	loc, err := time.LoadLocation(m.Schedule.Timezone)
-	if err != nil {
-		return false
-	}
-	now := time.Now().In(loc)
+	now := time.Now()
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		return now.Before(m.Schedule.StartTime)
-	}
 	if m.Schedule.Recurrence != nil {
-		return now.Before(m.Schedule.Recurrence.StartTime)
+		// Note: this would return true even if the maintenance is Active.
+		// This isn't an issue right now because the only usage happens after the `IsActive` check.
+		return m.Schedule.Recurrence.EndTime == nil || now.Before(*m.Schedule.Recurrence.EndTime)
+	}
+
+	// Fixed schedule
+	if !m.Schedule.StartTime.IsZero() {
+		return now.Before(m.Schedule.StartTime)
 	}
 	return false
 }
@@ -404,10 +411,10 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 	var kind MaintenanceKind
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
-		kind = MaintenanceKindFixed
-	} else {
+	if m.Schedule.Recurrence != nil {
 		kind = MaintenanceKindRecurring
+	} else {
+		kind = MaintenanceKindFixed
 	}
 
 	return json.Marshal(struct {

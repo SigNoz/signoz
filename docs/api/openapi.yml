@@ -5945,6 +5945,22 @@ components:
       - start
       - end
       type: object
+    RuletypesActiveMute:
+      properties:
+        description:
+          type: string
+        end:
+          format: date-time
+          nullable: true
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        start:
+          format: date-time
+          type: string
+      type: object
     RuletypesAlertCompositeQuery:
       properties:
         panelType:
@@ -6226,6 +6242,11 @@ components:
           additionalProperties:
             type: string
           type: object
+        mutes:
+          items:
+            $ref: '#/components/schemas/RuletypesActiveMute'
+          nullable: true
+          type: array
         notificationSettings:
           $ref: '#/components/schemas/RuletypesNotificationSettings'
         preferredChannels:

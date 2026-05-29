@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Divider } from '@signozhq/ui/divider';
-import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
@@ -18,6 +17,13 @@ import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
+import AlertStateSegmented, {
+	AlertSegmentedState,
+} from '../MuteAlert/AlertStateSegmented';
+import MutePopover from '../MuteAlert/MutePopover';
+import MuteSchedulerDrawer from '../MuteAlert/MuteSchedulerDrawer';
+import { useActiveMutes } from '../MuteAlert/useActiveMutes';
+import { useMuteAlertRule } from '../MuteAlert/useMuteAlertRule';
 import RenameModal from './RenameModal';
 
 import './ActionButtons.styles.scss';
@@ -107,19 +113,77 @@ function AlertActionButtons({
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => (): void => setAlertRuleState(undefined), []);
 
-	const toggleAlertRule = useCallback(() => {
-		setIsAlertRuleDisabled((prev) => !prev);
-		handleAlertStateToggle();
-	}, [handleAlertStateToggle]);
+	const { activeMutes, refetch: refetchActiveMute } = useActiveMutes(ruleId);
+
+	const segmentedState: AlertSegmentedState = useMemo(() => {
+		if (isAlertRuleDisabled) {
+			return 'disabled';
+		}
+		if (activeMutes.length) {
+			return 'muted';
+		}
+		return 'active';
+	}, [isAlertRuleDisabled, activeMutes]);
+
+	const [isMutePopoverOpen, setIsMutePopoverOpen] = useState<boolean>(false);
+	const [isMuteDrawerOpen, setIsMuteDrawerOpen] = useState<boolean>(false);
+
+	const { mute, isLoading: isMuting } = useMuteAlertRule({
+		ruleId,
+		onSuccess: () => {
+			setIsMutePopoverOpen(false);
+			setIsMuteDrawerOpen(false);
+			refetchActiveMute();
+		},
+	});
+
+	const handleActiveClick = useCallback(() => {
+		// If currently disabled, re-enable. Otherwise (already active) no-op.
+		// When muted, the segmented control disables this button.
+		if (isAlertRuleDisabled) {
+			setIsAlertRuleDisabled(false);
+			handleAlertStateToggle();
+		}
+	}, [isAlertRuleDisabled, handleAlertStateToggle]);
+
+	const handleMuteClick = useCallback(() => {
+		if (segmentedState === 'active') {
+			setIsMutePopoverOpen(true);
+		}
+	}, [segmentedState]);
+
+	const handleDisableClick = useCallback(() => {
+		if (!isAlertRuleDisabled) {
+			setIsAlertRuleDisabled(true);
+			handleAlertStateToggle();
+		}
+	}, [isAlertRuleDisabled, handleAlertStateToggle]);
+
+	const ruleDisplayName = alertRuleName ?? alertDetails.alert;
 
 	return (
 		<>
 			<div className="alert-action-buttons">
-				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
-					{isAlertRuleDisabled !== undefined && (
-						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
-					)}
-				</Tooltip>
+				{isAlertRuleDisabled !== undefined && (
+					<div className="alert-state-segmented-wrapper">
+						<AlertStateSegmented
+							state={segmentedState}
+							onActive={handleActiveClick}
+							onMute={handleMuteClick}
+							onDisable={handleDisableClick}
+						/>
+						<MutePopover
+							open={isMutePopoverOpen}
+							onOpenChange={setIsMutePopoverOpen}
+							ruleName={ruleDisplayName}
+							isLoading={isMuting}
+							onSubmit={mute}
+							onOpenCustomWindow={(): void => setIsMuteDrawerOpen(true)}
+							anchor={<span className="alert-state-segmented-anchor" />}
+						/>
+					</div>
+				)}
+
 				<CopyToClipboard textToCopy={window.location.href} />
 
 				<Divider type="vertical" className="alert-action-buttons__divider" />
@@ -140,6 +204,14 @@ function AlertActionButtons({
 					</span>
 				</DropdownMenuSimple>
 			</div>
+
+			<MuteSchedulerDrawer
+				open={isMuteDrawerOpen}
+				onClose={(): void => setIsMuteDrawerOpen(false)}
+				ruleName={ruleDisplayName}
+				isLoading={isMuting}
+				onSubmit={mute}
+			/>
 
 			<RenameModal
 				isOpen={isRenameAlertOpen}

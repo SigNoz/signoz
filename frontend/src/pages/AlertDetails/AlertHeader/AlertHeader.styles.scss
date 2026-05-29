@@ -1,3 +1,13 @@
+.alert-info-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.alert-info__banner {
+	padding: 0 16px;
+}
+
 .alert-info {
 	display: flex;
 	justify-content: space-between;

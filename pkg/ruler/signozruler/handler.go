@@ -29,15 +29,23 @@ func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	rules, err := handler.ruler.ListRuleStates(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
+	schedules, _ := handler.ruler.MaintenanceStore().ListPlannedMaintenance(ctx, claims.OrgID)
+
 	view := make([]*ruletypes.Rule, 0, len(rules.Rules))
 	for _, rule := range rules.Rules {
-		view = append(view, ruletypes.NewRule(rule))
+		view = append(view, ruletypes.NewRule(rule, schedules))
 	}
 
 	render.Success(rw, http.StatusOK, view)
@@ -46,6 +54,12 @@ func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
 func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
@@ -59,7 +73,9 @@ func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
+	schedules, _ := handler.ruler.MaintenanceStore().ListPlannedMaintenance(ctx, claims.OrgID)
+
+	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule, schedules))
 }
 
 func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
@@ -79,7 +95,7 @@ func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, ruletypes.NewRule(rule))
+	render.Success(rw, http.StatusCreated, ruletypes.NewRule(rule, nil))
 }
 
 func (handler *handler) UpdateRuleByID(rw http.ResponseWriter, req *http.Request) {
@@ -150,7 +166,7 @@ func (handler *handler) PatchRuleByID(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
+	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule, nil))
 }
 
 func (handler *handler) TestRule(rw http.ResponseWriter, req *http.Request) {

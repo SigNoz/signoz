@@ -13,6 +13,20 @@
 		align-items: center;
 	}
 }
+
+.alert-state-segmented-wrapper {
+	position: relative;
+	display: inline-flex;
+}
+
+.alert-state-segmented-anchor {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
 .dropdown-menu {
 	border-radius: 4px;
 	box-shadow: none;

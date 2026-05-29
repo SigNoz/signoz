@@ -12,6 +12,9 @@ import AlertActionButtons from './ActionButtons/ActionButtons';
 import AlertLabels from './AlertLabels/AlertLabels';
 import AlertSeverity from './AlertSeverity/AlertSeverity';
 import AlertState from './AlertState/AlertState';
+import DisabledBanner from './MuteAlert/DisabledBanner';
+import MutedBanner from './MuteAlert/MutedBanner';
+import { useActiveMutes } from './MuteAlert/useActiveMutes';
 
 import './AlertHeader.styles.scss';
 
@@ -43,6 +46,13 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
+	const ruleId = alertDetails?.id || '';
+	const { activeMutes, refetch } = useActiveMutes(ruleId);
+	const effectiveState = alertRuleState ?? state ?? '';
+	const isDisabled = effectiveState === 'disabled';
+	const showMutedBanner = !isDisabled && Boolean(activeMutes.length);
+	const showDisabledBanner = isDisabled;
+
 	const CreateAlertV1Header = (
 		<div className="alert-info__info-wrapper">
 			<div className="top-section">
@@ -67,14 +77,23 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	);
 
 	return (
-		<div className="alert-info">
-			{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
-			<div className="alert-info__action-buttons">
-				<AlertActionButtons
-					alertDetails={alertDetails}
-					ruleId={alertDetails?.id || ''}
-				/>
+		<div className="alert-info-wrapper">
+			<div className="alert-info">
+				{isV2Alert ? <CreateAlertV2Header /> : CreateAlertV1Header}
+				<div className="alert-info__action-buttons">
+					<AlertActionButtons alertDetails={alertDetails} ruleId={ruleId} />
+				</div>
 			</div>
+			{showMutedBanner && (
+				<div className="alert-info__banner">
+					<MutedBanner activeMute={activeMutes[0]} onExpire={refetch} />
+				</div>
+			)}
+			{showDisabledBanner && (
+				<div className="alert-info__banner">
+					<DisabledBanner rule={alertDetails as RuletypesRuleDTO} />
+				</div>
+			)}
 		</div>
 	);
 }
