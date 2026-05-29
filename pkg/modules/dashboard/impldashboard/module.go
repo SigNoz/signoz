@@ -69,15 +69,6 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.Dashboard, error) {
-	storableDashboard, err := module.store.GetSystemDashboard(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
-}
-
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	storableDashboards, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -122,10 +113,14 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error) {
-	existing, err := module.GetSystemDashboard(ctx, orgID)
+func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if dashboard.Source != dashboardtypes.SourceSystem {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only system dashboards can be reset")
 	}
 
 	defaults, err := dashboardtypes.NewDefaultSystemDashboard(orgID)
@@ -133,12 +128,7 @@ func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUI
 		return nil, err
 	}
 
-	existingID, err := valuer.NewUUID(existing.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return module.Update(ctx, orgID, existingID, updatedBy, defaults.Data, 0)
+	return module.Update(ctx, orgID, id, updatedBy, defaults.Data, 0)
 }
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {

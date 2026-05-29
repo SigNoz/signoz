@@ -13,8 +13,6 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
-	GetSystemDashboard(context.Context, valuer.UUID) (*StorableDashboard, error)
-
 	GetPublic(context.Context, string) (*StorablePublicDashboard, error)
 
 	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)

@@ -185,7 +185,7 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-// ResetSystemDashboard resets the org's system dashboard to its default.
+// ResetSystemDashboard resets the dashboard identified by {id} to its default.
 func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -202,7 +202,13 @@ func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, claims.Email)
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, id, claims.Email)
 	if err != nil {
 		render.Error(rw, err)
 		return

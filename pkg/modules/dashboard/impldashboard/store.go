@@ -63,23 +63,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-func (store *store) GetSystemDashboard(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.StorableDashboard, error) {
-	storableDashboard := new(dashboardtypes.StorableDashboard)
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(storableDashboard).
-		Where("org_id = ?", orgID).
-		Where("source = ?", dashboardtypes.SourceSystem.StringValue()).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "system dashboard doesn't exist")
-	}
-	return storableDashboard, nil
-}
-
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.

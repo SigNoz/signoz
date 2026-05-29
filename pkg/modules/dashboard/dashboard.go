@@ -41,8 +41,8 @@ type Module interface {
 	List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error)
-	
-	ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error)
+
+	ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string) (*dashboardtypes.Dashboard, error)
 
 	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 
