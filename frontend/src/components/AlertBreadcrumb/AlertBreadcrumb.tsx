@@ -1,4 +1,5 @@
-import { Breadcrumb, Divider } from 'antd';
+import { Breadcrumb } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 
 import styles from './AlertBreadcrumb.module.scss';
 import BreadcrumbItem, { BreadcrumbItemConfig } from './BreadcrumbItem';

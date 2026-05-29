@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import type { TabsProps } from 'antd';
+import type { TabItemProps } from '@signozhq/ui/tabs';
 import {
 	Alert,
 	Button,
@@ -14,8 +14,8 @@ import {
 	Row,
 	Skeleton,
 	Space,
-	Tabs,
 } from 'antd';
+import { Tabs } from '@signozhq/ui/tabs';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -154,7 +154,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				/>
 			));
 
-	const tabItems: TabsProps['items'] = [
+	const tabItems: TabItemProps[] = [
 		{
 			key: 'whyChooseSignoz',
 			label: t('whyChooseSignoz'),
@@ -398,8 +398,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 							<div className="workspace-locked__tabs">
 								<Tabs
 									items={tabItems}
-									defaultActiveKey="youAreInGoodCompany"
-									onTabClick={handleTabClick}
+									defaultValue="youAreInGoodCompany"
+									onChange={handleTabClick}
 								/>
 							</div>
 						</>

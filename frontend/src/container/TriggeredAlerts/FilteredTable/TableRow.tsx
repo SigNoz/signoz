@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SquareMinus, SquarePlus } from '@signozhq/icons';
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import ExapandableRow from './ExapandableRow';
@@ -26,9 +26,9 @@ function TableRowComponent({
 						</IconContainer>
 						<>
 							{tags.map((tag) => (
-								<Tag color="magenta" key={tag}>
+								<Badge color="sakura" key={tag}>
 									{tag}
-								</Tag>
+								</Badge>
 							))}
 						</>
 					</StatusContainer>

@@ -964,7 +964,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return nil, err
 	}
 
-	if whereClause == nil || whereClause.WhereClause == nil {
+	if whereClause.IsEmpty() {
 		return sqlbuilder.NewWhereClause(), nil
 	}
 
@@ -981,7 +981,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricsStatsWithSamples")
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
 
 	// Timeseries counts per metric
@@ -1155,7 +1155,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemap")
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
 
 	candidateLimit := req.Limit + 50

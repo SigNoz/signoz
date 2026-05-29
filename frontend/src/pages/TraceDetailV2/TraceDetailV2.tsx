@@ -5,7 +5,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/resizable';
-import { Button, Tabs } from 'antd';
+import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import cx from 'classnames';
 import TraceFlamegraph from 'container/PaginatedTraceFlamegraph/PaginatedTraceFlamegraph';
@@ -86,18 +86,11 @@ function TraceDetailsV2(): JSX.Element {
 		}
 	}, [noData]);
 
-	const items = [
+	const items: TabItemProps[] = [
 		{
-			label: (
-				<Button
-					type="text"
-					icon={<FlamegraphImg />}
-					className="flamegraph-waterfall-toggle"
-				>
-					Flamegraph
-				</Button>
-			),
 			key: 'flamegraph',
+			label: 'Flamegraph',
+			prefixIcon: <FlamegraphImg />,
 			children: (
 				<>
 					<TraceFlamegraph
@@ -145,11 +138,7 @@ function TraceDetailsV2(): JSX.Element {
 					totalSpans={traceData?.payload?.totalSpansCount || 0}
 					notFound={noData}
 				/>
-				{!noData ? (
-					<Tabs items={items} animated className="trace-visualisation-tabs" />
-				) : (
-					<NoData />
-				)}
+				{!noData ? <Tabs items={items} /> : <NoData />}
 			</ResizablePanel>
 
 			<ResizableHandle withHandle className="resizable-handle" />
