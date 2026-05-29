@@ -240,7 +240,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 
 	sb.SelectMore(fmt.Sprintf("%s AS value", aggCol))
 
-	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl, _ := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
@@ -369,7 +369,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDelta(
 
 	sb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl, _ := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
@@ -410,7 +410,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	}
 	baseSb.SelectMore(fmt.Sprintf("%s AS per_series_value", aggCol))
 
-	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl, _ := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	baseSb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	baseSb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	baseSb.Where(
@@ -501,7 +501,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggForMultipleTemporalities(
 		sb.SelectMore(expr)
 	}
 
-	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
+	tbl, _ := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
