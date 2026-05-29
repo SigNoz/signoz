@@ -17,6 +17,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 import {
 	usePage,
@@ -96,6 +97,13 @@ function DashboardsList(): JSX.Element {
 		error,
 		refetch,
 	} = useListDashboardsV2(listParams, { query: { keepPreviousData: true } });
+
+	const apiError = useMemo(
+		() => (error ? toAPIError(error) : undefined),
+		[error],
+	);
+	const errorHttpStatus = apiError?.getHttpStatusCode();
+	const errorMessage = apiError?.getErrorMessage();
 
 	const dashboards = useMemo<DashboardListItem[]>(
 		() => response?.data?.dashboards ?? [],
@@ -221,6 +229,8 @@ function DashboardsList(): JSX.Element {
 								onRetry={(): void => {
 									refetch();
 								}}
+								httpStatus={errorHttpStatus}
+								errorMessage={errorMessage}
 							/>
 						) : dashboards.length === 0 ? (
 							<NoResultsState searchString={searchInput} />

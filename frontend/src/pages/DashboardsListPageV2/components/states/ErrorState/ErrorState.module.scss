@@ -14,6 +14,12 @@
 	font-weight: var(--font-weight-medium);
 }
 
+.errorDetail {
+	composes: bodyText from '../states.module.scss';
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-normal);
+}
+
 .actionButtons {
 	display: flex;
 	gap: 24px;
