@@ -1,0 +1,70 @@
+.settings-tabs {
+	.ant-tabs-nav-list {
+		height: 32px;
+		flex-shrink: 0;
+		border-radius: 2px;
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		transition: opacity 0.1s !important;
+
+		.ant-tabs-tab + .ant-tabs-tab {
+			margin: 0px;
+		}
+
+		.ant-tabs-tab:not(:last-child) {
+			border-right: 1px solid var(--l1-border) !important;
+		}
+
+		.overview-btn {
+			width: 114px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.variables-btn {
+			width: 114px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.public-dashboard-btn {
+			width: 150px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			&.disabled-btn {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+		}
+
+		.ant-tabs-ink-bar {
+			display: none;
+		}
+
+		.ant-tabs-tab-active {
+			.overview-btn {
+				border-radius: 2px 0px 0px 2px;
+				background: var(--l1-border);
+			}
+
+			.variables-btn {
+				border-radius: 2px 0px 0px 2px;
+				background: var(--l1-border);
+			}
+
+			.public-dashboard-btn {
+				border-radius: 2px 0px 0px 2px;
+				background: var(--l1-border);
+			}
+		}
+	}
+
+	.ant-tabs-nav::before {
+		border-bottom: none;
+	}
+}
