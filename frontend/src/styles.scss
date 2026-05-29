@@ -825,6 +825,8 @@ body.ai-assistant-panel-open {
 // overrides
 :root {
 	--input-focus-outline-width: 0;
+	--tab-list-primary-gap: 12px;
+	--radius-2: 4px;
 }
 
 // Scoped to .theme-wipe-active (toggled on <html> in runThemeTransition) so

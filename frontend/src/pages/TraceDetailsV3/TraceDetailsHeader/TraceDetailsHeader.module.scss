@@ -8,6 +8,7 @@
 	align-items: center;
 	padding: 8px 16px;
 	gap: 8px;
+	min-height: 52px;
 
 	// KeyValueLabel renders with a global `.key-value-label` root; keep it from
 	// shrinking on the trace details header.
@@ -20,6 +21,28 @@
 	flex-shrink: 0;
 }
 
+.traceIdSection {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
+.filterSection {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	margin-left: auto;
+}
+
+.headerActions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+}
+
 .filter {
 	min-width: 0;
 }
@@ -27,15 +50,6 @@
 .isExpanded {
 	max-width: none;
 	flex: 1;
-}
-
-.oldViewBtn {
-	flex-shrink: 0;
-}
-
-.analyticsBtn {
-	flex-shrink: 0;
-	margin-left: auto;
 }
 
 .subHeader {

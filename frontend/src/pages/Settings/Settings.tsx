@@ -340,7 +340,7 @@ function SettingsPage(): JSX.Element {
 						routes={routes}
 						activeKey={pathname}
 						history={history}
-						tabBarStyle={{ display: 'none' }}
+						hideTabBar
 					/>
 				</div>
 			</div>

@@ -135,4 +135,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	AI_ASSISTANT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MCP_SERVER: ['ADMIN', 'EDITOR', 'VIEWER'],
+	AI_ASSISTANT_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

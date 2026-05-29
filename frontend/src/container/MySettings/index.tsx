@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Radio, RadioChangeEvent, Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -67,9 +68,7 @@ function MySettings(): JSX.Element {
 			label: (
 				<div className="theme-option">
 					<Sun size={12} data-testid="light-theme-icon" /> Light{' '}
-					<Tag bordered={false} color="geekblue">
-						Beta
-					</Tag>
+					<Badge color="robin">Beta</Badge>
 				</div>
 			),
 			value: THEME_MODE.LIGHT,
@@ -91,12 +90,12 @@ function MySettings(): JSX.Element {
 		return isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT;
 	});
 
-	const handleThemeChange = (event: RadioChangeEvent): void => {
-		// Radio options below are all THEME_MODE values, so antd's `any`-typed
-		// target.value is safe to narrow here.
-		const value = event.target.value as ThemeMode;
-		logEvent('Account Settings: Theme Changed', { theme: value });
-		selectTheme(value);
+	const handleThemeChange = (value: string): void => {
+		// ToggleGroupSimple items above are all THEME_MODE values, so narrowing
+		// the string here is safe.
+		const mode = value as ThemeMode;
+		logEvent('Account Settings: Theme Changed', { theme: mode });
+		selectTheme(mode);
 	};
 
 	useEffect(() => {
@@ -175,14 +174,12 @@ function MySettings(): JSX.Element {
 					<div className="user-preference-section-content-item theme-selector">
 						<div className="user-preference-section-content-item-title-action">
 							Select your theme
-							<Radio.Group
-								options={themeOptions}
+							<ToggleGroupSimple
+								type="single"
 								onChange={handleThemeChange}
 								value={theme}
-								optionType="button"
-								buttonStyle="solid"
 								data-testid="theme-selector"
-								size="middle"
+								items={themeOptions}
 							/>
 						</div>
 

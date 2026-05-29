@@ -353,12 +353,10 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -471,12 +469,10 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -622,12 +618,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -740,12 +734,10 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -759,9 +751,9 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) (*querybuilder.PreparedWhereClause, error) {
+) (querybuilder.PreparedWhereClause, error) {
 
-	var preparedWhereClause *querybuilder.PreparedWhereClause
+	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -779,11 +771,11 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		})
 
 		if err != nil {
-			return nil, err
+			return preparedWhereClause, err
 		}
 	}
 
-	if preparedWhereClause != nil {
+	if !preparedWhereClause.IsEmpty() {
 		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 

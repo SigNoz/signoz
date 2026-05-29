@@ -1,7 +1,8 @@
 import { ChangeEvent, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Input, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Flex, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
