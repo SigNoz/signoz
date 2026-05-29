@@ -14849,6 +14849,42 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/{token}/validate:
+    get:
+      deprecated: false
+      description: This endpoint validates whether a reset password token exists and
+        is not expired
+      operationId: ValidateResetPasswordToken
+      parameters:
+      - in: path
+        name: token
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Validate a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false

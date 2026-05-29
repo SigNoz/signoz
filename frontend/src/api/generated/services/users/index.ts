@@ -52,6 +52,7 @@ import type {
 	UpdateUserDeprecated200,
 	UpdateUserDeprecatedPathParameters,
 	UpdateUserPathParameters,
+	ValidateResetPasswordTokenPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -947,6 +948,112 @@ export const useForgotPassword = <
 > => {
 	return useMutation(getForgotPasswordMutationOptions(options));
 };
+/**
+ * This endpoint validates whether a reset password token exists and is not expired
+ * @summary Validate a reset password token
+ */
+export const validateResetPasswordToken = (
+	{ token }: ValidateResetPasswordTokenPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/reset_password_tokens/${token}/validate`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getValidateResetPasswordTokenQueryKey = ({
+	token,
+}: ValidateResetPasswordTokenPathParameters) => {
+	return [`/api/v2/reset_password_tokens/${token}/validate`] as const;
+};
+
+export const getValidateResetPasswordTokenQueryOptions = <
+	TData = Awaited<ReturnType<typeof validateResetPasswordToken>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ token }: ValidateResetPasswordTokenPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof validateResetPasswordToken>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getValidateResetPasswordTokenQueryKey({ token });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof validateResetPasswordToken>>
+	> = ({ signal }) => validateResetPasswordToken({ token }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!token,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof validateResetPasswordToken>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ValidateResetPasswordTokenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof validateResetPasswordToken>>
+>;
+export type ValidateResetPasswordTokenQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Validate a reset password token
+ */
+
+export function useValidateResetPasswordToken<
+	TData = Awaited<ReturnType<typeof validateResetPasswordToken>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ token }: ValidateResetPasswordTokenPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof validateResetPasswordToken>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getValidateResetPasswordTokenQueryOptions(
+		{ token },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Validate a reset password token
+ */
+export const invalidateValidateResetPasswordToken = async (
+	queryClient: QueryClient,
+	{ token }: ValidateResetPasswordTokenPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getValidateResetPasswordTokenQueryKey({ token }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint returns the users having the role by role id
  * @summary Get users by role id

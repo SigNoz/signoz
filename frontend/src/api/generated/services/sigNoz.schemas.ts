@@ -9764,6 +9764,9 @@ export type Readyz503 = {
 	status: string;
 };
 
+export type ValidateResetPasswordTokenPathParameters = {
+	token: string;
+};
 export type GetUsersByRoleIDPathParameters = {
 	id: string;
 };
