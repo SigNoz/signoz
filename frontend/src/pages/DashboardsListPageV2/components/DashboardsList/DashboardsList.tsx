@@ -11,7 +11,6 @@ import {
 import ROUTES from 'constants/routes';
 import { RequestDashboardBtn } from 'container/ListOfDashboard/RequestDashboardBtn';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useDebounce from 'hooks/useDebounce';
 import { toast } from '@signozhq/ui/sonner';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -27,7 +26,7 @@ import {
 	type SortColumn,
 	type SortOrder,
 } from '../../hooks/useDashboardsListQueryParams';
-import { buildSearchDSL, type DashboardListItem } from '../../utils';
+import type { DashboardListItem } from '../../utils';
 import ConfigureMetadataModal from '../ConfigureMetadataModal/ConfigureMetadataModal';
 import { useDashboardsListVisibleColumnsStore } from '../ConfigureMetadataModal/useDynamicColumns';
 import CreateDashboardDropdown from '../CreateDashboardDropdown/CreateDashboardDropdown';
@@ -62,19 +61,26 @@ function DashboardsList(): JSX.Element {
 	const [page, setPage] = usePage();
 
 	const [searchInput, setSearchInput] = useState(searchString);
-	const debouncedSearch = useDebounce(searchInput, 300);
 
+	// Keep the local input in sync with external searchString changes
+	// (browser back/forward, deep link). User typing only mutates
+	// searchInput, so this won't fight with in-flight edits.
 	useEffect(() => {
-		if (debouncedSearch === searchString) {
+		setSearchInput(searchString);
+	}, [searchString]);
+
+	const handleSubmitSearch = useCallback((): void => {
+		const next = searchInput.trim();
+		if (next === searchString) {
 			return;
 		}
-		setSearchString(debouncedSearch);
-		setPage(1);
-	}, [debouncedSearch, searchString, setSearchString, setPage]);
+		void setSearchString(next);
+		void setPage(1);
+	}, [searchInput, searchString, setSearchString, setPage]);
 
 	const listParams = useMemo(
 		() => ({
-			query: buildSearchDSL(searchString),
+			query: searchString.trim() || undefined,
 			sort: sortColumn,
 			order: sortOrder,
 			limit: PAGE_SIZE,
@@ -137,16 +143,16 @@ function DashboardsList(): JSX.Element {
 
 	const onSortChange = useCallback(
 		(column: SortColumn): void => {
-			setSortColumn(column);
-			setPage(1);
+			void setSortColumn(column);
+			void setPage(1);
 		},
 		[setSortColumn, setPage],
 	);
 
 	const onOrderChange = useCallback(
 		(order: SortOrder): void => {
-			setSortOrder(order);
-			setPage(1);
+			void setSortOrder(order);
+			void setPage(1);
 		},
 		[setSortOrder, setPage],
 	);
@@ -179,14 +185,7 @@ function DashboardsList(): JSX.Element {
 
 				{isLoading ? (
 					<LoadingState />
-				) : error ? (
-					<ErrorState
-						isCloudUser={!!isCloudUser}
-						onRetry={(): void => {
-							refetch();
-						}}
-					/>
-				) : dashboards.length === 0 && !searchString && page === 1 ? (
+				) : !error && dashboards.length === 0 && !searchString && page === 1 ? (
 					<EmptyState
 						createDropdown={
 							canCreateNewDashboard ? (
@@ -202,7 +201,11 @@ function DashboardsList(): JSX.Element {
 				) : (
 					<>
 						<div className={styles.toolbar}>
-							<SearchBar value={searchInput} onChange={setSearchInput} />
+							<SearchBar
+								value={searchInput}
+								onChange={setSearchInput}
+								onSubmit={handleSubmitSearch}
+							/>
 							{canCreateNewDashboard && (
 								<CreateDashboardDropdown
 									canCreate={!!canCreateNewDashboard}
@@ -212,7 +215,14 @@ function DashboardsList(): JSX.Element {
 							)}
 						</div>
 
-						{dashboards.length === 0 ? (
+						{error ? (
+							<ErrorState
+								isCloudUser={!!isCloudUser}
+								onRetry={(): void => {
+									refetch();
+								}}
+							/>
+						) : dashboards.length === 0 ? (
 							<NoResultsState searchString={searchInput} />
 						) : (
 							<>
