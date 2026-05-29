@@ -2653,20 +2653,20 @@ def test_logs_list_ambigous_warnings(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
-    
+
     response = make_query_request(
         signoz,
         token,
         start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=1)).timestamp() * 1000),
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
-        queries=[build_raw_query(name='A',signal='logs',filter_expression='service.name = "java"')],
+        queries=[build_raw_query(name="A", signal="logs", filter_expression='service.name = "java"')],
     )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
-    warning = response.json()["data"].get('warning', None)
+    warning = response.json()["data"].get("warning", None)
     assert warning is not None
-    assert warning['message'] == 'Encountered warnings'
-    assert len(warning.get('warnings')) > 0
-    assert any(['ambiguous' in w['message'] for w in warning.get('warnings') ])
+    assert warning["message"] == "Encountered warnings"
+    assert len(warning.get("warnings")) > 0
+    assert any(["ambiguous" in w["message"] for w in warning.get("warnings")])
