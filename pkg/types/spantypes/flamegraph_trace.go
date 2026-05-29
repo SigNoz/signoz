@@ -39,11 +39,42 @@ func NewFlamegraphTraceFromStorable(spans []StorableSpan) *FlamegraphTrace {
 }
 
 func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
-	allLevels := t.buildAllLevels()
-	for _, node := range t.nodeByID {
-		node.Children = nil // children not required after building tree
+	var result [][]*FlamegraphSpan
+
+	type entry struct {
+		node  *FlamegraphSpan
+		depth int64
 	}
-	return allLevels
+
+	for _, root := range t.roots {
+		levelMap := make(map[int64][]*FlamegraphSpan)
+		maxDepth := int64(-1)
+
+		queue := []entry{{root, 0}}
+		for len(queue) > 0 {
+			curr := queue[0]
+			queue = queue[1:]
+			curr.node.Level = curr.depth
+			levelMap[curr.depth] = append(levelMap[curr.depth], curr.node)
+			if curr.depth > maxDepth {
+				maxDepth = curr.depth
+			}
+			for _, child := range curr.node.Children {
+				queue = append(queue, entry{child, curr.depth + 1})
+			}
+		}
+
+		for depth := int64(0); depth <= maxDepth; depth++ {
+			if spans, ok := levelMap[depth]; ok {
+				result = append(result, spans)
+			}
+		}
+	}
+
+	for _, node := range t.nodeByID {
+		node.Children = nil
+	}
+	return result
 }
 
 // GetSelectedLevels returns the level window for selectedSpanID with sampling applied to
@@ -54,10 +85,7 @@ func (t *FlamegraphTrace) GetSelectedLevels(
 	selectedSpanID string,
 	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
 ) []FlamegraphLevel {
-	allLevels := t.buildAllLevels()
-	for _, node := range t.nodeByID {
-		node.Children = nil
-	}
+	allLevels := t.GetAllLevels()
 
 	selectedIndex := 0
 	if selectedSpanID != "" {
@@ -174,41 +202,6 @@ func (t *FlamegraphTrace) buildSpanTree() {
 	})
 }
 
-func (t *FlamegraphTrace) buildAllLevels() [][]*FlamegraphSpan {
-	var result [][]*FlamegraphSpan
-
-	type entry struct {
-		node  *FlamegraphSpan
-		depth int64
-	}
-
-	for _, root := range t.roots {
-		levelMap := make(map[int64][]*FlamegraphSpan)
-		maxDepth := int64(-1)
-
-		queue := []entry{{root, 0}}
-		for len(queue) > 0 {
-			curr := queue[0]
-			queue = queue[1:]
-			curr.node.Level = curr.depth
-			levelMap[curr.depth] = append(levelMap[curr.depth], curr.node)
-			if curr.depth > maxDepth {
-				maxDepth = curr.depth
-			}
-			for _, child := range curr.node.Children {
-				queue = append(queue, entry{child, curr.depth + 1})
-			}
-		}
-
-		for depth := int64(0); depth <= maxDepth; depth++ {
-			if spans, ok := levelMap[depth]; ok {
-				result = append(result, spans)
-			}
-		}
-	}
-
-	return result
-}
 
 func sampleFlamegraphLevel(
 	spans []*FlamegraphSpan,
