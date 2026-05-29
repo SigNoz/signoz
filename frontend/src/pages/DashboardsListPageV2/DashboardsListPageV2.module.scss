@@ -27,9 +27,9 @@
 .text {
 	color: var(--muted-foreground);
 	font-family: Inter;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	font-style: normal;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 }

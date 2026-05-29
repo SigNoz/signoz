@@ -14,7 +14,7 @@
 
 .bodyText {
 	font-family: Inter;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	font-style: normal;
 	line-height: 18px;
 	letter-spacing: -0.07px;
@@ -23,7 +23,7 @@
 .learnMoreLink {
 	composes: bodyText;
 	color: var(--bg-robin-400);
-	font-weight: 500;
+	font-weight: var(--font-weight-medium);
 	padding: 0px;
 }
 

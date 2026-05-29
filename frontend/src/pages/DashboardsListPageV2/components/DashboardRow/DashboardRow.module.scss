@@ -77,9 +77,9 @@
 	color: var(--bg-sienna-400);
 	text-align: center;
 	font-family: Inter;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	font-style: normal;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 	margin-inline-end: 0px;
@@ -99,8 +99,8 @@
 	gap: 6px;
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-normal);
 	line-height: 18px;
 	letter-spacing: -0.07px;
 }
@@ -132,8 +132,8 @@
 .byLabel {
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 12px;
-	font-weight: 400;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-normal);
 	line-height: 18px;
 	letter-spacing: -0.07px;
 }

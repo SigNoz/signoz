@@ -31,7 +31,7 @@
 	font-family: Inter;
 	font-size: 12.805px;
 	font-style: normal;
-	font-weight: 500;
+	font-weight: var(--font-weight-medium);
 	line-height: 18.293px;
 	letter-spacing: -0.064px;
 }
@@ -60,7 +60,7 @@
 	font-family: Inter;
 	font-size: 12.805px;
 	font-style: normal;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: 16.463px;
 	letter-spacing: -0.064px;
 	color: var(--l2-foreground);
@@ -92,7 +92,7 @@
 	color: var(--l2-foreground);
 	font-family: Inter;
 	font-size: 12.805px;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: 16.463px;
 	letter-spacing: -0.064px;
 }

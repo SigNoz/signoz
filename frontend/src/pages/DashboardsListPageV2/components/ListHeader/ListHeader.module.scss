@@ -14,9 +14,9 @@
 .label {
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	font-style: normal;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 }
@@ -68,7 +68,7 @@
 	font-family: Inter;
 	font-size: 11px;
 	font-style: normal;
-	font-weight: 600;
+	font-weight: var(--font-weight-semibold);
 	line-height: 18px;
 	letter-spacing: 0.88px;
 	text-transform: uppercase;
@@ -90,9 +90,9 @@
 	width: 100%;
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 14px;
+	font-size: var(--font-size-sm);
 	font-style: normal;
-	font-weight: 400;
+	font-weight: var(--font-weight-normal);
 	line-height: normal;
 	letter-spacing: 0.14px;
 	padding: 12px 18px 12px 14px;
@@ -117,8 +117,8 @@
 	border-radius: 4px;
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: 14px;
-	font-weight: 400;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-normal);
 	line-height: normal;
 	letter-spacing: 0.14px;
 	text-align: left;
