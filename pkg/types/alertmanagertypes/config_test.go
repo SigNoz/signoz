@@ -330,11 +330,7 @@ func TestSetGlobalConfigPreservesSMTPRequireTLS(t *testing.T) {
 	}
 }
 
-// TestConfigPreservesGoogleChatConfigs is the round-trip proof for the
-// native-notifier seam: create a Config with a GoogleChat receiver, serialize
-// to the storeable blob, reload via NewConfigFromStoreableConfig, and verify
-// the GoogleChatConfigs survive the trip — through both the blob and the
-// in-memory sidecar — and that GetReceiver zips them back into a *Receiver.
+// Round-trip: create → serialize → reload → GetReceiver still has the configs.
 func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
 	require.NoError(t, err)
@@ -359,20 +355,16 @@ func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 
 	require.NoError(t, cfg.CreateReceiver(receiver))
 
-	// In-memory: GetReceiver zips the base and the native sidecar back together.
 	got, err := cfg.GetReceiver("googlechat-receiver")
 	require.NoError(t, err)
 	require.Len(t, got.GoogleChatConfigs, 1)
 	assert.Equal(t, "Alert", got.GoogleChatConfigs[0].Title)
 	assert.Equal(t, "Body", got.GoogleChatConfigs[0].Text)
 
-	// Global threading: HTTPConfig was nil on input, so applyNativeDefaults
-	// should have filled it in from Config.Global.HTTPConfig. This mirrors
-	// upstream's webhook/email/slack defaulting in config.Config.UnmarshalYAML.
-	require.NotNil(t, got.GoogleChatConfigs[0].HTTPConfig, "HTTPConfig should be threaded from Global")
+	// HTTPConfig threaded from Global by applyNativeDefaults.
+	require.NotNil(t, got.GoogleChatConfigs[0].HTTPConfig)
 	assert.Same(t, cfg.alertmanagerConfig.Global.HTTPConfig, got.GoogleChatConfigs[0].HTTPConfig)
 
-	// Persisted blob: reload it and confirm the same.
 	reloaded, err := NewConfigFromStoreableConfig(cfg.StoreableConfig())
 	require.NoError(t, err)
 
@@ -382,10 +374,8 @@ func TestConfigPreservesGoogleChatConfigs(t *testing.T) {
 	assert.Equal(t, "Alert", reloadedReceiver.GoogleChatConfigs[0].Title)
 	assert.Equal(t, "Body", reloadedReceiver.GoogleChatConfigs[0].Text)
 	assert.Equal(t, "https://chat.googleapis.com/v1/spaces/test/messages", reloadedReceiver.GoogleChatConfigs[0].WebhookURL.String())
-	// HTTPConfig persisted into the blob and re-hydrated on load.
 	require.NotNil(t, reloadedReceiver.GoogleChatConfigs[0].HTTPConfig)
 
-	// Update path keeps the sidecar in sync.
 	receiver.GoogleChatConfigs[0].Title = "Updated"
 	require.NoError(t, cfg.UpdateReceiver(receiver))
 

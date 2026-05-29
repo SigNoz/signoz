@@ -74,9 +74,6 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 		OrgID: orgID,
 	}
 
-	// The embedded *config.Receiver marshals inline, so json.Marshal(receiver)
-	// emits every upstream notifier config plus any SigNoz-native ones in a
-	// single pass.
 	data, err := json.Marshal(receiver)
 	if err != nil {
 		return nil, err
@@ -91,11 +88,9 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	return &channel, nil
 }
 
-// receiverChannelType derives the channel.Type discriminator from the
-// configured notifier by reflecting over the receiver. It walks both the
-// SigNoz Receiver's own fields (for native notifiers) and the embedded
-// config.Receiver's fields (for upstream notifiers); the first non-empty
-// `*_configs` slice wins.
+// receiverChannelType returns the channel.Type discriminator. Walks
+// Receiver's own fields first (native), then the embed (upstream); first
+// non-empty *_configs slice wins.
 func receiverChannelType(receiver *Receiver) string {
 	if t := nonEmptyConfigsField(reflect.ValueOf(*receiver)); t != "" {
 		return t
@@ -221,9 +216,7 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 	schema.WithRequired("name")
 
 	var oneOf []jsonschema.SchemaOrBool
-	// Walk both the SigNoz Receiver's own fields (for native notifiers) and the
-	// embedded config.Receiver's fields (for upstream notifiers) — together
-	// they make up PostableChannel's JSON shape.
+	// Walk both halves: native fields on Receiver, upstream on the embed.
 	collect := func(t reflect.Type) {
 		for i := 0; i < t.NumField(); i++ {
 			jsonTag := strings.Split(t.Field(i).Tag.Get("json"), ",")[0]

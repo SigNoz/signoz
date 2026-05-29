@@ -301,9 +301,7 @@ func TestNewChannelFromReceiver(t *testing.T) {
 
 }
 
-// TestNewChannelFromReceiverGoogleChat covers the SigNoz-native side of the
-// receiver: the Type discriminator and the per-row Data both come from the
-// embed's googlechat_configs field — no upstream notifier config is present.
+// Type and Data are derived from the native googlechat_configs field.
 func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
 	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
 	if err != nil {
