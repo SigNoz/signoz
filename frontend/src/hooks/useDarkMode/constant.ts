@@ -4,4 +4,4 @@ export const THEME_MODE = {
 	SYSTEM: 'auto',
 } as const;
 
-export type ThemeMode = typeof THEME_MODE[keyof typeof THEME_MODE];
+export type ThemeMode = (typeof THEME_MODE)[keyof typeof THEME_MODE];
