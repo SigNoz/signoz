@@ -33,11 +33,6 @@ import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
 
-export type StatusFilter =
-	| 'all'
-	| 'activeAndUpcoming'
-	| AlertmanagertypesMaintenanceStatusDTO.expired;
-
 const STATUS_BADGE_PROPS: Record<
 	AlertmanagertypesMaintenanceStatusDTO,
 	{ color: 'forest' | 'robin' | 'vanilla'; label: string }
@@ -56,21 +51,12 @@ const STATUS_BADGE_PROPS: Record<
 	},
 };
 
-const matchesStatusFilter = (
-	status: AlertmanagertypesMaintenanceStatusDTO | undefined,
-	filter: StatusFilter,
-): boolean => {
-	if (filter === 'all') {
-		return true;
-	}
-	if (filter === 'activeAndUpcoming') {
-		return (
-			status === AlertmanagertypesMaintenanceStatusDTO.active ||
-			status === AlertmanagertypesMaintenanceStatusDTO.upcoming
-		);
-	}
-	return status === filter;
-};
+const STATUS_SORT_ORDER: Record<AlertmanagertypesMaintenanceStatusDTO, number> =
+	{
+		[AlertmanagertypesMaintenanceStatusDTO.active]: 0,
+		[AlertmanagertypesMaintenanceStatusDTO.upcoming]: 1,
+		[AlertmanagertypesMaintenanceStatusDTO.expired]: 2,
+	};
 
 function StatusBadge({
 	status,
@@ -361,7 +347,6 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime,
 	setEditMode,
 	searchValue,
-	statusFilter,
 }: {
 	downtimeSchedules: UseQueryResult<
 		ListDowntimeSchedules200,
@@ -375,7 +360,6 @@ export function PlannedDowntimeList({
 	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
-	statusFilter: StatusFilter;
 }): JSX.Element {
 	const columns: TableProps<DowntimeSchedulesTableData>['columns'] = [
 		{
@@ -393,22 +377,10 @@ export function PlannedDowntimeList({
 	];
 	const { notifications } = useNotifications();
 
-	const statusOrder: Record<AlertmanagertypesMaintenanceStatusDTO, number> = {
-		[AlertmanagertypesMaintenanceStatusDTO.active]: 0,
-		[AlertmanagertypesMaintenanceStatusDTO.upcoming]: 1,
-		[AlertmanagertypesMaintenanceStatusDTO.expired]: 2,
-	};
-
 	const tableData = [...(downtimeSchedules.data?.data || [])]
-		.filter((data) => matchesStatusFilter(data.status, statusFilter))
-		.filter(
-			(data) =>
-				data.name.includes(searchValue.toLocaleString()) ||
-				data.id === searchValue.toLocaleString(),
-		)
 		.sort((a, b): number => {
 			const statusDiff =
-				(statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+				(STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
 			if (statusDiff !== 0) {
 				return statusDiff;
 			}
@@ -417,6 +389,11 @@ export function PlannedDowntimeList({
 			}
 			return 0;
 		})
+		.filter(
+			(data) =>
+				data.name.includes(searchValue.toLocaleString()) ||
+				data.id === searchValue.toLocaleString(),
+		)
 		.map((data) => {
 			const specificAlertOptions = getAlertOptionsFromIds(
 				data.alertIds || [],
