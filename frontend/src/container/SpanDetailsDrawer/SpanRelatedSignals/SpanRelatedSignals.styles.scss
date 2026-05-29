@@ -15,11 +15,8 @@
 		}
 	}
 
-	.ant-divider {
-		margin-inline-start: 10px !important;
-		margin-inline-end: 16px !important;
-		height: 16px;
-		border-color: var(--l1-border);
+	&__divider {
+		--divider-vertical-margin: 10px;
 	}
 	.ant-drawer-close {
 		margin: 0 !important;

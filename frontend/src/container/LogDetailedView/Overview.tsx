@@ -4,7 +4,9 @@ import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Collapse, Divider, Tag } from 'antd';
+import { Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -105,11 +107,11 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							<Tag bordered={false}>
+							<Badge color="vanilla">
 								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 									body
 								</Typography.Text>
-							</Tag>
+							</Badge>
 						),
 						children: (
 							<div className="logs-body-content">
@@ -143,7 +145,7 @@ function Overview({
 								</div>
 							</div>
 						),
-						// extra: <Tag className="tag">JSON</Tag>,
+						// extra: <Badge className="tag" color="vanilla">JSON</Badge>,
 						className: 'collapse-content',
 					},
 				]}
@@ -164,11 +166,11 @@ function Overview({
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
 							>
-								<Tag bordered={false}>
+								<Badge color="vanilla">
 									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
 										Attributes
 									</Typography.Text>
-								</Tag>
+								</Badge>
 
 								{isAttributesExpanded && (
 									<Button
