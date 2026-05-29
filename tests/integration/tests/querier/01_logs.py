@@ -15,6 +15,7 @@ from fixtures.querier import (
     build_group_by_field,
     build_logs_aggregation,
     build_order_by,
+    build_raw_query,
     build_scalar_query,
     find_named_result,
     index_series_by_label,
@@ -2625,3 +2626,43 @@ def test_logs_aggregation_filter_by_trace_id(
     orphan_count, orphan_warnings = _count(narrow_start_ms, now_ms, orphan_trace_id)
     assert orphan_count == 1, f"Expected count=1 for orphan trace_id aggregation, got {orphan_count} — query may have been incorrectly short-circuited"
     assert not any(outside_range_msg in m for m in orphan_warnings), f"Did not expect outside-range warning for orphan trace_id, got {orphan_warnings}"
+
+
+def test_logs_list_ambigous_warnings(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+) -> None:
+    insert_logs(
+        [
+            Logs(
+                timestamp=datetime.now(tz=UTC) - timedelta(seconds=1),
+                resources={
+                    "service.name": "java",
+                },
+                attributes={
+                    "service.name": "java",
+                },
+                body="This is a log message, coming from a java application",
+                severity_text="DEBUG",
+            ),
+        ]
+    )
+
+    response = make_query_request(
+        signoz,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=1)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        request_type="raw",
+        queries=[build_raw_query(name="A", signal="logs", filter_expression='service.name = "java"')],
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+    warning = response.json()["data"].get("warning", None)
+    assert warning is not None
+    assert warning["message"] == "Encountered warnings"
+    assert len(warning.get("warnings")) > 0
+    assert any(["ambiguous" in w["message"] for w in warning.get("warnings")])
