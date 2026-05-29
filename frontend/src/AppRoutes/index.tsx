@@ -35,7 +35,6 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
-import { bootSettings } from 'utils/bootData';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -334,7 +333,10 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (bootSettings.posthog.enabled && process.env.POSTHOG_KEY) {
+			if (
+				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
+				process.env.POSTHOG_KEY
+			) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
