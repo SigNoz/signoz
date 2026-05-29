@@ -48,11 +48,11 @@ import type {
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesPostableRoleDTO,
+	TypesPostableVerifyResetPasswordTokenDTO,
 	TypesUpdatableUserDTO,
 	UpdateUserDeprecated200,
 	UpdateUserDeprecatedPathParameters,
 	UpdateUserPathParameters,
-	ValidateResetPasswordTokenPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -949,111 +949,89 @@ export const useForgotPassword = <
 	return useMutation(getForgotPasswordMutationOptions(options));
 };
 /**
- * This endpoint validates whether a reset password token exists and is not expired
- * @summary Validate a reset password token
+ * This endpoint verifies whether a reset password token exists and is not expired
+ * @summary Verify a reset password token
  */
-export const validateResetPasswordToken = (
-	{ token }: ValidateResetPasswordTokenPathParameters,
+export const verifyResetPasswordToken = (
+	typesPostableVerifyResetPasswordTokenDTO?: BodyType<TypesPostableVerifyResetPasswordTokenDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v2/reset_password_tokens/${token}/validate`,
-		method: 'GET',
+		url: `/api/v2/reset_password_tokens/verify`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableVerifyResetPasswordTokenDTO,
 		signal,
 	});
 };
 
-export const getValidateResetPasswordTokenQueryKey = ({
-	token,
-}: ValidateResetPasswordTokenPathParameters) => {
-	return [`/api/v2/reset_password_tokens/${token}/validate`] as const;
-};
-
-export const getValidateResetPasswordTokenQueryOptions = <
-	TData = Awaited<ReturnType<typeof validateResetPasswordToken>>,
+export const getVerifyResetPasswordTokenMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ token }: ValidateResetPasswordTokenPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof validateResetPasswordToken>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getValidateResetPasswordTokenQueryKey({ token });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof validateResetPasswordToken>>
-	> = ({ signal }) => validateResetPasswordToken({ token }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!token,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof validateResetPasswordToken>>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
 		TError,
-		TData
-	> & { queryKey: QueryKey };
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+	TError,
+	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	TContext
+> => {
+	const mutationKey = ['verifyResetPasswordToken'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return verifyResetPasswordToken(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
 };
 
-export type ValidateResetPasswordTokenQueryResult = NonNullable<
-	Awaited<ReturnType<typeof validateResetPasswordToken>>
+export type VerifyResetPasswordTokenMutationResult = NonNullable<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>
 >;
-export type ValidateResetPasswordTokenQueryError =
+export type VerifyResetPasswordTokenMutationBody =
+	| BodyType<TypesPostableVerifyResetPasswordTokenDTO>
+	| undefined;
+export type VerifyResetPasswordTokenMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
- * @summary Validate a reset password token
+ * @summary Verify a reset password token
  */
-
-export function useValidateResetPasswordToken<
-	TData = Awaited<ReturnType<typeof validateResetPasswordToken>>,
+export const useVerifyResetPasswordToken = <
 	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ token }: ValidateResetPasswordTokenPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof validateResetPasswordToken>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getValidateResetPasswordTokenQueryOptions(
-		{ token },
-		options,
-	);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Validate a reset password token
- */
-export const invalidateValidateResetPasswordToken = async (
-	queryClient: QueryClient,
-	{ token }: ValidateResetPasswordTokenPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getValidateResetPasswordTokenQueryKey({ token }) },
-		options,
-	);
-
-	return queryClient;
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+		TError,
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+	TError,
+	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	TContext
+> => {
+	return useMutation(getVerifyResetPasswordTokenMutationOptions(options));
 };
-
 /**
  * This endpoint returns the users having the role by role id
  * @summary Get users by role id

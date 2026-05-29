@@ -8308,6 +8308,13 @@ export interface TypesPostableRoleDTO {
 	name: string;
 }
 
+export interface TypesPostableVerifyResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 */
+	token?: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
@@ -9764,9 +9771,6 @@ export type Readyz503 = {
 	status: string;
 };
 
-export type ValidateResetPasswordTokenPathParameters = {
-	token: string;
-};
 export type GetUsersByRoleIDPathParameters = {
 	id: string;
 };

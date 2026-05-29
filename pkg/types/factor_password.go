@@ -26,6 +26,10 @@ var (
 	ErrCodeIncorrectPassword                      = errors.MustNewCode("incorrect_password")
 )
 
+type PostableVerifyResetPasswordToken struct {
+	Token string `json:"token"`
+}
+
 type PostableResetPassword struct {
 	Password string `json:"password"`
 	Token    string `json:"token"`

@@ -226,7 +226,7 @@ func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer
 	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 }
 
-func (module *getter) ValidateResetPasswordToken(ctx context.Context, token string) error {
+func (module *getter) VerifyResetPasswordToken(ctx context.Context, token string) error {
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err

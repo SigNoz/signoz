@@ -410,17 +410,17 @@ func (handler *handler) CreateResetPasswordToken(w http.ResponseWriter, r *http.
 	render.Success(w, http.StatusCreated, token)
 }
 
-func (handler *handler) ValidateResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) VerifyResetPasswordToken(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	token := mux.Vars(r)["token"]
-	if token == "" {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "token is required"))
+	req := new(types.PostableVerifyResetPasswordToken)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		render.Error(w, err)
 		return
 	}
 
-	err := handler.getter.ValidateResetPasswordToken(ctx, token)
+	err := handler.getter.VerifyResetPasswordToken(ctx, req.Token)
 	if err != nil {
 		render.Error(w, err)
 		return
