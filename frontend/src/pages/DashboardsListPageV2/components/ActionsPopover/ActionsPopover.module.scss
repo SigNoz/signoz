@@ -1,21 +1,12 @@
 .content {
 	display: flex;
 	flex-direction: column;
-	padding: 4px;
 }
 
 // Make signoz ghost-Button rows fill the popover and left-align their label.
 .menuItem {
 	width: 100%;
 	justify-content: flex-start;
-}
-
-// Separator above the destructive row. Matches the dashboard-details delete
-// treatment: a hairline divider + tightened corners.
-.deleteDivider {
-	margin-top: 4px;
-	border-top: 1px solid var(--l1-border);
-	border-radius: 0;
 }
 
 :global(.dashboardActionsPopover) {

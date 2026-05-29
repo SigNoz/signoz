@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
 import { Modal, Tooltip } from 'antd';
-import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { CircleAlert, Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import deleteDashboard from 'api/v1/dashboards/id/delete';
 import { invalidateListDashboardsV2 } from 'api/generated/services/dashboard';
@@ -94,11 +94,12 @@ function DeleteActionItem({
 
 	return (
 		<>
+			<Divider />
 			<Tooltip placement="left" title={tooltip}>
 				<Button
 					variant="ghost"
 					color="destructive"
-					className={cx(styles.menuItem, styles.deleteDivider)}
+					className={styles.menuItem}
 					prefix={<Trash2 size={14} />}
 					disabled={isDisabled}
 					onClick={(e): void => {

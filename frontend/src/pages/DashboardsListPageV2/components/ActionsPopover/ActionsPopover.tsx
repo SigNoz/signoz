@@ -37,7 +37,6 @@ function ActionsPopover({
 			content={
 				<div className={styles.content}>
 					<Button
-						variant="ghost"
 						color="secondary"
 						className={styles.menuItem}
 						prefix={<Expand size={14} />}
@@ -47,7 +46,6 @@ function ActionsPopover({
 						View
 					</Button>
 					<Button
-						variant="ghost"
 						color="secondary"
 						className={styles.menuItem}
 						prefix={<SquareArrowOutUpRight size={14} />}
@@ -61,7 +59,6 @@ function ActionsPopover({
 						Open in New Tab
 					</Button>
 					<Button
-						variant="ghost"
 						color="secondary"
 						className={styles.menuItem}
 						prefix={<Link2 size={14} />}
