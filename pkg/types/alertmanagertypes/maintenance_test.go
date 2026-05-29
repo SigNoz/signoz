@@ -704,13 +704,142 @@ func TestIsActiveFixedSchedule(t *testing.T) {
 	}
 }
 
+func TestIsActiveRecurringSchedule(t *testing.T) {
+	// Daily window 12:00-14:00, starting 2024-01-01 (a Monday).
+	start := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+
+	daily := &Recurrence{
+		Duration:   valuer.MustParseTextDuration("2h"),
+		RepeatType: RepeatTypeDaily,
+	}
+
+	cases := []struct {
+		name       string
+		startTime  time.Time
+		endTime    time.Time
+		recurrence *Recurrence
+		now        time.Time
+		active     bool
+	}{
+		{
+			// The recurrence has not begun yet, even though the time-of-day matches.
+			name:       "daily: t < recurrence start",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2023, 12, 31, 13, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: no end, within window",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 13, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:       "daily: no end, outside window",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 15, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: at window start boundary",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 12, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:       "daily: at window end boundary",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 14, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			// Past the recurrence end, the time-of-day match no longer applies.
+			name:       "daily: t > recurrence end",
+			startTime:  start,
+			endTime:    time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			recurrence: daily,
+			now:        time.Date(2024, 1, 15, 13, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: before recurrence end, within window",
+			startTime:  start,
+			endTime:    time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
+			recurrence: daily,
+			now:        time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:      "weekly: on allowed day, within window",
+			startTime: start, // Monday
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeWeekly,
+				RepeatOn:   []RepeatOn{RepeatOnMonday},
+			},
+			now:    time.Date(2024, 4, 15, 13, 0, 0, 0, time.UTC), // a Monday
+			active: true,
+		},
+		{
+			name:      "weekly: on non-allowed day",
+			startTime: start,
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeWeekly,
+				RepeatOn:   []RepeatOn{RepeatOnMonday},
+			},
+			now:    time.Date(2024, 4, 16, 13, 0, 0, 0, time.UTC), // a Tuesday
+			active: false,
+		},
+		{
+			name:      "monthly: on day-of-month, within window",
+			startTime: time.Date(2024, 1, 4, 12, 0, 0, 0, time.UTC),
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeMonthly,
+			},
+			now:    time.Date(2024, 5, 4, 13, 0, 0, 0, time.UTC),
+			active: true,
+		},
+		{
+			name:      "monthly: on different day-of-month",
+			startTime: time.Date(2024, 1, 4, 12, 0, 0, 0, time.UTC),
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeMonthly,
+			},
+			now:    time.Date(2024, 5, 5, 13, 0, 0, 0, time.UTC),
+			active: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:   "UTC",
+					StartTime:  c.startTime,
+					EndTime:    c.endTime,
+					Recurrence: c.recurrence,
+				},
+			}
+			if got := m.IsActive(c.now); got != c.active {
+				t.Errorf("IsActive() = %v, want %v", got, c.active)
+			}
+		})
+	}
+}
+
 func TestShouldSkip_Scope(t *testing.T) {
-	activeSchedule := func() *Schedule {
-		return &Schedule{
-			Timezone:  "UTC",
-			StartTime: time.Now().UTC().Add(-time.Hour),
-			EndTime:   time.Now().UTC().Add(time.Hour),
-		}
+	activeSchedule := &Schedule{
+		Timezone:  "UTC",
+		StartTime: time.Now().UTC().Add(-time.Hour),
+		EndTime:   time.Now().UTC().Add(time.Hour),
 	}
 	now := time.Now().UTC()
 
@@ -724,7 +853,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 	}{
 		{
 			name:        "empty scope - no label filtering applied",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule()},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -732,7 +861,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope matches labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -740,7 +869,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope does not match labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -748,7 +877,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - both conditions match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "api"},
@@ -756,7 +885,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - one condition does not match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "worker"},
@@ -764,7 +893,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - first alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -772,7 +901,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - second alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -780,7 +909,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - neither alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "development"},
@@ -788,7 +917,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope references label absent from lset",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"service": "api"},
@@ -796,7 +925,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "in expression - value is in list",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env in ["production", "staging"]`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -804,7 +933,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "in expression - value not in list",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env in ["production", "staging"]`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "development"},
@@ -812,7 +941,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list and scope matches - should skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -820,7 +949,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID not in list and scope matches - ruleID gate prevents skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-2"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -828,7 +957,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list but scope does not match - should not skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-1"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},

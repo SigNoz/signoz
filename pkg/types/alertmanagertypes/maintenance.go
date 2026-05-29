@@ -348,9 +348,8 @@ func (m *PlannedMaintenance) Validate() error {
 }
 
 func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
-	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
 	var status MaintenanceStatus
-	if m.IsActive(now) {
+	if m.IsActive(time.Now()) {
 		status = MaintenanceStatusActive
 	} else if m.IsUpcoming() {
 		status = MaintenanceStatusUpcoming
