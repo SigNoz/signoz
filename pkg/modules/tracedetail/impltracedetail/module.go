@@ -225,7 +225,7 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 	}
 
 	flamegraphTrace := spantypes.NewFlamegraphTraceFromMinimal(minimalSpans)
-	minimalSpans = nil //nolint:ineffassign // release backing array before further db calls
+	minimalSpans = nil //nolint:ineffassign,wastedassign // release backing array before further db calls
 
 	cfg := m.config.Flamegraph
 	selectedSpans := flamegraphTrace.GetSelectedLevels(selectedSpanID,
