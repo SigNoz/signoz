@@ -1,4 +1,5 @@
 import { Popover } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import {
 	Expand,
 	EllipsisVertical,
@@ -35,47 +36,44 @@ function ActionsPopover({
 		<Popover
 			content={
 				<div className={styles.content}>
-					<button
-						type="button"
-						className={styles.actionItem}
+					<Button
+						variant="ghost"
+						color="secondary"
+						className={styles.menuItem}
+						prefix={<Expand size={14} />}
 						onClick={onView}
-						data-testid="dashboard-action-view"
+						testId="dashboard-action-view"
 					>
-						<span className={styles.actionIcon}>
-							<Expand size={14} />
-						</span>
-						<span className={styles.actionLabel}>View</span>
-					</button>
-					<button
-						type="button"
-						className={styles.actionItem}
+						View
+					</Button>
+					<Button
+						variant="ghost"
+						color="secondary"
+						className={styles.menuItem}
+						prefix={<SquareArrowOutUpRight size={14} />}
 						onClick={(e): void => {
 							e.stopPropagation();
 							e.preventDefault();
 							openInNewTab(link);
 						}}
-						data-testid="dashboard-action-open-new-tab"
+						testId="dashboard-action-open-new-tab"
 					>
-						<span className={styles.actionIcon}>
-							<SquareArrowOutUpRight size={14} />
-						</span>
-						<span className={styles.actionLabel}>Open in New Tab</span>
-					</button>
-					<button
-						type="button"
-						className={styles.actionItem}
+						Open in New Tab
+					</Button>
+					<Button
+						variant="ghost"
+						color="secondary"
+						className={styles.menuItem}
+						prefix={<Link2 size={14} />}
 						onClick={(e): void => {
 							e.stopPropagation();
 							e.preventDefault();
 							setCopy(getAbsoluteUrl(link));
 						}}
-						data-testid="dashboard-action-copy-link"
+						testId="dashboard-action-copy-link"
 					>
-						<span className={styles.actionIcon}>
-							<Link2 size={14} />
-						</span>
-						<span className={styles.actionLabel}>Copy Link</span>
-					</button>
+						Copy Link
+					</Button>
 					<DeleteActionItem
 						dashboardId={dashboardId}
 						dashboardName={dashboardName}
@@ -89,17 +87,18 @@ function ActionsPopover({
 			rootClassName="dashboardActionsPopover"
 			trigger="click"
 		>
-			<button
-				type="button"
-				className={styles.triggerIcon}
-				data-testid="dashboard-action-icon"
+			<Button
+				size="icon"
+				variant="ghost"
+				color="secondary"
+				testId="dashboard-action-icon"
 				onClick={(e): void => {
 					e.stopPropagation();
 					e.preventDefault();
 				}}
 			>
 				<EllipsisVertical size={14} />
-			</button>
+			</Button>
 		</Popover>
 	);
 }

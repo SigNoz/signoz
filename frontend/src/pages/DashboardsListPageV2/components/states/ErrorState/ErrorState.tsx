@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, RotateCw } from '@signozhq/icons';
 import { handleContactSupport } from 'container/Integrations/utils';
@@ -21,17 +21,20 @@ function ErrorState({ isCloudUser, onRetry }: Props): JSX.Element {
 			</Typography.Text>
 			<section className={styles.actionButtons}>
 				<Button
-					className={styles.retryButton}
-					type="text"
-					icon={<RotateCw size={16} />}
+					variant="outlined"
+					color="secondary"
+					prefix={<RotateCw size={16} />}
 					onClick={onRetry}
+					testId="dashboards-list-retry"
 				>
 					Retry
 				</Button>
 				<Button
-					type="text"
+					variant="link"
+					color="primary"
 					className={styles.learnMore}
 					onClick={(): void => handleContactSupport(isCloudUser)}
+					testId="dashboards-list-contact-support"
 				>
 					Contact Support
 				</Button>

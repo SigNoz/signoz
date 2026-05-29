@@ -11,7 +11,7 @@
 .errorText {
 	composes: bodyText from '../states.module.scss';
 	color: var(--l1-foreground);
-	font-weight: 500;
+	font-weight: var(--font-weight-medium);
 }
 
 .actionButtons {
@@ -19,18 +19,6 @@
 	gap: 24px;
 	align-items: center;
 	margin-top: 20px;
-}
-
-.retryButton {
-	display: flex;
-	align-items: center;
-	height: 32px;
-	padding: 5.937px 11.875px;
-	justify-content: center;
-	gap: 5.937px;
-	border-radius: 1.484px;
-	background: var(--l1-border);
-	color: var(--l1-foreground);
 }
 
 .learnMore {

@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
@@ -33,9 +33,10 @@ function EmptyState({ createDropdown }: Props): JSX.Element {
 				<section className={styles.actions}>
 					{createDropdown}
 					<Button
-						type="text"
+						variant="link"
+						color="primary"
 						className={styles.learnMore}
-						data-testid="learn-more"
+						testId="learn-more"
 						onClick={(): void => {
 							logEvent('Dashboard List: Learn more clicked', {});
 							openInNewTab(LEARN_MORE_HREF);

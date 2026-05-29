@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
 import { Modal, Tooltip } from 'antd';
+import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
 import { CircleAlert, Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
@@ -93,10 +95,11 @@ function DeleteActionItem({
 	return (
 		<>
 			<Tooltip placement="left" title={tooltip}>
-				<button
-					type="button"
-					className={styles.actionItem}
-					data-variant="danger"
+				<Button
+					variant="ghost"
+					color="destructive"
+					className={cx(styles.menuItem, styles.deleteDivider)}
+					prefix={<Trash2 size={14} />}
 					disabled={isDisabled}
 					onClick={(e): void => {
 						e.preventDefault();
@@ -105,12 +108,10 @@ function DeleteActionItem({
 							openConfirm();
 						}
 					}}
+					testId="dashboard-action-delete"
 				>
-					<span className={styles.actionIcon}>
-						<Trash2 size={14} />
-					</span>
-					<span className={styles.actionLabel}>Delete Dashboard</span>
-				</button>
+					Delete Dashboard
+				</Button>
 			</Tooltip>
 			{contextHolder}
 		</>

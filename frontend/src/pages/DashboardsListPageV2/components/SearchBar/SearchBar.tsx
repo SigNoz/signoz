@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import { Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
 import { Color } from '@signozhq/design-tokens';
 import { Search } from '@signozhq/icons';
 
@@ -14,7 +14,7 @@ function SearchBar({ value, onChange }: Props): JSX.Element {
 			placeholder="Search by name, description, or tags..."
 			prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 			value={value}
-			data-testid="dashboards-list-search"
+			testId="dashboards-list-search"
 			onChange={(e: ChangeEvent<HTMLInputElement>): void =>
 				onChange(e.target.value)
 			}
