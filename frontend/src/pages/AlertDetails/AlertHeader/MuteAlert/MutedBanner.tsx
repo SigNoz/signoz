@@ -8,7 +8,7 @@ import type { ActiveMute } from './useActiveMutes';
 
 import './StateBanners.styles.scss';
 
-const PLANNED_DOWNTIMES_URL = `${ROUTES.LIST_ALL_ALERT}?tab=Configuration&subTab=planned-downtime`;
+const PLANNED_DOWNTIMES_URL = `${ROUTES.LIST_ALL_ALERT}?tab=PlannedDowntime`;
 
 const formatRemaining = (endTime: string): string | null => {
 	const end = dayjs(endTime);
