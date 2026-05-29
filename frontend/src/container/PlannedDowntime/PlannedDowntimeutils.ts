@@ -69,11 +69,11 @@ export const recurrenceInfo = (
 	schedule?: AlertmanagertypesScheduleDTO | null,
 ): string => {
 	if (!schedule) {
-		return 'N/A';
+		return 'No';
 	}
 	const { startTime, endTime, timezone, recurrence } = schedule;
 	if (!recurrence) {
-		return 'N/A';
+		return 'No';
 	}
 
 	const { duration, repeatOn, repeatType } = recurrence;

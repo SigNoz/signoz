@@ -10,10 +10,10 @@ import (
 )
 
 type Schedule struct {
-	Timezone   string      `json:"timezone" required:"true"`
-	StartTime  time.Time   `json:"startTime,omitempty"`
-	EndTime    time.Time   `json:"endTime,omitzero"`
-	Recurrence *Recurrence `json:"recurrence"`
+	Timezone   string `required:"true"`
+	StartTime  time.Time
+	EndTime    time.Time
+	Recurrence *Recurrence
 }
 
 func (s *Schedule) Scan(src interface{}) error {
@@ -76,14 +76,11 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	var startTime time.Time
-	if aux.StartTime != "" {
-		startTime, err = time.Parse(time.RFC3339, aux.StartTime)
-		if err != nil {
-			return err
-		}
-		startTime = startTime.In(loc)
+	startTime, err := time.Parse(time.RFC3339, aux.StartTime)
+	if err != nil {
+		return err
 	}
+	startTime = startTime.In(loc)
 
 	var endTime time.Time
 	if aux.EndTime != "" {

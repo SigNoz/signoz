@@ -159,17 +159,10 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model
 		return false, nil
 	}
 
-	if !m.IsActive(now) {
-		return false, nil
-	}
-
 	if m.Scope != "" {
-		result, err := EvalScopeExpression(m.Scope, lset)
-		if err != nil {
+		skip, err := EvalScopeExpression(m.Scope, lset)
+		if err != nil || !skip {
 			return false, err
-		}
-		if !result {
-			return false, nil
 		}
 	}
 	return true, nil

@@ -66,8 +66,8 @@ var RepeatOnAllMap = map[RepeatOn]time.Weekday{
 	RepeatOnSaturday:  time.Saturday,
 }
 
-// Recurrence describes the repeat pattern of a planned maintenance. The window
-// bounds (start/end) live on the enclosing Schedule, not here.
+// Recurrence describes the repeat pattern of a planned maintenance.
+// The window bounds (start/end) live on the enclosing Schedule.
 type Recurrence struct {
 	Duration   valuer.TextDuration `json:"duration" required:"true"`
 	RepeatType RepeatType          `json:"repeatType" required:"true"`
