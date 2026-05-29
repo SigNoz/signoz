@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pql "github.com/prometheus/prometheus/promql"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
