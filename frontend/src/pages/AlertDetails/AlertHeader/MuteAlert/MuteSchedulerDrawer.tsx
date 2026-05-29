@@ -165,6 +165,7 @@ function MuteSchedulerDrawer(props: MuteSchedulerDrawerProps): JSX.Element {
 				<Form.Item label="Starts" name="startTime" rules={requiredRule}>
 					<DatePicker
 						className="mute-scheduler-drawer__date"
+						popupClassName="mute-scheduler-drawer__date-popup"
 						showTime
 						showNow={false}
 						format={(date): string => date.format(DATE_FORMAT)}
@@ -183,6 +184,7 @@ function MuteSchedulerDrawer(props: MuteSchedulerDrawerProps): JSX.Element {
 				>
 					<DatePicker
 						className="mute-scheduler-drawer__date"
+						popupClassName="mute-scheduler-drawer__date-popup"
 						showTime
 						showNow={false}
 						format={(date): string => date.format(DATE_FORMAT)}

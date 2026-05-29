@@ -113,3 +113,13 @@
 		border-top: 1px solid var(--bg-slate-300);
 	}
 }
+
+// The DatePicker popup is portaled to <body>, so this selector lives at the
+// root rather than nested under .mute-scheduler-drawer. Without a solid panel
+// background the time-column cells are transparent and the drawer content
+// bleeds through.
+.mute-scheduler-drawer__date-popup {
+	.ant-picker-panel-container {
+		background: var(--bg-ink-400) !important;
+	}
+}
