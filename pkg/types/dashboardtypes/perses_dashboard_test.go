@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -1023,4 +1024,89 @@ func TestGenerateDashboardName(t *testing.T) {
 		second := generateDashboardName("collision-test")
 		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
 	})
+}
+
+func TestSpanGaps(t *testing.T) {
+	unmarshal := func(t *testing.T, val string) SpanGaps {
+		t.Helper()
+		var sg SpanGaps
+		require.NoError(t, json.Unmarshal([]byte(val), &sg))
+		return sg
+	}
+
+	t.Run("defaults", func(t *testing.T) {
+		var sg SpanGaps
+		assert.False(t, sg.FillOnlyBelow, "expected FillOnlyBelow default false")
+		assert.True(t, sg.FillLessThan.IsZero(), "expected FillLessThan default zero")
+	})
+
+	t.Run("fillOnlyBelow true", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": true}`)
+		assert.True(t, sg.FillOnlyBelow)
+	})
+
+	t.Run("fillLessThan duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+		assert.False(t, sg.FillOnlyBelow)
+		assert.Equal(t, 5*time.Minute, sg.FillLessThan.Duration())
+	})
+
+	t.Run("fillLessThan compound duration", func(t *testing.T) {
+		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
+		assert.Equal(t, 90*time.Minute, sg.FillLessThan.Duration())
+	})
+}
+
+func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
+	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
+		return []byte(`{
+			"panels": {"p1": {"kind": "Panel", "spec": {
+				"plugin": {"kind": "` + panelKind + `", "spec": {}},
+				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
+			}}},
+			"layouts": []
+		}`)
+	}
+	mkComposite := func(panelKind, subType, subSpec string) []byte {
+		return []byte(`{
+			"panels": {"p1": {"kind": "Panel", "spec": {
+				"plugin": {"kind": "` + panelKind + `", "spec": {}},
+				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
+					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
+				}}}}]
+			}}},
+			"layouts": []
+		}`)
+	}
+
+	cases := []struct {
+		name    string
+		data    []byte
+		wantErr bool
+	}{
+		// Top-level: allowed
+		{"TimeSeries+PromQL", mkQuery("signoz/TimeSeriesPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), false},
+		{"Table+ClickHouse", mkQuery("signoz/TablePanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"List+Builder", mkQuery("signoz/ListPanel", "signoz/BuilderQuery", `{"name":"A","signal":"logs"}`), false},
+		// Top-level: rejected
+		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
+		{"List+PromQL", mkQuery("signoz/ListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+Composite", mkQuery("signoz/ListPanel", "signoz/CompositeQuery", `{"queries":[]}`), true},
+		{"List+Formula", mkQuery("signoz/ListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), true},
+		// Composite sub-queries
+		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
+		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := unmarshalDashboard(tc.data)
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
