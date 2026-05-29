@@ -8312,7 +8312,7 @@ export interface TypesPostableVerifyResetPasswordTokenDTO {
 	/**
 	 * @type string
 	 */
-	token?: string;
+	token: string;
 }
 
 export interface TypesResetPasswordTokenDTO {

@@ -21,13 +21,13 @@ var (
 	ErrCodeResetPasswordTokenAlreadyExists        = errors.MustNewCode("reset_password_token_already_exists")
 	ErrCodePasswordNotFound                       = errors.MustNewCode("password_not_found")
 	ErrCodeResetPasswordTokenNotFound             = errors.MustNewCode("reset_password_token_not_found")
-	ErrCodeResetPasswordTokenExpired             = errors.MustNewCode("reset_password_token_expired")
+	ErrCodeResetPasswordTokenExpired              = errors.MustNewCode("reset_password_token_expired")
 	ErrCodePasswordAlreadyExists                  = errors.MustNewCode("password_already_exists")
 	ErrCodeIncorrectPassword                      = errors.MustNewCode("incorrect_password")
 )
 
 type PostableVerifyResetPasswordToken struct {
-	Token string `json:"token"`
+	Token string `json:"token" required:"true"`
 }
 
 type PostableResetPassword struct {

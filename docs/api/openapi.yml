@@ -7072,6 +7072,8 @@ components:
       properties:
         token:
           type: string
+      required:
+      - token
       type: object
     TypesResetPasswordToken:
       properties:
