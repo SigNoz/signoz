@@ -51,6 +51,13 @@ const STATUS_BADGE_PROPS: Record<
 	},
 };
 
+const STATUS_SORT_ORDER: Record<AlertmanagertypesMaintenanceStatusDTO, number> =
+	{
+		[AlertmanagertypesMaintenanceStatusDTO.active]: 0,
+		[AlertmanagertypesMaintenanceStatusDTO.upcoming]: 1,
+		[AlertmanagertypesMaintenanceStatusDTO.expired]: 2,
+	};
+
 function StatusBadge({
 	status,
 }: {
@@ -369,6 +376,11 @@ export function PlannedDowntimeList({
 
 	const tableData = [...(downtimeSchedules.data?.data || [])]
 		.sort((a, b): number => {
+			const statusDiff =
+				(STATUS_SORT_ORDER[a.status] ?? 99) - (STATUS_SORT_ORDER[b.status] ?? 99);
+			if (statusDiff !== 0) {
+				return statusDiff;
+			}
 			if (a?.updatedAt && b?.updatedAt) {
 				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
 			}
