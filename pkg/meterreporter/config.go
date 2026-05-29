@@ -21,7 +21,7 @@ type Config struct {
 	// Start() and to every subsequent cycle. The first fire happens at a
 	// random time in [0, Jitter); each subsequent cycle takes
 	// Interval - random(0, Jitter). Negative (the default) means "derive
-	// from Interval" via ResolvedJitter, so the value scales with whatever
+	// from Interval" via NewJitter, so the value scales with whatever
 	// Interval the user picks.
 	Jitter time.Duration `mapstructure:"jitter"`
 }

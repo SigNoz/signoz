@@ -1,36 +1,34 @@
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 import { getLabelRenderingValue } from './utils';
 
-function TagWithToolTip({
+function BadgeWithTooltip({
 	label,
 	value,
-	color,
-}: TagWithToolTipProps): JSX.Element {
+}: BadgeWithTooltipProps): JSX.Element {
 	const tooltipTitle =
 		value && value[label] ? `${label}: ${value[label]}` : label;
 	return (
 		<div key={label}>
 			<Tooltip title={tooltipTitle}>
-				<Tag className="label-column--tag" color={color}>
+				<Badge className="label-column--tag" color="vanilla">
 					{getLabelRenderingValue(label, value && value[label])}
-				</Tag>
+				</Badge>
 			</Tooltip>
 		</div>
 	);
 }
 
-type TagWithToolTipProps = {
+type BadgeWithTooltipProps = {
 	label: string;
-	color?: string;
 	value?: {
 		[key: string]: string;
 	};
 };
 
-TagWithToolTip.defaultProps = {
+BadgeWithTooltip.defaultProps = {
 	value: undefined,
-	color: undefined,
 };
 
-export default TagWithToolTip;
+export default BadgeWithTooltip;

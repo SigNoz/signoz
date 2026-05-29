@@ -1,5 +1,6 @@
 import {
 	MouseEvent,
+	ReactNode,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -25,7 +26,14 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Dropdown, MenuProps, Modal, Tooltip } from 'antd';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
+import { Button, MenuProps, Modal, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { Logout } from 'api/utils';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -162,7 +170,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [hasScroll, setHasScroll] = useState(false);
 	const navTopSectionRef = useRef<HTMLDivElement>(null);
+	const sidenavRef = useRef<HTMLDivElement>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const isDropdownOpenRef = useRef(false);
 
 	const [isHovered, setIsHovered] = useState(false);
 	const [pinnedMenuItems, setPinnedMenuItems] = useState<SidebarItem[]>([]);
@@ -175,7 +185,25 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, []);
 
 	const handleMouseLeave = useCallback(() => {
+		// When the dropdown is open its content renders in a portal outside
+		// the sidenav, which causes the browser to fire mouseleave on the
+		// sidenav. Keep the sidenav expanded in that case.
+		if (isDropdownOpenRef.current) {
+			return;
+		}
 		setIsHovered(false);
+	}, []);
+
+	const handleDropdownOpenChange = useCallback((open: boolean): void => {
+		isDropdownOpenRef.current = open;
+		setIsDropdownOpen(open);
+		if (!open) {
+			// Re-sync hover state on close: the cursor may have moved to the
+			// portal content (outside .sideNav), so mouseleave never fired.
+			requestAnimationFrame(() => {
+				setIsHovered(sidenavRef.current?.matches(':hover') ?? false);
+			});
+		}
 	}, []);
 
 	const checkScroll = useCallback((): void => {
@@ -959,9 +987,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	return (
 		<div className={cx('sidenav-container', isPinned && 'pinned')}>
 			<div
+				ref={sidenavRef}
 				className={cx(
 					'sideNav',
 					isPinned && 'pinned',
+					isHovered && 'is-hovered',
 					isDropdownOpen && 'dropdown-open',
 				)}
 				onMouseEnter={handleMouseEnter}
@@ -1182,46 +1212,95 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{isAIAssistantEnabled && renderNavItems([aiAssistantMenuItem], false)}
 
 							<div className="nav-dropdown-item">
-								<Dropdown
-									menu={{
-										items: helpSupportDropdownMenuItems,
-										onClick: handleHelpSupportMenuItemClick,
-									}}
-									placement="topLeft"
-									overlayClassName="nav-dropdown-overlay help-support-dropdown"
-									trigger={['click']}
-									onOpenChange={(open): void => setIsDropdownOpen(open)}
-								>
-									<div className="nav-item">
-										<div className="nav-item-data" data-testid="help-support-nav-item">
-											<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
+									<DropdownMenuTrigger asChild>
+										<div className="nav-item">
+											<div className="nav-item-data" data-testid="help-support-nav-item">
+												<div className="nav-item-icon">{helpSupportMenuItem.icon}</div>
 
-											<div className="nav-item-label">{helpSupportMenuItem.label}</div>
+												<div className="nav-item-label">{helpSupportMenuItem.label}</div>
+											</div>
 										</div>
-									</div>
-								</Dropdown>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										side="top"
+										align="start"
+										className="nav-dropdown-overlay help-support-dropdown"
+									>
+										{helpSupportDropdownMenuItems.map((item, idx) => {
+											if ('type' in item) {
+												// eslint-disable-next-line react/no-array-index-key
+												return <DropdownMenuSeparator key={`help-sep-${idx}`} />;
+											}
+											return (
+												<DropdownMenuItem
+													key={String(item.key)}
+													leftIcon={item.icon}
+													onClick={(e): void =>
+														handleHelpSupportMenuItemClick({
+															...item,
+															key: String(item.key),
+															domEvent: e.nativeEvent,
+														} as unknown as SidebarItem)
+													}
+												>
+													{item.label}
+												</DropdownMenuItem>
+											);
+										})}
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</div>
 
 							<div className="nav-dropdown-item">
-								<Dropdown
-									menu={{
-										items: userSettingsDropdownMenuItems,
-										onClick: handleSettingsMenuItemClick,
-									}}
-									placement="topLeft"
-									overlayClassName="nav-dropdown-overlay settings-dropdown"
-									trigger={['click']}
-									onOpenChange={(open): void => setIsDropdownOpen(open)}
-								>
-									<div className={cx('nav-item', isSettingsPage && 'active')}>
-										<div className="nav-item-active-marker" />
-										<div className="nav-item-data" data-testid="settings-nav-item">
-											<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
+								<DropdownMenu onOpenChange={handleDropdownOpenChange}>
+									<DropdownMenuTrigger asChild>
+										<div className={cx('nav-item', isSettingsPage && 'active')}>
+											<div className="nav-item-active-marker" />
+											<div className="nav-item-data" data-testid="settings-nav-item">
+												<div className="nav-item-icon">{userSettingsMenuItem.icon}</div>
 
-											<div className="nav-item-label">{userSettingsMenuItem.label}</div>
+												<div className="nav-item-label">{userSettingsMenuItem.label}</div>
+											</div>
 										</div>
-									</div>
-								</Dropdown>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										side="top"
+										align="start"
+										className="nav-dropdown-overlay settings-dropdown"
+									>
+										{(userSettingsDropdownMenuItems ?? []).map((item, idx) => {
+											if (!item) {
+												return null;
+											}
+											if ('type' in item && item.type === 'divider') {
+												// eslint-disable-next-line react/no-array-index-key
+												return <DropdownMenuSeparator key={`settings-sep-${idx}`} />;
+											}
+											const settingsItem = item as {
+												key?: string | number;
+												label?: ReactNode;
+												icon?: ReactNode;
+												disabled?: boolean;
+											};
+											return (
+												<DropdownMenuItem
+													key={String(settingsItem.key)}
+													leftIcon={settingsItem.icon}
+													disabled={settingsItem.disabled}
+													onClick={(e): void =>
+														handleSettingsMenuItemClick({
+															key: String(settingsItem.key),
+															domEvent: e.nativeEvent,
+														} as unknown as SidebarItem)
+													}
+												>
+													{settingsItem.label}
+												</DropdownMenuItem>
+											);
+										})}
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</div>
 						</div>
 					</div>

@@ -1,13 +1,7 @@
 import { useMemo, useState } from 'react';
-import {
-	Button,
-	Divider,
-	Dropdown,
-	Form,
-	MenuProps,
-	Space,
-	Tooltip,
-} from 'antd';
+import { Button, Form, Space, Tooltip } from 'antd';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
@@ -44,16 +38,22 @@ function FunnelStep({
 	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] =
 		useState<boolean>(false);
 
-	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
-		(option) => ({
-			key: option.value,
-			label: option.key,
-			style:
-				option.value === stepData.latency_pointer
-					? { backgroundColor: 'var(--bg-slate-100)' }
-					: {},
-		}),
-	);
+	const latencyPointerItems: MenuItem[] = [
+		{
+			type: 'radio-group',
+			value: stepData.latency_pointer,
+			onChange: (value): void =>
+				onStepChange(index, {
+					latency_pointer: value as FunnelStepData['latency_pointer'],
+				}),
+			children: LatencyPointers.map((option) => ({
+				type: 'radio',
+				key: option.value,
+				label: option.key,
+				value: option.value,
+			})),
+		},
+	];
 
 	const updatedCurrentQuery = useMemo(
 		() => ({
@@ -211,17 +211,18 @@ function FunnelStep({
 					</div>
 					<div className="latency-pointer">
 						<div className="latency-pointer__label">Latency pointer</div>
-						<Dropdown
-							menu={{
-								items: latencyPointerItems,
-								onClick: ({ key }): void =>
-									onStepChange(index, {
-										latency_pointer: key as FunnelStepData['latency_pointer'],
-									}),
-							}}
-							trigger={['click']}
-							disabled={!hasEditPermission}
-						>
+						{hasEditPermission ? (
+							<DropdownMenuSimple menu={{ items: latencyPointerItems }}>
+								<Space>
+									{
+										LatencyPointers.find(
+											(option) => option.value === stepData.latency_pointer,
+										)?.key
+									}
+									<ChevronDown size={14} color="var(--bg-vanilla-400)" />
+								</Space>
+							</DropdownMenuSimple>
+						) : (
 							<Space>
 								{
 									LatencyPointers.find(
@@ -230,7 +231,7 @@ function FunnelStep({
 								}
 								<ChevronDown size={14} color="var(--bg-vanilla-400)" />
 							</Space>
-						</Dropdown>
+						)}
 					</div>
 				</div>
 			</Form>

@@ -1,21 +1,21 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 function Severity({ severity }: SeverityProps): JSX.Element {
 	switch (severity) {
 		case 'unprocessed': {
-			return <Tag color="green">UnProcessed</Tag>;
+			return <Badge color="forest">UnProcessed</Badge>;
 		}
 
 		case 'active': {
-			return <Tag color="red">Firing</Tag>;
+			return <Badge color="cherry">Firing</Badge>;
 		}
 
 		case 'suppressed': {
-			return <Tag color="red">Suppressed</Tag>;
+			return <Badge color="cherry">Suppressed</Badge>;
 		}
 
 		default: {
-			return <Tag color="default">Unknown Status</Tag>;
+			return <Badge color="vanilla">Unknown Status</Badge>;
 		}
 	}
 }

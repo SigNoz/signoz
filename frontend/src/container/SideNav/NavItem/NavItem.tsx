@@ -1,4 +1,5 @@
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { Pin, PinOff } from '@signozhq/icons';
 
@@ -58,17 +59,17 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Tag bordered={false} className="sidenav-beta-tag">
+						<Badge color="robin" className="sidenav-beta-tag">
 							Beta
-						</Tag>
+						</Badge>
 					</div>
 				)}
 
 				{isNew && (
 					<div className="nav-item-new">
-						<Tag bordered={false} className="sidenav-new-tag">
+						<Badge color="robin" className="sidenav-new-tag">
 							New
-						</Tag>
+						</Badge>
 					</div>
 				)}
 
