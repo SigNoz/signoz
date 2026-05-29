@@ -2,6 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"target": "es6",
-		"noEmit": false
+		"noEmit": false,
+		"noImplicitAny": false
 	}
 }
