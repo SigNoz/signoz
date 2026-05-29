@@ -295,19 +295,16 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, loc *time.Locat
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {
-	loc, err := time.LoadLocation(m.Schedule.Timezone)
-	if err != nil {
-		return false
-	}
-	now := time.Now().In(loc)
+	now := time.Now()
 
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
-		return now.Before(m.Schedule.StartTime)
+	if m.IsRecurring() {
+		// Note: this would return true even if the maintenance is active.
+		// This isn't an issue right now because the only usage happens after the `IsActive` check.
+		return m.Schedule.EndTime.IsZero() || now.Before(m.Schedule.EndTime)
 	}
-	if m.Schedule.Recurrence != nil {
-		return now.Before(m.Schedule.StartTime)
-	}
-	return false
+
+	// Fixed schedule
+	return now.Before(m.Schedule.StartTime)
 }
 
 func (m *PlannedMaintenance) IsRecurring() bool {
