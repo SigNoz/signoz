@@ -39,12 +39,12 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	var startTime, endTime time.Time
-	if !s.StartTime.IsZero() {
-		startTime = time.Date(s.StartTime.Year(), s.StartTime.Month(), s.StartTime.Day(), s.StartTime.Hour(), s.StartTime.Minute(), s.StartTime.Second(), s.StartTime.Nanosecond(), loc)
-	}
+	// Marshal times in the selected timezone.
+	// This ensures that recurring events are handled correctly when DST is involved.
+	startTime := s.StartTime.In(loc)
+	var endTime time.Time
 	if !s.EndTime.IsZero() {
-		endTime = time.Date(s.EndTime.Year(), s.EndTime.Month(), s.EndTime.Day(), s.EndTime.Hour(), s.EndTime.Minute(), s.EndTime.Second(), s.EndTime.Nanosecond(), loc)
+		endTime = s.EndTime.In(loc)
 	}
 
 	return json.Marshal(&struct {
@@ -82,7 +82,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		s.StartTime = time.Date(startTime.Year(), startTime.Month(), startTime.Day(), startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(), loc)
+		startTime = startTime.In(loc)
 	}
 
 	var endTime time.Time
@@ -91,12 +91,14 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		// TODO(jatinderjit): if endTime.IsZero() then we should not set the endTime
-		s.EndTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), endTime.Second(), endTime.Nanosecond(), loc)
+		if !endTime.IsZero() {
+			endTime = endTime.In(loc)
+		}
 	}
 
 	s.Timezone = aux.Timezone
-
+	s.StartTime = startTime
+	s.EndTime = endTime
 	s.Recurrence = aux.Recurrence
 	return nil
 }

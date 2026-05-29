@@ -364,11 +364,9 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	} else {
 		status = MaintenanceStatusExpired
 	}
-	var kind MaintenanceKind
 
-	if m.Schedule.Recurrence == nil {
-		kind = MaintenanceKindFixed
-	} else {
+	kind := MaintenanceKindFixed
+	if m.Schedule.Recurrence != nil {
 		kind = MaintenanceKindRecurring
 	}
 
