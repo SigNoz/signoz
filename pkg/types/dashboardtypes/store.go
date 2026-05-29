@@ -32,12 +32,4 @@ type Store interface {
 	DeletePublic(context.Context, string) error
 
 	RunInTx(context.Context, func(context.Context) error) error
-
-	// ════════════════════════════════════════════════════════════════════════
-	// v2 dashboard methods
-	// ════════════════════════════════════════════════════════════════════════
-
-	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data StorableDashboardData) error
-
-	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error
 }

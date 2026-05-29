@@ -86,7 +86,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 			return err
 		}
 
-		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+		return module.store.Update(ctx, orgID, storable)
 	})
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 			return err
 		}
 
-		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+		return module.store.Update(ctx, orgID, storable)
 	})
 	if err != nil {
 		return nil, err
@@ -147,5 +147,5 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	if err != nil {
 		return err
 	}
-	return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+	return module.store.Update(ctx, orgID, storable)
 }

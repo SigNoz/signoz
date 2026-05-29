@@ -2,7 +2,6 @@ package impldashboard
 
 import (
 	"context"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -62,57 +61,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	}
 
 	return storableDashboard, nil
-}
-
-func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.StorableDashboardData) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("data = ?", data).
-		Set("updated_by = ?", updatedBy).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Where("org_id = ?", orgID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	// Defends against the race where a delete lands between the caller's
-	// pre-update GetV2 and this update.
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
-}
-
-func (store *store) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("locked = ?", locked).
-		Set("updated_by = ?", updatedBy).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
 }
 
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
@@ -205,7 +153,7 @@ func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashb
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewUpdate().
 		Model(storableDashboard).
 		WherePK().
