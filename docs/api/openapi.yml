@@ -2611,51 +2611,6 @@ components:
       - tags
       - spec
       type: object
-    DashboardtypesGettableDashboardWithPin:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        image:
-          type: string
-        locked:
-          type: boolean
-        name:
-          type: string
-        orgId:
-          type: string
-        pinned:
-          type: boolean
-        schemaVersion:
-          type: string
-        source:
-          $ref: '#/components/schemas/DashboardtypesSource'
-        spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
-        tags:
-          items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
-          nullable: true
-          type: array
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      - orgId
-      - locked
-      - source
-      - schemaVersion
-      - name
-      - tags
-      - spec
-      type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
@@ -2801,7 +2756,7 @@ components:
       properties:
         dashboards:
           items:
-            $ref: '#/components/schemas/DashboardtypesGettableDashboardWithPin'
+            $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
           type: array
         total:
           format: int64
@@ -2809,6 +2764,54 @@ components:
       required:
       - dashboards
       - total
+      type: object
+    DashboardtypesListedDashboardV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        pinned:
+          type: boolean
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - pinned
+      - tags
+      - spec
+      type: object
+    DashboardtypesListedDashboardV2Spec:
+      properties:
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
