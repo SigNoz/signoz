@@ -1,11 +1,12 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
-import { Button, Flex, Tag } from 'antd';
+import { Button, Flex } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import Input from 'components/Input';
 
-import './Tags.styles.scss';
+import './Badges.styles.scss';
 
-function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
+function Badges({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [inputVisible, setInputVisible] = useState<boolean>(false);
 
@@ -46,14 +47,18 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 	return (
 		<div className="tags-container">
 			{tags.map<React.ReactNode>((tag) => (
-				<Tag
+				<Badge
 					key={tag}
-					closable
+					color="vanilla"
 					style={{ userSelect: 'none' }}
-					onClose={(): void => handleClose(tag)}
+					closable
+					onClose={(e): void => {
+						e.preventDefault();
+						handleClose(tag);
+					}}
 				>
-					<span>{tag}</span>
-				</Tag>
+					{tag}
+				</Badge>
 			))}
 
 			{inputVisible && (
@@ -113,4 +118,4 @@ interface AddTagsProps {
 	setTags: Dispatch<SetStateAction<string[]>>;
 }
 
-export default Tags;
+export default Badges;

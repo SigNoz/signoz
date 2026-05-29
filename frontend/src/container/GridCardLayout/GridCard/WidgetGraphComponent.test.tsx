@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
@@ -176,6 +177,7 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const { getByTestId, findByRole, getByText, container } = render(
 			<MockQueryClientProvider>
 				<ErrorModalProvider>
@@ -208,7 +210,7 @@ describe('WidgetGraphComponent', () => {
 		expect(skeleton).toBeInTheDocument();
 
 		const moreOptionsButton = getByTestId('widget-header-options');
-		fireEvent.mouseEnter(moreOptionsButton);
+		await user.click(moreOptionsButton);
 
 		const menu = await findByRole('menu');
 		expect(menu).toBeInTheDocument();

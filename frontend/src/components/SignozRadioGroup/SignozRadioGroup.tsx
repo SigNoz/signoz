@@ -1,4 +1,4 @@
-import { Radio, RadioChangeEvent } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 
 import './SignozRadioGroup.styles.scss';
 
@@ -11,7 +11,7 @@ interface Option {
 interface SignozRadioGroupProps {
 	value: string;
 	options: Option[];
-	onChange: (e: RadioChangeEvent) => void;
+	onChange: (value: string) => void;
 	className?: string;
 	disabled?: boolean;
 }
@@ -24,26 +24,22 @@ function SignozRadioGroup({
 	disabled = false,
 }: SignozRadioGroupProps): JSX.Element {
 	return (
-		<Radio.Group
+		<ToggleGroupSimple
+			type="single"
 			value={value}
-			buttonStyle="solid"
 			className={`signoz-radio-group ${className}`}
 			onChange={onChange}
 			disabled={disabled}
-		>
-			{options.map((option) => (
-				<Radio.Button
-					key={option.value}
-					value={option.value}
-					className={value === option.value ? 'selected_view tab' : 'tab'}
-				>
+			items={options.map((option) => ({
+				value: option.value,
+				label: (
 					<div className="view-title-container">
 						{option.icon && <div className="icon-container">{option.icon}</div>}
 						{option.label}
 					</div>
-				</Radio.Button>
-			))}
-		</Radio.Group>
+				),
+			}))}
+		/>
 	);
 }
 

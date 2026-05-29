@@ -4,13 +4,10 @@ import {
 	ButtonProps,
 	Col,
 	ColProps,
-	Divider,
-	DividerProps,
 	Row,
 	RowProps,
 	Space,
 	SpaceProps,
-	TabsProps,
 } from 'antd';
 import {
 	Typography,
@@ -34,18 +31,8 @@ const StyledRow = styled(Row)<TStyledRow>`
 	${styledClass}
 `;
 
-type TStyledDivider = DividerProps & IStyledClass;
-const StyledDivider = styled(Divider)<TStyledDivider>`
-	${styledClass}
-`;
-
 type TStyledSpace = SpaceProps & IStyledClass;
 const StyledSpace = styled(Space)<TStyledSpace>`
-	${styledClass}
-`;
-
-type TStyledTabs = TabsProps & IStyledClass;
-const StyledTabs = styled(Divider)<TStyledTabs>`
 	${styledClass}
 `;
 
@@ -79,9 +66,7 @@ export {
 	StyledButton,
 	StyledCol,
 	StyledDiv,
-	StyledDivider,
 	StyledRow,
 	StyledSpace,
-	StyledTabs,
 	StyledTypography,
 };

@@ -1,9 +1,9 @@
-import type { MenuItemType } from 'antd/es/menu/hooks/useItems';
+import type { MenuItem as DropdownMenuItem } from '@signozhq/ui/dropdown-menu';
 
 import { MenuItemKeys } from './contants';
 import { MenuItem } from './types';
 
-export const generateMenuList = (actions: MenuItem[]): MenuItemType[] =>
+export const generateMenuList = (actions: MenuItem[]): DropdownMenuItem[] =>
 	actions
 		.filter((action: MenuItem) => action.isVisible)
 		.map(({ key, icon: Icon, label, disabled, ...rest }) => ({
