@@ -18,13 +18,11 @@ import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 type UseLogsTableColumnsProps = {
 	fields: IField[];
 	fontSize: FontSize;
-	appendTo?: 'center' | 'end';
 };
 
 export function useLogsTableColumns({
 	fields,
 	fontSize,
-	appendTo = 'center',
 }: UseLogsTableColumnsProps): TableColumnDef<ILog>[] {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -47,74 +45,71 @@ export function useLogsTableColumns({
 			),
 		};
 
-		const fieldColumns: TableColumnDef<ILog>[] = fields
-			.filter((f): boolean => !['id', 'body', 'timestamp'].includes(f.name))
-			.map(
-				(f): TableColumnDef<ILog> => ({
-					id: f.name,
-					header: f.name,
-					accessorFn: (log): unknown => FlatLogData(log)[f.name],
-					enableRemove: true,
-					width: { min: 192 },
-					cell: ({ value }): ReactElement => (
-						<TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>
-					),
-				}),
-			);
+		const timestampCol: TableColumnDef<ILog> = {
+			id: 'timestamp',
+			header: 'Timestamp',
+			accessorFn: (log): unknown => log.timestamp,
+			canBeHidden: false,
+			enableRemove: false,
+			width: { default: 170, min: 170 },
+			cell: ({ value }): ReactElement => {
+				const ts = value as string | number;
+				const formatted =
+					typeof ts === 'string'
+						? formatTimezoneAdjustedTimestamp(ts, DATE_TIME_FORMATS.ISO_DATETIME_MS)
+						: formatTimezoneAdjustedTimestamp(
+								ts / 1e6,
+								DATE_TIME_FORMATS.ISO_DATETIME_MS,
+							);
+				return <TanStackTable.Text>{formatted}</TanStackTable.Text>;
+			},
+		};
 
-		const timestampCol: TableColumnDef<ILog> | null = fields.some(
-			(f) => f.name === 'timestamp',
-		)
-			? {
-					id: 'timestamp',
-					header: 'Timestamp',
-					accessorFn: (log): unknown => log.timestamp,
-					canBeHidden: false,
-					enableRemove: false,
-					width: { default: 170, min: 170 },
-					cell: ({ value }): ReactElement => {
-						const ts = value as string | number;
-						const formatted =
-							typeof ts === 'string'
-								? formatTimezoneAdjustedTimestamp(ts, DATE_TIME_FORMATS.ISO_DATETIME_MS)
-								: formatTimezoneAdjustedTimestamp(
-										ts / 1e6,
-										DATE_TIME_FORMATS.ISO_DATETIME_MS,
-									);
-						return <TanStackTable.Text>{formatted}</TanStackTable.Text>;
-					},
+		const bodyCol: TableColumnDef<ILog> = {
+			id: 'body',
+			header: 'Body',
+			accessorFn: (log): string => getBodyDisplayString(log.body),
+			canBeHidden: false,
+			enableRemove: false,
+			width: { default: '100%', min: 300 },
+			cell: ({ value, isActive }): ReactElement => (
+				<TanStackTable.Text
+					dangerouslySetInnerHTML={{
+						__html: getSanitizedLogBody(value as string, {
+							shouldEscapeHtml: true,
+						}),
+					}}
+					data-active={isActive}
+				/>
+			),
+		};
+
+		const makeUserFieldCol = (f: IField): TableColumnDef<ILog> => ({
+			id: f.name,
+			header: f.name,
+			accessorFn: (log): unknown => FlatLogData(log)[f.name],
+			enableRemove: true,
+			width: { min: 192 },
+			cell: ({ value }): ReactElement => (
+				<TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>
+			),
+		});
+
+		const fieldCols = fields
+			.map((f): TableColumnDef<ILog> | null => {
+				if (f.name === 'id') {
+					return null;
 				}
-			: null;
-
-		const bodyCol: TableColumnDef<ILog> | null = fields.some(
-			(f) => f.name === 'body',
-		)
-			? {
-					id: 'body',
-					header: 'Body',
-					accessorFn: (log): string => getBodyDisplayString(log.body),
-					canBeHidden: false,
-					enableRemove: false,
-					width: { default: '100%', min: 300 },
-					cell: ({ value, isActive }): ReactElement => (
-						<TanStackTable.Text
-							dangerouslySetInnerHTML={{
-								__html: getSanitizedLogBody(value as string, {
-									shouldEscapeHtml: true,
-								}),
-							}}
-							data-active={isActive}
-						/>
-					),
+				if (f.name === 'timestamp') {
+					return timestampCol;
 				}
-			: null;
+				if (f.name === 'body') {
+					return bodyCol;
+				}
+				return makeUserFieldCol(f);
+			})
+			.filter((c): c is TableColumnDef<ILog> => c !== null);
 
-		return [
-			stateIndicatorCol,
-			...(timestampCol ? [timestampCol] : []),
-			...(appendTo === 'center' ? fieldColumns : []),
-			...(bodyCol ? [bodyCol] : []),
-			...(appendTo === 'end' ? fieldColumns : []),
-		];
-	}, [fields, appendTo, fontSize, formatTimezoneAdjustedTimestamp]);
+		return [stateIndicatorCol, ...fieldCols];
+	}, [fields, fontSize, formatTimezoneAdjustedTimestamp]);
 }

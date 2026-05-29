@@ -95,7 +95,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 6px 12px;
+	height: 36px;
+	padding: 0 12px;
 	border-radius: 4px;
 	user-select: none;
 	font-size: 13px;
@@ -132,7 +133,7 @@
 }
 
 .isDragDisabled {
-	padding: 6px 12px;
+	cursor: default;
 }
 
 .otherFieldItem {

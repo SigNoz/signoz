@@ -26,6 +26,7 @@ interface FieldsSelectorProps {
 	onClose: () => void;
 	signal: DataSource;
 	maxFields?: number;
+	requiredFields?: readonly string[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -39,6 +40,7 @@ function FieldsSelector({
 	onClose,
 	signal,
 	maxFields,
+	requiredFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -138,6 +140,7 @@ function FieldsSelector({
 					fields={draftFields}
 					onFieldsChange={setDraftFields}
 					maxFields={maxFields}
+					requiredFields={requiredFields}
 				/>
 
 				<OtherFields

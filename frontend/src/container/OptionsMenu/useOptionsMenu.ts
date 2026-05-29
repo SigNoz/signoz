@@ -396,6 +396,10 @@ const useOptionsMenu = ({
 				onSearch: handleSearchAttribute,
 				onReorder: reorderSelectColumns,
 			},
+			fieldsSelector: {
+				value: preferences?.columns ?? [],
+				onFieldsChange: updateColumns,
+			},
 			format: {
 				value: preferences?.formatting?.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
@@ -417,11 +421,14 @@ const useOptionsMenu = ({
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,
 			reorderSelectColumns,
+			updateColumns,
 			handleFormatChange,
 			handleMaxLinesChange,
 			handleFontSizeChange,
 		],
 	);
+	//oxlint-disable-next-line no-console
+	console.log('fieldsSelector  value', optionsMenuConfig.fieldsSelector.value);
 
 	useEffect(() => {
 		if (optionsQuery || !isFetchedInitialAttributes) {

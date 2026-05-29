@@ -27,10 +27,12 @@ function SortableField({
 	field,
 	onRemove,
 	allowDrag,
+	isRequired,
 }: {
 	field: TelemetryFieldKey;
 	onRemove: (field: TelemetryFieldKey) => void;
 	allowDrag: boolean;
+	isRequired: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id: field.name });
@@ -53,15 +55,17 @@ function SortableField({
 				{allowDrag && <GripVertical size={14} />}
 				<span className={styles.fieldKey}>{field.name}</span>
 			</div>
-			<Button
-				className={cx(styles.removeBtn, 'periscope-btn')}
-				variant="outlined"
-				color="destructive"
-				size="sm"
-				onClick={(): void => onRemove(field)}
-			>
-				Remove
-			</Button>
+			{!isRequired && (
+				<Button
+					className={cx(styles.removeBtn, 'periscope-btn')}
+					variant="outlined"
+					color="destructive"
+					size="sm"
+					onClick={(): void => onRemove(field)}
+				>
+					Remove
+				</Button>
+			)}
 		</div>
 	);
 }
@@ -71,6 +75,7 @@ interface AddedFieldsProps {
 	fields: TelemetryFieldKey[];
 	onFieldsChange: (fields: TelemetryFieldKey[]) => void;
 	maxFields?: number;
+	requiredFields?: readonly string[];
 }
 
 function AddedFields({
@@ -78,6 +83,7 @@ function AddedFields({
 	fields,
 	onFieldsChange,
 	maxFields,
+	requiredFields = [],
 }: AddedFieldsProps): JSX.Element {
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -135,6 +141,7 @@ function AddedFields({
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}
+										isRequired={requiredFields.includes(field.name)}
 									/>
 								))}
 							</SortableContext>

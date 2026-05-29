@@ -82,7 +82,6 @@ function LiveLogsList({
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		fontSize: options.fontSize,
-		appendTo: 'end',
 	});
 
 	const makeOnLogCopy = useCallback(
