@@ -101,24 +101,25 @@ func TestGetSpanCountByField(t *testing.T) {
 
 func TestGetSpanDurationByField(t *testing.T) {
 	expectedSQL := "WITH all_spans AS (SELECT DISTINCT ON (span_id) resource.`service.name`::String AS field_value, toUnixTimestamp64Nano(timestamp) AS start_ns, start_ns + duration_nano AS end_ns" + `
-			FROM signoz_traces.distributed_signoz_index_v3
-			WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND notEmpty(field_value)
-			ORDER BY timestamp ASC, name ASC),
+		FROM signoz_traces.distributed_signoz_index_v3
+		WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND notEmpty(field_value)
+		ORDER BY timestamp ASC, name ASC),
 
-			effective_start AS (
-				SELECT field_value, end_ns, greatest(start_ns, ifNull(
-					max(end_ns) OVER (
-						PARTITION BY field_value
-						ORDER BY start_ns
-						ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-					),
-					toUInt64(0)
-				)) AS effective_start_ns FROM all_spans
+		effective_start AS (SELECT field_value, end_ns, greatest(
+			start_ns,
+			ifNull(
+				max(end_ns) OVER (
+					PARTITION BY field_value
+					ORDER BY start_ns
+					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+				),
+				toUInt64(0)
 			)
+		) AS effective_start_ns FROM all_spans)
 
-			SELECT field_value, sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns
-			FROM effective_start
-			GROUP BY field_value`
+		SELECT field_value, sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns
+		FROM effective_start
+		GROUP BY field_value`
 
 	tests := []struct {
 		name      string
