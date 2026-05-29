@@ -1,13 +1,6 @@
 .wrapper {
-	display: flex;
-	flex-direction: column;
-	height: 320px;
+	composes: cardWrapper from '../states.module.scss';
 	padding: 105px 141px;
-	margin-top: 16px;
-	justify-content: center;
-	align-items: flex-start;
-	border-radius: 6px;
-	border: 1px dashed var(--l1-border);
 	gap: 4px;
 }
 
@@ -16,13 +9,9 @@
 }
 
 .errorText {
+	composes: bodyText from '../states.module.scss';
 	color: var(--l1-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
 	font-weight: 500;
-	line-height: 18px;
-	letter-spacing: -0.07px;
 }
 
 .actionButtons {
@@ -45,18 +34,9 @@
 }
 
 .learnMore {
-	color: var(--bg-robin-400);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 500;
-	line-height: 18px;
-	letter-spacing: -0.07px;
-	padding: 0px;
+	composes: learnMoreLink from '../states.module.scss';
 }
 
 .learnMoreArrow {
-	margin-left: -20px;
-	color: var(--bg-robin-400);
-	cursor: pointer;
+	composes: learnMoreArrow from '../states.module.scss';
 }
