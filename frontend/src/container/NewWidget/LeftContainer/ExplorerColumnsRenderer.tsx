@@ -7,7 +7,8 @@ import {
 	DropResult,
 } from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Tooltip } from 'antd';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -234,7 +235,7 @@ function ExplorerColumnsRenderer({
 					</Tooltip>
 				)}
 			</div>
-			<Divider />
+			<Divider className="explorer-columns-renderer__divider" />
 			{!isError && (
 				<div className="explorer-columns-contents">
 					<DragDropContext onDragEnd={onDragEnd}>

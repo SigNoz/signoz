@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, InputNumber, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';

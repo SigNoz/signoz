@@ -12,18 +12,10 @@ import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
+import { Input } from '@signozhq/ui/input';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
-import {
-	Button,
-	Flex,
-	Input,
-	Modal,
-	Popover,
-	Skeleton,
-	Table,
-	Tag,
-	Tooltip,
-} from 'antd';
+import { Button, Flex, Modal, Popover, Skeleton, Table, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
@@ -419,15 +411,15 @@ function DashboardsList(): JSX.Element {
 								{dashboard?.tags && dashboard.tags.length > 0 && (
 									<div className="dashboard-tags">
 										{dashboard.tags.slice(0, 3).map((tag) => (
-											<Tag className="tag" key={tag}>
+											<Badge className="tag" color="vanilla" key={tag}>
 												{tag}
-											</Tag>
+											</Badge>
 										))}
 
 										{dashboard.tags.length > 3 && (
-											<Tag className="tag" key={dashboard.tags[3]}>
+											<Badge className="tag" color="vanilla" key={dashboard.tags[3]}>
 												+ <span> {dashboard.tags.length - 3} </span>
-											</Tag>
+											</Badge>
 										)}
 									</div>
 								)}

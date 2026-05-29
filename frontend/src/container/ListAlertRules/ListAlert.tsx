@@ -310,9 +310,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					return <Typography>-</Typography>;
 				}
 
-				return (
-					<LabelColumn labels={withOutSeverityKeys} value={value} color="magenta" />
-				);
+				return <LabelColumn labels={withOutSeverityKeys} value={value} />;
 			},
 		},
 	];

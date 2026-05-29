@@ -125,7 +125,7 @@ export function AlertsEmptyState(): JSX.Element {
 					</div>
 				</section>
 				<div className="get-started-text">
-					<Divider>
+					<Divider className="get-started-text__divider">
 						<Typography.Text className="get-started-text">
 							Or get started with these sample alerts
 						</Typography.Text>

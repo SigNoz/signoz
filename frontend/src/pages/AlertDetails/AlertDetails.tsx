@@ -104,7 +104,7 @@ function AlertDetails(): JSX.Element {
 				/>
 
 				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
-				<Divider className="divider" />
+				<Divider className="alert-details__divider" />
 				<div className="tabs-and-filters">
 					<RouteTab
 						routes={routes}

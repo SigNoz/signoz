@@ -168,45 +168,6 @@
 			padding: 10px 16px;
 			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
-
-			.integration-tab-btns {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: 8px 8px 18px 8px !important;
-
-				.typography {
-					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 20px; /* 142.857% */
-					letter-spacing: -0.07px;
-				}
-			}
-
-			.integration-tab-btns:hover {
-				&.ant-btn-text {
-					background-color: unset !important;
-				}
-			}
-
-			.ant-tabs-nav-list {
-				gap: 24px;
-			}
-
-			.ant-tabs-nav {
-				padding: 0px !important;
-			}
-
-			.ant-tabs-tab {
-				padding: 0 !important;
-			}
-
-			.ant-tabs-tab + .ant-tabs-tab {
-				margin: 0px !important;
-			}
 		}
 
 		.uninstall-integration-bar {

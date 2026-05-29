@@ -25,6 +25,7 @@ const BANNED_COMPONENTS = {
 	Progress: 'Use @signozhq/ui/progress instead of antd Progress.',
 	Avatar: 'Use @signozhq/ui/avatar instead of antd Avatar.',
 	Divider: 'Use @signozhq/ui/divider Divider instead of antd Divider.',
+	Tag: 'Use @signozhq/ui/badge Bagde instead of antd Tag.',
 };
 
 export default {
