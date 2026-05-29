@@ -13,7 +13,7 @@
 }
 
 .primaryButton {
-	padding: 5.937px 11.875px;
+	padding: 6px 12px;
 }
 
 .textButton {
@@ -21,10 +21,10 @@
 	width: 153px;
 	align-items: center;
 	height: 32px;
-	padding: 5.937px 11.875px;
+	padding: 6px 12px;
 	justify-content: center;
-	gap: 5.937px;
-	border-radius: 1.484px;
+	gap: 6px;
+	border-radius: 2px;
 	background: var(--primary-background);
 	color: var(--l1-foreground);
 }
