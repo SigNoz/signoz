@@ -635,6 +635,75 @@ func TestShouldSkipMaintenance(t *testing.T) {
 	}
 }
 
+func TestIsActiveFixedSchedule(t *testing.T) {
+	start := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+	end := time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		name      string
+		startTime time.Time
+		endTime   time.Time
+		now       time.Time
+		active    bool
+	}{
+		{
+			name:      "no end, t < start",
+			startTime: start,
+			now:       start.Add(-time.Hour),
+			active:    false,
+		},
+		{
+			name:      "no end, start == t",
+			startTime: start,
+			now:       start,
+			active:    true,
+		},
+		{
+			// A fixed schedule with no end time stays active indefinitely.
+			name:      "no end, start << t",
+			startTime: start,
+			now:       start.AddDate(10, 0, 0),
+			active:    true,
+		},
+		{
+			name:      "with end, start < t < end",
+			startTime: start,
+			endTime:   end,
+			now:       start.Add(24 * time.Hour),
+			active:    true,
+		},
+		{
+			name:      "with end, t == end",
+			startTime: start,
+			endTime:   end,
+			now:       end,
+			active:    true,
+		},
+		{
+			name:      "with end, end < t",
+			startTime: start,
+			endTime:   end,
+			now:       end.Add(time.Hour),
+			active:    false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: c.startTime,
+					EndTime:   c.endTime,
+				},
+			}
+			if got := m.IsActive(c.now); got != c.active {
+				t.Errorf("IsActive() = %v, want %v", got, c.active)
+			}
+		})
+	}
+}
+
 func TestShouldSkip_Scope(t *testing.T) {
 	activeSchedule := func() *Schedule {
 		return &Schedule{
