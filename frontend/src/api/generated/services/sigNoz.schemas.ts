@@ -2051,17 +2051,8 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
-export enum ErrorsResponseretrypolicyDTO {
-	never = 'never',
-	immediate = 'immediate',
-	backoff = 'backoff',
-	after = 'after',
-	after_fix = 'after_fix',
-	after_auth = 'after_auth',
-}
 export interface ErrorsResponseretryjsonDTO {
 	delay?: TimeDurationDTO;
-	policy?: ErrorsResponseretrypolicyDTO;
 }
 
 export interface ErrorsJSONDTO {

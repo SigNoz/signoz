@@ -2430,18 +2430,7 @@ components:
       properties:
         delay:
           $ref: '#/components/schemas/TimeDuration'
-        policy:
-          $ref: '#/components/schemas/ErrorsResponseretrypolicy'
       type: object
-    ErrorsResponseretrypolicy:
-      enum:
-      - never
-      - immediate
-      - backoff
-      - after
-      - after_fix
-      - after_auth
-      type: string
     FactoryResponse:
       properties:
         healthy:
