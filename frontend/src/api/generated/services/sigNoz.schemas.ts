@@ -8325,6 +8325,13 @@ export interface TypesPostableRoleDTO {
 	name: string;
 }
 
+export interface TypesPostableVerifyResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 */
+	token: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
