@@ -433,6 +433,7 @@
 	border-radius: 50%;
 	flex-shrink: 0;
 	margin: 0 6px;
+	background-color: var(--service-dot-color);
 
 	&.hasError {
 		box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
@@ -514,7 +515,7 @@
 .spanBar {
 	position: absolute;
 	height: 18px;
-	top: 5px;
+	top: 3px;
 	border-radius: 2px;
 	display: flex;
 	align-items: center;
@@ -522,7 +523,9 @@
 	overflow: hidden;
 	cursor: pointer;
 	white-space: nowrap;
-	color: rgba(0, 0, 0, 0.9);
+	// Theme-resolved in JS: dark text on the bright dark-mode fill, white text on
+	// the darkened light-mode fill. See SpanDuration in Success.tsx.
+	color: var(--span-text-color);
 	background-color: var(--span-color);
 	border: 1px solid transparent;
 }
@@ -548,7 +551,6 @@
 
 .spanDurationText {
 	color: inherit;
-	opacity: 0.8;
 	font-size: 10px;
 	margin-left: 8px;
 	flex-shrink: 0;
@@ -604,25 +606,6 @@
 .isSelectedNonMatching {
 	.treeLabel {
 		opacity: 0.5;
-	}
-}
-
-// `.spanBar` text color is the one place where semantic tokens don't fit
-// cleanly: in dark mode the bar's bright `--span-color` background needs dark
-// text; in light mode `generateColor` produces darker bar fills, so the text
-// must flip to white.
-:global(.lightMode) {
-	.root {
-		.spanDuration .spanBar {
-			color: rgba(255, 255, 255, 0.9);
-		}
-
-		.timelineRow:hover .spanBar,
-		.timelineRow.hoveredSpan .spanBar,
-		.isInterested .spanBar,
-		.isSelectedNonMatching .spanBar {
-			color: var(--span-color);
-		}
 	}
 }
 

@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
-import { Button, Divider, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
@@ -76,7 +77,7 @@ function FunnelConfiguration({
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
-						<Divider type="vertical" />
+						<Divider type="vertical" className="funnel-configuration__divider" />
 						<FunnelItemPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}

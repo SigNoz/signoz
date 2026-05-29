@@ -4,7 +4,7 @@ import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -395,11 +395,11 @@ function ServiceAccountDrawer({
 	const drawerContent = (
 		<div className="sa-drawer__layout">
 			<div className="sa-drawer__tabs">
-				<ToggleGroup
+				<ToggleGroupSimple
 					type="single"
 					value={activeTab}
 					size="sm"
-					onChange={(val): void => {
+					onChange={(val: string): void => {
 						if (val) {
 							void setActiveTab(val as ServiceAccountDrawerTab);
 							if (val !== ServiceAccountDrawerTab.Keys) {
@@ -409,25 +409,30 @@ function ServiceAccountDrawer({
 						}
 					}}
 					className="sa-drawer__tab-group"
-				>
-					<ToggleGroupItem
-						value={ServiceAccountDrawerTab.Overview}
-						className="sa-drawer__tab"
-					>
-						<LayoutGrid size={14} />
-						Overview
-					</ToggleGroupItem>
-					<ToggleGroupItem
-						value={ServiceAccountDrawerTab.Keys}
-						className="sa-drawer__tab"
-					>
-						<Key size={14} />
-						Keys
-						{keys.length > 0 && (
-							<span className="sa-drawer__tab-count">{keys.length}</span>
-						)}
-					</ToggleGroupItem>
-				</ToggleGroup>
+					items={[
+						{
+							value: ServiceAccountDrawerTab.Overview,
+							label: (
+								<>
+									<LayoutGrid size={14} />
+									Overview
+								</>
+							),
+						},
+						{
+							value: ServiceAccountDrawerTab.Keys,
+							label: (
+								<>
+									<Key size={14} />
+									Keys
+									{keys.length > 0 && (
+										<span className="sa-drawer__tab-count">{keys.length}</span>
+									)}
+								</>
+							),
+						},
+					]}
+				/>
 				{activeTab === ServiceAccountDrawerTab.Keys && (
 					<AuthZTooltip
 						checks={[

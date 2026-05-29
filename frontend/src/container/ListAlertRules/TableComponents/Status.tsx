@@ -1,26 +1,46 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 function Status({ status }: StatusProps): JSX.Element {
 	switch (status) {
 		case 'inactive': {
-			return <Tag color="green">OK</Tag>;
+			return (
+				<Badge color="forest" variant="outline">
+					OK
+				</Badge>
+			);
 		}
 
 		case 'pending': {
-			return <Tag color="orange">Pending</Tag>;
+			return (
+				<Badge color="amber" variant="outline">
+					Pending
+				</Badge>
+			);
 		}
 
 		case 'firing': {
-			return <Tag color="red">Firing</Tag>;
+			return (
+				<Badge color="cherry" variant="outline">
+					Firing
+				</Badge>
+			);
 		}
 
 		case 'disabled': {
-			return <Tag>Disabled</Tag>;
+			return (
+				<Badge color="vanilla" variant="outline">
+					Disabled
+				</Badge>
+			);
 		}
 
 		default: {
-			return <Tag color="default">Unknown</Tag>;
+			return (
+				<Badge color="vanilla" variant="outline">
+					Unknown
+				</Badge>
+			);
 		}
 	}
 }

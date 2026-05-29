@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, RadioChangeEvent } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Drawer } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
@@ -82,8 +83,8 @@ function SpanRelatedSignals({
 		isDrawerOpen: isOpen,
 	});
 
-	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleTabChange = useCallback((value: string): void => {
+		setSelectedView(value as RelatedSignalsViews);
 	}, []);
 
 	const tabOptions = useMemo(() => {
@@ -178,7 +179,10 @@ function SpanRelatedSignals({
 			width="50%"
 			title={
 				<>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className="span-related-signals-drawer__divider"
+					/>
 					<Typography.Text className="title">
 						Related Signals - {selectedSpan.name}
 					</Typography.Text>
@@ -193,7 +197,7 @@ function SpanRelatedSignals({
 			}}
 			className="span-related-signals-drawer"
 			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			closeIcon={<X size={16} />}
 		>
 			{selectedSpan && (
 				<div className="span-related-signals-drawer__content">
