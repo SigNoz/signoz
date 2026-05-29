@@ -70,7 +70,7 @@ describe('RouteTab component', () => {
 			</Router>,
 		);
 		expect(history.location.pathname).toBe('/');
-		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
+		fireEvent.mouseDown(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(history.location.pathname).toBe('/tab2');
 	});
 
@@ -87,7 +87,7 @@ describe('RouteTab component', () => {
 				/>
 			</Router>,
 		);
-		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
+		fireEvent.mouseDown(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(onChangeHandler).toHaveBeenCalled();
 	});
 });

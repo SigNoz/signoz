@@ -1,10 +1,17 @@
+import './RouteTab.styles.scss';
+
 import {
 	generatePath,
 	matchPath,
 	useLocation,
 	useParams,
 } from 'react-router-dom';
-import { Tabs, TabsProps } from 'antd';
+import {
+	TabsContent,
+	TabsList,
+	TabsRoot,
+	TabsTrigger,
+} from '@signozhq/ui/tabs';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
 import { RouteTabProps } from './types';
@@ -16,11 +23,13 @@ interface Params {
 function RouteTab({
 	routes,
 	activeKey,
+	defaultActiveKey,
 	onChangeHandler,
 	history,
-	showRightSection,
-	...rest
-}: RouteTabProps & TabsProps): JSX.Element {
+	showRightSection = true,
+	tabBarExtraContent,
+	hideTabBar = false,
+}: RouteTabProps): JSX.Element {
 	const params = useParams<Params>();
 	const location = useLocation();
 
@@ -46,38 +55,38 @@ function RouteTab({
 		}
 	};
 
-	const items = routes.map(({ Component, name, route, key }) => ({
-		label: name,
-		key,
-		tabKey: route,
-		children: <Component />,
-	}));
+	const resolvedActiveKey = currentRoute?.key || activeKey;
+	const extraContent =
+		tabBarExtraContent ??
+		(showRightSection && (
+			<HeaderRightSection enableAnnouncements={false} enableShare enableFeedback />
+		));
 
 	return (
-		<Tabs
-			onChange={onChange}
-			destroyInactiveTabPane
-			activeKey={currentRoute?.key || activeKey}
-			defaultActiveKey={currentRoute?.key || activeKey}
-			animated
-			items={items}
-			tabBarExtraContent={
-				showRightSection && (
-					<HeaderRightSection
-						enableAnnouncements={false}
-						enableShare
-						enableFeedback
-					/>
-				)
-			}
-			{...rest}
-		/>
+		<TabsRoot
+			value={resolvedActiveKey}
+			defaultValue={defaultActiveKey ?? resolvedActiveKey}
+			onValueChange={onChange}
+		>
+			{!hideTabBar && (
+				<div className="route-tab-header">
+					<TabsList>
+						{routes.map(({ name, key }) => (
+							<TabsTrigger key={key} value={key}>
+								{name}
+							</TabsTrigger>
+						))}
+					</TabsList>
+					{extraContent && <div className="route-tab-extra">{extraContent}</div>}
+				</div>
+			)}
+			{routes.map(({ key, Component }) => (
+				<TabsContent key={key} value={key}>
+					<Component />
+				</TabsContent>
+			))}
+		</TabsRoot>
 	);
 }
-
-RouteTab.defaultProps = {
-	onChangeHandler: undefined,
-	showRightSection: true,
-};
 
 export default RouteTab;
