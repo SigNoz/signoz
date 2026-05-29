@@ -60,12 +60,12 @@ type Config struct {
 	// storeableConfig is the representation of the config in the store
 	storeableConfig *StoreableConfig
 
-	// customConfigs holds the SigNoz-native notifier configs upstream's
+	// customConfigs holds the custom notifier configs upstream's
 	// config.Receiver cannot carry, keyed by receiver name.
 	customConfigs map[string]customReceiverConfigs
 }
 
-// customReceiverConfigs is the per-receiver sidecar for SigNoz-native notifier
+// customReceiverConfigs is the per-receiver custom notifier
 // configs. To add another, mirror GoogleChat: a field here, a matching field
 // on Receiver, and extensions to customConfigsOf + isEmpty.
 type customReceiverConfigs struct {
@@ -300,7 +300,6 @@ func (c *Config) CreateReceiver(receiver *Receiver) error {
 func (c *Config) GetReceiver(name string) (*Receiver, error) {
 	for i := range c.alertmanagerConfig.Receivers {
 		if c.alertmanagerConfig.Receivers[i].Name == name {
-			// Copy to avoid aliasing the slice (may be reallocated by append).
 			base := c.alertmanagerConfig.Receivers[i]
 			custom := c.customConfigs[name]
 			return &Receiver{
@@ -368,10 +367,6 @@ func (c *Config) setCustomConfigs(receiver *Receiver) {
 	}
 }
 
-// applyNativeDefaults threads Global.HTTPConfig into native configs that did
-// not supply their own. Mirrors the equivalent loop in upstream's
-// config.Config.UnmarshalYAML. Call from mutation paths after upstream
-// UnmarshalYAML has run.
 func (c *Config) applyNativeDefaults() {
 	if c.alertmanagerConfig.Global == nil {
 		return

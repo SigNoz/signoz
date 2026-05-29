@@ -5,10 +5,6 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 )
 
-// GoogleChatReceiverConfig is a SigNoz-native notifier config. Shape mirrors
-// upstream notifier configs: inline NotifierConfig gives send_resolved +
-// SendResolved(); HTTPConfig is filled from Global.HTTPConfig when omitted
-// (Config.applyNativeDefaults). Config shape only — no notifier impl yet.
 type GoogleChatReceiverConfig struct {
 	config.NotifierConfig `yaml:",inline" json:",inline"`
 
@@ -19,7 +15,6 @@ type GoogleChatReceiverConfig struct {
 	Text       string            `yaml:"text,omitempty" json:"text,omitempty"`
 }
 
-// DefaultGoogleChatReceiverConfig — mirrors upstream's DefaultSlackConfig.
 var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{
 	NotifierConfig: config.NotifierConfig{
 		VSendResolved: false,

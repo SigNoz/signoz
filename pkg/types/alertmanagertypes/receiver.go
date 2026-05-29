@@ -17,17 +17,16 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// Receiver embeds upstream config.Receiver and adds slots for SigNoz-native
-// notifier configs upstream does not have. To add another native notifier,
-// mirror GoogleChatConfigs here and extend customReceiverConfigs in config.go.
+// Receiver embeds upstream config.Receiver to support custom receivers
+// To add another native notifier, mirror GoogleChatConfigs here
+// and extend customReceiverConfigs in config.go.
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
-// config's per-config defaults via UnmarshalYAML. Global-scoped defaulting
-// happens later in Config.applyNativeDefaults.
+// config's per-config defaults via UnmarshalYAML.
 func NewReceiver(input string) (*Receiver, error) {
 	receiver := &Receiver{Receiver: &config.Receiver{}}
 	if err := json.Unmarshal([]byte(input), receiver); err != nil {
