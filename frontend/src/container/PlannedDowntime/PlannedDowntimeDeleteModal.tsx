@@ -57,7 +57,7 @@ export function PlannedDowntimeDeleteModal(
 		>
 			<Typography.Text className="delete-text">
 				{hasAssociatedRules
-					? `Are you sure you want to delete - ${downtimeSchedule} schedule? This schedule has associated alert rules that will also be removed. Deleting is irreversible and cannot be undone.`
+					? `Are you sure you want to delete - ${downtimeSchedule} schedule? The rule associations will be removed, and any rule that belongs only to this schedule will no longer be suppressed. Deleting is irreversible and cannot be undone.`
 					: `Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
 			</Typography.Text>
 		</Modal>

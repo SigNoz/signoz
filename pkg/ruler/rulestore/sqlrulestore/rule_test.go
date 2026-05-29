@@ -17,7 +17,7 @@ import (
 
 var errSimulated = errors.New("simulated db error")
 
-func newRuleStoreForTest(t *testing.T) (store *sqlstoretest.Provider, rs *rule) {
+func newRuleStoreForTest(t *testing.T) (*sqlstoretest.Provider, *rule) {
 	t.Helper()
 	s := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
 	settings := factorytest.NewSettings()
@@ -30,18 +30,28 @@ func newRuleStoreForTest(t *testing.T) (store *sqlstoretest.Provider, rs *rule) 
 
 var noop = func(context.Context) error { return nil }
 
+// expectNoSoloWindows sets the mock to return an empty result for the
+// solo-window discovery SELECT, meaning no maintenance windows need to be
+// cleaned up before deleting the rule.
+func expectNoSoloWindows(mock sqlmock.Sqlmock) {
+	mock.ExpectQuery(`planned_maintenance_rule`).
+		WillReturnRows(sqlmock.NewRows([]string{"planned_maintenance_id"}))
+}
+
 // TestDeleteRule_CascadesMaintenanceRules verifies that deleting a rule first
-// removes its rows from planned_maintenance_rule (by rule_id), then removes the
-// rule itself — both inside the same transaction callback.
+// removes its rows from planned_maintenance_rule, then removes the rule itself.
 func TestDeleteRule_CascadesMaintenanceRules(t *testing.T) {
 	store, rs := newRuleStoreForTest(t)
 	ruleID := valuer.GenerateUUID()
 
-	// Junction rows removed first. Bun embeds values directly for SQLite — no WithArgs.
-	store.Mock().ExpectExec(`rule_id`).
+	// Solo-window check: no windows would be left empty.
+	expectNoSoloWindows(store.Mock())
+
+	// Remaining association rows removed.
+	store.Mock().ExpectExec(`planned_maintenance_rule`).
 		WillReturnResult(driver.ResultNoRows)
 
-	// Rule itself removed second. Match the table name to distinguish from planned_maintenance_rule.
+	// Rule record removed.
 	store.Mock().ExpectExec(`FROM "rule"`).
 		WillReturnResult(driver.ResultNoRows)
 
@@ -50,12 +60,47 @@ func TestDeleteRule_CascadesMaintenanceRules(t *testing.T) {
 	require.NoError(t, store.Mock().ExpectationsWereMet())
 }
 
-// TestDeleteRule_JunctionDeleteFailureAborts verifies that if the junction-row
-// delete fails, the rule record is not deleted.
+// TestDeleteRule_OrphanedWindowsDeletedWithRule verifies that when a rule is
+// the sole member of a maintenance window, that window and its junction rows
+// are deleted in the same transaction as the rule.
+func TestDeleteRule_OrphanedWindowsDeletedWithRule(t *testing.T) {
+	store, rs := newRuleStoreForTest(t)
+	ruleID := valuer.GenerateUUID()
+	windowID := valuer.GenerateUUID().StringValue()
+
+	// Solo-window SELECT returns one window.
+	store.Mock().ExpectQuery(`planned_maintenance_rule`).
+		WillReturnRows(sqlmock.NewRows([]string{"planned_maintenance_id"}).AddRow(windowID))
+
+	// Orphaned junction rows deleted.
+	store.Mock().ExpectExec(`planned_maintenance_rule`).
+		WillReturnResult(driver.ResultNoRows)
+
+	// Orphaned maintenance window deleted.
+	store.Mock().ExpectExec(`planned_maintenance`).
+		WillReturnResult(driver.ResultNoRows)
+
+	// Remaining associations for this rule deleted.
+	store.Mock().ExpectExec(`planned_maintenance_rule`).
+		WillReturnResult(driver.ResultNoRows)
+
+	// Rule itself deleted.
+	store.Mock().ExpectExec(`FROM "rule"`).
+		WillReturnResult(driver.ResultNoRows)
+
+	err := rs.DeleteRule(context.Background(), ruleID, noop)
+	require.NoError(t, err)
+	require.NoError(t, store.Mock().ExpectationsWereMet())
+}
+
+// TestDeleteRule_JunctionDeleteFailureAborts verifies that if the
+// association-row delete fails, the rule record is not deleted.
 func TestDeleteRule_JunctionDeleteFailureAborts(t *testing.T) {
 	store, rs := newRuleStoreForTest(t)
 
-	store.Mock().ExpectExec(`rule_id`).
+	expectNoSoloWindows(store.Mock())
+
+	store.Mock().ExpectExec(`planned_maintenance_rule`).
 		WillReturnError(errSimulated)
 
 	err := rs.DeleteRule(context.Background(), valuer.GenerateUUID(), noop)
@@ -63,17 +108,15 @@ func TestDeleteRule_JunctionDeleteFailureAborts(t *testing.T) {
 	require.NoError(t, store.Mock().ExpectationsWereMet())
 }
 
-// TestDeleteRule_CallbackCalledAfterDeletes verifies that the caller-supplied
-// callback is invoked (allowing the caller to perform additional cleanup) only
-// after both deletes succeed.
-func TestDeleteRule_CallbackCalledAfterDeletes(t *testing.T) {
+// TestDeleteRule_CallbackInvokedAfterDeletes verifies that the caller-supplied
+// callback runs only after both deletes succeed.
+func TestDeleteRule_CallbackInvokedAfterDeletes(t *testing.T) {
 	store, rs := newRuleStoreForTest(t)
 	ruleID := valuer.GenerateUUID()
 
-	store.Mock().ExpectExec(`rule_id`).
-		WillReturnResult(driver.ResultNoRows)
-	store.Mock().ExpectExec(`FROM "rule"`).
-		WillReturnResult(driver.ResultNoRows)
+	expectNoSoloWindows(store.Mock())
+	store.Mock().ExpectExec(`planned_maintenance_rule`).WillReturnResult(driver.ResultNoRows)
+	store.Mock().ExpectExec(`FROM "rule"`).WillReturnResult(driver.ResultNoRows)
 
 	called := false
 	err := rs.DeleteRule(context.Background(), ruleID, func(ctx context.Context) error {
