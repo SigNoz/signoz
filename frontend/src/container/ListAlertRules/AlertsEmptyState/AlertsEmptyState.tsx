@@ -97,7 +97,12 @@ export function AlertsEmptyState({
 									</span>
 								</Button>
 								{onRefresh && (
-									<Button onClick={onRefresh} prefix={<RefreshCw />} color="secondary">
+									<Button
+										onClick={onRefresh}
+										prefix={<RefreshCw />}
+										color="secondary"
+										data-testid="list-alerts-empty-refresh-button"
+									>
 										Refresh
 									</Button>
 								)}

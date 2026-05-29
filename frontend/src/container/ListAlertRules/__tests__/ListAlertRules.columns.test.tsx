@@ -1,0 +1,101 @@
+import { cleanup, fireEvent, screen, waitFor } from 'tests/test-utils';
+
+import { flushNuqsUrl, renderListAlertRules, resetUrl } from './_helpers';
+
+jest.mock(
+	'@signozhq/ui/divider',
+	() => ({
+		Divider: ({ children }: { children?: React.ReactNode }): JSX.Element => (
+			<div>{children}</div>
+		),
+	}),
+	{ virtual: true },
+);
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: jest.fn(() => ({ safeNavigate: jest.fn() })),
+}));
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(),
+}));
+
+const COLUMN_STORAGE_KEY = '@signoz/table-columns/alert-rules-columns';
+
+jest.setTimeout(20000);
+
+describe('ListAlertRules — columns selector', () => {
+	beforeEach(() => {
+		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		cleanup();
+		resetUrl();
+		localStorage.clear();
+	});
+
+	afterEach(async () => {
+		await flushNuqsUrl();
+		resetUrl();
+		localStorage.clear();
+	});
+
+	it('opens columns popover and lists toggleable columns', async () => {
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+
+		fireEvent.click(screen.getByTestId('alert-columns-button'));
+
+		// Popover should reveal "Toggle Columns" heading + per-column labels.
+		await screen.findByText('Toggle Columns');
+		expect(screen.getByText('Created At')).toBeInTheDocument();
+		expect(screen.getByText('Created By')).toBeInTheDocument();
+		expect(screen.getByText('Updated At')).toBeInTheDocument();
+		expect(screen.getByText('Updated By')).toBeInTheDocument();
+	});
+
+	it('default-hidden columns (Created At/By, Updated At/By) are not in the table header', async () => {
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+
+		const headers = document.querySelectorAll('th');
+		const headerTexts = Array.from(headers).map((h) => h.textContent || '');
+		expect(headerTexts.some((t) => t.includes('Created At'))).toBe(false);
+		expect(headerTexts.some((t) => t.includes('Created By'))).toBe(false);
+		expect(headerTexts.some((t) => t.includes('Updated At'))).toBe(false);
+		expect(headerTexts.some((t) => t.includes('Updated By'))).toBe(false);
+	});
+
+	it('toggling Created At on writes to localStorage and adds the header', async () => {
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+
+		const headersBefore = Array.from(document.querySelectorAll('th')).map(
+			(h) => h.textContent ?? '',
+		);
+		expect(headersBefore.some((t) => t.includes('Created At'))).toBe(false);
+
+		fireEvent.click(screen.getByTestId('alert-columns-button'));
+		await screen.findByText('Toggle Columns');
+
+		const checkbox = document.getElementById('col-createdAt');
+		expect(checkbox).not.toBeNull();
+		fireEvent.click(checkbox as HTMLElement);
+
+		await waitFor(() => {
+			const stored = window.localStorage.getItem(COLUMN_STORAGE_KEY);
+			expect(stored).not.toBeNull();
+			const parsed = JSON.parse(stored as string);
+			expect(parsed.hiddenColumnIds).not.toContain('createdAt');
+		});
+
+		await waitFor(() => {
+			const headersAfter = Array.from(document.querySelectorAll('th')).map(
+				(h) => h.textContent ?? '',
+			);
+			expect(headersAfter.some((t) => t.includes('Created At'))).toBe(true);
+		});
+	});
+});
