@@ -3,13 +3,12 @@ import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Switch } from '@signozhq/ui/switch';
 import { CalendarClock, Check, Clock4 } from '@signozhq/icons';
-import dayjs from 'dayjs';
-import { get, isEmpty } from 'lodash-es';
+import { get } from 'lodash-es';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 
-import type { DashboardListItem } from '../../utils';
+import { lastUpdatedLabel, type DashboardListItem } from '../../utils';
 import {
 	DynamicColumns,
 	useDashboardsListVisibleColumnsStore,
@@ -22,32 +21,6 @@ interface Props {
 	open: boolean;
 	previewDashboard: DashboardListItem | undefined;
 	onClose: () => void;
-}
-
-function lastUpdatedLabel(time: string | undefined): string {
-	if (!time || isEmpty(time)) {
-		return 'No updates yet!';
-	}
-	const diff = dayjs();
-	const ref = dayjs(time);
-	const months = diff.diff(ref, 'months');
-	if (months > 0) {
-		return `Last Updated ${months} months ago`;
-	}
-	const days = diff.diff(ref, 'days');
-	if (days > 0) {
-		return `Last Updated ${days} days ago`;
-	}
-	const hours = diff.diff(ref, 'hours');
-	if (hours > 0) {
-		return `Last Updated ${hours} hrs ago`;
-	}
-	const minutes = diff.diff(ref, 'minutes');
-	if (minutes > 0) {
-		return `Last Updated ${minutes} mins ago`;
-	}
-	const seconds = diff.diff(ref, 'seconds');
-	return `Last Updated ${seconds} sec ago`;
 }
 
 function ConfigureMetadataModal({

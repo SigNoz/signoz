@@ -3,8 +3,6 @@ import { Typography } from '@signozhq/ui/typography';
 import { CalendarClock } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { isEmpty } from 'lodash-es';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -13,7 +11,7 @@ import { useTimezone } from 'providers/Timezone';
 import { isModifierKeyPressed } from 'utils/app';
 
 import type { DashboardListItem } from '../../utils';
-import { tagsToStrings } from '../../utils';
+import { lastUpdatedLabel, tagsToStrings } from '../../utils';
 import ActionsPopover from '../ActionsPopover/ActionsPopover';
 
 import styles from './DashboardRow.module.scss';
@@ -24,32 +22,6 @@ interface Props {
 	canAct: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
-}
-
-function lastUpdatedLabel(time: string | undefined): string {
-	if (!time || isEmpty(time)) {
-		return 'No updates yet!';
-	}
-	const diff = dayjs();
-	const ref = dayjs(time);
-	const months = diff.diff(ref, 'months');
-	if (months > 0) {
-		return `Last Updated ${months} months ago`;
-	}
-	const days = diff.diff(ref, 'days');
-	if (days > 0) {
-		return `Last Updated ${days} days ago`;
-	}
-	const hours = diff.diff(ref, 'hours');
-	if (hours > 0) {
-		return `Last Updated ${hours} hrs ago`;
-	}
-	const minutes = diff.diff(ref, 'minutes');
-	if (minutes > 0) {
-		return `Last Updated ${minutes} mins ago`;
-	}
-	const seconds = diff.diff(ref, 'seconds');
-	return `Last Updated ${seconds} sec ago`;
 }
 
 function DashboardRow({
