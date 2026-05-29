@@ -74,37 +74,11 @@ func TestWithSuggestions(t *testing.T) {
 	assert.Equal(t, []string{"first", "second"}, suggestionsOf(err))
 }
 
-func TestWithRetryNever(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryNever()
-	assert.Equal(t, RetryNever, retryOf(err).policy)
-}
-
-func TestWithRetryImmediate(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryImmediate()
-	assert.Equal(t, RetryImmediate, retryOf(err).policy)
-}
-
-func TestWithRetryBackoff(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryBackoff()
-	assert.Equal(t, RetryBackoff, retryOf(err).policy)
-}
-
 func TestWithRetryAfter(t *testing.T) {
 	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfter(5 * time.Microsecond)
 	r := retryOf(err)
 
-	assert.Equal(t, RetryAfter, r.policy)
 	assert.Equal(t, 5, int(r.delay.Microseconds()))
-}
-
-func TestWithRetryAfterFix(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfterFix()
-	assert.Equal(t, RetryAfterFix, retryOf(err).policy)
-}
-
-func TestWithRetryAfterAuth(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "test error").WithRetryAfterAuth()
-	assert.Equal(t, RetryAfterAuth, retryOf(err).policy)
 }
 
 func TestWithInvalidReferences(t *testing.T) {
@@ -147,17 +121,14 @@ func TestAsJSONRetryBlock(t *testing.T) {
 		err := NewTimeoutf(MustNewCode("slow"), "slow").WithRetryAfter(5 * time.Second)
 		j := AsJSON(err)
 		require.NotNil(t, j.Retry)
-		assert.Equal(t, responseretrypolicy(RetryAfter), j.Retry.Policy)
-		assert.Equal(t, "5s", j.Retry.Delay)
+		assert.Equal(t, 5*time.Second, j.Retry.Delay)
 	})
 
 	t.Run("NonAfterPolicyOmitsDurationField", func(t *testing.T) {
 		// NewInvalidInputf auto-applies retryAfterFix via the constructor helper.
 		err := NewInvalidInputf(MustNewCode("bad"), "bad")
 		j := AsJSON(err)
-		require.NotNil(t, j.Retry)
-		assert.Equal(t, responseretrypolicy(RetryAfterFix), j.Retry.Policy)
-		assert.Empty(t, j.Retry.Delay, "delay must be empty when policy != after")
+		require.Nil(t, j.Retry, "retry must be empty")
 	})
 
 	t.Run("BareErrorOmitsRetryBlock", func(t *testing.T) {

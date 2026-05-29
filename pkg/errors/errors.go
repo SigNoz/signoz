@@ -28,8 +28,10 @@ type base struct {
 	// r is the retry strategy for the error, if applicable.
 	r *retry
 	// suggestions is a list of user-facing suggestions related to the error, if present.
+	// For example, narrow the time range window or typo suggestion
 	suggestions []string
 	// invalidReferences is a list of references that were invalid and contributed to the error, if present.
+	// For example, a typo from user avg(sum), we return invalidRefences: ['sum']
 	invalidReferences []string
 }
 
@@ -217,34 +219,9 @@ func (b *base) WithInvalidReferences(invalidReferences ...string) *base {
 	}
 }
 
-// WithRetryNever sets the retry policy to Never.
-func (b *base) WithRetryNever() *base {
-	return b.withRetry(retry{policy: RetryNever})
-}
-
-// WithRetryImmediate sets the retry policy to Immediate.
-func (b *base) WithRetryImmediate() *base {
-	return b.withRetry(retry{policy: RetryImmediate})
-}
-
-// WithRetryBackoff sets the retry policy to Backoff.
-func (b *base) WithRetryBackoff() *base {
-	return b.withRetry(retry{policy: RetryBackoff})
-}
-
 // WithRetryAfter sets the retry policy to After and requires a delay.
 func (b *base) WithRetryAfter(delay time.Duration) *base {
 	return b.withRetry(newRetryAfter(delay))
-}
-
-// WithRetryAfterFix sets the retry policy to AfterFix.
-func (b *base) WithRetryAfterFix() *base {
-	return b.withRetry(retry{policy: RetryAfterFix})
-}
-
-// WithRetryAfterAuth sets the retry policy to AfterAuth.
-func (b *base) WithRetryAfterAuth() *base {
-	return b.withRetry(retry{policy: RetryAfterAuth})
 }
 
 // Unwrapb is a combination of built-in errors.As and type casting.
@@ -294,67 +271,67 @@ func Is(err error, target error) bool {
 
 // WrapNotFoundf is a wrapper around Wrapf with TypeNotFound.
 func WrapNotFoundf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeNotFound, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Wrapf(cause, TypeNotFound, code, format, args...)
 }
 
 // NewNotFoundf is a wrapper around Newf with TypeNotFound.
 func NewNotFoundf(code Code, format string, args ...any) *base {
-	return Newf(TypeNotFound, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Newf(TypeNotFound, code, format, args...)
 }
 
 // WrapInternalf is a wrapper around Wrapf with TypeInternal.
 func WrapInternalf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeInternal, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Wrapf(cause, TypeInternal, code, format, args...)
 }
 
 // NewInternalf is a wrapper around Newf with TypeInternal.
 func NewInternalf(code Code, format string, args ...any) *base {
-	return Newf(TypeInternal, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Newf(TypeInternal, code, format, args...)
 }
 
 // WrapInvalidInputf is a wrapper around Wrapf with TypeInvalidInput.
 func WrapInvalidInputf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeInvalidInput, code, format, args...).withRetry(retry{policy: RetryAfterFix})
+	return Wrapf(cause, TypeInvalidInput, code, format, args...)
 }
 
 // NewInvalidInputf is a wrapper around Newf with TypeInvalidInput.
 func NewInvalidInputf(code Code, format string, args ...any) *base {
-	return Newf(TypeInvalidInput, code, format, args...).withRetry(retry{policy: RetryAfterFix})
+	return Newf(TypeInvalidInput, code, format, args...)
 }
 
 // NewMethodNotAllowedf is a wrapper around Newf with TypeMethodNotAllowed.
 func NewMethodNotAllowedf(code Code, format string, args ...any) *base {
-	return Newf(TypeMethodNotAllowed, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Newf(TypeMethodNotAllowed, code, format, args...)
 }
 
 // WrapTimeoutf is a wrapper around Wrapf with TypeTimeout.
 func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeTimeout, code, format, args...).withRetry(retry{policy: RetryBackoff})
+	return Wrapf(cause, TypeTimeout, code, format, args...)
 }
 
 // NewTimeoutf is a wrapper around Newf with TypeTimeout.
 func NewTimeoutf(code Code, format string, args ...any) *base {
-	return Newf(TypeTimeout, code, format, args...).withRetry(retry{policy: RetryBackoff})
+	return Newf(TypeTimeout, code, format, args...)
 }
 
 // WrapUnauthenticatedf is a wrapper around Wrapf with TypeUnauthenticated.
 func WrapUnauthenticatedf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeUnauthenticated, code, format, args...).withRetry(retry{policy: RetryAfterAuth})
+	return Wrapf(cause, TypeUnauthenticated, code, format, args...)
 }
 
 // NewUnauthenticatedf is a wrapper around Newf with TypeUnauthenticated.
 func NewUnauthenticatedf(code Code, format string, args ...any) *base {
-	return Newf(TypeUnauthenticated, code, format, args...).withRetry(retry{policy: RetryAfterAuth})
+	return Newf(TypeUnauthenticated, code, format, args...)
 }
 
 // WrapForbiddenf is a wrapper around Wrapf with TypeForbidden.
 func WrapForbiddenf(cause error, code Code, format string, args ...any) *base {
-	return Wrapf(cause, TypeForbidden, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Wrapf(cause, TypeForbidden, code, format, args...)
 }
 
 // NewForbiddenf is a wrapper around Newf with TypeForbidden.
 func NewForbiddenf(code Code, format string, args ...any) *base {
-	return Newf(TypeForbidden, code, format, args...).withRetry(retry{policy: RetryNever})
+	return Newf(TypeForbidden, code, format, args...)
 }
 
 // Attr returns an slog.Attr with a standardized "exception" key for the given error.
@@ -372,7 +349,7 @@ func TypeAttr(err error) attribute.KeyValue {
 // RetryAfterOf returns the explicit retry delay
 func RetryDelayOf(err error) time.Duration {
 	base, ok := err.(*base)
-	if !ok || base.r == nil || base.r.policy != RetryAfter {
+	if !ok || base.r == nil {
 		return 0
 	}
 	return base.r.delay

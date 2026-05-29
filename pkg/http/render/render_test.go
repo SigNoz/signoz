@@ -165,25 +165,13 @@ func TestErrorRetryAfterHeader(t *testing.T) {
 			name:             "ExplicitDelay5Seconds",
 			err:              errors.New(errors.TypeTooManyRequests, errors.MustNewCode("rate_limited"), "slow down").WithRetryAfter(5 * time.Second),
 			wantRetryAfter:   "5",
-			wantBodyContains: `"retry":{"policy":"after","delay":5000000000}`,
+			wantBodyContains: `"retry":{"delay":5000000000}`,
 		},
 		"/with_retry_after_subsecond": {
 			name:             "SubSecondRoundsUp",
 			err:              errors.New(errors.TypeTooManyRequests, errors.MustNewCode("rate_limited"), "slow down").WithRetryAfter(500 * time.Millisecond),
 			wantRetryAfter:   "1", // ceiling-rounded
 			wantBodyContains: `"delay":500000000`,
-		},
-		"/timeout_uses_backoff": {
-			name:             "BackoffPolicyNoHeader",
-			err:              errors.NewTimeoutf(errors.MustNewCode("slow_query"), "query timed out"),
-			wantRetryAfter:   "",
-			wantBodyContains: `"retry":{"policy":"backoff"}`,
-		},
-		"/invalid_input_after_fix": {
-			name:             "AfterFixPolicyNoHeader",
-			err:              errors.NewInvalidInputf(errors.MustNewCode("bad_field"), "bad field"),
-			wantRetryAfter:   "",
-			wantBodyContains: `"retry":{"policy":"after_fix"}`,
 		},
 		"/bare_no_policy": {
 			name:                "BareErrorNoHeaderNoRetryBlock",

@@ -18,23 +18,7 @@ type JSON struct {
 }
 
 type responseretryjson struct {
-	Policy responseretrypolicy `json:"policy"`
-	Delay  time.Duration       `json:"delay,omitempty"`
-}
-
-type responseretrypolicy string
-
-func (r responseretrypolicy) String() string { return string(r) }
-
-func (responseretrypolicy) Enum() []any {
-	return []any{
-		RetryNever,
-		RetryImmediate,
-		RetryBackoff,
-		RetryAfter,
-		RetryAfterFix,
-		RetryAfterAuth,
-	}
+	Delay time.Duration `json:"delay"`
 }
 
 type responseerroradditional struct {
@@ -52,10 +36,7 @@ func AsJSON(cause error) *JSON {
 
 	var retry *responseretryjson
 	if r := retryOf(cause); r != nil {
-		retry = &responseretryjson{Policy: responseretrypolicy(r.policy)}
-		if r.policy == RetryAfter {
-			retry.Delay = r.delay
-		}
+		retry = &responseretryjson{Delay: r.delay}
 	}
 
 	return &JSON{
