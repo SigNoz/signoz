@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EyeOpen } from '@signozhq/icons';
-import { Divider, Modal } from 'antd';
+import { Modal } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
 import { PipelineData } from 'types/api/pipeline/def';

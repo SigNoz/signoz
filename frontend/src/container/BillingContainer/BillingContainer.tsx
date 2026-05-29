@@ -14,8 +14,8 @@ import {
 	Skeleton,
 	Table,
 	TableColumnsType as ColumnsType,
-	Tag,
 } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
@@ -434,7 +434,7 @@ export default function BillingContainer(): JSX.Element {
 					<Flex vertical>
 						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
-							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
+							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
 						</Typography.Title>
 
 						{!isLoading && !isFetchingBillingData && !showGracePeriodMessage ? (

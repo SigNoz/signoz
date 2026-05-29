@@ -2,7 +2,8 @@ import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
-import { Checkbox, Radio } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 
 import { AIAssistantEvents } from '../../../events';
 import { useAIAssistantAnalyticsContext } from '../../../hooks/useAIAssistantAnalyticsContext';
@@ -81,31 +82,43 @@ export default function InteractiveQuestion({
 			{question && <p className={blockStyles.title}>{question}</p>}
 
 			{type === 'radio' ? (
-				<Radio.Group
+				<RadioGroup
 					className={styles.options}
-					onChange={(e): void => {
-						setSelected([e.target.value]);
-						handleSubmit([e.target.value]);
+					onChange={(value): void => {
+						setSelected([value]);
+						handleSubmit([value]);
 					}}
 				>
 					{normalized.map((opt) => (
-						<Radio key={opt.value} value={opt.value} className={styles.option}>
+						<RadioGroupItem
+							key={opt.value}
+							value={opt.value}
+							className={styles.option}
+						>
 							{opt.label}
-						</Radio>
+						</RadioGroupItem>
 					))}
-				</Radio.Group>
+				</RadioGroup>
 			) : (
 				<>
-					<Checkbox.Group
-						className={cx(styles.options, styles.checkbox)}
-						onChange={(vals): void => setSelected(vals as string[])}
-					>
+					<div className={cx(styles.options, styles.checkbox)}>
 						{normalized.map((opt) => (
-							<Checkbox key={opt.value} value={opt.value} className={styles.option}>
+							<Checkbox
+								key={opt.value}
+								value={selected.includes(opt.value)}
+								onChange={(checked): void => {
+									setSelected((prev) =>
+										checked === true
+											? [...prev, opt.value]
+											: prev.filter((v) => v !== opt.value),
+									);
+								}}
+								className={styles.option}
+							>
 								{opt.label}
 							</Checkbox>
 						))}
-					</Checkbox.Group>
+					</div>
 					<Button
 						variant="solid"
 						size="sm"

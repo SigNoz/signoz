@@ -521,7 +521,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoz/NumberPanel",
-								"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
+								"spec": {"thresholds": [{"value": 100, "operator": "above", "color": "Red", "format": "Color"}]}
 							}
 						}
 					}
@@ -699,17 +699,17 @@ func TestValidateRequiredFields(t *testing.T) {
 		},
 		{
 			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": ">", "format": "text", "color": "Red"}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": "above", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
-			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": ""}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"value": 100, "operator": "above", "format": "text", "color": ""}]}`),
 			wantContain: "Color",
 		},
 		{
 			name:        "TableThreshold missing columnName",
-			data:        wrapPanel("signoz/TablePanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": "Red", "columnName": ""}]}`),
+			data:        wrapPanel("signoz/TablePanel", `{"thresholds": [{"value": 100, "operator": "above", "format": "text", "color": "Red", "columnName": ""}]}`),
 			wantContain: "ColumnName",
 		},
 		{
@@ -799,7 +799,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 	spec := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
 
 	require.Len(t, spec.Thresholds, 1, "expected 1 threshold")
-	require.Equal(t, ">", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default >")
+	require.Equal(t, "above", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default above")
 	require.Equal(t, "text", spec.Thresholds[0].Format.ValueOrDefault(), "expected ThresholdFormat default text")
 
 	// Marshal back and verify defaults in JSON output.
@@ -807,10 +807,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 	require.NoError(t, err, "marshal dashboard failed")
 	outputStr := string(output)
 	assert.Contains(t, outputStr, `"format":"text"`, "expected stored/response JSON to contain format:text")
-	// Go's json.Marshal escapes ">" as "\u003e", so check for both forms.
-	assert.True(t,
-		strings.Contains(outputStr, `"operator":">"`) || strings.Contains(outputStr, `"operator":"\u003e"`),
-		"expected stored/response JSON to contain operator:>, got: %s", outputStr)
+	assert.Contains(t, outputStr, `"operator":"above"`, "expected stored/response JSON to contain operator:above")
 }
 
 // TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
@@ -880,7 +877,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "global_time", tsSpec.Visualization.TimePreference.ValueOrDefault())
 	assert.Equal(t, "bottom", tsSpec.Legend.Position.ValueOrDefault())
 	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	assert.Equal(t, ">", numSpec.Thresholds[0].Operator.ValueOrDefault())
+	assert.Equal(t, "above", numSpec.Thresholds[0].Operator.ValueOrDefault())
 	assert.Equal(t, "text", numSpec.Thresholds[0].Format.ValueOrDefault())
 
 	// Step 2: Marshal to JSON (simulates writing to DB).
@@ -900,7 +897,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	assert.Equal(t, "global_time", tsLoaded.Visualization.TimePreference.ValueOrDefault(), "after load")
 	assert.Equal(t, "bottom", tsLoaded.Legend.Position.ValueOrDefault(), "after load")
 	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	assert.Equal(t, ">", numLoaded.Thresholds[0].Operator.ValueOrDefault(), "after load")
+	assert.Equal(t, "above", numLoaded.Thresholds[0].Operator.ValueOrDefault(), "after load")
 	assert.Equal(t, "text", numLoaded.Thresholds[0].Format.ValueOrDefault(), "after load")
 
 	// Step 4: Marshal again (simulates API response) and verify defaults.
@@ -920,10 +917,7 @@ func TestStorageRoundTrip(t *testing.T) {
 		assert.Contains(t, responseStr, `"`+field+`":`+want, "expected %s:%s after storage round-trip", field, want)
 	}
 
-	// Verify operator default (Go escapes ">" as "\u003e").
-	assert.True(t,
-		strings.Contains(responseStr, `"operator":">"`) || strings.Contains(responseStr, `"operator":"\u003e"`),
-		"expected operator:> after storage round-trip")
+	assert.Contains(t, responseStr, `"operator":"above"`, "expected operator:above after storage round-trip")
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {

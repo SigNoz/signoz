@@ -2711,16 +2711,16 @@ components:
           type: string
         path:
           description: JSON Pointer (RFC 6901) into the dashboard's postable shape
-            — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0,
+            — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
             /tags/-.
           type: string
         value:
           description: 'Value to add/replace/test against. The expected type depends
             on the path. Common shapes (see referenced schemas for the exact field
-            set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N
-            (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable;
-            /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
-            TagtypesPostableTag; /data/display/name and other leaf string fields take
+            set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable;
+            /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /spec/display/name and other leaf string fields take
             a string. Required for add/replace/test; ignored for remove/move/copy.'
       required:
       - op
@@ -20324,6 +20324,77 @@ paths:
       description: Returns the waterfall view of spans for a given trace ID with tree
         structure, metadata, and windowed pagination
       operationId: GetWaterfall
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableWaterfall'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get waterfall view for a trace
+      tags:
+      - tracedetail
+  /api/v4/traces/{traceID}/waterfall:
+    post:
+      deprecated: false
+      description: Returns the waterfall view of spans including all spans if total
+        spans are under a limit, a max count otherwise. Aggregations are dropped compared
+        to v3
+      operationId: GetWaterfallV4
       parameters:
       - in: path
         name: traceID

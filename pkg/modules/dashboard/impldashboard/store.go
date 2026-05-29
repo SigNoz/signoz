@@ -67,46 +67,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, *dashboardtypes.StorablePublicDashboard, error) {
-	type joinedRow struct {
-		*dashboardtypes.StorableDashboard `bun:",extend"`
-
-		PublicID               *valuer.UUID `bun:"public_id"`
-		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
-		PublicUpdatedAt        *time.Time   `bun:"public_updated_at"`
-		PublicTimeRangeEnabled *bool        `bun:"public_time_range_enabled"`
-		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
-	}
-
-	row := &joinedRow{StorableDashboard: new(dashboardtypes.StorableDashboard)}
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(row).
-		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
-		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
-		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
-		Where("dashboard.id = ?", id).
-		Where("dashboard.org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-
-	if row.PublicID == nil {
-		return row.StorableDashboard, nil, nil
-	}
-	public := &dashboardtypes.StorablePublicDashboard{
-		Identifiable:     types.Identifiable{ID: *row.PublicID},
-		TimeAuditable:    types.TimeAuditable{CreatedAt: *row.PublicCreatedAt, UpdatedAt: *row.PublicUpdatedAt},
-		TimeRangeEnabled: *row.PublicTimeRangeEnabled,
-		DefaultTimeRange: *row.PublicDefaultTimeRange,
-		DashboardID:      row.ID.StringValue(),
-	}
-	return row.StorableDashboard, public, nil
-}
-
 // ListV2 emits the joined dashboard ⨝ pinned_dashboard ⨝ public_dashboard
 // query the spec calls for. Aliases:
 //
@@ -216,57 +176,6 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 		"unsupported sort field %q", sort)
 }
 
-func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.StorableDashboardData) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("data = ?", data).
-		Set("updated_by = ?", updatedBy).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Where("org_id = ?", orgID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	// Defends against the race where a delete lands between the caller's
-	// pre-update GetV2 and this update.
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
-}
-
-func (store *store) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error {
-	res, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewUpdate().
-		Model((*dashboardtypes.StorableDashboard)(nil)).
-		Set("locked = ?", locked).
-		Set("updated_by = ?", updatedBy).
-		Set("updated_at = ?", time.Now()).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
-	}
-	return nil
-}
-
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.
@@ -357,7 +266,7 @@ func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashb
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewUpdate().
 		Model(storableDashboard).
 		WherePK().
