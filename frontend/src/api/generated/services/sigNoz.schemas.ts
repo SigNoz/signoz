@@ -2051,6 +2051,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
+export interface ErrorsResponseretryjsonDTO {
+	delay?: TimeDurationDTO;
+}
+
 export interface ErrorsJSONDTO {
 	/**
 	 * @type string
@@ -2061,9 +2065,22 @@ export interface ErrorsJSONDTO {
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
 	/**
+	 * @type array
+	 */
+	invalidReferences?: string[];
+	/**
 	 * @type string
 	 */
 	message: string;
+	retry?: ErrorsResponseretryjsonDTO;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
+	/**
+	 * @type string
+	 */
+	type?: string;
 	/**
 	 * @type string
 	 */
