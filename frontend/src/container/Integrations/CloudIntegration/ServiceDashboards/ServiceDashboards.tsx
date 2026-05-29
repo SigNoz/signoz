@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import {
-	CloudintegrationtypesServiceDashboardDTO,
+	CloudintegrationtypesDashboardDTO,
 	CloudintegrationtypesServiceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -25,67 +25,68 @@ function ServiceDashboards({
 		<div className="aws-service-dashboards">
 			<div className="aws-service-dashboards-title">Dashboards</div>
 			<div className="aws-service-dashboards-items">
-				{dashboards.map(
-					(dashboard: CloudintegrationtypesServiceDashboardDTO, index: number) => {
-						const isClickable = isInteractive && !!dashboard.id;
-						const dashboardUrl = dashboard.id ? `/dashboard/${dashboard.id}` : '';
+				{dashboards.map((dashboard: CloudintegrationtypesDashboardDTO) => {
+					if (!dashboard.id) {
+						return null;
+					}
 
-						return (
-							<div
-								key={dashboard.id || `dashboard-${index}`}
-								className={`aws-service-dashboard-item ${
-									isClickable ? 'aws-service-dashboard-item-clickable' : ''
-								}`}
-								role={isClickable ? 'button' : undefined}
-								tabIndex={isClickable ? 0 : -1}
-								onClick={(event): void => {
-									if (!isClickable) {
-										return;
-									}
-									if (event.metaKey || event.ctrlKey) {
-										window.open(
-											withBasePath(dashboardUrl),
-											'_blank',
-											'noopener,noreferrer',
-										);
-										return;
-									}
+					const dashboardUrl = `/dashboard/${dashboard.id}`;
+
+					return (
+						<div
+							key={dashboard.id}
+							className={`aws-service-dashboard-item ${
+								isInteractive ? 'aws-service-dashboard-item-clickable' : ''
+							}`}
+							role={isInteractive ? 'button' : undefined}
+							tabIndex={isInteractive ? 0 : -1}
+							onClick={(event): void => {
+								if (!isInteractive) {
+									return;
+								}
+								if (event.metaKey || event.ctrlKey) {
+									window.open(
+										withBasePath(dashboardUrl),
+										'_blank',
+										'noopener,noreferrer',
+									);
+									return;
+								}
+								safeNavigate(dashboardUrl);
+							}}
+							onAuxClick={(event): void => {
+								if (!isInteractive) {
+									return;
+								}
+								if (event.button === 1) {
+									window.open(
+										withBasePath(dashboardUrl),
+										'_blank',
+										'noopener,noreferrer',
+									);
+								}
+							}}
+							onKeyDown={(event): void => {
+								if (!isInteractive) {
+									return;
+								}
+								if (event.key === 'Enter' || event.key === ' ') {
+									event.preventDefault();
 									safeNavigate(dashboardUrl);
-								}}
-								onAuxClick={(event): void => {
-									if (!isClickable) {
-										return;
-									}
-									if (event.button === 1) {
-										window.open(
-											withBasePath(dashboardUrl),
-											'_blank',
-											'noopener,noreferrer',
-										);
-									}
-								}}
-								onKeyDown={(event): void => {
-									if (!isClickable) {
-										return;
-									}
-									if (event.key === 'Enter' || event.key === ' ') {
-										event.preventDefault();
-										safeNavigate(dashboardUrl);
-									}
-								}}
-							>
-								<div className="aws-service-dashboard-item-content">
-									<div className="aws-service-dashboard-item-title">
-										{dashboard.title}
-									</div>
-									<div className="aws-service-dashboard-item-description">
-										{dashboard.description}
-									</div>
+								}
+							}}
+						>
+							<div className="aws-service-dashboard-item-content">
+								<div className="aws-service-dashboard-item-title">
+									{dashboard.title}
+								</div>
+								<div className="aws-service-dashboard-item-description">
+									{dashboard.description}
 								</div>
 							</div>
-						);
-					},
-				)}
+						</div>
+					);
+				})}
 			</div>
 		</div>
 	);

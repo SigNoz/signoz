@@ -55,6 +55,7 @@ const buildServiceDetailsResponse = (
 				},
 			},
 		},
+		telemetryCollectionStrategy: { aws: {} },
 	},
 });
 
