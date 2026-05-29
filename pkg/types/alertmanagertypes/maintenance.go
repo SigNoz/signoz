@@ -120,9 +120,6 @@ func (p *PostablePlannedMaintenance) Validate() error {
 		if p.Schedule.Recurrence.Duration.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
 		}
-		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
-		}
 	}
 	if p.Scope != "" {
 		if _, err := expr.Compile(p.Scope, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
@@ -146,26 +143,6 @@ type StorablePlannedMaintenanceRule struct {
 type PlannedMaintenanceWithRules struct {
 	*StorablePlannedMaintenance `bun:",extend"`
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
-}
-
-// HasScheduleRecurrenceBoundsMismatch reports whether a recurring maintenance
-// has different start/end bounds in Schedule and Schedule.Recurrence.
-//
-// This is used to detect if there are any entries with recurrence that don't
-// have the same timestamps stored at the schedule-level.
-// UI payloads duplicated those values in both places, but direct API users may
-// have stored bounds that are missing from, or different than, the schedule-level bounds.
-// We need to observe these before we can safely drop Recurrence.StartTime and
-// Recurrence.EndTime.
-func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
-	recurrence := m.Schedule.Recurrence
-	if recurrence == nil {
-		return false
-	}
-
-	return !recurrence.StartTime.Equal(m.Schedule.StartTime) ||
-		(recurrence.EndTime == nil && !m.Schedule.EndTime.IsZero()) ||
-		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
 }
 
 func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, lset model.LabelSet) (bool, error) {
@@ -230,15 +207,13 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	// recurring schedule
 	if recurrence != nil {
 		// Make sure the recurrence has started
-		if now.Before(recurrence.StartTime) {
+		if now.Before(startTime) {
 			return false
 		}
 
 		// Check if recurrence has expired
-		if recurrence.EndTime != nil {
-			if !recurrence.EndTime.IsZero() && now.After(*recurrence.EndTime) {
-				return false
-			}
+		if !endTime.IsZero() && now.After(endTime) {
+			return false
 		}
 
 		currentTime := now.In(loc)
@@ -260,7 +235,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
-		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+		m.Schedule.StartTime.Hour(), m.Schedule.StartTime.Minute(), 0, 0,
 		loc,
 	)
 	if candidate.After(currentTime) {
@@ -288,7 +263,7 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 		// Build a candidate occurrence by rebasing today's date to the allowed weekday.
 		candidate := time.Date(
 			currentTime.Year(), currentTime.Month(), currentTime.Day(),
-			rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
+			m.Schedule.StartTime.Hour(), m.Schedule.StartTime.Minute(), 0, 0,
 			loc,
 		).AddDate(0, 0, delta)
 		// If the candidate is in the future, subtract 7 days.
@@ -305,7 +280,8 @@ func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence,
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
 func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
-	refDay := rec.StartTime.Day()
+	startTime := m.Schedule.StartTime
+	refDay := startTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
 	day := refDay
@@ -313,7 +289,7 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 		day = lastDay
 	}
 	candidate := time.Date(year, month, day,
-		rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+		startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 		loc,
 	)
 	if candidate.After(currentTime) {
@@ -323,12 +299,12 @@ func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence
 		lastDayPrev := time.Date(y, m+1, 0, 0, 0, 0, 0, loc).Day()
 		if refDay > lastDayPrev {
 			candidate = time.Date(y, m, lastDayPrev,
-				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 				loc,
 			)
 		} else {
 			candidate = time.Date(y, m, refDay,
-				rec.StartTime.Hour(), rec.StartTime.Minute(), rec.StartTime.Second(), rec.StartTime.Nanosecond(),
+				startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(),
 				loc,
 			)
 		}
@@ -347,7 +323,7 @@ func (m *PlannedMaintenance) IsUpcoming() bool {
 		return now.Before(m.Schedule.StartTime)
 	}
 	if m.Schedule.Recurrence != nil {
-		return now.Before(m.Schedule.Recurrence.StartTime)
+		return now.Before(m.Schedule.StartTime)
 	}
 	return false
 }
@@ -384,9 +360,6 @@ func (m *PlannedMaintenance) Validate() error {
 		}
 		if m.Schedule.Recurrence.Duration.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
-		}
-		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
 		}
 	}
 	return nil

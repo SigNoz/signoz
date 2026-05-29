@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -64,7 +63,7 @@ func TestNewProviderFactories(t *testing.T) {
 		store := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(store), nil)
 		notificationManager := nfmanagertest.NewMock()
-		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(store, factorytest.NewSettings())
+		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(store)
 		NewAlertmanagerProviderFactories(store, orgGetter, notificationManager, maintenanceStore)
 	})
 

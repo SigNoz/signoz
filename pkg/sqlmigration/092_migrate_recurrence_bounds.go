@@ -64,10 +64,6 @@ func (migration *migrateRecurrenceBounds) Up(ctx context.Context, db *bun.DB) er
 	}
 
 	for _, row := range rows {
-		if row.Schedule == "" {
-			continue
-		}
-
 		schedule := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Schedule), &schedule); err != nil {
 			return err
