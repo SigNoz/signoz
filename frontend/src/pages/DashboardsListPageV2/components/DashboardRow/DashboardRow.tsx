@@ -1,5 +1,6 @@
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Badge } from '@signozhq/ui/badge';
 import { CalendarClock } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { generatePath } from 'react-router-dom';
@@ -84,14 +85,14 @@ function DashboardRow({
 					{tags.length > 0 && (
 						<div className={styles.tags}>
 							{tags.slice(0, 3).map((tag) => (
-								<Tag className={styles.tag} key={tag}>
+								<Badge className={styles.tag} key={tag}>
 									{tag}
-								</Tag>
+								</Badge>
 							))}
 							{tags.length > 3 && (
-								<Tag className={styles.tag} key={tags[3]}>
+								<Badge className={styles.tag} key={tags[3]}>
 									+ <span> {tags.length - 3} </span>
-								</Tag>
+								</Badge>
 							)}
 						</div>
 					)}
