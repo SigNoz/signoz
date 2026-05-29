@@ -2650,13 +2650,9 @@ def test_logs_list_ambigous_warnings(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Query Logs for the last 10 seconds and check if the logs are returned in the correct order
-
     response = make_query_request(
         signoz,
-        token,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
         start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=1)).timestamp() * 1000),
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
