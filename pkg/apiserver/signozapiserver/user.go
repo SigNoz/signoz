@@ -264,6 +264,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/reset_password_tokens/{token}/validate", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ValidateResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "ValidateResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Validate a reset password token",
+		Description:         "This endpoint validates whether a reset password token exists and is not expired",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/resetPassword", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
 		ID:                  "ResetPassword",
 		Tags:                []string{"users"},

@@ -410,6 +410,25 @@ func (handler *handler) CreateResetPasswordToken(w http.ResponseWriter, r *http.
 	render.Success(w, http.StatusCreated, token)
 }
 
+func (handler *handler) ValidateResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	token := mux.Vars(r)["token"]
+	if token == "" {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "token is required"))
+		return
+	}
+
+	err := handler.getter.ValidateResetPasswordToken(ctx, token)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
+}
+
 func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

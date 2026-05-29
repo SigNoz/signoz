@@ -226,6 +226,19 @@ func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer
 	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 }
 
+func (module *getter) ValidateResetPasswordToken(ctx context.Context, token string) error {
+	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	if resetPasswordToken.IsExpired() {
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
+	}
+
+	return nil
+}
+
 func (module *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error {
 	users, err := module.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 	if err != nil {
