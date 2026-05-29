@@ -210,6 +210,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateInstalledIntegrationDashboardsFactory(sqlstore),
 		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
 		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddPinnedDashboardFactory(sqlstore, sqlschema),
 	)
 }
 

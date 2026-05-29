@@ -14,6 +14,23 @@ import (
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.ListV2), handler.OpenAPIDef{
+		ID:                  "ListDashboardsV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "List dashboards (v2)",
+		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.",
+		Request:             new(dashboardtypes.ListDashboardsV2Params),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.ListableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateV2), handler.OpenAPIDef{
 		ID:                  "CreateDashboardV2",
 		Tags:                []string{"dashboard"},
@@ -118,6 +135,42 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	// ViewAccess: pinning only mutates the calling user's pin list, not the
+	// dashboard itself — anyone who can view a dashboard can bookmark it.
+	if err := router.Handle("/api/v2/dashboards/{id}/pins/me", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.PinV2), handler.OpenAPIDef{
+		ID:                  "PinDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Pin a dashboard for the current user (v2)",
+		Description:         "Pins the dashboard for the calling user. A user can pin at most 10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned dashboard is a no-op success.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/{id}/pins/me", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.UnpinV2), handler.OpenAPIDef{
+		ID:                  "UnpinDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Unpin a dashboard for the current user (v2)",
+		Description:         "Removes the pin for the calling user. Idempotent — unpinning a dashboard that wasn't pinned still returns 204.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

@@ -32,4 +32,16 @@ type Store interface {
 	DeletePublic(context.Context, string) error
 
 	RunInTx(context.Context, func(context.Context) error) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// v2 dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+
+	// int64 return is the total row count for the filter (pre-limit/offset),
+	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*DashboardListRow, int64, error)
+
+	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
+	PinForUser(ctx context.Context, pd *PinnedDashboard) error
+
+	UnpinForUser(ctx context.Context, userID valuer.UUID, dashboardID valuer.UUID) error
 }

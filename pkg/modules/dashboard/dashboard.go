@@ -61,11 +61,17 @@ type Module interface {
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
+	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error)
+
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 
 	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
+
+	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -96,6 +102,8 @@ type Handler interface {
 
 	GetV2(http.ResponseWriter, *http.Request)
 
+	ListV2(http.ResponseWriter, *http.Request)
+
 	UpdateV2(http.ResponseWriter, *http.Request)
 
 	LockV2(http.ResponseWriter, *http.Request)
@@ -103,4 +111,8 @@ type Handler interface {
 	UnlockV2(http.ResponseWriter, *http.Request)
 
 	PatchV2(http.ResponseWriter, *http.Request)
+
+	PinV2(http.ResponseWriter, *http.Request)
+
+	UnpinV2(http.ResponseWriter, *http.Request)
 }

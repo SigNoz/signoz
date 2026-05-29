@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -40,6 +41,24 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 
 	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
 	return dashboard, nil
+}
+
+func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardV2, error) {
+	rows, total, err := module.store.ListV2(ctx, orgID, userID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	dashboardIDs := make([]valuer.UUID, len(rows))
+	for i, r := range rows {
+		dashboardIDs[i] = r.Dashboard.ID
+	}
+	tagsByDashboard, err := module.tagModule.ListForResources(ctx, orgID, coretypes.KindDashboard, dashboardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardV2(rows, total, tagsByDashboard)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -148,4 +167,20 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 		return err
 	}
 	return module.store.Update(ctx, orgID, storable)
+}
+
+func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {
+	if _, err := module.GetV2(ctx, orgID, id); err != nil {
+		return err
+	}
+	return module.store.PinForUser(ctx, &dashboardtypes.PinnedDashboard{
+		UserID:      userID,
+		DashboardID: id,
+		OrgID:       orgID,
+		PinnedAt:    time.Now(),
+	})
+}
+
+func (module *module) UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error {
+	return module.store.UnpinForUser(ctx, userID, id)
 }
