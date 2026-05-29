@@ -11,8 +11,13 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
 import { toast } from '@signozhq/ui/sonner';
-import { Dropdown, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
 	ZeustypesHostDTO,
@@ -200,10 +205,15 @@ export default function CustomDomainSettings(): JSX.Element {
 							!workspaceName ? 'workspace-name-hidden' : ''
 						}`}
 					>
-						<Dropdown
-							trigger={['click']}
-							disabled={isFetchingHosts}
-							dropdownRender={(): JSX.Element => (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="link" color="none" disabled={isFetchingHosts}>
+									<Link2 size={12} />
+									<span>{stripProtocol(activeHost?.url ?? '')}</span>
+									<ChevronDown size={12} />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start">
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
 										All Workspace URLs
@@ -236,14 +246,8 @@ export default function CustomDomainSettings(): JSX.Element {
 										);
 									})}
 								</div>
-							)}
-						>
-							<Button variant="link" color="none">
-								<Link2 size={12} />
-								<span>{stripProtocol(activeHost?.url ?? '')}</span>
-								<ChevronDown size={12} />
-							</Button>
-						</Dropdown>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<span className="custom-domain-card-meta-timezone">
 							<Clock size={11} />
 							{timezone.offset}

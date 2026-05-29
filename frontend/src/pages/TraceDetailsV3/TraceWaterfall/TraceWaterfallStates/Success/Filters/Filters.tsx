@@ -3,7 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { ChevronsRight, Copy, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -340,22 +340,20 @@ function Filters({
 			>
 				{isExpanded && (
 					<div className={styles.categoryControls}>
-						<ToggleGroup
+						<ToggleGroupSimple
 							type="single"
 							value={selectedCategory}
-							onChange={(value): void => {
+							onChange={(value: SpanCategory): void => {
 								if (value) {
 									handleCategoryChange(value as SpanCategory);
 								}
 							}}
 							size="sm"
-						>
-							{categories.map((category) => (
-								<ToggleGroupItem key={category} value={category}>
-									{category}
-								</ToggleGroupItem>
-							))}
-						</ToggleGroup>
+							items={categories.map((category) => ({
+								value: category,
+								label: category,
+							}))}
+						/>
 					</div>
 				)}
 

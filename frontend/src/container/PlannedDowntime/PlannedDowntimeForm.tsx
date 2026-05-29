@@ -8,7 +8,6 @@ import {
 	FormInstance,
 	Input,
 	Modal,
-	Radio,
 	Select,
 	SelectProps,
 	Spin,
@@ -55,6 +54,8 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -464,10 +465,10 @@ export function PlannedDowntimeForm(
 						initialValue="specific"
 						className="alert-rule-scope"
 					>
-						<Radio.Group>
-							<Radio value="all">All alert rules</Radio>
-							<Radio value="specific">Specific alert rules</Radio>
-						</Radio.Group>
+						<RadioGroup>
+							<RadioGroupItem value="all">All alert rules</RadioGroupItem>
+							<RadioGroupItem value="specific">Specific alert rules</RadioGroupItem>
+						</RadioGroup>
 					</Form.Item>
 					{alertRuleScope === 'specific' && (
 						<>

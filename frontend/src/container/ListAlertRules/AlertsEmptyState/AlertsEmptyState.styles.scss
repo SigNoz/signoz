@@ -94,11 +94,8 @@
 			margin-bottom: 24px;
 			width: 100%;
 
-			.ant-divider::before,
-			.ant-divider::after {
-				border-bottom: 2px dotted var(--l1-border);
-				border-top: 2px dotted var(--l1-border);
-				height: 8px;
+			&__divider {
+				--divider-border-width: 1px;
 			}
 
 			.ant-typography {

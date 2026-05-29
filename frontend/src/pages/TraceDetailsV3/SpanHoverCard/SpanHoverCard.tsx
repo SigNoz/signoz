@@ -5,6 +5,7 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useMemo } from 'react';
@@ -101,6 +102,7 @@ export function SpanHoverCard({
 }: SpanHoverCardProps): JSX.Element {
 	const previewFields = useTraceStore((s) => s.previewFields);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const isDarkMode = useIsDarkMode();
 
 	const hoverCardData = useMemo(() => {
 		if (!hoveredSpanId) {
@@ -121,11 +123,12 @@ export function SpanHoverCard({
 			})
 			.filter((r): r is SpanPreviewRow => r !== null);
 
+		const pair = resolveSpanColor(span, colorByFieldName);
 		return {
 			anchorTop: idx * rowHeight,
 			tooltip: {
 				spanName: span.name,
-				color: resolveSpanColor(span, colorByFieldName),
+				color: isDarkMode ? pair.color : pair.colorDark,
 				hasError: span.has_error,
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
@@ -139,6 +142,7 @@ export function SpanHoverCard({
 		colorByFieldName,
 		rowHeight,
 		traceStartTime,
+		isDarkMode,
 	]);
 
 	return (

@@ -6,7 +6,8 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Button, Collapse, Divider } from 'antd';
+import { Button, Collapse } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 
 import { DurationSection } from './DurationSection';
 import {
@@ -64,7 +65,7 @@ export function Section(props: SectionProps): JSX.Element {
 
 	return (
 		<div>
-			<Divider plain className="divider" />
+			<Divider plain className="section-body__divider" />
 			<div className="section-body-header" data-testid={`collapse-${panelName}`}>
 				<Collapse
 					bordered={false}

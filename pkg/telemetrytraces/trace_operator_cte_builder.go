@@ -70,12 +70,31 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 
 	selectFromCTE := rootCTEName
 	if b.operator.ReturnSpansFrom != "" {
-		selectFromCTE = b.queryToCTEName[b.operator.ReturnSpansFrom]
-		if selectFromCTE == "" {
+		sourceQueryCTE := b.queryToCTEName[b.operator.ReturnSpansFrom]
+		if sourceQueryCTE == "" {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"returnSpansFrom references query '%s' which has no corresponding CTE",
 				b.operator.ReturnSpansFrom)
 		}
+		filteredCTEName := fmt.Sprintf("__return_from_%s", b.operator.ReturnSpansFrom)
+
+		// rootCTEName holds one row per matching *span*, not per *trace*, so it can
+		// contain many rows for the same trace_id. DISTINCT de-duplicates that set
+		// before ClickHouse builds the hash table for the IN check, keeping memory
+		// usage proportional to the number of distinct traces rather than spans.
+		matchingTracedSB := sqlbuilder.NewSelectBuilder()
+		matchingTracedSB.Select("DISTINCT trace_id")
+		matchingTracedSB.From(rootCTEName)
+		matchedTracesSQL, matchedTracesArgs := matchingTracedSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+		filteredSB := sqlbuilder.NewSelectBuilder()
+		filteredSB.Select("*")
+		filteredSB.From(sourceQueryCTE)
+		filteredSB.Where(fmt.Sprintf("trace_id IN (%s)", matchedTracesSQL))
+		filteredSQL, filteredArgs := filteredSB.BuildWithFlavor(sqlbuilder.ClickHouse, matchedTracesArgs...)
+
+		b.addCTE(filteredCTEName, filteredSQL, filteredArgs, []string{sourceQueryCTE, rootCTEName})
+		selectFromCTE = filteredCTEName
 	}
 
 	finalStmt, err := b.buildFinalQuery(ctx, selectFromCTE, requestType)

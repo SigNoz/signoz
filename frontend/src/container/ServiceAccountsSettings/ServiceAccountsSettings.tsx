@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
-import type { MenuProps } from 'antd';
-import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
@@ -134,7 +133,7 @@ function ServiceAccountsSettings(): JSX.Element {
 
 	const totalCount = allAccounts.length;
 
-	const filterMenuItems: MenuProps['items'] = [
+	const filterMenuItems: MenuItem[] = [
 		{
 			key: FilterMode.All,
 			label: (
@@ -231,10 +230,9 @@ function ServiceAccountsSettings(): JSX.Element {
 			) : (
 				<div className="sa-settings__list-section">
 					<div className="sa-settings__controls">
-						<Dropdown
+						<DropdownMenuSimple
 							menu={{ items: filterMenuItems }}
-							trigger={['click']}
-							overlayClassName="sa-settings-filter-dropdown"
+							className="sa-settings-filter-dropdown"
 						>
 							<Button
 								variant="solid"
@@ -247,7 +245,7 @@ function ServiceAccountsSettings(): JSX.Element {
 									className="sa-settings-filter-trigger__chevron"
 								/>
 							</Button>
-						</Dropdown>
+						</DropdownMenuSimple>
 
 						<div className="sa-settings__search">
 							<Input

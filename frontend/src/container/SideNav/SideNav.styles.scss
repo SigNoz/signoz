@@ -662,7 +662,7 @@
 		}
 	}
 
-	&:not(.pinned):hover,
+	&:not(.pinned).is-hovered,
 	&.dropdown-open {
 		flex: 0 0 240px;
 		max-width: 240px;
