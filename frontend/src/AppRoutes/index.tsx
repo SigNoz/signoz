@@ -291,7 +291,8 @@ function App(): JSX.Element {
 				isLoggedInState &&
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser)
+				(isCloudUser || isEnterpriseSelfHostedUser) &&
+				(window.signozBootData?.settings?.pylon.enabled ?? true)
 			) {
 				const email = user.email || '';
 				const secret = process.env.PYLON_IDENTITY_SECRET || '';
@@ -343,7 +344,10 @@ function App(): JSX.Element {
 				});
 			}
 
-			if (!isSentryInitialized) {
+			if (
+				!isSentryInitialized &&
+				(window.signozBootData?.settings?.sentry.enabled ?? true)
+			) {
 				Sentry.init({
 					dsn: process.env.SENTRY_DSN,
 					tunnel: process.env.TUNNEL_URL,
