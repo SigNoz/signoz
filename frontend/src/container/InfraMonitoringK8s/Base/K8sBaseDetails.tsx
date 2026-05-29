@@ -101,10 +101,6 @@ export interface K8sBaseDetailsProps<T> {
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
-	/**
-	 * @deprecated It's not needed anymore, remove in the next PR
-	 */
-	primaryFilterKeys: string[];
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	entityWidgetInfo: {
 		title: string;
