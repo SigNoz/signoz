@@ -152,6 +152,11 @@ export function PlannedDowntimeForm(
 
 	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
+			const { startTime, timezone } = values;
+			if (!startTime || !timezone) {
+				// unreachable
+				return;
+			}
 			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
 				alertIds:
 					values.alertRuleScope === 'all'
@@ -162,9 +167,9 @@ export function PlannedDowntimeForm(
 				name: values.name,
 				scope: values.scope,
 				schedule: {
-					startTime: values.startTime?.format(),
+					startTime: startTime.format(),
 					endTime: values.endTime?.format(),
-					timezone: values.timezone!,
+					timezone,
 					recurrence: values.recurrence,
 				},
 			};
@@ -201,25 +206,17 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		const { recurrence } = values;
-		const recurrenceData =
-			!recurrence ||
-			recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
-				? undefined
-				: {
-						duration: recurrence.duration
-							? `${recurrence.duration}${durationUnit}`
-							: '',
-						startTime: values.startTime!.format(),
-						endTime: values.endTime?.format(),
-						repeatOn: recurrence.repeatOn,
-						repeatType: recurrence.repeatType,
-					};
+		const rec = values.recurrence;
+		const recurrence =
+			rec && rec.repeatType !== recurrenceOptions.doesNotRepeat.value
+				? {
+						duration: `${rec.duration}${durationUnit}`,
+						repeatOn: rec.repeatOn,
+						repeatType: rec.repeatType,
+					}
+				: undefined;
 
-		await saveHandler({
-			...values,
-			recurrence: recurrenceData,
-		});
+		await saveHandler({ ...values, recurrence });
 	};
 
 	const handleFormData = (data: Partial<PlannedDowntimeFormData>): void => {

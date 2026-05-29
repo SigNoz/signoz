@@ -98,7 +98,7 @@ export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDT
 			timezone: '',
 			endTime: undefined,
 			recurrence: undefined,
-			startTime: undefined,
+			startTime: '',
 		},
 		alertIds: [],
 		createdAt: undefined,

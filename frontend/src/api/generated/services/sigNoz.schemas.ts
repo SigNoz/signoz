@@ -180,7 +180,7 @@ export interface AlertmanagertypesScheduleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: string;
+	startTime: string;
 	/**
 	 * @type string
 	 */

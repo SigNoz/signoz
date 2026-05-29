@@ -350,6 +350,7 @@ components:
           type: string
       required:
       - timezone
+      - startTime
       type: object
     AuthtypesAttributeMapping:
       properties:

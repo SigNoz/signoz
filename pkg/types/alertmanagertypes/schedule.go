@@ -10,10 +10,10 @@ import (
 )
 
 type Schedule struct {
-	Timezone   string `required:"true"`
-	StartTime  time.Time
-	EndTime    time.Time
-	Recurrence *Recurrence
+	Timezone   string      `json:"timezone" required:"true"`
+	StartTime  time.Time   `json:"startTime" required:"true"`
+	EndTime    time.Time   `json:"endTime,omitzero"`
+	Recurrence *Recurrence `json:"recurrence"`
 }
 
 func (s *Schedule) Scan(src interface{}) error {
