@@ -128,7 +128,6 @@ func Error(rw http.ResponseWriter, cause error) {
 	d := errors.RetryDelayOf(cause)
 	if d.Seconds() > 0 {
 		rw.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(d.Seconds()))))
-
 	}
 
 	rw.WriteHeader(httpCode)

@@ -219,7 +219,7 @@ func (b *base) WithInvalidReferences(invalidReferences ...string) *base {
 	}
 }
 
-// WithRetryAfter sets the retry policy to After and requires a delay.
+// WithRetryAfter sets the retry delay on the base error and returns a new base error.
 func (b *base) WithRetryAfter(delay time.Duration) *base {
 	return b.withRetry(newRetryAfter(delay))
 }
@@ -346,7 +346,8 @@ func TypeAttr(err error) attribute.KeyValue {
 	return attribute.String("error.type", t.String())
 }
 
-// RetryAfterOf returns the explicit retry delay
+// RetryDelayOf returns the explicit retry delay set via WithRetryAfter,
+// or zero if the error carries no retry delay.
 func RetryDelayOf(err error) time.Duration {
 	base, ok := err.(*base)
 	if !ok || base.r == nil {
