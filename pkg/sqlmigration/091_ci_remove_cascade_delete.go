@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -11,6 +12,17 @@ import (
 
 type cloudIntegrationRemoveCascadeDelete struct {
 	sqlschema sqlschema.SQLSchema
+}
+
+type ciServiceRow struct {
+	bun.BaseModel `bun:"table:cloud_integration_service"`
+
+	ID                 string    `bun:"id"`
+	CreatedAt          time.Time `bun:"created_at"`
+	UpdatedAt          time.Time `bun:"updated_at"`
+	Type               string    `bun:"type"`
+	Config             string    `bun:"config"`
+	CloudIntegrationID string    `bun:"cloud_integration_id"`
 }
 
 func NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
@@ -39,23 +51,68 @@ func (migration *cloudIntegrationRemoveCascadeDelete) Up(ctx context.Context, db
 		_ = tx.Rollback()
 	}()
 
-	oldTable, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("cloud_integration_service"))
+	// get all existing rows
+	var rows []*ciServiceRow
+	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil {
+		return err
+	}
+
+	// get existing table
+	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("cloud_integration_service"))
 	if err != nil {
 		return err
 	}
 
-	newTable := *oldTable
-	newTable.ForeignKeyConstraints = []*sqlschema.ForeignKeyConstraint{
-		{
-			ReferencingColumnName: sqlschema.ColumnName("cloud_integration_id"),
-			ReferencedTableName:   sqlschema.TableName("cloud_integration"),
-			ReferencedColumnName:  sqlschema.ColumnName("id"),
+	// drop the existing table
+	for _, sql := range migration.sqlschema.Operator().DropTable(table) {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	// create new table without cascade delete FK
+	newTable := &sqlschema.Table{
+		Name: sqlschema.TableName("cloud_integration_service"),
+		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "type", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "config", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "cloud_integration_id", DataType: sqlschema.DataTypeText, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
+			ColumnNames: []sqlschema.ColumnName{"id"},
+		},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("cloud_integration_id"),
+				ReferencedTableName:   sqlschema.TableName("cloud_integration"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
 		},
 	}
 
-	sqls := migration.sqlschema.Operator().AlterTable(oldTable, uniqueConstraints, &newTable)
+	// create table
+	for _, sql := range migration.sqlschema.Operator().CreateTable(newTable) {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
 
-	for _, sql := range sqls {
+	// add back existing rows
+	if len(rows) > 0 {
+		if _, err := tx.NewInsert().Model(&rows).Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	// create existing unique index on (cloud_integration_id, type)
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
+		TableName:   "cloud_integration_service",
+		ColumnNames: []sqlschema.ColumnName{"cloud_integration_id", "type"},
+	})
+	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
