@@ -84,18 +84,27 @@ function MuteSchedulerDrawer(props: MuteSchedulerDrawerProps): JSX.Element {
 			values.repeatType &&
 			values.repeatType !== recurrenceOptions.doesNotRepeat.value;
 
+		// Reinterpret the picked wall-clock time in the selected timezone (keep
+		// local time, swap the offset) so the formatted ISO offset matches the
+		// `timezone` field. The backend ignores the offset and re-attaches the
+		// timezone to the raw time, so the two must agree (mirrors
+		// PlannedDowntimeForm's handleFormData).
+		const { timezone: tz } = values;
+		const startTime = (values.startTime || dayjs()).tz(tz, true).format();
+		const endTime = values.endTime ? values.endTime.tz(tz, true).format() : null;
+
 		const payload: MutePayload = {
 			name: values.name.trim(),
-			startTime: values.startTime?.format() || dayjs().format(),
-			endTime: values.endTime ? values.endTime.format() : null,
-			timezone: values.timezone,
+			startTime,
+			endTime,
+			timezone: tz,
 			recurrence: isRecurring
 				? {
 						duration: values.duration ? `${values.duration}${durationUnit}` : '',
 						repeatOn: values.repeatOn as any,
 						repeatType: values.repeatType as any,
-						startTime: values.startTime?.format() || dayjs().format(),
-						endTime: values.endTime ? values.endTime.format() : undefined,
+						startTime,
+						endTime: endTime ?? undefined,
 					}
 				: undefined,
 		};

@@ -38,19 +38,24 @@ export const buildMutePayloadFromQuickDuration = (
 	if (!duration) {
 		return null;
 	}
+	// Format the times in the selected timezone so the ISO offset matches the
+	// `timezone` field. The backend ignores the offset and re-attaches the
+	// timezone to the raw wall-clock time, so the two must agree (mirrors
+	// PlannedDowntimeForm).
+	const tz = dayjs.tz.guess?.() || 'UTC';
 	const now = dayjs();
-	const startTime = now.toISOString();
+	const startTime = now.tz(tz).format();
 	// duration.minutes === null → "Forever"; send endTime as null so the
 	// backend treats the mute as indefinite.
 	const endTime =
 		duration.minutes === null
 			? null
-			: now.add(duration.minutes, 'minute').toISOString();
+			: now.add(duration.minutes, 'minute').tz(tz).format();
 	return {
 		name,
 		startTime,
 		endTime,
-		timezone: dayjs.tz.guess?.() || 'UTC',
+		timezone: tz,
 	};
 };
 
