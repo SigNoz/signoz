@@ -24,7 +24,7 @@ export const StyledCheckOutlined = styled(Check)`
 
 export const TagContainer = styled(Badge)`
 	&&& {
-		display: inline-block;
+		display: flex;
 		border-radius: 3px;
 		padding: 0.1rem 0.2rem;
 		font-weight: 300;
