@@ -23,36 +23,57 @@ var (
 	CodeArrayNavigationFailed    = errors.MustNewCode("array_navigation_failed")
 )
 
+// JSON body fields are stored across two columns:
+//   - Base column (body_v2): present from the start, always carries a value,
+//     and is the only column with skip-indexes (e.g. JSON paths bloom filter).
+//   - Promoted column (body_promoted): introduced later via a schema evolution;
+//     its field set is a subset of the base column at the time of promotion.
 type jsonConditionBuilder struct {
-	key       *telemetrytypes.TelemetryFieldKey
-	valueType telemetrytypes.JSONDataType
+	key        *telemetrytypes.TelemetryFieldKey
+	valueType  telemetrytypes.JSONDataType
+	baseColumn *schemamigrator.Column
 }
 
-func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType telemetrytypes.FieldDataType) *jsonConditionBuilder {
-	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
+func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType telemetrytypes.FieldDataType, baseColumn *schemamigrator.Column) *jsonConditionBuilder {
+	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType], baseColumn: baseColumn}
 }
 
 // BuildCondition builds the full WHERE condition for body_v2 JSON paths.
-func (c *jsonConditionBuilder) buildJSONCondition(columns []schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	if len(columns) == 1 {
-		baseCond, err := c.emitPlannedCondition(columns[0], operator, value, sb)
+func (c *jsonConditionBuilder) buildJSONCondition(startNs, endNs uint64, columns []*schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	if len(c.key.Evolutions) > 0 {
+		filtered, _, err := selectEvolutionsForColumns(columns, c.key.Evolutions, startNs, endNs)
+		if err != nil {
+			return "", err
+		}
+		columns = filtered
+	}
+
+	columnConditions := make([]string, 0, len(columns))
+	for _, col := range columns {
+		cond, err := c.emitPlannedCondition(col, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
 
-		// path index
-		if operator.AddDefaultExistsFilter() {
-			pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
-			return sb.And(baseCond, pathIndex), nil
-		}
-
-		return baseCond, nil
+		columnConditions = append(columnConditions, cond)
 	}
 
-	
+	var baseCondition string
+	if len(columnConditions) == 1 {
+		baseCondition = columnConditions[0]
+	} else {
+		baseCondition = sb.Or(columnConditions...)
+	}
+
+	// path index is only available on the base column
+	if operator.AddDefaultExistsFilter() {
+		return sb.And(baseCondition, fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(c.baseColumn.Name), c.key.ArrayParentPaths()[0])), nil
+	}
+
+	return baseCondition, nil
 }
 
-func (c *jsonConditionBuilder) emitPlannedCondition(column schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) emitPlannedCondition(column *schemamigrator.Column, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if c.key.PlanBuilder == nil {
 		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no plan builder for key %s", c.key.Name)
 	}

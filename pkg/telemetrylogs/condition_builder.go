@@ -38,17 +38,14 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
-	for _, column := range columns {
-		// TODO(Tushar): thread orgID here to evaluate correctly
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && key.FieldContext == telemetrytypes.FieldContextBody && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
-			valueType, value := InferDataType(value, operator, key)
-			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-			if err != nil {
-				return "", err
-			}
-			return cond, nil
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if key.FieldContext == telemetrytypes.FieldContextBody && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+		valueType, value := InferDataType(value, operator, key)
+		cond, err := NewJSONConditionBuilder(key, valueType, logsV2Columns[LogsV2BodyV2Column]).buildJSONCondition(startNs, endNs, columns, operator, value, sb)
+		if err != nil {
+			return "", err
 		}
+		return cond, nil
 	}
 
 	if operator.IsStringSearchOperator() {

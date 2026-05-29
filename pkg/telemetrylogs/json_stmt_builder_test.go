@@ -327,11 +327,8 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 	}
 }
 
-/* Promoted path list-query tests commented out — Materialized now means type hint
-   (direct sub-column access), not a body_promoted.* column.
-
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, "education", "tags")
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -348,7 +345,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -361,7 +358,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -374,7 +371,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -387,7 +384,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -414,7 +411,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -455,7 +452,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -468,7 +465,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{ "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args: []any{"%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -491,7 +488,6 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 		})
 	}
 }
-*/
 
 func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
