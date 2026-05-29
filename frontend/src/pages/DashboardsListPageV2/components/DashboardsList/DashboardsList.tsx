@@ -31,12 +31,12 @@ import { buildSearchDSL, type DashboardListItem } from '../../utils';
 import ConfigureMetadataModal from '../ConfigureMetadataModal/ConfigureMetadataModal';
 import { useDashboardsListVisibleColumnsStore } from '../ConfigureMetadataModal/useDynamicColumns';
 import CreateDashboardDropdown from '../CreateDashboardDropdown/CreateDashboardDropdown';
-import EmptyState from '../EmptyState/EmptyState';
-import ErrorState from '../ErrorState/ErrorState';
 import ImportJSONModal from '../ImportJSONModal/ImportJSONModal';
 import ListHeader from '../ListHeader/ListHeader';
-import LoadingState from '../LoadingState/LoadingState';
-import NoResultsState from '../NoResultsState/NoResultsState';
+import EmptyState from '../states/EmptyState/EmptyState';
+import ErrorState from '../states/ErrorState/ErrorState';
+import LoadingState from '../states/LoadingState/LoadingState';
+import NoResultsState from '../states/NoResultsState/NoResultsState';
 import SearchBar from '../SearchBar/SearchBar';
 import DashboardsListContent from './DashboardsListContent';
 
