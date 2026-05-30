@@ -204,7 +204,7 @@ const processContextLinks = (
 };
 
 /**
- * Transforms context variables into the format expected by VariablesDropdown
+ * Transforms context variables into the format expected by VariablesPopover
  * @param variables - Array of context variables from useContextVariables
  * @returns Array of transformed variables with proper source descriptions
  */

@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { FillMode } from 'lib/uPlotV2/config/types';
 
@@ -16,74 +16,97 @@ export default function FillModeSelector({
 	return (
 		<section className="fill-mode-selector control-container">
 			<Typography.Text className="section-heading">Fill mode</Typography.Text>
-			<ToggleGroup
+			<ToggleGroupSimple
 				type="single"
 				value={value}
 				size="lg"
-				onChange={(newValue): void => {
+				onChange={(newValue: string): void => {
 					if (newValue) {
 						onChange(newValue as FillMode);
 					}
 				}}
-			>
-				<ToggleGroupItem value={FillMode.None} aria-label="None">
-					<svg
-						className="fill-mode-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<rect x="8" y="16" width="32" height="16" stroke="#888" fill="none" />
-					</svg>
-					<Typography.Text className="section-heading-small">None</Typography.Text>
-				</ToggleGroupItem>
-				<ToggleGroupItem value={FillMode.Solid} aria-label="Solid">
-					<svg
-						className="fill-mode-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<rect x="8" y="16" width="32" height="16" fill="#888" />
-					</svg>
-					<Typography.Text className="section-heading-small">Solid</Typography.Text>
-				</ToggleGroupItem>
-				<ToggleGroupItem value={FillMode.Gradient} aria-label="Gradient">
-					<svg
-						className="fill-mode-icon"
-						viewBox="0 0 48 48"
-						fill="none"
-						stroke="#888"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<defs>
-							<linearGradient id="fill-gradient" x1="0" y1="0" x2="1" y2="0">
-								<stop offset="0%" stopColor="#888" stopOpacity="0.2" />
-								<stop offset="100%" stopColor="#888" stopOpacity="0.8" />
-							</linearGradient>
-						</defs>
-						<rect
-							x="8"
-							y="16"
-							width="32"
-							height="16"
-							fill="url(#fill-gradient)"
-							stroke="#888"
-						/>
-					</svg>
-					<Typography.Text className="section-heading-small">
-						Gradient
-					</Typography.Text>
-				</ToggleGroupItem>
-			</ToggleGroup>
+				items={[
+					{
+						value: FillMode.None,
+						'aria-label': 'None',
+						label: (
+							<>
+								<svg
+									className="fill-mode-icon"
+									viewBox="0 0 48 48"
+									fill="none"
+									stroke="#888"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<rect x="8" y="16" width="32" height="16" stroke="#888" fill="none" />
+								</svg>
+								<Typography.Text className="section-heading-small">
+									None
+								</Typography.Text>
+							</>
+						),
+					},
+					{
+						value: FillMode.Solid,
+						'aria-label': 'Solid',
+						label: (
+							<>
+								<svg
+									className="fill-mode-icon"
+									viewBox="0 0 48 48"
+									fill="none"
+									stroke="#888"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<rect x="8" y="16" width="32" height="16" fill="#888" />
+								</svg>
+								<Typography.Text className="section-heading-small">
+									Solid
+								</Typography.Text>
+							</>
+						),
+					},
+					{
+						value: FillMode.Gradient,
+						'aria-label': 'Gradient',
+						label: (
+							<>
+								<svg
+									className="fill-mode-icon"
+									viewBox="0 0 48 48"
+									fill="none"
+									stroke="#888"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<defs>
+										<linearGradient id="fill-gradient" x1="0" y1="0" x2="1" y2="0">
+											<stop offset="0%" stopColor="#888" stopOpacity="0.2" />
+											<stop offset="100%" stopColor="#888" stopOpacity="0.8" />
+										</linearGradient>
+									</defs>
+									<rect
+										x="8"
+										y="16"
+										width="32"
+										height="16"
+										fill="url(#fill-gradient)"
+										stroke="#888"
+									/>
+								</svg>
+								<Typography.Text className="section-heading-small">
+									Gradient
+								</Typography.Text>
+							</>
+						),
+					},
+				]}
+			/>
 		</section>
 	);
 }

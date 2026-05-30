@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Radio, RadioChangeEvent, Space } from 'antd';
+import { Space } from 'antd';
+import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	OnboardingMethods,
@@ -10,29 +11,29 @@ export default function SelectMethod(): JSX.Element {
 	const { selectedMethod, updateSelectedMethod } = useOnboardingContext();
 	const [value, setValue] = useState(selectedMethod);
 
-	const onChange = (e: RadioChangeEvent): void => {
-		setValue(e.target.value);
-		updateSelectedMethod(e.target.value);
+	const onChange = (next: string): void => {
+		setValue(next);
+		updateSelectedMethod(next);
 	};
 
 	return (
 		<div>
-			<Radio.Group onChange={onChange} value={value}>
+			<RadioGroup onChange={onChange} value={value}>
 				<Space direction="vertical">
-					<Radio value={OnboardingMethods.QUICK_START}>
+					<RadioGroupItem value={OnboardingMethods.QUICK_START}>
 						<Typography.Text> Quick Start </Typography.Text> <br />
 						<small>Send data to SigNoz directly from OpenTelemetry SDK.</small>
-					</Radio>
+					</RadioGroupItem>
 
-					<Radio value={OnboardingMethods.RECOMMENDED_STEPS}>
+					<RadioGroupItem value={OnboardingMethods.RECOMMENDED_STEPS}>
 						<Typography.Text> Use Recommended Steps </Typography.Text> <br />
 						<small>
 							Send data to SigNoz via OpenTelemetry Collector (better control on data
 							you send to SigNoz, collect host metrics & logs).
 						</small>
-					</Radio>
+					</RadioGroupItem>
 				</Space>
-			</Radio.Group>
+			</RadioGroup>
 		</div>
 	);
 }

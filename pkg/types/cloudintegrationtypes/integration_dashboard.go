@@ -10,7 +10,10 @@ import (
 
 type IntegrationDashboardProviderType struct{ valuer.String }
 
-var IntegrationDashboardProviderCloudIntegration = IntegrationDashboardProviderType{valuer.NewString("cloud_integration")}
+var (
+	IntegrationDashboardProviderCloudIntegration     = IntegrationDashboardProviderType{valuer.NewString("cloud_integration")}
+	IntegrationDashboardInstalledIntegrationProvider = IntegrationDashboardProviderType{valuer.NewString("installed_integration")}
+)
 
 type StorableIntegrationDashboard struct {
 	bun.BaseModel `bun:"table:integration_dashboard"`
@@ -35,10 +38,18 @@ func NewStorableIntegrationDashboard(dashboardID string, provider IntegrationDas
 	}
 }
 
-func IntegrationDashboardSlug(provider CloudProviderType, serviceID ServiceID, dashName string) string {
+func CloudIntegrationDashboardSlug(provider CloudProviderType, serviceID ServiceID, dashName string) string {
 	return fmt.Sprintf("%s-%s-%s", provider.StringValue(), serviceID.StringValue(), dashName)
 }
 
-func IntegrationDashboardSlugPrefix(provider CloudProviderType, serviceID ServiceID) string {
+func CloudIntegrationDashboardSlugPrefix(provider CloudProviderType, serviceID ServiceID) string {
 	return fmt.Sprintf("%s-%s-", provider.StringValue(), serviceID.StringValue())
+}
+
+func InstalledIntegrationDashboardSlug(integrationID, dashboardName string) string {
+	return fmt.Sprintf("%s-%s", integrationID, dashboardName)
+}
+
+func InstalledIntegrationDashboardSlugPrefix(integrationID string) string {
+	return fmt.Sprintf("%s-", integrationID)
 }

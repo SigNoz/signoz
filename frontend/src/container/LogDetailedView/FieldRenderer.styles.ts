@@ -1,7 +1,7 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
-export const TagContainer = styled(Tag)`
+export const TagContainer = styled(Badge)`
 	&&& {
 		border-color: var(--bg-slate-400);
 		border-radius: 0.25rem;
@@ -12,6 +12,7 @@ export const TagContainer = styled(Tag)`
 `;
 
 export const TagLabel = styled.span`
+	color: var(--foreground);
 	font-weight: 400;
 	font-size: 12px;
 `;

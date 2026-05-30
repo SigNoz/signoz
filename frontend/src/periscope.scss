@@ -204,5 +204,12 @@
 		background: var(--l2-background);
 		height: 38px;
 		width: 38px;
+
+		&:focus:not(:focus-visible),
+		&.ant-btn:focus:not(:focus-visible) {
+			border-color: var(--l2-border);
+			outline: none;
+			box-shadow: none;
+		}
 	}
 }

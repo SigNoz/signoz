@@ -19,12 +19,6 @@
 			}
 		}
 
-		.ant-modal-body {
-			.ant-divider {
-				margin: 16px 0;
-				border: 0.5px solid var(--l1-border);
-			}
-		}
 		.downtime-schedule-btn {
 			display: flex;
 		}
@@ -53,12 +47,6 @@
 		margin-bottom: 8px;
 		overflow: auto;
 		max-height: 100px;
-		.ant-tag {
-			user-select: none;
-			height: 28px;
-			display: inline-flex;
-			align-items: center;
-		}
 	}
 
 	.ant-select {
@@ -81,6 +69,20 @@
 		}
 	}
 
+	.alert-rule-scope {
+		margin-bottom: 12px;
+
+		.ant-radio-wrapper {
+			color: var(--l1-foreground);
+		}
+	}
+
+	.alert-rule-all-warning {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--l2-foreground);
+	}
+
 	.formItemWithBullet {
 		margin-bottom: 0;
 	}
@@ -95,61 +97,8 @@
 }
 
 .alert-rule-tags {
-	.ant-tag {
-		display: flex;
-		align-items: center;
-		border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
-		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-		padding-right: 0px;
-		border-right: 0;
-		color: var(--bg-robin-400);
-
-		.ant-tag-close-icon {
-			height: 28px;
-			width: 20px !important;
-			justify-content: center;
-			border-left: 1px solid
-				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
-			border-radius: 0px 2px 2px 0px;
-			background: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
-			border-right: 1px solid
-				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
-			margin-right: 0px;
-
-			svg {
-				fill: var(--primary-background);
-			}
-		}
-	}
 	.non-closable-tag {
 		padding-right: 7px;
-		border-right: 1px solid
-			color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
-	}
-
-	.red-tag.non-closable-tag {
-		border-right: 1px solid
-			color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
-	}
-
-	.red-tag {
-		border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-		background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
-		border-right: 0;
-		color: var(--bg-sakura-400);
-
-		.ant-tag-close-icon {
-			background: color-mix(in srgb, var(--bg-sakura-500) 30%, transparent);
-			border-left: 1px solid
-				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-			border-right: 1px solid
-				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-
-			svg {
-				fill: var(--bg-sakura-500);
-			}
-		}
 	}
 }
 
@@ -257,9 +206,6 @@
 				line-height: 18px;
 				letter-spacing: -0.07px;
 			}
-			.ant-tag {
-				border-radius: 20px;
-			}
 
 			.action-btn {
 				display: flex;
@@ -314,12 +260,6 @@
 				width: 540px;
 				max-height: 100px;
 				overflow: auto;
-
-				.ant-tag {
-					height: 28px;
-					display: flex;
-					align-items: center;
-				}
 			}
 			.ant-collapse-content-active {
 				border-top: 0;
