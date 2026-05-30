@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Flex, Tag } from 'antd';
+import { Button, Collapse, Flex } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { PenLine, Trash2 } from '@signozhq/icons';
@@ -118,7 +119,9 @@ function PolicyListItemContent({
 				<Typography>Channels</Typography>
 				<div>
 					{routingPolicy.channels.map((channel) => (
-						<Tag key={channel}>{channel}</Tag>
+						<Badge key={channel} color="vanilla">
+							{channel}
+						</Badge>
 					))}
 				</div>
 			</div>

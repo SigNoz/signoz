@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
 import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useRenameFunnel } from 'hooks/TracesFunnels/useFunnels';

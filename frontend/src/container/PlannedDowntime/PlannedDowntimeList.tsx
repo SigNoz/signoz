@@ -1,7 +1,8 @@
 import React, { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
+import { Collapse, Flex, Space, Table, TableProps, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
@@ -48,21 +49,24 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
 				const isLongTag = (tag?.label as string)?.length > 20;
 				const tagElem = (
-					<Tag
+					<Badge
 						key={tag.value}
-						onClose={(): void => handleClose?.(tag?.value)}
-						closable={closable}
+						color={index % 2 ? 'sakura' : 'robin'}
+						variant="outline"
 						className={cx(
 							{ 'red-tag': index % 2 },
 							{ 'non-closable-tag': !closable },
 						)}
+						closable={closable}
+						onClose={(e): void => {
+							e.preventDefault();
+							handleClose?.(tag?.value);
+						}}
 					>
-						<span>
-							{isLongTag
-								? `${(tag?.label as string | null)?.slice(0, 20)}...`
-								: tag?.label}
-						</span>
-					</Tag>
+						{isLongTag
+							? `${(tag?.label as string | null)?.slice(0, 20)}...`
+							: tag?.label}
+					</Badge>
 				);
 				return isLongTag ? (
 					<Tooltip title={tag?.label} key={tag?.value}>
@@ -93,7 +97,7 @@ function HeaderComponent({
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
 				<Typography>{name}</Typography>
-				<Tag>{duration}</Tag>
+				<Badge color="vanilla">{duration}</Badge>
 			</Flex>
 
 			{isCrudEnabled && (
@@ -155,9 +159,7 @@ export function CollapseListContent({
 				created_by_name ? (
 					<Flex gap={8}>
 						<Typography>{created_by_name}</Typography>
-						{created_by_email && (
-							<Tag style={{ borderRadius: 20 }}>{created_by_email}</Tag>
-						)}
+						{created_by_email && <Badge color="vanilla">{created_by_email}</Badge>}
 					</Flex>
 				) : (
 					'-'
@@ -204,7 +206,9 @@ export function CollapseListContent({
 						selectedTags={alertOptions}
 					/>
 				) : (
-					'-'
+					<Badge className="all-alerts-tag" color="vanilla">
+						All alert rules
+					</Badge>
 				),
 			)}
 		</Flex>
