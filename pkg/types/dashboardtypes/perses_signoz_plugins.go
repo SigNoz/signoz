@@ -397,12 +397,7 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 type ComparisonOperator struct{ valuer.String }
 
 var (
-	ComparisonOperatorGT           = ComparisonOperator{valuer.NewString(">")} // default
-	ComparisonOperatorLT           = ComparisonOperator{valuer.NewString("<")}
-	ComparisonOperatorGTE          = ComparisonOperator{valuer.NewString(">=")}
-	ComparisonOperatorLTE          = ComparisonOperator{valuer.NewString("<=")}
-	ComparisonOperatorEQ           = ComparisonOperator{valuer.NewString("=")}
-	ComparisonOperatorAbove        = ComparisonOperator{valuer.NewString("above")}
+	ComparisonOperatorAbove        = ComparisonOperator{valuer.NewString("above")} // default
 	ComparisonOperatorBelow        = ComparisonOperator{valuer.NewString("below")}
 	ComparisonOperatorAboveOrEqual = ComparisonOperator{valuer.NewString("above_or_equal")}
 	ComparisonOperatorBelowOrEqual = ComparisonOperator{valuer.NewString("below_or_equal")}
@@ -411,12 +406,12 @@ var (
 )
 
 func (ComparisonOperator) Enum() []any {
-	return []any{ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ, ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual, ComparisonOperatorEqual, ComparisonOperatorNotEqual}
+	return []any{ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual, ComparisonOperatorEqual, ComparisonOperatorNotEqual}
 }
 
 func (o ComparisonOperator) ValueOrDefault() string {
 	if o.IsZero() {
-		return ComparisonOperatorGT.StringValue()
+		return ComparisonOperatorAbove.StringValue()
 	}
 	return o.StringValue()
 }
@@ -428,21 +423,20 @@ func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
 	if v == "" {
-		*o = ComparisonOperatorGT
+		*o = ComparisonOperatorAbove
 		return nil
 	}
 	co := ComparisonOperator{valuer.NewString(v)}
 	switch co {
-	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
-		ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
+	case ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
 		ComparisonOperatorEqual, ComparisonOperatorNotEqual:
 		*o = co
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
 	}
 }
 

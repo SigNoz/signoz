@@ -94,9 +94,7 @@ export function useListRoles<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -119,7 +117,7 @@ export const invalidateListRoles = async (
  * @summary Create role
  */
 export const createRole = (
-	authtypesPostableRoleDTO: BodyType<AuthtypesPostableRoleDTO>,
+	authtypesPostableRoleDTO?: BodyType<AuthtypesPostableRoleDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateRole201>({
@@ -138,13 +136,13 @@ export const getCreateRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableRoleDTO> },
+		{ data?: BodyType<AuthtypesPostableRoleDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableRoleDTO> },
+	{ data?: BodyType<AuthtypesPostableRoleDTO> },
 	TContext
 > => {
 	const mutationKey = ['createRole'];
@@ -158,7 +156,7 @@ export const getCreateRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRole>>,
-		{ data: BodyType<AuthtypesPostableRoleDTO> }
+		{ data?: BodyType<AuthtypesPostableRoleDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -171,7 +169,9 @@ export const getCreateRoleMutationOptions = <
 export type CreateRoleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createRole>>
 >;
-export type CreateRoleMutationBody = BodyType<AuthtypesPostableRoleDTO>;
+export type CreateRoleMutationBody =
+	| BodyType<AuthtypesPostableRoleDTO>
+	| undefined;
 export type CreateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -184,27 +184,29 @@ export const useCreateRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data: BodyType<AuthtypesPostableRoleDTO> },
+		{ data?: BodyType<AuthtypesPostableRoleDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data: BodyType<AuthtypesPostableRoleDTO> },
+	{ data?: BodyType<AuthtypesPostableRoleDTO> },
 	TContext
 > => {
-	const mutationOptions = getCreateRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getCreateRoleMutationOptions(options));
 };
 /**
  * This endpoint deletes a role
  * @summary Delete role
  */
-export const deleteRole = ({ id }: DeleteRolePathParameters) => {
+export const deleteRole = (
+	{ id }: DeleteRolePathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/roles/${id}`,
 		method: 'DELETE',
+		signal,
 	});
 };
 
@@ -270,9 +272,7 @@ export const useDeleteRole = <
 	{ pathParams: DeleteRolePathParameters },
 	TContext
 > => {
-	const mutationOptions = getDeleteRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getDeleteRoleMutationOptions(options));
 };
 /**
  * This endpoint gets a role
@@ -344,9 +344,7 @@ export function useGetRole<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -371,13 +369,15 @@ export const invalidateGetRole = async (
  */
 export const patchRole = (
 	{ id }: PatchRolePathParameters,
-	authtypesPatchableRoleDTO: BodyType<AuthtypesPatchableRoleDTO>,
+	authtypesPatchableRoleDTO?: BodyType<AuthtypesPatchableRoleDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/roles/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPatchableRoleDTO,
+		signal,
 	});
 };
 
@@ -390,7 +390,7 @@ export const getPatchRoleMutationOptions = <
 		TError,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		},
 		TContext
 	>;
@@ -399,7 +399,7 @@ export const getPatchRoleMutationOptions = <
 	TError,
 	{
 		pathParams: PatchRolePathParameters;
-		data: BodyType<AuthtypesPatchableRoleDTO>;
+		data?: BodyType<AuthtypesPatchableRoleDTO>;
 	},
 	TContext
 > => {
@@ -416,7 +416,7 @@ export const getPatchRoleMutationOptions = <
 		Awaited<ReturnType<typeof patchRole>>,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -430,7 +430,9 @@ export const getPatchRoleMutationOptions = <
 export type PatchRoleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchRole>>
 >;
-export type PatchRoleMutationBody = BodyType<AuthtypesPatchableRoleDTO>;
+export type PatchRoleMutationBody =
+	| BodyType<AuthtypesPatchableRoleDTO>
+	| undefined;
 export type PatchRoleMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -445,7 +447,7 @@ export const usePatchRole = <
 		TError,
 		{
 			pathParams: PatchRolePathParameters;
-			data: BodyType<AuthtypesPatchableRoleDTO>;
+			data?: BodyType<AuthtypesPatchableRoleDTO>;
 		},
 		TContext
 	>;
@@ -454,13 +456,11 @@ export const usePatchRole = <
 	TError,
 	{
 		pathParams: PatchRolePathParameters;
-		data: BodyType<AuthtypesPatchableRoleDTO>;
+		data?: BodyType<AuthtypesPatchableRoleDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchRoleMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchRoleMutationOptions(options));
 };
 /**
  * Gets all objects connected to the specified role via a given relation type
@@ -544,9 +544,7 @@ export function useGetObjects<
 		queryKey: QueryKey;
 	};
 
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
+	return { ...query, queryKey: queryOptions.queryKey };
 }
 
 /**
@@ -571,13 +569,15 @@ export const invalidateGetObjects = async (
  */
 export const patchObjects = (
 	{ id, relation }: PatchObjectsPathParameters,
-	coretypesPatchableObjectsDTO: BodyType<CoretypesPatchableObjectsDTO>,
+	coretypesPatchableObjectsDTO?: BodyType<CoretypesPatchableObjectsDTO>,
+	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: coretypesPatchableObjectsDTO,
+		signal,
 	});
 };
 
@@ -590,7 +590,7 @@ export const getPatchObjectsMutationOptions = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<CoretypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -599,7 +599,7 @@ export const getPatchObjectsMutationOptions = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<CoretypesPatchableObjectsDTO>;
+		data?: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
@@ -616,7 +616,7 @@ export const getPatchObjectsMutationOptions = <
 		Awaited<ReturnType<typeof patchObjects>>,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<CoretypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -630,7 +630,9 @@ export const getPatchObjectsMutationOptions = <
 export type PatchObjectsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchObjects>>
 >;
-export type PatchObjectsMutationBody = BodyType<CoretypesPatchableObjectsDTO>;
+export type PatchObjectsMutationBody =
+	| BodyType<CoretypesPatchableObjectsDTO>
+	| undefined;
 export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -645,7 +647,7 @@ export const usePatchObjects = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<CoretypesPatchableObjectsDTO>;
+			data?: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -654,11 +656,9 @@ export const usePatchObjects = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<CoretypesPatchableObjectsDTO>;
+		data?: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
-	const mutationOptions = getPatchObjectsMutationOptions(options);
-
-	return useMutation(mutationOptions);
+	return useMutation(getPatchObjectsMutationOptions(options));
 };

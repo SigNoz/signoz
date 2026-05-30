@@ -39,8 +39,12 @@ export interface PrettyViewAction {
 	label: React.ReactNode;
 	icon?: React.ReactNode;
 	onClick: (context: FieldContext) => void;
-	/** If provided, action is hidden when this returns true for the field key */
-	shouldHide?: (key: string) => boolean;
+	/**
+	 * If provided, action is hidden when this returns true. Receives the leaf
+	 * key plus the full path so callers can hide based on ancestor segments
+	 * (e.g. anything under `events.*`).
+	 */
+	shouldHide?: (key: string, fieldKeyPath: (string | number)[]) => boolean;
 }
 
 export interface VisibleActionsConfig {
@@ -176,7 +180,7 @@ function PrettyView({
 				const visibleCustomActions = actions.filter(
 					(action) =>
 						isActionVisible(action.key, context.isNested) &&
-						!(action.shouldHide && action.shouldHide(leafKey)),
+						!(action.shouldHide && action.shouldHide(leafKey, context.fieldKeyPath)),
 				);
 				visibleCustomActions.forEach((action) => {
 					items.push({
@@ -223,10 +227,8 @@ function PrettyView({
 						menu={{ items: menuItems }}
 						align="start"
 						className="pretty-view-actions-dropdown"
-						// onClick on the dropdown content is forwarded to the underlying div via ...props
-						// but is not in the public type. Stop click bubbling so item clicks don't reach
-						// clickable ancestors of the trigger through the React tree.
-						// @ts-expect-error see comment above
+						// Stop click bubbling so item clicks don't reach clickable ancestors
+						// of the trigger through the React tree.
 						onClick={(e: React.MouseEvent): void => e.stopPropagation()}
 					>
 						<span

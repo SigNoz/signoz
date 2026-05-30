@@ -2,17 +2,12 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { AllTheProviders } from 'tests/test-utils';
 
-import { TraceProvider } from '../../contexts/TraceContext';
 import { useFlamegraphHover } from '../hooks/useFlamegraphHover';
 import type { SpanRect } from '../types';
 import { MOCK_SPAN, MOCK_TRACE_METADATA } from './testUtils';
 
 function wrapper({ children }: { children: React.ReactNode }): JSX.Element {
-	return (
-		<AllTheProviders>
-			<TraceProvider aggregations={undefined}>{children}</TraceProvider>
-		</AllTheProviders>
-	);
+	return <AllTheProviders>{children}</AllTheProviders>;
 }
 
 function createMockCanvas(): HTMLCanvasElement {

@@ -163,7 +163,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		if err != nil {
 			return false, err
 		}
-		if filterWhereClause == nil {
+		if filterWhereClause.IsEmpty() {
 			// this means all conditions evaluated to no-op (non-resource fields, unknown keys, skipped full-text/functions)
 			// the CTE would select all fingerprints, so skip it entirely
 			return true, nil

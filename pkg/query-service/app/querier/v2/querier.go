@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/prometheus"
+
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -45,6 +47,7 @@ type querier struct {
 
 	builder *queryBuilder.QueryBuilder
 
+	parser prometheus.Parser
 	logger *slog.Logger
 
 	// used for testing
@@ -88,6 +91,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}),
 
+		parser: prometheus.NewParser(),
 		logger: slog.Default(),
 
 		testingMode:    opts.TestingMode,

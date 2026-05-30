@@ -12,7 +12,7 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
-		label: 'Service',
+		label: 'service.name',
 	},
 	{
 		field: {
@@ -20,7 +20,7 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
-		label: 'Namespace',
+		label: 'service.namespace',
 	},
 	{
 		field: {
@@ -28,7 +28,7 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
-		label: 'Host',
+		label: 'host.name',
 	},
 	{
 		field: {
@@ -36,7 +36,7 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
-		label: 'Node',
+		label: 'k8s.node.name',
 	},
 	{
 		field: {
@@ -44,7 +44,7 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
-		label: 'Container',
+		label: 'k8s.container.name',
 	},
 ];
 

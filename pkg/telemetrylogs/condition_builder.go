@@ -41,7 +41,7 @@ func (c *conditionBuilder) conditionFor(
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && key.FieldContext == telemetrytypes.FieldContextBody && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {

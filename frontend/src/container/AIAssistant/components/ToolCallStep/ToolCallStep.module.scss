@@ -1,0 +1,99 @@
+// Minimal expandable row — chevron + label, no icon, no left rail.
+// While the tool is running we swap the chevron for a spinner in the
+// same slot so the row alignment doesn't shift when it completes.
+.row {
+	width: 100%;
+	font-size: 12px;
+
+	&.running {
+		opacity: 0.85;
+	}
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 0;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	color: var(--l3-foreground);
+	user-select: none;
+	transition: color 0.12s ease;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.chevron {
+	flex-shrink: 0;
+	color: inherit;
+
+	&.spin {
+		color: var(--accent-primary);
+		animation: spin 1s linear infinite;
+	}
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.label {
+	font-weight: 400;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.body {
+	padding: 4px 0 4px 22px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.sectionLabel {
+	font-size: 9px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--l3-foreground);
+}
+
+.toolName {
+	font-family: var(--font-mono, monospace);
+	font-size: 10px;
+	color: var(--l2-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.json {
+	font-family: var(--font-mono, monospace);
+	font-size: 11px;
+	color: var(--l2-foreground);
+	background: var(--l1-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: 5px 7px;
+	margin: 0;
+	overflow-x: auto;
+	white-space: pre;
+	max-height: 160px;
+}

@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import type { MenuItem } from '@signozhq/ui';
-import { Button } from '@signozhq/ui';
+import type { MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
-import { Ellipsis } from '@signozhq/icons';
+import { Settings2 } from '@signozhq/icons';
 
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
+
+import styles from './TraceOptionsMenu.module.scss';
 
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
@@ -17,8 +19,11 @@ function TraceOptionsMenu({
 	onToggleTraceDetails,
 	onOpenPreviewFields,
 }: TraceOptionsMenuProps): JSX.Element {
-	const { colorByField, setColorByField, availableColorByOptions } =
-		useTraceContext();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const setColorByField = useTraceStore((s) => s.setColorByField);
+	const availableColorByOptions = useTraceStore(
+		(s) => s.availableColorByOptions,
+	);
 
 	const menuItems: MenuItem[] = useMemo(() => {
 		const items: MenuItem[] = [
@@ -79,12 +84,17 @@ function TraceOptionsMenu({
 	]);
 
 	return (
-		<Dropdown menu={{ items: menuItems }}>
+		<Dropdown
+			menu={{ items: menuItems }}
+			align="start"
+			className={styles.traceOptionsDropdown}
+		>
 			<Button
-				variant="solid"
+				variant="ghost"
+				size="icon"
 				color="secondary"
-				size="sm"
-				prefix={<Ellipsis size={14} />}
+				aria-label="Trace options"
+				prefix={<Settings2 size={14} />}
 			/>
 		</Dropdown>
 	);

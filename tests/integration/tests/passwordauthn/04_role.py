@@ -129,11 +129,11 @@ def test_get_user_roles(
         assert "type" in role
 
 
-def test_assign_role_replaces_previous(
+def test_assign_role_is_additive(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify POST /api/v2/users/{id}/roles replaces existing role."""
+    """Verify POST /api/v2/users/{id}/roles ADDS a role alongside existing ones and is idempotent."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -144,6 +144,8 @@ def test_assign_role_replaces_previous(
     me = response.json()["data"]
     user_id = me["id"]
 
+    # User currently has signoz-admin from test_change_role.
+    # Assign signoz-editor — should be additive, admin stays.
     response = requests.post(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
         json={"name": "signoz-editor"},
@@ -160,8 +162,29 @@ def test_assign_role_replaces_previous(
     assert response.status_code == HTTPStatus.OK
     roles = response.json()["data"]
     names = {r["name"] for r in roles}
+    assert len(names) == 2
     assert "signoz-editor" in names
-    assert "signoz-admin" not in names
+    assert "signoz-admin" in names
+
+    # Idempotency: assigning the same role again succeeds without duplicates
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
+        json={"name": "signoz-editor"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    roles = response.json()["data"]
+    editor_count = sum(1 for r in roles if r["name"] == "signoz-editor")
+    assert editor_count == 1
+    assert len(roles) == 2
 
 
 def test_get_users_by_role(
@@ -202,7 +225,7 @@ def test_remove_role(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify DELETE /api/v2/users/{id}/roles/{roleId} removes the role."""
+    """Verify DELETE /api/v2/users/{id}/roles/{roleId} removes only the specified role."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -237,7 +260,10 @@ def test_remove_role(
     )
     assert response.status_code == HTTPStatus.OK
     roles_after = response.json()["data"]
-    assert len(roles_after) == 0
+    names_after = {r["name"] for r in roles_after}
+    assert len(roles_after) == 1
+    assert "signoz-editor" not in names_after
+    assert "signoz-admin" in names_after
 
 
 def test_user_with_roles_reflects_change(
@@ -262,7 +288,8 @@ def test_user_with_roles_reflects_change(
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
     role_names = {ur["role"]["name"] for ur in data["userRoles"]}
-    assert len(role_names) == 0
+    assert len(role_names) == 1
+    assert "signoz-admin" in role_names
 
 
 def test_admin_cannot_assign_role_to_self(

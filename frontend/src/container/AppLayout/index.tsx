@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -36,12 +37,16 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
+import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
+import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import dayjs from 'dayjs';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
@@ -104,6 +109,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		showChangelogModal,
 		changelog,
 	} = useAppContext();
+
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const fetchAIThreads = useAIAssistantStore((s) => s.fetchThreads);
+
+	// Bootstrap the AI Assistant thread list once the base URL is configured.
+	// Centralizing this here (rather than per-view) means the persisted active
+	// thread's messages reload reliably on refresh — `fetchThreads` itself
+	// hydrates the active conversation's messages after populating threadIds.
+	useEffect(() => {
+		if (isAIAssistantEnabled) {
+			void fetchAIThreads();
+		}
+	}, [isAIAssistantEnabled, fetchAIThreads]);
 
 	const { notifications } = useNotifications();
 
@@ -389,6 +407,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const pageTitle = t(routeKey);
 
 	const isPublicDashboard = pathname.startsWith('/public/dashboard/');
+	const isAIAssistantPage = pathname.startsWith('/ai-assistant/');
 
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED ||
@@ -764,110 +783,121 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		!showTrialExpiryBanner && showPaymentFailedWarning;
 
 	return (
-		<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
-			<Helmet>
-				<title>{pageTitle}</title>
-			</Helmet>
+		<TooltipProvider>
+			<Layout className={cx(isDarkMode ? 'darkMode dark' : 'lightMode')}>
+				<Helmet>
+					<title>{pageTitle}</title>
+				</Helmet>
 
-			{isLoggedIn && (
-				<div className={cx('app-banner-wrapper')}>
-					{SHOW_TRIAL_EXPIRY_BANNER && (
-						<div className="trial-expiry-banner">
-							You are in free trial period. Your free trial will end on{' '}
-							<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
-							{user.role === USER_ROLES.ADMIN ? (
-								<span>
-									{' '}
-									Please{' '}
-									<a className="upgrade-link" onClick={handleUpgrade}>
-										upgrade
-									</a>
-									to continue using SigNoz features.
-									<span className="refresh-payment-status">
+				{isLoggedIn && (
+					<div className={cx('app-banner-wrapper')}>
+						{SHOW_TRIAL_EXPIRY_BANNER && (
+							<div className="trial-expiry-banner">
+								You are in free trial period. Your free trial will end on{' '}
+								<span>{getFormattedDate(trialInfo?.trialEnd || Date.now())}.</span>
+								{user.role === USER_ROLES.ADMIN ? (
+									<span>
 										{' '}
-										| Already upgraded? <RefreshPaymentStatus type="text" />
+										Please{' '}
+										<a className="upgrade-link" onClick={handleUpgrade}>
+											upgrade
+										</a>
+										to continue using SigNoz features.
+										<span className="refresh-payment-status">
+											{' '}
+											| Already upgraded? <RefreshPaymentStatus type="text" />
+										</span>
 									</span>
-								</span>
-							) : (
-								'Please contact your administrator for upgrading to a paid plan.'
-							)}
-						</div>
-					)}
-
-					{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
-
-					{SHOW_PAYMENT_FAILED_BANNER && (
-						<div className="payment-failed-banner">
-							Your bill payment has failed. Your workspace will get suspended on{' '}
-							<span>
-								{getFormattedDateWithMinutes(
-									dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+								) : (
+									'Please contact your administrator for upgrading to a paid plan.'
 								)}
-								.
-							</span>
-							{user.role === USER_ROLES.ADMIN ? (
+							</div>
+						)}
+
+						{SHOW_WORKSPACE_RESTRICTED_BANNER && renderWorkspaceRestrictedBanner()}
+
+						{SHOW_PAYMENT_FAILED_BANNER && (
+							<div className="payment-failed-banner">
+								Your bill payment has failed. Your workspace will get suspended on{' '}
 								<span>
-									{' '}
-									Please{' '}
-									<a className="upgrade-link" onClick={handleFailedPayment}>
-										pay the bill
-									</a>
-									to continue using SigNoz features.
-									<span className="refresh-payment-status">
-										{' '}
-										| Already paid? <RefreshPaymentStatus type="text" />
-									</span>
+									{getFormattedDateWithMinutes(
+										dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+									)}
+									.
 								</span>
-							) : (
-								' Please contact your administrator to pay the bill.'
-							)}
-						</div>
+								{user.role === USER_ROLES.ADMIN ? (
+									<span>
+										{' '}
+										Please{' '}
+										<a className="upgrade-link" onClick={handleFailedPayment}>
+											pay the bill
+										</a>
+										to continue using SigNoz features.
+										<span className="refresh-payment-status">
+											{' '}
+											| Already paid? <RefreshPaymentStatus type="text" />
+										</span>
+									</span>
+								) : (
+									' Please contact your administrator to pay the bill.'
+								)}
+							</div>
+						)}
+					</div>
+				)}
+
+				<Flex
+					className={cx(
+						'app-layout',
+						isDarkMode ? 'darkMode dark' : 'lightMode',
+						isSideNavPinned ? 'side-nav-pinned' : '',
+						SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
+						SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
+						SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
 					)}
-				</div>
-			)}
-
-			<Flex
-				className={cx(
-					'app-layout',
-					isDarkMode ? 'darkMode dark' : 'lightMode',
-					isSideNavPinned ? 'side-nav-pinned' : '',
-					SHOW_WORKSPACE_RESTRICTED_BANNER ? 'isWorkspaceRestricted' : '',
-					SHOW_TRIAL_EXPIRY_BANNER ? 'isTrialExpired' : '',
-					SHOW_PAYMENT_FAILED_BANNER ? 'isPaymentFailed' : '',
-				)}
-			>
-				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav isPinned={isSideNavPinned} />
-				)}
-				<div
-					className={cx('app-content', {
-						'full-screen-content': renderFullScreen,
-					})}
-					data-overlayscrollbars-initialize
 				>
-					<Sentry.ErrorBoundary
-						fallback={<ErrorBoundaryFallback />}
-						ref={errorBoundaryRef}
+					{isToDisplayLayout && !renderFullScreen && (
+						<SideNav isPinned={isSideNavPinned} />
+					)}
+					<div
+						className={cx('app-content', {
+							'full-screen-content': renderFullScreen,
+						})}
+						data-overlayscrollbars-initialize
 					>
-						<LayoutContent data-overlayscrollbars-initialize>
-							<OverlayScrollbar>
-								<ChildrenContainer>
-									{isToDisplayLayout && !renderFullScreen && <TopNav />}
-									{children}
-								</ChildrenContainer>
-							</OverlayScrollbar>
-						</LayoutContent>
-					</Sentry.ErrorBoundary>
-				</div>
-			</Flex>
+						<Sentry.ErrorBoundary
+							fallback={<ErrorBoundaryFallback />}
+							ref={errorBoundaryRef}
+						>
+							<LayoutContent data-overlayscrollbars-initialize>
+								<OverlayScrollbar>
+									<ChildrenContainer>
+										{isToDisplayLayout && !renderFullScreen && !isAIAssistantPage && (
+											<TopNav />
+										)}
+										{children}
+									</ChildrenContainer>
+								</OverlayScrollbar>
+							</LayoutContent>
+						</Sentry.ErrorBoundary>
+					</div>
 
-			{showAddCreditCardModal && <ChatSupportGateway />}
-			{showChangelogModal && changelog && (
-				<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
-			)}
+					{isLoggedIn && isAIAssistantEnabled && (
+						<>
+							<AIAssistantPanel />
+							<AIAssistantModal />
+						</>
+					)}
+				</Flex>
 
-			<Toaster />
-		</Layout>
+				{showAddCreditCardModal && <ChatSupportGateway />}
+				{showChangelogModal && changelog && (
+					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+				)}
+
+				<Toaster />
+			</Layout>
+		</TooltipProvider>
 	);
 }
 

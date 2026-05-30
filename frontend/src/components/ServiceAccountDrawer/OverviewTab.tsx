@@ -3,9 +3,11 @@ import { LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Input } from '@signozhq/ui/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import { buildSAUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
@@ -19,6 +21,7 @@ interface OverviewTabProps {
 	localRoles: string[];
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
+	canUpdate?: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
 	rolesError?: boolean;
@@ -34,6 +37,7 @@ function OverviewTab({
 	localRoles,
 	onRolesChange,
 	isDisabled,
+	canUpdate = true,
 	availableRoles,
 	rolesLoading,
 	rolesError,
@@ -63,11 +67,16 @@ function OverviewTab({
 				<label className="sa-drawer__label" htmlFor="sa-name">
 					Name
 				</label>
-				{isDisabled ? (
-					<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
-						<span className="sa-drawer__input-text">{localName || '—'}</span>
-						<LockKeyhole size={14} className="sa-drawer__lock-icon" />
-					</div>
+				{isDisabled || !canUpdate ? (
+					<AuthZTooltip
+						checks={[buildSAUpdatePermission(account.id)]}
+						enabled={!isDisabled && !canUpdate}
+					>
+						<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
+							<span className="sa-drawer__input-text">{localName || '—'}</span>
+							<LockKeyhole size={14} className="sa-drawer__lock-icon" />
+						</div>
+					</AuthZTooltip>
 				) : (
 					<Input
 						id="sa-name"
@@ -76,6 +85,16 @@ function OverviewTab({
 						placeholder="Enter name"
 					/>
 				)}
+			</div>
+
+			<div className="sa-drawer__field">
+				<label className="sa-drawer__label" htmlFor="sa-id">
+					ID
+				</label>
+				<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
+					<span className="sa-drawer__input-text">{account.id || '—'}</span>
+					<LockKeyhole size={14} className="sa-drawer__lock-icon" />
+				</div>
 			</div>
 
 			<div className="sa-drawer__field">

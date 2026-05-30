@@ -327,9 +327,13 @@ describe('TracesExplorer - Filters', () => {
 
 		// check if the default query is applied - composite query has filters - serviceName : demo-app and name : HTTP GET /customer
 		await expect(findByText('demo-app')).resolves.toBeInTheDocument();
-		expect(getByTestId('serviceName-demo-app')).toBeChecked();
+		expect(
+			getByTestId('serviceName-demo-app').querySelector('[role="checkbox"]'),
+		).toHaveAttribute('data-state', 'checked');
 		await expect(findByText('HTTP GET /customer')).resolves.toBeInTheDocument();
-		expect(getByTestId('name-HTTP GET /customer')).toBeChecked();
+		expect(
+			getByTestId('name-HTTP GET /customer').querySelector('[role="checkbox"]'),
+		).toHaveAttribute('data-state', 'checked');
 	});
 
 	it('test edge cases of undefined filters', async () => {

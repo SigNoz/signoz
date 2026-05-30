@@ -7,14 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	hostNameAttrKey = "host.name"
-)
-
 // Helper group-by key used across all queries.
 var hostNameGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-		Name:          hostNameAttrKey,
+		Name:          inframonitoringtypes.HostNameAttrKey,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	},

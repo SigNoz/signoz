@@ -84,7 +84,7 @@
 		padding-top: 12px;
 	}
 
-	.ant-tag-borderless {
+	[data-slot='badge'] {
 		border-radius: 2px;
 		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 	}

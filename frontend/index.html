@@ -94,12 +94,28 @@
 				}
 			})();
 		</script>
+		<script type="application/json" id="signoz-boot-settings">
+			[[.Settings]]
+		</script>
+		<script>
+			try {
+				var _el = document.getElementById('signoz-boot-settings');
+				window.signozBootData = {
+					settings: _el ? JSON.parse(_el.textContent) : null,
+				};
+			} catch (e) {
+				window.signozBootData = { settings: null };
+			}
+		</script>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
 
 		<script>
 			var PYLON_APP_ID = '<%- PYLON_APP_ID %>';
-			if (PYLON_APP_ID) {
+			var pylonSettings =
+				((window.signozBootData || {}).settings || {}).pylon || {};
+			var pylonEnabled = pylonSettings.enabled !== false;
+			if (PYLON_APP_ID && pylonEnabled) {
 				(function () {
 					var e = window;
 					var t = document;
@@ -135,7 +151,10 @@
 		</script>
 		<script>
 			var APPCUES_APP_ID = '<%- APPCUES_APP_ID %>';
-			if (APPCUES_APP_ID) {
+			var appcuesSettings =
+				((window.signozBootData || {}).settings || {}).appcues || {};
+			var appcuesEnabled = appcuesSettings.enabled !== false;
+			if (APPCUES_APP_ID && appcuesEnabled) {
 				(function (d, t) {
 					var a = d.createElement(t);
 					a.async = 1;

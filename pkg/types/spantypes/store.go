@@ -2,6 +2,7 @@ package spantypes
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -20,4 +21,12 @@ type SpanMapperStore interface {
 	CreateMapper(ctx context.Context, mapper *SpanMapper) error
 	UpdateMapper(ctx context.Context, mapper *SpanMapper) error
 	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
+}
+
+// TraceStore defines the data access interface for trace detail queries.
+type TraceStore interface {
+	GetTraceSummary(ctx context.Context, traceID string) (*TraceSummary, error)
+	GetTraceSpans(ctx context.Context, traceID string, summary *TraceSummary) ([]StorableSpan, error)
+	GetMinimalSpans(ctx context.Context, traceID string, start, end time.Time) ([]MinimalSpan, error)
+	GetTraceSpansByIDs(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]StorableSpan, error)
 }

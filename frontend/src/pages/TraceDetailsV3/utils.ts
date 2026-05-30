@@ -1,5 +1,11 @@
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import {
+	ColorPair,
+	generateColorPair,
+	RESERVED_ERROR,
+} from './utils/generateColorPair';
+
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
@@ -74,4 +80,32 @@ export function isV3PinnedAttribute(entry: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Reads the value used to group a span for color-by purposes. Falls back to
+ * `"unknown"` so all unattributed spans share a single colour rather than
+ * appearing as missing data.
+ */
+export function getSpanGroupValue(
+	span: SpanV3,
+	colorByFieldName: string,
+): string {
+	return getSpanAttribute(span, colorByFieldName) || 'unknown';
+}
+
+/**
+ * Resolves the rendering colour for a span. Error spans always get the
+ * reserved error colour; everything else is derived deterministically from its
+ * group value via `generateColorPair`. Returns both the base color and a
+ * darkened variant for light-mode hover/selected foregrounds.
+ */
+export function resolveSpanColor(
+	span: SpanV3,
+	colorByFieldName: string,
+): ColorPair {
+	if (span.has_error) {
+		return { color: RESERVED_ERROR, colorDark: RESERVED_ERROR };
+	}
+	return generateColorPair(getSpanGroupValue(span, colorByFieldName));
 }

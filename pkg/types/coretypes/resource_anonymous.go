@@ -34,3 +34,7 @@ func (resourceAnonymous *resourceAnonymous) Object(orgID valuer.UUID, selector s
 func (resourceAnonymous *resourceAnonymous) Scope(verb Verb) string {
 	return resourceAnonymous.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceAnonymous) AllowedVerbs() []Verb {
+	return TypeAnonymous.AllowedVerbs()
+}

@@ -34,3 +34,7 @@ func (resourceRole *resourceRole) Object(orgID valuer.UUID, selector string) str
 func (resourceRole *resourceRole) Scope(verb Verb) string {
 	return resourceRole.Kind().String() + ":" + verb.StringValue()
 }
+
+func (*resourceRole) AllowedVerbs() []Verb {
+	return TypeRole.AllowedVerbs()
+}

@@ -74,6 +74,7 @@ export type TableColumnDef<
 		min?: number | string;
 		default?: number | string;
 		max?: number | string;
+		ignoreLastColumnFill?: boolean;
 	};
 };
 
@@ -111,12 +112,32 @@ export type TableRowContext<TData> = {
 	enableAlternatingRowColors?: boolean;
 };
 
+export type AutoPageSizeConfig = {
+	rowHeight?: number;
+	headerHeight?: number;
+	paginationHeight?: number;
+	minPageSize?: number;
+	maxPageSize?: number;
+};
+
 export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
 	defaultLimit?: number;
+	/**
+	 * @default true
+	 */
+	showPageSize?: boolean;
+	onPageChange?: (page: number) => void;
+	onLimitChange?: (limit: number) => void;
 	showTotalCount?: boolean;
 	totalCountLabel?: string;
+	/**
+	 * Auto-calculated page size for the current container.
+	 * When set, shows as "Auto (N)" option in the page size dropdown.
+	 * Consumer is responsible for calculating this via useCalculatedPageSize.
+	 */
+	calculatedPageSize?: number | null;
 };
 
 export type TanstackTableQueryParamsConfig = {
@@ -142,6 +163,8 @@ export type TanStackTableProps<TData> = {
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig;
 	pagination?: PaginationProps;
 	paginationClassname?: string;
+	/** Callback when sort changes. */
+	onSort?: (sort: SortState | null) => void;
 	onEndReached?: (index: number) => void;
 	/** Function to get the unique key for a row (before duplicate handling).
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */

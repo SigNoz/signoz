@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
@@ -138,19 +138,20 @@ export function useFlamegraphHover(
 		null,
 	);
 
-	const { colorByField, previewFields } = useTraceContext();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const previewFields = useTraceStore((s) => s.previewFields);
 
 	const buildPreviewRows = useCallback(
 		(span: FlamegraphSpan): SpanPreviewRowData[] =>
 			previewFields
-				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.name))
 				.map((field) => {
 					const value = getSpanAttribute(
 						{ resource: span.resource, attributes: span.attributes },
-						field.key,
+						field.name,
 					);
 					return value !== undefined && value !== ''
-						? { key: field.key, value: String(value) }
+						? { key: field.name, value: String(value) }
 						: null;
 				})
 				.filter((r): r is SpanPreviewRowData => r !== null),
@@ -210,11 +211,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					event: {
 						name: event.name,
 						timeOffsetMs: eventTimeMs - span.timestamp,
@@ -243,11 +247,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					previewRows: buildPreviewRows(span),
 				});
 				updateCursor(canvas, span);

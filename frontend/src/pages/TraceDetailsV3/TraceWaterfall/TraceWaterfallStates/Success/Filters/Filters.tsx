@@ -1,25 +1,19 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import {
-	ChevronDown,
-	ChevronUp,
-	Copy,
-	Info,
-	Loader,
-	Search,
-	X,
-} from '@signozhq/icons';
-import { Switch, ToggleGroup, ToggleGroupItem, toast } from '@signozhq/ui';
+import { ChevronsRight, Copy, Search, X } from '@signozhq/icons';
+import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { AxiosError } from 'axios';
+import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -39,8 +33,9 @@ import {
 	SpanCategory,
 	useSpanCategoryFilter,
 } from './hooks/useSpanCategoryFilter';
+import QueryResult from './QueryResult';
 
-import './Filters.styles.scss';
+import styles from './Filters.module.scss';
 
 function prepareQuery(filters: TagFilter, traceID: string): Query {
 	return {
@@ -149,6 +144,16 @@ function Filters({
 		runQuery(expressionRef.current);
 	}, [runQuery]);
 
+	const handleClear = useCallback((): void => {
+		setExpression('');
+		expressionRef.current = '';
+		setFilters({ items: [], op: 'AND' });
+		setFilteredSpanIds([]);
+		onFilteredSpansChange?.([], false);
+		setCurrentSearchedIndex(0);
+		setNoData(false);
+	}, [onFilteredSpansChange]);
+
 	// Expression-based filter hooks
 	const filterProps = {
 		expression,
@@ -157,8 +162,21 @@ function Filters({
 		expressionRef,
 		runQuery,
 	};
-	const { isHighlightErrors, handleToggle: handleToggleHighlightErrors } =
+	const { isHighlightErrors, handleToggle: toggleHighlightErrors } =
 		useHighlightErrors(filterProps);
+
+	// Auto-expand the filter row when turning Highlight errors ON so the user
+	// can immediately use prev/next navigation. Turning it OFF doesn't auto-
+	// collapse — the user keeps whatever expansion state they had.
+	const handleToggleHighlightErrors = useCallback(
+		(checked: boolean): void => {
+			if (checked && !isExpanded) {
+				onExpand();
+			}
+			toggleHighlightErrors(checked);
+		},
+		[isExpanded, onExpand, toggleHighlightErrors],
+	);
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
@@ -240,7 +258,7 @@ function Filters({
 	);
 
 	const highlightErrorsToggle = (
-		<div className="highlight-errors-toggle">
+		<div className={styles.highlightErrorsToggle}>
 			<Typography.Text>Highlight errors</Typography.Text>
 			<Switch
 				color="cherry"
@@ -250,164 +268,165 @@ function Filters({
 		</div>
 	);
 
-	const statusIndicators = (
-		<>
-			{isFetching && <Loader className="animate-spin" />}
-			{error && (
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<span className="filter-status filter-status--error">
-							<Info />
-							API error
-						</span>
-					</TooltipTrigger>
-					<TooltipContent>
-						{(error as AxiosError)?.message || 'Something went wrong'}
-					</TooltipContent>
-				</Tooltip>
-			)}
-			{!error && noData && (
-				<Typography.Text className="filter-status">
-					No results found
-				</Typography.Text>
-			)}
-		</>
+	const hasExpression = expression.trim().length > 0;
+	const hasResults = filteredSpanIds.length > 0;
+
+	const handlePrev = useCallback((): void => {
+		handlePrevNext(currentSearchedIndex - 1);
+		setCurrentSearchedIndex((prev) => prev - 1);
+	}, [currentSearchedIndex, handlePrevNext]);
+
+	const handleNext = useCallback((): void => {
+		handlePrevNext(currentSearchedIndex + 1);
+		setCurrentSearchedIndex((prev) => prev + 1);
+	}, [currentSearchedIndex, handlePrevNext]);
+
+	const pill = (
+		/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+		<div className={styles.pill} onClick={onExpand}>
+			<Search size={12} />
+			<span className={styles.pillText}>{expression || 'Search...'}</span>
+			{expression && <span className={styles.pillIndicator} />}
+		</div>
 	);
 
-	// --- COLLAPSED VIEW ---
-	if (!isExpanded) {
-		const pill = (
-			/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-			<div className="filter-pill" onClick={onExpand}>
-				<Search size={12} />
-				<span className="filter-pill__text">{expression || 'Search...'}</span>
-				{expression && <span className="filter-pill__indicator" />}
-			</div>
-		);
+	const pillWithPopover = expression ? (
+		<TooltipRoot>
+			<TooltipTrigger asChild>{pill}</TooltipTrigger>
+			<TooltipContent side="bottom" align="start">
+				<div className={styles.pillPopover}>
+					<div className={styles.pillPopoverHeader}>
+						<Typography.Text>Search query</Typography.Text>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							onClick={(): void => {
+								setCopy(expression);
+								toast.success('Copied to clipboard', {
+									richColors: false,
+									position: 'top-right',
+								});
+							}}
+						>
+							<Copy size={12} />
+						</Button>
+					</div>
+					<div className={styles.pillPopoverExpression}>{expression}</div>
+				</div>
+			</TooltipContent>
+		</TooltipRoot>
+	) : (
+		pill
+	);
 
-		return (
-			<TooltipProvider>
-				<div className="trace-v3-filter-row collapsed">
-					{expression ? (
-						<Tooltip>
-							<TooltipTrigger asChild>{pill}</TooltipTrigger>
-							<TooltipContent side="bottom" align="start">
-								<div className="filter-pill-popover">
-									<div className="filter-pill-popover__header">
-										<Typography.Text>Search query</Typography.Text>
+	// Mode-conditional render: only one of (pill | QuerySearch) is mounted
+	// at a time. Collapsing unmounts the editor — half-written queries are
+	// dropped, so collapse can't accidentally commit a malformed expression
+	// and fire an erroring /query_range request.
+	return (
+		<TooltipProvider>
+			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+			<div
+				className={cx(styles.root, isExpanded && styles.isExpanded)}
+				ref={containerRef}
+				onBlur={(e): void => {
+					const relatedTarget = e.relatedTarget as Node | null;
+					const blurredIntoSelf = !!containerRef.current?.contains(relatedTarget);
+					if (!blurredIntoSelf) {
+						handleBlur();
+					}
+				}}
+			>
+				{isExpanded && (
+					<div className={styles.categoryControls}>
+						<ToggleGroupSimple
+							type="single"
+							value={selectedCategory}
+							onChange={(value: SpanCategory): void => {
+								if (value) {
+									handleCategoryChange(value as SpanCategory);
+								}
+							}}
+							size="sm"
+							items={categories.map((category) => ({
+								value: category,
+								label: category,
+							}))}
+						/>
+					</div>
+				)}
+
+				<div className={styles.searchInput}>
+					{isExpanded ? (
+						<div className={styles.searchAndNav}>
+							<div className={styles.searchContainer}>
+								<QuerySearch
+									queryData={{
+										...BASE_FILTER_QUERY,
+										filters,
+										filter: { expression },
+									}}
+									onChange={handleExpressionChange}
+									onRun={handleRunQuery}
+									dataSource={DataSource.TRACES}
+									placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
+								/>
+							</div>
+						</div>
+					) : (
+						<div className={styles.searchPill}>{pillWithPopover}</div>
+					)}
+				</div>
+
+				<div className={styles.resultActions}>
+					<QueryResult
+						hasExpression={hasExpression}
+						hasResults={hasResults}
+						isFetching={isFetching}
+						error={error}
+						noData={noData}
+						currentIndex={currentSearchedIndex}
+						total={filteredSpanIds.length}
+						onPrev={handlePrev}
+						onNext={handleNext}
+						showNavigation={isExpanded}
+					/>
+					{isExpanded && (
+						<div className={styles.expandedActions}>
+							{hasExpression && (
+								<TooltipRoot>
+									<TooltipTrigger asChild>
 										<Button
 											variant="ghost"
 											size="icon"
 											color="secondary"
-											onClick={(): void => {
-												setCopy(expression);
-												toast.success('Copied to clipboard', {
-													richColors: false,
-													position: 'top-right',
-												});
-											}}
+											onClick={handleClear}
 										>
-											<Copy size={12} />
+											<X size={14} />
 										</Button>
-									</div>
-									<div className="filter-pill-popover__expression">{expression}</div>
-								</div>
-							</TooltipContent>
-						</Tooltip>
-					) : (
-						pill
+									</TooltipTrigger>
+									<TooltipContent>Clear filter</TooltipContent>
+								</TooltipRoot>
+							)}
+							<TooltipRoot>
+								<TooltipTrigger asChild>
+									<Button
+										variant="ghost"
+										size="icon"
+										color="secondary"
+										onClick={onCollapse}
+									>
+										<ChevronsRight size={14} />
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>Collapse filters</TooltipContent>
+							</TooltipRoot>
+						</div>
 					)}
-					{highlightErrorsToggle}
-					{statusIndicators}
 				</div>
-			</TooltipProvider>
-		);
-	}
 
-	// --- EXPANDED VIEW ---
-	return (
-		<TooltipProvider>
-			<div className="trace-v3-filter-row expanded">
-				<ToggleGroup
-					type="single"
-					value={selectedCategory}
-					onChange={(value): void => {
-						if (value) {
-							handleCategoryChange(value as SpanCategory);
-						}
-					}}
-					size="sm"
-				>
-					{categories.map((category) => (
-						<ToggleGroupItem key={category} value={category}>
-							{category}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
-				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-				<div
-					className="filter-search-container"
-					ref={containerRef}
-					onBlur={(e): void => {
-						if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-							handleBlur();
-						}
-					}}
-				>
-					<QuerySearch
-						queryData={{
-							...BASE_FILTER_QUERY,
-							filters,
-							filter: { expression },
-						}}
-						onChange={handleExpressionChange}
-						onRun={handleRunQuery}
-						dataSource={DataSource.TRACES}
-						placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-					/>
-				</div>
-				{filteredSpanIds.length > 0 && (
-					<div className="pre-next-toggle">
-						<Typography.Text className="pre-next-toggle__count">
-							{currentSearchedIndex + 1} / {filteredSpanIds.length}
-						</Typography.Text>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							disabled={currentSearchedIndex === 0}
-							onClick={(): void => {
-								handlePrevNext(currentSearchedIndex - 1);
-								setCurrentSearchedIndex((prev) => prev - 1);
-							}}
-						>
-							<ChevronUp size={14} />
-						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							disabled={currentSearchedIndex === filteredSpanIds.length - 1}
-							onClick={(): void => {
-								handlePrevNext(currentSearchedIndex + 1);
-								setCurrentSearchedIndex((prev) => prev + 1);
-							}}
-						>
-							<ChevronDown size={14} />
-						</Button>
-					</div>
-				)}
-				<Button
-					variant="ghost"
-					size="icon"
-					color="secondary"
-					className="filter-collapse-btn"
-					onClick={onCollapse}
-				>
-					<X size={14} />
-				</Button>
-				{highlightErrorsToggle}
-				{statusIndicators}
+				<div className={styles.highlightControl}>{highlightErrorsToggle}</div>
 			</div>
 		</TooltipProvider>
 	);
