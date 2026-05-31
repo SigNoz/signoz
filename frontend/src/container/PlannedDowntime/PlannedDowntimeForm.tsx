@@ -154,7 +154,7 @@ export function PlannedDowntimeForm(
 		async (values: PlannedDowntimeFormData) => {
 			const { startTime, timezone } = values;
 			if (!startTime || !timezone) {
-				// unreachable
+				// unreachable: required fields should always be present on submitting.
 				return;
 			}
 			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
