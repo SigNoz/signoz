@@ -35,7 +35,7 @@ function SortableField({
 	isRequired: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: field.name });
+		useSortable({ id: field.key as string });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -87,11 +87,14 @@ function AddedFields({
 }: AddedFieldsProps): JSX.Element {
 	const sensors = useSensors(useSensor(PointerSensor));
 
+	// Contract: caller (FieldsSelector) normalizes `fields` so every entry has
+	// `.key` populated. AddedFields reads it directly.
+
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
 		if (over && active.id !== over.id) {
-			const oldIndex = fields.findIndex((f) => f.name === active.id);
-			const newIndex = fields.findIndex((f) => f.name === over.id);
+			const oldIndex = fields.findIndex((f) => f.key === active.id);
+			const newIndex = fields.findIndex((f) => f.key === over.id);
 			onFieldsChange(arrayMove(fields, oldIndex, newIndex));
 		}
 	};
@@ -105,7 +108,7 @@ function AddedFields({
 	);
 
 	const handleRemove = (field: TelemetryFieldKey): void => {
-		onFieldsChange(fields.filter((f) => f.name !== field.name));
+		onFieldsChange(fields.filter((f) => f.key !== field.key));
 	};
 
 	const allowDrag = inputValue.length === 0;
@@ -131,17 +134,20 @@ function AddedFields({
 							<div className={styles.noValues}>No values found</div>
 						) : (
 							<SortableContext
-								items={fields.map((f) => f.name)}
+								items={fields.map((f) => f.key as string)}
 								strategy={verticalListSortingStrategy}
 								disabled={!allowDrag}
 							>
 								{filteredFields.map((field) => (
 									<SortableField
-										key={field.name}
+										key={field.key}
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}
-										isRequired={requiredFields.includes(field.name)}
+										isRequired={
+											requiredFields.includes(field.name) ||
+											requiredFields.includes(field.key as string)
+										}
 									/>
 								))}
 							</SortableContext>

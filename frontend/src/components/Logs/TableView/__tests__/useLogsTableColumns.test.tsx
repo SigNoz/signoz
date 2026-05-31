@@ -47,13 +47,15 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		// body/timestamp are NOT pinned to fixed positions — they appear where the
-		// caller placed them in `fields`.
+		// caller placed them in `fields`. body/timestamp use composite IDs
+		// ('log.body', 'log.timestamp') since their fieldContext is fixed; user
+		// fields here have empty `type` so their composite collapses to bare name.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
 			'service.name',
-			'body',
+			'log.body',
 			'request.id',
-			'timestamp',
+			'log.timestamp',
 		]);
 	});
 
@@ -82,11 +84,12 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 
 		const byId = new Map(result.current.map((c) => [c.id, c]));
 		// body + timestamp are locked from the table-X removal pathway.
-		expect(byId.get('body')?.canBeHidden).toBe(false);
-		expect(byId.get('body')?.enableRemove).toBe(false);
-		expect(byId.get('timestamp')?.canBeHidden).toBe(false);
-		expect(byId.get('timestamp')?.enableRemove).toBe(false);
-		// User-added fields stay removable.
+		expect(byId.get('log.body')?.canBeHidden).toBe(false);
+		expect(byId.get('log.body')?.enableRemove).toBe(false);
+		expect(byId.get('log.timestamp')?.canBeHidden).toBe(false);
+		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
+		// User-added fields stay removable. User field has type='' so composite
+		// collapses to bare name.
 		expect(byId.get('user_field')?.enableRemove).toBe(true);
 	});
 

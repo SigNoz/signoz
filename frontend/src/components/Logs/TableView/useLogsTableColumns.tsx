@@ -7,6 +7,7 @@ import {
 	getSanitizedLogBody,
 } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
 import { IField } from 'types/api/logs/fields';
@@ -46,7 +47,7 @@ export function useLogsTableColumns({
 		};
 
 		const timestampCol: TableColumnDef<ILog> = {
-			id: 'timestamp',
+			id: buildCompositeKey('timestamp', 'log'),
 			header: 'Timestamp',
 			accessorFn: (log): unknown => log.timestamp,
 			canBeHidden: false,
@@ -66,7 +67,7 @@ export function useLogsTableColumns({
 		};
 
 		const bodyCol: TableColumnDef<ILog> = {
-			id: 'body',
+			id: buildCompositeKey('body', 'log'),
 			header: 'Body',
 			accessorFn: (log): string => getBodyDisplayString(log.body),
 			canBeHidden: false,
@@ -85,7 +86,7 @@ export function useLogsTableColumns({
 		};
 
 		const makeUserFieldCol = (f: IField): TableColumnDef<ILog> => ({
-			id: f.name,
+			id: buildCompositeKey(f.name, f.type),
 			header: f.name,
 			accessorFn: (log): unknown => FlatLogData(log)[f.name],
 			enableRemove: true,
