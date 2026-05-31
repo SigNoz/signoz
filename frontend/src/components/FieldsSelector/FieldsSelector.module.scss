@@ -76,11 +76,8 @@
 	min-height: 0;
 	overflow: hidden;
 
-	// Ant Skeleton.Input rendered inside the loading state — override its
-	// hard-coded width.
 	:global(.ant-skeleton-input) {
-		width: 300px;
-		margin: 8px 12px;
+		width: 50% !important;
 	}
 }
 

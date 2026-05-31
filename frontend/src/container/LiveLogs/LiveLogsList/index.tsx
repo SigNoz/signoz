@@ -197,6 +197,7 @@ function LiveLogsList({
 							ref={ref as React.Ref<TanStackTableHandle>}
 							columns={logsColumns}
 							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+							respectColumnOrder={false}
 							onColumnRemove={config?.addColumn?.onRemove}
 							plainTextCellLineClamp={options.maxLines}
 							cellTypographySize={options.fontSize}

@@ -64,8 +64,13 @@ function OtherFields({
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>
 				<div className={styles.otherList}>
 					{Array.from({ length: 5 }).map((_, i) => (
-						// eslint-disable-next-line react/no-array-index-key
-						<Skeleton.Input active size="small" key={i} />
+						<div
+							// eslint-disable-next-line react/no-array-index-key
+							key={i}
+							className={cx(styles.fieldItem, styles.otherFieldItem)}
+						>
+							<Skeleton.Input active size="small" block />
+						</div>
 					))}
 				</div>
 			</div>
