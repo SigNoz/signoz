@@ -117,7 +117,37 @@
 				width: 100% !important;
 				max-width: 100% !important;
 				font-family: 'Space Mono', monospace !important;
-				min-height: 200px !important;
+				// Default cap = ~5 suggestion rows + section header + footer.
+				// Anything beyond scrolls inside this container.
+				max-height: 250px !important;
+				overflow-y: auto !important;
+
+				// Grow the cap proportionally to the number of recent search
+				// rows present so all recents render in full while ~5
+				// suggestions remain visible below them. Each pill card is
+				// ~52px (36px row + 8px margin top/bottom + 8px padding) plus
+				// a one-time ~30px for the "Recent searches" section header.
+				//
+				// CodeMirror renders recents first (rank: 1), then
+				// `<completion-section>` between groups, then suggestions —
+				// so the first N `<li>` direct children are the recents.
+				// `:nth-of-type` counts only `<li>` (sections use a different
+				// tag), making the count-via-position trick reliable.
+				&:has(> li:nth-of-type(1) .cm-completionIcon-recent) {
+					max-height: 332px !important;
+				}
+				&:has(> li:nth-of-type(2) .cm-completionIcon-recent) {
+					max-height: 384px !important;
+				}
+				&:has(> li:nth-of-type(3) .cm-completionIcon-recent) {
+					max-height: 436px !important;
+				}
+				&:has(> li:nth-of-type(4) .cm-completionIcon-recent) {
+					max-height: 488px !important;
+				}
+				&:has(> li:nth-of-type(5) .cm-completionIcon-recent) {
+					max-height: 540px !important;
+				}
 
 				&::-webkit-scrollbar {
 					width: 0.3rem;
@@ -131,6 +161,31 @@
 				}
 				&::-webkit-scrollbar-track {
 					background: transparent;
+				}
+
+				// CodeMirror renders <completion-section> headers between
+				// option groups when the `section` field is set on each
+				// Completion. Style them as small caps labels with a top
+				// divider so the Suggestions and Recent searches groups are
+				// clearly distinct.
+				completion-section {
+					display: block;
+					padding: 10px 12px 6px;
+					font-size: 10px !important;
+					font-weight: 700;
+					letter-spacing: 0.08em;
+					text-transform: uppercase;
+					color: var(--l3-foreground, var(--l2-foreground));
+					opacity: 0.7;
+					border-top: 1px solid var(--l1-border);
+					background-color: transparent;
+				}
+
+				// The first section header doesn't need a divider above it.
+				completion-section:first-child,
+				> li:first-child + completion-section,
+				completion-section:first-of-type {
+					border-top: 0;
 				}
 
 				li {
@@ -159,11 +214,136 @@
 						display: none !important;
 					}
 
+					// Tag the "recent" detail column so it reads as a label,
+					// not as an inline value. CodeMirror puts the option's
+					// `detail` string in `.cm-completionDetail`.
+					.cm-completionDetail {
+						margin-left: auto;
+						font-style: normal;
+						font-size: 10px;
+						font-weight: 600;
+						letter-spacing: 0.06em;
+						text-transform: uppercase;
+						opacity: 0.55;
+					}
+
 					&[aria-selected='true'] {
 						background: var(--l3-background) !important;
 						font-weight: 600 !important;
 					}
 				}
+
+				// Recent search rows render as pill-style cards: rounded
+				// background per row, padded inset, design-token text color.
+				// Targeted via the icon class CodeMirror emits — even though
+				// the icon itself is hidden, its element still carries the
+				// type class.
+				li:has(.cm-completionIcon-recent) {
+					height: auto !important;
+					margin: 4px 8px !important;
+					padding: 6px 12px !important;
+					width: calc(100% - 16px) !important;
+					max-width: calc(100% - 16px) !important;
+					background: #23262e !important;
+					color: var(--text-vanilla-400) !important;
+					border: 1px solid var(--l1-border) !important;
+					border-radius: 6px !important;
+					line-height: 24px !important;
+
+					// Long filter expressions truncate to a single line with
+					// an ellipsis instead of wrapping or pushing the inline
+					// delete button off-screen. `min-width: 0` on the label
+					// is required for ellipsis to work inside a flex parent.
+					.cm-completionLabel {
+						flex: 1;
+						min-width: 0;
+						white-space: nowrap;
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+
+					&:hover,
+					&[aria-selected='true'] {
+						background: color-mix(
+							in srgb,
+							#23262e 80%,
+							var(--text-vanilla-400)
+						) !important;
+						color: var(--text-vanilla-400) !important;
+					}
+
+					// Reveal the inline delete button more strongly on hover
+					// or when the row is keyboard-selected.
+					&:hover .cm-recent-delete,
+					&[aria-selected='true'] .cm-recent-delete {
+						opacity: 1;
+					}
+				}
+
+				// Apply the same truncation to regular suggestion rows so
+				// long attribute names (e.g. `service.cluster.namespace.x`)
+				// don't push other cells off the row.
+				li:not(:has(.cm-completionIcon-recent)) .cm-completionLabel {
+					flex: 1;
+					min-width: 0;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+
+				// Inline per-row delete affordance for recent searches,
+				// injected via the autocompletion `addToOptions` config.
+				.cm-recent-delete {
+					margin-left: auto;
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					width: 20px;
+					height: 20px;
+					padding: 0;
+					border: 0;
+					border-radius: 4px;
+					background: transparent;
+					color: var(--text-vanilla-400);
+					font-size: 18px;
+					line-height: 1;
+					cursor: pointer;
+					opacity: 0.5;
+					transition: opacity 0.12s ease, background-color 0.12s ease;
+
+					&:hover {
+						opacity: 1;
+						background: color-mix(
+							in srgb,
+							var(--text-vanilla-400) 18%,
+							transparent
+						);
+					}
+				}
+			}
+
+			// Footer hint bar: keyboard shortcuts at the bottom of the
+			// dropdown. Rendered via ::after so we don't need to inject DOM
+			// — the popover's outer container gets a pseudo-element below
+			// the scrollable list.
+			&::after {
+				content: '↓↑ to navigate · ↵ to apply · esc to dismiss';
+				display: block;
+				padding: 8px 12px;
+				border-top: 1px solid var(--l1-border);
+				font-family: 'Space Mono', monospace;
+				font-size: 11px;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+				color: var(--l2-foreground);
+				opacity: 0.6;
+				background: color-mix(
+					in srgb,
+					var(--l1-background) 50%,
+					transparent
+				);
+				border-bottom-left-radius: 4px;
+				border-bottom-right-radius: 4px;
 			}
 		}
 

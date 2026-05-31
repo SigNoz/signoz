@@ -24,6 +24,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -194,6 +195,8 @@ function ChartPreview({
 			keepPreviousData: true,
 		},
 	);
+
+	useSaveRecentQuery(query, queryResponse.isSuccess, graphType);
 
 	useEffect(() => {
 		onFetchingStateChange?.(queryResponse.isFetching);

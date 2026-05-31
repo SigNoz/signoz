@@ -11,6 +11,7 @@ import { populateMultipleResults } from 'container/NewWidget/LeftContainer/Widge
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
@@ -282,6 +283,8 @@ function GridCardGraph({
 			},
 		},
 	);
+
+	useSaveRecentQuery(widget?.query, queryResponse.isSuccess, widget?.panelTypes);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 

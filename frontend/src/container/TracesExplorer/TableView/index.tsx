@@ -16,6 +16,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
@@ -54,7 +55,14 @@ function TableView({
 		queryKeyRef.current = queryKey;
 	}
 
-	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		isSuccess,
+		error,
+	} = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.TABLE,
@@ -70,6 +78,8 @@ function TableView({
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TABLE,
 		},
 	);
+
+	useSaveRecentQuery(stagedQuery, isSuccess, panelType);
 
 	useEffect(() => {
 		if (isLoading || isFetching) {

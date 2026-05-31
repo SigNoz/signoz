@@ -37,6 +37,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
@@ -187,6 +188,8 @@ function LogsExplorerViewsContainer({
 			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
 			'custom',
 		);
+
+	useSaveRecentQuery(stagedQuery, isSuccess, selectedPanelType);
 
 	const getRequestData = useCallback(
 		(

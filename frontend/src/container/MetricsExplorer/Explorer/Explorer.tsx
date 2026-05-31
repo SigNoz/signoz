@@ -16,6 +16,7 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
@@ -62,6 +63,14 @@ function Explorer(): JSX.Element {
 		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	// Save recent queries on every committed staged-query change. Metrics
+	// Explorer fans out queries through `useQueries` in its TimeSeries child,
+	// so there's no single `isSuccess` to gate on at this level; we pass
+	// `true` and rely on the hook's signature-dedup ref + frontend grammar
+	// validation to keep saves correct.
+	useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES);
+
 	const { safeNavigate } = useSafeNavigate();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();

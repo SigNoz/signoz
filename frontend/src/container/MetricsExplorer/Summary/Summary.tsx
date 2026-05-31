@@ -20,11 +20,12 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -68,6 +69,13 @@ function Summary(): JSX.Element {
 
 	const { currentQuery, stagedQuery, redirectWithQueryBuilderData } =
 		useQueryBuilder();
+
+	// Save recent queries on every committed staged-query change. Metrics
+	// Summary doesn't have a single `isSuccess` to gate on (the page fans out
+	// into treemap + stats fetches via custom hooks), so we pass `true` and
+	// let the hook's frontend-validation gate + signature-dedup ref protect
+	// against invalid or duplicate saves.
+	useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES);
 
 	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
 
