@@ -1,4 +1,5 @@
-import { Form, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
 import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 
 function RenderConnectionFields({

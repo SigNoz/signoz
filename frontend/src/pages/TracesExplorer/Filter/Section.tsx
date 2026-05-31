@@ -65,7 +65,7 @@ export function Section(props: SectionProps): JSX.Element {
 
 	return (
 		<div>
-			<Divider plain className="divider" />
+			<Divider plain className="section-body__divider" />
 			<div className="section-body-header" data-testid={`collapse-${panelName}`}>
 				<Collapse
 					bordered={false}

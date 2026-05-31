@@ -1,4 +1,4 @@
-import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
+import { QueryProps } from 'container/QueryBuilder/type';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {

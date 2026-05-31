@@ -35,7 +35,6 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
-import { bootSettings } from 'utils/bootData';
 
 import { Home } from './pageComponents';
 import PrivateRoute from './Private';
@@ -292,7 +291,8 @@ function App(): JSX.Element {
 				isLoggedInState &&
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser)
+				(isCloudUser || isEnterpriseSelfHostedUser) &&
+				(window.signozBootData?.settings?.pylon.enabled ?? true)
 			) {
 				const email = user.email || '';
 				const secret = process.env.PYLON_IDENTITY_SECRET || '';
@@ -334,14 +334,20 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (bootSettings.posthog.enabled && process.env.POSTHOG_KEY) {
+			if (
+				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
+				process.env.POSTHOG_KEY
+			) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (!isSentryInitialized) {
+			if (
+				!isSentryInitialized &&
+				(window.signozBootData?.settings?.sentry.enabled ?? true)
+			) {
 				Sentry.init({
 					dsn: process.env.SENTRY_DSN,
 					tunnel: process.env.TUNNEL_URL,
