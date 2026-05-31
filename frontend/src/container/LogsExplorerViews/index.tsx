@@ -189,7 +189,7 @@ function LogsExplorerViewsContainer({
 			'custom',
 		);
 
-	useSaveRecentQuery(stagedQuery, isSuccess, selectedPanelType);
+	useSaveRecentQuery(stagedQuery);
 
 	const getRequestData = useCallback(
 		(

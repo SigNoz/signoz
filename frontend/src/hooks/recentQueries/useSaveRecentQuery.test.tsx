@@ -1,5 +1,4 @@
 import { renderHook } from '@testing-library/react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import type {
@@ -20,9 +19,7 @@ const mockedValidateQuery = validateQuery as jest.MockedFunction<
 	typeof validateQuery
 >;
 
-const buildQuery = (
-	overrides: Partial<IBuilderQuery>[] = [{}],
-): Query => ({
+const buildQuery = (overrides: Partial<IBuilderQuery>[] = [{}]): Query => ({
 	queryType: EQueryType.QUERY_BUILDER,
 	promql: [],
 	clickhouse_sql: [],
@@ -60,34 +57,14 @@ describe('useSaveRecentQuery', () => {
 		});
 	});
 
-	it('saves the staged query when isSuccess and validation pass', () => {
+	it('saves the staged query when validation passes', () => {
 		const stagedQuery = buildQuery();
 
-		renderHook(() =>
-			useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES),
-		);
+		renderHook(() => useSaveRecentQuery(stagedQuery));
 
 		const entries = store.list('logs');
 		expect(entries).toHaveLength(1);
 		expect(entries[0].filter.expression).toBe('service.name = "frontend"');
-	});
-
-	it('saves regardless of panel type', () => {
-		const stagedQuery = buildQuery();
-
-		renderHook(() => useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.LIST));
-
-		expect(store.list('logs')).toHaveLength(1);
-	});
-
-	it('does not save when isSuccess is false', () => {
-		const stagedQuery = buildQuery();
-
-		renderHook(() =>
-			useSaveRecentQuery(stagedQuery, false, PANEL_TYPES.TIME_SERIES),
-		);
-
-		expect(store.list('logs')).toHaveLength(0);
 	});
 
 	it('does not save when validateQuery rejects the expression', () => {
@@ -98,9 +75,7 @@ describe('useSaveRecentQuery', () => {
 		});
 		const stagedQuery = buildQuery();
 
-		renderHook(() =>
-			useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES),
-		);
+		renderHook(() => useSaveRecentQuery(stagedQuery));
 
 		expect(store.list('logs')).toHaveLength(0);
 	});
@@ -108,9 +83,7 @@ describe('useSaveRecentQuery', () => {
 	it('does not save a builder query with an empty filter expression', () => {
 		const stagedQuery = buildQuery([{ filter: { expression: '' } }]);
 
-		renderHook(() =>
-			useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES),
-		);
+		renderHook(() => useSaveRecentQuery(stagedQuery));
 
 		expect(store.list('logs')).toHaveLength(0);
 	});
@@ -127,9 +100,7 @@ describe('useSaveRecentQuery', () => {
 			},
 		]);
 
-		renderHook(() =>
-			useSaveRecentQuery(stagedQuery, true, PANEL_TYPES.TIME_SERIES),
-		);
+		renderHook(() => useSaveRecentQuery(stagedQuery));
 
 		expect(store.list('logs')).toHaveLength(1);
 		expect(store.list('traces')).toHaveLength(1);
@@ -139,13 +110,12 @@ describe('useSaveRecentQuery', () => {
 		const stagedQuery = buildQuery();
 
 		const { rerender } = renderHook(
-			({ isSuccess }: { isSuccess: boolean }) =>
-				useSaveRecentQuery(stagedQuery, isSuccess, PANEL_TYPES.TIME_SERIES),
-			{ initialProps: { isSuccess: true } },
+			({ q }: { q: Query }) => useSaveRecentQuery(q),
+			{ initialProps: { q: stagedQuery } },
 		);
 
 		const firstTimestamp = store.list('logs')[0].lastUsedAt;
-		rerender({ isSuccess: true });
+		rerender({ q: stagedQuery });
 
 		const second = store.list('logs');
 		expect(second).toHaveLength(1);
@@ -157,8 +127,7 @@ describe('useSaveRecentQuery', () => {
 		const changed = buildQuery([{ filter: { expression: 'b = 2' } }]);
 
 		const { rerender } = renderHook(
-			({ q }: { q: Query }) =>
-				useSaveRecentQuery(q, true, PANEL_TYPES.TIME_SERIES),
+			({ q }: { q: Query }) => useSaveRecentQuery(q),
 			{ initialProps: { q: initial } },
 		);
 
@@ -168,9 +137,7 @@ describe('useSaveRecentQuery', () => {
 	});
 
 	it('is a no-op when stagedQuery is null', () => {
-		renderHook(() =>
-			useSaveRecentQuery(null, true, PANEL_TYPES.TIME_SERIES),
-		);
+		renderHook(() => useSaveRecentQuery(null));
 
 		expect(store.list('logs')).toHaveLength(0);
 	});

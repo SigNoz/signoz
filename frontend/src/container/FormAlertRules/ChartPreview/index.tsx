@@ -196,7 +196,7 @@ function ChartPreview({
 		},
 	);
 
-	useSaveRecentQuery(query, queryResponse.isSuccess, graphType);
+	useSaveRecentQuery(query);
 
 	useEffect(() => {
 		onFetchingStateChange?.(queryResponse.isFetching);

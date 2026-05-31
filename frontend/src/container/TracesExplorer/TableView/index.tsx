@@ -55,14 +55,7 @@ function TableView({
 		queryKeyRef.current = queryKey;
 	}
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isError,
-		isSuccess,
-		error,
-	} = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.TABLE,
@@ -79,7 +72,7 @@ function TableView({
 		},
 	);
 
-	useSaveRecentQuery(stagedQuery, isSuccess, panelType);
+	useSaveRecentQuery(stagedQuery);
 
 	useEffect(() => {
 		if (isLoading || isFetching) {

@@ -65,7 +65,7 @@ function LeftContainer({
 		keepPreviousData: true,
 	});
 
-	useSaveRecentQuery(stagedQuery, queryResponse.isSuccess, selectedGraph);
+	useSaveRecentQuery(stagedQuery);
 
 	useEffect(() => {
 		if (queryResponse.isFetching) {

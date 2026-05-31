@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import type {
 	IBuilderQuery,
 	Query,
@@ -13,7 +12,11 @@ import * as store from 'lib/recentQueries/store';
 // values match `SignalType`. Narrow with a runtime check rather than blindly
 // casting — guards against any future drift.
 function toSignal(dataSource: IBuilderQuery['dataSource']): SignalType | null {
-	if (dataSource === 'logs' || dataSource === 'traces' || dataSource === 'metrics') {
+	if (
+		dataSource === 'logs' ||
+		dataSource === 'traces' ||
+		dataSource === 'metrics'
+	) {
 		return dataSource;
 	}
 	return null;
@@ -22,9 +25,7 @@ function toSignal(dataSource: IBuilderQuery['dataSource']): SignalType | null {
 // Build a stable signature of the staged filter expressions so the effect
 // knows when a re-save is genuinely warranted vs. when we're seeing the same
 // state across renders.
-function buildSignature(
-	stagedQuery: Query | null | undefined,
-): string | null {
+function buildSignature(stagedQuery: Query | null | undefined): string | null {
 	if (!stagedQuery) {
 		return null;
 	}
@@ -41,37 +42,28 @@ function buildSignature(
 }
 
 /**
- * Save each valid builder query's filter expression in
- * `stagedQuery.builder.queryData[]` to the recent-queries store when
- * `isSuccess` is true.
+ * Save each builder query's filter expression in
+ * `stagedQuery.builder.queryData[]` to the recent-queries store.
  *
- * Gates:
- * - Frontend grammar: `validateQuery(expression)` must accept the expression.
- * - Backend response: caller passes `isSuccess` from `useGetQueryRange`.
- *   Metrics surfaces with no clean `isSuccess` may pass `true` and rely on
- *   the grammar gate + signature-dedup ref.
+ * Gate: frontend grammar — `validateQuery(expression)` must accept it.
  *
- * The hook is panel-type-agnostic — it saves on any panel where the surface
- * dispatches a builder query. The `panelType` parameter is retained for
- * call-site compatibility but is no longer used inside the hook.
+ * We intentionally do NOT gate on a backend `isSuccess` flag. An
+ * investigation often runs queries that return zero results (e.g. searching
+ * for a rare error condition that doesn't currently exist in the data),
+ * and the user still wants to replay that query later. The frontend
+ * grammar check rejects expressions that don't parse; everything else is
+ * the user's intent worth preserving.
  *
- * The hook stores only the **filter expression** (not the full bundle).
- * Selecting a recent restores only the filter; the rest of the user's
- * builder query (groupBy/orderBy/having/limit) is left untouched.
+ * The hook saves only the filter expression. Selecting a recent restores
+ * only the filter; the rest of the user's builder query (groupBy/orderBy/
+ * having/limit) is left untouched.
  */
 export function useSaveRecentQuery(
 	stagedQuery: Query | null | undefined,
-	isSuccess: boolean,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	_panelType?: PANEL_TYPES | null,
 ): void {
 	const lastSavedSignatureRef = useRef<string | null>(null);
 
 	useEffect(() => {
-		if (!isSuccess) {
-			return;
-		}
-
 		const signature = buildSignature(stagedQuery);
 		if (!signature || signature === lastSavedSignatureRef.current) {
 			return;
@@ -98,5 +90,5 @@ export function useSaveRecentQuery(
 		});
 
 		lastSavedSignatureRef.current = signature;
-	}, [isSuccess, stagedQuery]);
+	}, [stagedQuery]);
 }

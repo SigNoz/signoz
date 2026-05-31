@@ -77,14 +77,7 @@ function TimeSeriesViewContainer({
 		queryKeyRef.current = queryKey;
 	}
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isError,
-		isSuccess,
-		error,
-	} = useGetQueryRange(
+	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -102,7 +95,7 @@ function TimeSeriesViewContainer({
 		},
 	);
 
-	useSaveRecentQuery(stagedQuery, isSuccess, panelType);
+	useSaveRecentQuery(stagedQuery);
 
 	useEffect(() => {
 		if (data?.payload) {

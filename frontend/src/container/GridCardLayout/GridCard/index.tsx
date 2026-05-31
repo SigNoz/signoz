@@ -284,7 +284,7 @@ function GridCardGraph({
 		},
 	);
 
-	useSaveRecentQuery(widget?.query, queryResponse.isSuccess, widget?.panelTypes);
+	useSaveRecentQuery(widget?.query);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
