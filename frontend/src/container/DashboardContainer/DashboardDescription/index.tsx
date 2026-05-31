@@ -16,9 +16,10 @@ import {
 	Plus,
 	X,
 } from '@signozhq/icons';
-import { Button, Card, Input, Modal, Popover, Tooltip } from 'antd';
+import { Button, Card, Modal, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';

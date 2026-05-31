@@ -26,10 +26,7 @@
 	}
 	&__divider {
 		width: 100%;
-		.ant-divider {
-			margin: 0;
-			border-color: var(--l1-border);
-		}
+		--divider-margin: 0;
 	}
 	&__latency-options {
 		flex-shrink: 0;
