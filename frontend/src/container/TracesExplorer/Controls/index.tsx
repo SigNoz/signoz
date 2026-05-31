@@ -1,14 +1,13 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
-import { Flex } from 'antd';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { Container } from './styles';
+import styles from './Controls.module.scss';
 
 function TraceExplorerControls({
 	isLoading,
@@ -28,18 +27,16 @@ function TraceExplorerControls({
 	} = useQueryPagination(totalCount, perPageOptions);
 
 	return (
-		<Container>
+		<div className={styles.container}>
 			{config?.fieldsSelector && (
 				<>
-					<Flex
-						align="center"
-						gap="4px"
+					<div
+						className={styles.optionsTrigger}
 						onClick={(): void => setIsFieldsSelectorOpen(true)}
-						style={{ cursor: 'pointer' }}
 					>
 						{t('options_menu.options')}
 						<Settings size="md" />
-					</Flex>
+					</div>
 					<FieldsSelector
 						isOpen={isFieldsSelectorOpen}
 						title="Edit columns"
@@ -62,7 +59,7 @@ function TraceExplorerControls({
 				handleNavigatePrevious={handleNavigatePrevious}
 				showSizeChanger={showSizeChanger}
 			/>
-		</Container>
+		</div>
 	);
 }
 

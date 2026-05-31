@@ -427,8 +427,6 @@ const useOptionsMenu = ({
 			handleFontSizeChange,
 		],
 	);
-	//oxlint-disable-next-line no-console
-	console.log('fieldsSelector  value', optionsMenuConfig.fieldsSelector.value);
 
 	useEffect(() => {
 		if (optionsQuery || !isFetchedInitialAttributes) {
