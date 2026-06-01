@@ -1,8 +1,10 @@
 import { startCompletion } from '@codemirror/autocomplete';
 import type { Completion } from '@codemirror/autocomplete';
 import type { EditorView } from '@uiw/react-codemirror';
+import dayjs from 'dayjs';
 import { normalizeFilterExpression } from 'lib/recentQueries/normalize';
 import * as recentQueriesStore from 'lib/recentQueries/store';
+import 'utils/timeUtils';
 
 import { RECENTS_DISPLAY_CAP, RECENTS_SECTION } from './constants';
 
@@ -72,6 +74,7 @@ export function getRecentOptions(
 		type: 'recent' as const,
 		boost: -50,
 		section: RECENTS_SECTION,
+		detail: dayjs(entry.lastUsedAt).fromNow(),
 		recentId: entry.id,
 		recentSignal: entry.signal,
 		apply: (view: EditorView): void => {

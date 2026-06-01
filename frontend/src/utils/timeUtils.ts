@@ -2,6 +2,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -9,6 +10,7 @@ dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);
 dayjs.extend(timezone);
+dayjs.extend(relativeTime);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
