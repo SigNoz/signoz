@@ -14,7 +14,8 @@ import {
 	Plus,
 	X,
 } from '@signozhq/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Button, Card, Input, Modal, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -340,9 +341,9 @@ function DashboardDescriptionV2(props: DashboardDescriptionV2Props): JSX.Element
 			{tags.length > 0 && (
 				<div className="dashboard-tags">
 					{tags.map((tag) => (
-						<Tag key={tag} className="tag">
+						<Badge key={tag} className="tag">
 							{tag}
-						</Tag>
+						</Badge>
 					))}
 				</div>
 			)}
