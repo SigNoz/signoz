@@ -16,6 +16,7 @@
   <a href="https://github.com/SigNoz/signoz/blob/main/README.md"><b>Readme auf Englisch </b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.ja-jp.md"><b>ReadMe auf Japanisch</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
