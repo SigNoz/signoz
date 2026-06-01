@@ -1,29 +1,59 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { Container } from '@signozhq/icons';
+import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import {
+	InframonitoringtypesPodPhaseDTO,
+	InframonitoringtypesPodRecordDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sPodsData } from './api';
-import { Container } from '@signozhq/icons';
+import { formatAge, formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	EntityProgressBar,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
+import { Typography } from '@signozhq/ui/typography';
 
-export function getK8sPodRowKey(pod: K8sPodsData): string {
-	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
+export function getK8sPodRowKey(pod: InframonitoringtypesPodRecordDTO): string {
+	return (
+		pod.podUID ||
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_UID] ||
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] ||
+		''
+	);
 }
 
-export function getK8sPodItemKey(pod: K8sPodsData): string {
+export function getK8sPodItemKey(
+	pod: InframonitoringtypesPodRecordDTO,
+): string {
 	return pod.podUID;
 }
 
-export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
+const POD_PHASE_COLORS: Record<string, BadgeColor> = {
+	running: 'forest',
+	pending: 'amber',
+	succeeded: 'robin',
+	failed: 'cherry',
+	unknown: 'vanilla',
+	no_data: 'vanilla',
+};
+
+export type PodTableColumnConfig =
+	TableColumnDef<InframonitoringtypesPodRecordDTO>;
+export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'podGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="POD GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_pod_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
@@ -49,7 +79,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 				icon={<Container data-hide-expanded="true" size={14} />}
 			/>
 		),
-		accessorFn: (row): string => row.meta.k8s_pod_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
@@ -59,10 +90,70 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const podName = value as string;
 			return (
-				<Tooltip title={podName}>
+				<TooltipSimple title={podName}>
 					<TanStackTable.Text>{podName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
+		},
+	},
+	{
+		id: 'podPhase',
+		header: 'Status',
+		accessorFn: (row): string => row.podPhase,
+		width: { min: 120 },
+		enableSort: false,
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ row }): React.ReactNode => {
+			if (!row.podPhase) {
+				return <></>;
+			}
+
+			const color = POD_PHASE_COLORS[row.podPhase] || POD_PHASE_COLORS.unknown;
+			const label =
+				row.podPhase === InframonitoringtypesPodPhaseDTO.no_data
+					? 'No Data'
+					: row.podPhase.charAt(0).toUpperCase() + row.podPhase.slice(1);
+			return (
+				<Badge color={color} variant="outline">
+					{label}
+				</Badge>
+			);
+		},
+	},
+	{
+		id: 'podCountsByPhase',
+		header: 'Status',
+		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 220 },
+		enableSort: false,
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
+			);
+		},
+	},
+	{
+		id: 'podAge',
+		header: 'Age',
+		accessorFn: (row): number => row.podAge,
+		width: { min: 100 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => {
+			const age = value as number;
+			if (age === -1) {
+				return (
+					<TooltipSimple title="No data">
+						<Typography.Text>-</Typography.Text>
+					</TooltipSimple>
+				);
+			}
+			return <TanStackTable.Text>{formatAge(age)}</TanStackTable.Text>;
 		},
 	},
 	{
@@ -110,14 +201,14 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -182,7 +273,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	{
 		id: 'namespace',
 		header: 'Namespace',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,
@@ -193,7 +285,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	{
 		id: 'node',
 		header: 'Node',
-		accessorFn: (row): string => row.meta.k8s_node_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,
@@ -204,7 +297,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	{
 		id: 'cluster',
 		header: 'Cluster',
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,

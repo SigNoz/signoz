@@ -1,62 +1,59 @@
+import { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sPodsData } from './api';
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 
-export const k8sPodGetSelectedItemFilters = (
+export const k8sPodGetSelectedItemExpression = (
 	selectedItemId: string,
-): TagFilter => {
-	return {
-		op: 'AND',
-		items: [
-			{
-				id: 'k8s_pod_uid',
-				key: {
-					key: 'k8s_pod_uid',
-					type: null,
-				},
-				op: '=',
-				value: selectedItemId,
-			},
-		],
-	};
-};
+): string => `k8s.pod.uid = ${formatValueForExpression(selectedItemId)}`;
 
-export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sPodsData>[] =
+export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesPodRecordDTO>[] =
 	[
-		{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
+		{
+			label: 'NAMESPACE',
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+		},
 		{
 			label: 'Cluster Name',
-			getValue: (p): string => p.meta.k8s_cluster_name,
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		},
-		{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
+		{
+			label: 'Node',
+			getValue: (p): string =>
+				p.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
+		},
 	];
 
-export const k8sPodInitialEventsFilter = (
-	pod: K8sPodsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Pod'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, pod.meta.k8s_pod_name),
-];
+export const k8sPodInitialEventsExpression = (
+	pod: InframonitoringtypesPodRecordDTO,
+): string => {
+	const podName = formatValueForExpression(
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
+	);
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Pod' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${podName}`;
+};
 
-export const k8sPodInitialLogTracesFilter = (
-	pod: K8sPodsData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_POD_NAME, pod.meta.k8s_pod_name),
-];
+export const k8sPodInitialLogTracesExpression = (
+	pod: InframonitoringtypesPodRecordDTO,
+): string => {
+	const podName = formatValueForExpression(
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
+	);
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME} = ${podName}`;
+};
 
-export const k8sPodGetEntityName = (pod: K8sPodsData): string =>
-	pod.meta.k8s_pod_name;
+export const k8sPodGetEntityName = (
+	pod: InframonitoringtypesPodRecordDTO,
+): string => pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '';
 
 export const podWidgetInfo = [
 	{
@@ -114,7 +111,7 @@ export const podWidgetInfo = [
 ];
 
 export const getPodMetricsQueryPayload = (
-	pod: K8sPodsData,
+	pod: InframonitoringtypesPodRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -224,9 +221,15 @@ export const getPodMetricsQueryPayload = (
 		'k8s_pod_filesystem_usage',
 	);
 
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
+	const k8sPodNameKey = getKey(
+		INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
+		'k8s_pod_name',
+	);
 
-	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
+	const k8sNamespaceNameKey = getKey(
+		INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		'k8s_namespace_name',
+	);
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',
@@ -256,7 +259,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 									{
 										id: '067b2dc4',
@@ -267,7 +270,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -306,7 +310,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 									{
 										id: '379af416',
@@ -317,7 +321,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -356,7 +361,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 									{
 										id: '39ee0dbd',
@@ -367,7 +372,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -440,7 +446,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '755c8a9d',
@@ -451,7 +458,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -490,7 +497,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '1e3d01ee',
@@ -501,7 +509,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -540,7 +548,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '0c8b2662',
@@ -551,7 +560,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -590,7 +599,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'e915da76',
@@ -601,7 +611,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -640,7 +650,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '32c15c03',
@@ -651,7 +662,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -690,7 +701,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '703fced1',
@@ -701,7 +713,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -774,7 +786,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '5418405c',
@@ -785,7 +798,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -824,7 +837,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '1ea5c602',
@@ -835,7 +849,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -874,7 +888,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'd7632974',
@@ -885,7 +900,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -958,7 +973,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '5a822bec',
@@ -969,7 +985,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1008,7 +1024,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '3362c603',
@@ -1019,7 +1036,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1058,7 +1075,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'ce88008b',
@@ -1069,7 +1087,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1108,7 +1126,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '53fc92fd',
@@ -1119,7 +1138,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1158,7 +1177,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '61dfa9f6',
@@ -1169,7 +1189,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1208,7 +1228,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '508cdf26',
@@ -1219,7 +1240,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1292,7 +1313,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '80528f79',
@@ -1303,7 +1325,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1342,7 +1364,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '780cc786',
@@ -1353,7 +1376,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1433,7 +1456,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '8b2a539b',
@@ -1444,7 +1468,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1517,7 +1541,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '4b4382be',
@@ -1528,7 +1553,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1608,7 +1633,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '9301d7c0',
@@ -1619,7 +1645,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1665,7 +1691,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '92b99374',
@@ -1676,7 +1703,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1722,7 +1749,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '1c7de95d',
@@ -1733,7 +1761,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1826,7 +1854,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '964fd905',
@@ -1837,7 +1866,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1883,7 +1912,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '76a586be',
@@ -1894,7 +1924,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -1940,7 +1970,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '7c5f875b',
@@ -1951,7 +1982,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2031,7 +2062,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '80216712',
@@ -2042,7 +2074,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2088,7 +2120,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '84b59a9f',
@@ -2099,7 +2132,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2145,7 +2178,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'd649ad0c',
@@ -2156,7 +2190,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2249,7 +2283,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'bc9c5cf3',
@@ -2260,7 +2295,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2346,7 +2381,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'b54a3d78',
@@ -2357,7 +2393,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2443,7 +2479,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '1a97cb95',
@@ -2454,7 +2491,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2493,7 +2530,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: 'ddfbd379',
@@ -2504,7 +2542,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2543,7 +2581,8 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_namespace_name,
+										value:
+											pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 									},
 									{
 										id: '1963fc96',
@@ -2554,7 +2593,7 @@ export const getPodMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: pod.meta.k8s_pod_name,
+										value: pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 									},
 								],
 								op: 'AND',
@@ -2562,7 +2601,7 @@ export const getPodMetricsQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: 'Uage',
+							legend: 'Usage',
 							limit: null,
 							orderBy: [],
 							queryName: 'C',

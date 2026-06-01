@@ -1,29 +1,42 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sJobsData } from './api';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	EntityProgressBar,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { Bolt } from '@signozhq/icons';
 
-export function getK8sJobRowKey(job: K8sJobsData): string {
-	return job.jobName || job.meta.k8s_job_name || '';
+export function getK8sJobRowKey(job: InframonitoringtypesJobRecordDTO): string {
+	return (
+		job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || job.jobName || ''
+	);
 }
 
-export function getK8sJobItemKey(job: K8sJobsData): string {
-	return job.meta.k8s_job_name;
+export function getK8sJobItemKey(
+	job: InframonitoringtypesJobRecordDTO,
+): string {
+	return job.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '';
 }
 
-export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
+export type JobTableColumnConfig =
+	TableColumnDef<InframonitoringtypesJobRecordDTO>;
+export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 	{
 		id: 'jobGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="JOB GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_job_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
 		width: { min: 270 },
 		enableSort: false,
 		enableRemove: false,
@@ -49,7 +62,8 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 				icon={<Bolt data-hide-expanded="true" size={14} />}
 			/>
 		),
-		accessorFn: (row): string => row.meta.k8s_job_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
 		width: { min: 260 },
 		enableSort: false,
 		enableRemove: false,
@@ -59,30 +73,49 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const jobName = value as string;
 			return (
-				<Tooltip title={jobName}>
+				<TooltipSimple title={jobName}>
 					<TanStackTable.Text>{jobName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
 	{
 		id: 'namespaceName',
 		header: 'Namespace Name',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 150 },
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<TooltipSimple title={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
+			);
+		},
+	},
+	{
+		id: 'pod_counts_by_phase',
+		header: 'Pod Status',
+		accessorFn: (row): InframonitoringtypesJobRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 220 },
+		enableSort: false,
+		enableResize: true,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
 			);
 		},
 	},
 	{
 		id: 'successful_pods',
-		header: 'Successful',
+		header: 'Successful Pods',
 		accessorFn: (row): number => row.successfulPods,
 		width: { min: 120 },
 		enableSort: true,
@@ -101,7 +134,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	},
 	{
 		id: 'failed_pods',
-		header: 'Failed',
+		header: 'Failed Pods',
 		accessorFn: (row): number => row.failedPods,
 		width: { min: 100 },
 		enableSort: true,
@@ -120,7 +153,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	},
 	{
 		id: 'desired_successful_pods',
-		header: 'Desired Successful',
+		header: 'Desired Successful Pods',
 		accessorFn: (row): number => row.desiredSuccessfulPods,
 		width: { min: 160 },
 		enableSort: true,
@@ -139,7 +172,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	},
 	{
 		id: 'active_pods',
-		header: 'Active',
+		header: 'Active Pods',
 		accessorFn: (row): number => row.activePods,
 		width: { min: 100 },
 		enableSort: true,
@@ -159,7 +192,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'cpu_request',
 		header: 'CPU Req Usage (%)',
-		accessorFn: (row): number => row.cpuRequest,
+		accessorFn: (row): number => row.jobCPURequest,
 		width: { min: 200, default: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -178,7 +211,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'cpu_limit',
 		header: 'CPU Limit Usage (%)',
-		accessorFn: (row): number => row.cpuLimit,
+		accessorFn: (row): number => row.jobCPULimit,
 		width: { min: 200, default: 200 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -197,18 +230,18 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'cpu',
 		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.cpuUsage,
+		accessorFn: (row): number => row.jobCPU,
 		width: { min: 190 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -216,7 +249,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'memory_request',
 		header: 'Mem Req Usage (%)',
-		accessorFn: (row): number => row.memoryRequest,
+		accessorFn: (row): number => row.jobMemoryRequest,
 		width: { min: 190 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -235,7 +268,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'memory_limit',
 		header: 'Mem Limit Usage (%)',
-		accessorFn: (row): number => row.memoryLimit,
+		accessorFn: (row): number => row.jobMemoryLimit,
 		width: { min: 180 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -254,7 +287,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'memory',
 		header: 'Mem Usage (WSS)',
-		accessorFn: (row): number => row.memoryUsage,
+		accessorFn: (row): number => row.jobMemory,
 		width: { min: 160 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {

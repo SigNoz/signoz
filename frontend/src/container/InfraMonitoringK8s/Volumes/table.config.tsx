@@ -1,4 +1,5 @@
-import { Tooltip } from 'antd';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
@@ -7,23 +8,31 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sVolumesData } from './api';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { HardDrive } from '@signozhq/icons';
 
-export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
+export function getK8sVolumeRowKey(
+	volume: InframonitoringtypesVolumeRecordDTO,
+): string {
 	return (
 		volume.persistentVolumeClaimName ||
-		volume.meta.k8s_persistentvolumeclaim_name ||
+		volume.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME] ||
 		''
 	);
 }
 
-export function getK8sVolumeItemKey(volume: K8sVolumesData): string {
+export function getK8sVolumeItemKey(
+	volume: InframonitoringtypesVolumeRecordDTO,
+): string {
 	return volume.persistentVolumeClaimName;
 }
 
-export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
+export type VolumeTableColumnConfig =
+	TableColumnDef<InframonitoringtypesVolumeRecordDTO>;
+export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 	{
 		id: 'volumeGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="VOLUME GROUP" />,
@@ -63,24 +72,25 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
 			return (
-				<Tooltip title={pvcName}>
+				<TooltipSimple title={pvcName}>
 					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
 	{
 		id: 'namespaceName',
 		header: 'Namespace Name',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 220 },
 		enableSort: false,
 		cell: ({ value }): React.ReactNode => {
 			const namespaceName = value as string;
 			return (
-				<Tooltip title={namespaceName}>
+				<TooltipSimple title={namespaceName}>
 					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
 			);
 		},
 	},
@@ -105,7 +115,7 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'usage',
-		header: 'Volume Utilization',
+		header: 'Volume Used',
 		accessorFn: (row): number => row.volumeUsage,
 		width: { min: 220 },
 		enableSort: true,
@@ -137,6 +147,63 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 					attribute="available metric"
 				>
 					<TanStackTable.Text>{formatBytes(available)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodes',
+		header: 'Total Inodes',
+		accessorFn: (row): number => row.volumeInodes,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodes = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodes}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes metric"
+				>
+					<TanStackTable.Text>{inodes.toLocaleString()}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodes_free',
+		header: 'Inodes Free',
+		accessorFn: (row): number => row.volumeInodesFree,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesFree = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesFree}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes free metric"
+				>
+					<TanStackTable.Text>{inodesFree.toLocaleString()}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'inodes_used',
+		header: 'Inodes Used',
+		accessorFn: (row): number => row.volumeInodesUsed,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const inodesUsed = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={inodesUsed}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="inodes used metric"
+				>
+					<TanStackTable.Text>{inodesUsed.toLocaleString()}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},

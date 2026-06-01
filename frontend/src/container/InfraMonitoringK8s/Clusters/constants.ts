@@ -1,53 +1,39 @@
+import { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import {
-	createFilterItem,
-	K8sDetailsMetadataConfig,
-} from '../Base/K8sBaseDetails';
-import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
-import { K8sClusterData } from './api';
+import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 
-export const k8sClusterGetSelectedItemFilters = (
+export const k8sClusterGetSelectedItemExpression = (
 	selectedItemId: string,
-): TagFilter => ({
-	op: 'AND',
-	items: [
-		{
-			id: 'k8s_cluster_name',
-			key: {
-				key: 'k8s_cluster_name',
-				type: null,
-			},
-			op: '=',
-			value: selectedItemId,
-		},
-	],
-});
+): string => `k8s.cluster.name = ${formatValueForExpression(selectedItemId)}`;
 
-export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sClusterData>[] =
-	[{ label: 'Cluster Name', getValue: (p): string => p.meta.k8s_cluster_name }];
+export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<InframonitoringtypesClusterRecordDTO>[] =
+	[{ label: 'Cluster Name', getValue: (p): string => p.clusterName || '' }];
 
-export const k8sClusterInitialEventsFilter = (
-	item: K8sClusterData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Cluster'),
-	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_cluster_name),
-];
+export const k8sClusterInitialEventsExpression = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string => {
+	const objectName = formatValueForExpression(item.clusterName || '');
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_KIND} = 'Cluster' AND ${INFRA_MONITORING_ATTR_KEYS.K8S_OBJECT_NAME} = ${objectName}`;
+};
 
-export const k8sClusterInitialLogTracesFilter = (
-	item: K8sClusterData,
-): ReturnType<typeof createFilterItem>[] => [
-	createFilterItem(QUERY_KEYS.K8S_CLUSTER_NAME, item.meta.k8s_cluster_name),
-];
+export const k8sClusterInitialLogTracesExpression = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string => {
+	const clusterName = formatValueForExpression(item.clusterName || '');
+	return `${INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME} = ${clusterName}`;
+};
 
-export const k8sClusterGetEntityName = (item: K8sClusterData): string =>
-	item.meta.k8s_cluster_name;
+export const k8sClusterGetEntityName = (
+	item: InframonitoringtypesClusterRecordDTO,
+): string => item.clusterName || '';
 
 export const clusterWidgetInfo = [
 	{
@@ -85,7 +71,7 @@ export const clusterWidgetInfo = [
 ];
 
 export const getClusterMetricsQueryPayload = (
-	cluster: K8sClusterData,
+	cluster: InframonitoringtypesClusterRecordDTO,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
@@ -207,7 +193,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -246,7 +232,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -285,7 +271,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -324,7 +310,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -397,7 +383,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -436,7 +422,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -475,7 +461,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -514,7 +500,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -587,7 +573,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -673,7 +659,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -759,7 +745,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -811,7 +797,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -909,7 +895,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -961,7 +947,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1013,7 +999,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1065,7 +1051,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1187,7 +1173,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1233,7 +1219,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1279,7 +1265,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1383,7 +1369,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1435,7 +1421,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1487,7 +1473,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',
@@ -1539,7 +1525,7 @@ export const getClusterMetricsQueryPayload = (
 											type: 'tag',
 										},
 										op: '=',
-										value: cluster.meta.k8s_cluster_name,
+										value: cluster.clusterName,
 									},
 								],
 								op: 'AND',

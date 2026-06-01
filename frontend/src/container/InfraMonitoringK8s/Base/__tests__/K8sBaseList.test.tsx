@@ -22,6 +22,15 @@ import { openInNewTab } from 'utils/navigation';
 import { TableColumnDef } from 'components/TanStackTableView';
 
 import { InfraMonitoringEntity } from '../../constants';
+
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 import { K8sBaseList, K8sBaseListProps, K8sEntityData } from '../K8sBaseList';
 
 jest.mock('utils/navigation', () => ({
@@ -206,8 +215,10 @@ describe('K8sBaseList', () => {
 		const itemId2 = Math.random().toString(36).slice(7);
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItemWithTitle>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
+			ReturnType<
+				NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
+			>,
+			Parameters<NonNullable<K8sBaseListProps<TestItemWithTitle>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -259,7 +270,10 @@ describe('K8sBaseList', () => {
 			const [filters] = fetchListDataMock.mock.calls[0];
 			expect(filters.limit).toBe(10);
 			expect(filters.offset).toBe(0);
-			expect(filters.filters).toStrictEqual({ items: [], op: 'AND' });
+			expect(filters.filter).toStrictEqual({
+				expression: '',
+				filterByStatus: undefined,
+			});
 			expect(filters.groupBy).toBeUndefined();
 			expect(filters.orderBy).toBeUndefined();
 		});
@@ -419,11 +433,11 @@ describe('K8sBaseList', () => {
 		});
 	});
 
-	describe('with URL params (orderBy, groupBy, pagination)', () => {
+	describe('with URL params (orderBy, groupBy old format, pagination)', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
@@ -462,8 +476,11 @@ describe('K8sBaseList', () => {
 			});
 
 			const [filters] = fetchListDataMock.mock.calls[0];
-			expect(filters.orderBy).toStrictEqual({ columnName: 'cpu', order: 'desc' });
-			expect(filters.groupBy).toStrictEqual(groupByValue);
+			expect(filters.orderBy).toStrictEqual({
+				key: { name: 'cpu' },
+				direction: 'desc',
+			});
+			expect(filters.groupBy).toStrictEqual([{ name: 'k8s.namespace.name' }]);
 			expect(filters.offset).toBe(20); // (3 - 1) * 10 = 20
 			expect(filters.limit).toBe(10);
 		});
@@ -487,14 +504,84 @@ describe('K8sBaseList', () => {
 				(c) => c[0].groupBy && c[0].groupBy.length > 0,
 			);
 			expect(callWithGroupBy).toBeDefined();
-			expect(callWithGroupBy?.[0].groupBy).toStrictEqual(groupByValue);
+			expect(callWithGroupBy?.[0].groupBy).toStrictEqual([
+				{ name: 'k8s.namespace.name' },
+			]);
+		});
+	});
+
+	describe('with URL params (groupBy new format - string array)', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+		const groupByValue = ['k8s.namespace.name'];
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [
+					{ id: 'namespace-default', meta: { 'k8s.namespace.name': 'default' } },
+				],
+				total: 50,
+				error: null,
+			});
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: {
+					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
+					groupBy: JSON.stringify(groupByValue),
+					page: '3',
+				},
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should call fetchListData with groupBy from new format URL', async () => {
+			await waitFor(() => {
+				expect(fetchListDataMock).toHaveBeenCalled();
+			});
+
+			const [filters] = fetchListDataMock.mock.calls[0];
+			expect(filters.groupBy).toStrictEqual([{ name: 'k8s.namespace.name' }]);
+		});
+
+		it('should render expand icons when groupBy is set with new format', async () => {
+			await waitFor(() => {
+				expect(screen.getByText('namespace-default')).toBeInTheDocument();
+			});
+
+			const expandButtons = screen.getAllByRole('button');
+			expect(expandButtons.length).toBeGreaterThan(0);
+		});
+
+		it('should render data with new groupBy format', async () => {
+			await waitFor(() => {
+				expect(screen.getByText('namespace-default')).toBeInTheDocument();
+			});
+
+			const callWithGroupBy = fetchListDataMock.mock.calls.find(
+				(c) => c[0].groupBy && c[0].groupBy.length > 0,
+			);
+			expect(callWithGroupBy).toBeDefined();
+			expect(callWithGroupBy?.[0].groupBy).toStrictEqual([
+				{ name: 'k8s.namespace.name' },
+			]);
 		});
 	});
 
 	describe('with empty data', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -503,10 +590,6 @@ describe('K8sBaseList', () => {
 				data: [],
 				total: 0,
 				error: null,
-				rawData: {
-					sentAnyHostMetricsData: true,
-					isSendingK8SAgentMetrics: false,
-				},
 			});
 
 			renderComponent<TestItem>({
@@ -534,8 +617,8 @@ describe('K8sBaseList', () => {
 
 	describe('with error response', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -569,95 +652,10 @@ describe('K8sBaseList', () => {
 		});
 	});
 
-	describe('with no metrics data (sentAnyHostMetricsData=false)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
-		>();
-
-		beforeEach(() => {
-			fetchListDataMock.mockClear();
-			fetchListDataMock.mockResolvedValue({
-				data: [],
-				total: 0,
-				error: null,
-				rawData: {
-					sentAnyHostMetricsData: false,
-					isSendingK8SAgentMetrics: false,
-				},
-			});
-
-			renderComponent<TestItem>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				tableColumns: createTestColumns(),
-				getRowKey: (row): string => row.id,
-				getItemKey: (row): string => row.id,
-			});
-		});
-
-		it('should display no metrics data message', async () => {
-			await waitFor(() => {
-				expect(
-					screen.getByText(/No host metrics data received yet/i),
-				).toBeInTheDocument();
-			});
-		});
-
-		it('should display link to documentation', async () => {
-			await waitFor(() => {
-				const link = screen.getByRole('link', { name: /our documentation/i });
-				expect(link).toBeInTheDocument();
-				expect(link).toHaveAttribute(
-					'href',
-					'https://signoz.io/docs/userguide/hostmetrics/',
-				);
-			});
-		});
-	});
-
-	describe('with incorrect K8s agent metrics (isSendingK8SAgentMetrics=true)', () => {
-		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
-		>();
-
-		beforeEach(() => {
-			fetchListDataMock.mockClear();
-			fetchListDataMock.mockResolvedValue({
-				data: [],
-				total: 0,
-				error: null,
-				rawData: {
-					sentAnyHostMetricsData: true,
-					isSendingK8SAgentMetrics: true,
-				},
-			});
-
-			renderComponent<TestItem>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				tableColumns: createTestColumns(),
-				getRowKey: (row): string => row.id,
-				getItemKey: (row): string => row.id,
-			});
-		});
-
-		it('should display upgrade message', async () => {
-			await waitFor(() => {
-				expect(
-					screen.getByText(/upgrade to the latest version of SigNoz k8s-infra/i),
-				).toBeInTheDocument();
-			});
-		});
-	});
-
 	describe('with end time before retention (endTimeBeforeRetention=true)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -666,11 +664,7 @@ describe('K8sBaseList', () => {
 				data: [],
 				total: 0,
 				error: null,
-				rawData: {
-					sentAnyHostMetricsData: true,
-					isSendingK8SAgentMetrics: false,
-					endTimeBeforeRetention: true,
-				},
+				endTimeBeforeRetention: true,
 			});
 
 			renderComponent<TestItem>({
@@ -695,10 +689,104 @@ describe('K8sBaseList', () => {
 		});
 	});
 
+	describe('with missing required metrics', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [],
+				total: 0,
+				error: null,
+				requiredMetricsCheck: {
+					missingMetrics: [
+						'container_cpu_usage_seconds_total',
+						'container_memory_working_set_bytes',
+					],
+				},
+			});
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should display missing metrics list', async () => {
+			await waitFor(() => {
+				expect(screen.getByText(/Missing required metrics/i)).toBeInTheDocument();
+				expect(
+					screen.getByText('container_cpu_usage_seconds_total'),
+				).toBeInTheDocument();
+				expect(
+					screen.getByText('container_memory_working_set_bytes'),
+				).toBeInTheDocument();
+			});
+		});
+
+		it('should expose docs button with k8s metrics URL', async () => {
+			await waitFor(() => {
+				const button = screen.getByTestId('missing-metrics-docs-button');
+				expect(button).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/',
+				);
+			});
+		});
+	});
+
+	describe('with empty missing metrics array', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [],
+				total: 0,
+				error: null,
+				requiredMetricsCheck: {
+					missingMetrics: [],
+				},
+			});
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should display default empty state instead of missing metrics UI', async () => {
+			await waitFor(() => {
+				expect(screen.getByText(/This query had no results/i)).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByText(/Missing required metrics/i),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('missing-metrics-docs-button'),
+			).not.toBeInTheDocument();
+		});
+	});
+
 	describe('column visibility based on TanStack columns', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItemWithName>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItemWithName>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -736,8 +824,10 @@ describe('K8sBaseList', () => {
 
 	describe('column behavior with groupBy (expanded/collapsed)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItemWithGroup>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItemWithGroup>['fetchListData']>
+			ReturnType<
+				NonNullable<K8sBaseListProps<TestItemWithGroup>['fetchListData']>
+			>,
+			Parameters<NonNullable<K8sBaseListProps<TestItemWithGroup>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -807,8 +897,8 @@ describe('K8sBaseList', () => {
 
 	describe('column visibility in expanded row (nested table)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
@@ -852,8 +942,8 @@ describe('K8sBaseList', () => {
 
 	describe('TanStack table column rendering', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<TestItemWithName>['fetchListData']>,
-			Parameters<K8sBaseListProps<TestItemWithName>['fetchListData']>
+			ReturnType<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItemWithName>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
@@ -906,6 +996,42 @@ describe('K8sBaseList', () => {
 				expect(screen.getByText('Item 1')).toBeInTheDocument();
 				expect(screen.getByText('item-2')).toBeInTheDocument();
 				expect(screen.getByText('Item 2')).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('with warnings from API', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [{ id: 'item-1' }],
+				total: 1,
+				error: null,
+				warning: {
+					message: 'Some data may be incomplete',
+					url: 'https://docs.example.com/partial-data',
+					warnings: [{ message: 'Node xyz did not report metrics' }],
+				},
+			});
+
+			renderComponent<TestItem>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should render warning popover in pagination area', async () => {
+			await waitFor(() => {
+				expect(screen.getByTestId('k8s-list-warning-popover')).toBeInTheDocument();
 			});
 		});
 	});
