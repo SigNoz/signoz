@@ -127,6 +127,25 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	}, nil
 }
 
+// BuildCount returns a statement that counts the distinct fingerprints matching
+// the resource filter. Returns (nil, nil) when the filter is a no-op.
+func (b *resourceFilterStatementBuilder[T]) BuildCount(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	inner, err := b.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	if err != nil || inner == nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{
+		Query: fmt.Sprintf("SELECT count() FROM (%s)", inner.Query),
+		Args:  inner.Args,
+	}, nil
+}
+
 // addConditions adds both filter and time conditions to the query.
 // Returns true (isNoOp) when the filter expression evaluated to no resource conditions,
 // meaning the CTE would select all fingerprints and should be skipped entirely.

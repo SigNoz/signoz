@@ -478,6 +478,8 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	statementBuilder := NewTraceOperatorStatementBuilder(
@@ -594,6 +596,8 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	statementBuilder := NewTraceOperatorStatementBuilder(
