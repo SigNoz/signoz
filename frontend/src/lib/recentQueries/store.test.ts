@@ -86,9 +86,7 @@ describe('recentQueries store', () => {
 	describe('signal partitioning', () => {
 		it('saves to the right bucket per signal', () => {
 			store.save(baseInput({ signal: 'logs', filter: { expression: 'a = 1' } }));
-			store.save(
-				baseInput({ signal: 'traces', filter: { expression: 'b = 2' } }),
-			);
+			store.save(baseInput({ signal: 'traces', filter: { expression: 'b = 2' } }));
 			store.save(
 				baseInput({ signal: 'metrics', filter: { expression: 'c = 3' } }),
 			);
@@ -103,9 +101,7 @@ describe('recentQueries store', () => {
 
 		it('does not leak between signals on dedup', () => {
 			store.save(baseInput({ signal: 'logs', filter: { expression: 'a = 1' } }));
-			store.save(
-				baseInput({ signal: 'traces', filter: { expression: 'a = 1' } }),
-			);
+			store.save(baseInput({ signal: 'traces', filter: { expression: 'a = 1' } }));
 
 			expect(store.list('logs')).toHaveLength(1);
 			expect(store.list('traces')).toHaveLength(1);
@@ -121,9 +117,9 @@ describe('recentQueries store', () => {
 			const entries = store.list('logs');
 			expect(entries).toHaveLength(10);
 			expect(entries[0].filter.expression).toBe('attr_10 = 1');
-			expect(
-				entries.some((e) => e.filter.expression === 'attr_0 = 1'),
-			).toBe(false);
+			expect(entries.some((e) => e.filter.expression === 'attr_0 = 1')).toBe(
+				false,
+			);
 		});
 	});
 

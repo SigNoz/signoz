@@ -1438,9 +1438,7 @@ function QuerySearch({
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
-							addToOptions: [
-								{ render: renderRecentDeleteButton, position: 100 },
-							],
+							addToOptions: [{ render: renderRecentDeleteButton, position: 100 }],
 						}),
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,

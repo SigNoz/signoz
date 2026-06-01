@@ -34,7 +34,9 @@ describe('normalizeFilterExpression', () => {
 	});
 
 	it('does not lowercase keyword-looking substrings inside quotes', () => {
-		expect(normalizeFilterExpression("msg = 'AND ERROR'")).toBe("msg='AND ERROR'");
+		expect(normalizeFilterExpression("msg = 'AND ERROR'")).toBe(
+			"msg='AND ERROR'",
+		);
 	});
 
 	it('handles escaped quotes inside strings', () => {
