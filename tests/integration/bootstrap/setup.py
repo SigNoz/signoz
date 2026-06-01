@@ -39,5 +39,7 @@ def test_teardown(
     idp: types.TestContainerIDP,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     migrator: types.Operation,  # pylint: disable=unused-argument
+    maildev: types.TestContainerDocker,  # pylint: disable=unused-argument
+    notification_channel: types.TestContainerDocker,  # pylint: disable=unused-argument
 ) -> None:
     pass

@@ -4,6 +4,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 import pytest
 import requests
@@ -13,6 +14,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
+from fixtures.maildev import verify_email_received
 from fixtures.metrics import Metrics
 from fixtures.traces import Traces
 
@@ -218,3 +220,118 @@ def update_rule_channel_name(rule_data: dict, channel_name: str):
         # loop over all the sepcs and update the channels
         for spec in thresholds["spec"]:
             spec["channels"] = [channel_name]
+
+
+def _is_json_subset(subset, superset) -> bool:
+    """Check if subset is contained within superset recursively.
+    - For dicts: all keys in subset must exist in superset with matching values
+    - For lists: all items in subset must be present in superset
+    - For scalars: exact equality
+    """
+    if isinstance(subset, dict):
+        if not isinstance(superset, dict):
+            return False
+        return all(key in superset and _is_json_subset(value, superset[key]) for key, value in subset.items())
+    if isinstance(subset, list):
+        if not isinstance(superset, list):
+            return False
+        return all(any(_is_json_subset(sub_item, sup_item) for sup_item in superset) for sub_item in subset)
+    return subset == superset
+
+
+def verify_webhook_notification_expectation(
+    notification_channel: types.TestContainerDocker,
+    validation_data: dict,
+) -> bool:
+    """Check if wiremock received a request at the given path
+    whose JSON body is a superset of the expected json_body."""
+    path = validation_data["path"]
+    json_body = validation_data["json_body"]
+
+    url = notification_channel.host_configs["8080"].get("__admin/requests/find")
+    res = requests.post(url, json={"method": "POST", "url": path}, timeout=5)
+    assert res.status_code == HTTPStatus.OK, f"Failed to find requests for path {path}, status code: {res.status_code}, response: {res.text}"
+
+    for req in res.json()["requests"]:
+        body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
+        # logger.info("Webhook request body: %s", json.dumps(body, indent=2))
+        if _is_json_subset(json_body, body):
+            return True
+    return False
+
+
+def _check_notification_validation(
+    validation: types.NotificationValidation,
+    notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker,
+) -> bool:
+    """Dispatch a single validation check to the appropriate verifier."""
+    if validation.destination_type == "webhook":
+        return verify_webhook_notification_expectation(notification_channel, validation.validation_data)
+    if validation.destination_type == "email":
+        return verify_email_received(maildev, validation.validation_data)
+    raise ValueError(f"Invalid destination type: {validation.destination_type}")
+
+
+def verify_notification_expectation(
+    notification_channel: types.TestContainerDocker,
+    maildev: types.TestContainerDocker,
+    expected_notification: types.AMNotificationExpectation,
+) -> bool:
+    """Poll for expected notifications across webhook and email channels."""
+    time_to_wait = datetime.now() + timedelta(seconds=expected_notification.wait_time_seconds)
+
+    while datetime.now() < time_to_wait:
+        all_found = all(_check_notification_validation(v, notification_channel, maildev) for v in expected_notification.notification_validations)
+
+        if expected_notification.should_notify and all_found:
+            logger.info("All expected notifications found")
+            return True
+
+        time.sleep(1)
+
+    # Timeout reached
+    if not expected_notification.should_notify:
+        # Verify no notifications were received
+        for validation in expected_notification.notification_validations:
+            found = _check_notification_validation(validation, notification_channel, maildev)
+            assert not found, f"Expected no notification but found one for {validation.destination_type} with data {validation.validation_data}"
+        logger.info("No notifications found, as expected")
+        return True
+
+    # Expected notifications but didn't get them all — report missing
+    missing = [v for v in expected_notification.notification_validations if not _check_notification_validation(v, notification_channel, maildev)]
+    assert len(missing) == 0, f"Expected all notifications to be found but missing: {missing}"
+    return True
+
+
+def update_raw_channel_config(
+    channel_config: dict,
+    channel_name: str,
+    notification_channel: types.TestContainerDocker,
+) -> dict:
+    """
+    Updates the channel config to point to the given wiremock
+    notification_channel container to receive notifications.
+    """
+    config = channel_config.copy()
+
+    config["name"] = channel_name
+
+    url_field_map = {
+        "slack_configs": "api_url",
+        "msteamsv2_configs": "webhook_url",
+        "webhook_configs": "url",
+        "pagerduty_configs": "url",
+        "opsgenie_configs": "api_url",
+    }
+
+    for config_key, url_field in url_field_map.items():
+        if config_key in config:
+            for entry in config[config_key]:
+                if url_field in entry:
+                    original_url = entry[url_field]
+                    path = urlparse(original_url).path
+                    entry[url_field] = notification_channel.container_configs["8080"].get(path)
+
+    return config

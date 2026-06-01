@@ -1,0 +1,71 @@
+{
+  "alert": "content_templating_logs",
+  "ruleType": "threshold_rule",
+  "alertType": "LOGS_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 0,
+          "matchType": "1",
+          "op": "1",
+          "channels": [
+            "test channel"
+          ]
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_query",
+          "spec": {
+            "name": "A",
+            "signal": "logs",
+            "filter": {
+              "expression": "body CONTAINS 'payment failure'"
+            },
+            "aggregations": [
+              {
+                "expression": "count()"
+              }
+            ],
+            "groupBy": [
+              {"name": "service.name", "fieldContext": "resource"}
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "Payment failure spike detected on $service_name",
+    "summary": "Payment failures elevated on $service_name",
+    "_title_template": "[$alert.status] Payment failure spike in $labels.service.name",
+    "_body_template": "**Severity:** $rule.severity\n**Status:** $alert.status\n\n**Service:** $labels.service.name\n\n**Condition ($labels.threshold.name):**\n- **Current:** $alert.value\n- **Threshold:** $rule.threshold.op $rule.threshold.value\n\n**Description:** Payment failures observed at $alert.value over the evaluation window, crossing the $labels.threshold.name threshold of $rule.threshold.op $rule.threshold.value on $labels.service.name. Investigate downstream payment processor health.\n\n**Runbook:** https://signoz.io/docs/runbooks/payment-failure-spike"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": false,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}
