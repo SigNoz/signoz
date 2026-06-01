@@ -39,15 +39,73 @@ func NewFlamegraphTraceFromStorable(spans []StorableSpan) *FlamegraphTrace {
 }
 
 func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
-	return nil
+	var result [][]*FlamegraphSpan
+
+	type entry struct {
+		node  *FlamegraphSpan
+		depth int64
+	}
+
+	for _, root := range t.roots {
+		levelMap := make(map[int64][]*FlamegraphSpan)
+		maxDepth := int64(-1)
+
+		queue := []entry{{root, 0}}
+		for len(queue) > 0 {
+			curr := queue[0]
+			queue = queue[1:]
+			curr.node.Level = curr.depth
+			levelMap[curr.depth] = append(levelMap[curr.depth], curr.node)
+			if curr.depth > maxDepth {
+				maxDepth = curr.depth
+			}
+			for _, child := range curr.node.Children {
+				queue = append(queue, entry{child, curr.depth + 1})
+			}
+		}
+
+		for depth := int64(0); depth <= maxDepth; depth++ {
+			if spans, ok := levelMap[depth]; ok {
+				result = append(result, spans)
+			}
+		}
+	}
+
+	for _, node := range t.nodeByID {
+		node.Children = nil
+	}
+	return result
 }
 
-// GetSelectedLevels returns the window of levels around selectedSpanID with sampling applied to dense levels.
-func (t *FlamegraphTrace) GetSelectedLevels(
-	selectedSpanID string,
-	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
-) []FlamegraphLevel {
-	return nil
+// GetSelectedLevels returns a window of sampled view of levels around selectedSpanID.
+func (t *FlamegraphTrace) GetSelectedLevels(selectedSpanID string, levelLimit, spansPerLevel, topLatencyCount, bucketCount int) []FlamegraphLevel {
+	allLevels := t.GetAllLevels()
+
+	selectedIndex := getLevelIndex(allLevels, selectedSpanID)
+
+	beforeSelectedLevel := int(float64(levelLimit) * 0.4)
+	startLevel := max(0, selectedIndex-beforeSelectedLevel)
+	endLevel := min(len(allLevels), startLevel+levelLimit)
+
+	result := make([]FlamegraphLevel, 0, endLevel-startLevel)
+	for i := startLevel; i < endLevel; i++ {
+		spans := allLevels[i]
+		sampled := spans
+		if len(spans) > spansPerLevel {
+			sampled = sampleFlamegraphLevel(spans, selectedSpanID, i == selectedIndex,
+				t.startTime, t.endTime, topLatencyCount, bucketCount)
+		}
+		if len(sampled) == 0 {
+			continue
+		}
+		spanIDs := make([]string, len(sampled))
+		for j, s := range sampled {
+			spanIDs[j] = s.SpanID
+		}
+		result = append(result, FlamegraphLevel{Level: spans[0].Level, SpanIDs: spanIDs})
+	}
+
+	return result
 }
 
 func (t *FlamegraphTrace) EnrichSelectedSpans(selectedSpans []FlamegraphLevel, fullSpans []StorableSpan) [][]*FlamegraphSpan {
@@ -106,6 +164,73 @@ func (t *FlamegraphTrace) buildSpanTree() {
 		}
 		return t.roots[i].Timestamp < t.roots[j].Timestamp
 	})
+}
+
+func sampleFlamegraphLevel(
+	spans []*FlamegraphSpan,
+	selectedSpanID string,
+	isSelectedLevel bool,
+	startTime, endTime uint64,
+	topLatencyCount, bucketCount int,
+) []*FlamegraphSpan {
+	sorted := make([]*FlamegraphSpan, len(spans))
+	copy(sorted, spans)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].DurationNano > sorted[j].DurationNano
+	})
+
+	var sampled []*FlamegraphSpan
+
+	topK := min(topLatencyCount, len(sorted))
+	sampled = append(sampled, sorted[:topK]...)
+
+	if isSelectedLevel {
+		for _, span := range sorted {
+			if span.SpanID == selectedSpanID {
+				sampled = append(sampled, span)
+				break
+			}
+		}
+	}
+
+	bucketSize := (endTime - startTime) / uint64(bucketCount)
+	if bucketSize == 0 {
+		bucketSize = 1
+	}
+	buckets := make([][]*FlamegraphSpan, bucketCount)
+	for _, span := range sorted {
+		if span.Timestamp < startTime || span.Timestamp > endTime {
+			continue
+		}
+		idx := int((span.Timestamp - startTime) / bucketSize)
+		if idx < 0 {
+			idx = 0
+		} else if idx >= bucketCount {
+			idx = bucketCount - 1
+		}
+		buckets[idx] = append(buckets[idx], span)
+	}
+	for i := range buckets {
+		if len(buckets[i]) > 2 {
+			buckets[i] = buckets[i][:2]
+		}
+	}
+	for _, bucket := range buckets {
+		sampled = append(sampled, bucket...)
+	}
+
+	return sampled
+}
+
+func getLevelIndex(levels [][]*FlamegraphSpan, spanID string) int {
+	for i, lvl := range levels {
+		for _, span := range lvl {
+			if span.SpanID == spanID {
+				return i
+			}
+		}
+	}
+	return 0
 }
 
 func flamegraphSpanIndex(spans []*FlamegraphSpan, spanID string) int {
