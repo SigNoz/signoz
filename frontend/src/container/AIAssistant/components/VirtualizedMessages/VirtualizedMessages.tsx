@@ -7,8 +7,8 @@ import {
 	ChartBar,
 	Search,
 	Zap,
-	Sparkles,
 } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -177,10 +177,10 @@ export default function VirtualizedMessages({
 	if (messages.length === 0 && !showStreamingSlot) {
 		return (
 			<div className={styles.empty}>
-				<div className={styles.emptyIcon}>
-					<Sparkles size={24} color="var(--primary)" />
+				<div className={`${styles.emptyIcon} noz-wave`}>
+					<Noz size={48} />
 				</div>
-				<h3 className={styles.emptyTitle}>SigNoz AI Assistant</h3>
+				<h3 className={styles.emptyTitle}>Noz</h3>
 				<p className={styles.emptySubtitle}>
 					Ask questions about your traces, logs, metrics, and infrastructure.
 				</p>

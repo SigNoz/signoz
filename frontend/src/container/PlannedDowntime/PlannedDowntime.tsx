@@ -2,7 +2,8 @@ import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Flex, Form, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useDeleteDowntimeScheduleByID,

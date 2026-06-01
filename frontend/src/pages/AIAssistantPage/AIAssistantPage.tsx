@@ -9,7 +9,7 @@ import { AIAssistantEvents } from 'container/AIAssistant/events';
 import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
-import { Sparkles } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
@@ -116,9 +116,9 @@ export default function AIAssistantPage(): JSX.Element {
 		<VariantContext.Provider value="page">
 			<div className={styles.page}>
 				<div className={styles.header}>
-					<div className={styles.title}>
-						<Sparkles size={16} color="var(--primary)" />
-						<span>AI Assistant</span>
+					<div className={`${styles.title} noz-wave`}>
+						<Noz size={18} />
+						<span>Noz</span>
 					</div>
 				</div>
 

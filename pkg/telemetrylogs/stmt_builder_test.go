@@ -237,8 +237,10 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		name        string
 		requestType qbtypes.RequestType
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		variables   map[string]qbtypes.VariableItem
 		expected    qbtypes.Statement
 		expectedErr error
+		expectWarn  bool
 	}{
 		{
 			name:        "default list",
@@ -312,6 +314,22 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "filter skips entirely but emits LIKE-without-wildcards warning",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{
+					Expression: "message LIKE 'plain' OR message IN $env",
+				},
+				Limit: 10,
+			},
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Type: qbtypes.DynamicVariableType, Value: "__all__"},
+			},
+			expectedErr: nil,
+			expectWarn:  true,
+		},
 	}
 
 	ctx := context.Background()
@@ -340,16 +358,20 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 
-			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			q, err := statementBuilder.Build(ctx, 1747947419000, 1747983448000, c.requestType, c.query, c.variables)
 
 			if c.expectedErr != nil {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, q.Query)
-				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.Warnings, q.Warnings)
+				if c.expectWarn {
+					require.NotEmpty(t, q.Warnings)
+				} else {
+					require.Equal(t, c.expected.Query, q.Query)
+					require.Equal(t, c.expected.Args, q.Args)
+					require.Equal(t, c.expected.Warnings, q.Warnings)
+				}
 			}
 		})
 	}

@@ -178,7 +178,7 @@ export default function MessageBubble({
 					</div>
 				</div>
 
-				{!isUser && (
+				{!isUser && !message.isRateLimitError && (
 					<MessageFeedback
 						message={message}
 						onRegenerate={onRegenerate}

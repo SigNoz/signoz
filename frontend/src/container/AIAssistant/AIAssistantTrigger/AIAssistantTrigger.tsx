@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { Bot } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import { normalizePage } from '../hooks/useAIAssistantAnalyticsContext';
@@ -42,15 +42,15 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 	}
 
 	return (
-		<TooltipSimple title="AI Assistant">
+		<TooltipSimple title="Noz">
 			<Button
 				variant="solid"
 				color="primary"
-				className={styles.trigger}
+				className={`${styles.trigger} noz-wave`}
 				onClick={handleOpen}
-				aria-label="Open AI Assistant"
+				aria-label="Open Noz"
 			>
-				<Bot size={20} />
+				<Noz size={24} />
 			</Button>
 		</TooltipSimple>
 	);
