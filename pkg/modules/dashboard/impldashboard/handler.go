@@ -185,6 +185,38 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 
 }
 
+// ResetSystemDashboard resets the dashboard identified by {id} to its default.
+func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, id, claims.Email)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard)
+}
+
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
