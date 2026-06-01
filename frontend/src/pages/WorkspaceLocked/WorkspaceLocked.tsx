@@ -30,7 +30,6 @@ import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';
-import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
 import InfoBlocks from './InfoBlocks';
@@ -53,20 +52,20 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { t } = useTranslation(['workspaceLocked']);
 
 	useEffect((): void => {
-		logEvent('Workspace Blocked: Screen Viewed', {});
+		void logEvent('Workspace Blocked: Screen Viewed', {});
 	}, []);
 
 	const handleContactUsClick = (): void => {
-		logEvent('Workspace Blocked: Contact Us Clicked', {});
+		void logEvent('Workspace Blocked: Contact Us Clicked', {});
 	};
 
 	const handleTabClick = (key: string): void => {
-		logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
+		void logEvent('Workspace Blocked: Screen Tabs Clicked', { tabKey: key });
 	};
 
 	const handleCollapseChange = (key: string | string[]): void => {
 		const lastKey = Array.isArray(key) ? key.slice(-1)[0] : key;
-		logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
+		void logEvent('Workspace Blocked: Screen Tab FAQ Item Clicked', {
 			panelKey: lastKey,
 		});
 	};
@@ -109,7 +108,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
-		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
+		void logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
 			url: getBaseUrl(),
@@ -117,7 +116,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	}, [updateCreditCard]);
 
 	const handleExtendTrial = (): void => {
-		logEvent('Workspace Blocked: User Clicked Extend Trial', {});
+		void logEvent('Workspace Blocked: User Clicked Extend Trial', {});
 
 		notifications.info({
 			message: t('extendTrial'),
@@ -133,7 +132,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	};
 
 	const handleViewBilling = (e?: React.MouseEvent): void => {
-		logEvent('Workspace Blocked: User Clicked View Billing', {});
+		void logEvent('Workspace Blocked: User Clicked View Billing', {});
 
 		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
@@ -336,12 +335,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 										</Typography.Title>
 										<Typography.Text className="workspace-locked__details">
 											{t('upgradeNow')}
-											<br />
-											{t('yourDataIsSafe')}{' '}
-											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
-											</span>{' '}
-											{t('actNow')}
 										</Typography.Text>
 									</Space>
 								</Col>
