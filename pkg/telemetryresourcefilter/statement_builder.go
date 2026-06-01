@@ -99,7 +99,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	q := sqlbuilder.NewSelectBuilder()
-	q.Select("fingerprint")
+	q.Select("DISTINCT fingerprint")
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := b.getKeySelectors(query)
