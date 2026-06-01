@@ -99,7 +99,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	q := sqlbuilder.NewSelectBuilder()
-	q.Select("DISTINCT fingerprint")
+	q.Select("fingerprint")
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := b.getKeySelectors(query)
@@ -115,6 +115,10 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	if isNoOp {
 		return nil, nil //nolint:nilnil
 	}
+
+	// Group by fingerprint instead of using DISTINCT; on ClickHouse GROUP BY
+	// parallelizes across multiple threads and is faster for deduplication.
+	q.GroupBy("fingerprint")
 
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
