@@ -6530,8 +6530,9 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/SpantypesSpanAggregationResult'
-          nullable: true
           type: array
+      required:
+      - aggregations
       type: object
     SpantypesGettableWaterfallTrace:
       properties:
@@ -6647,6 +6648,10 @@ components:
             type: integer
           nullable: true
           type: object
+      required:
+      - field
+      - aggregation
+      - value
       type: object
     SpantypesSpanAggregationType:
       enum:

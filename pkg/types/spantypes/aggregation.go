@@ -28,16 +28,16 @@ var (
 
 // SpanAggregation is a single aggregation request item: which field to group by and how.
 type SpanAggregation struct {
-	Field       telemetrytypes.TelemetryFieldKey `json:"field"       required:"true"`
-	Aggregation SpanAggregationType              `json:"aggregation" required:"true"`
+	Field       telemetrytypes.TelemetryFieldKey `json:"field" required:"true" nullable:"false"`
+	Aggregation SpanAggregationType              `json:"aggregation" required:"true" nullable:"false"`
 }
 
 // SpanAggregationResult is the computed result for one aggregation request item.
 // Duration values are in milliseconds.
 type SpanAggregationResult struct {
-	Field       telemetrytypes.TelemetryFieldKey `json:"field"`
-	Aggregation SpanAggregationType              `json:"aggregation"`
-	Value       map[string]uint64                `json:"value" nullable:"true"`
+	Field       telemetrytypes.TelemetryFieldKey `json:"field" required:"true" nullable:"false"`
+	Aggregation SpanAggregationType              `json:"aggregation" required:"true" nullable:"false"`
+	Value       map[string]uint64                `json:"value" required:"true" nullable:"true"`
 }
 
 func (SpanAggregationType) Enum() []any {
@@ -81,5 +81,5 @@ func (p *PostableTraceAggregations) Validate() error {
 
 // GettableTraceAggregations is the response for the V4 aggregations endpoint.
 type GettableTraceAggregations struct {
-	Aggregations []SpanAggregationResult `json:"aggregations"`
+	Aggregations []SpanAggregationResult `json:"aggregations" required:"true" nullable:"false"`
 }

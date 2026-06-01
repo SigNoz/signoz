@@ -7753,19 +7753,19 @@ export type SpantypesSpanAggregationResultDTOValue =
 	SpantypesSpanAggregationResultDTOValueAnyOf | null;
 
 export interface SpantypesSpanAggregationResultDTO {
-	aggregation?: SpantypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	aggregation: SpantypesSpanAggregationTypeDTO;
+	field: TelemetrytypesTelemetryFieldKeyDTO;
 	/**
 	 * @type object,null
 	 */
-	value?: SpantypesSpanAggregationResultDTOValue;
+	value: SpantypesSpanAggregationResultDTOValue;
 }
 
 export interface SpantypesGettableTraceAggregationsDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	aggregations?: SpantypesSpanAggregationResultDTO[] | null;
+	aggregations: SpantypesSpanAggregationResultDTO[];
 }
 
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
