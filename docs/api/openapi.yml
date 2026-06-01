@@ -1236,8 +1236,8 @@ components:
       properties:
         description:
           type: string
-        id:
-          type: string
+        integrationDashboard:
+          $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
         title:
           type: string
       type: object
@@ -1274,6 +1274,23 @@ components:
       - title
       - icon
       - enabled
+      type: object
+    CloudintegrationtypesStorableIntegrationDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        dashboardId:
+          type: string
+        id:
+          type: string
+        provider:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
       type: object
     CloudintegrationtypesSupportedSignals:
       properties:

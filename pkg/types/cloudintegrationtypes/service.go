@@ -59,7 +59,7 @@ type Service struct {
 }
 
 type ServiceAssets struct {
-	Dashboards []ServiceDashboard `json:"dashboards" required:"true"`
+	Dashboards []*ServiceDashboard `json:"dashboards" required:"true"`
 }
 
 type GetServiceParams struct {
@@ -130,9 +130,9 @@ type Dashboard struct {
 }
 
 type ServiceDashboard struct {
-	ID          *valuer.UUID `json:"id,omitempty" required:"false" nullable:"false"`
-	Title       string       `json:"title"`
-	Description string       `json:"description"`
+	Title                string                `json:"title"`
+	Description          string                `json:"description"`
+	IntegrationDashboard *IntegrationDashboard `json:"integrationDashboard,omitempty" required:"false"`
 }
 
 func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, provider CloudProviderType, config *ServiceConfig) (*CloudIntegrationService, error) {
@@ -185,16 +185,16 @@ func NewService(provider CloudProviderType, def *ServiceDefinition, integrationS
 		SupportedSignals:          def.SupportedSignals,
 		DataCollected:             def.DataCollected,
 		CloudIntegrationService:   integrationService,
-		ServiceAssets:             ServiceAssets{Dashboards: make([]ServiceDashboard, 0, len(def.Assets.Dashboards))},
+		ServiceAssets:             ServiceAssets{Dashboards: make([]*ServiceDashboard, 0, len(def.Assets.Dashboards))},
 	}
 
-	integrationDashboardsMap := make(map[string]string)
+	integrationDashboardsMap := make(map[string]*IntegrationDashboard)
 	for _, d := range integrationDashboards {
-		integrationDashboardsMap[d.Slug] = d.DashboardID
+		integrationDashboardsMap[d.Slug] = d
 	}
 
 	for _, d := range def.Assets.Dashboards {
-		dashboard := ServiceDashboard{
+		dashboard := &ServiceDashboard{
 			Title:       d.Title,
 			Description: d.Description,
 		}
@@ -202,10 +202,9 @@ func NewService(provider CloudProviderType, def *ServiceDefinition, integrationS
 		if integrationService != nil {
 			slug := CloudIntegrationDashboardSlug(provider, integrationService.Type, d.ID)
 
-			if dashboardIDStr, exists := integrationDashboardsMap[slug]; exists {
-				dashboardUUID, err := valuer.NewUUID(dashboardIDStr)
-				if err == nil && !dashboardUUID.IsZero() {
-					dashboard.ID = &dashboardUUID
+			if integrationDashboard, exists := integrationDashboardsMap[slug]; exists {
+				if integrationDashboard != nil {
+					dashboard.IntegrationDashboard = integrationDashboard
 				}
 			}
 		}
