@@ -36,6 +36,7 @@ import {
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
@@ -133,6 +134,8 @@ export function QueryBuilderProvider({
 	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
+
+	useSaveRecentQuery(stagedQuery);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
 

@@ -25,6 +25,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
+import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 
 import {
 	DASHBOARD_CACHE_TIME,
@@ -282,6 +283,15 @@ function GridCardGraph({
 			},
 		},
 	);
+
+	/*
+	`widget.query` is the dashboard's saved query for this panel — it
+	does not flow through `useQueryBuilder().stagedQuery`, so the
+	provider-level save effect in `providers/QueryBuilder.tsx` doesn't
+	cover this surface. This explicit call ensures dashboard-viewed
+	queries are surfaced in the user's recents.
+	*/
+	useSaveRecentQuery(widget?.query);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 

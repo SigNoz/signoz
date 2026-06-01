@@ -1,3 +1,8 @@
+export const RECENTS_SECTION = { name: 'Recent searches', rank: 1 } as const;
+export const SUGGESTIONS_SECTION = { name: 'Suggestions', rank: 2 } as const;
+
+export const RECENTS_DISPLAY_CAP = 5;
+
 export const queryExamples = [
 	{
 		label: 'Basic Query',
