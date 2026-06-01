@@ -6603,7 +6603,6 @@ components:
         aggregations:
           items:
             $ref: '#/components/schemas/SpantypesSpanAggregation'
-          nullable: true
           type: array
       required:
       - aggregations

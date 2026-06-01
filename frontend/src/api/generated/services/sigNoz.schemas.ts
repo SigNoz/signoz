@@ -8013,9 +8013,9 @@ export interface SpantypesSpanAggregationDTO {
 
 export interface SpantypesPostableTraceAggregationsDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	aggregations: SpantypesSpanAggregationDTO[] | null;
+	aggregations: SpantypesSpanAggregationDTO[];
 }
 
 export interface SpantypesPostableWaterfallDTO {

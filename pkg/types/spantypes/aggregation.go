@@ -54,7 +54,7 @@ func (s SpanAggregationType) isValid() bool {
 
 // PostableTraceAggregations is the request body for the V4 aggregations endpoint.
 type PostableTraceAggregations struct {
-	Aggregations []SpanAggregation `json:"aggregations" required:"true"`
+	Aggregations []SpanAggregation `json:"aggregations" required:"true" nullable:"false"`
 }
 
 func (p *PostableTraceAggregations) Validate() error {
