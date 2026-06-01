@@ -29,8 +29,6 @@ import {
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
-import * as recentQueriesStore from 'lib/recentQueries/store';
-import { normalizeFilterExpression } from 'lib/recentQueries/normalize';
 import { debounce, isNull } from 'lodash-es';
 import {
 	IDetailedError,
@@ -47,8 +45,14 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { queryExamples } from './constants';
-import { combineInitialAndUserExpression } from './utils';
+import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	combineInitialAndUserExpression,
+	getRecentOptions,
+	type RecentsSignal,
+	renderRecentDeleteButton,
+	renderRecentTitleCell,
+} from './utils';
 
 import './QuerySearch.styles.scss';
 
@@ -89,24 +93,6 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
-}
-
-// Maps the legacy `DataSource` enum to the V5 `SignalType` union. The string
-// values match (`'logs'` / `'traces'` / `'metrics'`); narrow with a runtime
-// check rather than blindly casting. Return type is inlined to keep this
-// module's import surface minimal (avoids a transitive dep cycle through
-// the v5 queryRange types).
-function dataSourceToSignal(
-	dataSource: DataSource,
-): 'logs' | 'traces' | 'metrics' | null {
-	if (
-		dataSource === DataSource.LOGS ||
-		dataSource === DataSource.TRACES ||
-		dataSource === DataSource.METRICS
-	) {
-		return dataSource;
-	}
-	return null;
 }
 
 function QuerySearch({
@@ -1269,108 +1255,17 @@ function QuerySearch({
 		};
 	}
 
-	// Whole-expression recent-search completions. Folded into the same
-	// `CompletionResult` as `autoSuggestions` (see `combinedSuggestions` below)
-	// rather than registered as a separate completion source — CodeMirror picks
-	// the source with the rightmost `from`, so a parallel source with
-	// `from: 0` would be silently dropped in favour of the positional one.
-	const recentsSignal = useMemo(() => dataSourceToSignal(dataSource), [dataSource]);
-
-	// Stable section objects so CodeMirror can group options under labelled
-	// headers in the dropdown. `rank` orders the sections — Recent searches
-	// render first (top) so users can scan their own history before falling
-	// through to the larger Suggestions list.
-	const recentsSection = useMemo(
-		() => ({ name: 'Recent searches', rank: 1 }),
-		[],
-	);
-	const suggestionsSection = useMemo(() => ({ name: 'Suggestions', rank: 2 }), []);
-
-	function getRecentOptions(
-		fullDoc: string,
-	): {
-		label: string;
-		type: string;
-		boost: number;
-		section: typeof recentsSection;
-		recentId: string;
-		recentSignal: 'logs' | 'traces' | 'metrics';
-		apply: (
-			view: EditorView,
-			completion: unknown,
-			from: number,
-			to: number,
-		) => void;
-	}[] {
-		// Display gates only on signal. Recents are shown across all panel
-		// types for the same signal so a user can replay a query they built
-		// anywhere.
-		if (!recentsSignal) {
-			return [];
-		}
-
-		const all = recentQueriesStore.list(recentsSignal);
-		// Normalize both sides before substring matching so formatting
-		// variations (leading/trailing whitespace, spaces around operators,
-		// keyword casing) don't accidentally exclude a recent. `attempt != 1`
-		// stored, ` attempt != 1 ` typed → both normalize to `attempt!=1` and
-		// substring-match.
-		const normalizedDoc = normalizeFilterExpression(fullDoc);
-		const seen = new Set<string>();
-		const matches = all
-			.filter((e) => {
-				if (normalizedDoc === '') {
-					return true;
-				}
-				return normalizeFilterExpression(e.filter.expression).includes(
-					normalizedDoc,
-				);
-			})
-			// Dedupe by raw expression in case old (pre-strip) entries with
-			// different ID formats still live in localStorage alongside the
-			// new ones — most-recently-used wins.
-			.filter((e) => {
-				const key = e.filter.expression.toLowerCase().trim();
-				if (seen.has(key)) {
-					return false;
-				}
-				seen.add(key);
-				return true;
-			})
-			.slice(0, 5);
-
-		return matches.map((entry) => ({
-			label: entry.filter.expression,
-			type: 'recent',
-			boost: -50,
-			section: recentsSection,
-			// Custom fields read by the addToOptions delete-button renderer
-			// so it can call store.remove on click.
-			recentId: entry.id,
-			recentSignal: entry.signal,
-			apply: (view: EditorView): void => {
-				// Replace the whole document with the recent's filter
-				// expression. The editor's onChange fires synchronously and
-				// pushes the new expression up to the parent via
-				// `handleSearchChange`, so non-filter fields on the current
-				// builder query stay as-is.
-				view.dispatch({
-					changes: {
-						from: 0,
-						to: view.state.doc.length,
-						insert: entry.filter.expression,
-					},
-					selection: { anchor: entry.filter.expression.length },
-				});
-			},
-		}));
-	}
+	// The `DataSource` enum's string values exactly match the
+	// `RecentsSignal` union, so a cast at this boundary is safe. If
+	// `DataSource` ever gains non-signal values (e.g. a meter source),
+	// add a runtime guard here.
+	const recentsSignal = dataSource as RecentsSignal;
 
 	function combinedSuggestions(
 		context: CompletionContext,
 	): CompletionResult | null {
 		const fullDoc = context.state.doc.toString();
-		const recentOptions = getRecentOptions(fullDoc);
+		const recentOptions = getRecentOptions(recentsSignal, fullDoc);
 		const result = autoSuggestions(context);
 
 		// Tag positional suggestions with the "Suggestions" section so
@@ -1379,7 +1274,7 @@ function QuerySearch({
 		// can always reach any key/value, with or without recents present.
 		const sectionedSuggestions = (result?.options || []).map((opt) => ({
 			...opt,
-			section: suggestionsSection,
+			section: SUGGESTIONS_SECTION,
 		}));
 
 		if (recentOptions.length === 0 && sectionedSuggestions.length === 0) {
@@ -1557,88 +1452,14 @@ function QuerySearch({
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
-							// Inject a delete (×) button into recent-search
-							// rows so users can remove individual entries
-							// without opening any other UI. Non-recent rows
-							// render an empty placeholder.
+							// Inject a native title tooltip + an inline × delete
+							// button into recent-search rows. See utils.ts for
+							// the render implementations. Non-recent rows fall
+							// through to the empty-placeholder branch inside
+							// each renderer.
 							addToOptions: [
-								{
-									// Attach a native `title` tooltip to the row for
-									// long recent-search expressions. The pill cell
-									// truncates with ellipsis (see CSS); the tooltip
-									// reveals the full text on hover. We can't set
-									// attributes on the `<li>` directly from this
-									// render — CodeMirror appends our returned Node
-									// as a cell — so we defer the title-set to a
-									// microtask once the parent linkage is in place.
-									render: (completion): Node => {
-										const cell = document.createElement('span');
-										cell.style.display = 'none';
-										if (completion.type === 'recent') {
-											queueMicrotask(() => {
-												if (cell.parentElement) {
-													cell.parentElement.title = completion.label;
-												}
-											});
-										}
-										return cell;
-									},
-									position: 5,
-								},
-								{
-									render: (completion, _state, view): Node => {
-										if (completion.type !== 'recent') {
-											const empty = document.createElement('span');
-											empty.style.display = 'none';
-											return empty;
-										}
-										const c = completion as typeof completion & {
-											recentId?: string;
-											recentSignal?: 'logs' | 'traces' | 'metrics';
-										};
-										const btn = document.createElement('button');
-										btn.type = 'button';
-										btn.className = 'cm-recent-delete';
-										btn.setAttribute(
-											'aria-label',
-											'Remove from recent searches',
-										);
-										btn.title = 'Remove from recent searches';
-										btn.textContent = '×';
-										// Stop pointerdown / mousedown / click so the
-										// delete doesn't also fire the apply-completion
-										// path. CodeMirror uses pointerdown to commit
-										// the selected option, so we must intercept it.
-										const stop = (e: Event): void => {
-											e.preventDefault();
-											e.stopPropagation();
-										};
-										btn.addEventListener('pointerdown', stop);
-										btn.addEventListener('mousedown', stop);
-										btn.addEventListener('click', (e) => {
-											stop(e);
-											if (!c.recentId || !c.recentSignal) {
-												return;
-											}
-											recentQueriesStore.remove(
-												c.recentId,
-												c.recentSignal,
-											);
-											// The store mutation alone doesn't tell
-											// CodeMirror to re-render the open
-											// dropdown. Re-trigger the completion
-											// source so the deleted row disappears
-											// immediately, and re-focus the editor
-											// so the dropdown stays interactive.
-											if (view) {
-												view.focus();
-												startCompletion(view);
-											}
-										});
-										return btn;
-									},
-									position: 100,
-								},
+								{ render: renderRecentTitleCell, position: 5 },
+								{ render: renderRecentDeleteButton, position: 100 },
 							],
 						}),
 						javascript({ jsx: false, typescript: false }),

@@ -1,10 +1,7 @@
 import type { SignalType } from 'types/api/v5/queryRange';
 
 import { normalizeFilterExpression } from './normalize';
-import type {
-	RecentQueriesStoreShape,
-	RecentQueryEntry,
-} from './types';
+import type { RecentQueriesStoreShape, RecentQueryEntry } from './types';
 
 const STORAGE_KEY_PREFIX = 'qb_recent_v1';
 const STORAGE_VERSION = 1;
@@ -117,7 +114,9 @@ export function save(entry: RecentQueryInput): RecentQueryEntry | null {
 
 	const id = makeId(entry.signal, normalized);
 	const current = getCache(entry.signal);
-	const filtered = current.filter((e) => e.id !== id);
+	const filtered = current.filter(
+		(e) => normalizeFilterExpression(e.filter.expression) !== normalized,
+	);
 
 	const newEntry: RecentQueryEntry = {
 		...entry,
