@@ -44,11 +44,13 @@
 
 .new-widget-container {
 	.resizable-panel-left-container {
+		min-width: 0;
 		overflow-x: hidden;
 		overflow-y: auto;
 	}
 
 	.resizable-panel-right-container {
+		flex-shrink: 0;
 		overflow-y: auto !important;
 		min-width: 350px;
 
@@ -65,6 +67,9 @@
 	}
 
 	.widget-resizable-panel-group {
+		min-width: 0;
+		width: 100%;
+
 		.widget-resizable-handle {
 			height: 100vh;
 			background: color-mix(in srgb, var(--l3-background) 20%, transparent);

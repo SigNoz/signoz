@@ -24,6 +24,7 @@ function WidgetGraph({
 	isLoadingPanelData,
 	enableDrillDown = false,
 	isCancelled = false,
+	onColumnWidthsChange,
 }: WidgetGraphContainerProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
@@ -64,6 +65,7 @@ function WidgetGraph({
 					setRequestData={setRequestData}
 					selectedWidget={selectedWidget}
 					enableDrillDown={enableDrillDown}
+					onColumnWidthsChange={onColumnWidthsChange}
 				/>
 			)}
 		</Container>

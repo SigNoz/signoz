@@ -32,6 +32,7 @@ function LeftContainer({
 	enableDrillDown = false,
 	dashboardData,
 	isNewPanel = false,
+	onColumnWidthsChange,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	const queryClient = useQueryClient();
@@ -87,6 +88,7 @@ function LeftContainer({
 				isLoadingPanelData={isLoadingPanelData}
 				enableDrillDown={enableDrillDown}
 				isCancelled={isCancelled}
+				onColumnWidthsChange={onColumnWidthsChange}
 			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection
