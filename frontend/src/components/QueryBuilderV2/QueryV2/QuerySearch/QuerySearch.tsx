@@ -51,7 +51,6 @@ import {
 	getRecentOptions,
 	type RecentsSignal,
 	renderRecentDeleteButton,
-	renderRecentTitleCell,
 } from './utils';
 
 import './QuerySearch.styles.scss';
@@ -1440,7 +1439,6 @@ function QuerySearch({
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
 							addToOptions: [
-								{ render: renderRecentTitleCell, position: 5 },
 								{ render: renderRecentDeleteButton, position: 100 },
 							],
 						}),

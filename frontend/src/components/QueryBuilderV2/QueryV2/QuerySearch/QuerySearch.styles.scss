@@ -161,8 +161,6 @@ $max-recents-shown: 5;
 				}
 
 				// The first section header doesn't need a divider above it.
-				completion-section:first-child,
-				> li:first-child + completion-section,
 				completion-section:first-of-type {
 					border-top: 0;
 				}
@@ -215,7 +213,7 @@ $max-recents-shown: 5;
 					padding: 6px 12px !important;
 					width: calc(100% - 16px) !important;
 					max-width: calc(100% - 16px) !important;
-					background: #23262e !important;
+					background: var(--bg-ink-200) !important;
 					color: var(--text-vanilla-400) !important;
 					border: 1px solid var(--l1-border) !important;
 					border-radius: 6px !important;
@@ -233,7 +231,7 @@ $max-recents-shown: 5;
 					&[aria-selected='true'] {
 						background: color-mix(
 							in srgb,
-							#23262e 80%,
+							var(--bg-ink-200) 80%,
 							var(--text-vanilla-400)
 						) !important;
 						color: var(--text-vanilla-400) !important;

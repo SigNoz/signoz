@@ -90,19 +90,6 @@ export function getRecentOptions(
 	}));
 }
 
-export function renderRecentTitleCell(completion: Completion): Node {
-	const cell = document.createElement('span');
-	cell.style.display = 'none';
-	if (completion.type === 'recent') {
-		queueMicrotask(() => {
-			if (cell.parentElement) {
-				cell.parentElement.title = completion.label;
-			}
-		});
-	}
-	return cell;
-}
-
 export function renderRecentDeleteButton(
 	completion: Completion,
 	_state: unknown,
@@ -125,6 +112,11 @@ export function renderRecentDeleteButton(
 	btn.setAttribute('aria-label', 'Remove from recent searches');
 	btn.title = 'Remove from recent searches';
 	btn.textContent = '×';
+	queueMicrotask(() => {
+		if (btn.parentElement) {
+			btn.parentElement.title = completion.label;
+		}
+	});
 
 	const stop = (e: Event): void => {
 		e.preventDefault();
