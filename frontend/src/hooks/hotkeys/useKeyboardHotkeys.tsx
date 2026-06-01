@@ -36,6 +36,9 @@ const KeyboardHotkeysContext = createContext<KeyboardHotkeysContextReturnValue>(
 
 const IGNORE_INPUTS = ['input', 'textarea', 'cm-editor']; // Inputs in which hotkey events will be ignored
 
+/** Fire shortcut after keys held this long without releasing */
+export const HOLD_FIRE_DELAY_MS = 200;
+
 export function useKeyboardHotkeys(): KeyboardHotkeysContextReturnValue {
 	const context = useContext(KeyboardHotkeysContext);
 	if (!context) {
@@ -63,6 +66,19 @@ function normalizeComboString(combo: string): string {
 	return normalizeChord(new Set(combo.split('+')));
 }
 
+/** Sync modifier flags from the event into the pressed-keys set. */
+function syncModifiers(event: KeyboardEvent, keys: Set<string>): void {
+	if (event.shiftKey) {
+		keys.add('shift');
+	}
+	if (event.metaKey || event.ctrlKey) {
+		keys.add('meta');
+	}
+	if (event.altKey) {
+		keys.add('alt');
+	}
+}
+
 export function KeyboardHotkeysProvider({
 	children,
 }: {
@@ -78,18 +94,29 @@ export function KeyboardHotkeysProvider({
 	// Tracks whether user extended the combo
 	const wasExtended = useRef(false);
 
-	const handleKeyDown = (event: KeyboardEvent): void => {
-		if (event.repeat) {
-			return;
-		}
+	const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+	const clearHoldTimer = (): void => {
+		if (holdTimerRef.current !== null) {
+			clearTimeout(holdTimerRef.current);
+			holdTimerRef.current = null;
+		}
+	};
+
+	/** Returns true when the event should be ignored (input fields, code editors, repeats). */
+	function shouldIgnoreKeyDown(event: KeyboardEvent): boolean {
+		if (event.repeat) {
+			return true;
+		}
 		const target = event.target as HTMLElement;
-		const isCodeMirrorEditor =
-			(target as HTMLElement).closest('.cm-editor') !== null;
-		if (
-			IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase()) ||
-			isCodeMirrorEditor
-		) {
+		if (target.closest?.('.cm-editor')) {
+			return true;
+		}
+		return IGNORE_INPUTS.includes(target.tagName?.toLowerCase());
+	}
+
+	const handleKeyDown = (event: KeyboardEvent): void => {
+		if (shouldIgnoreKeyDown(event)) {
 			return;
 		}
 
@@ -104,16 +131,7 @@ export function KeyboardHotkeysProvider({
 		}
 
 		pressedKeys.current.add(key);
-
-		if (event.shiftKey) {
-			pressedKeys.current.add('shift');
-		}
-		if (event.metaKey || event.ctrlKey) {
-			pressedKeys.current.add('meta');
-		}
-		if (event.altKey) {
-			pressedKeys.current.add('alt');
-		}
+		syncModifiers(event, pressedKeys.current);
 
 		const combo = normalizeChord(pressedKeys.current);
 
@@ -122,6 +140,19 @@ export function KeyboardHotkeysProvider({
 			event.stopPropagation();
 			pendingCombo.current = combo;
 			wasExtended.current = false;
+
+			clearHoldTimer();
+			holdTimerRef.current = setTimeout(() => {
+				if (pendingCombo.current === combo && !wasExtended.current) {
+					try {
+						shortcuts.current[combo]?.();
+					} catch (error) {
+						console.error('Error executing hotkey callback:', error);
+					}
+					// Mark as fired so keyup doesn't double-fire
+					pendingCombo.current = null;
+				}
+			}, HOLD_FIRE_DELAY_MS);
 		}
 	};
 
@@ -142,6 +173,8 @@ export function KeyboardHotkeysProvider({
 		if (!event.altKey) {
 			pressedKeys.current.delete('alt');
 		}
+
+		clearHoldTimer();
 
 		if (!pendingCombo.current) {
 			return;
@@ -169,6 +202,7 @@ export function KeyboardHotkeysProvider({
 			pressedKeys.current.clear();
 			pendingCombo.current = null;
 			wasExtended.current = false;
+			clearHoldTimer();
 		};
 
 		window.addEventListener('blur', reset);
@@ -186,6 +220,7 @@ export function KeyboardHotkeysProvider({
 			pressedKeys.current.clear();
 			pendingCombo.current = null;
 			wasExtended.current = false;
+			clearHoldTimer();
 		}
 	}, [cmdKOpen]);
 
