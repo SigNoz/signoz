@@ -15,7 +15,6 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -94,8 +93,6 @@ function TimeSeriesViewContainer({
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TIME_SERIES,
 		},
 	);
-
-	useSaveRecentQuery(stagedQuery);
 
 	useEffect(() => {
 		if (data?.payload) {

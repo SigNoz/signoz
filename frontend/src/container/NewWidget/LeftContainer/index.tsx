@@ -7,7 +7,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -64,8 +63,6 @@ function LeftContainer({
 		queryKey: queryRangeKey,
 		keepPreviousData: true,
 	});
-
-	useSaveRecentQuery(stagedQuery);
 
 	useEffect(() => {
 		if (queryResponse.isFetching) {

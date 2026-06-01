@@ -25,7 +25,6 @@ import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -69,8 +68,6 @@ function Summary(): JSX.Element {
 
 	const { currentQuery, stagedQuery, redirectWithQueryBuilderData } =
 		useQueryBuilder();
-
-	useSaveRecentQuery(stagedQuery);
 
 	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
 
