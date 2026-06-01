@@ -8,16 +8,14 @@ import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
 import type { K8sBaseListEmptyStateContext } from './K8sBaseList';
+import MissingMetricsContent from './MissingMetricsContent';
 
 import styles from './K8sEmptyState.module.scss';
 
-export interface K8sListResponseMetadata {
-	sentAnyHostMetricsData?: boolean;
-	isSendingK8SAgentMetrics?: boolean;
-	endTimeBeforeRetention?: boolean;
-}
-
 type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
+
+const K8S_METRICS_DOCS_URL =
+	'https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/';
 
 const handleContactSupport = (isCloudUser: boolean): void => {
 	if (isCloudUser) {
@@ -31,7 +29,8 @@ export function K8sEmptyState({
 	isError,
 	error,
 	isLoading,
-	rawData,
+	missingMetrics,
+	endTimeBeforeRetention,
 }: K8sEmptyStateProps): JSX.Element | null {
 	const { isCloudUser } = useGetTenantLicense();
 
@@ -70,47 +69,7 @@ export function K8sEmptyState({
 		);
 	}
 
-	const metadata = rawData as K8sListResponseMetadata | undefined;
-
-	if (metadata?.sentAnyHostMetricsData === false) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.content}>
-					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
-					<div className={styles.noDataMessage}>
-						<h5 className={styles.title}>No host metrics data received yet</h5>
-						<span className={styles.message}>
-							Please refer to{' '}
-							<a
-								href="https://signoz.io/docs/userguide/hostmetrics/"
-								target="_blank"
-								rel="noreferrer"
-							>
-								our documentation
-							</a>{' '}
-							to learn how to send host metrics.
-						</span>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
-	if (metadata?.isSendingK8SAgentMetrics) {
-		return (
-			<div className={styles.container}>
-				<div className={styles.content}>
-					<img className={styles.eyesEmoji} src={eyesEmojiUrl} alt="eyes emoji" />
-					<span className={styles.message}>
-						To see K8s metrics, upgrade to the latest version of SigNoz k8s-infra
-						chart. Please contact support if you need help.
-					</span>
-				</div>
-			</div>
-		);
-	}
-
-	if (metadata?.endTimeBeforeRetention) {
+	if (endTimeBeforeRetention) {
 		return (
 			<div className={styles.container}>
 				<div className={styles.content}>
@@ -126,6 +85,15 @@ export function K8sEmptyState({
 					</div>
 				</div>
 			</div>
+		);
+	}
+
+	if (missingMetrics && missingMetrics.length > 0) {
+		return (
+			<MissingMetricsContent
+				missingMetrics={missingMetrics}
+				docsUrl={K8S_METRICS_DOCS_URL}
+			/>
 		);
 	}
 
