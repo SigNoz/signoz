@@ -15,6 +15,7 @@ import (
 )
 
 func TestTraceOperatorStatementBuilder(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name           string
 		requestType    qbtypes.RequestType
@@ -466,7 +467,7 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
@@ -519,6 +520,7 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 }
 
 func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name           string
 		operator       qbtypes.QueryBuilderTraceOperator
@@ -582,7 +584,7 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 

@@ -82,13 +82,6 @@ func (b *traceQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 
-	keySelectors := getKeySelectors(query)
-
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
-	if err != nil {
-		return nil, err
-	}
-
 	/*
 		Adding a tech debt note here:
 		This piece of code is a hot fix and should be removed once we close issue: engineering-pod/issues/3622
@@ -123,6 +116,14 @@ func (b *traceQueryStatementBuilder) Build(
 	/*
 		-------------------------------- End of tech debt ----------------------------
 	*/
+
+	// since we are modifying the selectFields, they might include keys which need evolutions so we should get keys after that.
+	keySelectors := getKeySelectors(query)
+
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
 
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
