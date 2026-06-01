@@ -80,18 +80,23 @@ export function ColumnUnitSelector(
 				{aggregationQueries.map(({ value, label }) => {
 					const baseQueryName = value.split('.')[0];
 					return (
-						<YAxisUnitSelectorV2
-							value={columnUnits[value] || ''}
-							onSelect={(unitValue: string): void =>
-								handleColumnUnitSelect(value, unitValue)
-							}
-							fieldLabel={label}
+						<div
 							key={value}
-							data-testid={props['data-testid']}
-							selectedQueryName={baseQueryName}
-							// Update the column unit value automatically only in create mode
-							shouldUpdateYAxisUnit={isNewDashboard}
-						/>
+							className="column-unit-row"
+							data-testid={`column-unit-row-${baseQueryName}`}
+						>
+							<YAxisUnitSelectorV2
+								value={columnUnits[value] || ''}
+								onSelect={(unitValue: string): void =>
+									handleColumnUnitSelect(value, unitValue)
+								}
+								fieldLabel={label}
+								data-testid={props['data-testid']}
+								selectedQueryName={baseQueryName}
+								// Update the column unit value automatically only in create mode
+								shouldUpdateYAxisUnit={isNewDashboard}
+							/>
+						</div>
 					);
 				})}
 			</div>

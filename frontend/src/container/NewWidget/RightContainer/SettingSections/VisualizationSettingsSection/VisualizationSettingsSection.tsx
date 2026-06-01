@@ -78,7 +78,10 @@ export default function VisualizationSettingsSection({
 				>
 					{graphTypes.map((item) => (
 						<Option key={item.name} value={item.name}>
-							<div className="select-option">
+							<div
+								className="select-option"
+								data-testid={`panel-type-option-${item.name}`}
+							>
 								<div className="icon">{item.icon}</div>
 								<Typography.Text className="display">{item.display}</Typography.Text>
 							</div>
