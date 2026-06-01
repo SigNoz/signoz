@@ -56,6 +56,9 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Use default order by
+	queryRangeRequest.UseDefaultOrderBy()
+
 	orgID, err := valuer.NewUUID(claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
