@@ -35,14 +35,14 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 					icon: (
 						<img src={`${javaPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
-					url: 'https://signoz.io/docs/instrumentation/java/',
+					url: 'https://signoz.io/docs/instrumentation/java/opentelemetry-java/',
 				},
 				{
 					title: 'Instrument your Python Application',
 					icon: (
 						<img src={`${pythonPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
-					url: 'https://signoz.io/docs/instrumentation/python/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-python/',
 				},
 				{
 					title: 'Instrument your JS Application',
@@ -52,12 +52,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 							alt=""
 						/>
 					),
-					url: 'https://signoz.io/docs/instrumentation/javascript/',
+					url: 'https://signoz.io/docs/instrumentation/javascript/overview/',
 				},
 				{
 					title: 'Instrument your Go Application',
 					icon: <img src={`${goPngUrl}?currentVersion=${currentVersion}`} alt="" />,
-					url: 'https://signoz.io/docs/instrumentation/golang/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-golang/',
 				},
 				{
 					title: 'Instrument your .NET Application',
@@ -67,33 +67,33 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 							alt=""
 						/>
 					),
-					url: 'https://signoz.io/docs/instrumentation/dotnet/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-dotnet/',
 				},
 				{
 					title: 'Instrument your PHP Application',
 					icon: <img src={`${phpPngUrl}?currentVersion=${currentVersion}`} alt="" />,
-					url: 'https://signoz.io/docs/instrumentation/php/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-php/',
 				},
 				{
 					title: 'Instrument your Rails Application',
 					icon: (
 						<img src={`${railsPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
-					url: 'https://signoz.io/docs/instrumentation/ruby-on-rails/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-ruby/',
 				},
 				{
 					title: 'Instrument your Rust Application',
 					icon: (
 						<img src={`${rustPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
-					url: 'https://signoz.io/docs/instrumentation/rust/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-rust/',
 				},
 				{
 					title: 'Instrument your Elixir Application',
 					icon: (
 						<img src={`${elixirPngUrl}?currentVersion=${currentVersion}`} alt="" />
 					),
-					url: 'https://signoz.io/docs/instrumentation/elixir/',
+					url: 'https://signoz.io/docs/instrumentation/opentelemetry-elixir/',
 				},
 			],
 		},
@@ -103,12 +103,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Send metrics to SigNoz',
 					icon: <ChartBar size="lg" />,
-					url: 'https://signoz.io/docs/userguide/send-metrics/',
+					url: 'https://signoz.io/docs/metrics-management/send-metrics/',
 				},
 				{
 					title: 'Create and Manage Dashboards',
 					icon: <LayoutDashboard size="lg" />,
-					url: 'https://signoz.io/docs/userguide/manage-dashboards-and-panels/',
+					url: 'https://signoz.io/docs/userguide/manage-dashboards/',
 				},
 			],
 		},
@@ -118,7 +118,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Send your logs to SigNoz',
 					icon: <AlignLeft size="lg" />,
-					url: 'https://signoz.io/docs/userguide/logs/',
+					url: 'https://signoz.io/docs/userguide/logs_query_builder/',
 				},
 				{
 					title: 'Existing log collectors to SigNoz',
@@ -133,12 +133,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Create alert rules on metrics',
 					icon: <BellRing size="lg" />,
-					url: 'https://signoz.io/docs/userguide/alerts-management/',
+					url: 'https://signoz.io/docs/alerts/',
 				},
 				{
 					title: 'Configure alert notification channels',
 					icon: <Volume2 size="lg" />,
-					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
+					url: 'https://signoz.io/docs/setup-alerts-notification/',
 				},
 			],
 		},
