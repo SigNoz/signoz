@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>cert-manager</title>
+  <defs>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#eff6ff" />
+  <path
+    d="M64 16 100 30v27c0 25.7-14.8 42.9-36 55-21.2-12.1-36-29.3-36-55V30L64 16Z"
+    fill="url(#shield)"
+  />
+  <path
+    d="M47 63.5 58.5 75 82 51.5"
+    fill="none"
+    stroke="#f8fafc"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="10"
+  />
+</svg>
