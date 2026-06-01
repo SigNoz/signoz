@@ -36,7 +36,11 @@ func (j *JSONFieldMapper) ExistExprFor(key *telemetrytypes.TelemetryFieldKey, co
 		return "", err
 	}
 	if node.IsTerminal {
-		return fmt.Sprintf("dynamicElement(%s, '%s') IS NOT NULL", node.FieldPath(), node.TerminalConfig.ElemType.StringValue()), nil
+		dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
+		if node.TerminalConfig.ElemType.IsArray {
+			return fmt.Sprintf("length(%s) > 0", dynamicExpr), nil
+		}
+		return fmt.Sprintf("%s IS NOT NULL", dynamicExpr), nil
 	}
 	arrayConcatExpr, err := j.buildArrayConcat(node)
 	if err != nil {

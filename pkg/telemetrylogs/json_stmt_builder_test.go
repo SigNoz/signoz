@@ -33,7 +33,7 @@ func (t TestExpected) GetQuery() string {
 }
 
 func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, 0)
 
 	cases := []struct {
 		name                string
@@ -109,18 +109,30 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
 	}
 }
 
-/* Promoted path tests commented out — Materialized now means type hint (direct sub-column),
-   not a body_promoted.* column. These tests assumed the old coalesce(body_promoted.x, body_v2.x) path.
-
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	statementBuilder := buildJSONTestStatementBuilder(t, "user.age", "user.name")
+	const promotionMs = uint64(1747960000000)
+
+	var (
+		beforePromotedStart = uint64(1747947419000)
+		beforePromotedEnd   = promotionMs - 1
+
+		afterPromotedStart = promotionMs + 1
+		afterPromotedEnd   = uint64(1747983448000)
+
+		inBetweenStart = uint64(1747947419000)
+		inBetweenEnd   = uint64(1747983448000)
+	)
+
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, promotionMs, "user.age", "user.name")
 
 	cases := []struct {
-		name                string
-		requestType         qbtypes.RequestType
-		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-		expected            qbtypes.Statement
-		expectedErrContains string
+		name           string
+		requestType    qbtypes.RequestType
+		query          qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		beforePromoted *qbtypes.Statement
+		afterPromoted  *qbtypes.Statement
+		inBetween      *qbtypes.Statement
+		expectedErr    string
 	}{
 		{
 			name:        "Two simple paths",
@@ -128,50 +140,66 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal:       telemetrytypes.SignalLogs,
 				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Aggregations: []qbtypes.LogAggregation{
-					{
-						Expression: "count()",
-					},
-				},
-				Limit: 10,
+				Aggregations: []qbtypes.LogAggregation{{Expression: "count()"}},
 				GroupBy: []qbtypes.GroupByKey{
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "user.age",
-						},
-					},
-					{
-						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-							Name: "user.name",
-						},
-					},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "user.age"}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "user.name"}},
 				},
 			},
-			expected: qbtypes.Statement{
-				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			// Only body_v2 is active — group-by expressions reference body_v2 exclusively.
+			beforePromoted: &qbtypes.Statement{
+				Query: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_v2.`user.age`, 'Int64')), (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.age`, 'String'), NULL)) AS `user.age`, toString(multiIf((dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.name`, 'String'), NULL)) AS `user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `user.age`, `user.name`",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747959999999000000", uint64(1747959999)},
+			},
+			// Only body_promoted is active — group-by expressions reference body_promoted exclusively.
+			afterPromoted: &qbtypes.Statement{
+				Query: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_promoted.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_promoted.`user.age`, 'Int64')), (dynamicElement(body_promoted.`user.age`, 'String') IS NOT NULL), dynamicElement(body_promoted.`user.age`, 'String'), NULL)) AS `user.age`, toString(multiIf((dynamicElement(body_promoted.`user.name`, 'String') IS NOT NULL), dynamicElement(body_promoted.`user.name`, 'String'), NULL)) AS `user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `user.age`, `user.name`",
+				Args:  []any{"1747960000001000000", uint64(1747958200), "1747983448000000000", uint64(1747983448)},
+			},
+			// Both columns active — group-by uses multiIf(promoted IS NOT NULL, promoted, v2 IS NOT NULL, v2, NULL).
+			inBetween: &qbtypes.Statement{
+				Query: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(((dynamicElement(body_promoted.`user.age`, 'Int64') IS NOT NULL) OR (dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL)), toString(multiIf(dynamicElement(body_promoted.`user.age`, 'Int64') IS NOT NULL, dynamicElement(body_promoted.`user.age`, 'Int64'), dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL, dynamicElement(body_v2.`user.age`, 'Int64'), NULL)), ((dynamicElement(body_promoted.`user.age`, 'String') IS NOT NULL) OR (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL)), multiIf(dynamicElement(body_promoted.`user.age`, 'String') IS NOT NULL, dynamicElement(body_promoted.`user.age`, 'String'), dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL, dynamicElement(body_v2.`user.age`, 'String'), NULL), NULL)) AS `user.age`, toString(multiIf(((dynamicElement(body_promoted.`user.name`, 'String') IS NOT NULL) OR (dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL)), multiIf(dynamicElement(body_promoted.`user.name`, 'String') IS NOT NULL, dynamicElement(body_promoted.`user.name`, 'String'), dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL, dynamicElement(body_v2.`user.name`, 'String'), NULL), NULL)) AS `user.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `user.age`, `user.name`",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
 
+	type scenario struct {
+		name  string
+		start uint64
+		end   uint64
+		exp   *qbtypes.Statement
+	}
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
-			if c.expectedErrContains != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), c.expectedErrContains)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, q.Query)
-				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.Warnings, q.Warnings)
+			for _, s := range []scenario{
+				{"before_promoted", beforePromotedStart, beforePromotedEnd, c.beforePromoted},
+				{"after_promoted", afterPromotedStart, afterPromotedEnd, c.afterPromoted},
+				{"in_between", inBetweenStart, inBetweenEnd, c.inBetween},
+			} {
+				if s.exp == nil {
+					continue
+				}
+				s := s
+				t.Run(s.name, func(t *testing.T) {
+					q, err := statementBuilder.Build(context.Background(), s.start, s.end, c.requestType, c.query, nil)
+					if c.expectedErr != "" {
+						require.Error(t, err)
+						require.Contains(t, err.Error(), c.expectedErr)
+						return
+					}
+					require.NoError(t, err)
+					require.Equal(t, s.exp.Query, q.Query)
+					require.Equal(t, s.exp.Args, q.Args)
+				})
 			}
 		})
 	}
 }
-*/
 
 func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, 0)
 	cases := []struct {
 		name        string
 		filter      string
@@ -328,13 +356,38 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	// promotionMs is when body_promoted column was introduced — sits in the middle of the
+	// existing test range so the three scenarios produce meaningfully different queries.
+	const promotionMs = uint64(1747960000000)
+
+	// Three non-overlapping (or spanning) time windows used by the runner below.
+	// beforePromoted : entirely before the promotion  → body_v2 only
+	// afterPromoted  : entirely after  the promotion  → body_promoted only
+	// inBetween      : spans the promotion            → both columns relevant
+	var (
+		beforePromotedStart = uint64(1747947419000)
+		beforePromotedEnd   = promotionMs - 1
+
+		afterPromotedStart = promotionMs + 1
+		afterPromotedEnd   = uint64(1747983448000)
+
+		inBetweenStart = uint64(1747947419000)
+		inBetweenEnd   = uint64(1747983448000)
+	)
+
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, promotionMs,
+		"tags",
+		"education",
+	)
+
 	cases := []struct {
-		name        string
-		requestType qbtypes.RequestType
-		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-		expected    TestExpected
-		expectedErr error
+		name           string
+		requestType    qbtypes.RequestType
+		query          qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		beforePromoted *TestExpected
+		afterPromoted  *TestExpected
+		inBetween      *TestExpected
+		expectedErr    error
 	}{
 		{
 			name:        "Has Array promoted uses body fallback",
@@ -344,10 +397,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "has(body.tags, 'production')"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "has(multiIf(length(dynamicElement(body_promoted.`tags`, 'Array(Nullable(String))')) > 0, dynamicElement(body_promoted.`tags`, 'Array(Nullable(String))'), length(dynamicElement(body_v2.`tags`, 'Array(Nullable(String))')) > 0, dynamicElement(body_v2.`tags`, 'Array(Nullable(String))'), NULL), ?)",
+				Args:        []any{"production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Key inside Array(JSON) exists",
@@ -357,10 +410,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].name Exists"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "((arrayExists(`body_promoted.education`-> dynamicElement(`body_promoted.education`.`name`, 'String') IS NOT NULL, dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`name`, 'String') IS NOT NULL, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Key inside Array(JSON) -> Array(Dynamic) + Array(JSON) exists",
@@ -370,10 +423,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].awards[].name Exists"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "((arrayExists(`body_promoted.education`-> (arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`name`, 'String') IS NOT NULL, dynamicElement(`body_promoted.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`name`, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Key inside Array(JSON) -> Array(Dynamic) + Array(JSON) = 'Iron Award'",
@@ -383,10 +436,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].awards[].name = 'Iron Award'"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "(((arrayExists(`body_promoted.education`-> (arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`name`, 'String') = ?, dynamicElement(`body_promoted.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`name`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') = ?, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education'))",
+				Args:        []any{"Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Key inside Array(JSON) contains value",
@@ -396,11 +449,11 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].parameters Contains 1.65"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args:     []any{uint64(1747945619), uint64(1747983448), "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
+			inBetween: &TestExpected{
+				WhereClause: "((((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')) OR (((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')))",
+				Args:        []any{"%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Key inside Array(JSON) contains String value",
@@ -410,10 +463,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].name Contains 'IIT'"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "(((arrayExists(`body_promoted.education`-> LOWER(dynamicElement(`body_promoted.education`.`name`, 'String')) LIKE LOWER(?), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> LOWER(dynamicElement(`body_v2.education`.`name`, 'String')) LIKE LOWER(?), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education'))",
+				Args:        []any{"%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Dynamic array contains boolean",
@@ -423,11 +476,11 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].parameters Contains true"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args:     []any{uint64(1747945619), uint64(1747983448), "%true%", true, "%true%", true, "%true%", true, "%true%", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
+			inBetween: &TestExpected{
+				WhereClause: "((((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> x = ?, dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> x = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')) OR (((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Bool') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Bool') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')))",
+				Args:        []any{"%true%", true, "%true%", true, "%true%", true, "%true%", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Dynamic array contains String",
@@ -437,11 +490,11 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].parameters Contains 'passed'"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args:     []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
+			inBetween: &TestExpected{
+				WhereClause: "((((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toString(x) = ?, dynamicElement(`body_promoted.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')) OR (((arrayExists(`body_promoted.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_promoted.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education')))",
+				Args:        []any{"%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Array(Dynamic) + Array(JSON) both can contain a value",
@@ -451,10 +504,10 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].awards[].type = 'sports'"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "(((arrayExists(`body_promoted.education`-> (arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`type`, 'String') = ?, dynamicElement(`body_promoted.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_promoted.education[].awards`-> dynamicElement(`body_promoted.education[].awards`.`type`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`type`, 'String') = ?, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`type`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education'))",
+				Args:        []any{"sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
 		{
 			name:        "Multi nested Array(Dynamic) + Array(JSON) both can contain a value",
@@ -464,33 +517,50 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body.education[].awards[].participated[].team[].branch Contains 'Civil'"},
 				Limit:  10,
 			},
-			expected: TestExpected{
-				Args: []any{"%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			inBetween: &TestExpected{
+				WhereClause: "(((arrayExists(`body_promoted.education`-> (arrayExists(`body_promoted.education[].awards`-> (arrayExists(`body_promoted.education[].awards[].participated`-> arrayExists(`body_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_promoted.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_promoted.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=4))')), dynamicElement(`body_promoted.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=16))')) OR arrayExists(`body_promoted.education[].awards[].participated`-> arrayExists(`body_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_promoted.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_promoted.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_promoted.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')) OR arrayExists(`body_promoted.education[].awards`-> (arrayExists(`body_promoted.education[].awards[].participated`-> arrayExists(`body_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_promoted.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_promoted.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_promoted.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_promoted.education[].awards[].participated`-> arrayExists(`body_promoted.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_promoted.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_promoted.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_promoted.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_promoted.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))'))) OR (arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AND has(JSONAllPaths(body_v2), 'education'))",
+				Args:        []any{"%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
-			expectedErr: nil,
 		},
+	}
+
+	type scenario struct {
+		name  string
+		start uint64
+		end   uint64
+		exp   *TestExpected
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
-			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
-
-			if c.expectedErr != nil {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), c.expectedErr.Error())
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, c.expected.GetQuery(), q.Query)
-				require.Equal(t, c.expected.Args, q.Args)
-				require.Equal(t, c.expected.Warnings, q.Warnings)
+			for _, s := range []scenario{
+				{"before_promoted", beforePromotedStart, beforePromotedEnd, c.beforePromoted},
+				{"after_promoted", afterPromotedStart, afterPromotedEnd, c.afterPromoted},
+				{"in_between", inBetweenStart, inBetweenEnd, c.inBetween},
+			} {
+				if s.exp == nil {
+					continue
+				}
+				s := s
+				t.Run(s.name, func(t *testing.T) {
+					q, err := statementBuilder.Build(context.Background(), s.start, s.end, c.requestType, c.query, nil)
+					if c.expectedErr != nil {
+						require.Error(t, err)
+						require.Contains(t, err.Error(), c.expectedErr.Error())
+						return
+					}
+					require.NoError(t, err)
+					require.Equal(t, s.exp.GetQuery(), q.Query)
+					require.Equal(t, s.exp.Args, q.Args)
+					require.Equal(t, s.exp.Warnings, q.Warnings)
+				})
 			}
 		})
 	}
 }
 
 func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, 0)
 	cases := []struct {
 		name        string
 		filter      string
@@ -795,7 +865,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, true)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, true, 0)
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -914,7 +984,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_SelectField(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, 0)
 
 	cases := []struct {
 		name                string
@@ -1002,7 +1072,7 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_OrderBy(t *testing.T) {
-	statementBuilder, _ := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, _ := buildJSONTestStatementBuilder(t, false, 0)
 
 	cases := []struct {
 		name                string
@@ -1079,7 +1149,7 @@ func TestJSONStmtBuilder_OrderBy(t *testing.T) {
 }
 
 func TestResourceAggrAndGroupBy_WithJSONEnabled(t *testing.T) {
-	statementBuilder, metadataStore := buildJSONTestStatementBuilder(t, false)
+	statementBuilder, metadataStore := buildJSONTestStatementBuilder(t, false, 0)
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keysMap := buildCompleteFieldKeyMap(releaseTime)
 	for _, keys := range keysMap {
@@ -1146,12 +1216,34 @@ func buildTestTelemetryMetadataStore(_ *testing.T, addIndexes bool, promotionMs 
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
 
+	baseEvolutionsForKey := []*telemetrytypes.EvolutionEntry{
+		// base column — present from epoch; required anchor for selectEvolutionsForColumns
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   LogsV2BodyColumn,
+			ColumnType:   "String",
+			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0).UTC(),
+			Version:      0,
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   LogsV2BodyV2Column,
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextBody,
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0).UTC(),
+			Version:      1,
+		},
+	}
 	// Pre-build per-path evolutions for the promoted subset.
 	promotionTime := time.UnixMilli(int64(promotionMs)).UTC()
 	evolutionsFor := make(map[string][]*telemetrytypes.EvolutionEntry, len(promotedPaths))
 	for _, p := range promotedPaths {
-		evolutionsFor[p] = []*telemetrytypes.EvolutionEntry{
-			{
+		evolutionsFor[p] = append(baseEvolutionsForKey,
+			// promoted column — introduced at promotionTime
+			&telemetrytypes.EvolutionEntry{
 				Signal:       telemetrytypes.SignalLogs,
 				ColumnName:   LogsV2BodyPromotedColumn,
 				ColumnType:   "JSON()",
@@ -1160,7 +1252,7 @@ func buildTestTelemetryMetadataStore(_ *testing.T, addIndexes bool, promotionMs 
 				ReleaseTime:  promotionTime,
 				Version:      2,
 			},
-		}
+		)
 	}
 
 	for path, fieldDataTypes := range types {
@@ -1187,16 +1279,25 @@ func buildTestTelemetryMetadataStore(_ *testing.T, addIndexes bool, promotionMs 
 				}
 			}
 
+			// "message" maps to body_v2.message sub-column, not body_v2 itself.
+			// Assigning body_v2 evolutions to it would cause selectEvolutionsForColumns
+			// to fail ("evolution column body_v2 not found in [body_v2.message]").
+			if path == messageSubField {
+				mockMetadataStore.SetKey(key)
+				continue
+			}
+
 			if evolutions, ok := evolutionsFor[key.ArrayParentPaths()[0]]; ok {
 				key.Materialized = true
 				key.Evolutions = evolutions
+			} else {
+				key.Evolutions = baseEvolutionsForKey
 			}
 
 			key.PlanBuilder = telemetrytypes.NewFieldPlanBuilder(key, telemetrytypes.JSONColumnMetadata{
 				BaseColumn:     LogsV2BodyV2Column,
 				PromotedColumn: LogsV2BodyPromotedColumn,
 			}, types)
-			require.NoError(t, err)
 
 			mockMetadataStore.SetKey(key)
 		}
@@ -1204,7 +1305,6 @@ func buildTestTelemetryMetadataStore(_ *testing.T, addIndexes bool, promotionMs 
 
 	return mockMetadataStore
 }
-
 
 func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool, promotionMs uint64, promotedPaths ...string) (*logQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
 	t.Helper()
