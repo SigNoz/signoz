@@ -7,6 +7,7 @@ import { Form, Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
+import { verifyResetPasswordToken } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
@@ -37,13 +38,31 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const token = params.get('token');
 	const { notifications } = useNotifications();
 
+	const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+
 	const [form] = Form.useForm<FormValues>();
+
 	useEffect(() => {
 		if (!token) {
 			Logout();
 			history.push(ROUTES.LOGIN);
+			return;
 		}
-	}, [token]);
+
+		// Validate the token before showing the form. If the token is invalid,
+		// expired, or already used, redirect to login with an error message so
+		// the user doesn't waste time filling out a form that will fail.
+		verifyResetPasswordToken({ token })
+			.then(() => setTokenValid(true))
+			.catch(() => {
+				notifications.error({
+					message:
+						'Invalid or expired invitation token. Please contact your admin for a new invite link.',
+				});
+				Logout();
+				history.push(ROUTES.LOGIN);
+			});
+	}, [token, notifications]);
 
 	const handleFormSubmit: () => Promise<void> = async () => {
 		try {
@@ -143,6 +162,13 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			handleFormSubmit();
 		}
 	};
+
+	// Don't render the form until the token has been validated.
+	// A null state means validation is still in progress; false means the
+	// redirect has already been triggered by the useEffect above.
+	if (tokenValid !== true) {
+		return null;
+	}
 
 	return (
 		<AuthPageContainer>
