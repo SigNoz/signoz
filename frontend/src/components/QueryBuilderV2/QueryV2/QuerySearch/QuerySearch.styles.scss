@@ -282,10 +282,6 @@ $max-recents-shown: 5;
 				}
 			}
 
-			// Footer hint bar: keyboard shortcuts at the bottom of the
-			// dropdown. Rendered via ::after so we don't need to inject DOM
-			// — the popover's outer container gets a pseudo-element below
-			// the scrollable list.
 			&::after {
 				content: '↓↑ to navigate · ↵ to apply · esc to dismiss';
 				display: block;

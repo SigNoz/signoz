@@ -135,12 +135,6 @@ export function QueryBuilderProvider({
 	const [lastUsedQuery, setLastUsedQuery] = useState<number | null>(0);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
-	// Persist recent searches whenever the staged query changes. The hook
-	// dedupes via a signature ref and gates on frontend grammar validation,
-	// so this single call covers every surface that uses this provider
-	// (Logs/Traces/Metrics explorers, NewWidget editor, etc.). Surfaces with
-	// their own query source (GridCard, alert ChartPreview) still call the
-	// hook directly with that source.
 	useSaveRecentQuery(stagedQuery);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);

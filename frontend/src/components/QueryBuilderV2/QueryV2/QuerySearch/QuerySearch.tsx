@@ -1439,11 +1439,6 @@ function QuerySearch({
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
-							// Inject a native title tooltip + an inline × delete
-							// button into recent-search rows. See utils.ts for
-							// the render implementations. Non-recent rows fall
-							// through to the empty-placeholder branch inside
-							// each renderer.
 							addToOptions: [
 								{ render: renderRecentTitleCell, position: 5 },
 								{ render: renderRecentDeleteButton, position: 100 },

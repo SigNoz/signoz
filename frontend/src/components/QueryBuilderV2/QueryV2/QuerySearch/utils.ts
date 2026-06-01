@@ -135,10 +135,6 @@ export function renderRecentDeleteButton(
 			return;
 		}
 		recentQueriesStore.remove(c.recentId, c.recentSignal);
-		// Store mutation alone doesn't tell CodeMirror to re-render the
-		// open dropdown. Re-trigger the completion source so the deleted
-		// row disappears immediately, and re-focus the editor so the
-		// dropdown stays interactive.
 		if (view) {
 			view.focus();
 			startCompletion(view);
