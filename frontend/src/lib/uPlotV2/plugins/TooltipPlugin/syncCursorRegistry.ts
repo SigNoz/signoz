@@ -17,6 +17,9 @@ const activeSeriesMetricBySyncKey = new Map<
 	Record<string, string> | null
 >();
 
+type SyncPinListener = () => void;
+const pinListenersBySyncKey = new Map<string, Set<SyncPinListener>>();
+
 export const syncCursorRegistry = {
 	setMetadata(syncKey: string, metadata: TooltipSyncMetadata | undefined): void {
 		metadataBySyncKey.set(syncKey, metadata);
@@ -35,5 +38,21 @@ export const syncCursorRegistry = {
 
 	getActiveSeriesMetric(syncKey: string): Record<string, string> | null {
 		return activeSeriesMetricBySyncKey.get(syncKey) ?? null;
+	},
+
+	subscribePin(syncKey: string, listener: SyncPinListener): () => void {
+		let listeners = pinListenersBySyncKey.get(syncKey);
+		if (!listeners) {
+			listeners = new Set();
+			pinListenersBySyncKey.set(syncKey, listeners);
+		}
+		listeners.add(listener);
+		return (): void => {
+			pinListenersBySyncKey.get(syncKey)?.delete(listener);
+		};
+	},
+
+	broadcastPin(syncKey: string): void {
+		pinListenersBySyncKey.get(syncKey)?.forEach((listener) => listener());
 	},
 };
