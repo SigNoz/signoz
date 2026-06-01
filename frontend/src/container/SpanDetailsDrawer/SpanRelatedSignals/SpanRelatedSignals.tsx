@@ -73,6 +73,7 @@ function SpanRelatedSignals({
 		isFetching,
 		isLogSpanRelated,
 		hasTraceIdLogs,
+		isTraceOnlyLoading,
 	} = useSpanContextLogs({
 		traceId: selectedSpan.traceId,
 		spanId: selectedSpan.spanId,
@@ -235,6 +236,7 @@ function SpanRelatedSignals({
 							isLogSpanRelated={isLogSpanRelated}
 							handleExplorerPageRedirect={handleExplorerPageRedirect}
 							emptyStateConfig={!hasTraceIdLogs ? emptyStateConfig : undefined}
+							isTraceOnlyLoading={isTraceOnlyLoading}
 						/>
 					)}
 
