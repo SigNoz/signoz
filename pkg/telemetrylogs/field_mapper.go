@@ -145,8 +145,12 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
 	copy(sortedEvolutions, evolutions)
 
-	// sort the evolutions by ReleaseTime ascending
+	// Sort by ReleaseTime ascending; break ties by Version ascending so that at the
+	// same timestamp the highest-versioned entry is last and becomes the base anchor.
 	sort.Slice(sortedEvolutions, func(i, j int) bool {
+		if sortedEvolutions[i].ReleaseTime.Equal(sortedEvolutions[j].ReleaseTime) {
+			return sortedEvolutions[i].Version < sortedEvolutions[j].Version
+		}
 		return sortedEvolutions[i].ReleaseTime.Before(sortedEvolutions[j].ReleaseTime)
 	})
 
@@ -193,6 +197,12 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	for _, evolution := range evolutionMap {
 		// Reject evolutions before the latest base evolution
 		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
+			continue
+		}
+		// At the same timestamp, a lower-versioned entry is superseded by the higher-versioned
+		// base (e.g. body v0 is superseded by body_v2 v1 at epoch).
+		if evolution.ReleaseTime.Equal(latestBaseEvolutionAcrossAll.ReleaseTime) &&
+			evolution.Version < latestBaseEvolutionAcrossAll.Version {
 			continue
 		}
 		// skip evolutions after tsEndTime
