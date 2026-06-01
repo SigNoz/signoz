@@ -15,7 +15,6 @@ import {
 	k8sClusterGetEntityName,
 	k8sClusterGetSelectedItemFilters,
 	k8sClusterInitialEventsFilter,
-	k8sClusterInitialFilters,
 	k8sClusterInitialLogTracesFilter,
 } from './constants';
 import {
@@ -106,7 +105,6 @@ function K8sClustersList({
 				getEntityName={k8sClusterGetEntityName}
 				getInitialLogTracesFilters={k8sClusterInitialLogTracesFilter}
 				getInitialEventsFilters={k8sClusterInitialEventsFilter}
-				primaryFilterKeys={k8sClusterInitialFilters}
 				metadataConfig={k8sClusterDetailsMetadataConfig}
 				entityWidgetInfo={clusterWidgetInfo}
 				getEntityQueryPayload={getClusterMetricsQueryPayload}
