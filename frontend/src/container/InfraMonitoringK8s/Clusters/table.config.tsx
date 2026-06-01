@@ -1,41 +1,43 @@
-import { Tooltip } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Boxes } from '@signozhq/icons';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sClusterData, K8sClustersListPayload } from './api';
-import { Boxes } from '@signozhq/icons';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import { GroupedStatusCounts, ValidateColumnValueWrapper } from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 
-export function getK8sClusterRowKey(cluster: K8sClusterData): string {
+export function getK8sClusterRowKey(
+	cluster: InframonitoringtypesClusterRecordDTO,
+): string {
 	return (
-		cluster.clusterUID ||
-		cluster.meta.k8s_cluster_uid ||
-		cluster.meta.k8s_cluster_name
+		cluster.clusterName ||
+		cluster.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_UID] ||
+		''
 	);
 }
 
-export function getK8sClusterItemKey(cluster: K8sClusterData): string {
-	return cluster.meta.k8s_cluster_name;
+export function getK8sClusterItemKey(
+	cluster: InframonitoringtypesClusterRecordDTO,
+): string {
+	return cluster.clusterName;
 }
 
-export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
-	filters: {
-		items: [],
-		op: 'and',
-	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
-});
-
-export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
+export type ClusterTableColumnConfig =
+	TableColumnDef<InframonitoringtypesClusterRecordDTO>;
+export const k8sClustersColumnsConfig: ClusterTableColumnConfig[] = [
 	{
 		id: 'clusterGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="CLUSTER GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		accessorFn: (row): string => row.clusterName || '',
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
@@ -61,7 +63,7 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 				icon={<Boxes data-hide-expanded="true" size={14} />}
 			/>
 		),
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		accessorFn: (row): string => row.clusterName || '',
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
@@ -71,46 +73,63 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const clusterName = value as string;
 			return (
-				<Tooltip title={clusterName}>
+				<TooltipSimple title={clusterName}>
 					<TanStackTable.Text>{clusterName}</TanStackTable.Text>
-				</Tooltip>
+				</TooltipSimple>
+			);
+		},
+	},
+	{
+		id: 'podCountsByPhase',
+		header: 'Pod Phases',
+		accessorFn: (row): InframonitoringtypesClusterRecordDTO['podCountsByPhase'] =>
+			row.podCountsByPhase,
+		width: { min: 220 },
+		enableSort: false,
+		cell: ({ row }): React.ReactNode => {
+			const podCountsByPhase = row.podCountsByPhase;
+			if (!podCountsByPhase) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+			return (
+				<GroupedStatusCounts items={getPodPhaseStatusItems(row.podCountsByPhase)} />
 			);
 		},
 	},
 	{
 		id: 'cpu',
 		header: 'CPU Usage (cores)',
-		accessorFn: (row): number => row.cpuUsage,
+		accessorFn: (row): number => row.clusterCPU,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'cpu_allocatable',
-		header: 'CPU Alloc (cores)',
-		accessorFn: (row): number => row.cpuAllocatable,
+		header: 'CPU Allocatable (cores)',
+		accessorFn: (row): number => row.clusterCPUAllocatable,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
-			const cpuAllocatable = value as number;
+			const cpuAllocatable = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpuAllocatable}
 					entity={InfraMonitoringEntity.CLUSTERS}
 					attribute="CPU allocatable metric"
 				>
-					<TanStackTable.Text>{cpuAllocatable}</TanStackTable.Text>
+					<TanStackTable.Text>{cpuAllocatable.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -118,7 +137,7 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 	{
 		id: 'memory',
 		header: 'Memory Usage (WSS)',
-		accessorFn: (row): number => row.memoryUsage,
+		accessorFn: (row): number => row.clusterMemory,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -137,7 +156,7 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 	{
 		id: 'memory_allocatable',
 		header: 'Memory Allocatable',
-		accessorFn: (row): number => row.memoryAllocatable,
+		accessorFn: (row): number => row.clusterMemoryAllocatable,
 		width: { min: 220 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
@@ -150,6 +169,38 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 				>
 					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'nodeCountsByReadiness',
+		header: 'Node Readiness',
+		accessorFn: (
+			row,
+		): InframonitoringtypesClusterRecordDTO['nodeCountsByReadiness'] =>
+			row.nodeCountsByReadiness,
+		width: { min: 180 },
+		enableSort: false,
+		cell: ({ row }): React.ReactNode => {
+			if (!row.nodeCountsByReadiness) {
+				return <TanStackTable.Text>-</TanStackTable.Text>;
+			}
+
+			return (
+				<GroupedStatusCounts
+					items={[
+						{
+							value: row.nodeCountsByReadiness.ready,
+							label: 'Ready',
+							color: Color.BG_FOREST_500,
+						},
+						{
+							value: row.nodeCountsByReadiness.notReady,
+							label: 'Not Ready',
+							color: Color.BG_AMBER_500,
+						},
+					]}
+				/>
 			);
 		},
 	},
