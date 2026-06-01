@@ -585,8 +585,9 @@ export async function configureAndSavePanel(
 
 /**
  * Display labels surfaced in the `panel-change-select` Ant Select inside the
- * widget editor. The mapping to URL `graphType` values comes from the
- * `PANEL_TYPES` enum: TIME_SERIES='graph', VALUE='value', and so on.
+ * widget editor. Mirrors the `PanelDisplay` enum in
+ * `frontend/src/constants/queryBuilder.ts` — keep in sync if a label is added,
+ * removed, or renamed there.
  */
 export type PanelDisplayLabel =
 	| 'Time Series'
@@ -597,6 +598,12 @@ export type PanelDisplayLabel =
 	| 'Pie'
 	| 'Histogram';
 
+/**
+ * Maps each display label to the URL `graphType` value. The right-hand strings
+ * mirror the `PANEL_TYPES` enum in
+ * `frontend/src/constants/queryBuilder.ts` (TIME_SERIES='graph',
+ * VALUE='value', and so on) — keep in sync with the enum.
+ */
 const PANEL_DISPLAY_TO_GRAPH_TYPE: Record<PanelDisplayLabel, string> = {
 	'Time Series': 'graph',
 	Number: 'value',
@@ -668,12 +675,11 @@ export async function changePanelType(
 ): Promise<void> {
 	const expectedGraphType = PANEL_DISPLAY_TO_GRAPH_TYPE[displayLabel];
 	await page.getByTestId('panel-change-select').click();
-	// Each option renders a .select-option containing the display text — match
-	// against the typography element to avoid matching the trigger itself.
-	await page
-		.locator('.ant-select-item-option .display', { hasText: displayLabel })
-		.first()
-		.click();
+	// Each option renders a `data-testid="panel-type-option-<graphType>"` hook
+	// on its inner `.select-option` wrapper (see VisualizationSettingsSection).
+	// Targeting that is more stable than Ant's hidden-select option role —
+	// whose accessible name is the URL `graphType` value, not the display label.
+	await page.getByTestId(`panel-type-option-${expectedGraphType}`).click();
 	await page.waitForURL(new RegExp(`graphType=${expectedGraphType}`));
 	await page.getByTestId('new-widget-save').waitFor({ state: 'visible' });
 }
