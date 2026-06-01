@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Collapse, Input, Modal } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Collapse, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from '@signozhq/icons';

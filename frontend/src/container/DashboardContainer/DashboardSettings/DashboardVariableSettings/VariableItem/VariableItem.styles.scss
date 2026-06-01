@@ -359,7 +359,7 @@
 				flex-flow: wrap;
 				gap: 8px;
 
-				.ant-tag {
+				[data-slot='badge'] {
 					height: 30px;
 					color: var(--l1-foreground);
 					font-family: 'Space Mono';

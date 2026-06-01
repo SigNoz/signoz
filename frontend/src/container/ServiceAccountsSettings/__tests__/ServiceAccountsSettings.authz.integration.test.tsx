@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import userEvent from '@testing-library/user-event';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -129,6 +130,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('filter dropdown to "Active" hides DISABLED accounts', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
 			<NuqsTestingAdapter>
 				<ServiceAccountsSettings />
@@ -137,10 +139,10 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await screen.findByText('CI Bot');
 
-		fireEvent.click(screen.getByRole('button', { name: /All accounts/i }));
+		await user.click(screen.getByRole('button', { name: /All accounts/i }));
 
 		const activeOption = await screen.findByText(/Active ⎯/i);
-		fireEvent.click(activeOption);
+		await user.click(activeOption);
 
 		await screen.findByText('CI Bot');
 		expect(screen.queryByText('Legacy Bot')).not.toBeInTheDocument();

@@ -510,9 +510,7 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 	if err != nil {
 		return nil, err
 	}
-	if prepared == nil || prepared.WhereClause == nil {
-		return nil, nil //nolint:nilnil
-	}
+
 	return prepared.WhereClause, nil
 }
 

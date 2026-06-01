@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
@@ -250,8 +251,7 @@ function QueryAddOns({
 		);
 	}, [panelType, isListViewPanel, query, showReduceTo]);
 
-	const handleOptionClick = (e: RadioChangeEvent): void => {
-		const clickedAddOn = e.target.value as AddOn;
+	const handleOptionClick = (clickedAddOn: AddOn): void => {
 		const isAlreadySelected = selectedViews.some(
 			(view) => view.key === clickedAddOn.key,
 		);
@@ -515,15 +515,27 @@ function QueryAddOns({
 				</div>
 			)}
 
-			<div className="add-ons-list">
-				<Radio.Group
-					className="add-ons-tabs"
-					onChange={handleOptionClick}
-					value={selectedViews}
-				>
-					{addOns.map((addOn) => (
+			<ToggleGroupSimple
+				type="multiple"
+				className="add-ons-tabs"
+				value={selectedViews.map((view) => view.key)}
+				onChange={(newKeys: string[]): void => {
+					const oldKeys = selectedViews.map((view) => view.key);
+					const toggledKey =
+						newKeys.find((k) => !oldKeys.includes(k)) ??
+						oldKeys.find((k) => !newKeys.includes(k));
+					if (!toggledKey) {
+						return;
+					}
+					const clickedAddOn = addOns.find((a) => a.key === toggledKey);
+					if (clickedAddOn) {
+						handleOptionClick(clickedAddOn);
+					}
+				}}
+				items={addOns.map((addOn) => ({
+					value: addOn.key,
+					label: (
 						<Tooltip
-							key={addOn.key}
 							title={
 								<TooltipContent
 									label={addOn.label}
@@ -534,26 +546,17 @@ function QueryAddOns({
 							placement="top"
 							mouseEnterDelay={0.5}
 						>
-							<Radio.Button
-								className={
-									selectedViews.find((view) => view.key === addOn.key)
-										? 'selected-view tab'
-										: 'tab'
-								}
-								value={addOn}
+							<span
+								className="add-on-tab-title"
+								data-testid={`query-add-on-${addOn.key}`}
 							>
-								<div
-									className="add-on-tab-title"
-									data-testid={`query-add-on-${addOn.key}`}
-								>
-									{addOn.icon}
-									{addOn.label}
-								</div>
-							</Radio.Button>
+								{addOn.icon}
+								{addOn.label}
+							</span>
 						</Tooltip>
-					))}
-				</Radio.Group>
-			</div>
+					),
+				}))}
+			/>
 		</div>
 	);
 }

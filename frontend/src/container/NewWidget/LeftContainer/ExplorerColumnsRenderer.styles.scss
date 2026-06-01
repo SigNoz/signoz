@@ -19,9 +19,9 @@
 		letter-spacing: 0.5px;
 	}
 
-	.ant-divider {
-		margin: 8px 0 !important;
-		border: 0.5px solid var(--l1-border);
+	&__divider {
+		--divider-color: var(--l1-border);
+		--divider-margin: 8px 0;
 	}
 
 	.explorer-columns-contents {
@@ -104,38 +104,33 @@
 	height: 200px;
 	background-color: var(--l1-border);
 	overflow: hidden !important;
-	.ant-dropdown-menu {
-		padding: 0;
 
-		.ant-dropdown-menu-item {
-			padding: 4px;
-			.ant-checkbox-wrapper {
-				padding: 2px 8px !important;
-			}
+	padding: 4px;
+	.ant-checkbox-wrapper {
+		padding: 2px 8px !important;
+	}
 
-			.attribute-columns {
-				display: flex;
-				flex-direction: column;
-				height: 160px;
-				overflow: scroll;
-			}
+	.attribute-columns {
+		display: flex;
+		flex-direction: column;
+		height: 160px;
+		overflow: scroll;
+	}
 
-			.attribute-columns::-webkit-scrollbar {
-				width: 3px; /* Width of the scrollbar */
-			}
+	.attribute-columns::-webkit-scrollbar {
+		width: 3px; /* Width of the scrollbar */
+	}
 
-			.attribute-columns::-webkit-scrollbar-track {
-				background: var(--l1-border); /* Color of the track */
-			}
+	.attribute-columns::-webkit-scrollbar-track {
+		background: var(--l1-border); /* Color of the track */
+	}
 
-			.attribute-columns::-webkit-scrollbar-thumb {
-				background: var(--l2-foreground); /* Color of the thumb */
-				border-radius: 4px; /* Roundness of the thumb */
-			}
+	.attribute-columns::-webkit-scrollbar-thumb {
+		background: var(--l2-foreground); /* Color of the thumb */
+		border-radius: 4px; /* Roundness of the thumb */
+	}
 
-			.attribute-columns::-webkit-scrollbar-thumb:hover {
-				background: var(--l1-border); /* Color of the thumb on hover */
-			}
-		}
+	.attribute-columns::-webkit-scrollbar-thumb:hover {
+		background: var(--l1-border); /* Color of the thumb on hover */
 	}
 }
