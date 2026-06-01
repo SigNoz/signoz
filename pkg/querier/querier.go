@@ -642,6 +642,12 @@ func (q *querier) run(
 		},
 	}
 
+	// Warnings can arrive duplicated: the bucket cache returns the cached
+	// portion's warnings alongside an identical warning emitted by every
+	// freshly-executed missing range (see mergeResults), and distinct queries
+	// can surface the same warning. Collapse exact duplicates before building
+	// the response.
+	warnings = dedupeWarnings(warnings)
 	if len(warnings) != 0 {
 		warns := make([]qbtypes.QueryWarnDataAdditional, len(warnings))
 		for i, warning := range warnings {
@@ -1125,6 +1131,8 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				if qe.GetSource() == telemetrytypes.SourceMeter {
 					clampStep(qe, meterRecommended, meterMin, &warnings)
+					// we don't want to return warnings for meter metrics.
+					warnings = nil
 				} else {
 					clampStep(qe, metricRecommended, metricMin, &warnings)
 				}
@@ -1139,4 +1147,22 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 		}
 	}
 	return warnings
+}
+
+// dedupeWarnings removes exact-duplicate warning messages while preserving the
+// order of first occurrence. Returns nil for an empty input. Warning counts are
+// tiny (a handful per request), so a linear scan beats the allocation and
+// hashing overhead of a map.
+func dedupeWarnings(warnings []string) []string {
+	if len(warnings) == 0 {
+		return nil
+	}
+	unique := make([]string, 0, len(warnings))
+	// N^2 is faster than map-based deduping for small warning counts, and it preserves order of first occurrence without extra bookkeeping.
+	for _, warning := range warnings {
+		if !slices.Contains(unique, warning) {
+			unique = append(unique, warning)
+		}
+	}
+	return unique
 }

@@ -116,6 +116,10 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, nil //nolint:nilnil
 	}
 
+	// Group by fingerprint instead of using DISTINCT; on ClickHouse GROUP BY
+	// parallelizes across multiple threads and is faster for deduplication.
+	q.GroupBy("fingerprint")
+
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
 		Query: stmt,
