@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes/spantypestest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,10 +43,7 @@ func newTestStore(matcher sqlmock.QueryMatcher) *spantypestest.TraceStoreTest {
 }
 
 func TestGetTraceSummary(t *testing.T) {
-	expectedSQL := `
-		SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans
-		FROM signoz_traces.distributed_trace_summary
-		WHERE trace_id = ? GROUP BY trace_id`
+	expectedSQL := "SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM signoz_traces.distributed_trace_summary WHERE trace_id = ? GROUP BY trace_id"
 
 	t.Run("ValidTraceID_GeneratesExpectedSQL", func(t *testing.T) {
 		s := newTestStore(sqlmock.QueryMatcherRegexp)
@@ -58,12 +55,7 @@ func TestGetTraceSummary(t *testing.T) {
 }
 
 func TestGetMinimalSpans(t *testing.T) {
-	expectedSQL := `
-		SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano,
-			has_error, resource_string_service$$name
-		FROM signoz_traces.distributed_signoz_index_v3
-		WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?
-		ORDER BY timestamp ASC, name ASC`
+	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, resource_string_service$$name FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
 	t.Run("ValidRange_GeneratesExpectedSQL", func(t *testing.T) {
 		s := newTestStore(sqlmock.QueryMatcherRegexp)
@@ -100,26 +92,8 @@ func TestGetSpanCountByField(t *testing.T) {
 }
 
 func TestGetSpanDurationByField(t *testing.T) {
-	expectedSQL := "WITH all_spans AS (SELECT DISTINCT ON (span_id) resource.`service.name`::String AS field_value, toUnixTimestamp64Nano(timestamp) AS start_ns, start_ns + duration_nano AS end_ns" + `
-		FROM signoz_traces.distributed_signoz_index_v3
-		WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND notEmpty(field_value)
-		ORDER BY timestamp ASC, name ASC),
 
-		effective_start AS (SELECT field_value, end_ns, greatest(
-			start_ns,
-			ifNull(
-				max(end_ns) OVER (
-					PARTITION BY field_value
-					ORDER BY start_ns
-					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-				),
-				toUInt64(0)
-			)
-		) AS effective_start_ns FROM all_spans)
-
-		SELECT field_value, sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns
-		FROM effective_start
-		GROUP BY field_value`
+	expectedSQL := "WITH all_spans AS (SELECT DISTINCT ON (span_id) resource.`service.name`::String AS field_value, toUnixTimestamp64Nano(timestamp) AS start_ns, start_ns + duration_nano AS end_ns FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND notEmpty(field_value) ORDER BY timestamp ASC, name ASC)), effective_start AS (SELECT field_value, end_ns, greatest(start_ns, ifNull( max(end_ns) OVER (PARTITION BY field_value ORDER BY start_ns  ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), toUInt64(0))) AS effective_start_ns FROM all_spans) SELECT field_value, sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns FROM effective_start GROUP BY field_value"
 
 	tests := []struct {
 		name      string
