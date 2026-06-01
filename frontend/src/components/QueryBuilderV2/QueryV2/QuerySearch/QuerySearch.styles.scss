@@ -1,12 +1,5 @@
 // TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
 
-// Recents-aware dropdown sizing. The autocomplete dropdown caps at
-// `$dropdown-base-height` when there are no recents (compact, fits ~5
-// suggestion rows). For each recent search row present, the cap grows by
-// one row-height plus a one-time header offset, so recents render in
-// full while ~5 suggestion rows stay visible below. Numbers match the
-// JS display cap (RECENTS_DISPLAY_CAP in constants.ts).
-
 $dropdown-base-height: 250px;
 $recents-header-height: 30px;
 $recent-row-height: 52px;
@@ -132,10 +125,6 @@ $max-recents-shown: 5;
 				max-height: $dropdown-base-height !important;
 				overflow-y: auto !important;
 
-				// CodeMirror renders recents first (rank: 1), so the first N
-				// `<li>` direct children are the recents. Each cascading rule
-				// matches when at least N recents exist; the highest-N rule
-				// wins because it appears latest in source order.
 				@for $i from 1 through $max-recents-shown {
 					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
 						max-height: $dropdown-base-height +
@@ -158,11 +147,6 @@ $max-recents-shown: 5;
 					background: transparent;
 				}
 
-				// CodeMirror renders <completion-section> headers between
-				// option groups when the `section` field is set on each
-				// Completion. Style them as small caps labels with a top
-				// divider so the Suggestions and Recent searches groups are
-				// clearly distinct.
 				completion-section {
 					display: block;
 					padding: 10px 12px 6px;
@@ -209,9 +193,6 @@ $max-recents-shown: 5;
 						display: none !important;
 					}
 
-					// Tag the "recent" detail column so it reads as a label,
-					// not as an inline value. CodeMirror puts the option's
-					// `detail` string in `.cm-completionDetail`.
 					.cm-completionDetail {
 						margin-left: auto;
 						font-style: normal;
@@ -228,11 +209,6 @@ $max-recents-shown: 5;
 					}
 				}
 
-				// Recent search rows render as pill-style cards: rounded
-				// background per row, padded inset, design-token text color.
-				// Targeted via the icon class CodeMirror emits — even though
-				// the icon itself is hidden, its element still carries the
-				// type class.
 				li:has(.cm-completionIcon-recent) {
 					height: auto !important;
 					margin: 4px 8px !important;
@@ -245,10 +221,6 @@ $max-recents-shown: 5;
 					border-radius: 6px !important;
 					line-height: 24px !important;
 
-					// Long filter expressions truncate to a single line with
-					// an ellipsis instead of wrapping or pushing the inline
-					// delete button off-screen. `min-width: 0` on the label
-					// is required for ellipsis to work inside a flex parent.
 					.cm-completionLabel {
 						flex: 1;
 						min-width: 0;
@@ -275,9 +247,6 @@ $max-recents-shown: 5;
 					}
 				}
 
-				// Apply the same truncation to regular suggestion rows so
-				// long attribute names (e.g. `service.cluster.namespace.x`)
-				// don't push other cells off the row.
 				li:not(:has(.cm-completionIcon-recent)) .cm-completionLabel {
 					flex: 1;
 					min-width: 0;
@@ -286,8 +255,6 @@ $max-recents-shown: 5;
 					text-overflow: ellipsis;
 				}
 
-				// Inline per-row delete affordance for recent searches,
-				// injected via the autocompletion `addToOptions` config.
 				.cm-recent-delete {
 					margin-left: auto;
 					display: inline-flex;
