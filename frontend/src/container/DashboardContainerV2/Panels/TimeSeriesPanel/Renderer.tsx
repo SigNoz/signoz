@@ -3,6 +3,10 @@ import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/service
 
 import type { PanelRendererProps } from '../types';
 
+/** Skeleton Component for TimeSeriesPanel
+ * TODO: will be replaced by actual implementation in subsequent PRs. This is to unblock the integration of the panel into the dashboard and work on other dependent features.
+ */
+
 function TimeSeriesRenderer({
 	isLoading,
 	error,
