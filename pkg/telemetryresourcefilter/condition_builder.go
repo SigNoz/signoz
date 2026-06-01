@@ -57,6 +57,14 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return querybuilder.SkipConditionLiteral, nil
 	}
 
+	// Optimization: Skip materialized resource fields in the resource CTE.
+	// Materialized fields are filtered directly on the main span index table
+	// using their materialized columns (e.g., `resource_string_service$$name`)
+	// which have BLOOM FILTER INDEXES and avoid expensive JSON extraction.
+	if key.Materialized {
+		return querybuilder.SkipConditionLiteral, nil
+	}
+
 	// except for in, not in, between, not between all other operators should have formatted value
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
