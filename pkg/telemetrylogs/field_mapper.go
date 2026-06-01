@@ -10,7 +10,6 @@ import (
 	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -70,11 +69,12 @@ var (
 )
 
 type fieldMapper struct {
-	fl flagger.Flagger
+	fl         flagger.Flagger
+	jsonMapper *JSONFieldMapper
 }
 
 func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
-	return &fieldMapper{fl: fl}
+	return &fieldMapper{fl: fl, jsonMapper: NewJSONFieldMapper()}
 }
 
 func (m *fieldMapper) getColumns(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
@@ -106,7 +106,7 @@ func (m *fieldMapper) getColumns(ctx context.Context, key *telemetrytypes.Teleme
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
-			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}, nil
+			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column], logsV2Columns[LogsV2BodyPromotedColumn]}, nil
 		}
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
@@ -119,13 +119,9 @@ func (m *fieldMapper) getColumns(ctx context.Context, key *telemetrytypes.Teleme
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-				// Use body_v2 if feature flag is enabled and we have a body condition builder
 				// TODO(Tushar): thread orgID here to evaluate correctly
 				if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
-					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
-					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
-					// based on the query range time.
-					return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}, nil
+					return []*schema.Column{logsV2Columns[LogsV2BodyV2Column], logsV2Columns[LogsV2BodyPromotedColumn]}, nil
 				}
 				// Fall back to legacy body column
 				return []*schema.Column{logsV2Columns["body"]}, nil
@@ -146,7 +142,6 @@ func (m *fieldMapper) getColumns(ctx context.Context, key *telemetrytypes.Teleme
 //   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
 //   - Results are sorted by ReleaseTime descending (newest first)
 func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
-
 	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
 	copy(sortedEvolutions, evolutions)
 
@@ -288,14 +283,18 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					return "", qbtypes.ErrColumnNotFound
 				}
 
-				for _, column := range columns {
-					expr, err := m.buildFieldForJSON(key, column)
-					if err != nil {
-						return "", err
-					}
-
-					exprs = append(exprs, expr)
+				// Use `column` from the outer newColumns loop (already evolution-filtered).
+				expr, err := m.jsonMapper.FieldExprFor(key, column)
+				if err != nil {
+					return "", err
 				}
+				exprs = append(exprs, expr)
+
+				exist, err := m.jsonMapper.ExistExprFor(key, column)
+				if err != nil {
+					return "", err
+				}
+				existExpr = append(existExpr, exist)
 			default:
 				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
@@ -403,138 +402,4 @@ func (m *fieldMapper) ColumnExpressionFor(
 	}
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
-}
-
-// buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.
-func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey, column *schemamigrator.Column) (string, error) {
-	node, err := key.PlanBuilder.Build(*column)
-	if err != nil {
-		return "", err
-	}
-
-	if node.IsTerminal {
-		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
-		// TODO(Piyush): Promoted path logic commented out. Materialized now means type hint
-		// promotion will be extracted from key field evolution
-		// (direct sub-column access), not a promoted body_promoted.* column.
-		// if key.Materialized {
-		// 	if len(plan) < 2 {
-		// 		return "", errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
-		// 			"plan length is less than 2 for promoted path: %s", key.Name)
-		// 	}
-
-		// 	node := plan[1]
-		// 	promotedExpr := fmt.Sprintf(
-		// 		"dynamicElement(%s, '%s')",
-		// 		node.FieldPath(),
-		// 		node.TerminalConfig.ElemType.StringValue(),
-		// 	)
-
-		// 	// dynamicElement returns NULL for scalar types or an empty array for array types.
-		// 	if node.TerminalConfig.ElemType.IsArray {
-		// 		expr = fmt.Sprintf(
-		// 			"if(length(%s) > 0, %s, %s)",
-		// 			promotedExpr,
-		// 			promotedExpr,
-		// 			expr,
-		// 		)
-		// 	} else {
-		// 		// promoted column first then body_json column
-		// 		// TODO(Piyush): Change this in future for better performance
-		// 		expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
-		// 	}
-
-		// }
-
-		return expr, nil
-	}
-
-	// Build arrayConcat pattern directly from the tree structure
-	arrayConcatExpr, err := m.buildArrayConcat(node)
-	if err != nil {
-		return "", err
-	}
-
-	return arrayConcatExpr, nil
-}
-
-// buildArrayConcat builds the arrayConcat pattern directly from the tree structure.
-func (m *fieldMapper) buildArrayConcat(node *telemetrytypes.JSONAccessNode) (string, error) {
-	// Build arrayMap expressions for ALL available branches at the root level.
-	// Iterate branches in deterministic order (JSON then Dynamic)
-	var arrayMapExpressions []string
-	for _, branchType := range node.BranchesInOrder() {
-		expr, err := m.buildArrayMap(node, branchType)
-		if err != nil {
-			return "", err
-		}
-		arrayMapExpressions = append(arrayMapExpressions, expr)
-	}
-
-	if len(arrayMapExpressions) == 0 {
-		return "", errors.Newf(errors.TypeInternal, CodeArrayMapExpressionsEmpty, "array map expressions are empty while building arrayConcat")
-	}
-
-	// Build the arrayConcat expression
-	arrayConcatExpr := fmt.Sprintf("arrayConcat(%s)", strings.Join(arrayMapExpressions, ", "))
-
-	// Wrap with arrayFlatten
-	arrayFlattenExpr := fmt.Sprintf("arrayFlatten(%s)", arrayConcatExpr)
-
-	return arrayFlattenExpr, nil
-}
-
-// buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches.
-func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, branchType telemetrytypes.JSONAccessBranchType) (string, error) {
-	if currentNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")
-	}
-
-	childNode := currentNode.Branches[branchType]
-	if childNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeChildNodeNil, "child node is nil while building arrayMap")
-	}
-
-	// Build the array expression for this level
-	var arrayExpr string
-	if branchType == telemetrytypes.BranchJSON {
-		// Array(JSON) branch
-		arrayExpr = fmt.Sprintf("dynamicElement(%s, 'Array(JSON(max_dynamic_types=%d, max_dynamic_paths=%d))')",
-			currentNode.FieldPath(), currentNode.MaxDynamicTypes, currentNode.MaxDynamicPaths)
-	} else {
-		// Array(Dynamic) branch - filter for JSON objects
-		dynBaseExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", currentNode.FieldPath())
-		arrayExpr = fmt.Sprintf("arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), %s))", dynBaseExpr)
-	}
-
-	// If this is the terminal level, return the simple arrayMap
-	if childNode.IsTerminal {
-		dynamicElementExpr := fmt.Sprintf("dynamicElement(%s, '%s')", childNode.FieldPath(),
-			childNode.TerminalConfig.ElemType.StringValue(),
-		)
-		return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), dynamicElementExpr, arrayExpr), nil
-	}
-
-	// For non-terminal nodes, we need to handle ALL possible branches at the next level.
-	// Use deterministic branch order so generated SQL is stable across environments.
-	var nestedExpressions []string
-	for _, branchType := range childNode.BranchesInOrder() {
-		expr, err := m.buildArrayMap(childNode, branchType)
-		if err != nil {
-			return "", err
-		}
-		nestedExpressions = append(nestedExpressions, expr)
-	}
-
-	// If we have multiple nested expressions, we need to concat them
-	var nestedExpr string
-	if len(nestedExpressions) == 1 {
-		nestedExpr = nestedExpressions[0]
-	} else if len(nestedExpressions) > 1 {
-		nestedExpr = fmt.Sprintf("arrayConcat(%s)", strings.Join(nestedExpressions, ", "))
-	} else {
-		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
-	}
-
-	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }

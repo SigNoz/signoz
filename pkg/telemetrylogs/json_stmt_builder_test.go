@@ -1141,10 +1141,28 @@ func TestResourceAggrAndGroupBy_WithJSONEnabled(t *testing.T) {
 	}
 }
 
-func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetrytypestest.MockMetadataStore {
+func buildTestTelemetryMetadataStore(_ *testing.T, addIndexes bool, promotionMs uint64, promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
+
+	// Pre-build per-path evolutions for the promoted subset.
+	promotionTime := time.UnixMilli(int64(promotionMs)).UTC()
+	evolutionsFor := make(map[string][]*telemetrytypes.EvolutionEntry, len(promotedPaths))
+	for _, p := range promotedPaths {
+		evolutionsFor[p] = []*telemetrytypes.EvolutionEntry{
+			{
+				Signal:       telemetrytypes.SignalLogs,
+				ColumnName:   LogsV2BodyPromotedColumn,
+				ColumnType:   "JSON()",
+				FieldContext: telemetrytypes.FieldContextBody,
+				FieldName:    p,
+				ReleaseTime:  promotionTime,
+				Version:      2,
+			},
+		}
+	}
+
 	for path, fieldDataTypes := range types {
 		for _, fdt := range fieldDataTypes {
 			key := &telemetrytypes.TelemetryFieldKey{
@@ -1169,7 +1187,12 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 				}
 			}
 
-			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
+			if evolutions, ok := evolutionsFor[key.ArrayParentPaths()[0]]; ok {
+				key.Materialized = true
+				key.Evolutions = evolutions
+			}
+
+			key.PlanBuilder = telemetrytypes.NewFieldPlanBuilder(key, telemetrytypes.JSONColumnMetadata{
 				BaseColumn:     LogsV2BodyV2Column,
 				PromotedColumn: LogsV2BodyPromotedColumn,
 			}, types)
@@ -1182,10 +1205,11 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
+
+func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool, promotionMs uint64, promotedPaths ...string) (*logQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
 	t.Helper()
 
-	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
+	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes, promotionMs, promotedPaths...)
 	fl := flaggertest.WithUseJSONBody(t, true)
 	fm := NewFieldMapper(fl)
 	cb := NewConditionBuilder(fm, fl)

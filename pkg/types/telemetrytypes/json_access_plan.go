@@ -115,7 +115,7 @@ func NewFieldPlanBuilder(key *TelemetryFieldKey, info JSONColumnMetadata, typeCa
 }
 
 // Build dispatches by column name — called by JSONConditionBuilder in field_mapper.
-func (b *FieldPlanBuilder) Build(column schemamigrator.Column) (*JSONAccessNode, error) {
+func (b *FieldPlanBuilder) Build(column *schemamigrator.Column) (*JSONAccessNode, error) {
 	if column.Name == b.columnInfo.BaseColumn {
 		return b.build(NewRootJSONAccessNode(b.columnInfo.BaseColumn, 32, 0))
 	}
