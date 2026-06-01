@@ -2,11 +2,9 @@ package sqlalertmanagerstore
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -16,13 +14,11 @@ import (
 
 type maintenance struct {
 	sqlstore sqlstore.SQLStore
-	logger   *slog.Logger
 }
 
-func NewMaintenanceStore(store sqlstore.SQLStore, providerSettings factory.ProviderSettings) alertmanagertypes.MaintenanceStore {
+func NewMaintenanceStore(store sqlstore.SQLStore) alertmanagertypes.MaintenanceStore {
 	return &maintenance{
 		sqlstore: store,
-		logger:   providerSettings.Logger,
 	}
 }
 
@@ -41,11 +37,7 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 
 	gettablePlannedMaintenance := make([]*alertmanagertypes.PlannedMaintenance, 0)
 	for _, gettableMaintenancesRule := range gettableMaintenancesRules {
-		m := gettableMaintenancesRule.ToPlannedMaintenance()
-		gettablePlannedMaintenance = append(gettablePlannedMaintenance, m)
-		if m.HasScheduleRecurrenceBoundsMismatch() {
-			r.logger.WarnContext(ctx, "planned_downtime_recurrence_schedule_mismatch", slog.String("maintenance_id", m.ID.StringValue()))
-		}
+		gettablePlannedMaintenance = append(gettablePlannedMaintenance, gettableMaintenancesRule.ToPlannedMaintenance())
 	}
 
 	return gettablePlannedMaintenance, nil

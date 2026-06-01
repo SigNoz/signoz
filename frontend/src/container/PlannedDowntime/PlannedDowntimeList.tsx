@@ -142,7 +142,6 @@ export function CollapseListContent({
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
 }): JSX.Element {
-	const repeats = schedule?.recurrence;
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
 		<div className="render-item-collapse-list">
 			<Typography>{title}</Typography>
@@ -193,10 +192,7 @@ export function CollapseListContent({
 				'Timezone',
 				<Typography>{schedule?.timezone || '-'}</Typography>,
 			)}
-			{renderItems(
-				'Repeats',
-				<Typography>{recurrenceInfo(repeats, schedule?.timezone)}</Typography>,
-			)}
+			{renderItems('Repeats', <Typography>{recurrenceInfo(schedule)}</Typography>)}
 			{renderItems(
 				'Alerts silenced',
 				alertOptions?.length ? (

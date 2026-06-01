@@ -13,7 +13,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -30,7 +29,7 @@ import (
 
 func newTestMaintenanceStore() alertmanagertypes.MaintenanceStore {
 	ss := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
-	return sqlalertmanagerstore.NewMaintenanceStore(ss, factorytest.NewSettings())
+	return sqlalertmanagerstore.NewMaintenanceStore(ss)
 }
 
 func TestServerSetConfigAndStop(t *testing.T) {

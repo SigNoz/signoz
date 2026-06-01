@@ -309,10 +309,6 @@ components:
       properties:
         duration:
           type: string
-        endTime:
-          format: date-time
-          nullable: true
-          type: string
         repeatOn:
           items:
             $ref: '#/components/schemas/AlertmanagertypesRepeatOn'
@@ -320,11 +316,7 @@ components:
           type: array
         repeatType:
           $ref: '#/components/schemas/AlertmanagertypesRepeatType'
-        startTime:
-          format: date-time
-          type: string
       required:
-      - startTime
       - duration
       - repeatType
       type: object
@@ -358,6 +350,7 @@ components:
           type: string
       required:
       - timezone
+      - startTime
       type: object
     AuthtypesAttributeMapping:
       properties:

@@ -163,20 +163,10 @@ export interface AlertmanagertypesRecurrenceDTO {
 	 */
 	duration: string;
 	/**
-	 * @type string,null
-	 * @format date-time
-	 */
-	endTime?: string | null;
-	/**
 	 * @type array,null
 	 */
 	repeatOn?: AlertmanagertypesRepeatOnDTO[] | null;
 	repeatType: AlertmanagertypesRepeatTypeDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	startTime: string;
 }
 
 export interface AlertmanagertypesScheduleDTO {
@@ -190,7 +180,7 @@ export interface AlertmanagertypesScheduleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: string;
+	startTime: string;
 	/**
 	 * @type string
 	 */
