@@ -78,6 +78,7 @@ def create_signoz(
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__WAIT": "1s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__INTERVAL": "5s",
                 "SIGNOZ_CLOUDINTEGRATION_AGENT_VERSION": "v0.0.8",
+                "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_SETTINGS_MAX__QUERY__SIZE": "350000",
             }
             | sqlstore.env
             | clickhouse.env
