@@ -1220,7 +1220,6 @@ components:
         dashboards:
           items:
             $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
-          nullable: true
           type: array
       required:
       - dashboards

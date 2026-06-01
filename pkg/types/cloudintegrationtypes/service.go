@@ -59,7 +59,7 @@ type Service struct {
 }
 
 type ServiceAssets struct {
-	Dashboards []*ServiceDashboard `json:"dashboards" required:"true"`
+	Dashboards []*ServiceDashboard `json:"dashboards" required:"true" nullable:"false"`
 }
 
 type GetServiceParams struct {
