@@ -6,7 +6,6 @@ import type { RecentQueriesStoreShape, RecentQueryEntry } from './types';
 const STORAGE_KEY_PREFIX = 'qb_recent_v1';
 const STORAGE_VERSION = 1;
 const MAX_ENTRIES = 10;
-const QUOTA_RETRY_FRACTION = 0.8;
 const SIGNALS: readonly SignalType[] = ['logs', 'traces', 'metrics'];
 
 const storageKey = (signal: SignalType): string =>
@@ -40,44 +39,19 @@ function readFromStorage(signal: SignalType): RecentQueryEntry[] {
 	}
 }
 
-// Attempts to persist; on write failure (typically QuotaExceededError), drops
-// the oldest fraction and retries once. Returns the entries that were actually
-// written (caller should mirror this into the in-memory cache so reads stay
-// consistent).
-function writeToStorage(
-	signal: SignalType,
-	entries: RecentQueryEntry[],
-): RecentQueryEntry[] {
+function writeToStorage(signal: SignalType, entries: RecentQueryEntry[]): void {
 	if (!hasLocalStorage()) {
-		return entries;
+		return;
 	}
-
-	const persist = (toWrite: RecentQueryEntry[]): boolean => {
-		try {
-			window.localStorage.setItem(
-				storageKey(signal),
-				JSON.stringify({ version: STORAGE_VERSION, entries: toWrite }),
-			);
-			return true;
-		} catch {
-			// Swallow quota and other write errors. Caller retries with a trimmed
-			// list when this returns false.
-			return false;
-		}
-	};
-
-	if (persist(entries)) {
-		return entries;
+	try {
+		window.localStorage.setItem(
+			storageKey(signal),
+			JSON.stringify({ version: STORAGE_VERSION, entries }),
+		);
+	} catch {
+		console.warn('Failed to persist recent queries to localStorage');
+		// Persistence failed; cache still reflects the user's intent in-session.
 	}
-
-	const trimmed = entries.slice(
-		0,
-		Math.max(1, Math.floor(entries.length * QUOTA_RETRY_FRACTION)),
-	);
-	if (persist(trimmed)) {
-		return trimmed;
-	}
-	return entries;
 }
 
 function getCache(signal: SignalType): RecentQueryEntry[] {
@@ -125,8 +99,8 @@ export function save(entry: RecentQueryInput): RecentQueryEntry | null {
 	};
 
 	const next = [newEntry, ...filtered].slice(0, MAX_ENTRIES);
-	const persisted = writeToStorage(entry.signal, next);
-	cache.set(entry.signal, persisted);
+	cache.set(entry.signal, next);
+	writeToStorage(entry.signal, next);
 	notify();
 	return newEntry;
 }
@@ -137,8 +111,8 @@ export function remove(id: string, signal: SignalType): void {
 	if (next.length === current.length) {
 		return;
 	}
-	const persisted = writeToStorage(signal, next);
-	cache.set(signal, persisted);
+	cache.set(signal, next);
+	writeToStorage(signal, next);
 	notify();
 }
 
@@ -149,12 +123,16 @@ export function subscribe(cb: () => void): () => void {
 	};
 }
 
+function parseSignalFromStorageKey(key: string): SignalType | null {
+	return SIGNALS.find((s) => storageKey(s) === key) ?? null;
+}
+
 function handleCrossTabStorageEvent(event: StorageEvent): void {
-	if (!event.key || !event.key.startsWith(`${STORAGE_KEY_PREFIX}:`)) {
+	if (!event.key) {
 		return;
 	}
-	const signal = event.key.slice(STORAGE_KEY_PREFIX.length + 1) as SignalType;
-	if (!SIGNALS.includes(signal)) {
+	const signal = parseSignalFromStorageKey(event.key);
+	if (!signal) {
 		return;
 	}
 	cache.set(signal, readFromStorage(signal));
