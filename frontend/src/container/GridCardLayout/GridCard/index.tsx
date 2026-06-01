@@ -11,7 +11,6 @@ import { populateMultipleResults } from 'container/NewWidget/LeftContainer/Widge
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useSaveRecentQuery } from 'hooks/recentQueries/useSaveRecentQuery';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
@@ -284,12 +283,14 @@ function GridCardGraph({
 		},
 	);
 
-	// `widget.query` is the dashboard's saved query for this panel — it
-	// does not flow through `useQueryBuilder().stagedQuery`, so the
-	// provider-level save effect in `providers/QueryBuilder.tsx` doesn't
-	// cover this surface. This explicit call ensures dashboard-viewed
-	// queries are surfaced in the user's recents.
+	/*
+	`widget.query` is the dashboard's saved query for this panel — it
+	does not flow through `useQueryBuilder().stagedQuery`, so the
+	provider-level save effect in `providers/QueryBuilder.tsx` doesn't
+	cover this surface. This explicit call ensures dashboard-viewed
+	queries are surfaced in the user's recents.
 	useSaveRecentQuery(widget?.query);
+	*/
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 

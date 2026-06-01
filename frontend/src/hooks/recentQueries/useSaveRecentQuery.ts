@@ -19,9 +19,6 @@ function toSignal(dataSource: IBuilderQuery['dataSource']): SignalType | null {
 	return null;
 }
 
-// Build a stable signature of the staged filter expressions so the effect
-// knows when a re-save is genuinely warranted vs. when we're seeing the same
-// state across renders.
 function buildSignature(stagedQuery: Query | null | undefined): string | null {
 	if (!stagedQuery) {
 		return null;
