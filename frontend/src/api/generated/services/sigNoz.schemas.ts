@@ -4616,6 +4616,61 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	updatedBy?: string;
 }
 
+export interface DashboardtypesGettableDashboardWithPinDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type boolean
+	 */
+	pinned?: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
@@ -4634,6 +4689,55 @@ export interface DashboardtypesGettablePublicDasbhboardDTO {
 export interface DashboardtypesGettablePublicDashboardDataDTO {
 	dashboard?: DashboardtypesDashboardDTO;
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
+}
+
+export enum DashboardtypesJSONPatchOperationDTOOp {
+	add = 'add',
+	remove = 'remove',
+	replace = 'replace',
+	move = 'move',
+	copy = 'copy',
+	test = 'test',
+}
+export interface DashboardtypesJSONPatchOperationDTO {
+	/**
+	 * @type string
+	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
+	 */
+	from?: string;
+	/**
+	 * @enum add,remove,replace,move,copy,test
+	 * @type string
+	 */
+	op: DashboardtypesJSONPatchOperationDTOOp;
+	/**
+	 * @type string
+	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0, /tags/-.
+	 */
+	path: string;
+	/**
+	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable; /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /data/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
+	 */
+	value?: unknown;
+}
+
+/**
+ * @nullable
+ */
+export type DashboardtypesJSONPatchDocumentDTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
+export interface DashboardtypesListableDashboardV2DTO {
+	/**
+	 * @type array
+	 */
+	dashboards: DashboardtypesGettableDashboardWithPinDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
 }
 
 export enum DashboardtypesPanelPluginKindDTO {
@@ -9389,6 +9493,42 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardsV2Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	sort?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	order?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListDashboardsV2200 = {
+	data: DashboardtypesListableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
@@ -9408,6 +9548,40 @@ export type GetDashboardV2200 = {
 	status: string;
 };
 
+export type PatchDashboardV2PathParameters = {
+	id: string;
+};
+export type PatchDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateDashboardV2PathParameters = {
+	id: string;
+};
+export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnlockDashboardV2PathParameters = {
+	id: string;
+};
+export type LockDashboardV2PathParameters = {
+	id: string;
+};
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
+	id: string;
+};
 export type GetFeatures200 = {
 	/**
 	 * @type array
