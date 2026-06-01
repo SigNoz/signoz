@@ -11,7 +11,7 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/opentelemetry-golang/#library-instrumentation).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     
@@ -145,11 +145,11 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 
 OTel Collector binary helps to collect logs, hostmetrics, resource and infra attributes. It is recommended to install Otel Collector binary to collect and send traces to SigNoz cloud. You can correlate signals and have rich contextual data through this way.
 
-You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Golang application.
+You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Golang application.
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/opentelemetry-golang/#library-instrumentation).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     
@@ -280,13 +280,13 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 
 ### Applications Deployed on Kubernetes
 
-For Golang application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/).
+For Golang application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Golang instrumentation by following the below steps:
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/opentelemetry-golang/#library-instrumentation).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     

@@ -23,5 +23,5 @@ docker run <your-image-name>
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/java/opentelemetry-java/) for assistance.
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/java/#troubleshooting-your-installation) for assistance.
 

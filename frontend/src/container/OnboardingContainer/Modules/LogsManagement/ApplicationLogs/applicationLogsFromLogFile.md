@@ -1,6 +1,6 @@
 ## Collect Application Logs from Log file in SigNoz cloud
 
-- Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/).
+- Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/).
 
 - Add the filelog reciever to `config.yaml`.
 
@@ -17,7 +17,7 @@
 
   Note: change the `start_at` value to `beginning` if you want to read the log file from the beginning. It may be useful if you want to send old logs to SigNoz. The log records older than the standard log retention period (default 15 days) will be discarded.
 
-  For parsing logs of different formats you will have to use operators, you can read more about operators [here](https://signoz.io/docs/userguide/logs_query_builder/).
+  For parsing logs of different formats you will have to use operators, you can read more about operators [here](https://signoz.io/docs/userguide/logs/#operators-for-parsing-and-manipulating-logs).
 
   For more configurations that are available for filelog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver).
 

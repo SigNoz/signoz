@@ -3,4 +3,4 @@ Once you are done instrumenting your Elixir (Phoenix + Ecto) application with Op
 
 &nbsp;
 
-To see some examples for instrumented applications, you can checkout [this link](https://signoz.io/docs/instrumentation/opentelemetry-elixir/)
+To see some examples for instrumented applications, you can checkout [this link](https://signoz.io/docs/instrumentation/elixir/#sample-examples)

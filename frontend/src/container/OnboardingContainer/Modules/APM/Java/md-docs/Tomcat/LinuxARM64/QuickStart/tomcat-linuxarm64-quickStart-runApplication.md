@@ -18,5 +18,5 @@ export OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}}
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/java/opentelemetry-tomcat/) for assistance.
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/tomcat/#troubleshooting-your-installation) for assistance.
 

@@ -19,4 +19,4 @@ opentelemetry-instrument <your_run_command>
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/opentelemetry-python/) for assistance.
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/django/#troubleshooting-your-installation) for assistance.

@@ -57,7 +57,7 @@ Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For ex
 
 OTel Collector binary helps to collect logs, hostmetrics, resource and infra attributes. It is recommended to install Otel Collector binary to collect and send traces to SigNoz cloud. You can correlate signals and have rich contextual data through this way.
 
-You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/opentelemetry-collection-agents/vm/install/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Python application.
+You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Python application.
 
 Step 1. Create a virtual environment
     
@@ -104,7 +104,7 @@ In case you have OtelCollector Agent in different VM, replace localhost:4317 wit
 
 ### Applications Deployed on Kubernetes
 
-For Python application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/opentelemetry-collection-agents/k8s/k8s-infra/install-k8s-infra/).
+For Python application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Python instrumentation by following the below steps:
 

@@ -166,7 +166,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						entity="kubernetes"
 						heading="Collecting Kubernetes Pod logs"
 						imgURL={kubernetesSvgUrl}
-						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#setup"
+						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#collect-kubernetes-pod-logs-in-signoz-cloud"
 						imgClassName="supported-logs-type-img"
 					/>
 				);
@@ -198,7 +198,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						entity="nodejs"
 						heading="Collecting NodeJS winston logs"
 						imgURL={nodeJsSvgUrl}
-						docsURL="https://signoz.io/docs/logs-management/send-logs/nodejs-winston-logs/"
+						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
 				);
@@ -220,7 +220,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 						docsURL={
 							logType === ApplicationLogsType.FROM_LOG_FILE
 								? 'https://signoz.io/docs/userguide/collect_logs_from_file/'
-								: 'https://signoz.io/docs/logs-management/send-logs/java-logs/'
+								: 'https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/'
 						}
 						imgClassName="supported-logs-type-img"
 					/>
