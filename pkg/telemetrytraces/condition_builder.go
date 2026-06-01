@@ -186,7 +186,7 @@ func (c *conditionBuilder) conditionFor(
 				}
 				return sb.E(fieldExpression, value), nil
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType).WithInvalidReferences(key.String())
 			}
 
 		case schema.ColumnTypeEnumUInt64,
@@ -204,7 +204,7 @@ func (c *conditionBuilder) conditionFor(
 		case schema.ColumnTypeEnumMap:
 			keyType := columns[0].Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, columns[0].Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, columns[0].Type).WithInvalidReferences(key.String())
 			}
 
 			switch valueType := columns[0].Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -219,10 +219,10 @@ func (c *conditionBuilder) conditionFor(
 					return sb.NE(leftOperand, true), nil
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType).WithInvalidReferences(key.String())
 			}
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", columns[0].Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", columns[0].Type).WithInvalidReferences(key.String())
 		}
 	}
 	return "", nil
@@ -272,7 +272,7 @@ func (c *conditionBuilder) isSpanScopeField(name string) bool {
 
 func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, startNs uint64) (string, error) {
 	if operator != qbtypes.FilterOperatorEqual {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s only supports '=' operator", key.Name).WithInvalidReferences(key.String())
 	}
 
 	var isTrue bool
@@ -282,11 +282,11 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 	case string:
 		isTrue = strings.ToLower(v) == "true"
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s expects boolean value, got %T", key.Name, value)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s expects boolean value, got %T", key.Name, value).WithInvalidReferences(key.String())
 	}
 
 	if !isTrue {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s can only be filtered with value 'true'", key.Name)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "span scope field %s can only be filtered with value 'true'", key.Name).WithInvalidReferences(key.String())
 	}
 
 	keyName := strings.ToLower(key.Name)
@@ -304,6 +304,6 @@ func (c *conditionBuilder) buildSpanScopeCondition(key *telemetrytypes.Telemetry
 		return sqlbuilder.Escape(fmt.Sprintf("((name, resource_string_service$$name) GLOBAL IN (SELECT DISTINCT name, serviceName from %s.%s)) AND parent_span_id != ''",
 			DBName, TopLevelOperationsTableName)), nil
 	default:
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name)
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid span search scope: %s", key.Name).WithInvalidReferences(key.String())
 	}
 }

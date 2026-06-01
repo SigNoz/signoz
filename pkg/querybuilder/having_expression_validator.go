@@ -294,7 +294,10 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			validKeys = append(validKeys, k)
 		}
 		sort.Strings(validKeys)
-		additional := []string{"Valid references are: [" + strings.Join(validKeys, ", ") + "]"}
+		// Each suggestion is a self-describing string prefixed with either
+		// "did you mean: " (the full corrected expression) or "valid references: "
+		// (the set of valid references).
+		var suggestions []string
 		if len(v.invalid) == 1 {
 			inv := v.invalid[0]
 			// Only suggest for plain identifier typos, not for unresolved function
@@ -303,15 +306,16 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			// a simple string substitution produce a corrupt expression.
 			isFuncCall := strings.Contains(original, inv+"(")
 			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				corrected := strings.ReplaceAll(original, inv, match)
-				additional = append(additional, "Suggestion: `"+corrected+"`")
+				suggestions = append(suggestions, "did you mean: "+strings.ReplaceAll(original, inv, match))
 			}
 		}
-		return "", errors.NewInvalidInputf(
+		suggestions = append(suggestions, "valid references: "+strings.Join(validKeys, ", "))
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithAdditional(additional...)
+		).WithInvalidReferences(v.invalid...).WithSuggestions(suggestions...)
+		return "", havingErr
 	}
 
 	// Layer 3 – ANTLR syntax errors. We parse the original expression, so error messages

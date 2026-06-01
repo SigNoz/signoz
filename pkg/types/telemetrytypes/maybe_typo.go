@@ -1,7 +1,6 @@
 package telemetrytypes
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -104,7 +103,7 @@ func SuggestCorrection(input string, knownFieldKeys []string) (string, bool) {
 	}
 
 	if bestSimilarity >= typoSuggestionThreshold {
-		return fmt.Sprintf("did you mean: '%s'?", bestMatch), true
+		return bestMatch, true
 	}
 
 	return "", false

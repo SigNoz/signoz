@@ -92,13 +92,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 				if found {
-					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				} else {
-					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
+					// we found a close match, attach the suggestion
+					wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
 				}
+				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it

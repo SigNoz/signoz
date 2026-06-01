@@ -245,18 +245,14 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 					errors.CodeInvalidInput,
 					"unknown field %q in composite query",
 					field,
-				).WithAdditional(
-					suggestion,
-				)
+				).WithInvalidReferences(field).WithSuggestions("did you mean: " + suggestion)
 			}
 
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
-			).WithAdditional(
-				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			)
+			).WithInvalidReferences(field).WithSuggestions("valid references: " + strings.Join(fieldNames, ", "))
 		}
 	}
 
@@ -591,18 +587,14 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 					errors.CodeInvalidInput,
 					"unknown field %q",
 					field,
-				).WithAdditional(
-					suggestion,
-				)
+				).WithInvalidReferences(field).WithSuggestions("did you mean: " + suggestion)
 			}
 
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
-			).WithAdditional(
-				"Valid fields are: " + strings.Join(fieldNames, ", "),
-			)
+			).WithInvalidReferences(field).WithSuggestions("valid references: " + strings.Join(fieldNames, ", "))
 		}
 	}
 

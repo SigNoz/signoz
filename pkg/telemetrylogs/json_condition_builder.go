@@ -170,10 +170,10 @@ func getEmptyValue(elemType telemetrytypes.JSONDataType) any {
 func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	fieldPath := node.FieldPath()
 	if strings.Contains(fieldPath, telemetrytypes.ArraySepSuffix) {
-		return "", errors.NewInternalf(CodeArrayNavigationFailed, "can not build index condition for array field %s", fieldPath)
+		return "", errors.NewInternalf(CodeArrayNavigationFailed, "can not build index condition for array field %s", fieldPath).WithInvalidReferences(node.Name)
 	}
 	if !node.IsTerminal {
-		return "", errors.NewInternalf(errors.CodeInvalidInput, "can not build index condition for non-terminal node %s", fieldPath)
+		return "", errors.NewInternalf(errors.CodeInvalidInput, "can not build index condition for non-terminal node %s", fieldPath).WithInvalidReferences(node.Name)
 	}
 
 	indexedExpr := schemamigrator.JSONSubColumnIndexExpr(node.Parent.Name, node.Name, node.TerminalConfig.ElemType.StringValue())

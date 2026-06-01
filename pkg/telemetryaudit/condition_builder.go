@@ -130,7 +130,7 @@ func (c *conditionBuilder) conditionFor(
 				}
 				return sb.E(fieldExpression, value), nil
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType).WithInvalidReferences(key.String())
 			}
 		case schema.ColumnTypeEnumString:
 			value = ""
@@ -147,7 +147,7 @@ func (c *conditionBuilder) conditionFor(
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type).WithInvalidReferences(key.String())
 			}
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -161,10 +161,10 @@ func (c *conditionBuilder) conditionFor(
 				}
 				return sb.NE(leftOperand, true), nil
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType).WithInvalidReferences(key.String())
 			}
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type).WithInvalidReferences(key.String())
 		}
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
