@@ -1,34 +1,47 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesDeploymentRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sDeploymentsData } from './api';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	EntityProgressBar,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { Computer } from '@signozhq/icons';
 
-export function getK8sDeploymentRowKey(deployment: K8sDeploymentsData): string {
-	return deployment.meta.k8s_deployment_name || deployment.deploymentName;
+export function getK8sDeploymentRowKey(
+	deployment: InframonitoringtypesDeploymentRecordDTO,
+): string {
+	return (
+		deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] ||
+		deployment.deploymentName ||
+		''
+	);
 }
 
 export function getK8sDeploymentItemKey(
-	deployment: K8sDeploymentsData,
+	deployment: InframonitoringtypesDeploymentRecordDTO,
 ): string {
-	return deployment.meta.k8s_deployment_name;
+	return deployment.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '';
 }
 
-export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
+export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDeploymentRecordDTO>[] =
 	[
 		{
 			id: 'deploymentGroup',
 			header: (): React.ReactNode => (
 				<EntityGroupHeader title="DEPLOYMENT GROUP" />
 			),
-			accessorFn: (row): string => row.meta.k8s_deployment_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '',
 			width: { min: 220 },
 			enableSort: false,
 			enableRemove: false,
@@ -54,7 +67,8 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 					icon={<Computer data-hide-expanded="true" size={14} />}
 				/>
 			),
-			accessorFn: (row): string => row.meta.k8s_deployment_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '',
 			width: { min: 210 },
 			enableSort: false,
 			enableRemove: false,
@@ -64,16 +78,17 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			cell: ({ value }): React.ReactNode => {
 				const deploymentName = value as string;
 				return (
-					<Tooltip title={deploymentName}>
+					<TooltipSimple title={deploymentName}>
 						<TanStackTable.Text>{deploymentName}</TanStackTable.Text>
-					</Tooltip>
+					</TooltipSimple>
 				);
 			},
 		},
 		{
 			id: 'namespaceName',
 			header: 'Namespace Name',
-			accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 			width: { default: 220 },
 			enableSort: false,
 			enableResize: true,
@@ -82,11 +97,28 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			),
 		},
 		{
+			id: 'podCountsByPhase',
+			header: 'Pod Status',
+			accessorFn: (row): object | undefined => row.podCountsByPhase,
+			width: { min: 220 },
+			enableSort: false,
+			enableResize: true,
+			cell: ({ row }): React.ReactNode => {
+				const podCountsByPhase = row.podCountsByPhase;
+				if (!podCountsByPhase) {
+					return <TanStackTable.Text>-</TanStackTable.Text>;
+				}
+				return (
+					<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
+				);
+			},
+		},
+		{
 			id: 'available_pods',
 			header: 'Available',
 			accessorFn: (row): number => row.availablePods,
 			width: { min: 100 },
-			enableSort: false,
+			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
 			cell: ({ value }): React.ReactNode => {
@@ -107,11 +139,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			header: 'Desired',
 			accessorFn: (row): number => row.desiredPods,
 			width: { min: 80 },
-			enableSort: false,
+			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
 			cell: ({ value }): React.ReactNode => {
-				const desiredPods = value as number;
+				const desiredPods = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={desiredPods}
@@ -126,7 +158,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'cpu_request',
 			header: 'CPU Req Usage (%)',
-			accessorFn: (row): number => row.cpuRequest,
+			accessorFn: (row): number => row.deploymentCPURequest,
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
@@ -146,12 +178,12 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'cpu_limit',
 			header: 'CPU Limit Usage (%)',
-			accessorFn: (row): number => row.cpuLimit,
+			accessorFn: (row): number => row.deploymentCPULimit,
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
-				const cpuLimit = value as number;
+				const cpuLimit = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={cpuLimit}
@@ -166,19 +198,19 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'cpu',
 			header: 'CPU Usage (cores)',
-			accessorFn: (row): number => row.cpuUsage,
+			accessorFn: (row): number => row.deploymentCPU,
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
-				const cpu = value as number;
+				const cpu = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={cpu}
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU metric"
 					>
-						<TanStackTable.Text>{cpu}</TanStackTable.Text>
+						<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -186,12 +218,12 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'memory_request',
 			header: 'Mem Req Usage (%)',
-			accessorFn: (row): number => row.memoryRequest,
+			accessorFn: (row): number => row.deploymentMemoryRequest,
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
-				const memoryRequest = value as number;
+				const memoryRequest = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={memoryRequest}
@@ -206,12 +238,12 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'memory_limit',
 			header: 'Mem Limit Usage (%)',
-			accessorFn: (row): number => row.memoryLimit,
+			accessorFn: (row): number => row.deploymentMemoryLimit,
 			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
-				const memoryLimit = value as number;
+				const memoryLimit = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={memoryLimit}
@@ -226,7 +258,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'memory',
 			header: 'Mem Usage (WSS)',
-			accessorFn: (row): number => row.memoryUsage,
+			accessorFn: (row): number => row.deploymentMemory,
 			width: { min: 140 },
 			enableSort: true,
 			enableResize: true,
