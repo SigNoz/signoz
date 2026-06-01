@@ -209,17 +209,7 @@ func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string,
 	effectiveStartSB := sqlbuilder.NewSelectBuilder()
 	effectiveStartSB.Select(
 		"field_value", "end_ns",
-		`greatest(
-			start_ns,
-			ifNull(
-				max(end_ns) OVER (
-					PARTITION BY field_value
-					ORDER BY start_ns
-					ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
-				),
-				toUInt64(0)
-			)
-		) AS effective_start_ns`,
+		"greatest(start_ns, ifNull(max(end_ns) OVER (PARTITION BY field_value ORDER BY start_ns ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), toUInt64(0))) AS effective_start_ns",
 	)
 	effectiveStartSB.From("all_spans")
 
