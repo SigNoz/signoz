@@ -322,6 +322,51 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, svc)
 }
 
+func (handler *handler) GetAccountService(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceID, err := cloudintegrationtypes.NewServiceID(provider, mux.Vars(r)["service_id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	cloudIntegrationID, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	_, err = handler.module.GetConnectedAccount(ctx, orgID, cloudIntegrationID, provider)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	svc, err := handler.module.GetService(ctx, orgID, serviceID, provider, cloudIntegrationID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, svc)
+}
+
 func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

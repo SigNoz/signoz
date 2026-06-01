@@ -192,6 +192,26 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetAccountService),
+		handler.OpenAPIDef{
+			ID:                  "GetAccountService",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "Get service for account",
+			Description:         "This endpoint gets a service and its configuration for the specified cloud integration account",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(citypes.Service),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	// Agent check-in endpoint is kept same as older one to maintain backward compatibility with already deployed agents.
 	// In the future, this endpoint will be deprecated and a new endpoint will be introduced for consistency with above endpoints.
 	if err := router.Handle("/api/v1/cloud-integrations/{cloud_provider}/agent-check-in", handler.New(

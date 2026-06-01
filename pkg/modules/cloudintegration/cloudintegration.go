@@ -76,6 +76,7 @@ type Handler interface {
 	DisconnectAccount(http.ResponseWriter, *http.Request)
 	ListServicesMetadata(http.ResponseWriter, *http.Request)
 	GetService(http.ResponseWriter, *http.Request)
+	GetAccountService(http.ResponseWriter, *http.Request)
 	UpdateService(http.ResponseWriter, *http.Request)
 	AgentCheckIn(http.ResponseWriter, *http.Request)
 }
