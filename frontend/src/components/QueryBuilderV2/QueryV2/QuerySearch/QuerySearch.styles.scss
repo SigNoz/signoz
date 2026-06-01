@@ -1,5 +1,17 @@
 // TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
 
+// Recents-aware dropdown sizing. The autocomplete dropdown caps at
+// `$dropdown-base-height` when there are no recents (compact, fits ~5
+// suggestion rows). For each recent search row present, the cap grows by
+// one row-height plus a one-time header offset, so recents render in
+// full while ~5 suggestion rows stay visible below. Numbers match the
+// JS display cap (RECENTS_DISPLAY_CAP in constants.ts).
+
+$dropdown-base-height: 250px;
+$recents-header-height: 30px;
+$recent-row-height: 52px;
+$max-recents-shown: 5;
+
 .code-mirror-where-clause {
 	width: 100%;
 	display: flex;
@@ -117,36 +129,19 @@
 				width: 100% !important;
 				max-width: 100% !important;
 				font-family: 'Space Mono', monospace !important;
-				// Default cap = ~5 suggestion rows + section header + footer.
-				// Anything beyond scrolls inside this container.
-				max-height: 250px !important;
+				max-height: $dropdown-base-height !important;
 				overflow-y: auto !important;
 
-				// Grow the cap proportionally to the number of recent search
-				// rows present so all recents render in full while ~5
-				// suggestions remain visible below them. Each pill card is
-				// ~52px (36px row + 8px margin top/bottom + 8px padding) plus
-				// a one-time ~30px for the "Recent searches" section header.
-				//
-				// CodeMirror renders recents first (rank: 1), then
-				// `<completion-section>` between groups, then suggestions —
-				// so the first N `<li>` direct children are the recents.
-				// `:nth-of-type` counts only `<li>` (sections use a different
-				// tag), making the count-via-position trick reliable.
-				&:has(> li:nth-of-type(1) .cm-completionIcon-recent) {
-					max-height: 332px !important;
-				}
-				&:has(> li:nth-of-type(2) .cm-completionIcon-recent) {
-					max-height: 384px !important;
-				}
-				&:has(> li:nth-of-type(3) .cm-completionIcon-recent) {
-					max-height: 436px !important;
-				}
-				&:has(> li:nth-of-type(4) .cm-completionIcon-recent) {
-					max-height: 488px !important;
-				}
-				&:has(> li:nth-of-type(5) .cm-completionIcon-recent) {
-					max-height: 540px !important;
+				// CodeMirror renders recents first (rank: 1), so the first N
+				// `<li>` direct children are the recents. Each cascading rule
+				// matches when at least N recents exist; the highest-N rule
+				// wins because it appears latest in source order.
+				@for $i from 1 through $max-recents-shown {
+					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
+						max-height: $dropdown-base-height +
+							$recents-header-height +
+							($i * $recent-row-height) !important;
+					}
 				}
 
 				&::-webkit-scrollbar {
@@ -309,15 +304,13 @@
 					line-height: 1;
 					cursor: pointer;
 					opacity: 0.5;
-					transition: opacity 0.12s ease, background-color 0.12s ease;
+					transition:
+						opacity 0.12s ease,
+						background-color 0.12s ease;
 
 					&:hover {
 						opacity: 1;
-						background: color-mix(
-							in srgb,
-							var(--text-vanilla-400) 18%,
-							transparent
-						);
+						background: color-mix(in srgb, var(--text-vanilla-400) 18%, transparent);
 					}
 				}
 			}
@@ -337,11 +330,7 @@
 				letter-spacing: 0.02em;
 				color: var(--l2-foreground);
 				opacity: 0.6;
-				background: color-mix(
-					in srgb,
-					var(--l1-background) 50%,
-					transparent
-				);
+				background: color-mix(in srgb, var(--l1-background) 50%, transparent);
 				border-bottom-left-radius: 4px;
 				border-bottom-right-radius: 4px;
 			}

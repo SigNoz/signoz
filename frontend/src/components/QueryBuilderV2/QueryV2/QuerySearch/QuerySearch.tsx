@@ -1255,10 +1255,6 @@ function QuerySearch({
 		};
 	}
 
-	// The `DataSource` enum's string values exactly match the
-	// `RecentsSignal` union, so a cast at this boundary is safe. If
-	// `DataSource` ever gains non-signal values (e.g. a meter source),
-	// add a runtime guard here.
 	const recentsSignal = dataSource as RecentsSignal;
 
 	function combinedSuggestions(
@@ -1268,10 +1264,6 @@ function QuerySearch({
 		const recentOptions = getRecentOptions(recentsSignal, fullDoc);
 		const result = autoSuggestions(context);
 
-		// Tag positional suggestions with the "Suggestions" section so
-		// CodeMirror renders a section header above them. No cap — the full
-		// list scrolls inside the dropdown's max-height container so users
-		// can always reach any key/value, with or without recents present.
 		const sectionedSuggestions = (result?.options || []).map((opt) => ({
 			...opt,
 			section: SUGGESTIONS_SECTION,
@@ -1281,11 +1273,6 @@ function QuerySearch({
 			return result;
 		}
 
-		// `filter: false` tells CodeMirror to skip its built-in prefix scorer.
-		// Both option groups are pre-filtered in their respective sources
-		// (autoSuggestions filters positional options by the current token;
-		// getRecentOptions filters recents by full-doc prefix), so disabling
-		// CM's scorer keeps both visible when our filters allowed them through.
 		if (!result) {
 			return {
 				from: 0,
