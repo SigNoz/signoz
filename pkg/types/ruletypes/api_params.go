@@ -633,6 +633,7 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 		return json.Marshal(aux)
 	case SchemaVersionV2Alpha1:
 		copyStruct := *g
+		copyStruct.PostableRule.populateEvaluationForResponse()
 		aux := Alias(copyStruct)
 		return json.Marshal(aux)
 	default:
@@ -687,11 +688,49 @@ func (r *Rule) MarshalJSON() ([]byte, error) {
 		return json.Marshal(aux)
 	case SchemaVersionV2Alpha1:
 		copyStruct := *r
+		copyStruct.PostableRule.populateEvaluationForResponse()
 		aux := Alias(copyStruct)
 		return json.Marshal(aux)
 	default:
 		copyStruct := *r
 		aux := Alias(copyStruct)
 		return json.Marshal(aux)
+	}
+}
+
+// populateEvaluationForResponse normalizes the v2alpha1 read shape so that
+// `evaluation` is the single canonical home of the evaluation window and
+// the legacy top-level `evalWindow` / `frequency` fields don't leak into
+// the response. Two cases:
+//
+//   - rule was POSTed under v2alpha1 with `evaluation: {...}` — the
+//     envelope is already populated; the top-level fields are zero from
+//     unmarshaling. Just leave the envelope alone.
+//   - rule was originally created under v1 (top-level fields, no
+//     envelope) and is now being read back under v2alpha1 — synthesize a
+//     RollingWindow envelope from the legacy fields so the wire output
+//     matches what a v2alpha1 client would have sent.
+//
+// In both cases the top-level legacy fields get zeroed; their `omitzero`
+// json tags drop them from the response, and clients see exactly the
+// `evaluation` envelope they POST/PUT with.
+//
+// v1 (DefaultSchemaVersion) responses keep the legacy decomposed shape —
+// existing v1 clients (older SDKs, terraform-provider's signoz/ tree)
+// rely on it. The MarshalJSON case above already nils out Evaluation
+// for v1 so the two responses stay distinct.
+func (r *PostableRule) populateEvaluationForResponse() {
+	if r.Evaluation == nil && (!r.EvalWindow.IsZero() || !r.Frequency.IsZero()) {
+		r.Evaluation = &EvaluationEnvelope{
+			Kind: RollingEvaluation,
+			Spec: RollingWindow{
+				EvalWindow: r.EvalWindow,
+				Frequency:  r.Frequency,
+			},
+		}
+	}
+	if r.Evaluation != nil {
+		r.EvalWindow = valuer.TextDuration{}
+		r.Frequency = valuer.TextDuration{}
 	}
 }
