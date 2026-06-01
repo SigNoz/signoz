@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -51,7 +52,11 @@ function logsPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 	formatting: FormattingOptions;
 } {
-	return preferencesLoader(logsLoaderConfig);
+	const result = preferencesLoader<{
+		columns: TelemetryFieldKey[];
+		formatting: FormattingOptions;
+	}>(logsLoaderConfig);
+	return { ...result, columns: ensureLogsRequiredColumns(result.columns) };
 }
 
 function tracesPreferencesLoader(): {

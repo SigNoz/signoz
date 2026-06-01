@@ -14,7 +14,6 @@ import {
 	k8sVolumeGetEntityName,
 	k8sVolumeGetSelectedItemFilters,
 	k8sVolumeInitialEventsFilter,
-	k8sVolumeInitialFilters,
 	k8sVolumeInitialLogTracesFilter,
 	volumeWidgetInfo,
 } from './constants';
@@ -106,7 +105,6 @@ function K8sVolumesList({
 				getEntityName={k8sVolumeGetEntityName}
 				getInitialLogTracesFilters={k8sVolumeInitialLogTracesFilter}
 				getInitialEventsFilters={k8sVolumeInitialEventsFilter}
-				primaryFilterKeys={k8sVolumeInitialFilters}
 				metadataConfig={k8sVolumeDetailsMetadataConfig}
 				entityWidgetInfo={volumeWidgetInfo}
 				getEntityQueryPayload={getVolumeMetricsQueryPayload}
