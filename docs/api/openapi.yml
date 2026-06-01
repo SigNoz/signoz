@@ -6605,6 +6605,8 @@ components:
             $ref: '#/components/schemas/SpantypesSpanAggregation'
           nullable: true
           type: array
+      required:
+      - aggregations
       type: object
     SpantypesPostableWaterfall:
       properties:
@@ -6630,6 +6632,9 @@ components:
           $ref: '#/components/schemas/SpantypesSpanAggregationType'
         field:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
       type: object
     SpantypesSpanAggregationResult:
       properties:

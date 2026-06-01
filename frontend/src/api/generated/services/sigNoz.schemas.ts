@@ -8007,15 +8007,15 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 }
 
 export interface SpantypesSpanAggregationDTO {
-	aggregation?: SpantypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	aggregation: SpantypesSpanAggregationTypeDTO;
+	field: TelemetrytypesTelemetryFieldKeyDTO;
 }
 
 export interface SpantypesPostableTraceAggregationsDTO {
 	/**
 	 * @type array,null
 	 */
-	aggregations?: SpantypesSpanAggregationDTO[] | null;
+	aggregations: SpantypesSpanAggregationDTO[] | null;
 }
 
 export interface SpantypesPostableWaterfallDTO {

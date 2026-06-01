@@ -28,8 +28,8 @@ var (
 
 // SpanAggregation is a single aggregation request item: which field to group by and how.
 type SpanAggregation struct {
-	Field       telemetrytypes.TelemetryFieldKey `json:"field"`
-	Aggregation SpanAggregationType              `json:"aggregation"`
+	Field       telemetrytypes.TelemetryFieldKey `json:"field"       required:"true"`
+	Aggregation SpanAggregationType              `json:"aggregation" required:"true"`
 }
 
 // SpanAggregationResult is the computed result for one aggregation request item.
@@ -54,10 +54,13 @@ func (s SpanAggregationType) isValid() bool {
 
 // PostableTraceAggregations is the request body for the V4 aggregations endpoint.
 type PostableTraceAggregations struct {
-	Aggregations []SpanAggregation `json:"aggregations"`
+	Aggregations []SpanAggregation `json:"aggregations" required:"true"`
 }
 
 func (p *PostableTraceAggregations) Validate() error {
+	if len(p.Aggregations) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregations is required and must not be empty")
+	}
 	if len(p.Aggregations) > maxAggregationItems {
 		return ErrTooManyAggregationItems
 	}
