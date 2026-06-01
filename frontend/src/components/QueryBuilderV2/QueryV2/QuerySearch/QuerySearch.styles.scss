@@ -237,8 +237,6 @@ $max-recents-shown: 5;
 						color: var(--text-vanilla-400) !important;
 					}
 
-					// Reveal the inline delete button more strongly on hover
-					// or when the row is keyboard-selected.
 					&:hover .cm-recent-delete,
 					&[aria-selected='true'] .cm-recent-delete {
 						opacity: 1;
