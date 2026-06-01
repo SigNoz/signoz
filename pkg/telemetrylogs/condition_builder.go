@@ -192,7 +192,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 
 			if len(newColumns) == 0 {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name).WithInvalidReferences(key.Text())
 			}
 
 			// This mean tblFieldName is with multiIf, we just need to do a null check.
@@ -223,7 +223,7 @@ func (c *conditionBuilder) conditionFor(
 				}
 				return sb.E(fieldExpression, value), nil
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType).WithInvalidReferences(key.Text())
 			}
 		case schema.ColumnTypeEnumString:
 			value = ""
@@ -242,7 +242,7 @@ func (c *conditionBuilder) conditionFor(
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type).WithInvalidReferences(key.Text())
 			}
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -257,10 +257,10 @@ func (c *conditionBuilder) conditionFor(
 					return sb.NE(leftOperand, true), nil
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType).WithInvalidReferences(key.Text())
 			}
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type).WithInvalidReferences(key.Text())
 
 		}
 	}

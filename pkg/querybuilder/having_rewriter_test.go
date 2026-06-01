@@ -19,13 +19,14 @@ func toTraceAggregations(logs []qbtypes.LogAggregation) []qbtypes.TraceAggregati
 }
 
 type logsAndTracesTestCase struct {
-	name           string
-	expression     string
-	aggregations   []qbtypes.LogAggregation
-	wantExpression string
-	wantErr        bool
-	wantErrMsg     string
-	wantAdditional []string
+	name            string
+	expression      string
+	aggregations    []qbtypes.LogAggregation
+	wantExpression  string
+	wantErr         bool
+	wantErrMsg      string
+	wantAdditional  []string
+	wantSuggestions []string
 }
 
 func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
@@ -42,10 +43,12 @@ func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
 				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
 				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
 				assert.Equal(t, tt.wantAdditional, additionalLogs)
+				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(errLogs).Suggestions)
 				require.Error(t, errTraces)
 				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
 				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
 				assert.Equal(t, tt.wantAdditional, additionalTraces)
+				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(errTraces).Suggestions)
 			} else {
 				require.NoError(t, errLogs)
 				assert.Equal(t, tt.wantExpression, gotLogs)
@@ -562,9 +565,9 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
+			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
 		},
 		{
 			name:       "IN with end bracked missing",
@@ -621,9 +624,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [unknown_alias]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [unknown_alias]",
+			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
 		},
 		{
 			name:       "typo in identifier suggests closest match",
@@ -631,9 +634,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [totol]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]", "Suggestion: `total > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [totol]",
+			wantSuggestions: []string{"did you mean: total > 100", "valid references: __result, __result0, count(), total"},
 		},
 		{
 			name:       "expression not in column map",
@@ -641,9 +644,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantSuggestions: []string{"valid references: __result, __result0, count()"},
 		},
 		{
 			name:       "one valid one invalid reference",
@@ -651,9 +654,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
+			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
 		},
 		{
 			name:       "__result ambiguous with multiple aggregations",
@@ -662,9 +665,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 				{Expression: "count()"},
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result]",
-			wantAdditional: []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]", "Suggestion: `__result0 > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result]",
+			wantSuggestions: []string{"did you mean: __result0 > 100", "valid references: __result0, __result1, count(), sum(bytes)"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -672,9 +675,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result_9]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result_9]",
+			wantSuggestions: []string{"did you mean: __result > 100", "valid references: __result, __result0, count()"},
 		},
 		{
 			name:       "__result_1 out of range for single aggregation",
@@ -682,9 +685,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [__result_1]",
+			wantSuggestions: []string{"did you mean: __result > 100", "valid references: __result, __result0, count()"},
 		},
 		{
 			name:       "cascaded function calls",
@@ -692,9 +695,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantSuggestions: []string{"valid references: __result, __result0, count()"},
 		},
 		{
 			name:       "function call with multiple args not in column map",
@@ -702,9 +705,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(a)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(a)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
+			wantSuggestions: []string{"valid references: __result, __result0, sum(a)"},
 		},
 		{
 			name:       "unquoted string value treated as unknown identifier",
@@ -712,9 +715,9 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "sum(bytes)"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [xyz]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(bytes)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [xyz]",
+			wantSuggestions: []string{"valid references: __result, __result0, sum(bytes)"},
 		},
 	})
 }
@@ -875,13 +878,14 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 
 func TestRewriteForMetrics(t *testing.T) {
 	tests := []struct {
-		name           string
-		expression     string
-		aggregations   []qbtypes.MetricAggregation
-		wantExpression string
-		wantErr        bool
-		wantErrMsg     string
-		wantAdditional []string
+		name            string
+		expression      string
+		aggregations    []qbtypes.MetricAggregation
+		wantExpression  string
+		wantErr         bool
+		wantErrMsg      string
+		wantAdditional  []string
+		wantSuggestions []string
 	}{
 		// --- Happy path: reference types (time/space aggregation, __result, bare metric) ---
 		{
@@ -981,9 +985,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [wrong_metric]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [wrong_metric]",
+			wantSuggestions: []string{"valid references: __result, __result0, sum(cpu_usage)"},
 		},
 		// --- Error: string literal (not allowed in HAVING) ---
 		{
@@ -1026,9 +1030,9 @@ func TestRewriteForMetrics(t *testing.T) {
 					SpaceAggregation: metrictypes.SpaceAggregationUnspecified,
 				},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [count]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantErr:         true,
+			wantErrMsg:      "Invalid references in `Having` expression: [count]",
+			wantSuggestions: []string{"valid references: __result, __result0, sum(cpu_usage)"},
 		},
 	}
 
@@ -1041,6 +1045,7 @@ func TestRewriteForMetrics(t *testing.T) {
 				assert.ErrorContains(t, err, tt.wantErrMsg)
 				_, _, _, _, _, additional := errors.Unwrapb(err)
 				assert.Equal(t, tt.wantAdditional, additional)
+				assert.Equal(t, tt.wantSuggestions, errors.AsJSON(err).Suggestions)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantExpression, got)

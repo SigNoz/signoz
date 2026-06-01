@@ -179,7 +179,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 
 	// We shouldn't reach this, it basically means there is something wrong with the evolutions data
 	if latestBaseEvolutionAcrossAll == nil {
-		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
+		return nil, nil, errors.NewInternalf(errors.CodeInternal, "no base evolution found for columns %v", columns)
 	}
 
 	columnLookUpMap := make(map[string]*schema.Column)
@@ -205,7 +205,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		}
 
 		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
+			return nil, nil, errors.NewInternalf(errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns).WithInvalidReferences(evolution.ColumnName)
 		}
 
 		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})
@@ -294,7 +294,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 
 				exprs = append(exprs, expr)
 			default:
-				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
 
 		case schema.ColumnTypeEnumLowCardinality:
@@ -302,7 +302,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			case schema.ColumnTypeEnumString:
 				exprs = append(exprs, column.Name)
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType).WithInvalidReferences(key.Text())
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
@@ -310,7 +310,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type).WithInvalidReferences(key.Text())
 			}
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -324,7 +324,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType).WithInvalidReferences(key.Text())
 			}
 		}
 	}
@@ -334,7 +334,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 	} else if len(exprs) > 1 {
 		// Ensure existExpr has the same length as exprs
 		if len(existExpr) != len(exprs) {
-			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
+			return "", errors.NewInternalf(errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
 		}
 		finalExprs := []string{}
 		for i, expr := range exprs {
@@ -375,13 +375,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				} else {
-					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
+					wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
 				}
+				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
@@ -406,7 +405,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	plan := key.JSONPlan
 	if len(plan) == 0 {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"Could not find any valid paths for: %s", key.Name)
 	}
 
@@ -461,7 +460,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 // buildArrayConcat builds the arrayConcat pattern directly from the tree structure.
 func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (string, error) {
 	if len(plan) == 0 {
-		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
+		return "", errors.NewInternalf(CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
 	}
 
 	// Build arrayMap expressions for ALL available branches at the root level.
@@ -477,7 +476,7 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 		}
 	}
 	if len(arrayMapExpressions) == 0 {
-		return "", errors.Newf(errors.TypeInternal, CodeArrayMapExpressionsEmpty, "array map expressions are empty while building arrayConcat")
+		return "", errors.NewInternalf(CodeArrayMapExpressionsEmpty, "array map expressions are empty while building arrayConcat")
 	}
 
 	// Build the arrayConcat expression
@@ -492,12 +491,12 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 // buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches.
 func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, branchType telemetrytypes.JSONAccessBranchType) (string, error) {
 	if currentNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")
+		return "", errors.NewInternalf(CodeCurrentNodeNil, "current node is nil while building arrayMap")
 	}
 
 	childNode := currentNode.Branches[branchType]
 	if childNode == nil {
-		return "", errors.Newf(errors.TypeInternal, CodeChildNodeNil, "child node is nil while building arrayMap")
+		return "", errors.NewInternalf(CodeChildNodeNil, "child node is nil while building arrayMap")
 	}
 
 	// Build the array expression for this level
@@ -538,7 +537,7 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	} else if len(nestedExpressions) > 1 {
 		nestedExpr = fmt.Sprintf("arrayConcat(%s)", strings.Join(nestedExpressions, ", "))
 	} else {
-		return "", errors.Newf(errors.TypeInternal, CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
+		return "", errors.NewInternalf(CodeNestedExpressionsEmpty, "nested expressions are empty while building arrayMap")
 	}
 
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil

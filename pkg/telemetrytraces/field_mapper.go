@@ -255,7 +255,7 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 	if len(columns) != 1 {
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+		return "", errors.NewInternalf(errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
 	}
 	column := columns[0]
 
@@ -263,7 +263,7 @@ func (m *defaultFieldMapper) FieldFor(
 	case schema.ColumnTypeEnumJSON:
 		// json is only supported for resource context as of now
 		if key.FieldContext != telemetrytypes.FieldContextResource {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
 		oldColumn := indexV3Columns["resources_string"]
 		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
@@ -290,12 +290,12 @@ func (m *defaultFieldMapper) FieldFor(
 		case schema.ColumnTypeEnumString:
 			return column.Name, nil
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type).WithInvalidReferences(key.Text())
 		}
 	case schema.ColumnTypeEnumMap:
 		keyType := column.Type.(schema.MapColumnType).KeyType
 		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type).WithInvalidReferences(key.Text())
 		}
 
 		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -306,7 +306,7 @@ func (m *defaultFieldMapper) FieldFor(
 			}
 			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type).WithInvalidReferences(key.Text())
 		}
 	}
 	// should not reach here
@@ -340,13 +340,12 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 				// - the next best thing to do is see if there is a typo
 				// and suggest a correction
 				correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
+				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 				if found {
 					// we found a close match, in the error message send the suggestion
-					return "", errors.Wrap(err, errors.TypeInvalidInput, errors.CodeInvalidInput, correction)
-				} else {
-					// not even a close match, return an error
-					return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
+					wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
 				}
+				return "", wrappedErr
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it

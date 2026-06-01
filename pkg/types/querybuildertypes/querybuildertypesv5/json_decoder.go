@@ -48,9 +48,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 					errors.CodeInvalidInput,
 					errorMsg,
 					unknownField,
-				).WithAdditional(
-					suggestion,
-				)
+				).WithInvalidReferences(unknownField).WithSuggestions("did you mean: " + suggestion)
 			}
 
 			// No good suggestion found
@@ -58,9 +56,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 				errors.CodeInvalidInput,
 				errorMsg,
 				unknownField,
-			).WithAdditional(
-				"Valid fields are: " + strings.Join(validFields, ", "),
-			)
+			).WithInvalidReferences(unknownField).WithSuggestions("valid references: " + strings.Join(validFields, ", "))
 		}
 	}
 

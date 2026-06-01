@@ -16,6 +16,7 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 		jsonData            string
 		wantErrMsg          string
 		wantAdditionalHints []string
+		wantSuggestions     []string
 	}{
 		{
 			name: "unknown field 'function' in query spec",
@@ -42,10 +43,8 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 					}]
 				}
 			}`,
-			wantErrMsg: `unknown field "function" in query spec`,
-			wantAdditionalHints: []string{
-				"did you mean: 'functions'?",
-			},
+			wantErrMsg:      `unknown field "function" in query spec`,
+			wantSuggestions: []string{"did you mean: functions"},
 		},
 		{
 			name: "unknown field 'filters' in query spec",
@@ -70,10 +69,8 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 					}]
 				}
 			}`,
-			wantErrMsg: `unknown field "filters" in query spec`,
-			wantAdditionalHints: []string{
-				"did you mean: 'filter'?",
-			},
+			wantErrMsg:      `unknown field "filters" in query spec`,
+			wantSuggestions: []string{"did you mean: filter"},
 		},
 		{
 			name: "unknown field at top level",
@@ -86,10 +83,8 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 					"queries": []
 				}
 			}`,
-			wantErrMsg: `unknown field "compositeQueries"`,
-			wantAdditionalHints: []string{
-				"did you mean: 'compositeQuery'?",
-			},
+			wantErrMsg:      `unknown field "compositeQueries"`,
+			wantSuggestions: []string{"did you mean: compositeQuery"},
 		},
 		{
 			name: "unknown field with no good suggestion",
@@ -113,9 +108,6 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 				}
 			}`,
 			wantErrMsg: `unknown field "randomField" in query spec`,
-			wantAdditionalHints: []string{
-				"Valid fields are:",
-			},
 		},
 	}
 
@@ -143,6 +135,15 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 						}
 					}
 					assert.True(t, found, "Expected to find hint '%s' in additionals: %v", hint, additionals)
+				}
+			}
+
+			// Typo suggestions are surfaced as structured (machine-consumable)
+			// suggestions, not in the human-facing additional hints.
+			if len(tt.wantSuggestions) > 0 {
+				suggestions := errors.AsJSON(err).Suggestions
+				for _, want := range tt.wantSuggestions {
+					assert.Contains(t, suggestions, want, "Expected suggestion %q in %v", want, suggestions)
 				}
 			}
 		})

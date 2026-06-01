@@ -32,7 +32,7 @@ func CollisionHandledFinalExpr(
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
 		requiredDataType != telemetrytypes.FieldDataTypeFloat64 {
-		return "", nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unsupported data type %s", requiredDataType)
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported data type %s", requiredDataType)
 	}
 
 	var dummyValue any
@@ -82,13 +82,12 @@ func CollisionHandledFinalExpr(
 			// - the next best thing to do is see if there is a typo
 			// and suggest a correction
 			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
+			wrappedErr := errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 			if found {
-				// we found a close match, in the error message send the suggestion
-				return "", nil, errors.WithAdditionalf(fieldForErr, "%s", correction)
-			} else {
-				// not even a close match, return an error
-				return "", nil, errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name)
+				// we found a close match, attach the suggestion
+				wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
 			}
+			return "", nil, wrappedErr
 		} else {
 			for _, key := range keysForField {
 				err := addCondition(key)
@@ -108,9 +107,9 @@ func CollisionHandledFinalExpr(
 
 		// first if condition covers the older tests and second if condition covers the array conditions
 		if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column").WithInvalidReferences(field.Name)
 		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name).WithInvalidReferences(field.Name)
 		} else {
 			fieldExpression, _ = DataTypeCollisionHandledFieldName(field, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 		}
