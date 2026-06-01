@@ -4,9 +4,10 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Drawer, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -50,6 +51,7 @@ import {
 import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
+import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -196,8 +198,8 @@ function LogDetailInner({
 
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleModeChange = (value: string): void => {
+		setSelectedView(value as VIEWS);
 		setIsEdit(false);
 		setIsFilterVisible(false);
 	};
@@ -217,20 +219,17 @@ function LogDetailInner({
 
 	const logBody = useMemo(() => {
 		if (!isBodyJsonQueryEnabled) {
-			return log?.body || '';
+			return (log?.body as string) ?? '';
 		}
-
-		try {
-			const json = JSON.parse(log?.body || '');
-
-			if (typeof json?.message === 'string' && json.message !== '') {
-				return json.message;
-			}
-
-			return log?.body || '';
-		} catch {
-			return log?.body || '';
+		// Feature enabled: body is always a map; message is always a string
+		const bodyObj = log?.body as ILogBody;
+		if (!bodyObj) {
+			return '';
 		}
+		if (bodyObj.message) {
+			return bodyObj.message;
+		}
+		return JSON.stringify(bodyObj);
 	}, [isBodyJsonQueryEnabled, log?.body]);
 
 	const htmlBody = useMemo(
@@ -454,56 +453,50 @@ function LogDetailInner({
 				</div>
 
 				<div className="tabs-and-search">
-					<Radio.Group
+					<ToggleGroupSimple
+						type="single"
 						className="views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
-					>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.OVERVIEW}
-						>
-							<div className="view-title">
-								<Table size={14} />
-								Overview
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.JSON ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.JSON}
-						>
-							<div className="view-title">
-								<Braces size={14} />
-								JSON
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.CONTEXT ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.CONTEXT}
-						>
-							<div className="view-title">
-								<TextSelect size={14} />
-								Context
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.INFRAMETRICS}
-						>
-							<div className="view-title">
-								<Histogram size="md" />
-								Metrics
-							</div>
-						</Radio.Button>
-					</Radio.Group>
+						items={[
+							{
+								value: VIEW_TYPES.OVERVIEW,
+								label: (
+									<div className="view-title">
+										<Table size={14} />
+										Overview
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.JSON,
+								label: (
+									<div className="view-title">
+										<Braces size={14} />
+										JSON
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.CONTEXT,
+								label: (
+									<div className="view-title">
+										<TextSelect size={14} />
+										Context
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.INFRAMETRICS,
+								label: (
+									<div className="view-title">
+										<Histogram size="md" />
+										Metrics
+									</div>
+								),
+							},
+						]}
+					/>
 
 					<div className="log-detail-drawer__actions">
 						{selectedView === VIEW_TYPES.CONTEXT && (

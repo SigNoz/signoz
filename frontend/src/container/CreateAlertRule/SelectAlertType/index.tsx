@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row, Tag } from 'antd';
+import { Row } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -66,13 +67,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					<AlertTypeCard
 						key={option.selection}
 						title={option.title}
-						extra={
-							option.isBeta ? (
-								<Tag bordered={false} color="geekblue">
-									Beta
-								</Tag>
-							) : undefined
-						}
+						extra={option.isBeta ? <Badge color="robin">Beta</Badge> : undefined}
 						onClick={(e): void => {
 							onSelect(option.selection, isModifierKeyPressed(e));
 						}}

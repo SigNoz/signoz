@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
@@ -60,9 +61,9 @@ describe('usePreferenceLoader', () => {
 			expect(result.current.loading).toBe(false);
 		});
 
-		// Should have loaded from local storage (highest priority)
+		// Loader wraps with ensureLogsRequiredColumns — body+timestamp always prepended
 		expect(result.current.preferences).toStrictEqual({
-			columns: [{ name: 'local-column' }],
+			columns: [...defaultLogsSelectedColumns, { name: 'local-column' }],
 			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
 		});
 		expect(result.current.error).toBeNull();

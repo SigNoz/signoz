@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Button, Skeleton } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -177,12 +178,14 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							<Tag color={rule?.labels?.severity}>{rule?.labels?.severity}</Tag>
+							<Badge color="sienna" variant="outline">
+								{rule?.labels?.severity}
+							</Badge>
 
 							{rule.state === 'firing' && (
-								<Tag color="red" className="firing-tag">
+								<Badge color="cherry" variant="outline" className="firing-tag">
 									{rule.state}
-								</Tag>
+								</Badge>
 							)}
 						</div>
 					</div>

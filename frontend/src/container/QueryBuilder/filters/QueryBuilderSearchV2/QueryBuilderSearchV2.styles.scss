@@ -225,7 +225,7 @@
 	}
 
 	.qb-search-bar-tokenised-tags {
-		.ant-tag {
+		[data-slot='badge'] {
 			display: flex;
 			align-items: center;
 			border-radius: 2px 0px 0px 2px;
@@ -244,7 +244,7 @@
 				padding: 2px 6px;
 			}
 
-			.ant-tag-close-icon {
+			.close-icon {
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -265,7 +265,7 @@
 					font-size: 14px;
 				}
 
-				.ant-tag-close-icon {
+				.close-icon {
 					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 				}
 			}
@@ -278,7 +278,7 @@
 					font-size: 14px;
 				}
 
-				.ant-tag-close-icon {
+				.close-icon {
 					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 				}
 			}
@@ -292,7 +292,7 @@
 					font-size: 14px;
 				}
 
-				.ant-tag-close-icon {
+				.close-icon {
 					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 				}
 			}

@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

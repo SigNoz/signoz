@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check } from '@signozhq/icons';
+import { Check, Info } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
@@ -11,6 +11,7 @@ import {
 	Select,
 	SelectProps,
 	Spin,
+	Tooltip,
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
@@ -20,9 +21,9 @@ import {
 	updateDowntimeScheduleByID,
 } from 'api/generated/services/downtimeschedules';
 import type {
-	RuletypesPlannedMaintenanceDTO,
-	RuletypesPostablePlannedMaintenanceDTO,
-	RuletypesRecurrenceDTO,
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AlertmanagertypesPostablePlannedMaintenanceDTO,
+	AlertmanagertypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -46,8 +47,6 @@ import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	getAlertOptionsFromIds,
 	getDurationInfo,
-	getEndTime,
-	handleTimeConversion,
 	isScheduleRecurring,
 	recurrenceOptions,
 	recurrenceOptionWithSubmenu,
@@ -55,6 +54,8 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { RadioGroupItem } from '@signozhq/ui/radio-group';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -64,24 +65,32 @@ const TIME_FORMAT = DATE_TIME_FORMATS.TIME;
 const DATE_FORMAT = DATE_TIME_FORMATS.ORDINAL_DATE;
 const ORDINAL_FORMAT = DATE_TIME_FORMATS.ORDINAL_ONLY;
 
+const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
+	(timezone: string) => ({
+		label: timezone,
+		value: timezone,
+		key: timezone,
+	}),
+);
+
+type AlertRuleScope = 'all' | 'specific';
+
 interface PlannedDowntimeFormData {
 	name: string;
-	startTime: dayjs.Dayjs | string;
-	endTime: dayjs.Dayjs | string;
-	recurrence?: RuletypesRecurrenceDTO | null;
+	startTime: dayjs.Dayjs | null;
+	endTime: dayjs.Dayjs | null;
+	recurrence?: AlertmanagertypesRecurrenceDTO;
+	alertRuleScope: AlertRuleScope;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect?: RuletypesRecurrenceDTO;
+	recurrenceSelect?: AlertmanagertypesRecurrenceDTO;
 	timezone?: string;
+	scope?: string;
 }
 
 const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
-	initialValues: Partial<
-		RuletypesPlannedMaintenanceDTO & {
-			editMode: boolean;
-		}
-	>;
+	initialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO>;
 	alertOptions: DefaultOptionType[];
 	isError: boolean;
 	isLoading: boolean;
@@ -89,7 +98,7 @@ interface PlannedDowntimeFormProps {
 	setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	refetchAllSchedules: () => void;
 	isEditMode: boolean;
-	form: FormInstance<any>;
+	form: FormInstance;
 }
 
 export function PlannedDowntimeForm(
@@ -107,66 +116,56 @@ export function PlannedDowntimeForm(
 		form,
 	} = props;
 
-	const [selectedTags, setSelectedTags] = React.useState<
-		DefaultOptionType | DefaultOptionType[]
-	>([]);
+	const [selectedTags, setSelectedTags] = React.useState<DefaultOptionType[]>(
+		[],
+	);
 	const alertRuleFormName = 'alertRules';
 	const [saveLoading, setSaveLoading] = useState(false);
 	const [durationUnit, setDurationUnit] = useState<string>(
-		getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
-			?.unit || 'm',
+		getDurationInfo(initialValues.schedule?.recurrence?.duration)?.unit || 'm',
 	);
 
 	const [formData, setFormData] = useState<Partial<PlannedDowntimeFormData>>({
 		timezone: initialValues.schedule?.timezone,
 	});
 
-	const [recurrenceType, setRecurrenceType] = useState<string | null>(
-		(initialValues.schedule?.recurrence?.repeatType as string) ||
+	const [recurrenceType, setRecurrenceType] = useState<string>(
+		initialValues.schedule?.recurrence?.repeatType ||
 			recurrenceOptions.doesNotRepeat.value,
 	);
 
-	const timezoneInitialValue = !isEmpty(initialValues.schedule?.timezone)
-		? (initialValues.schedule?.timezone as string)
-		: undefined;
+	const [alertRuleScope, setAlertRuleScope] = useState<AlertRuleScope>(
+		initialValues.id && (initialValues.alertIds || []).length === 0
+			? 'all'
+			: 'specific',
+	);
 
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
+
+	const requiredFieldRule = [{ required: true }];
 
 	const datePickerFooter = (mode: any): any =>
 		mode === 'time' ? (
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
 
-	const saveHanlder = useCallback(
+	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
-			const shouldKeepLocalTime = !isEditMode;
-			const data: RuletypesPostablePlannedMaintenanceDTO = {
-				alertIds: values.alertRules
-					.map((alert) => alert.value)
-					.filter((alert) => alert !== undefined) as string[],
+			const data: AlertmanagertypesPostablePlannedMaintenanceDTO = {
+				alertIds:
+					values.alertRuleScope === 'all'
+						? []
+						: (values.alertRules
+								.map((alert) => alert.value)
+								.filter((alert) => alert !== undefined) as string[]),
 				name: values.name,
+				scope: values.scope,
 				schedule: {
-					startTime: new Date(
-						handleTimeConversion(
-							values.startTime,
-							timezoneInitialValue,
-							values.timezone,
-							shouldKeepLocalTime,
-						),
-					),
-					timezone: values.timezone as string,
-					endTime: values.endTime
-						? new Date(
-								handleTimeConversion(
-									values.endTime,
-									timezoneInitialValue,
-									values.timezone,
-									shouldKeepLocalTime,
-								),
-							)
-						: undefined,
-					recurrence: values.recurrence as RuletypesRecurrenceDTO,
+					startTime: values.startTime?.format(),
+					endTime: values.endTime?.format(),
+					timezone: values.timezone!,
+					recurrence: values.recurrence,
 				},
 			};
 
@@ -198,50 +197,58 @@ export function PlannedDowntimeForm(
 			notifications,
 			refetchAllSchedules,
 			setIsOpen,
-			timezoneInitialValue,
 			showErrorModal,
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
+		const { recurrence } = values;
 		const recurrenceData =
-			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
+			!recurrence ||
+			recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
-						duration: values.recurrence?.duration
-							? `${values.recurrence?.duration}${durationUnit}`
-							: undefined,
-						endTime: !isEmpty(values.endTime)
-							? handleTimeConversion(
-									values.endTime,
-									timezoneInitialValue,
-									values.timezone,
-									!isEditMode,
-								)
-							: undefined,
-						startTime: handleTimeConversion(
-							values.startTime,
-							timezoneInitialValue,
-							values.timezone,
-							!isEditMode,
-						),
-						repeatOn: !values.recurrence?.repeatOn?.length
-							? undefined
-							: values.recurrence?.repeatOn,
-						repeatType: values.recurrence?.repeatType,
+						duration: recurrence.duration
+							? `${recurrence.duration}${durationUnit}`
+							: '',
+						startTime: values.startTime!.format(),
+						endTime: values.endTime?.format(),
+						repeatOn: recurrence.repeatOn,
+						repeatType: recurrence.repeatType,
 					};
 
-		const payloadValues = {
+		await saveHandler({
 			...values,
-			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
-		};
-		await saveHanlder(payloadValues);
+			recurrence: recurrenceData,
+		});
 	};
 
-	const formValidationRules = [
-		{
-			required: true,
-		},
-	];
+	const handleFormData = (data: Partial<PlannedDowntimeFormData>): void => {
+		const { startTime, endTime, timezone } = data;
+		const update: Partial<PlannedDowntimeFormData> = {};
+
+		// If the set timezone doesn't match, update it.
+		if (
+			startTime &&
+			timezone &&
+			startTime.format() !== startTime.tz(timezone, true).format()
+		) {
+			update.startTime = startTime.tz(timezone, true);
+		}
+		if (
+			endTime &&
+			timezone &&
+			endTime.format() !== endTime.tz(timezone, true).format()
+		) {
+			update.endTime = endTime.tz(timezone, true);
+		}
+
+		if (!isEmpty(update)) {
+			data = { ...data, ...update };
+			form.setFieldsValue({ ...update });
+		}
+
+		setFormData(data);
+	};
 
 	const handleOk = async (): Promise<void> => {
 		await form.validateFields().catch(() => {
@@ -249,16 +256,11 @@ export function PlannedDowntimeForm(
 		});
 	};
 
-	const handleCancel = (): void => {
-		setIsOpen(false);
-	};
+	const handleCancel = (): void => setIsOpen(false);
 
-	const handleChange = (
-		_value: string,
-		options: DefaultOptionType | DefaultOptionType[],
-	): void => {
+	const handleAlertRulesChange: SelectProps['onChange'] = (_value, options) => {
 		form.setFieldValue(alertRuleFormName, options);
-		setSelectedTags(options);
+		setSelectedTags(Array.isArray(options) ? options : [options]);
 	};
 
 	const noTagRenderer: SelectProps['tagRender'] = () => <></>;
@@ -267,113 +269,54 @@ export function PlannedDowntimeForm(
 		if (!removedTag) {
 			return;
 		}
-		const newTags = selectedTags.filter(
-			(tag: DefaultOptionType) => tag.value !== removedTag,
-		);
+		const newTags = selectedTags.filter((tag) => tag.value !== removedTag);
 		form.setFieldValue(alertRuleFormName, newTags);
 		setSelectedTags(newTags);
 	};
 
-	const formatedInitialValues = useMemo(() => {
-		const formData: PlannedDowntimeFormData = {
+	const formattedInitialValues = useMemo((): PlannedDowntimeFormData => {
+		const { schedule } = initialValues;
+		const startTime = schedule?.recurrence?.startTime || schedule?.startTime;
+		const endTime = schedule?.recurrence?.endTime || schedule?.endTime;
+
+		const initialAlertIds = initialValues.alertIds || [];
+
+		return {
 			name: defaultTo(initialValues.name, ''),
-			alertRules: getAlertOptionsFromIds(
-				initialValues.alertIds || [],
-				alertOptions,
-			),
-			endTime: getEndTime(initialValues) ? dayjs(getEndTime(initialValues)) : '',
-			startTime: initialValues.schedule?.startTime
-				? dayjs(initialValues.schedule?.startTime)
-				: '',
+			alertRuleScope:
+				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
+			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
+			startTime: startTime ? dayjs(startTime).tz(schedule.timezone) : null,
+			endTime: endTime ? dayjs(endTime).tz(schedule.timezone) : null,
 			recurrence: {
-				...initialValues.schedule?.recurrence,
-				repeatType: (!isScheduleRecurring(initialValues?.schedule)
+				...schedule?.recurrence,
+				repeatType: !isScheduleRecurring(schedule)
 					? recurrenceOptions.doesNotRepeat.value
-					: initialValues.schedule?.recurrence
-							?.repeatType) as RuletypesRecurrenceDTO['repeatType'],
-				duration: String(
-					getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
-						?.value ?? '',
-				),
-			} as RuletypesRecurrenceDTO,
-			timezone: initialValues.schedule?.timezone as string,
+					: schedule?.recurrence?.repeatType,
+				duration: getDurationInfo(schedule?.recurrence?.duration)?.value ?? '',
+			} as AlertmanagertypesRecurrenceDTO,
+			timezone: schedule?.timezone as string,
+			scope: initialValues.scope || '',
 		};
-		return formData;
 	}, [initialValues, alertOptions]);
 
 	useEffect(() => {
-		setSelectedTags(formatedInitialValues.alertRules);
-		form.setFieldsValue({ ...formatedInitialValues });
-	}, [form, formatedInitialValues, initialValues]);
-
-	const timeZoneItems: DefaultOptionType[] = ALL_TIME_ZONES.map(
-		(timezone: string) => ({
-			label: timezone,
-			value: timezone,
-			key: timezone,
-		}),
-	);
-
-	const getTimezoneFormattedTime = (
-		time: string | dayjs.Dayjs,
-		timeZone?: string,
-		isEditMode?: boolean,
-		format?: string,
-	): string => {
-		if (!time) {
-			return '';
-		}
-		if (!timeZone) {
-			return dayjs(time).format(format);
-		}
-		return dayjs(time).tz(timeZone, isEditMode).format(format);
-	};
+		setSelectedTags(formattedInitialValues.alertRules);
+		setAlertRuleScope(formattedInitialValues.alertRuleScope);
+		form.setFieldsValue({ ...formattedInitialValues });
+	}, [form, formattedInitialValues, initialValues]);
 
 	const startTimeText = useMemo((): string => {
-		let startTime = formData?.startTime;
-		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			startTime =
-				(formData?.recurrence?.startTime
-					? dayjs(formData.recurrence.startTime).toISOString()
-					: '') ||
-				formData?.startTime ||
-				'';
-		}
-
+		const startTime = formData.startTime;
 		if (!startTime) {
 			return '';
 		}
 
-		if (formData.timezone) {
-			startTime = handleTimeConversion(
-				startTime,
-				timezoneInitialValue,
-				formData?.timezone,
-				!isEditMode,
-			);
-		}
-		const daysOfWeek = formData?.recurrence?.repeatOn;
+		const daysOfWeek = formData.recurrence?.repeatOn;
 
-		const formattedStartTime = getTimezoneFormattedTime(
-			startTime,
-			formData.timezone,
-			!isEditMode,
-			TIME_FORMAT,
-		);
-
-		const formattedStartDate = getTimezoneFormattedTime(
-			startTime,
-			formData.timezone,
-			!isEditMode,
-			DATE_FORMAT,
-		);
-
-		const ordinalFormat = getTimezoneFormattedTime(
-			startTime,
-			formData.timezone,
-			!isEditMode,
-			ORDINAL_FORMAT,
-		);
+		const formattedStartTime = startTime.format(TIME_FORMAT);
+		const formattedStartDate = startTime.format(DATE_FORMAT);
+		const ordinalFormat = startTime.format(ORDINAL_FORMAT);
 
 		const formattedDaysOfWeek = daysOfWeek?.join(', ');
 		switch (recurrenceType) {
@@ -388,49 +331,18 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+	}, [formData, recurrenceType]);
 
 	const endTimeText = useMemo((): string => {
-		let endTime = formData?.endTime;
-		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			endTime =
-				(formData?.recurrence?.endTime
-					? dayjs(formData.recurrence.endTime).toISOString()
-					: '') || '';
-
-			if (!isEditMode && !endTime) {
-				endTime = formData?.endTime || '';
-			}
-		}
-
+		const endTime = formData.endTime;
 		if (!endTime) {
 			return '';
 		}
 
-		if (formData.timezone) {
-			endTime = handleTimeConversion(
-				endTime,
-				timezoneInitialValue,
-				formData?.timezone,
-				!isEditMode,
-			);
-		}
-
-		const formattedEndTime = getTimezoneFormattedTime(
-			endTime,
-			formData.timezone,
-			!isEditMode,
-			TIME_FORMAT,
-		);
-
-		const formattedEndDate = getTimezoneFormattedTime(
-			endTime,
-			formData.timezone,
-			!isEditMode,
-			DATE_FORMAT,
-		);
+		const formattedEndTime = endTime.format(TIME_FORMAT);
+		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+	}, [formData, recurrenceType]);
 
 	return (
 		<Modal
@@ -446,33 +358,29 @@ export function PlannedDowntimeForm(
 			footer={null}
 		>
 			<Form<PlannedDowntimeFormData>
-				name={initialValues.editMode ? 'edit-form' : 'create-form'}
+				name={isEditMode ? 'edit-form' : 'create-form'}
 				form={form}
 				layout="vertical"
 				className="createForm"
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
-					setFormData(form.getFieldsValue());
+					setAlertRuleScope(form.getFieldValue('alertRuleScope') as AlertRuleScope);
+					handleFormData(form.getFieldsValue());
 				}}
 				autoComplete="off"
 			>
-				<Form.Item label="Name" name="name" rules={formValidationRules}>
+				<Form.Item label="Name" name="name" rules={requiredFieldRule}>
 					<Input placeholder="e.g. Upgrade downtime" />
 				</Form.Item>
 				<Form.Item
 					label="Starts from"
 					name="startTime"
-					rules={formValidationRules}
+					rules={requiredFieldRule}
 					className={!isEmpty(startTimeText) ? 'formItemWithBullet' : ''}
-					getValueProps={(value): any => ({
-						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
-					})}
 				>
 					<DatePicker
-						format={(date): string =>
-							dayjs(date).tz(timezoneInitialValue).format(customFormat)
-						}
+						format={(date) => date.format(customFormat)}
 						showTime
 						renderExtraFooter={datePickerFooter}
 						showNow={false}
@@ -485,7 +393,7 @@ export function PlannedDowntimeForm(
 				<Form.Item
 					label="Repeats every"
 					name={['recurrence', 'repeatType']}
-					rules={formValidationRules}
+					rules={requiredFieldRule}
 				>
 					<Select
 						placeholder="Select option..."
@@ -496,7 +404,7 @@ export function PlannedDowntimeForm(
 					<Form.Item
 						label="Weekly occurernce"
 						name={['recurrence', 'repeatOn']}
-						rules={formValidationRules}
+						rules={requiredFieldRule}
 					>
 						<Select
 							placeholder="Select option..."
@@ -510,16 +418,14 @@ export function PlannedDowntimeForm(
 						<Form.Item
 							label="Duration"
 							name={['recurrence', 'duration']}
-							rules={formValidationRules}
+							rules={requiredFieldRule}
 						>
 							<Input
 								addonAfter={
 									<Select
 										defaultValue="m"
 										value={durationUnit}
-										onChange={(value): void => {
-											setDurationUnit(value);
-										}}
+										onChange={(value): void => setDurationUnit(value)}
 									>
 										<Select.Option value="m">Mins</Select.Option>
 										<Select.Option value="h">Hours</Select.Option>
@@ -533,8 +439,8 @@ export function PlannedDowntimeForm(
 							/>
 						</Form.Item>
 					)}
-				<Form.Item label="Timezone" name="timezone" rules={formValidationRules}>
-					<Select options={timeZoneItems} placeholder="Select timezone" showSearch />
+				<Form.Item label="Timezone" name="timezone" rules={requiredFieldRule}>
+					<Select options={TZ_OPTIONS} placeholder="Select timezone" showSearch />
 				</Form.Item>
 				<Form.Item
 					label="Ends on"
@@ -546,14 +452,9 @@ export function PlannedDowntimeForm(
 						},
 					]}
 					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
-					getValueProps={(value): any => ({
-						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
-					})}
 				>
 					<DatePicker
-						format={(date): string =>
-							dayjs(date).tz(timezoneInitialValue).format(customFormat)
-						}
+						format={(date) => date.format(customFormat)}
 						showTime
 						showNow={false}
 						renderExtraFooter={datePickerFooter}
@@ -564,50 +465,107 @@ export function PlannedDowntimeForm(
 					<div className="scheduleTimeInfoText">{endTimeText}</div>
 				)}
 				<div>
-					<div className="alert-rule-form">
-						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
-						<Typography style={{ marginBottom: 8 }} className="alert-rule-info">
-							(Leave empty to silence all alerts)
-						</Typography>
-					</div>
-					<Form.Item noStyle shouldUpdate>
-						<AlertRuleTags
-							closable
-							selectedTags={selectedTags}
-							handleClose={handleClose}
-						/>
+					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+					<Form.Item
+						name="alertRuleScope"
+						initialValue="specific"
+						className="alert-rule-scope"
+					>
+						<RadioGroup>
+							<RadioGroupItem value="all">All alert rules</RadioGroupItem>
+							<RadioGroupItem value="specific">Specific alert rules</RadioGroupItem>
+						</RadioGroup>
 					</Form.Item>
-					<Form.Item name={alertRuleFormName}>
-						<Select
-							placeholder="Search for alerts rules or groups..."
-							mode="multiple"
-							status={isError ? 'error' : undefined}
-							loading={isLoading}
-							tagRender={noTagRenderer}
-							onChange={handleChange}
-							showSearch
-							options={alertOptions}
-							filterOption={(input, option): boolean =>
-								(option?.label as string)?.toLowerCase()?.includes(input.toLowerCase())
-							}
-							notFoundContent={
-								isLoading ? (
-									<span>
-										<Spin size="small" /> Loading...
-									</span>
-								) : (
-									<span>No alert available.</span>
-								)
-							}
-						>
-							{alertOptions?.map((option) => (
-								<Select.Option key={option.value} value={option.value}>
-									{option.label}
-								</Select.Option>
-							))}
-						</Select>
-					</Form.Item>
+					{alertRuleScope === 'specific' && (
+						<>
+							<Form.Item noStyle shouldUpdate>
+								<AlertRuleTags
+									closable
+									selectedTags={selectedTags}
+									handleClose={handleClose}
+								/>
+							</Form.Item>
+							<Form.Item
+								name={alertRuleFormName}
+								rules={[
+									{
+										validator: async (
+											_rule,
+											value: DefaultOptionType[] | undefined,
+										): Promise<void> => {
+											if (!value || value.length === 0) {
+												throw new Error(
+													'Select at least one alert rule, or choose "All alert rules" to silence everything.',
+												);
+											}
+										},
+									},
+								]}
+							>
+								<Select
+									placeholder="Search for alert rules or groups..."
+									mode="multiple"
+									status={isError ? 'error' : undefined}
+									loading={isLoading}
+									tagRender={noTagRenderer}
+									onChange={handleAlertRulesChange}
+									showSearch
+									options={alertOptions}
+									filterOption={(input, option): boolean =>
+										(option?.label as string)
+											?.toLowerCase()
+											?.includes(input.toLowerCase())
+									}
+									notFoundContent={
+										isLoading ? (
+											<span>
+												<Spin size="small" /> Loading...
+											</span>
+										) : (
+											<span>No alert available.</span>
+										)
+									}
+								>
+									{alertOptions?.map((option) => (
+										<Select.Option key={option.value} value={option.value}>
+											{option.label}
+										</Select.Option>
+									))}
+								</Select>
+							</Form.Item>
+						</>
+					)}
 				</div>
+				<Form.Item
+					label={
+						<span>
+							Scope&nbsp;
+							<Tooltip
+								mouseLeaveDelay={0.3}
+								title={
+									<span>
+										Scope the planned downtime by alert labels.{' '}
+										<a
+											href="https://signoz.io/docs/alerts-management/planned-maintenance/#scoping-with-label-expressions"
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											Learn more
+										</a>
+									</span>
+								}
+							>
+								<Info size={13} />
+							</Tooltip>
+						</span>
+					}
+					name="scope"
+				>
+					<Input.TextArea
+						placeholder='e.g. env = "prod" AND region = "us-east-1"'
+						autoSize={{ minRows: 2, maxRows: 4 }}
+					/>
+				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
 						<Button

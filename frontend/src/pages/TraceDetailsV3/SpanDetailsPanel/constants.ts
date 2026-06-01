@@ -22,6 +22,7 @@ export enum SpanDetailVariant {
 	DRAWER = 'drawer',
 	DIALOG = 'dialog',
 	DOCKED = 'docked',
+	DOCKED_RIGHT = 'right',
 }
 
 export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {

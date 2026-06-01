@@ -3,6 +3,10 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+
+	:global(.details-header) {
+		height: 39px;
+	}
 }
 
 .body {
@@ -117,6 +121,12 @@
 	border-radius: 50%;
 	background: var(--accent-forest);
 	flex-shrink: 0;
+}
+
+.statusMessageBadge {
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
 }
 
 .traceId {
