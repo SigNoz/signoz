@@ -98,7 +98,11 @@ function YAxisUnitSelector({
 				{categoriesToRender.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
 						{category.units.map((unit) => (
-							<Select.Option key={unit.id} value={unit.id}>
+							<Select.Option
+								key={unit.id}
+								value={unit.id}
+								data-testid={`unit-option-${unit.id}`}
+							>
 								{unit.name}
 							</Select.Option>
 						))}
