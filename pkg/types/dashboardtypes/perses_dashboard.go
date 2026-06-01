@@ -13,6 +13,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/swaggest/jsonschema-go"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -60,6 +62,54 @@ type DashboardV2 struct {
 	Name string          `json:"name" required:"true"`
 	Tags []*tagtypes.Tag `json:"tags" required:"true"`
 	Spec DashboardSpec   `json:"spec" required:"true"`
+}
+
+func (d *DashboardV2) CanUpdate() error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	}
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	return nil
+}
+
+func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if err := d.CanUpdate(); err != nil {
+		return err
+	}
+	if updateable.Name != d.Name {
+		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updateable.Name)
+	}
+	d.DashboardV2MetadataBase = updateable.DashboardV2MetadataBase
+	d.Tags = resolvedTags
+	d.Spec = updateable.Spec
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) CanLockUnlock(isAdmin bool, updatedBy string) error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+	}
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	return nil
+}
+
+func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.CanLockUnlock(isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
 }
 
 type DashboardV2MetadataBase struct {
@@ -262,6 +312,87 @@ func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardDat
 }
 
 type StorableDashboardV2Metadata = DashboardV2MetadataBase
+
+// ════════════════════════════════════════════════════════════════════════
+// Updateable
+// ════════════════════════════════════════════════════════════════════════
+
+type UpdateableDashboardV2 = PostableDashboardV2
+
+func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
+	return PostableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Patchable
+// ════════════════════════════════════════════════════════════════════════
+
+// PatchableDashboardV2 is an RFC 6902 JSON Patch document applied against a
+// PostableDashboardV2-shaped view of an existing dashboard. Patch ops can
+// target any field — including individual entries inside `data.panels`,
+// `data.panels.<id>.spec.queries`, or `tags` — without re-sending the rest of
+// the dashboard.
+type PatchableDashboardV2 struct {
+	patch jsonpatch.Patch
+}
+
+// JSONPatchDocument is the OpenAPI-facing schema for an RFC 6902 patch body.
+// PatchableDashboardV2 has only an internal `jsonpatch.Patch` field, so the
+// reflector would emit an empty schema; the handler def points at this type
+// instead so consumers see the array-of-ops shape.
+type JSONPatchDocument []JSONPatchOperation
+
+// JSONPatchOperation is one RFC 6902 op. Not every field is valid on every
+// op kind (e.g. `value` is required for add/replace/test, ignored for remove;
+// `from` is required for move/copy) — the JSON Patch RFC governs that.
+type JSONPatchOperation struct {
+	Op    string `json:"op" required:"true"`
+	Path  string `json:"path" required:"true" description:"JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-."`
+	Value any    `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
+	From  string `json:"from,omitempty" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
+}
+
+// PrepareJSONSchema constrains the `op` field to the six RFC 6902 verbs.
+func (JSONPatchOperation) PrepareJSONSchema(s *jsonschema.Schema) error {
+	op, ok := s.Properties["op"]
+	if !ok || op.TypeObject == nil {
+		return errors.NewInternalf(errors.CodeInternal, "JSONPatchOperation schema missing `op` property")
+	}
+	op.TypeObject.WithEnum("add", "remove", "replace", "move", "copy", "test")
+	s.Properties["op"] = op
+	return nil
+}
+
+func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
+	patch, err := jsonpatch.DecodePatch(data)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	p.patch = patch
+	return nil
+}
+
+func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboardV2, error) {
+	existingAsUpdateable := existing.toUpdateableDashboardV2()
+	raw, err := json.Marshal(existingAsUpdateable)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal existing dashboard for patch")
+	}
+	patched, err := p.patch.Apply(raw)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	out := &UpdateableDashboardV2{}
+	if err := json.Unmarshal(patched, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
 // ════════════════════════════════════════════════════════════════════════
 // Convertors
