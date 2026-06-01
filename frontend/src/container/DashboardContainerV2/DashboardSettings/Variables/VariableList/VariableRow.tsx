@@ -1,4 +1,5 @@
-import { Button, Space, Tag } from 'antd';
+import { Button, Space } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { PenLine, Trash2 } from '@signozhq/icons';
 
@@ -25,7 +26,9 @@ function VariableRow({
 				{description}
 			</Typography.Text>
 			<Space className="actions-btns">
-				<Tag>{kindLabel}</Tag>
+				<Badge color="sienna" variant="outline">
+					{kindLabel}
+				</Badge>
 				<Button
 					type="text"
 					onClick={onEdit}

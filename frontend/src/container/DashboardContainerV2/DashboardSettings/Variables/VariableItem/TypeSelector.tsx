@@ -1,4 +1,5 @@
-import { Button, Tag } from 'antd';
+import { Button } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	ClipboardType,
@@ -58,9 +59,9 @@ function TypeSelector({ kind, onChange }: Props): JSX.Element {
 					data-testid="variable-type-dynamic-v2"
 				>
 					Dynamic
-					<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+					<Badge className="sidenav-beta-tag" color="robin">
 						Beta
-					</Tag>
+					</Badge>
 				</Button>
 				<Button
 					type="text"
@@ -97,9 +98,9 @@ function TypeSelector({ kind, onChange }: Props): JSX.Element {
 					data-testid="variable-type-query-v2"
 				>
 					Query
-					<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+					<Badge className="sidenav-beta-tag" color="warning">
 						Not Recommended
-					</Tag>
+					</Badge>
 					<div onClick={(e): void => e.stopPropagation()}>
 						<TextToolTip
 							text="Learn why we don't recommend"

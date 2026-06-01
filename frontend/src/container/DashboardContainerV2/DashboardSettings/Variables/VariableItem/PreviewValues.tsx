@@ -1,4 +1,4 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { orange } from '@ant-design/colors';
 
@@ -22,7 +22,7 @@ function PreviewValues({ previewValues, error }: Props): JSX.Element {
 					<Typography style={{ color: orange[5] }}>{error}</Typography>
 				) : (
 					previewValues.map((v, idx) => (
-						<Tag key={`${v}${idx}`}>{v.toString()}</Tag>
+						<Badge key={`${v}${idx}`}>{v.toString()}</Badge>
 					))
 				)}
 			</div>

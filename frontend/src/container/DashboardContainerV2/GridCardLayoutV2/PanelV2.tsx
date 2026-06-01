@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { EllipsisVertical } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -66,7 +67,7 @@ function PanelV2({ panel, panelId }: Props): JSX.Element {
 					>
 						{headerTitle}
 					</Typography.Text>
-					<Tag style={{ marginInlineEnd: 0 }}>{kind}</Tag>
+					<Badge style={{ marginInlineEnd: 0 }}>{kind}</Badge>
 				</div>
 				<EllipsisVertical size={14} />
 			</div>
