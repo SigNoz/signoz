@@ -99,7 +99,14 @@ func (p *ClustersRepo) getMetadataAttributes(ctx context.Context, req model.Clus
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherClusterMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForNodes {
+		if metric != metricToUseForClusters {
+			otherClusterMetricsForMetadata = append(otherClusterMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherClusterMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

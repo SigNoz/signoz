@@ -166,7 +166,19 @@ func (d *DaemonSetsRepo) getMetadataAttributes(ctx context.Context, req model.Da
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherDaemonSetMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForWorkloads {
+		if metric != metricToUseForDaemonSets {
+			otherDaemonSetMetricsForMetadata = append(otherDaemonSetMetricsForMetadata, metric)
+		}
+	}
+	for _, metric := range metricNamesForDaemonSets {
+		if metric != metricToUseForDaemonSets {
+			otherDaemonSetMetricsForMetadata = append(otherDaemonSetMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherDaemonSetMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

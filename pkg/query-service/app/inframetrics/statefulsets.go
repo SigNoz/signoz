@@ -166,7 +166,19 @@ func (d *StatefulSetsRepo) getMetadataAttributes(ctx context.Context, req model.
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherStatefulSetMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForWorkloads {
+		if metric != metricToUseForStatefulSets {
+			otherStatefulSetMetricsForMetadata = append(otherStatefulSetMetricsForMetadata, metric)
+		}
+	}
+	for _, metric := range metricNamesForStatefulSets {
+		if metric != metricToUseForStatefulSets {
+			otherStatefulSetMetricsForMetadata = append(otherStatefulSetMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherStatefulSetMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}
