@@ -3,13 +3,22 @@ package errors
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 )
 
 type JSON struct {
-	Code    string                    `json:"code" required:"true"`
-	Message string                    `json:"message" required:"true"`
-	Url     string                    `json:"url,omitempty"`
-	Errors  []responseerroradditional `json:"errors,omitempty"`
+	Type              string                    `json:"type,omitempty"`
+	Code              string                    `json:"code" required:"true"`
+	Message           string                    `json:"message" required:"true"`
+	Url               string                    `json:"url,omitempty"`
+	Errors            []responseerroradditional `json:"errors,omitempty"`
+	Retry             *responseretryjson        `json:"retry,omitempty"`
+	Suggestions       []string                  `json:"suggestions,omitempty"`
+	InvalidReferences []string                  `json:"invalidReferences,omitempty"`
+}
+
+type responseretryjson struct {
+	Delay time.Duration `json:"delay"`
 }
 
 type responseerroradditional struct {
@@ -18,18 +27,27 @@ type responseerroradditional struct {
 
 func AsJSON(cause error) *JSON {
 	// See if this is an instance of the base error or not
-	_, c, m, _, u, a := Unwrapb(cause)
+	t, c, m, _, u, a := Unwrapb(cause)
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
 		rea[k] = responseerroradditional{v}
 	}
 
+	var retry *responseretryjson
+	if r := retryOf(cause); r != nil {
+		retry = &responseretryjson{Delay: r.delay}
+	}
+
 	return &JSON{
-		Code:    c.String(),
-		Message: m,
-		Url:     u,
-		Errors:  rea,
+		Type:              t.String(),
+		Code:              c.String(),
+		Message:           m,
+		Url:               u,
+		Errors:            rea,
+		Retry:             retry,
+		Suggestions:       suggestionsOf(cause),
+		InvalidReferences: invalidReferencesOf(cause),
 	}
 }
 

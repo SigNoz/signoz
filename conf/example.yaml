@@ -68,6 +68,12 @@ web:
     appcues:
       # Whether to enable Appcues in web.
       enabled: true
+    sentry:
+      # Whether to enable Sentry in web.
+      enabled: true
+    pylon:
+      # Whether to enable Pylon in web.
+      enabled: true
 
 ##################### Cache #####################
 cache:
@@ -445,7 +451,12 @@ authz:
 
 ##################### Meter Reporter #####################
 meterreporter:
-  # The interval between collection ticks. Minimum 5m.
+  # The interval between collection ticks. Minimum 10m, maximum 24h.
   interval: 6h
   # Whether to backfill sealed days from the license creation day.
   backfill: true
+  # Random jitter applied to the first collect and to every subsequent cycle.
+  # The first collect fires at a random time in [0, jitter); each cycle then takes
+  # interval - random(0, jitter). Must be between 10m and interval. Defaults to
+  # min(interval, 2h) when unset.
+  jitter: 2h

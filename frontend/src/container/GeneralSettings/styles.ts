@@ -1,8 +1,4 @@
-import {
-	Col,
-	Dropdown as DropDownComponent,
-	Input as InputComponent,
-} from 'antd';
+import { Col, Input as InputComponent } from 'antd';
 import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
@@ -31,16 +27,6 @@ export const ButtonContainer = styled.div`
 		width: 50%;
 		align-items: center;
 		margin-top: 3rem;
-	}
-`;
-
-export const Dropdown = styled(DropDownComponent)`
-	&&& {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		max-width: 150px;
-		min-width: 150px;
 	}
 `;
 

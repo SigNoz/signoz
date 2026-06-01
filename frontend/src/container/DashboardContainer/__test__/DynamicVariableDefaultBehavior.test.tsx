@@ -395,8 +395,8 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			// Check if the checkbox exists (it should be unchecked initially)
 			const checkbox = allOptionContainer?.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
+				'[role="checkbox"]',
+			) as HTMLElement;
 			expect(checkbox).toBeInTheDocument();
 
 			// Should call onValueUpdate with all values (ALL selection)
@@ -516,10 +516,10 @@ describe('Dynamic Variable Default Behavior', () => {
 
 			// Check if the checkbox for ALL option is checked
 			const checkbox = dropdownAllOption.querySelector(
-				'input[type="checkbox"]',
-			) as HTMLInputElement;
+				'[role="checkbox"]',
+			) as HTMLElement;
 			expect(checkbox).toBeInTheDocument();
-			expect(checkbox.checked).toBe(true);
+			expect(checkbox).toHaveAttribute('data-state', 'checked');
 		});
 	});
 });

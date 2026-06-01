@@ -2403,7 +2403,7 @@ func TestFilterExprLogs(t *testing.T) {
 					return
 				}
 
-				if clause == nil {
+				if clause.IsEmpty() {
 					t.Errorf("Expected clause for query: %s\n", tc.query)
 					return
 				}
@@ -2524,7 +2524,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 					return
 				}
 
-				if clause == nil {
+				if clause.IsEmpty() {
 					t.Errorf("Expected clause for query: %s\n", tc.query)
 					return
 				}

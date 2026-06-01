@@ -1,6 +1,6 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import {
@@ -52,14 +52,14 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		label: 'STATUS',
 		getValue: (h): string => (h.active ? 'ACTIVE' : 'INACTIVE'),
 		render: (value, h): React.ReactNode => (
-			<Tag
+			<Badge
+				variant="outline"
 				className={`${infraHostsStyles.infraMonitoringTags} ${
 					h.active ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
 				}`}
-				bordered
 			>
 				{value}
-			</Tag>
+			</Badge>
 		),
 	},
 	{
@@ -67,9 +67,9 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		getValue: (h): string => h.os || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Tag className={infraHostsStyles.infraMonitoringTags} bordered>
+				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
 					{value}
-				</Tag>
+				</Badge>
 			) : (
 				<Typography.Text>-</Typography.Text>
 			),

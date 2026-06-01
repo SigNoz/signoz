@@ -1,9 +1,3 @@
-function DashboardsListPageV2(): JSX.Element {
-	return (
-		<div>
-			<h1>Dashboards List Page V2</h1>
-		</div>
-	);
-}
+import DashboardsListPageV2 from './DashboardsListPageV2';
 
 export default DashboardsListPageV2;

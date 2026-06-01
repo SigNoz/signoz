@@ -1,4 +1,5 @@
-import { Avatar, Card, Space } from 'antd';
+import { Avatar } from '@signozhq/ui/avatar';
+import { Card, Space } from 'antd';
 
 import './customerStoryCard.styles.scss';
 
@@ -22,7 +23,7 @@ function CustomerStoryCard({
 			<Card className="customer-story-card">
 				<Space size="middle" direction="vertical">
 					<Card.Meta
-						avatar={<Avatar size={48} src={avatar} />}
+						avatar={<Avatar size="xl" src={avatar} />}
 						title={personName}
 						description={role}
 					/>

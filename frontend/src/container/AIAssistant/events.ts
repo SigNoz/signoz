@@ -63,6 +63,26 @@ export const SuggestedPromptCategory = {
 export type SuggestedPromptCategory =
 	(typeof SuggestedPromptCategory)[keyof typeof SuggestedPromptCategory];
 
+// `source` attribute on the AI Assistant `Opened` event — describes which
+// surface triggered the open. Keep values stable: dashboards downstream
+// depend on the literal strings.
+export const AIAssistantOpenSource = {
+	Icon: 'icon',
+	Shortcut: 'shortcut',
+	Cmdk: 'cmdk',
+} as const;
+export type AIAssistantOpenSource =
+	(typeof AIAssistantOpenSource)[keyof typeof AIAssistantOpenSource];
+
+// `source` attribute on the `VoiceInputUsed` event — which surface initiated
+// the recording.
+export const VoiceInputSource = {
+	Button: 'button',
+	Shortcut: 'shortcut',
+} as const;
+export type VoiceInputSource =
+	(typeof VoiceInputSource)[keyof typeof VoiceInputSource];
+
 export enum AIAssistantEvents {
 	Opened = 'AI Assistant: Opened',
 	MessageSent = 'AI Assistant: Message sent',
