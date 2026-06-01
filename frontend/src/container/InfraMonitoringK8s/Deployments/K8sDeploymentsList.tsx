@@ -15,7 +15,6 @@ import {
 	k8sDeploymentGetEntityName,
 	k8sDeploymentGetSelectedItemFilters,
 	k8sDeploymentInitialEventsFilter,
-	k8sDeploymentInitialFilters,
 	k8sDeploymentInitialLogTracesFilter,
 } from './constants';
 import {
@@ -106,7 +105,6 @@ function K8sDeploymentsList({
 				getEntityName={k8sDeploymentGetEntityName}
 				getInitialLogTracesFilters={k8sDeploymentInitialLogTracesFilter}
 				getInitialEventsFilters={k8sDeploymentInitialEventsFilter}
-				primaryFilterKeys={k8sDeploymentInitialFilters}
 				metadataConfig={k8sDeploymentDetailsMetadataConfig}
 				entityWidgetInfo={deploymentWidgetInfo}
 				getEntityQueryPayload={getDeploymentMetricsQueryPayload}

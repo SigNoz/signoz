@@ -14,7 +14,6 @@ import {
 	k8sNamespaceGetEntityName,
 	k8sNamespaceGetSelectedItemFilters,
 	k8sNamespaceInitialEventsFilter,
-	k8sNamespaceInitialFilters,
 	k8sNamespaceInitialLogTracesFilter,
 	namespaceWidgetInfo,
 } from './constants';
@@ -106,7 +105,6 @@ function K8sNamespacesList({
 				getEntityName={k8sNamespaceGetEntityName}
 				getInitialLogTracesFilters={k8sNamespaceInitialLogTracesFilter}
 				getInitialEventsFilters={k8sNamespaceInitialEventsFilter}
-				primaryFilterKeys={k8sNamespaceInitialFilters}
 				metadataConfig={k8sNamespaceDetailsMetadataConfig}
 				entityWidgetInfo={namespaceWidgetInfo}
 				getEntityQueryPayload={getNamespaceMetricsQueryPayload}
