@@ -123,6 +123,7 @@
     "react/require-render-return": "error",
     "react/no-unsafe": "off",
     "no-array-constructor": "error",
+    "jsdoc/check-tag-names": "off",
     "@typescript-eslint/no-duplicate-enum-values": "warn",
     // TODO: Change to error after migration to oxlint
     "@typescript-eslint/no-empty-object-type": "error",
@@ -197,10 +198,7 @@
         ]
       }
     ],
-    "max-params": [
-      "warn",
-      3
-    ],
+    "max-params": "off",
     // Warns when functions have more than 3 parameters
     "@typescript-eslint/explicit-function-return-type": "error",
     // Requires explicit return types on functions
@@ -538,7 +536,10 @@
         "signoz/no-raw-absolute-path":"off",
         "no-restricted-globals": "off",
         // Tests need raw localStorage/sessionStorage to seed DOM state for isolation
-        "signoz/no-zustand-getstate-in-hooks": "off"
+        "signoz/no-zustand-getstate-in-hooks": "off",
+        "@typescript-eslint/no-explicit-any": "off", // Tests often need any for mocks/stubs
+        "@typescript-eslint/explicit-module-boundary-types": "off", // Return types not required in tests
+        "@typescript-eslint/explicit-function-return-type": "off" // Same as above rule, don't need to care about return type
       }
     },
     {

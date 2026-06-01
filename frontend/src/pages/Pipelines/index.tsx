@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import * as Sentry from '@sentry/react';
-import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import getPipeline from 'api/pipeline/get';
 import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
@@ -11,6 +12,8 @@ import { useNotifications } from 'hooks/useNotifications';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
+
+import './Pipelines.styles.scss';
 
 const pipelineRefetchInterval = (
 	pipelineResponse: SuccessResponse<Pipeline> | undefined,
@@ -43,7 +46,7 @@ function Pipelines(): JSX.Element {
 		refetchInterval: pipelineRefetchInterval,
 	});
 
-	const tabItems: TabItemProps[] = useMemo(
+	const tabItems: TabsProps['items'] = useMemo(
 		() => [
 			{
 				key: 'pipelines',
@@ -80,7 +83,11 @@ function Pipelines(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<Tabs defaultValue="pipelines" items={tabItems} />
+			<Tabs
+				className="pipeline-tabs"
+				defaultActiveKey="pipelines"
+				items={tabItems}
+			/>
 		</Sentry.ErrorBoundary>
 	);
 }

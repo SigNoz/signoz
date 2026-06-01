@@ -3244,7 +3244,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -3256,6 +3268,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -7074,6 +7091,13 @@ components:
           type: string
       required:
       - name
+      type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
       type: object
     TypesResetPasswordToken:
       properties:
@@ -14856,6 +14880,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false
