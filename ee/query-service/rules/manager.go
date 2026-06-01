@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) {
@@ -35,6 +34,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
@@ -49,7 +49,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, tr)
 
 		// create ch rule task for evaluation
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -60,6 +60,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
@@ -73,7 +74,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, pr)
 
 		// create promql rule task for evaluation
-		task = newTask(baserules.TaskTypeProm, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeProm, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeAnomaly {
 		// create anomaly rule
@@ -83,6 +84,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
@@ -96,7 +98,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 		rules = append(rules, ar)
 
 		// create anomaly rule task for evaluation
-		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(baserules.TaskTypeCh, opts.TaskName, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc)
 
 	} else {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -142,6 +144,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			parsedRule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -163,6 +166,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			parsedRule,
 			opts.Logger,
 			opts.ManagerOpts.Prometheus,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -182,6 +186,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 			parsedRule,
 			opts.Querier,
 			opts.Logger,
+			opts.ManagerOpts.Alertmanager.Config().ExternalURL,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -210,9 +215,9 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 }
 
 // newTask returns an appropriate group for the rule type
-func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) baserules.Task {
+func newTask(taskType baserules.TaskType, name string, frequency time.Duration, rules []baserules.Rule, opts *baserules.ManagerOptions, notify baserules.NotifyFunc) baserules.Task {
 	if taskType == baserules.TaskTypeCh {
-		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
+		return baserules.NewRuleTask(name, "", frequency, rules, opts, notify)
 	}
-	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify, maintenanceStore, orgID)
+	return baserules.NewPromRuleTask(name, "", frequency, rules, opts, notify)
 }

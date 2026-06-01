@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Radio } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
@@ -35,27 +35,25 @@ function ProducerLatencyTabs({
 	const history = useHistory();
 
 	return (
-		<Radio.Group
-			onChange={(e): void => {
+		<ToggleGroupSimple
+			type="single"
+			onChange={(value: string): void => {
 				setConfigDetail(urlQuery, location, history, {});
-				setOption(e.target.value);
+				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}
 			className="mq-details-options"
-		>
-			<Radio.Button
-				value={ProducerLatencyOptions.Producers}
-				key={ProducerLatencyOptions.Producers}
-			>
-				{ProducerLatencyOptions.Producers}
-			</Radio.Button>
-			<Radio.Button
-				value={ProducerLatencyOptions.Consumers}
-				key={ProducerLatencyOptions.Consumers}
-			>
-				{ProducerLatencyOptions.Consumers}
-			</Radio.Button>
-		</Radio.Group>
+			items={[
+				{
+					value: ProducerLatencyOptions.Producers,
+					label: ProducerLatencyOptions.Producers,
+				},
+				{
+					value: ProducerLatencyOptions.Consumers,
+					label: ProducerLatencyOptions.Consumers,
+				},
+			]}
+		/>
 	);
 }
 

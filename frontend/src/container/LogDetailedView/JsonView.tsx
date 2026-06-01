@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -81,7 +81,7 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 				<div className="log-switch">
 					<div className="wrap-word-switch">
 						<Typography.Text>Wrap text</Typography.Text>
-						<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
+						<Switch value={isWrapWord} onChange={handleWrapWord} />
 					</div>
 				</div>
 			</div>

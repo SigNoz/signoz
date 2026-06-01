@@ -295,37 +295,6 @@
 
 		.slider-container {
 			width: calc(100% - 16px);
-
-			.ant-slider .ant-slider-mark {
-				margin-top: 12px;
-
-				.ant-slider-mark-text {
-					color: var(--l3-foreground);
-					font-variant-numeric: lining-nums tabular-nums stacked-fractions
-						slashed-zero;
-					font-feature-settings:
-						'dlig' on,
-						'salt' on,
-						'cpsp' on,
-						'case' on;
-					font-family: Inter;
-					font-size: 11px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 100%;
-				}
-			}
-
-			&.logs-slider-container {
-				.ant-slider .ant-slider-mark {
-					.ant-slider-mark-text {
-						&:last-child {
-							left: calc(100% - 8px) !important;
-							white-space: nowrap;
-						}
-					}
-				}
-			}
 		}
 
 		.do-later-container {

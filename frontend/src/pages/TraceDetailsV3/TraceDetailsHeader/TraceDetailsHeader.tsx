@@ -10,25 +10,25 @@ import {
 import { Skeleton } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import cx from 'classnames';
+import FieldsSelector from 'components/FieldsSelector';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
-import history from 'lib/history';
+import history, { hasInAppHistory } from 'lib/history';
 import {
 	ArrowLeft,
 	CalendarClock,
 	ChartPie,
+	CornerUpLeft,
 	Server,
 	Timer,
 } from '@signozhq/icons';
-import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
-import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
 import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
@@ -97,13 +97,7 @@ function TraceDetailsHeader({
 	}, [traceID]);
 
 	const handlePreviousBtnClick = useCallback((): void => {
-		const isSpaNavigate =
-			document.referrer &&
-			// oxlint-disable-next-line signoz/no-raw-absolute-path
-			new URL(document.referrer).origin === window.location.origin;
-		const hasBackHistory = window.history.length > 1;
-
-		if (isSpaNavigate && hasBackHistory) {
+		if (hasInAppHistory()) {
 			history.goBack();
 		} else {
 			history.push(ROUTES.TRACES_EXPLORER);
@@ -124,13 +118,14 @@ function TraceDetailsHeader({
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				{!isFilterExpanded && (
-					<>
+					<div className={styles.traceIdSection}>
 						<Button
 							variant="solid"
 							color="secondary"
 							size="md"
 							className={styles.backBtn}
 							onClick={handlePreviousBtnClick}
+							aria-label="Back"
 						>
 							<ArrowLeft size={14} />
 						</Button>
@@ -139,20 +134,39 @@ function TraceDetailsHeader({
 							badgeValue={traceID || ''}
 							maxCharacters={100}
 						/>
-					</>
+					</div>
 				)}
 				{isDataLoaded && (
-					<>
+					<div
+						className={cx(
+							styles.filterSection,
+							isFilterExpanded && styles.isExpanded,
+						)}
+					>
 						{!isFilterExpanded && (
-							<>
-								<TooltipProvider>
+							<TooltipProvider>
+								<div className={styles.headerActions}>
 									<TooltipRoot>
 										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
 												color="secondary"
-												className={styles.analyticsBtn}
+												aria-label="Switch to legacy trace view"
+												onClick={handleSwitchToOldView}
+											>
+												<CornerUpLeft size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Switch to legacy trace view</TooltipContent>
+									</TooltipRoot>
+									<TooltipRoot>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
+												aria-label="Analytics"
 												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
 											>
 												<ChartPie size={14} />
@@ -160,15 +174,18 @@ function TraceDetailsHeader({
 										</TooltipTrigger>
 										<TooltipContent>Analytics</TooltipContent>
 									</TooltipRoot>
-								</TooltipProvider>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+									<TraceOptionsMenu
+										showTraceDetails={showTraceDetails}
+										onToggleTraceDetails={handleToggleTraceDetails}
+										onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+									/>
+								</div>
+							</TooltipProvider>
 						)}
-						<div className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}>
+						<div
+							key="filter"
+							className={cx(styles.filter, isFilterExpanded && styles.isExpanded)}
+						>
 							<Filters
 								startTime={filterMetadata.startTime}
 								endTime={filterMetadata.endTime}
@@ -179,18 +196,7 @@ function TraceDetailsHeader({
 								onCollapse={(): void => setIsFilterExpanded(false)}
 							/>
 						</div>
-						{!isFilterExpanded && (
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								className={styles.oldViewBtn}
-								onClick={handleSwitchToOldView}
-							>
-								Legacy View
-							</Button>
-						)}
-					</>
+					</div>
 				)}
 			</div>
 
@@ -226,26 +232,15 @@ function TraceDetailsHeader({
 				</div>
 			)}
 
-			{isPreviewFieldsOpen && (
-				<FloatingPanel
-					isOpen
-					width={350}
-					height={window.innerHeight - 100}
-					defaultPosition={{
-						x: window.innerWidth - 350 - 100,
-						y: 50,
-					}}
-					enableResizing={false}
-				>
-					<FieldsSettings
-						title="Preview fields"
-						fields={previewFields}
-						onFieldsChange={setPreviewFields}
-						onClose={(): void => setIsPreviewFieldsOpen(false)}
-						dataSource={DataSource.TRACES}
-					/>
-				</FloatingPanel>
-			)}
+			<FieldsSelector
+				isOpen={isPreviewFieldsOpen}
+				title="Preview fields"
+				fields={previewFields}
+				onFieldsChange={setPreviewFields}
+				onClose={(): void => setIsPreviewFieldsOpen(false)}
+				signal={DataSource.TRACES}
+				maxFields={10}
+			/>
 
 			<AnalyticsPanel
 				isOpen={isAnalyticsOpen}

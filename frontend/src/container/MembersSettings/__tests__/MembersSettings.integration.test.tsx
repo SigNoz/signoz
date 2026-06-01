@@ -1,4 +1,5 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
+import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
@@ -20,7 +21,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Alice Smith',
 		email: 'alice@signoz.io',
 		status: 'active',
-		createdAt: new Date('2024-01-01T00:00:00.000Z'),
+		createdAt: '2024-01-01T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -28,7 +29,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Bob Jones',
 		email: 'bob@signoz.io',
 		status: 'active',
-		createdAt: new Date('2024-01-02T00:00:00.000Z'),
+		createdAt: '2024-01-02T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -36,7 +37,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: '',
 		email: 'charlie@signoz.io',
 		status: 'pending_invite',
-		createdAt: new Date('2024-01-03T00:00:00.000Z'),
+		createdAt: '2024-01-03T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -44,7 +45,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Dave Deleted',
 		email: 'dave@signoz.io',
 		status: 'deleted',
-		createdAt: new Date('2024-01-04T00:00:00.000Z'),
+		createdAt: '2024-01-04T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 ];
@@ -76,14 +77,15 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 
-		fireEvent.click(screen.getByRole('button', { name: /all members/i }));
+		await user.click(screen.getByRole('button', { name: /all members/i }));
 
 		const pendingOption = await screen.findByText(/pending invites/i);
-		fireEvent.click(pendingOption);
+		await user.click(pendingOption);
 
 		await screen.findByText('charlie@signoz.io');
 		expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();

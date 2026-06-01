@@ -9,6 +9,19 @@
 		width: 0.2rem;
 		height: 0.2rem;
 	}
+
+	.option-value {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+	}
+
+	.option-meta-data-container {
+		display: flex;
+		gap: 8px;
+		flex-shrink: 0;
+	}
 }
 
 .option-renderer-tooltip {

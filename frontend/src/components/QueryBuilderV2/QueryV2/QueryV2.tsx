@@ -6,12 +6,12 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Dropdown } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
-import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
+import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -195,7 +195,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<Dropdown
+								<DropdownMenuSimple
 									className="query-actions-dropdown"
 									menu={{
 										items: [
@@ -217,10 +217,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 												: []),
 										],
 									}}
-									placement="bottomRight"
+									align="end"
 								>
 									<Ellipsis size={16} />
-								</Dropdown>
+								</DropdownMenuSimple>
 							)}
 						</div>
 					</div>

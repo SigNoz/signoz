@@ -1,9 +1,13 @@
+import { useCallback } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { Bot } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
+import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
+import { normalizePage } from '../hooks/useAIAssistantAnalyticsContext';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
@@ -25,20 +29,28 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 		exact: true,
 	});
 
+	const handleOpen = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: AIAssistantOpenSource.Icon,
+			currentPage: normalizePage(pathname),
+		});
+		openAIAssistant();
+	}, [pathname]);
+
 	if (isDrawerOpen || isModalOpen || isFullScreenPage) {
 		return null;
 	}
 
 	return (
-		<TooltipSimple title="AI Assistant">
+		<TooltipSimple title="Noz">
 			<Button
 				variant="solid"
 				color="primary"
-				className={styles.trigger}
-				onClick={openAIAssistant}
-				aria-label="Open AI Assistant"
+				className={`${styles.trigger} noz-wave`}
+				onClick={handleOpen}
+				aria-label="Open Noz"
 			>
-				<Bot size={20} />
+				<Noz size={24} />
 			</Button>
 		</TooltipSimple>
 	);

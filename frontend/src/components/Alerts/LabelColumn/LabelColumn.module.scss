@@ -1,0 +1,68 @@
+.labelColumn {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	overflow: hidden;
+	max-width: 100%;
+	width: 100%;
+}
+
+.labelBadge {
+	cursor: default;
+	font-size: 12px;
+
+	--badge-display: inline;
+
+	max-width: 180px;
+	text-overflow: ellipsis;
+}
+
+.overflowTrigger {
+	all: unset;
+	cursor: pointer;
+}
+
+.overflowBadge {
+	cursor: pointer;
+	font-size: 12px;
+}
+
+.labelPopover {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.labelTooltip {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.labelValue {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.tooltipContent {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.copyButton {
+	all: unset;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	opacity: 0.7;
+
+	&:hover {
+		opacity: 1;
+	}
+}

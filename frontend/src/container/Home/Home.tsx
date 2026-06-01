@@ -18,6 +18,8 @@ import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import NoAuthBanner from 'components/NoAuthBanner/NoAuthBanner';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -196,7 +198,7 @@ export default function Home(): JSX.Element {
 	const { mutate: updateUserPreference } = useMutation(updateUserPreferenceAPI, {
 		onSuccess: () => {
 			setUpdatingUserPreferences(false);
-			refetchUserPreferences();
+			void refetchUserPreferences();
 		},
 		onError: () => {
 			setUpdatingUserPreferences(false);
@@ -204,7 +206,7 @@ export default function Home(): JSX.Element {
 	});
 
 	const handleWillDoThisLater = (): void => {
-		logEvent('Welcome Checklist: Will do this later clicked', {});
+		void logEvent('Welcome Checklist: Will do this later clicked', {});
 		setUpdatingUserPreferences(true);
 
 		updateUserPreference({
@@ -271,11 +273,12 @@ export default function Home(): JSX.Element {
 	}, [metricsOnboardingData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		logEvent('Homepage: Visited', {});
+		void logEvent('Homepage: Visited', {});
 	}, []);
 
 	return (
 		<div className="home-container">
+			{getIsNoAuthMode() && <NoAuthBanner />}
 			<div className="sticky-header">
 				<Header
 					leftComponent={
@@ -298,9 +301,9 @@ export default function Home(): JSX.Element {
 									autoAdjustOverflow
 									onOpenChange={(visible): void => {
 										if (visible) {
-											logEvent('Welcome Checklist: Expanded', {});
+											void logEvent('Welcome Checklist: Expanded', {});
 										} else {
-											logEvent('Welcome Checklist: Minimized', {});
+											void logEvent('Welcome Checklist: Minimized', {});
 										}
 									}}
 									content={renderWelcomeChecklistModal()}
@@ -353,7 +356,7 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											onClick={(e: React.MouseEvent): void => {
 												// eslint-disable-next-line sonarjs/no-duplicate-string
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
 												safeNavigate(ROUTES.LOGS_EXPLORER, {
@@ -362,7 +365,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
 													history.push(ROUTES.LOGS_EXPLORER);
@@ -396,7 +399,7 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(e: React.MouseEvent): void => {
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
 												safeNavigate(ROUTES.TRACES_EXPLORER, {
@@ -405,7 +408,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
 													history.push(ROUTES.TRACES_EXPLORER);
@@ -439,7 +442,7 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											onClick={(e: React.MouseEvent): void => {
-												logEvent('Homepage: Ingestion Active Explore clicked', {
+												void logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
 												safeNavigate(ROUTES.METRICS_EXPLORER, {
@@ -448,7 +451,7 @@ export default function Home(): JSX.Element {
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
-													logEvent('Homepage: Ingestion Active Explore clicked', {
+													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
 													history.push(ROUTES.METRICS_EXPLORER);
@@ -496,7 +499,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
 													safeNavigate(ROUTES.LOGS_EXPLORER, {
@@ -513,7 +516,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
 													safeNavigate(ROUTES.TRACES_EXPLORER, {
@@ -530,7 +533,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
 													safeNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, {
@@ -569,7 +572,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
 													safeNavigate(ROUTES.ALL_DASHBOARD, {
@@ -614,7 +617,7 @@ export default function Home(): JSX.Element {
 												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
-													logEvent('Homepage: Explore clicked', {
+													void logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
 													safeNavigate(ROUTES.ALERTS_NEW, {

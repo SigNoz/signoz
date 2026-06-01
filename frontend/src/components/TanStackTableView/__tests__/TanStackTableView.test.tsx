@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -23,12 +23,13 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
-// Mock ResizeObserver for combobox tests
-global.ResizeObserver = class ResizeObserver {
-	observe(): void {}
-	unobserve(): void {}
-	disconnect(): void {}
-};
+beforeAll(() => {
+	window.ResizeObserver = jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+});
 
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
@@ -400,6 +401,78 @@ describe('TanStackTableView Integration', () => {
 			await waitFor(() => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
 			});
+		});
+
+		it('preserves page from URL on initial mount', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				queryParams: { page: '3' },
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page3Button = within(nav).getByRole('button', { name: '3' });
+
+			// Page 3 should be active (from URL), not reset to defaultPage 1
+			expect(page3Button).toHaveAttribute('aria-current', 'page');
+		});
+
+		it('resets page to 1 when limit changes', async () => {
+			const user = userEvent.setup();
+			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onPageChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
+					enableQueryParams: true,
+				},
+				onUrlUpdate,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			// Navigate to page 2
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
+
+			await waitFor(() => {
+				const lastPage = onUrlUpdate.mock.calls
+					.map((call) => call[0].searchParams.get('page'))
+					.filter(Boolean)
+					.pop();
+				expect(lastPage).toBe('2');
+			});
+
+			// Change page size
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			// Verify page reset to 1 (nuqs removes default values from URL)
+			await waitFor(() => {
+				const lastCall = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+				const lastPage = lastCall[0].searchParams.get('page');
+				expect(lastPage === '1' || lastPage === null).toBe(true);
+				expect(lastCall[0].searchParams.get('limit')).toBe('20');
+			});
+
+			// Verify onPageChange callback was called with 1
+			expect(onPageChange).toHaveBeenCalledWith(1);
 		});
 	});
 

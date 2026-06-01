@@ -28,6 +28,42 @@ class TelemetryFieldKey:
         }
 
 
+class RequestType:
+    RAW = "raw"
+    TIME_SERIES = "time_series"
+    SCALAR = "scalar"
+    TABLE = "table"
+
+
+@dataclass
+class Aggregation:
+    expression: str
+    alias: str | None = None
+
+    def to_dict(self) -> dict:
+        agg: dict[str, Any] = {"expression": self.expression}
+        if self.alias:
+            agg["alias"] = self.alias
+        return agg
+
+
+@dataclass
+class MetricAggregation:
+    metric_name: str
+    time_aggregation: str
+    space_aggregation: str
+    temporality: str = "cumulative"
+
+    def to_dict(self) -> dict:
+        agg: dict[str, Any] = {
+            "metricName": self.metric_name,
+            "timeAggregation": self.time_aggregation,
+            "spaceAggregation": self.space_aggregation,
+            "temporality": self.temporality,
+        }
+        return agg
+
+
 @dataclass
 class OrderBy:
     key: TelemetryFieldKey
@@ -46,6 +82,8 @@ class BuilderQuery:
     filter_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
     order: list[OrderBy] | None = None
+    aggregations: list[Aggregation | MetricAggregation] | None = None
+    step_interval: int | None = None
 
     def to_dict(self) -> dict:
         spec: dict[str, Any] = {
@@ -62,6 +100,11 @@ class BuilderQuery:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
+        if self.aggregations:
+            spec["aggregations"] = [agg.to_dict() if hasattr(agg, "to_dict") else agg for agg in self.aggregations]
+        if self.step_interval is not None:
+            spec["stepInterval"] = self.step_interval
+
         return {"type": "builder_query", "spec": spec}
 
 
@@ -72,6 +115,7 @@ class TraceOperatorQuery:
     return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
+    select_fields: list[TelemetryFieldKey] | None = None
 
     def to_dict(self) -> dict:
         spec: dict[str, Any] = {
@@ -84,6 +128,8 @@ class TraceOperatorQuery:
             spec["limit"] = self.limit
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
+        if self.select_fields:
+            spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
@@ -114,7 +160,7 @@ def make_query_request(
     end_ms: int,
     queries: list[dict],
     *,
-    request_type: str = "time_series",
+    request_type: str = RequestType.TIME_SERIES,
     format_options: dict | None = None,
     variables: dict | None = None,
     no_cache: bool = True,
