@@ -68,7 +68,6 @@ function FormAlertChannels({
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
 						data-testid="channel-name-textbox"
-						disabled={editing}
 						onChange={(event): void => {
 							setSelectedConfig((state) => ({
 								...state,
