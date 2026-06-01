@@ -32,7 +32,7 @@ var friendly = map[string]string{
 	"BETWEEN": "BETWEEN", "IN": "IN", "EXISTS": "EXISTS",
 	"REGEXP": "REGEXP", "CONTAINS": "CONTAINS",
 	"HAS": "has()", "HASANY": "hasAny()", "HASALL": "hasAll()",
-	"HASTOKEN": "hasToken()",
+	"HASTOKEN": "hasToken()", "SEARCH": "search()",
 
 	// literals / identifiers
 	"NUMBER":      "number",

@@ -16,6 +16,10 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+var (
+	ErrCodeInvalidFTSOperator = errors.MustNewCode("invalid_fts_operator")
+)
+
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
 	fl flagger.Flagger
@@ -23,6 +27,74 @@ type conditionBuilder struct {
 
 func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
 	return &conditionBuilder{fm: fm, fl: fl}
+}
+
+// buildFTSCondition produces the WHERE fragment for a single FTS key by iterating
+// over its resolved columns and emitting the right match expression per column type:
+//   - Map  → arrayExists(x -> match(x, ?), mapKeys/mapValues(col))
+//   - JSON → match(LOWER(toString(col)), LOWER(?))  — only when useJSONBody is true
+//   - String/LowCardinality → match(LOWER(col), LOWER(?))
+//
+// Evolution entries (key.Evolutions) are applied first: selectEvolutionsForColumns
+// picks the active column set for the query time range, and the ColumnName from each
+// entry overrides col.Name so evolved table layouts use the right physical column.
+// JSON columns are then skipped when useJSONBody is false.
+func buildFTSCondition(
+	columns []*schema.Column,
+	key *telemetrytypes.TelemetryFieldKey,
+	tsStart, tsEnd uint64,
+	value any,
+	useJSONBody bool,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	activeColumns := columns
+	var evolutionEntries []*telemetrytypes.EvolutionEntry
+
+	if len(key.Evolutions) > 0 {
+		var err error
+		activeColumns, evolutionEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	var conditions []string
+	for i, col := range activeColumns {
+		if !useJSONBody && col.Type.GetType() == schema.ColumnTypeEnumJSON {
+			continue
+		}
+
+		colName := col.Name
+		if evolutionEntries != nil && evolutionEntries[i] != nil {
+			colName = evolutionEntries[i].ColumnName
+		}
+
+		switch col.Type.GetType() {
+		case schema.ColumnTypeEnumMap:
+			keysExpr := fmt.Sprintf("mapKeys(%s)", colName)
+			valsExpr := fmt.Sprintf("mapValues(%s)", colName)
+			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", colName)
+			}
+			conditions = append(conditions,
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
+			)
+		case schema.ColumnTypeEnumJSON:
+			conditions = append(conditions,
+				fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, colName, sb.Var(value)))
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+			conditions = append(conditions,
+				fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, colName, sb.Var(value)))
+		}
+	}
+	if len(conditions) == 0 {
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "no FTS conditions built for columns")
+	}
+	if len(conditions) == 1 {
+		return conditions[0], nil
+	}
+	return sb.Or(conditions...), nil
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -33,9 +105,20 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
+	if key.Name == querybuilder.FTSInternalKey && operator != qbtypes.FilterOperatorRegexp {
+		return "", errors.NewInternalf(ErrCodeInvalidFTSOperator, "only regexp operator is supported for fts")
+	}
+
 	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
+	}
+
+	// FTS is branched here
+	if key.Name == querybuilder.FTSInternalKey {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+		return buildFTSCondition(columns, key, startNs, endNs, value, useJSONBody, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
@@ -62,7 +145,8 @@ func (c *conditionBuilder) conditionFor(
 
 	// Check if this is a body JSON search - either by FieldContext
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+	if key.FieldContext == telemetrytypes.FieldContextBody &&
+		!c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -116,7 +200,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -280,6 +363,12 @@ func (c *conditionBuilder) ConditionFor(
 	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
+	}
+
+	// FTS wildcard conditions are self-contained (arrayExists over full map);
+	// no additional EXISTS wrapper is needed.
+	if key.Name == querybuilder.FTSInternalKey {
+		return condition, nil
 	}
 
 	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields

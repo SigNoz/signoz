@@ -107,7 +107,7 @@ fullText
  *    ...
  */
 functionCall
-    : (HASTOKEN | HAS | HASANY | HASALL) LPAREN functionParamList RPAREN
+    : (HASTOKEN | HAS | HASANY | HASALL | SEARCH) LPAREN functionParamList RPAREN
     ;
 
 // Function parameters can be keys, single scalar values, or arrays
@@ -184,6 +184,7 @@ HASTOKEN    : [Hh][Aa][Ss][Tt][Oo][Kk][Ee][Nn];
 HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
+SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
 
 // Potential boolean constants
 BOOL
