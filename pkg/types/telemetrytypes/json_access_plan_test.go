@@ -80,6 +80,29 @@ func toTestNode(n *JSONAccessNode) *jsonAccessTestNode {
 	return out
 }
 
+// buildTestPlans sets PlanBuilder on the key and returns the pre-built access plans.
+// Non-materialized keys produce one plan (base column); materialized keys produce two (base + promoted).
+func buildTestPlans(t *testing.T, key *TelemetryFieldKey, meta JSONColumnMetadata, types map[string][]FieldDataType) ([]*JSONAccessNode, error) {
+	t.Helper()
+
+	key.PlanBuilder = NewFieldPlanBuilder(key, meta, types)
+
+	basePlan, err := key.PlanBuilder.build(NewRootJSONAccessNode(meta.BaseColumn, 32, 0))
+	if err != nil {
+		return nil, err
+	}
+	plans := []*JSONAccessNode{basePlan}
+
+	if key.Materialized {
+		promotedPlan, err := key.PlanBuilder.build(NewRootJSONAccessNode(meta.PromotedColumn, 32, 1024))
+		if err != nil {
+			return nil, err
+		}
+		plans = append(plans, promotedPlan)
+	}
+	return plans, nil
+}
+
 // plansToYAML converts a slice of JSONAccessNode plans to a YAML string that
 // can be compared against a per-test expectedTree.
 func plansToYAML(t *testing.T, plans []*JSONAccessNode) string {
@@ -267,19 +290,17 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 		},
 	}
 
+	meta := JSONColumnMetadata{BaseColumn: bodyV2Column, PromotedColumn: bodyPromotedColumn}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.key.SetJSONAccessPlan(JSONColumnMetadata{
-				BaseColumn:     bodyV2Column,
-				PromotedColumn: bodyPromotedColumn,
-			}, types)
+			plans, err := buildTestPlans(t, tt.key, meta, types)
 			if tt.expectErr {
 				require.Error(t, err)
-				require.Nil(t, tt.key.JSONPlan)
+				require.Nil(t, plans)
 				return
 			}
 			require.NoError(t, err)
-			got := plansToYAML(t, tt.key.JSONPlan)
+			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
@@ -383,17 +404,15 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 		},
 	}
 
+	meta := JSONColumnMetadata{BaseColumn: bodyV2Column, PromotedColumn: bodyPromotedColumn}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := makeKey(tt.path, FieldDataTypeString, false)
-			err := key.SetJSONAccessPlan(JSONColumnMetadata{
-				BaseColumn:     bodyV2Column,
-				PromotedColumn: bodyPromotedColumn,
-			}, types)
+			plans, err := buildTestPlans(t, key, meta, types)
 			require.NoError(t, err)
-			require.NotNil(t, key.JSONPlan)
-			require.Len(t, key.JSONPlan, 1)
-			got := plansToYAML(t, key.JSONPlan)
+			require.NotNil(t, plans)
+			require.Len(t, plans, 1)
+			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
@@ -403,14 +422,13 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].type"
 
+	meta := JSONColumnMetadata{BaseColumn: bodyV2Column, PromotedColumn: bodyPromotedColumn}
+
 	t.Run("Non-promoted plan", func(t *testing.T) {
 		key := makeKey(path, FieldDataTypeString, false)
-		err := key.SetJSONAccessPlan(JSONColumnMetadata{
-			BaseColumn:     bodyV2Column,
-			PromotedColumn: bodyPromotedColumn,
-		}, types)
+		plans, err := buildTestPlans(t, key, meta, types)
 		require.NoError(t, err)
-		require.Len(t, key.JSONPlan, 1)
+		require.Len(t, plans, 1)
 
 		expectedYAML := fmt.Sprintf(`
 - name: education
@@ -433,18 +451,15 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           isTerminal: true
           elemType: String
 `, bodyV2Column)
-		got := plansToYAML(t, key.JSONPlan)
+		got := plansToYAML(t, plans)
 		require.YAMLEq(t, expectedYAML, got)
 	})
 
 	t.Run("Promoted plan", func(t *testing.T) {
 		key := makeKey(path, FieldDataTypeString, true)
-		err := key.SetJSONAccessPlan(JSONColumnMetadata{
-			BaseColumn:     bodyV2Column,
-			PromotedColumn: bodyPromotedColumn,
-		}, types)
+		plans, err := buildTestPlans(t, key, meta, types)
 		require.NoError(t, err)
-		require.Len(t, key.JSONPlan, 2)
+		require.Len(t, plans, 2)
 
 		expectedYAML := fmt.Sprintf(`
 - name: education
@@ -489,7 +504,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
           isTerminal: true
           elemType: String
 `, bodyV2Column, bodyPromotedColumn)
-		got := plansToYAML(t, key.JSONPlan)
+		got := plansToYAML(t, plans)
 		require.YAMLEq(t, expectedYAML, got)
 	})
 }
@@ -580,7 +595,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				keyType = FieldDataTypeString
 			}
 			key := makeKey(tt.path, keyType, false)
-			err := key.SetJSONAccessPlan(JSONColumnMetadata{
+			plans, err := buildTestPlans(t, key, JSONColumnMetadata{
 				BaseColumn:     bodyV2Column,
 				PromotedColumn: bodyPromotedColumn,
 			}, types)
@@ -589,7 +604,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			got := plansToYAML(t, key.JSONPlan)
+			got := plansToYAML(t, plans)
 			require.YAMLEq(t, tt.expectedYAML, got)
 		})
 	}
@@ -599,12 +614,12 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
 	key := makeKey(path, FieldDataTypeString, false)
-	err := key.SetJSONAccessPlan(JSONColumnMetadata{
+	plans, err := buildTestPlans(t, key, JSONColumnMetadata{
 		BaseColumn:     bodyV2Column,
 		PromotedColumn: bodyPromotedColumn,
 	}, types)
 	require.NoError(t, err)
-	require.Len(t, key.JSONPlan, 1)
+	require.Len(t, plans, 1)
 
 	expectedYAML := fmt.Sprintf(`
 - name: education
@@ -668,6 +683,6 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
                   elemType: String
 `, bodyV2Column)
 
-	got := plansToYAML(t, key.JSONPlan)
+	got := plansToYAML(t, plans)
 	require.YAMLEq(t, expectedYAML, got)
 }

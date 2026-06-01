@@ -61,6 +61,9 @@ func TestJSONTypeSet() (map[string][]FieldDataType, MetadataStore) {
 		"http-events":                     {FieldDataTypeArrayJSON},
 		"http-events[].request-info.host": {FieldDataTypeString},
 
+		// ── top-level arrays ─────────────────────────────────────────────
+		"tags": {FieldDataTypeArrayString},
+
 		// ── top-level primitives ──────────────────────────────────────────
 		"message":     {FieldDataTypeString},
 		"http-status": {FieldDataTypeInt64, FieldDataTypeString}, // hyphen in root key, ambiguous
