@@ -871,11 +871,13 @@ func (v *filterExpressionVisitor) runSearchFunction(text string) any {
 	for _, key := range v.ftsFieldKeys {
 		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
 		if err != nil {
-			continue
+			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Name, err.Error()))
+			return ErrorConditionLiteral
 		}
 		ftsConds = append(ftsConds, cond)
 	}
 	if len(ftsConds) == 0 {
+		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")
 		return ErrorConditionLiteral
 	}
 
@@ -897,7 +899,11 @@ func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallC
 	// unquoted tokens like search(error) don't trigger "key not found" errors.
 	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
 	if len(paramCtxs) < 1 {
-		v.errors = append(v.errors, "search() requires a value parameter, e.g. search('error') or search(error)")
+		v.errors = append(v.errors, "search() requires exactly one value parameter, e.g. search('error') or search(error)")
+		return ErrorConditionLiteral
+	}
+	if len(paramCtxs) > 1 {
+		v.errors = append(v.errors, fmt.Sprintf("search() accepts exactly one parameter but got %d", len(paramCtxs)))
 		return ErrorConditionLiteral
 	}
 	paramCtx := paramCtxs[0]

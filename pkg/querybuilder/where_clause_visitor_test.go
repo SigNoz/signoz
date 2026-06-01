@@ -1684,6 +1684,70 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 	}
 }
 
+// TestVisitComparison_SearchFunction covers search() function validation.
+// opts uses FTSFieldKeys so search() is enabled; invalid multi-param calls must error.
+func TestVisitComparison_SearchFunction(t *testing.T) {
+	bodyKey := &telemetrytypes.TelemetryFieldKey{
+		Name:          "body",
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	ftsOpts := FilterExprVisitorOpts{
+		Context:            t.Context(),
+		FieldKeys:          visitTestKeys,
+		ConditionBuilder:   &conditionBuilder{},
+		SkipResourceFilter: false,
+		SkipFullTextFilter: false,
+		SkipFunctionCalls:  false,
+		IgnoreNotFoundKeys: false,
+		FTSFieldKeys:       []*telemetrytypes.TelemetryFieldKey{bodyKey},
+	}
+
+	tests := []struct {
+		name    string
+		expr    string
+		opts    FilterExprVisitorOpts
+		wantErr bool
+	}{
+		{
+			name:    "search with quoted string - valid",
+			expr:    "search('error')",
+			opts:    ftsOpts,
+			wantErr: false,
+		},
+		{
+			name:    "search with unquoted word - valid",
+			expr:    "search(error)",
+			opts:    ftsOpts,
+			wantErr: false,
+		},
+		{
+			name:    "search(\"err1\", \"err2\") - too many params",
+			expr:    `search("err1", "err2")`,
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+		{
+			name:    "search(attributes, \"err\") - too many params",
+			expr:    `search(attributes, "err")`,
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+		{
+			name:    "search() without params - error",
+			expr:    "search()",
+			opts:    ftsOpts,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := PrepareWhereClause(tt.expr, tt.opts)
+			assert.Equal(t, tt.wantErr, err != nil, "error expectation mismatch: err=%v", err)
+		})
+	}
+}
+
 // TestVisitComparison_SkippableLiteralValues guards against two distinct collision risks
 // involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):.
 func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
