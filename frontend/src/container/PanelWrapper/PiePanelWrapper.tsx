@@ -77,6 +77,10 @@ function PiePanelWrapper({
 			arc.value && !isNaN(parseFloat(arc.value)) && parseFloat(arc.value) > 0,
 	);
 
+	const sortedPieChartData = [...pieChartData].sort((a, b) =>
+		(a.label || '').localeCompare(b.label || ''),
+	);
+
 	let size = 0;
 	let width = 0;
 	let height = 0;
@@ -183,7 +187,7 @@ function PiePanelWrapper({
 						<svg width={width} height={height} ref={containerRef}>
 							<Group top={height / 2} left={width / 2}>
 								<Pie
-									data={pieChartData}
+									data={sortedPieChartData}
 									pieValue={(data: {
 										label: string;
 										value: string;
@@ -234,7 +238,10 @@ function PiePanelWrapper({
 
 												const shouldShowLabel =
 													parseFloat(arc.data.value) /
-														pieChartData.reduce((sum, d) => sum + parseFloat(d.value), 0) >
+														sortedPieChartData.reduce(
+															(sum, d) => sum + parseFloat(d.value),
+															0,
+														) >
 													0.03;
 
 												return (
@@ -376,7 +383,7 @@ function PiePanelWrapper({
 						)}
 					</div>
 					<div className="piechart-legend">
-						{pieChartData.map((data) => (
+						{sortedPieChartData.map((data) => (
 							<div
 								key={data.label}
 								className="piechart-legend-item"
