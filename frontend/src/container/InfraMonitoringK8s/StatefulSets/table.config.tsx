@@ -1,38 +1,49 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sStatefulSetsData } from './api';
+import { formatBytes, getPodPhaseStatusItems } from '../commonUtils';
+import {
+	EntityProgressBar,
+	GroupedStatusCounts,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { ArrowUpDown } from '@signozhq/icons';
 
 export function getK8sStatefulSetRowKey(
-	statefulSet: K8sStatefulSetsData,
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
 ): string {
 	return (
-		statefulSet.statefulSetName || statefulSet.meta.k8s_statefulset_name || ''
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] ||
+		statefulSet.statefulSetName ||
+		''
 	);
 }
 
 export function getK8sStatefulSetItemKey(
-	statefulSet: K8sStatefulSetsData,
+	statefulSet: InframonitoringtypesStatefulSetRecordDTO,
 ): string {
-	return statefulSet.meta.k8s_statefulset_name;
+	return (
+		statefulSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] || ''
+	);
 }
 
-export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[] =
+export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesStatefulSetRecordDTO>[] =
 	[
 		{
 			id: 'statefulSetGroup',
 			header: (): React.ReactNode => (
 				<EntityGroupHeader title="STATEFULSET GROUP" />
 			),
-			accessorFn: (row): string => row.meta.k8s_statefulset_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] || '',
 			width: { min: 210 },
 			enableSort: false,
 			enableRemove: false,
@@ -58,7 +69,8 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 					icon={<ArrowUpDown data-hide-expanded="true" size={14} />}
 				/>
 			),
-			accessorFn: (row): string => row.meta.k8s_statefulset_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] || '',
 			width: { min: 200 },
 			enableSort: false,
 			enableRemove: false,
@@ -68,51 +80,72 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 			cell: ({ value }): React.ReactNode => {
 				const statefulsetName = value as string;
 				return (
-					<Tooltip title={statefulsetName}>
+					<TooltipSimple title={statefulsetName}>
 						<TanStackTable.Text>{statefulsetName}</TanStackTable.Text>
-					</Tooltip>
+					</TooltipSimple>
 				);
 			},
 		},
 		{
 			id: 'namespaceName',
 			header: 'Namespace Name',
-			accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+			accessorFn: (row): string =>
+				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 			width: { default: 150 },
 			enableSort: false,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
 				const namespaceName = value as string;
 				return (
-					<Tooltip title={namespaceName}>
+					<TooltipSimple title={namespaceName}>
 						<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
-					</Tooltip>
+					</TooltipSimple>
 				);
 			},
 		},
 		{
-			id: 'available_pods',
-			header: 'Available',
-			accessorFn: (row): number => row.availablePods,
+			id: 'pod_counts_by_phase',
+			header: 'Pod Phases',
+			accessorFn: (
+				row,
+			): InframonitoringtypesStatefulSetRecordDTO['podCountsByPhase'] =>
+				row.podCountsByPhase,
+			width: { min: 220 },
+			enableSort: false,
+			enableResize: true,
+			cell: ({ row }): React.ReactNode => {
+				const podCountsByPhase = row.podCountsByPhase;
+				if (!podCountsByPhase) {
+					return <TanStackTable.Text>-</TanStackTable.Text>;
+				}
+				return (
+					<GroupedStatusCounts items={getPodPhaseStatusItems(podCountsByPhase)} />
+				);
+			},
+		},
+		{
+			id: 'current_pods',
+			header: 'Current Pods',
+			accessorFn: (row): number => row.currentPods,
 			width: { min: 100, default: 140 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
-				const availablePods = value as number;
+				const currentPods = value as number;
 				return (
 					<ValidateColumnValueWrapper
-						value={availablePods}
+						value={currentPods}
 						entity={InfraMonitoringEntity.STATEFULSETS}
-						attribute="available pod"
+						attribute="current pod"
 					>
-						<TanStackTable.Text>{availablePods}</TanStackTable.Text>
+						<TanStackTable.Text>{currentPods}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
 			},
 		},
 		{
 			id: 'desired_pods',
-			header: 'Desired',
+			header: 'Desired Pods',
 			accessorFn: (row): number => row.desiredPods,
 			width: { min: 100, default: 140 },
 			enableSort: true,
@@ -133,7 +166,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'cpu_request',
 			header: 'CPU Req Usage (%)',
-			accessorFn: (row): number => row.cpuRequest,
+			accessorFn: (row): number => row.statefulSetCPURequest,
 			width: { min: 200, default: 200 },
 			enableSort: true,
 			enableResize: true,
@@ -153,7 +186,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'cpu_limit',
 			header: 'CPU Limit Usage (%)',
-			accessorFn: (row): number => row.cpuLimit,
+			accessorFn: (row): number => row.statefulSetCPULimit,
 			width: { min: 200, default: 200 },
 			enableSort: true,
 			enableResize: true,
@@ -173,20 +206,20 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'cpu',
 			header: 'CPU Usage (cores)',
-			accessorFn: (row): number => row.cpuUsage,
+			accessorFn: (row): number => row.statefulSetCPU,
 			width: { min: 190 },
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
 			cell: ({ value }): React.ReactNode => {
-				const cpu = value as number;
+				const cpu = Number(value);
 				return (
 					<ValidateColumnValueWrapper
 						value={cpu}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU metric"
 					>
-						<TanStackTable.Text>{cpu}</TanStackTable.Text>
+						<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -194,7 +227,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'memory_request',
 			header: 'Mem Req Usage (%)',
-			accessorFn: (row): number => row.memoryRequest,
+			accessorFn: (row): number => row.statefulSetMemoryRequest,
 			width: { min: 190 },
 			enableSort: true,
 			enableResize: true,
@@ -214,7 +247,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'memory_limit',
 			header: 'Mem Limit Usage (%)',
-			accessorFn: (row): number => row.memoryLimit,
+			accessorFn: (row): number => row.statefulSetMemoryLimit,
 			width: { min: 180 },
 			enableSort: true,
 			enableResize: true,
@@ -234,7 +267,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'memory',
 			header: 'Mem Usage (WSS)',
-			accessorFn: (row): number => row.memoryUsage,
+			accessorFn: (row): number => row.statefulSetMemory,
 			width: { min: 160 },
 			enableSort: true,
 			enableResize: true,
