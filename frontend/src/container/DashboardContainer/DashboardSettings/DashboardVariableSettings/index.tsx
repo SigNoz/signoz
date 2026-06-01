@@ -22,6 +22,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { removeVariableReferencesFromDashboard } from './addTagFiltersToDashboard';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -256,6 +257,12 @@ function VariablesSettings({
 	};
 
 	const handleDeleteConfirm = (): void => {
+		if (!dashboardData || !variableToDelete.current) {
+			variableToDelete.current = null;
+			setDeleteVariableModal(false);
+			return;
+		}
+
 		const newVariablesArr = variablesTableData.filter(
 			(variable: IDashboardVariable) =>
 				variable.id !== variableToDelete?.current?.id,
@@ -263,7 +270,34 @@ function VariablesSettings({
 
 		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
 
-		updateVariables(updatedVariables);
+		const cleanedDashboard =
+			removeVariableReferencesFromDashboard(
+				dashboardData,
+				variableToDelete.current.name || '',
+				variableToDelete.current.dynamicVariablesAttribute,
+			) || dashboardData;
+
+		updateMutation.mutateAsync(
+			{
+				id: dashboardData.id,
+
+				data: {
+					...cleanedDashboard.data,
+					variables: updatedVariables,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.data) {
+						setDashboardData(updatedDashboard.data);
+						notifications.success({
+							message: t('variable_updated_successfully'),
+						});
+					}
+				},
+			},
+		);
+
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -476,6 +510,7 @@ function VariablesSettings({
 				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
+				okButtonProps={{ loading: updateMutation.isLoading }}
 			>
 				<Typography.Text>
 					Are you sure you want to delete variable{' '}
