@@ -2,7 +2,7 @@
 
 $dropdown-base-height: 250px;
 $recents-header-height: 30px;
-$recent-row-height: 52px;
+$recent-row-height: 36px;
 $max-recents-shown: 5;
 
 .code-mirror-where-clause {
@@ -208,42 +208,13 @@ $max-recents-shown: 5;
 				}
 
 				li:has(.cm-completionIcon-recent) {
-					height: auto !important;
-					margin: 4px 8px !important;
-					padding: 6px 12px !important;
-					width: calc(100% - 16px) !important;
-					max-width: calc(100% - 16px) !important;
-					background: var(--bg-ink-200) !important;
-					color: var(--text-vanilla-400) !important;
-					border: 1px solid var(--l1-border) !important;
-					border-radius: 6px !important;
-					line-height: 24px !important;
-
-					.cm-completionLabel {
-						flex: 1;
-						min-width: 0;
-						white-space: nowrap;
-						overflow: hidden;
-						text-overflow: ellipsis;
-					}
-
-					&:hover,
-					&[aria-selected='true'] {
-						background: color-mix(
-							in srgb,
-							var(--bg-ink-200) 80%,
-							var(--text-vanilla-400)
-						) !important;
-						color: var(--text-vanilla-400) !important;
-					}
-
 					&:hover .cm-recent-delete,
 					&[aria-selected='true'] .cm-recent-delete {
 						opacity: 1;
 					}
 				}
 
-				li:not(:has(.cm-completionIcon-recent)) .cm-completionLabel {
+				li .cm-completionLabel {
 					flex: 1;
 					min-width: 0;
 					white-space: nowrap;
