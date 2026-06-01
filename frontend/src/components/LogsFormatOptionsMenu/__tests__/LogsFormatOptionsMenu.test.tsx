@@ -155,4 +155,66 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
 		});
 	});
+
+	function renderWithOnOpen(
+		onOpenColumns?: jest.Mock,
+		selectedOptionFormat: 'table' | 'raw' | 'list' = 'table',
+	): { getByTestId: ReturnType<typeof render>['getByTestId'] } {
+		const items = [
+			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
+			{ key: 'list', label: 'Default' },
+			{ key: 'table', label: 'Column', data: { title: 'columns' } },
+		];
+
+		const { getByTestId } = render(
+			<LogsFormatOptionsMenu
+				items={items}
+				selectedOptionFormat={selectedOptionFormat}
+				config={{
+					format: { value: selectedOptionFormat, onChange: jest.fn() },
+					maxLines: { value: 1, onChange: jest.fn() },
+					fontSize: { value: FontSize.SMALL, onChange: jest.fn() },
+				}}
+				onOpenColumns={onOpenColumns}
+			/>,
+		);
+		fireEvent.click(getByTestId('periscope-btn-format-options'));
+		return { getByTestId };
+	}
+
+	it('renders "Edit columns" row when format=table and onOpenColumns provided', () => {
+		const onOpenColumns = jest.fn();
+		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
+
+		expect(getByTestId('periscope-btn-edit-columns')).toBeInTheDocument();
+	});
+
+	it('does not render "Edit columns" row when onOpenColumns is not provided', () => {
+		renderWithOnOpen(undefined, 'table');
+
+		expect(
+			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
+		).toBeNull();
+	});
+
+	it('does not render "Edit columns" row when format is not table', () => {
+		renderWithOnOpen(jest.fn(), 'raw');
+
+		expect(
+			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
+		).toBeNull();
+	});
+
+	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
+		const onOpenColumns = jest.fn();
+		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
+
+		fireEvent.click(getByTestId('periscope-btn-edit-columns'));
+
+		expect(onOpenColumns).toHaveBeenCalledTimes(1);
+		await waitFor(() => {
+			// Popover content unmounts on close.
+			expect(document.querySelector('.menu-container')).toBeNull();
+		});
+	});
 });

@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
+import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
 import { ArrowUp10, Minus } from '@signozhq/icons';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
@@ -39,6 +42,8 @@ function LogsActionsContainer({
 		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
 	const formatItems = [
 		{
@@ -102,6 +107,7 @@ function LogsActionsContainer({
 									items={formatItems}
 									selectedOptionFormat={options.format}
 									config={config}
+									onOpenColumns={(): void => setIsFieldsSelectorOpen(true)}
 								/>
 							</div>
 						</>
@@ -119,6 +125,17 @@ function LogsActionsContainer({
 					)}
 				</div>
 			</div>
+			{config.fieldsSelector && (
+				<FieldsSelector
+					isOpen={isFieldsSelectorOpen}
+					title="Edit columns"
+					fields={config.fieldsSelector.value}
+					onFieldsChange={config.fieldsSelector.onFieldsChange}
+					onClose={(): void => setIsFieldsSelectorOpen(false)}
+					signal={DataSource.LOGS}
+					requiredFields={LOGS_REQUIRED_COLUMNS}
+				/>
+			)}
 		</div>
 	);
 }
