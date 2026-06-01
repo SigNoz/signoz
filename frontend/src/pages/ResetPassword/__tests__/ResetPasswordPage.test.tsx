@@ -76,7 +76,7 @@ describe('ResetPassword Page', () => {
 			expect(screen.getByTestId('confirmPassword')).toBeInTheDocument();
 		});
 
-		it('shows error state when token is expired or invalid', async () => {
+		it('shows "Invalid Reset Link" when token is not found (404)', async () => {
 			server.use(
 				rest.post(
 					VERIFY_TOKEN_ENDPOINT,
@@ -84,6 +84,35 @@ describe('ResetPassword Page', () => {
 						404,
 						'reset_password_token_not_found',
 						'reset password token does not exist',
+					),
+				),
+			);
+
+			window.history.pushState({}, '', '/password-reset?token=invalid-token');
+			render(<ResetPassword />, undefined, {
+				initialRoute: '/password-reset?token=invalid-token',
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText(/invalid reset link/i)).toBeInTheDocument();
+			});
+
+			expect(
+				screen.getByText(/invalid or has already been used/i),
+			).toBeInTheDocument();
+			expect(
+				screen.getByText(/reset password token does not exist/i),
+			).toBeInTheDocument();
+		});
+
+		it('shows "token is expired" when token is expired (401) without redirecting to login', async () => {
+			server.use(
+				rest.post(
+					VERIFY_TOKEN_ENDPOINT,
+					createErrorResponse(
+						401,
+						'reset_password_token_expired',
+						'reset password token has expired',
 					),
 				),
 			);
@@ -100,11 +129,14 @@ describe('ResetPassword Page', () => {
 			});
 
 			expect(
-				screen.getByText(/password reset links are single-use/i),
+				screen.getByText(/single-use and expire after a set period/i),
 			).toBeInTheDocument();
 			expect(
-				screen.getByText(/reset password token does not exist/i),
+				screen.getByText(/reset password token has expired/i),
 			).toBeInTheDocument();
+			// 401 from this endpoint must NOT trigger logout/redirect
+			expect(mockHistoryPush).not.toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(Logout).not.toHaveBeenCalled();
 		});
 
 		it('redirects to login when no token is in the URL', async () => {
