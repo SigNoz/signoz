@@ -46,8 +46,13 @@ import {
 import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
-import { queryExamples } from './constants';
-import { combineInitialAndUserExpression } from './utils';
+import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	combineInitialAndUserExpression,
+	getRecentOptions,
+	type RecentsSignal,
+	renderRecentDeleteButton,
+} from './utils';
 
 import './QuerySearch.styles.scss';
 
@@ -1250,6 +1255,40 @@ function QuerySearch({
 		};
 	}
 
+	const recentsSignal = dataSource as RecentsSignal;
+
+	function combinedSuggestions(
+		context: CompletionContext,
+	): CompletionResult | null {
+		const fullDoc = context.state.doc.toString();
+		const recentOptions = getRecentOptions(recentsSignal, fullDoc);
+		const result = autoSuggestions(context);
+
+		const sectionedSuggestions = (result?.options || []).map((opt) => ({
+			...opt,
+			section: SUGGESTIONS_SECTION,
+		}));
+
+		if (recentOptions.length === 0 && sectionedSuggestions.length === 0) {
+			return result;
+		}
+
+		if (!result) {
+			return {
+				from: 0,
+				to: fullDoc.length,
+				options: recentOptions,
+				filter: false,
+			};
+		}
+
+		return {
+			...result,
+			options: [...recentOptions, ...sectionedSuggestions],
+			filter: false,
+		};
+	}
+
 	// Effect to handle focus state and trigger suggestions
 	useEffect(() => {
 		const clearTimeout = toggleSuggestions(10);
@@ -1398,11 +1437,14 @@ function QuerySearch({
 					})}
 					extensions={[
 						autocompletion({
-							override: [autoSuggestions],
+							override: [combinedSuggestions],
 							defaultKeymap: true,
 							closeOnBlur: true,
 							activateOnTyping: true,
 							maxRenderedOptions: 50,
+							addToOptions: [
+								{ render: renderRecentDeleteButton, position: 100 },
+							],
 						}),
 						javascript({ jsx: false, typescript: false }),
 						EditorView.lineWrapping,

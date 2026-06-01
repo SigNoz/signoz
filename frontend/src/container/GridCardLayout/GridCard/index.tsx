@@ -283,6 +283,15 @@ function GridCardGraph({
 		},
 	);
 
+	/*
+	`widget.query` is the dashboard's saved query for this panel — it
+	does not flow through `useQueryBuilder().stagedQuery`, so the
+	provider-level save effect in `providers/QueryBuilder.tsx` doesn't
+	cover this surface. This explicit call ensures dashboard-viewed
+	queries are surfaced in the user's recents.
+	useSaveRecentQuery(widget?.query);
+	*/
+
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
