@@ -146,8 +146,7 @@ if (
 	window.addEventListener('storage', handleCrossTabStorageEvent);
 }
 
-// Test-only escape hatch. Clears in-memory cache, subscribers, and the
-// localStorage keys we own. Should not be called from production code.
+// Test-only escape hatch.
 export function __resetForTests(): void {
 	cache.clear();
 	subscribers.clear();
@@ -156,9 +155,7 @@ export function __resetForTests(): void {
 	}
 }
 
-// Test-only escape hatch. Drops the in-memory cache without touching
-// localStorage, letting tests simulate a fresh page load that rehydrates from
-// persisted data. Should not be called from production code.
+// Test-only escape hatch.
 export function __dropCacheForTests(): void {
 	cache.clear();
 }
