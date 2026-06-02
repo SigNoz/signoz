@@ -10,9 +10,9 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
-const field = (name: string): IField => ({
+const field = (name: string, type = ''): IField => ({
 	name,
-	type: '',
+	type,
 	dataType: 'string',
 });
 
@@ -38,18 +38,16 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 			useLogsTableColumns({
 				fields: [
 					field('service.name'),
-					field('body'),
+					field('body', 'log'),
 					field('request.id'),
-					field('timestamp'),
+					field('timestamp', 'log'),
 				],
 				fontSize: FontSize.SMALL,
 			}),
 		);
 
-		// body/timestamp are NOT pinned to fixed positions — they appear where the
-		// caller placed them in `fields`. body/timestamp use composite IDs
-		// ('log.body', 'log.timestamp') since their fieldContext is fixed; user
-		// fields here have empty `type` so their composite collapses to bare name.
+		// body/timestamp appear where the caller placed them, keyed by their
+		// composite IDs ('log.*'); contextless user fields collapse to bare name.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
 			'service.name',
@@ -57,6 +55,43 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 			'request.id',
 			'log.timestamp',
 		]);
+	});
+
+	it('renders a same-name field from another context as a DISTINCT column (no collision)', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('body', 'log'), field('body', 'attribute')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+
+		const byId = new Map(result.current.map((c) => [c.id, c]));
+		// Attribute variant is its own column, not a duplicate 'log.body'.
+		expect(result.current.map((c) => c.id)).toStrictEqual([
+			'state-indicator',
+			'log.body',
+			'attribute.body',
+		]);
+		expect(byId.get('log.body')?.enableRemove).toBe(false);
+		expect(byId.get('attribute.body')?.enableRemove).toBe(true);
+	});
+
+	it('applies the same distinct-column treatment to timestamp variants', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('timestamp', 'log'), field('timestamp', 'attribute')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+
+		const byId = new Map(result.current.map((c) => [c.id, c]));
+		expect(result.current.map((c) => c.id)).toStrictEqual([
+			'state-indicator',
+			'log.timestamp',
+			'attribute.timestamp',
+		]);
+		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
+		expect(byId.get('attribute.timestamp')?.enableRemove).toBe(true);
 	});
 
 	it('skips the synthetic "id" field name', () => {
@@ -77,7 +112,11 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 	it('uses the special body/timestamp coldefs (canBeHidden=false), not the generic user field def', () => {
 		const { result } = renderHook(() =>
 			useLogsTableColumns({
-				fields: [field('body'), field('timestamp'), field('user_field')],
+				fields: [
+					field('body', 'log'),
+					field('timestamp', 'log'),
+					field('user_field'),
+				],
 				fontSize: FontSize.SMALL,
 			}),
 		);

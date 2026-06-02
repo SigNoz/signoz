@@ -96,15 +96,18 @@ export function useLogsTableColumns({
 			),
 		});
 
+		// Match body/timestamp by composite key, not bare name — else a variant
+		// like `attribute.body` collapses onto `log.body`, duplicating the column.
 		const fieldCols = fields
 			.map((f): TableColumnDef<ILog> | null => {
 				if (f.name === 'id') {
 					return null;
 				}
-				if (f.name === 'timestamp') {
+				const compositeKey = buildCompositeKey(f.name, f.type);
+				if (compositeKey === timestampCol.id) {
 					return timestampCol;
 				}
-				if (f.name === 'body') {
+				if (compositeKey === bodyCol.id) {
 					return bodyCol;
 				}
 				return makeUserFieldCol(f);
