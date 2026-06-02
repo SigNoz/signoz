@@ -25,25 +25,6 @@ from fixtures.querier import (
 from fixtures.traces import Traces
 
 
-def _query(signal: str, filter_expression: str, select_fields: list[TelemetryFieldKey]) -> dict:
-    return BuilderQuery(
-        signal=signal,
-        limit=50,
-        order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
-        filter_expression=filter_expression,
-        select_fields=select_fields,
-    ).to_dict()
-
-
-def _run_both(signoz: types.SigNoz, signoz_fingerprint: types.SigNoz, token: str, query: dict) -> tuple:
-    """Run the same query against both instances and return (optimized, fingerprint)."""
-    start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000)
-    end_ms = int(datetime.now(tz=UTC).timestamp() * 1000)
-    optimized = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
-    fingerprint = make_query_request(signoz_fingerprint, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
-    return optimized, fingerprint
-
-
 def test_skip_resource_fingerprint_traces_fallback_matches_fingerprint(
     signoz: types.SigNoz,
     signoz_fingerprint: types.SigNoz,
@@ -67,8 +48,18 @@ def test_skip_resource_fingerprint_traces_fallback_matches_fingerprint(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    query = _query("traces", "deployment.environment = 'skip-fallback'", [TelemetryFieldKey("service.name", "string", "resource")])
-    optimized, fingerprint = _run_both(signoz, signoz_fingerprint, token, query)
+    query = BuilderQuery(
+        signal="traces",
+        limit=50,
+        order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
+        filter_expression="deployment.environment = 'skip-fallback'",
+        select_fields=[TelemetryFieldKey("service.name", "string", "resource")],
+    ).to_dict()
+
+    start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(datetime.now(tz=UTC).timestamp() * 1000)
+    optimized = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
+    fingerprint = make_query_request(signoz_fingerprint, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
 
     assert len(get_rows(optimized)) == 3
     assert_identical_query_response(optimized, fingerprint)
@@ -97,12 +88,18 @@ def test_skip_resource_fingerprint_logs_fallback_matches_fingerprint(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    query = _query(
-        "logs",
-        "deployment.environment = 'skip-logs-fallback'",
-        [TelemetryFieldKey("service.name", "string", "resource"), TelemetryFieldKey("body")],
-    )
-    optimized, fingerprint = _run_both(signoz, signoz_fingerprint, token, query)
+    query = BuilderQuery(
+        signal="logs",
+        limit=50,
+        order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
+        filter_expression="deployment.environment = 'skip-logs-fallback'",
+        select_fields=[TelemetryFieldKey("service.name", "string", "resource"), TelemetryFieldKey("body")],
+    ).to_dict()
+
+    start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(datetime.now(tz=UTC).timestamp() * 1000)
+    optimized = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
+    fingerprint = make_query_request(signoz_fingerprint, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
 
     assert len(get_rows(optimized)) == 3
     assert_identical_query_response(optimized, fingerprint)
