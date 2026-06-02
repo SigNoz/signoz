@@ -6847,7 +6847,6 @@ components:
         references:
           items:
             $ref: '#/components/schemas/SpantypesOtelSpanRef'
-          nullable: true
           type: array
         resource:
           additionalProperties:
@@ -6874,6 +6873,8 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
       type: object
     TagtypesPostableTag:
       properties:

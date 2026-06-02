@@ -7878,9 +7878,9 @@ export interface SpantypesWaterfallSpanDTO {
 	 */
 	parent_span_id?: string;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	references?: SpantypesOtelSpanRefDTO[] | null;
+	references: SpantypesOtelSpanRefDTO[];
 	/**
 	 * @type object,null
 	 */

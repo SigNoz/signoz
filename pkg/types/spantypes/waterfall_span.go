@@ -80,7 +80,7 @@ type WaterfallSpan struct {
 	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
-	References   []OtelSpanRef     `json:"references"`
+	References   []OtelSpanRef     `json:"references" required:"true" nullable:"false"`
 
 	// Calculated fields https://signoz.io/docs/traces-management/guides/derived-fields-spans
 	DBName             string `json:"db_name,omitempty"`
