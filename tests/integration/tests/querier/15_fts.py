@@ -39,7 +39,8 @@ def test_fts_across_contexts(
 ) -> None:
     """
     10 logs, one unique token per log, each token in a different field context.
-    Every FTS form (bare / quoted / search()) is exercised per context.
+    Every FTS form (bare / quoted / search('…')) is exercised per context.
+    search() requires a quoted argument; unquoted args must return HTTP 400.
     """
     now = datetime.now(tz=UTC)
 
@@ -185,11 +186,6 @@ def test_fts_across_contexts(
             "expression": f'search("{TOK_SEV}")',
             "validate": _only("severity-text-svc"),
         },
-        {
-            "name": "fts.severity_text/search_unquoted",
-            "expression": f"search({TOK_SEV})",
-            "validate": _only("severity-text-svc"),
-        },
         # trace_id (String — only reachable via search())
         {
             "name": "fts.trace_id/search",
@@ -257,3 +253,15 @@ def test_fts_across_contexts(
     for case in cases:
         resp = _fts(case["expression"])
         assert case["validate"](resp), f"Validation failed for '{case['name']}': {resp.json()}"
+
+    # ── unquoted search guard ────────────────────────────────────────────────
+    # search(TRACE) — unquoted argument — must be rejected with HTTP 400.
+    unquoted_resp = make_query_request(
+        signoz=signoz,
+        token=token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[build_raw_query("A", "logs", filter_expression=f"search({TOK_SEV})", step_interval=60)],
+        request_type="raw",
+    )
+    assert unquoted_resp.status_code == 400, f"Expected 400 for unquoted search(), got {unquoted_resp.status_code}: {unquoted_resp.text}"

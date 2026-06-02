@@ -1132,23 +1132,6 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 			},
 		},
 		{
-			name:        "search_unquoted_token",
-			requestType: qbtypes.RequestTypeRaw,
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "search(error)"},
-				Limit:  10,
-			},
-			enableUseJSONBody: false,
-			startMs:           1705309200000,
-			endMs:             1705316400000,
-			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
-				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
-			},
-		},
-		{
 			name:        "search_not_wraps_condition",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{

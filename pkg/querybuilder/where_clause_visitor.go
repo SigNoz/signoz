@@ -754,11 +754,9 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return ErrorConditionLiteral
 	}
 
-	// Extract the search text directly from the parse tree — bypass VisitKey so that
-	// unquoted tokens like search(error) don't trigger "key not found" errors.
 	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
 	if len(paramCtxs) < 1 {
-		v.errors = append(v.errors, "search() requires exactly one value parameter, e.g. search('error') or search(error)")
+		v.errors = append(v.errors, "search() requires exactly one quoted string parameter, e.g. search('error')")
 		return ErrorConditionLiteral
 	}
 	if len(paramCtxs) > 1 {
@@ -770,11 +768,8 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	if paramCtx.Value() != nil {
 		raw := v.Visit(paramCtx.Value())
 		searchText = fmt.Sprintf("%v", raw)
-	} else if paramCtx.Key() != nil {
-		// Unquoted word — use the raw token text, bypassing the key lookup.
-		searchText = paramCtx.Key().GetText()
 	} else {
-		v.errors = append(v.errors, "search() parameter must be a string value")
+		v.errors = append(v.errors, "search() parameter must be a quoted string, e.g. search('error')")
 		return ErrorConditionLiteral
 	}
 

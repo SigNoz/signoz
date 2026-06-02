@@ -1718,10 +1718,10 @@ func TestVisitComparison_FullTextSearch(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "search with unquoted word - valid",
+			name:    "search with unquoted word - invalid, quotes required",
 			expr:    "search(error)",
 			opts:    ftsOpts,
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name:    "search(\"err1\", \"err2\") - too many params",
