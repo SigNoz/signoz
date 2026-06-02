@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -29,7 +30,7 @@ type logQueryStatementBuilder struct {
 
 	freeTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
-	ftsFieldKeys   []*telemetrytypes.TelemetryFieldKey
+	ftsSet         map[telemetrytypes.FieldContext][]schema.Column
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -68,7 +69,7 @@ func NewLogQueryStatementBuilder(
 		fl:                        fl,
 		freeTextColumn:            freeTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
-		ftsFieldKeys:              defaultFTSFieldKeys,
+		ftsSet:                    defaultFTSSet,
 	}
 }
 
@@ -665,7 +666,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			EndNs:              end,
 		}
 		if enableFTS {
-			opts.FTSFieldKeys = b.ftsFieldKeys
+			opts.FTSSet = b.ftsSet
 		}
 
 		// add filter expression

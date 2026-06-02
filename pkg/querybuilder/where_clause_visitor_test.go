@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -744,6 +745,10 @@ func (b *resourceConditionBuilder) ConditionFor(
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 
+func (b *resourceConditionBuilder) ConditionForContext(_ context.Context, col schema.Column, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	return fmt.Sprintf("match(LOWER(%s), LOWER(%s))", col.Name, sb.Var(value)), nil
+}
+
 type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
@@ -755,8 +760,11 @@ func (b *conditionBuilder) ConditionFor(
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
 	return fmt.Sprintf("%s_cond", key.Name), nil
+}
+
+func (b *conditionBuilder) ConditionForContext(_ context.Context, col schema.Column, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	return fmt.Sprintf("match(LOWER(%s), LOWER(%s))", col.Name, sb.Var(value)), nil
 }
 
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
@@ -1686,14 +1694,9 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 }
 
 // TestVisitComparison_FullTextSearch covers Full Text Search — the explicit search()
-// function that fans out across all ftsFieldKeys. FTSFieldKeys must be set for
+// function that fans out across all FTSSet columns. FTSSet must be set for
 // search() to be enabled; invalid param counts must error.
 func TestVisitComparison_FullTextSearch(t *testing.T) {
-	bodyKey := &telemetrytypes.TelemetryFieldKey{
-		Name:          "body",
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}
 	ftsOpts := FilterExprVisitorOpts{
 		Context:            t.Context(),
 		FieldKeys:          visitTestKeys,
@@ -1702,7 +1705,11 @@ func TestVisitComparison_FullTextSearch(t *testing.T) {
 		SkipFullTextFilter: false,
 		SkipFunctionCalls:  false,
 		IgnoreNotFoundKeys: false,
-		FTSFieldKeys:       []*telemetrytypes.TelemetryFieldKey{bodyKey},
+		FTSSet: map[telemetrytypes.FieldContext][]schema.Column{
+			telemetrytypes.FieldContextResource: {
+				{Name: "body", Type: schema.ColumnTypeString},
+			},
+		},
 	}
 
 	tests := []struct {

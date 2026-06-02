@@ -265,6 +265,10 @@ func (c *conditionBuilder) ConditionFor(
 	return condition, nil
 }
 
+func (c *conditionBuilder) ConditionForContext(_ context.Context, _ schema.Column, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
+	return "", nil
+}
+
 func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	keyName := strings.ToLower(name)
 	return keyName == SpanSearchScopeRoot || keyName == SpanSearchScopeEntryPoint

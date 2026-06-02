@@ -3,8 +3,8 @@ package telemetrylogs
 import (
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -35,6 +35,7 @@ const (
 	LogsV2AttributesNumberColumn = "attributes_number"
 	LogsV2AttributesBoolColumn   = "attributes_bool"
 	LogsV2ResourcesStringColumn  = "resources_string"
+	LogsV2ResourceJSONColumn     = "resource"
 	LogsV2ScopeStringColumn      = "scope_string"
 
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
@@ -127,19 +128,40 @@ var (
 		},
 	}
 
-	// defaultFTSFieldKeys is set of TelemetryFieldKey instances that
-	// search() fans out across. Intrinsic log columns use the normal conditionFor
-	// path; entries with Name==FTSInternalKey are short-circuited in conditionFor
-	// to emit arrayExists conditions over mapKeys/mapValues without arrayConcat.
-	defaultFTSFieldKeys = []*telemetrytypes.TelemetryFieldKey{
-		{Name: LogsV2SeverityTextColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: LogsV2TraceIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: LogsV2SpanIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextBody, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeBool},
-		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+	// defaultFTSSet maps each field context to the physical columns that
+	// search() fans out across. ConditionForContext handles each column
+	// independently based on its ColumnType.
+	defaultFTSSet = map[telemetrytypes.FieldContext][]schema.Column{
+		telemetrytypes.FieldContextLog: {
+			{Name: LogsV2SeverityTextColumn, Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
+			{Name: LogsV2TraceIDColumn, Type: schema.ColumnTypeString},
+			{Name: LogsV2SpanIDColumn, Type: schema.ColumnTypeString},
+		},
+		telemetrytypes.FieldContextBody: {
+			{Name: LogsV2BodyColumn, Type: schema.ColumnTypeString},
+			{Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{}},
+		},
+		telemetrytypes.FieldContextAttribute: {
+			{Name: LogsV2AttributesStringColumn, Type: schema.MapColumnType{
+				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+				ValueType: schema.ColumnTypeString,
+			}},
+			{Name: LogsV2AttributesNumberColumn, Type: schema.MapColumnType{
+				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+				ValueType: schema.ColumnTypeFloat64,
+			}},
+			{Name: LogsV2AttributesBoolColumn, Type: schema.MapColumnType{
+				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+				ValueType: schema.ColumnTypeBool,
+			}},
+		},
+		telemetrytypes.FieldContextResource: {
+			{Name: LogsV2ResourcesStringColumn, Type: schema.MapColumnType{
+				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+				ValueType: schema.ColumnTypeString,
+			}},
+			{Name: LogsV2ResourceJSONColumn, Type: schema.JSONColumnType{}},
+		},
 	}
 )
 

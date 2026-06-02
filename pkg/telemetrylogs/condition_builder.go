@@ -16,10 +16,6 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
-	ErrCodeInvalidFTSOperator = errors.MustNewCode("invalid_fts_operator")
-)
-
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
 	fl flagger.Flagger
@@ -29,72 +25,45 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
-// buildFTSCondition produces the WHERE fragment for a single FTS key by iterating
-// over its resolved columns and emitting the right match expression per column type:
-//   - Map  → arrayExists(x -> match(x, ?), mapKeys/mapValues(col))
-//   - JSON → match(LOWER(toString(col)), LOWER(?))  — only when useJSONBody is true
+// ConditionForContext builds the ClickHouse match expression for a single physical
+// column in the FTS fan-out. The expression depends on the column type:
+//   - Map  → (arrayExists(x -> match(x, ?), mapKeys(col)) OR arrayExists(x -> match(x, ?), mapValues(col)))
+//   - JSON → match(LOWER(toString(col)), LOWER(?))
 //   - String/LowCardinality → match(LOWER(col), LOWER(?))
 //
-// Evolution entries (key.Evolutions) are applied first: selectEvolutionsForColumns
-// picks the active column set for the query time range, and the ColumnName from each
-// entry overrides col.Name so evolved table layouts use the right physical column.
-// JSON columns are then skipped when useJSONBody is false.
-func buildFTSCondition(
-	columns []*schema.Column,
-	key *telemetrytypes.TelemetryFieldKey,
-	tsStart, tsEnd uint64,
+// Returns ("", nil) when the column should be skipped — currently only a JSON
+// column when useJSONBody is false.
+func (c *conditionBuilder) ConditionForContext(
+	ctx context.Context,
+	col schema.Column,
 	value any,
-	useJSONBody bool,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	activeColumns := columns
-	var evolutionEntries []*telemetrytypes.EvolutionEntry
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
-	if len(key.Evolutions) > 0 {
-		var err error
-		activeColumns, evolutionEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
-		if err != nil {
-			return "", err
-		}
+	if !useJSONBody && col.Type.GetType() == schema.ColumnTypeEnumJSON {
+		return "", nil
 	}
 
-	var conditions []string
-	for i, col := range activeColumns {
-		if !useJSONBody && col.Type.GetType() == schema.ColumnTypeEnumJSON {
-			continue
+	switch col.Type.GetType() {
+	case schema.ColumnTypeEnumMap:
+		keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
+		valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
+		if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+			valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
 		}
-
-		colName := col.Name
-		if evolutionEntries != nil && evolutionEntries[i] != nil {
-			colName = evolutionEntries[i].ColumnName
-		}
-
-		switch col.Type.GetType() {
-		case schema.ColumnTypeEnumMap:
-			keysExpr := fmt.Sprintf("mapKeys(%s)", colName)
-			valsExpr := fmt.Sprintf("mapValues(%s)", colName)
-			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
-				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", colName)
-			}
-			conditions = append(conditions,
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
-			)
-		case schema.ColumnTypeEnumJSON:
-			conditions = append(conditions,
-				fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, colName, sb.Var(value)))
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
-			conditions = append(conditions,
-				fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, colName, sb.Var(value)))
-		}
+		return sb.Or(
+			fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+			fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
+		), nil
+	case schema.ColumnTypeEnumJSON:
+		return fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)), nil
+	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+		return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)), nil
+	default:
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
 	}
-	if len(conditions) == 0 {
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "no FTS conditions built for columns")
-	}
-	if len(conditions) == 1 {
-		return conditions[0], nil
-	}
-	return sb.Or(conditions...), nil
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -105,20 +74,9 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	if key.Name == querybuilder.FTSInternalKey && operator != qbtypes.FilterOperatorRegexp {
-		return "", errors.NewInternalf(ErrCodeInvalidFTSOperator, "only regexp operator is supported for fts")
-	}
-
 	columns, err := c.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
-	}
-
-	// FTS is branched here
-	if key.Name == querybuilder.FTSInternalKey {
-		// TODO(Tushar): thread orgID here to evaluate correctly
-		useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
-		return buildFTSCondition(columns, key, startNs, endNs, value, useJSONBody, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
@@ -363,12 +321,6 @@ func (c *conditionBuilder) ConditionFor(
 	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
-	}
-
-	// FTS wildcard conditions are self-contained (arrayExists over full map);
-	// no additional EXISTS wrapper is needed.
-	if key.Name == querybuilder.FTSInternalKey {
-		return condition, nil
 	}
 
 	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields

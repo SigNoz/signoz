@@ -33,6 +33,10 @@ type FieldMapper interface {
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
 	ConditionFor(ctx context.Context, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	// ConditionForContext builds the search expression for a single physical column in
+	// the FTS fan-out. Returns ("", nil) when the column should be skipped.
+	// Non-log implementations may return ("", nil) unconditionally.
+	ConditionForContext(ctx context.Context, col schema.Column, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
 type AggExprRewriter interface {

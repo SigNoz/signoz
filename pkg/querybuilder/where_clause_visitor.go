@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -46,7 +47,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
-	ftsFieldKeys     []*telemetrytypes.TelemetryFieldKey
+	ftsSet           map[telemetrytypes.FieldContext][]schema.Column
 }
 
 type FilterExprVisitorOpts struct {
@@ -64,11 +65,12 @@ type FilterExprVisitorOpts struct {
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
-	StartNs            uint64
-	EndNs              uint64
-	// FTSFieldKeys enables search() for this query context. nil disables search()
+	StartNs uint64
+	EndNs   uint64
+	// FTSSet enables search() for this query context. nil disables search()
 	// (traces, metrics, and non-log callers leave this nil).
-	FTSFieldKeys []*telemetrytypes.TelemetryFieldKey
+	// Keys are iterated in sorted order for deterministic SQL output.
+	FTSSet map[telemetrytypes.FieldContext][]schema.Column
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -88,10 +90,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		skipFunctionCalls:  opts.SkipFunctionCalls,
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
-		keysWithWarnings:   make(map[string]bool),
-		startNs:            opts.StartNs,
-		endNs:              opts.EndNs,
-		ftsFieldKeys:       opts.FTSFieldKeys,
+		keysWithWarnings: make(map[string]bool),
+		startNs:          opts.StartNs,
+		endNs:            opts.EndNs,
+		ftsSet:           opts.FTSSet,
 	}
 }
 
@@ -747,9 +749,9 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	if v.skipFunctionCalls {
 		return SkipConditionLiteral
 	}
-	// ftsFieldKeys == nil means search() is not enabled for this signal/query type.
-	// Only log statement builders set FTSFieldKeys; traces/metrics leave it nil.
-	if len(v.ftsFieldKeys) == 0 {
+	// ftsSet == nil means search() is not enabled for this signal/query type.
+	// Only log statement builders set FTSSet; traces/metrics leave it nil.
+	if len(v.ftsSet) == 0 {
 		v.errors = append(v.errors, "search() is only supported for log queries")
 		return ErrorConditionLiteral
 	}
@@ -778,15 +780,29 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return ErrorConditionLiteral
 	}
 
+	// Sort contexts for deterministic SQL output.
+	contexts := make([]telemetrytypes.FieldContext, 0, len(v.ftsSet))
+	for fieldCtx := range v.ftsSet {
+		contexts = append(contexts, fieldCtx)
+	}
+	slices.SortFunc(contexts, func(a, b telemetrytypes.FieldContext) int {
+		return strings.Compare(a.StringValue(), b.StringValue())
+	})
+
 	formattedText := FormatFullTextSearch(searchText)
 	var ftsConds []string
-	for _, key := range v.ftsFieldKeys {
-		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
-		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Text(), err.Error()))
-			return ErrorConditionLiteral
+	for _, fieldCtx := range contexts {
+		for _, col := range v.ftsSet[fieldCtx] {
+			cond, err := v.conditionBuilder.ConditionForContext(v.context, col, formattedText, v.builder)
+			if err != nil {
+				v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for column %q: %s", col.Name, err.Error()))
+				return ErrorConditionLiteral
+			}
+			if cond == "" {
+				continue // column skipped (e.g. JSON column when useJSONBody is false)
+			}
+			ftsConds = append(ftsConds, cond)
 		}
-		ftsConds = append(ftsConds, cond)
 	}
 	if len(ftsConds) == 0 {
 		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")
