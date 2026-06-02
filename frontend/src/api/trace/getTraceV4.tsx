@@ -1,15 +1,15 @@
-import { ApiV3Instance as axios } from 'api';
+import { ApiV4Instance as axios } from 'api';
 import { omit } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	GetTraceV3PayloadProps,
-	GetTraceV3SuccessResponse,
+	GetTraceV4PayloadProps,
+	GetTraceV4SuccessResponse,
 	SpanV3,
 } from 'types/api/trace/getTraceV3';
 
-const getTraceV3 = async (
-	props: GetTraceV3PayloadProps,
-): Promise<SuccessResponse<GetTraceV3SuccessResponse> | ErrorResponse> => {
+const getTraceV4 = async (
+	props: GetTraceV4PayloadProps,
+): Promise<SuccessResponse<GetTraceV4SuccessResponse> | ErrorResponse> => {
 	let uncollapsedSpans = [...props.uncollapsedSpans];
 	if (!props.isSelectedSpanIDUnCollapsed) {
 		uncollapsedSpans = uncollapsedSpans.filter(
@@ -19,21 +19,21 @@ const getTraceV3 = async (
 		props.selectedSpanId &&
 		!uncollapsedSpans.includes(props.selectedSpanId)
 	) {
-		// V3 backend only uses uncollapsedSpans list (unlike V2 which also interprets
+		// Backend only uses the uncollapsedSpans list (unlike V2 which also interprets
 		// isSelectedSpanIDUnCollapsed server-side), so explicitly add the selected span
 		uncollapsedSpans.push(props.selectedSpanId);
 	}
-	const postData: GetTraceV3PayloadProps = {
+	const postData: GetTraceV4PayloadProps = {
 		...props,
 		uncollapsedSpans,
 		limit: 10000,
 	};
-	const response = await axios.post<GetTraceV3SuccessResponse>(
+	const response = await axios.post<GetTraceV4SuccessResponse>(
 		`/traces/${props.traceId}/waterfall`,
 		omit(postData, 'traceId'),
 	);
 
-	// V3 API wraps response in { status, data }
+	// API wraps response in { status, data }
 	const rawPayload = (response.data as any).data || response.data;
 
 	// Derive 'service.name' from resource for convenience — only derived field
@@ -43,7 +43,7 @@ const getTraceV3 = async (
 		timestamp: span.time_unix,
 	}));
 
-	// V3 API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),
+	// API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),
 	// not absolute unix millis like V2. The span timestamps are absolute unix millis.
 	// Convert by using the first span's timestamp as the base if there's a mismatch.
 	let { startTimestampMillis, endTimestampMillis } = rawPayload;
@@ -70,4 +70,4 @@ const getTraceV3 = async (
 	};
 };
 
-export default getTraceV3;
+export default getTraceV4;

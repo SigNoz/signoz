@@ -1,17 +1,17 @@
 import {
-	WaterfallAggregationResponse,
-	WaterfallAggregationType,
-} from 'types/api/trace/getTraceV3';
+	TraceAggregationResponse,
+	TraceAggregationType,
+} from 'types/api/trace/getTraceAggregations';
 
 export const AGGREGATIONS = {
 	EXEC_TIME_PCT: 'execution_time_percentage',
 	SPAN_COUNT: 'span_count',
 	DURATION: 'duration',
-} as const satisfies Record<string, WaterfallAggregationType>;
+} as const satisfies Record<string, TraceAggregationType>;
 
 export function getAggregationMap(
-	aggregations: WaterfallAggregationResponse[] | undefined,
-	type: WaterfallAggregationType,
+	aggregations: TraceAggregationResponse[] | undefined,
+	type: TraceAggregationType,
 	fieldName: string,
 ): Record<string, number> | undefined {
 	return aggregations?.find(

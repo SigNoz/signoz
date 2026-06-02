@@ -3,20 +3,20 @@ import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { AxiosError } from 'axios';
 import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import {
-	WaterfallAggregationRequest,
-	WaterfallAggregationResponse,
-} from 'types/api/trace/getTraceV3';
+	TraceAggregationRequest,
+	TraceAggregationResponse,
+} from 'types/api/trace/getTraceAggregations';
 
 interface GetTraceAggregationsProps {
 	traceId: string;
-	aggregations: WaterfallAggregationRequest[];
+	aggregations: TraceAggregationRequest[];
 }
 
 const getTraceAggregations = async ({
 	traceId,
 	aggregations,
 }: GetTraceAggregationsProps): Promise<
-	SuccessResponseV2<WaterfallAggregationResponse[]>
+	SuccessResponseV2<TraceAggregationResponse[]>
 > => {
 	try {
 		const response = await axios.post(`/traces/${traceId}/aggregations`, {

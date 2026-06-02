@@ -3,18 +3,18 @@ import getTraceAggregations from 'api/trace/getTraceAggregations';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { SuccessResponseV2 } from 'types/api';
 import {
-	WaterfallAggregationRequest,
-	WaterfallAggregationResponse,
-} from 'types/api/trace/getTraceV3';
+	TraceAggregationRequest,
+	TraceAggregationResponse,
+} from 'types/api/trace/getTraceAggregations';
 
 interface UseGetTraceAggregationsProps {
 	traceId: string;
-	aggregations: WaterfallAggregationRequest[];
+	aggregations: TraceAggregationRequest[];
 	enabled: boolean;
 }
 
 type UseGetTraceAggregations = UseQueryResult<
-	SuccessResponseV2<WaterfallAggregationResponse[]>
+	SuccessResponseV2<TraceAggregationResponse[]>
 >;
 
 /**
