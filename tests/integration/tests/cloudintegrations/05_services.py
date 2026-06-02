@@ -139,6 +139,7 @@ def test_get_service_details_with_account(
     assert data["id"] == SERVICE_ID
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any service config is set"
 
+
 def test_get_account_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
