@@ -6572,6 +6572,15 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+      type: object
     SpantypesPostableSpanMapper:
       properties:
         config:
@@ -6835,6 +6844,10 @@ components:
           type: string
         parent_span_id:
           type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
         resource:
           additionalProperties:
             type: string
@@ -6860,6 +6873,8 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
       type: object
     TagtypesPostableTag:
       properties:
