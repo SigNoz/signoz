@@ -6,12 +6,14 @@ import { WaterfallAggregationResponse } from 'types/api/trace/getTraceV3';
 
 import {
 	setTraceStoreAggregations,
+	setTraceStoreAvailableColorByFields,
 	setTraceStoreCallbacks,
 	setTraceStoreUserPreferences,
 } from './traceStore';
 
 interface TraceStoreSyncProps {
 	aggregations: WaterfallAggregationResponse[] | undefined;
+	availableColorByFields: string[] | undefined;
 	children: ReactNode;
 }
 
@@ -26,6 +28,7 @@ interface TraceStoreSyncProps {
  */
 function TraceStoreSync({
 	aggregations,
+	availableColorByFields,
 	children,
 }: TraceStoreSyncProps): JSX.Element | null {
 	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
@@ -34,6 +37,10 @@ function TraceStoreSync({
 	useEffect(() => {
 		setTraceStoreAggregations(aggregations);
 	}, [aggregations]);
+
+	useEffect(() => {
+		setTraceStoreAvailableColorByFields(availableColorByFields);
+	}, [availableColorByFields]);
 
 	useEffect(() => {
 		setTraceStoreUserPreferences(userPreferences ?? null);

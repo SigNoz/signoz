@@ -34,6 +34,7 @@ import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
 import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
+import { getAvailableColorByFieldNames } from './utils';
 
 import cx from 'classnames';
 
@@ -149,6 +150,13 @@ function TraceDetailsV3(): JSX.Element {
 	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
 	const isFullDataLoaded =
 		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
+
+	// Color-by options, gated on fields in loaded spans. Resource attrs are
+	// trace-wide, so any window has the full set — no need to accumulate.
+	const availableColorByFields = useMemo(() => {
+		const spans = traceData?.payload?.spans;
+		return spans?.length ? getAvailableColorByFieldNames(spans) : undefined;
+	}, [traceData?.payload?.spans]);
 
 	// Lock the ref once we confirm all data is loaded
 	if (isFullDataLoaded && !fullDataLoadedRef.current) {
@@ -382,7 +390,10 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceStoreSync aggregations={traceData?.payload?.aggregations}>
+		<TraceStoreSync
+			aggregations={traceData?.payload?.aggregations}
+			availableColorByFields={availableColorByFields}
+		>
 			<div className={styles.root}>
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}
