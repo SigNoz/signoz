@@ -1156,9 +1156,11 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
 		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
-		if len(req.SelectFields) > 0 {
-			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
+		selectFieldCols := req.GetSelectedFieldsSourceColumns()
+		if len(selectFieldCols) > 0 {
+			selectCols = fmt.Sprintf("%s, %s", selectCols, strings.Join(selectFieldCols, ", "))
 		}
+
 		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
 
 		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
