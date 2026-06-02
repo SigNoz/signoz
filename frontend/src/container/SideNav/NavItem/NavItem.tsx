@@ -6,7 +6,6 @@ import { Pin, PinOff } from '@signozhq/icons';
 import { SidebarItem } from '../sideNav.types';
 
 import './NavItem.styles.scss';
-import './NavItem.styles.scss';
 
 export default function NavItem({
 	item,
@@ -27,7 +26,7 @@ export default function NavItem({
 	showIcon?: boolean;
 	dataTestId?: string;
 }): JSX.Element {
-	const { label, icon, isBeta, isNew } = item;
+	const { label, icon, isBeta, isNew, isEarlyAccess, tooltip } = item;
 
 	const handleTogglePinClick = (
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
@@ -36,7 +35,7 @@ export default function NavItem({
 		onTogglePin?.(item);
 	};
 
-	return (
+	const navItem = (
 		<div
 			className={cx(
 				'nav-item',
@@ -53,7 +52,11 @@ export default function NavItem({
 		>
 			{showIcon && <div className="nav-item-active-marker" />}
 			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
-				{showIcon && <div className="nav-item-icon">{icon}</div>}
+				{showIcon && (
+					<div className={cx('nav-item-icon', isEarlyAccess ? 'noz-wave' : '')}>
+						{icon}
+					</div>
+				)}
 
 				<div className="nav-item-label">{label}</div>
 
@@ -70,6 +73,12 @@ export default function NavItem({
 						<Badge color="robin" className="sidenav-new-tag">
 							New
 						</Badge>
+					</div>
+				)}
+
+				{isEarlyAccess && (
+					<div className="nav-item-early-access">
+						<Badge color="robin">Early Access</Badge>
 					</div>
 				)}
 
@@ -96,6 +105,15 @@ export default function NavItem({
 				)}
 			</div>
 		</div>
+	);
+
+	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
+	return tooltip ? (
+		<Tooltip title={tooltip} placement="right">
+			{navItem}
+		</Tooltip>
+	) : (
+		navItem
 	);
 }
 

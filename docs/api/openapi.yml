@@ -3273,7 +3273,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -3285,6 +3297,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -6544,6 +6561,15 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         aggregations:
@@ -6582,6 +6608,15 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+      type: object
     SpantypesPostableSpanMapper:
       properties:
         config:
@@ -6609,6 +6644,15 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesPostableWaterfall:
       properties:
         aggregations:
@@ -6633,6 +6677,9 @@ components:
           $ref: '#/components/schemas/SpantypesSpanAggregationType'
         field:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
       type: object
     SpantypesSpanAggregationResult:
       properties:
@@ -6646,6 +6693,10 @@ components:
             type: integer
           nullable: true
           type: object
+      required:
+      - field
+      - aggregation
+      - value
       type: object
     SpantypesSpanAggregationType:
       enum:
@@ -6829,6 +6880,10 @@ components:
           type: string
         parent_span_id:
           type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
         resource:
           additionalProperties:
             type: string
@@ -6854,6 +6909,8 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
       type: object
     TagtypesPostableTag:
       properties:
@@ -7103,6 +7160,13 @@ components:
           type: string
       required:
       - name
+      type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
       type: object
     TypesResetPasswordToken:
       properties:
@@ -12277,6 +12341,75 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/traces/{traceID}/aggregations:
+    post:
+      deprecated: false
+      description: Computes span aggregations grouped by requested field.
+      operationId: GetTraceAggregations
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableTraceAggregations'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceAggregations'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get aggregations for a trace
+      tags:
+      - tracedetail
   /api/v1/user:
     get:
       deprecated: false
@@ -15091,6 +15224,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false

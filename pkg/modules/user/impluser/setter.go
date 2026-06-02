@@ -537,7 +537,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	if resetPasswordToken.IsExpired() {
-		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)

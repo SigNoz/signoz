@@ -8,4 +8,16 @@
 	grid-template-columns: 60% 35%;
 	justify-content: space-between;
 	gap: 16px;
+
+	.input-with-label {
+		.label {
+			box-sizing: border-box;
+			height: 36px;
+		}
+
+		.input {
+			box-sizing: border-box;
+			height: 36px;
+		}
+	}
 }

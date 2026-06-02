@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -23,12 +23,13 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
-// Mock ResizeObserver for combobox tests
-global.ResizeObserver = class ResizeObserver {
-	observe(): void {}
-	unobserve(): void {}
-	disconnect(): void {}
-};
+beforeAll(() => {
+	window.ResizeObserver = jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+});
 
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
@@ -400,6 +401,22 @@ describe('TanStackTableView Integration', () => {
 			await waitFor(() => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
 			});
+		});
+
+		it('preserves page from URL on initial mount', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				queryParams: { page: '3' },
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page3Button = within(nav).getByRole('button', { name: '3' });
+
+			// Page 3 should be active (from URL), not reset to defaultPage 1
+			expect(page3Button).toHaveAttribute('aria-current', 'page');
 		});
 
 		it('resets page to 1 when limit changes', async () => {
