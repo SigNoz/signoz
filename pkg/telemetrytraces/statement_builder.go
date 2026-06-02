@@ -124,7 +124,7 @@ func (b *traceQueryStatementBuilder) Build(
 		-------------------------------- End of tech debt ----------------------------
 	*/
 
-	for _, action := range adjustTraceKeys(ctx, keys, &query, requestType) {
+	for _, action := range adjustTraceKeys(keys, &query, requestType) {
 		// TODO: change to debug level once we are confident about the behavior
 		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
@@ -213,7 +213,7 @@ func mergeDeprecatedTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKe
 	}
 }
 
-func adjustTraceKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query *qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) []string {
+func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query *qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) []string {
 
 	mergeDeprecatedTraceKeys(keys)
 

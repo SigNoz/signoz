@@ -218,7 +218,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	// The CTE only selects spans matching the filter. Aggregations, group by
 	// and order by run later in buildFinalQuery, so RequestTypeRaw is fine here.
-	for _, action := range adjustTraceKeys(ctx, keys, query, qbtypes.RequestTypeRaw) {
+	for _, action := range adjustTraceKeys(keys, query, qbtypes.RequestTypeRaw) {
 		// TODO: change to debug level once we are confident about the behavior
 		b.stmtBuilder.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}

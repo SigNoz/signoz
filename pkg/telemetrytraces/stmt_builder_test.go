@@ -1394,7 +1394,7 @@ func TestAdjustKeys(t *testing.T) {
 			}
 
 			// Call adjustKeys
-			adjustTraceKeys(context.Background(), keysMapCopy, &c.query, qbtypes.RequestTypeScalar)
+			adjustTraceKeys(keysMapCopy, &c.query, qbtypes.RequestTypeScalar)
 
 			// Verify select fields were adjusted
 			if c.expectedSelectFields != nil {
