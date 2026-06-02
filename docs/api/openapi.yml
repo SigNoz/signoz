@@ -96,6 +96,19 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesGoogleChatReceiverConfig:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+      type: object
     AlertmanagertypesMaintenanceKind:
       enum:
       - fixed
@@ -148,6 +161,8 @@ components:
     AlertmanagertypesPostableChannel:
       oneOf:
       - required:
+        - googlechat_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -191,6 +206,10 @@ components:
         email_configs:
           items:
             $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
           type: array
         incidentio_configs:
           items:
@@ -304,6 +323,87 @@ components:
       - expression
       - channels
       - name
+      type: object
+    AlertmanagertypesReceiver:
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        googlechat_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesGoogleChatReceiverConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
       type: object
     AlertmanagertypesRecurrence:
       properties:
@@ -1848,83 +1948,6 @@ components:
           type: string
         user_key_file:
           type: string
-      type: object
-    ConfigReceiver:
-      properties:
-        discord_configs:
-          items:
-            $ref: '#/components/schemas/ConfigDiscordConfig'
-          type: array
-        email_configs:
-          items:
-            $ref: '#/components/schemas/ConfigEmailConfig'
-          type: array
-        incidentio_configs:
-          items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
-          type: array
-        jira_configs:
-          items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
-          type: array
-        mattermost_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMattermostConfig'
-          type: array
-        msteams_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsConfig'
-          type: array
-        msteamsv2_configs:
-          items:
-            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
-          type: array
-        name:
-          type: string
-        opsgenie_configs:
-          items:
-            $ref: '#/components/schemas/ConfigOpsGenieConfig'
-          type: array
-        pagerduty_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPagerdutyConfig'
-          type: array
-        pushover_configs:
-          items:
-            $ref: '#/components/schemas/ConfigPushoverConfig'
-          type: array
-        rocketchat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigRocketchatConfig'
-          type: array
-        slack_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSlackConfig'
-          type: array
-        sns_configs:
-          items:
-            $ref: '#/components/schemas/ConfigSNSConfig'
-          type: array
-        telegram_configs:
-          items:
-            $ref: '#/components/schemas/ConfigTelegramConfig'
-          type: array
-        victorops_configs:
-          items:
-            $ref: '#/components/schemas/ConfigVictorOpsConfig'
-          type: array
-        webex_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebexConfig'
-          type: array
-        webhook_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWebhookConfig'
-          type: array
-        wechat_configs:
-          items:
-            $ref: '#/components/schemas/ConfigWechatConfig'
-          type: array
       type: object
     ConfigRocketchatAttachmentAction:
       properties:
@@ -7597,7 +7620,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -7648,7 +7671,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content
@@ -12254,7 +12277,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesReceiver'
       responses:
         "204":
           description: No Content

@@ -269,7 +269,7 @@ func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *alertmanag
 	return nil
 }
 
-func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver alertmanagertypes.Receiver) alertmanagertypes.Receiver {
+func (migration *addAlertmanager) msTeamsReceiverToMSTeamsV2Receiver(receiver *alertmanagertypes.Receiver) *alertmanagertypes.Receiver {
 	if receiver.MSTeamsConfigs == nil {
 		return receiver
 	}
