@@ -12,9 +12,6 @@ const (
 	// FullTextSearchDefaultWarning is emitted when a search() function call is used.
 	FullTextSearchDefaultWarning = "Full text searches across all fields and will be slow and expensive. Consider using specific field to search e.g. <context>.<field_key>:<type>"
 
-	// SearchFunctionName is the grammar function name for full-text search.
-	SearchFunctionName = "search"
-
 	// FTSMaxWindowNs is the maximum allowed time range for a search() query (6 hours).
 	FTSMaxWindowNs = uint64(6 * 60 * 60 * 1_000_000_000)
 )
