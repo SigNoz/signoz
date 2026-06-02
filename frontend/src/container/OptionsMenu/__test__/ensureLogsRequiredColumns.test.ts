@@ -68,9 +68,7 @@ describe('ensureLogsRequiredColumns', () => {
 	});
 
 	it('collapses composite-key duplicates in the input', () => {
-		// Two identical `body` entries (same name + context → same composite key)
-		// are corrupted state; the invariant dedupes them down to one, then
-		// prepends the missing timestamp.
+		// Two identical `body` entries → deduped to one, then timestamp prepended.
 		const input = [BODY, BODY, ATTR_A];
 		const result = ensureLogsRequiredColumns(input);
 		expect(result).toStrictEqual([TIMESTAMP, BODY, ATTR_A]);
@@ -78,8 +76,7 @@ describe('ensureLogsRequiredColumns', () => {
 	});
 
 	it('keeps same-name fields with different contexts as distinct columns', () => {
-		// `body` (log) and a hypothetical `body` (attribute) have different
-		// composite keys → both legitimate, neither deduped.
+		// Different composite keys → both legitimate, neither deduped.
 		const ATTR_BODY: TelemetryFieldKey = {
 			name: 'body',
 			signal: 'logs',
