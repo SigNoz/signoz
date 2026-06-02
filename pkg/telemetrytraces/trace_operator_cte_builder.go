@@ -216,6 +216,13 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	}
 	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", slog.String("query_name", queryName), slog.Int("keys_count", len(keys)))
 
+	// The CTE only selects spans matching the filter. Aggregations, group by
+	// and order by run later in buildFinalQuery, so RequestTypeRaw is fine here.
+	for _, action := range adjustTraceKeys(keys, query, qbtypes.RequestTypeRaw) {
+		// TODO: change to debug level once we are confident about the behavior
+		b.stmtBuilder.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+	}
+
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
 	resourceStmt, err := b.buildResourceFilterCTE(ctx, *query)
@@ -417,11 +424,12 @@ func (b *traceOperatorCTEBuilder) buildNotCTE(leftCTE, rightCTE string) (string,
 }
 
 func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFromCTE string, requestType qbtypes.RequestType) (*qbtypes.Statement, error) {
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.getKeySelectors())
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
 	}
-	b.adjustKeys(keys)
+	b.adjustOperatorKeys(ctx, keys, requestType)
 
 	switch requestType {
 	case qbtypes.RequestTypeRaw:
@@ -508,6 +516,44 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	}, nil
 }
 
+// adjustOperatorKeys runs the same key adjustments as adjustTraceKeys, but on
+// the operator's own fields. The operator has a different struct shape than
+// QueryBuilderQuery, so we copy the relevant fields into a temp query, run
+// the shared helpers, and copy the results back.
+func (b *traceOperatorCTEBuilder) adjustOperatorKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, requestType qbtypes.RequestType) {
+	mergeDeprecatedTraceKeys(keys)
+
+	tmp := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Aggregations: b.operator.Aggregations,
+		SelectFields: b.operator.SelectFields,
+		GroupBy:      b.operator.GroupBy,
+		Order:        b.operator.Order,
+	}
+
+	actions := querybuilder.AdjustKeysForAliasExpressions(&tmp, requestType)
+	actions = append(actions, querybuilder.AdjustDuplicateKeys(&tmp)...)
+
+	for idx := range tmp.SelectFields {
+		actions = append(actions, adjustTraceKey(&tmp.SelectFields[idx], keys)...)
+	}
+	for idx := range tmp.GroupBy {
+		actions = append(actions, adjustTraceKey(&tmp.GroupBy[idx].TelemetryFieldKey, keys)...)
+	}
+	for idx := range tmp.Order {
+		actions = append(actions, adjustTraceKey(&tmp.Order[idx].Key.TelemetryFieldKey, keys)...)
+	}
+
+	// Copy back the slices the helpers can rewrite.
+	b.operator.Aggregations = tmp.Aggregations
+	b.operator.SelectFields = tmp.SelectFields
+	b.operator.GroupBy = tmp.GroupBy
+	b.operator.Order = tmp.Order
+
+	for _, action := range actions {
+		b.stmtBuilder.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+	}
+}
+
 func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySelector {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 
@@ -535,12 +581,12 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 		})
 	}
 
-	for _, field := range b.operator.SelectFields {
+	for _, sf := range b.operator.SelectFields {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          field.Name,
+			Name:          sf.Name,
 			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  field.FieldContext,
-			FieldDataType: field.FieldDataType,
+			FieldContext:  sf.FieldContext,
+			FieldDataType: sf.FieldDataType,
 		})
 	}
 
@@ -932,17 +978,4 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 		}
 	}
 	return 0, false
-}
-
-func (b *traceOperatorCTEBuilder) adjustKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey) {
-	// todo: this needs to be updated w.r.t trace statement builder.
-	for i := range b.operator.SelectFields {
-		querybuilder.AdjustKey(&b.operator.SelectFields[i], keys, nil)
-	}
-	for i := range b.operator.GroupBy {
-		querybuilder.AdjustKey(&b.operator.GroupBy[i].TelemetryFieldKey, keys, nil)
-	}
-	for i := range b.operator.Order {
-		querybuilder.AdjustKey(&b.operator.Order[i].Key.TelemetryFieldKey, keys, nil)
-	}
 }
