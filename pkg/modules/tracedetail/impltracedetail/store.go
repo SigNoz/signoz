@@ -157,9 +157,18 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
-		"DISTINCT ON (span_id) span_id",
-		"parent_span_id", "timestamp", "duration_nano", "has_error", "name", "events",
-		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+		"span_id",
+		"any(parent_span_id) AS parent_span_id",
+		"any(timestamp) AS timestamp",
+		"any(duration_nano) AS duration_nano",
+		"any(has_error) AS has_error",
+		fmt.Sprintf("any(%s) AS %s", colServiceName, colServiceName),
+		"any(name) AS name",
+		"any(events) AS events",
+		"any(attributes_string) AS attributes_string",
+		"any(attributes_number) AS attributes_number",
+		"any(attributes_bool) AS attributes_bool",
+		"any(resources_string) AS resources_string",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{
@@ -175,8 +184,8 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		conditions = append(conditions, sb.In("span_id", ids...))
 	}
 	sb.Where(conditions...)
-	sb.OrderByAsc("timestamp")
-	sb.OrderByAsc("name")
+	sb.GroupBy("span_id")
+	sb.OrderBy("any(timestamp) ASC", "any(name) ASC")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var spans []spantypes.StorableSpan
