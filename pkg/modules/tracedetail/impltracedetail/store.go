@@ -162,7 +162,6 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"any(timestamp) AS timestamp",
 		"any(duration_nano) AS duration_nano",
 		"any(has_error) AS has_error",
-		fmt.Sprintf("any(%s) AS %s", colServiceName, colServiceName),
 		"any(name) AS name",
 		"any(events) AS events",
 		"any(attributes_string) AS attributes_string",

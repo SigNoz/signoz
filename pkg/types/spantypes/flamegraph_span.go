@@ -10,7 +10,6 @@ type FlamegraphSpan struct {
 	Timestamp    uint64            `json:"timestamp"`
 	DurationNano uint64            `json:"durationNano"`
 	HasError     bool              `json:"hasError"`
-	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
 	Level        int64             `json:"level"`
 	Events       []Event           `json:"event" required:"true" nullable:"false"`
@@ -54,7 +53,6 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		Timestamp:    uint64(s.StartTime.UnixNano()),
 		DurationNano: s.DurationNano,
 		HasError:     s.HasError,
-		ServiceName:  s.ServiceName,
 		Name:         s.Name,
 		Level:        level,
 		Events:       s.UnmarshalledEvents(),

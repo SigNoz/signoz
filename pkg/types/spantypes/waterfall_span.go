@@ -171,7 +171,6 @@ func (item *MinimalSpan) ToFlamegraphSpan() *FlamegraphSpan {
 		Timestamp:    uint64(item.StartTime.UnixNano()),
 		DurationNano: item.DurationNano,
 		HasError:     item.HasError,
-		ServiceName:  item.ServiceName,
 		Children:     make([]*FlamegraphSpan, 0),
 	}
 }
