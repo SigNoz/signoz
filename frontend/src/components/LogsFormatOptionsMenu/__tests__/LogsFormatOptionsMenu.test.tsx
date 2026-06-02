@@ -62,6 +62,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 						onSearch: jest.fn(),
 						onSelect: jest.fn(),
 						onRemove: jest.fn(),
+						onReorder: jest.fn(),
 					},
 				}}
 			/>,
