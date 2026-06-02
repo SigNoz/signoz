@@ -1,7 +1,7 @@
 """
-Full-text search integration tests — context isolation.
+Text search integration tests.
 
-Validates that FTS (bare text, "quoted", search()) correctly finds logs
+Validates that Text Search (free text, full text) correctly finds logs
 when the search term lives in any one of the intended field contexts:
 
     severity_text       — LowCardinality(String), LOWER/match
@@ -60,7 +60,7 @@ def test_fts_across_contexts(
     TOK_ANKEY = "xfts_ankey_008"  # → attributes_number key (string key of the map)
     TOK_RKEY = "xfts_rkey_009"  # → resources_string key
     TOK_RVAL = "xfts_rval_010"  # → resources_string value
-    TOK_BMSG = "xfts_bmsg_011"  # → body_v2.message — for bare/quoted FTS (fullTextColumn path)
+    TOK_BMSG = "xfts_bmsg_011"  # → body_v2.message — for bare/quoted FTS (freeTextColumn path)
 
     # Neutral body — does not contain any xfts_ token.
     _N = json.dumps({"message": "neutral log entry"})
@@ -191,7 +191,7 @@ def test_fts_across_contexts(
         return lambda r, s=svc: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == s and r.json().get("data", {}).get("warning") is not None
 
     # ── per-context isolation cases ───────────────────────────────────────────
-    # Free Text Search: bare/quoted tokens route through fullTextColumn (body_v2.message only).
+    # Free Text Search: bare/quoted tokens route through freeTextColumn (body_v2.message only).
     # Full Text Search: search() fans out across all fields via ftsFieldKeys.
 
     cases = [

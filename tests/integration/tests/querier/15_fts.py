@@ -169,7 +169,7 @@ def test_fts_across_contexts(
         return lambda r, s=svc: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == s
 
     # ── per-context isolation cases ───────────────────────────────────────────
-    # Free Text Search: bare/quoted tokens route through fullTextColumn (body only).
+    # Free Text Search: bare/quoted tokens route through freeTextColumn (body only).
     # Full Text Search: search() fans out across all fields via ftsFieldKeys.
 
     cases = [

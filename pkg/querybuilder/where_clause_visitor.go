@@ -783,7 +783,7 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	for _, key := range v.ftsFieldKeys {
 		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
 		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Name, err.Error()))
+			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Text(), err.Error()))
 			return ErrorConditionLiteral
 		}
 		ftsConds = append(ftsConds, cond)

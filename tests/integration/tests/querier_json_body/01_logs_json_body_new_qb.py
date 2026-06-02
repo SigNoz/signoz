@@ -1217,8 +1217,7 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages,
         },
-        # FTS — String bare keyword (implicit search across all log fields, case-insensitive)
-        # Both text_log and json_log match via their body_v2 message and service.name="payment-service".
+        # Free Text Search — String bare keyword
         {
             "name": "msg.fts_quoted",
             "requestType": "raw",
@@ -1226,7 +1225,6 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
-        # FTS — bare keyword (same fan-out as quoted FTS)
         {
             "name": "msg.fts_quoted_without_quotes",
             "requestType": "raw",
@@ -1234,7 +1232,7 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
-        # ── search() explicit function ──────────────────────────────────────
+        # ── Full Text Search: search() explicit function ──────────────────────────────────────
         # search("Payment") is equivalent to the bare-text '"Payment"' FTS:
         # both fan out a case-insensitive match across severity_text, trace_id,
         # span_id, body JSON values, attribute values, and resource values.
