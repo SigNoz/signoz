@@ -43,6 +43,7 @@ import defaultRoutes, {
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
+import { getCurrentEnvironment } from 'AppRoutes/getCurrentEnvironment';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -348,22 +349,19 @@ function App(): JSX.Element {
 				!isSentryInitialized &&
 				(window.signozBootData?.settings?.sentry.enabled ?? true)
 			) {
+				const sentryEnvironment = getCurrentEnvironment();
+
 				Sentry.init({
 					dsn: process.env.SENTRY_DSN,
 					tunnel: process.env.TUNNEL_URL,
-					environment: 'production',
+					environment: sentryEnvironment,
 					integrations: [
-						Sentry.browserTracingIntegration(),
 						Sentry.replayIntegration({
 							maskAllText: false,
 							blockAllMedia: false,
 						}),
 					],
-					// Performance Monitoring
-					tracesSampleRate: 1.0, //  Capture 100% of the transactions
-					// Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-					tracePropagationTargets: [],
-					// Session Replay
+					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 					beforeSend(event) {
