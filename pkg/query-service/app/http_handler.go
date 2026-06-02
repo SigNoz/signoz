@@ -482,8 +482,10 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
-	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet, http.MethodPost)
+	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet, http.MethodPost)
+	router.HandleFunc("/api/v1/series", am.ViewAccess(aH.seriesMetrics)).Methods(http.MethodGet, http.MethodPost)
+	router.HandleFunc("/api/v1/status/buildinfo", am.ViewAccess(aH.buildInfo)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -1273,6 +1275,42 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, responseData)
 
+}
+
+func (aH *APIHandler) seriesMetrics(w http.ResponseWriter, r *http.Request) {
+	params, apiErr := parseSeriesRequest(r)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ctx := r.Context()
+	if to := r.FormValue("timeout"); to != "" {
+		var cancel context.CancelFunc
+		timeout, err := parseMetricsDuration(to)
+		if aH.HandleError(w, err, http.StatusBadRequest) {
+			return
+		}
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	result, apiError := aH.reader.GetSeries(ctx, params)
+	if apiError != nil {
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	aH.Respond(w, result)
+}
+
+func (aH *APIHandler) buildInfo(w http.ResponseWriter, r *http.Request) {
+	aH.Respond(w, map[string]string{
+		"version":   version.Info.Version(),
+		"revision":  version.Info.Hash(),
+		"branch":    version.Info.Branch(),
+		"goVersion": version.Info.GoVersion(),
+	})
 }
 
 func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {

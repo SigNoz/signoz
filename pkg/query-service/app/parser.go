@@ -177,6 +177,42 @@ func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.Ap
 	return &queryRangeParams, nil
 }
 
+func parseSeriesRequest(r *http.Request) (*model.SeriesQueryParams, *model.ApiError) {
+	if err := r.ParseForm(); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	matches := r.Form["match[]"]
+	if len(matches) == 0 {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("no match[] parameter provided")}
+	}
+
+	now := time.Now()
+	start := now.Add(-5 * time.Minute)
+	end := now
+
+	if s := r.FormValue("start"); s != "" {
+		var err error
+		start, err = parseMetricsTime(s)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+	if e := r.FormValue("end"); e != "" {
+		var err error
+		end, err = parseMetricsTime(e)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+
+	return &model.SeriesQueryParams{
+		Start:   start,
+		End:     end,
+		Matches: matches,
+	}, nil
+}
+
 func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 	startTime, err := parseTime("start", r)
 	if err != nil {

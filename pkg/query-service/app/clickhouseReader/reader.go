@@ -33,7 +33,10 @@ import (
 
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -276,6 +279,50 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 		return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return res, &qs, nil
+}
+
+func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQueryParams) ([]map[string]string, *model.ApiError) {
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	querier, err := r.prometheus.Storage().Querier(mintMs, maxtMs)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	defer querier.Close()
+
+	seen := map[uint64]struct{}{}
+	result := []map[string]string{}
+
+	for _, matchStr := range params.Matches {
+		matchers, err := parser.ParseMetricSelector(matchStr)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+
+		hints := &storage.SelectHints{Start: mintMs, End: maxtMs, Func: "series"}
+		ss := querier.Select(ctx, false, hints, matchers...)
+		for ss.Next() {
+			lbls := ss.At().Labels()
+			h := lbls.Hash()
+			if _, ok := seen[h]; ok {
+				continue
+			}
+			seen[h] = struct{}{}
+			m := make(map[string]string, lbls.Len())
+			lbls.Range(func(l labels.Label) {
+				if l.Name != prometheus.FingerprintAsPromLabelName {
+					m[l.Name] = l.Value
+				}
+			})
+			result = append(result, m)
+		}
+		if ssErr := ss.Err(); ssErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: ssErr}
+		}
+	}
+
+	return result, nil
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
