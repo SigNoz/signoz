@@ -4,6 +4,7 @@ import { Dot } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import Noz from 'components/Noz/Noz';
+import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { AIAssistantEvents } from 'container/AIAssistant/events';
@@ -109,7 +110,7 @@ function HeaderRightSection({
 						</span>
 					) : null}
 
-					<TooltipSimple title="Noz">
+					<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
 						<Button
 							variant="solid"
 							color="secondary"

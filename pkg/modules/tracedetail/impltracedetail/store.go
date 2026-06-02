@@ -11,9 +11,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
+
+func buildFieldExpr(fieldKey telemetrytypes.TelemetryFieldKey) (string, error) {
+	switch fieldKey.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		// String cast required — Variant/Dynamic is rejected by GROUP BY.
+		return fmt.Sprintf("resource.`%s`::String", fieldKey.Name), nil
+	}
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported field context: %v", fieldKey.FieldContext)
+}
+
+type spanCountRow struct {
+	FieldValue string `ch:"field_value"`
+	Count      uint64 `ch:"count"`
+}
+
+type spanDurationRow struct {
+	FieldValue string `ch:"field_value"`
+	TotalNs    uint64 `ch:"total_ns"`
+}
 
 type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
@@ -132,4 +152,86 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace spans by IDs")
 	}
 	return spans, nil
+}
+
+func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
+	fieldExpr, err := buildFieldExpr(fieldKey)
+	if err != nil {
+		return nil, err
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(fieldExpr+" AS field_value", "count(DISTINCT span_id) AS count")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", summary.End.Unix()),
+		"notEmpty("+fieldExpr+")",
+	)
+	sb.GroupBy("field_value")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var rows []spanCountRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying span count by field")
+	}
+	result := make(map[string]uint64, len(rows))
+	for _, r := range rows {
+		result[r.FieldValue] = r.Count
+	}
+	return result, nil
+}
+
+func (s *traceStore) GetSpanDurationByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
+	fieldExpr, err := buildFieldExpr(fieldKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// CTE 1: all span with start and end timestamps.
+	allSpansSB := sqlbuilder.NewSelectBuilder()
+	allSpansSB.Select(
+		"DISTINCT ON (span_id) "+fieldExpr+" AS field_value",
+		"toUnixTimestamp64Nano(timestamp) AS start_ns",
+		"start_ns + duration_nano AS end_ns",
+	)
+	allSpansSB.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	allSpansSB.Where(
+		allSpansSB.E("trace_id", traceID),
+		allSpansSB.GE("ts_bucket_start", summary.Start.Unix()-1800),
+		allSpansSB.LE("ts_bucket_start", summary.End.Unix()),
+		"notEmpty(field_value)",
+	)
+	allSpansSB.OrderByAsc("timestamp")
+	allSpansSB.OrderByAsc("name")
+
+	// CTE 2: find max end time of all preceding spans.
+	effectiveStartSB := sqlbuilder.NewSelectBuilder()
+	effectiveStartSB.Select(
+		"field_value", "end_ns",
+		"greatest(start_ns, ifNull(max(end_ns) OVER (PARTITION BY field_value ORDER BY start_ns ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), toUInt64(0))) AS effective_start_ns",
+	)
+	effectiveStartSB.From("all_spans")
+
+	// Final SELECT: each span contributes only the tail past its effective start.
+	sb := sqlbuilder.With(
+		sqlbuilder.CTEQuery("all_spans").As(allSpansSB),
+		sqlbuilder.CTEQuery("effective_start").As(effectiveStartSB),
+	).Select(
+		"field_value",
+		"sum(toUInt64(greatest(end_ns - effective_start_ns, 0))) AS total_ns",
+	)
+	sb.From("effective_start")
+	sb.GroupBy("field_value")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	var rows []spanDurationRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying span duration by field")
+	}
+	result := make(map[string]uint64, len(rows))
+	for _, r := range rows {
+		result[r.FieldValue] = r.TotalNs
+	}
+	return result, nil
 }
