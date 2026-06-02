@@ -292,6 +292,11 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		colType := qbtypes.ColumnTypeGroup
 		if aggRe.MatchString(name) {
 			colType = qbtypes.ColumnTypeAggregation
+		} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
+			colType = qbtypes.ColumnTypeAggregation
+		} else if numericKind(colTypes[i].ScanType().Kind()) {
+			// Custom alias or unnamed aggregation: infer from numeric type.
+			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
