@@ -18,6 +18,12 @@ type QueryRangeParams struct {
 	Stats string
 }
 
+type SeriesQueryParams struct {
+	Start   time.Time
+	End     time.Time
+	Matches []string // raw match[] PromQL selector strings
+}
+
 const (
 	StringTagMapCol   = "stringTagMap"
 	NumberTagMapCol   = "numberTagMap"
