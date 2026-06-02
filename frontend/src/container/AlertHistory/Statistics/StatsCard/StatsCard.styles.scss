@@ -42,7 +42,7 @@
 		flex-direction: column;
 		gap: 4px;
 		.count-label {
-			color: var(--l1-foreground);
+			color: var(--l1-foreground) !important;
 			font-family: 'Geist Mono';
 			font-size: 24px;
 			line-height: 36px;
