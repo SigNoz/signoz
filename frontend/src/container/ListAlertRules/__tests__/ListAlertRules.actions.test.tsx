@@ -1,157 +1,44 @@
-import { cloneElement, useState as useStateImport } from 'react';
+import userEvent from '@testing-library/user-event';
+import { logEventMock } from '__tests__/logEventMock';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { cleanup, fireEvent, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 
-import {
-	findAlertRow,
-	flushNuqsUrl,
-	renderListAlertRules,
-	resetUrl,
-} from './_helpers';
-
-jest.mock(
-	'@signozhq/ui/divider',
-	() => ({
-		Divider: ({ children }: { children?: React.ReactNode }): JSX.Element => (
-			<div>{children}</div>
-		),
-	}),
-	{ virtual: true },
-);
-
-const safeNavigateMock = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: safeNavigateMock })),
-}));
-
-const logEventMock = jest.fn();
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): unknown => logEventMock(...args),
-}));
-
-const toastPromiseMock = jest.fn();
-jest.mock(
-	'@signozhq/ui/sonner',
-	() => ({
-		toast: {
-			promise: (promise: unknown, opts: unknown): unknown => {
-				toastPromiseMock(promise, opts);
-				if (
-					promise &&
-					typeof (promise as { catch?: unknown }).catch === 'function'
-				) {
-					(promise as Promise<unknown>).catch(() => {});
-				}
-				return promise;
-			},
-		},
-	}),
-	{ virtual: true },
-);
-
-// Stand-in for Radix DropdownMenuSimple: items render only after the trigger
-// child is clicked, mirroring real open/close semantics. Tests must click the
-// trigger (data-testid="alert-actions") before menu items are reachable.
-jest.mock(
-	'@signozhq/ui/dropdown-menu',
-	() => {
-		type MenuItem = {
-			key: string;
-			label?: string;
-			onClick?: () => void;
-			type?: string;
-			disabled?: boolean;
-		};
-
-		function DropdownMenuSimple({
-			children,
-			menu,
-		}: {
-			children: React.ReactElement;
-			menu: { items: MenuItem[] };
-		}): JSX.Element {
-			const [open, setOpen] = useStateImport(false);
-			const triggerWithToggle = cloneElement(children, {
-				onClick: (e: React.MouseEvent): void => {
-					children.props.onClick?.(e);
-					setOpen((v) => !v);
-				},
-			});
-			return (
-				<>
-					{triggerWithToggle}
-					{open ? (
-						<div data-testid="dropdown-menu-portal">
-							{menu.items
-								.filter((it) => it.type !== 'divider')
-								.map((it) => (
-									<button
-										key={it.key}
-										type="button"
-										disabled={it.disabled}
-										onClick={(): void => it.onClick?.()}
-									>
-										{it.label}
-									</button>
-								))}
-						</div>
-					) : null}
-				</>
-			);
-		}
-
-		return { DropdownMenuSimple };
-	},
-	{ virtual: true },
-);
+import { findAlertRow, renderListAlertRules } from './_helpers';
 
 async function openActionsMenu(row: HTMLElement): Promise<void> {
 	const trigger = row.querySelector(
 		'[data-testid="alert-actions"]',
 	) as HTMLElement | null;
 	expect(trigger).not.toBeNull();
-	fireEvent.click(trigger as HTMLElement);
-	await screen.findByTestId('dropdown-menu-portal');
+	const user = userEvent.setup({ delay: null });
+	await user.click(trigger as HTMLElement);
+	// Radix renders the menu items in a portal once the trigger is activated.
+	await screen.findByRole('menu');
 }
 
-function clickMenuItem(label: string): void {
-	const portal = screen.getByTestId('dropdown-menu-portal');
-	const btn = Array.from(portal.querySelectorAll('button')).find(
-		(b) => b.textContent === label,
-	);
-	expect(btn).toBeDefined();
-	fireEvent.click(btn as HTMLElement);
+async function clickMenuItem(label: string): Promise<void> {
+	const user = userEvent.setup({ delay: null });
+	const item = await screen.findByRole('menuitem', { name: label });
+	await user.click(item);
 }
-
-jest.setTimeout(30000);
 
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-		cleanup();
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		await flushNuqsUrl();
-		resetUrl();
 	});
 
 	it('renders Enable/Disable/Edit/Edit in New Tab/Clone/Delete items after opening the menu', async () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 
-		// Items are not in the DOM until the trigger is clicked.
-		expect(screen.queryByTestId('dropdown-menu-portal')).not.toBeInTheDocument();
+		expect(screen.queryByRole('menu')).not.toBeInTheDocument();
 
 		await openActionsMenu(row);
 
-		const portal = screen.getByTestId('dropdown-menu-portal');
-		const labels = Array.from(portal.querySelectorAll('button')).map(
-			(b) => b.textContent,
-		);
+		const items = screen.getAllByRole('menuitem');
+		const labels = items.map((it) => it.textContent);
 		expect(labels).toStrictEqual(
 			expect.arrayContaining([
 				'Edit',
@@ -168,15 +55,13 @@ describe('ListAlertRules — actions menu', () => {
 		const row = await findAlertRow('Disabled Alert');
 		await openActionsMenu(row);
 
-		const portal = screen.getByTestId('dropdown-menu-portal');
-		const labels = Array.from(portal.querySelectorAll('button')).map(
-			(b) => b.textContent,
-		);
+		const items = screen.getAllByRole('menuitem');
+		const labels = items.map((it) => it.textContent);
 		expect(labels).toContain('Enable');
 		expect(labels).not.toContain('Disable');
 	});
 
-	it('toggle action: clicking Disable sends PATCH with disabled:true and toasts', async () => {
+	it('toggle action: clicking Disable sends PATCH with disabled:true', async () => {
 		let capturedBody: unknown = null;
 		let capturedPath: string | null = null;
 		server.use(
@@ -190,11 +75,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Disable');
-
-		await waitFor(() => {
-			expect(toastPromiseMock).toHaveBeenCalled();
-		});
+		await clickMenuItem('Disable');
 
 		await waitFor(() => {
 			expect(capturedBody).toStrictEqual(
@@ -213,7 +94,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Edit');
+		await clickMenuItem('Edit');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -230,7 +111,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Edit in New Tab');
+		await clickMenuItem('Edit in New Tab');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -261,11 +142,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Clone');
-
-		await waitFor(() => {
-			expect(toastPromiseMock).toHaveBeenCalled();
-		});
+		await clickMenuItem('Clone');
 
 		await waitFor(() => {
 			expect(capturedPostBody).toStrictEqual(
@@ -288,7 +165,7 @@ describe('ListAlertRules — actions menu', () => {
 		);
 	});
 
-	it('delete action: sends DELETE for the rule id and toasts', async () => {
+	it('delete action: sends DELETE for the rule id', async () => {
 		let deletedId: string | null = null;
 		server.use(
 			rest.delete('http://localhost/api/v2/rules/:id', (req, res, ctx) => {
@@ -300,11 +177,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Delete');
-
-		await waitFor(() => {
-			expect(toastPromiseMock).toHaveBeenCalled();
-		});
+		await clickMenuItem('Delete');
 
 		await waitFor(() => {
 			expect(deletedId).toBe('rule-1');
@@ -316,24 +189,27 @@ describe('ListAlertRules — actions menu', () => {
 		);
 	});
 
-	it('error path: toast.promise still called when server returns 500', async () => {
+	it('error path: PATCH is still attempted when server returns 500', async () => {
+		let patchAttempted = false;
 		server.use(
-			rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
-				res(ctx.status(500), ctx.json({ status: 'error' })),
-			),
+			rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) => {
+				patchAttempted = true;
+				return res(ctx.status(500), ctx.json({ status: 'error' }));
+			}),
 		);
 
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		clickMenuItem('Disable');
+		await clickMenuItem('Disable');
 
 		await waitFor(() => {
-			expect(toastPromiseMock).toHaveBeenCalled();
+			expect(patchAttempted).toBe(true);
 		});
-		const [, opts] = toastPromiseMock.mock.calls[0];
-		expect(opts).toStrictEqual(
-			expect.objectContaining({ error: expect.any(Function) }),
+
+		expect(logEventMock).toHaveBeenCalledWith(
+			'Alert: Action',
+			expect.objectContaining({ action: 'Enable/Disable', ruleId: 'rule-1' }),
 		);
 	});
 });

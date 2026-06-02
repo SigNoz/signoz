@@ -2,18 +2,10 @@ import userEvent from '@testing-library/user-event';
 import { triggeredAlertsPaginationFixture } from 'mocks-server/__mockdata__/triggered_alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { cleanup, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
+import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
-import { flushNuqsUrl, renderTriggeredAlerts, resetUrl } from './_helpers';
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: jest.fn() })),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
+import { renderTriggeredAlerts } from './_helpers';
 
 function usePaginationHandler(): void {
 	server.use(
@@ -30,18 +22,6 @@ function usePaginationHandler(): void {
 }
 
 describe('TriggeredAlerts — pagination', () => {
-	jest.setTimeout(15000);
-
-	beforeEach(() => {
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		cleanup();
-		await flushNuqsUrl();
-		resetUrl();
-	});
-
 	// Default sort is duration ascending = newest startsAt first. Fixture indices
 	// 0..14 use startsAt 2023-10-01..15, so index 14 (newest) appears first and
 	// index 0 (oldest) appears last. Page 1 (limit 10) = items 14..5. Page 2 = 4..0.
@@ -50,7 +30,7 @@ describe('TriggeredAlerts — pagination', () => {
 		usePaginationHandler();
 		renderTriggeredAlerts();
 
-		await screen.findByText('Pag Alert 14', {}, { timeout: 8000 });
+		await screen.findByText('Pag Alert 14');
 
 		expect(screen.getByText('Pag Alert 5')).toBeInTheDocument();
 		expect(screen.queryByText('Pag Alert 4')).not.toBeInTheDocument();
@@ -61,7 +41,7 @@ describe('TriggeredAlerts — pagination', () => {
 		usePaginationHandler();
 		renderTriggeredAlerts();
 
-		await screen.findByText('Pag Alert 14', {}, { timeout: 8000 });
+		await screen.findByText('Pag Alert 14');
 
 		const nav = screen.getByRole('navigation');
 		const page2 = Array.from(nav.querySelectorAll('button')).find(
@@ -75,7 +55,7 @@ describe('TriggeredAlerts — pagination', () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await screen.findByText('Pag Alert 14', {}, { timeout: 8000 });
+		await screen.findByText('Pag Alert 14');
 
 		const nav = screen.getByRole('navigation');
 		const page2Button = Array.from(nav.querySelectorAll('button')).find(
@@ -86,14 +66,11 @@ describe('TriggeredAlerts — pagination', () => {
 		}
 		await user.click(page2Button);
 
-		await waitFor(
-			() => expect(screen.getByText('Pag Alert 0')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('Pag Alert 0')).toBeInTheDocument(),
 		);
 		expect(screen.getByText('Pag Alert 4')).toBeInTheDocument();
 		expect(screen.queryByText('Pag Alert 14')).not.toBeInTheDocument();
-		await waitFor(() => expect(window.location.search).toContain('page=2'), {
-			timeout: 3000,
-		});
+		await waitFor(() => expect(getCurrentNuqsQueryString()).toContain('page=2'));
 	});
 });

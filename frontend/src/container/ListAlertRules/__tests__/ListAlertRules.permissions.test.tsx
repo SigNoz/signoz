@@ -1,48 +1,23 @@
-import { cleanup, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
-import { flushNuqsUrl, renderListAlertRules, resetUrl } from './_helpers';
-
-jest.mock(
-	'@signozhq/ui/divider',
-	() => ({
-		Divider: ({ children }: { children?: React.ReactNode }): JSX.Element => (
-			<div>{children}</div>
-		),
-	}),
-	{ virtual: true },
-);
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: jest.fn() })),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
-jest.setTimeout(20000);
+import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-		cleanup();
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		await flushNuqsUrl();
-		resetUrl();
 	});
 
 	it('VIEWER role hides "New Alert" button and "Actions" column', async () => {
 		renderListAlertRules({ role: USER_ROLES.VIEWER });
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		expect(
 			screen.queryByTestId('list-alerts-new-alert-button'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /new alert/i }),
 		).not.toBeInTheDocument();
 
 		const headers = Array.from(document.querySelectorAll('th')).map(
@@ -55,10 +30,13 @@ describe('ListAlertRules — permissions', () => {
 	it('ADMIN role shows "New Alert" button and "Actions" column', async () => {
 		renderListAlertRules({ role: USER_ROLES.ADMIN });
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /new alert/i }),
 		).toBeInTheDocument();
 
 		await waitFor(() => {
@@ -73,10 +51,13 @@ describe('ListAlertRules — permissions', () => {
 	it('EDITOR role behaves like ADMIN (New Alert + Actions visible)', async () => {
 		renderListAlertRules({ role: USER_ROLES.EDITOR });
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /new alert/i }),
 		).toBeInTheDocument();
 
 		await waitFor(() => {

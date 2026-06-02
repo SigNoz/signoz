@@ -1,6 +1,6 @@
-import type { SortState } from 'components/TanStackTableView/types';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SortState } from 'components/TanStackTableView/types';
 
 import type { AlertRule } from '../types';
 import {
@@ -10,11 +10,6 @@ import {
 	getAlertSortValue,
 	sortRules,
 } from '../utils';
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
 
 const baseRule = {
 	id: 'r1',
@@ -189,12 +184,6 @@ describe('filterRulesByFilters', () => {
 });
 
 describe('alertActionLogEvent', () => {
-	const logEventMock = logEvent as jest.MockedFunction<typeof logEvent>;
-
-	beforeEach(() => {
-		logEventMock.mockClear();
-	});
-
 	it('logs with mapped action label', () => {
 		const rule = makeRule({
 			id: 'rule-1',

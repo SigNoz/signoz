@@ -1,48 +1,23 @@
-import { cleanup, fireEvent, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, screen, waitFor } from 'tests/test-utils';
 
-import { flushNuqsUrl, renderListAlertRules, resetUrl } from './_helpers';
-
-jest.mock(
-	'@signozhq/ui/divider',
-	() => ({
-		Divider: ({ children }: { children?: React.ReactNode }): JSX.Element => (
-			<div>{children}</div>
-		),
-	}),
-	{ virtual: true },
-);
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: jest.fn() })),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
+import { renderListAlertRules } from './_helpers';
 
 const COLUMN_STORAGE_KEY = '@signoz/table-columns/alert-rules-columns';
-
-jest.setTimeout(20000);
 
 describe('ListAlertRules — columns selector', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-		cleanup();
-		resetUrl();
 		localStorage.clear();
 	});
 
-	afterEach(async () => {
-		await flushNuqsUrl();
-		resetUrl();
+	afterEach(() => {
 		localStorage.clear();
 	});
 
 	it('opens columns popover and lists toggleable columns', async () => {
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		fireEvent.click(screen.getByTestId('alert-columns-button'));
 
@@ -57,7 +32,7 @@ describe('ListAlertRules — columns selector', () => {
 	it('default-hidden columns (Created At/By, Updated At/By) are not in the table header', async () => {
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		const headers = document.querySelectorAll('th');
 		const headerTexts = Array.from(headers).map((h) => h.textContent || '');
@@ -70,7 +45,7 @@ describe('ListAlertRules — columns selector', () => {
 	it('toggling Created At on writes to localStorage and adds the header', async () => {
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		const headersBefore = Array.from(document.querySelectorAll('th')).map(
 			(h) => h.textContent ?? '',

@@ -139,7 +139,6 @@ jest.mock('react-query', (): unknown => {
 });
 
 // mock other side-effecty modules
-jest.mock('api/common/logEvent', () => jest.fn());
 jest.mock('api/browser/localstorage/set', () => jest.fn());
 jest.mock('utils/error', () => ({ showErrorNotification: jest.fn() }));
 

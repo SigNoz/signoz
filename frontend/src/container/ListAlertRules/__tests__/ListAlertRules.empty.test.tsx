@@ -1,43 +1,15 @@
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import ROUTES from 'constants/routes';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { cleanup, fireEvent, screen } from 'tests/test-utils';
+import { fireEvent, screen } from 'tests/test-utils';
 
-import { flushNuqsUrl, renderListAlertRules, resetUrl } from './_helpers';
-
-jest.mock(
-	'@signozhq/ui/divider',
-	() => ({
-		Divider: ({ children }: { children?: React.ReactNode }): JSX.Element => (
-			<div>{children}</div>
-		),
-	}),
-	{ virtual: true },
-);
-
-const safeNavigateMock = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: safeNavigateMock })),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
-jest.setTimeout(20000);
+import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — empty states', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-		cleanup();
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		await flushNuqsUrl();
-		resetUrl();
 	});
 
 	it('renders AlertsEmptyState when API returns no rules', async () => {
@@ -49,7 +21,7 @@ describe('ListAlertRules — empty states', () => {
 
 		renderListAlertRules();
 
-		await screen.findByText('No Alert rules yet.', {}, { timeout: 5000 });
+		await screen.findByText('No Alert rules yet.');
 		expect(
 			screen.getByText('Create an Alert Rule to get started'),
 		).toBeInTheDocument();
@@ -79,28 +51,34 @@ describe('ListAlertRules — empty states', () => {
 
 		renderListAlertRules();
 
-		await screen.findByTestId('error-empty-state', {}, { timeout: 5000 });
+		await screen.findByTestId('error-empty-state');
 
 		fireEvent.click(screen.getByTestId('error-refresh-button'));
 
-		const rule = await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		const rule = await screen.findByText('High CPU Alert');
 		expect(rule).toBeInTheDocument();
 	});
 
 	it('renders NoResultsEmptyState when search yields no match; Clear Search resets', async () => {
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		await screen.findByText('High CPU Alert');
 
 		fireEvent.change(screen.getByTestId('list-alerts-search-input'), {
 			target: { value: 'totally-not-found' },
 		});
 
-		await screen.findByTestId('no-results-empty-state', {}, { timeout: 5000 });
+		await screen.findByTestId('no-results-empty-state');
+		expect(screen.getByTestId('no-results-title')).toHaveTextContent(
+			'No matching alert rules',
+		);
+		expect(screen.getByTestId('no-results-subtitle')).toHaveTextContent(
+			'No alert rules match your search. Try adjusting your search criteria.',
+		);
 
 		fireEvent.click(screen.getByTestId('no-results-clear-button'));
 
-		const rule = await screen.findByText('High CPU Alert', {}, { timeout: 5000 });
+		const rule = await screen.findByText('High CPU Alert');
 		expect(rule).toBeInTheDocument();
 	});
 });

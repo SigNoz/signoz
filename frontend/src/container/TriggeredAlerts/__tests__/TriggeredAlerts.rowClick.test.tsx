@@ -1,44 +1,26 @@
 import userEvent from '@testing-library/user-event';
+import { logEventMock } from '__tests__/logEventMock';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { cleanup, fireEvent, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, screen, waitFor } from 'tests/test-utils';
 
-import { flushNuqsUrl, renderTriggeredAlerts, resetUrl } from './_helpers';
-
-const safeNavigateMock = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: safeNavigateMock })),
-}));
-
-const logEventMock = jest.fn();
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): unknown => logEventMock(...args),
-}));
+import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
 
 describe('TriggeredAlerts — row click', () => {
-	jest.setTimeout(15000);
-
-	beforeEach(() => {
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		cleanup();
-		await flushNuqsUrl();
-		resetUrl();
-	});
-
 	it('navigates to the alert overview with the rule id from labels on row click', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(
+				screen.getByTestId(getTriggeredAlertRowTestId('fp-critical-1', 'name')),
+			).toBeInTheDocument(),
 		);
 
-		await user.click(screen.getByText('High CPU Usage'));
+		await user.click(
+			screen.getByTestId(getTriggeredAlertRowTestId('fp-critical-1', 'name')),
+		);
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			'/alerts/overview?ruleId=rule-1',
@@ -55,12 +37,16 @@ describe('TriggeredAlerts — row click', () => {
 	it('opens in a new tab when ctrl+clicked', async () => {
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('Memory Warning')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(
+				screen.getByTestId(getTriggeredAlertRowTestId('fp-warning-1', 'name')),
+			).toBeInTheDocument(),
 		);
 
-		fireEvent.click(screen.getByText('Memory Warning'), { ctrlKey: true });
+		fireEvent.click(
+			screen.getByTestId(getTriggeredAlertRowTestId('fp-warning-1', 'name')),
+			{ ctrlKey: true },
+		);
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			'/alerts/overview?ruleId=rule-2',
@@ -98,12 +84,15 @@ describe('TriggeredAlerts — row click', () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('URL Rule Alert')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(
+				screen.getByTestId(getTriggeredAlertRowTestId('fp-no-rule-label', 'name')),
+			).toBeInTheDocument(),
 		);
 
-		await user.click(screen.getByText('URL Rule Alert'));
+		await user.click(
+			screen.getByTestId(getTriggeredAlertRowTestId('fp-no-rule-label', 'name')),
+		);
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			'/alerts/overview?ruleId=rule-from-url',
@@ -137,12 +126,15 @@ describe('TriggeredAlerts — row click', () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('No Rule Alert')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(
+				screen.getByTestId(getTriggeredAlertRowTestId('fp-no-rule', 'name')),
+			).toBeInTheDocument(),
 		);
 
-		await user.click(screen.getByText('No Rule Alert'));
+		await user.click(
+			screen.getByTestId(getTriggeredAlertRowTestId('fp-no-rule', 'name')),
+		);
 
 		expect(safeNavigateMock).not.toHaveBeenCalled();
 	});

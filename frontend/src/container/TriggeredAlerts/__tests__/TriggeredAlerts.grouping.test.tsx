@@ -1,35 +1,13 @@
 import userEvent from '@testing-library/user-event';
-import { cleanup, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 
-import { flushNuqsUrl, renderTriggeredAlerts, resetUrl } from './_helpers';
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(() => ({ safeNavigate: jest.fn() })),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
+import { renderTriggeredAlerts } from './_helpers';
 
 describe('TriggeredAlerts — group by', () => {
-	jest.setTimeout(15000);
-
-	beforeEach(() => {
-		resetUrl();
-	});
-
-	afterEach(async () => {
-		cleanup();
-		await flushNuqsUrl();
-		resetUrl();
-	});
-
 	it('renders a flat table when no group-by is selected', async () => {
 		renderTriggeredAlerts();
-		await waitFor(
-			() => expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 		// No "Group" column header in flat mode.
 		expect(screen.queryByText('Group')).not.toBeInTheDocument();
@@ -39,56 +17,40 @@ describe('TriggeredAlerts — group by', () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
 		await user.click(screen.getByTestId('triggered-alerts-groupby-combobox'));
 
-		const serviceOption = await screen.findByText(
-			'service',
-			{},
-			{ timeout: 3000 },
-		);
+		const serviceOption = await screen.findByText('service');
 		await user.click(serviceOption);
 		await user.keyboard('{Escape}');
 
-		await waitFor(() => expect(screen.getByText('Group')).toBeInTheDocument(), {
-			timeout: 5000,
-		});
+		await waitFor(() => expect(screen.getByText('Group')).toBeInTheDocument());
 
-		await waitFor(
-			() => {
-				expect(screen.getByText('service:frontend')).toBeInTheDocument();
-				expect(screen.getByText('service:backend')).toBeInTheDocument();
-				expect(screen.getByText('service:misc')).toBeInTheDocument();
-			},
-			{ timeout: 5000 },
-		);
+		await waitFor(() => {
+			expect(screen.getByText('service:frontend')).toBeInTheDocument();
+			expect(screen.getByText('service:backend')).toBeInTheDocument();
+			expect(screen.getByText('service:misc')).toBeInTheDocument();
+		});
 	});
 
 	it('expands and collapses a group row to reveal nested alerts', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(
-			() => expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
 		await user.click(screen.getByTestId('triggered-alerts-groupby-combobox'));
-		const serviceOption = await screen.findByText(
-			'service',
-			{},
-			{ timeout: 3000 },
-		);
+		const serviceOption = await screen.findByText('service');
 		await user.click(serviceOption);
 		await user.keyboard('{Escape}');
 
-		await waitFor(
-			() => expect(screen.getByText('service:frontend')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('service:frontend')).toBeInTheDocument(),
 		);
 
 		// Nested rows aren't shown yet.
@@ -109,17 +71,15 @@ describe('TriggeredAlerts — group by', () => {
 
 		await user.click(frontendToggle as HTMLElement);
 
-		await waitFor(
-			() => expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 		expect(screen.getByText('Disk Slow')).toBeInTheDocument();
 
 		await user.click(frontendToggle as HTMLElement);
 
-		await waitFor(
-			() => expect(screen.queryByText('High CPU Usage')).not.toBeInTheDocument(),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.queryByText('High CPU Usage')).not.toBeInTheDocument(),
 		);
 	});
 });

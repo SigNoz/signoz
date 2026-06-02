@@ -1,8 +1,13 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import { render, RenderResult, screen } from '@testing-library/react';
 import ListAlertRules from 'container/ListAlertRules';
-import { render, screen } from 'tests/test-utils';
-
-const NUQS_FLUSH_MS = 100;
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { AppContext } from 'providers/App/App';
+import TimezoneProvider from 'providers/Timezone';
+import { onNuqsUrlUpdate, resetNuqsState } from 'tests/nuqs-helpers';
+import { getAppContextMock } from 'tests/test-utils';
 
 interface RenderOptions {
 	role?: string;
@@ -11,29 +16,43 @@ interface RenderOptions {
 
 export function renderListAlertRules(
 	options: RenderOptions = {},
-): ReturnType<typeof render> {
-	const { role, initialRoute = '/' } = options;
-	window.history.replaceState({}, '', initialRoute);
-	return render(
-		<VirtuosoMockContext.Provider value={{ viewportHeight: 800, itemHeight: 46 }}>
-			<ListAlertRules />
-		</VirtuosoMockContext.Provider>,
-		undefined,
-		role !== undefined ? { role, initialRoute } : { initialRoute },
-	);
-}
+): RenderResult {
+	const { role = 'ADMIN', initialRoute = '/' } = options;
 
-// nuqs schedules URL writes through a throttle/debounce. Tests that mutate
-// query state must flush pending writes before resetting the URL, otherwise
-// a queued write can leak into the next test.
-export async function flushNuqsUrl(): Promise<void> {
-	await new Promise<void>((resolve) => {
-		setTimeout(resolve, NUQS_FLUSH_MS);
+	const initialSearch = initialRoute.includes('?')
+		? initialRoute.slice(initialRoute.indexOf('?'))
+		: '';
+	resetNuqsState(initialSearch);
+
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: { refetchOnWindowFocus: false, retry: false },
+			mutations: { retry: false },
+		},
 	});
-}
 
-export function resetUrl(): void {
-	window.history.replaceState({}, '', '/');
+	return render(
+		<MemoryRouter initialEntries={[initialRoute]}>
+			<NuqsTestingAdapter
+				searchParams={initialSearch}
+				onUrlUpdate={onNuqsUrlUpdate}
+				rateLimitFactor={0}
+				hasMemory
+			>
+				<QueryClientProvider client={queryClient}>
+					<AppContext.Provider value={getAppContextMock(role)}>
+						<TimezoneProvider>
+							<VirtuosoMockContext.Provider
+								value={{ viewportHeight: 800, itemHeight: 46 }}
+							>
+								<ListAlertRules />
+							</VirtuosoMockContext.Provider>
+						</TimezoneProvider>
+					</AppContext.Provider>
+				</QueryClientProvider>
+			</NuqsTestingAdapter>
+		</MemoryRouter>,
+	);
 }
 
 export async function findAlertRow(alertName: string): Promise<HTMLElement> {
