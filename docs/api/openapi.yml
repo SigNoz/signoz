@@ -6541,8 +6541,6 @@ components:
           additionalProperties:
             type: string
           type: object
-        serviceName:
-          type: string
         spanId:
           type: string
         timestamp:
@@ -6569,6 +6567,9 @@ components:
           type: integer
       required:
       - spans
+      - startTimestampMillis
+      - endTimestampMillis
+      - hasMore
       type: object
     SpantypesGettableSpanMapperGroups:
       properties:

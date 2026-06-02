@@ -7717,10 +7717,6 @@ export interface SpantypesFlamegraphSpanDTO {
 	/**
 	 * @type string
 	 */
-	serviceName?: string;
-	/**
-	 * @type string
-	 */
 	spanId?: string;
 	/**
 	 * @type integer
@@ -7734,11 +7730,11 @@ export interface SpantypesGettableFlamegraphTraceDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	endTimestampMillis?: number;
+	endTimestampMillis: number;
 	/**
 	 * @type boolean
 	 */
-	hasMore?: boolean;
+	hasMore: boolean;
 	/**
 	 * @type array
 	 */
@@ -7747,7 +7743,7 @@ export interface SpantypesGettableFlamegraphTraceDTO {
 	 * @type integer
 	 * @format int64
 	 */
-	startTimestampMillis?: number;
+	startTimestampMillis: number;
 }
 
 export type SpantypesSpanMapperGroupConditionDTOAnyOf = {
