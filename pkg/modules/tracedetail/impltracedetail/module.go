@@ -59,6 +59,29 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantype
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
 }
 
+// getTraceData fetches all spans for a trace and builds the WaterfallTrace.
+func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(spanItems) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+
+	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
+	for i := range spanItems {
+		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
+	}
+	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
+}
+
 // GetWaterfallV4 is the OOM-safe V4 waterfall.
 // For large traces (NumSpans > effectiveLimit) it uses a two-step fetch:
 // minimal fields for all spans to build the tree, then full fields for the
@@ -78,11 +101,32 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	return m.getFullWaterfall(ctx, traceID, summary)
 }
 
+func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
+	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(spanItems) == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+
+	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
+	for i := range spanItems {
+		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
+	}
+	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
+	selectedSpans := waterfallTrace.GetAllSpans()
+
+	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
+}
+
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
+
 	traceDurationNs := uint64(summary.End.UnixNano()) - uint64(summary.Start.UnixNano())
 
 	results := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
@@ -129,49 +173,6 @@ func (m *module) GetFlamegraph(ctx context.Context, traceID string, req *spantyp
 		return m.getFullFlamegraph(ctx, traceID, summary)
 	}
 	return m.getWindowedFlamegraph(ctx, traceID, req.SelectedSpanID, summary)
-}
-
-// getTraceData fetches all spans for a trace and builds the WaterfallTrace.
-func (m *module) getTraceData(ctx context.Context, traceID string) (*spantypes.WaterfallTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(spanItems) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
-	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
-	}
-	return spantypes.NewWaterfallTraceFromSpans(nodes), nil
-}
-
-func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *spantypes.TraceSummary) (*spantypes.GettableWaterfallTrace, error) {
-	spanItems, err := m.store.GetTraceSpans(ctx, traceID, summary)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(spanItems) == 0 {
-		return nil, spantypes.ErrTraceNotFound
-	}
-
-	nodes := make([]*spantypes.WaterfallSpan, len(spanItems))
-	for i := range spanItems {
-		nodes[i] = spanItems[i].ToWaterfallSpan(traceID)
-	}
-	waterfallTrace := spantypes.NewWaterfallTraceFromSpans(nodes)
-	selectedSpans := waterfallTrace.GetAllSpans()
-
-	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
 }
 
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
