@@ -483,8 +483,9 @@ $custom-border-color: #2c3044;
 		.option-checkbox {
 			width: 100%;
 
-			> span:not(.ant-checkbox) {
-				width: 100%;
+			> label {
+				flex: 1;
+				min-width: 0;
 			}
 
 			.all-option-text {
