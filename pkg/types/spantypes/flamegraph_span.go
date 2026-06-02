@@ -13,7 +13,7 @@ type FlamegraphSpan struct {
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
 	Level        int64             `json:"level"`
-	Events       []Event           `json:"event"`
+	Events       []Event           `json:"event" required:"true" nullable:"false"`
 	Attributes   map[string]any    `json:"attributes,omitempty"`
 	Resource     map[string]string `json:"resource,omitempty"`
 	Children     []*FlamegraphSpan `json:"-"` // internal tree use only
@@ -32,7 +32,7 @@ type PostableFlamegraph struct {
 
 // GettableFlamegraphTrace is the response for the v3 flamegraph API.
 type GettableFlamegraphTrace struct {
-	Spans                [][]*FlamegraphSpan `json:"spans"`
+	Spans                [][]*FlamegraphSpan `json:"spans" required:"true" nullable:"false"`
 	StartTimestampMillis int64               `json:"startTimestampMillis"`
 	EndTimestampMillis   int64               `json:"endTimestampMillis"`
 	HasMore              bool                `json:"hasMore"`
