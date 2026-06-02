@@ -18,7 +18,13 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { THEME_MODE } from './constant';
 
-export const ThemeContext = createContext({
+export const ThemeContext = createContext<{
+	theme: string;
+	toggleTheme: () => void;
+	autoSwitch: boolean;
+	setAutoSwitch: Dispatch<SetStateAction<boolean>>;
+	setTheme: Dispatch<SetStateAction<string>>;
+}>({
 	theme: THEME_MODE.DARK,
 	toggleTheme: (): void => {},
 	autoSwitch: false,

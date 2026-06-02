@@ -9,6 +9,8 @@ import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
+import { THEME_MODE, ThemeMode } from 'hooks/useDarkMode/constant';
+import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -24,9 +26,10 @@ import './MySettings.styles.scss';
 function MySettings(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
-	const { toggleTheme, autoSwitch, setAutoSwitch } = useThemeMode();
+	const { autoSwitch } = useThemeMode();
 	const systemTheme = useSystemTheme();
 	const { notifications } = useNotifications();
+	const selectTheme = useThemeSelection();
 
 	const [sideNavPinned, setSideNavPinned] = useState(false);
 
@@ -59,7 +62,7 @@ function MySettings(): JSX.Element {
 					<Moon data-testid="dark-theme-icon" size={12} /> Dark{' '}
 				</div>
 			),
-			value: 'dark',
+			value: THEME_MODE.DARK,
 		},
 		{
 			label: (
@@ -68,7 +71,7 @@ function MySettings(): JSX.Element {
 					<Badge color="robin">Beta</Badge>
 				</div>
 			),
-			value: 'light',
+			value: THEME_MODE.LIGHT,
 		},
 		{
 			label: (
@@ -76,46 +79,31 @@ function MySettings(): JSX.Element {
 					<MonitorCog size={12} data-testid="auto-theme-icon" /> System{' '}
 				</div>
 			),
-			value: 'auto',
+			value: THEME_MODE.SYSTEM,
 		},
 	];
 
 	const [theme, setTheme] = useState(() => {
 		if (autoSwitch) {
-			return 'auto';
+			return THEME_MODE.SYSTEM;
 		}
-		return isDarkMode ? 'dark' : 'light';
+		return isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT;
 	});
 
 	const handleThemeChange = (value: string): void => {
-		logEvent('Account Settings: Theme Changed', {
-			theme: value,
-		});
-		setTheme(value);
-
-		if (value === 'auto') {
-			setAutoSwitch(true);
-		} else {
-			setAutoSwitch(false);
-			// Only toggle if the current theme is different from the target
-			const targetIsDark = value === 'dark';
-			if (targetIsDark !== isDarkMode) {
-				toggleTheme();
-			}
-		}
+		// ToggleGroupSimple items above are all THEME_MODE values, so narrowing
+		// the string here is safe.
+		const mode = value as ThemeMode;
+		logEvent('Account Settings: Theme Changed', { theme: mode });
+		selectTheme(mode);
 	};
 
 	useEffect(() => {
 		if (autoSwitch) {
-			setTheme('auto');
+			setTheme(THEME_MODE.SYSTEM);
 			return;
 		}
-
-		if (isDarkMode) {
-			setTheme('dark');
-		} else {
-			setTheme('light');
-		}
+		setTheme(isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT);
 	}, [autoSwitch, isDarkMode]);
 
 	const handleSideNavPinnedChange = (checked: boolean): void => {
