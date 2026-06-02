@@ -449,6 +449,21 @@ def index_series_by_label(
     return series_by_label
 
 
+def assert_grouped_series(
+    series_by_group: dict[str, dict],
+    expected_values_by_group: dict[str, dict[int, int]],
+) -> None:
+    assert set(series_by_group.keys()) == set(expected_values_by_group.keys())
+
+    for group_name, expected_by_ts in expected_values_by_group.items():
+        actual_values = sorted(
+            series_by_group[group_name]["values"],
+            key=lambda value: value["timestamp"],
+        )
+        expected_values = [{"timestamp": timestamp, "value": value} for timestamp, value in sorted(expected_by_ts.items())]
+        assert actual_values == expected_values
+
+
 def find_named_result(
     results: list[dict[str, Any]],
     name: str,
@@ -645,6 +660,28 @@ def assert_identical_query_response(response1: requests.Response, response2: req
     if response1.status_code == HTTPStatus.OK:
         assert response1.json()["status"] == response2.json()["status"], "Response statuses do not match"
         assert response1.json()["data"]["data"]["results"] == response2.json()["data"]["data"]["results"], "Response data do not match"
+
+
+# we already create the evolution for resource during schema migration
+# since we have to create test data around it, we need to get the evolution time
+def get_resource_evolution_time(signoz: types.SigNoz, signal: str) -> datetime:
+    result = signoz.telemetrystore.conn.query(
+        """
+        SELECT release_time
+        FROM signoz_metadata.distributed_column_evolution_metadata
+        WHERE signal = %(signal)s
+          AND field_context = 'resource'
+          AND field_name = '__all__'
+          AND column_name = 'resource'
+        LIMIT 1
+        """,
+        parameters={"signal": signal},
+    ).result_rows
+
+    assert result, f"Expected {signal} resource evolution metadata to exist"
+
+    release_time_ns = int(result[0][0])
+    return datetime.fromtimestamp(release_time_ns / 1e9, tz=UTC)
 
 
 def generate_logs_with_corrupt_metadata() -> list[Logs]:
