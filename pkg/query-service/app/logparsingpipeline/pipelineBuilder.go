@@ -216,7 +216,7 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 
 func processSeverityParser(operator *pipelinetypes.PipelineOperator) error {
 	if operator.Type != "severity_parser" {
-		return errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", operator.Type)
+		return errors.NewInternalf(CodeInvalidOperatorType, "operator type received %s", operator.Type)
 	}
 
 	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
@@ -236,7 +236,7 @@ func processSeverityParser(operator *pipelinetypes.PipelineOperator) error {
 // processJSONParser converts simple JSON parser operator into multiple operators for JSONMapping of default variables
 func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.PipelineOperator, error) {
 	if parent.Type != "json_parser" {
-		return nil, errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", parent.Type)
+		return nil, errors.NewInternalf(CodeInvalidOperatorType, "operator type received %s", parent.Type)
 	}
 
 	parseFromNotNilCheck, err := fieldNotNilCheck(parent.ParseFrom)

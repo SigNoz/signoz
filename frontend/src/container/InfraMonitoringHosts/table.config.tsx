@@ -1,5 +1,6 @@
 import React from 'react';
-import { Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8s/Base/utils';
@@ -92,14 +93,13 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const active = value as boolean;
 			return (
-				<Tag
-					bordered
+				<Badge
 					className={`${styles.statusTag} ${
 						active ? styles.statusTagActive : styles.statusTagInactive
 					}`}
 				>
 					{active ? 'ACTIVE' : 'INACTIVE'}
-				</Tag>
+				</Badge>
 			);
 		},
 	},

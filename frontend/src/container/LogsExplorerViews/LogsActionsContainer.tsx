@@ -1,4 +1,4 @@
-import { Switch } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
@@ -9,8 +9,6 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { ArrowUp10, Minus } from '@signozhq/icons';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import QueryStatus from './QueryStatus';
-
 function LogsActionsContainer({
 	listQuery,
 	selectedPanelType,
@@ -18,10 +16,6 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart,
 	orderBy,
 	setOrderBy,
-	isFetching,
-	isLoading,
-	isError,
-	isSuccess,
 }: {
 	listQuery: any;
 	selectedPanelType: PANEL_TYPES;
@@ -29,10 +23,6 @@ function LogsActionsContainer({
 	handleToggleFrequencyChart: () => void;
 	orderBy: string;
 	setOrderBy: (value: string) => void;
-	isFetching: boolean;
-	isLoading: boolean;
-	isError: boolean;
-	isSuccess: boolean;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -69,9 +59,8 @@ function LogsActionsContainer({
 						<div className="frequency-chart-view-controller">
 							<Typography>Frequency chart</Typography>
 							<Switch
-								size="small"
-								checked={showFrequencyChart}
-								defaultChecked
+								value={showFrequencyChart}
+								defaultValue
 								onChange={handleToggleFrequencyChart}
 							/>
 						</div>
@@ -106,17 +95,6 @@ function LogsActionsContainer({
 								/>
 							</div>
 						</>
-					)}
-
-					{(selectedPanelType === PANEL_TYPES.TIME_SERIES ||
-						selectedPanelType === PANEL_TYPES.TABLE) && (
-						<div className="query-stats">
-							<QueryStatus
-								loading={isLoading || isFetching}
-								error={isError}
-								success={isSuccess}
-							/>
-						</div>
 					)}
 				</div>
 			</div>

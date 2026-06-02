@@ -1,0 +1,96 @@
+.container {
+	margin-top: 30px;
+	margin-bottom: 30px;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.viewContent {
+	width: calc(100% - 30px);
+	max-width: 836px;
+
+	:global(.ant-table-wrapper) :global(.ant-table-cell) {
+		padding: 0 !important;
+		border: none !important;
+		background: var(--l1-background) !important;
+	}
+
+	:global(.ant-table-wrapper)
+		:global(.ant-table-tbody)
+		:global(.ant-table-row)
+		:global(.ant-table-cell)
+		> div {
+		// Row content is the only child of the td; it carries the borders.
+	}
+
+	:global(.ant-table-wrapper)
+		:global(.ant-table-tbody)
+		:global(.ant-table-row:last-child)
+		:global(.ant-table-cell)
+		> div {
+		border-radius: 0 0 6px 6px;
+	}
+
+	:global(.ant-pagination-item) {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	:global(.ant-pagination-item) > a {
+		color: var(--l2-foreground);
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-normal);
+		line-height: 20px;
+	}
+
+	:global(.ant-pagination-item-active) {
+		background-color: var(--primary-background);
+	}
+
+	:global(.ant-pagination-item-active) > a {
+		color: var(--foreground) !important;
+		font-weight: var(--font-weight-medium);
+	}
+}
+
+.titleContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.title {
+	color: var(--l1-foreground);
+	font-size: var(--font-size-lg);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 28px;
+	letter-spacing: -0.09px;
+}
+
+.subtitle {
+	color: var(--l2-foreground);
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.integrationsContainer {
+	margin: 16px 0;
+}
+
+.integrationsContent {
+	max-width: 100%;
+	width: 100%;
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 16px 0;
+}

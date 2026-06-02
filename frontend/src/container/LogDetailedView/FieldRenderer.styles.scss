@@ -22,3 +22,9 @@
 		gap: 8px;
 	}
 }
+
+// FieldRenderer is used inside log/trace/metric detail drawers (z-index 1000).
+// The design-system tooltip defaults to z-index 50 and would render behind them.
+.field-renderer-tooltip-content {
+	--tooltip-z-index: 1000;
+}

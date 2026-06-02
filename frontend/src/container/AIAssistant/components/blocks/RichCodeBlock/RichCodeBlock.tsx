@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 import SyntaxHighlighter, {
 	a11yDark,
@@ -126,16 +127,17 @@ function CopyButton({ text }: { text: string }): JSX.Element {
 	};
 
 	return (
-		<Button
-			variant="ghost"
-			size="sm"
-			color="secondary"
-			className={styles.copyBtn}
-			onClick={handleCopy}
-			title={copied ? 'Copied' : 'Copy code'}
-			aria-label={copied ? 'Copied' : 'Copy code'}
-		>
-			{copied ? <Check size={12} /> : <Copy size={12} />}
-		</Button>
+		<TooltipSimple title={copied ? 'Copied' : 'Copy code'}>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				className={styles.copyBtn}
+				onClick={handleCopy}
+				aria-label={copied ? 'Copied' : 'Copy code'}
+			>
+				{copied ? <Check size={12} /> : <Copy size={12} />}
+			</Button>
+		</TooltipSimple>
 	);
 }

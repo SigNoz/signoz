@@ -34,11 +34,10 @@ func (m *module) getPerGroupHostStatusCounts(
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
 
-	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
-		uint64(req.Start), uint64(req.End), nil,
-	)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, distributedTimeSeriesTableName, _, _, localSamplesTable := alignedMetricWindow(req.Start, req.End)
 
-	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", hostNameAttrKey)
+	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", inframonitoringtypes.HostNameAttrKey)
 
 	sb := sqlbuilder.NewSelectBuilder()
 	selectCols := make([]string, 0, len(req.GroupBy)+2)
@@ -48,22 +47,22 @@ func (m *module) getPerGroupHostStatusCounts(
 		)
 	}
 
-	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey, sinceUnixMilli)
+	activeHostsSQ := m.getActiveHostsQuery(metricNames, inframonitoringtypes.HostNameAttrKey, sinceUnixMilli)
 	selectCols = append(selectCols,
 		fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
 		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),
 	)
 
 	// Build a fingerprint subquery to restrict to fingerprints with actual sample
-	// data in the original time range (not the wider timeseries table window).
-	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, req.Start, req.End)
+	// data in the floored time range.
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
 
 	sb.Select(selectCols...)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
-		sb.GE("unix_milli", adjustedStart),
-		sb.L("unix_milli", adjustedEnd),
+		sb.GE("unix_milli", tsAdjustedStartMs),
+		sb.LE("unix_milli", flooredEndMs),
 		fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
 	)
 
@@ -142,7 +141,7 @@ func buildHostRecords(
 	records := make([]inframonitoringtypes.HostRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		hostName := labels[hostNameAttrKey]
+		hostName := labels[inframonitoringtypes.HostNameAttrKey]
 
 		activeStatus := inframonitoringtypes.HostStatusNone
 		activeHostCount := 0
@@ -216,6 +215,9 @@ func (m *module) getTopHostGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.HostNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToHostsQueryNames[orderByKey]
 	// The last entry is the formula/query whose value we sort by.
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
@@ -281,7 +283,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 	if req.Filter.FilterByStatus == inframonitoringtypes.HostStatusInactive {
 		op = "NOT IN"
 	}
-	statusClause := fmt.Sprintf("%s %s (%s)", hostNameAttrKey, op, strings.Join(activeHosts, ", "))
+	statusClause := fmt.Sprintf("%s %s (%s)", inframonitoringtypes.HostNameAttrKey, op, strings.Join(activeHosts, ", "))
 	req.Filter.Expression = mergeFilterExpressions(req.Filter.Expression, statusClause)
 	return false
 }

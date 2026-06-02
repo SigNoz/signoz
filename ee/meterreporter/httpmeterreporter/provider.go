@@ -94,17 +94,19 @@ func newProvider(
 func (provider *Provider) Start(ctx context.Context) error {
 	close(provider.healthyC)
 
-	provider.collect(ctx)
+	startDelay := provider.config.NewJitter()
 
-	ticker := time.NewTicker(provider.config.Interval)
-	defer ticker.Stop()
+	timer := time.NewTimer(startDelay)
+	defer timer.Stop()
 
 	for {
 		select {
 		case <-provider.stopC:
 			return nil
-		case <-ticker.C:
+		case <-timer.C:
 			provider.collect(ctx)
+			next := provider.config.Interval - provider.config.NewJitter()
+			timer.Reset(next)
 		}
 	}
 }
@@ -257,6 +259,7 @@ func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license
 		collectedReadings, err := collector.Collect(ctx, orgID, license, window)
 		if err != nil {
 			provider.metrics.collections.Add(ctx, 1, metric.WithAttributes(meterAttr, errors.TypeAttr(err)))
+			provider.settings.Logger().ErrorContext(ctx, "meter collector failed", errors.Attr(err), slog.String("org_id", orgID.StringValue()), slog.String("meter", collector.Name().String()))
 			continue
 		}
 

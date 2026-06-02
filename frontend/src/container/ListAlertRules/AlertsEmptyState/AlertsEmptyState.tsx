@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { Plus } from '@signozhq/icons';
-import { Button, Divider, Flex } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Plus, RefreshCw } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -16,7 +17,7 @@ import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
 import InfoLinkText from './InfoLinkText';
 
-import './AlertsEmptyState.styles.scss';
+import styles from './AlertsEmptyState.module.scss';
 
 const alertLogEvents = (
 	title: string,
@@ -28,10 +29,16 @@ const alertLogEvents = (
 		page: 'Alert empty state page',
 	};
 
-	logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
+	void logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
 };
 
-export function AlertsEmptyState(): JSX.Element {
+interface AlertsEmptyStateProps {
+	onRefresh?: () => void;
+}
+
+export function AlertsEmptyState({
+	onRefresh,
+}: AlertsEmptyStateProps): JSX.Element {
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const [addNewAlert] = useComponentPermission(
@@ -50,45 +57,51 @@ export function AlertsEmptyState(): JSX.Element {
 	);
 
 	return (
-		<div className="alert-list-container">
-			<div className="alert-list-view-content">
-				<div className="alert-list-title-container">
-					<Typography.Title className="title">Alert Rules</Typography.Title>
-					<Typography.Text className="subtitle">
+		<div className={styles.alertListContainer}>
+			<div className={styles.alertListViewContent}>
+				<div>
+					<Typography.Title className={styles.title}>Alert Rules</Typography.Title>
+					<Typography.Text className={styles.subtitle}>
 						Create and manage alert rules for your resources.
 					</Typography.Text>
 				</div>
-				<section className="empty-alert-info-container">
-					<div className="alert-content">
-						<section className="heading">
+				<section className={styles.emptyAlertInfoContainer}>
+					<div className={styles.alertContent}>
+						<section className={styles.heading}>
 							<img
 								src={alertEmojiUrl}
 								alt="alert-header"
 								style={{ height: '32px', width: '32px' }}
 							/>
 							<div>
-								<Typography.Text className="empty-info">
+								<Typography.Text className={styles.emptyInfo}>
 									No Alert rules yet.{' '}
 								</Typography.Text>
-								<Typography.Text className="empty-alert-action">
+								<br />
+								<Typography.Text className={styles.emptyAlertAction}>
 									Create an Alert Rule to get started
 								</Typography.Text>
 							</div>
 						</section>
-						<div className="action-container">
-							<Button
-								className="add-alert-btn"
-								onClick={onClickNewAlertHandler}
-								disabled={!addNewAlert}
-								loading={loading}
-								type="primary"
-								data-testid="add-alert"
-							>
-								<Flex align="center" justify="center" gap={4}>
-									<Plus size="md" />
-									New Alert Rule
-								</Flex>
-							</Button>
+						<div className={styles.actionContainer}>
+							<div className={styles.buttonGroup}>
+								<Button
+									onClick={onClickNewAlertHandler}
+									disabled={!addNewAlert}
+									loading={loading}
+									data-testid="add-alert"
+								>
+									<span className={styles.buttonContent}>
+										<Plus size="md" />
+										New Alert Rule
+									</span>
+								</Button>
+								{onRefresh && (
+									<Button onClick={onRefresh} prefix={<RefreshCw />} color="secondary">
+										Refresh
+									</Button>
+								)}
+							</div>
 							<InfoLinkText
 								infoText="Watch a tutorial on creating a sample alert"
 								link="https://youtu.be/xjxNIqiv4_M"
@@ -123,11 +136,9 @@ export function AlertsEmptyState(): JSX.Element {
 						})}
 					</div>
 				</section>
-				<div className="get-started-text">
-					<Divider>
-						<Typography.Text className="get-started-text">
-							Or get started with these sample alerts
-						</Typography.Text>
+				<div className={styles.getStartedText}>
+					<Divider className="get-started-text__divider">
+						<Typography.Text>Or get started with these sample alerts</Typography.Text>
 					</Divider>
 				</div>
 

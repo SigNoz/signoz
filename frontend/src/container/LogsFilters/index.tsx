@@ -2,7 +2,8 @@ import { ChangeEvent, useCallback, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { CirclePlus, X } from '@signozhq/icons';
-import { Col, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Col } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { AppState } from 'store/reducers';

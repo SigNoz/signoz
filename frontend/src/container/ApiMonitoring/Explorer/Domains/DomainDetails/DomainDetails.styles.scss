@@ -141,12 +141,9 @@
 
 			.progress-container {
 				width: 158px;
-				.ant-progress {
-					margin: 0;
 
-					.ant-progress-text {
-						font-weight: 600;
-					}
+				span {
+					font-weight: 600;
 				}
 			}
 
@@ -164,41 +161,6 @@
 		justify-content: space-between;
 		align-items: center;
 		border-bottom: 1px solid var(--l1-border);
-
-		.views-tabs {
-			color: var(--l2-foreground);
-
-			.view-title {
-				display: flex;
-				gap: var(--margin-2);
-				align-items: center;
-				justify-content: center;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: var(--font-weight-normal);
-			}
-
-			.tab {
-				padding: 0 32px;
-				background: var(--l3-background);
-				border: 1px solid var(--l1-border);
-				width: auto;
-			}
-
-			.tab::before {
-				background: var(--l1-border);
-			}
-
-			.selected_view {
-				background: none;
-				border: 1px solid var(--l1-border);
-				border-bottom: none;
-			}
-
-			.selected_view::before {
-				background: var(--l1-border);
-			}
-		}
 	}
 }
 
@@ -701,40 +663,6 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
-	}
-
-	.views-tabs {
-		color: var(--l2-foreground);
-
-		.ant-btn {
-			box-shadow: none;
-			position: relative;
-		}
-
-		.tab {
-			border: 1px solid var(--l1-border);
-			width: 114px;
-			z-index: 1;
-		}
-
-		.tab:hover {
-			z-index: 3;
-		}
-
-		.tab::before {
-			background: var(--l2-background);
-		}
-
-		.selected_view {
-			background: var(--l1-border);
-			color: var(--l1-foreground);
-			border: 1px solid var(--l1-border);
-			z-index: 2;
-		}
-
-		.selected_view::before {
-			background: var(--l2-background);
-		}
 	}
 }
 

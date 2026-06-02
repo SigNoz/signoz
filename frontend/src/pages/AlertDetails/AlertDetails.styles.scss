@@ -41,10 +41,9 @@
 }
 
 .alert-details {
-	margin-top: 10px;
-	.divider {
-		border-color: var(--l1-border);
-		margin: 16px 0;
+	&__divider {
+		--divider-color: var(--l1-border);
+		--divider-margin: 16px 0;
 	}
 	.breadcrumb-divider {
 		margin-top: 10px;
