@@ -16,10 +16,11 @@ import (
 
 func newTestTraceOperatorStatementBuilder(t *testing.T) *traceOperatorStatementBuilder {
 	t.Helper()
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
