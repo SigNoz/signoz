@@ -85,6 +85,7 @@ func (t *FlamegraphTrace) GetSelectedLevels(selectedSpanID string, levelLimit, s
 
 	selectedIndex := getLevelIndex(allLevels, selectedSpanID)
 
+	// 40% window above level with selected span and 60% below that
 	beforeSelectedLevel := int(float64(levelLimit) * 0.4)
 	startLevel := max(0, selectedIndex-beforeSelectedLevel)
 	endLevel := min(len(allLevels), startLevel+levelLimit)
@@ -94,8 +95,7 @@ func (t *FlamegraphTrace) GetSelectedLevels(selectedSpanID string, levelLimit, s
 		spans := allLevels[i]
 		sampled := spans
 		if len(spans) > spansPerLevel {
-			sampled = sampleFlamegraphLevel(spans, selectedSpanID, i == selectedIndex,
-				t.startTime, t.endTime, topLatencyCount, bucketCount)
+			sampled = t.sampleLevel(spans, selectedSpanID, i == selectedIndex, topLatencyCount, bucketCount)
 		}
 		if len(sampled) == 0 {
 			continue
@@ -162,17 +162,16 @@ func (t *FlamegraphTrace) buildSpanTree() {
 	})
 }
 
-func sampleFlamegraphLevel(spans []*FlamegraphSpan, selectedSpanID string, isSelectedLevel bool, startTime, endTime uint64, topLatencyCount, bucketCount int) []*FlamegraphSpan {
+func (t *FlamegraphTrace) sampleLevel(spans []*FlamegraphSpan, selectedSpanID string, isSelectedLevel bool, topLatencyCount, bucketCount int) []*FlamegraphSpan {
 	sorted := make([]*FlamegraphSpan, len(spans))
 	copy(sorted, spans)
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].DurationNano > sorted[j].DurationNano
 	})
 
-	var sampled []*FlamegraphSpan
-
 	topK := min(topLatencyCount, len(sorted))
-	sampled = append(sampled, sorted[:topK]...)
+	sampled := make([]*FlamegraphSpan, topK, topK+1)
+	copy(sampled, sorted[:topK])
 
 	if isSelectedLevel {
 		for _, span := range sorted {
@@ -183,33 +182,29 @@ func sampleFlamegraphLevel(spans []*FlamegraphSpan, selectedSpanID string, isSel
 		}
 	}
 
-	bucketSize := (endTime - startTime) / uint64(bucketCount)
+	return append(sampled, t.bucketSampleSpans(sorted, bucketCount)...)
+}
+
+func (t *FlamegraphTrace) bucketSampleSpans(sorted []*FlamegraphSpan, bucketCount int) []*FlamegraphSpan {
+	bucketSize := (t.endTime - t.startTime) / uint64(bucketCount)
 	if bucketSize == 0 {
 		bucketSize = 1
 	}
 	buckets := make([][]*FlamegraphSpan, bucketCount)
 	for _, span := range sorted {
-		if span.Timestamp < startTime || span.Timestamp > endTime {
+		if span.Timestamp < t.startTime || span.Timestamp > t.endTime {
 			continue
 		}
-		idx := int((span.Timestamp - startTime) / bucketSize)
-		if idx < 0 {
-			idx = 0
-		} else if idx >= bucketCount {
-			idx = bucketCount - 1
-		}
-		buckets[idx] = append(buckets[idx], span)
-	}
-	for i := range buckets {
-		if len(buckets[i]) > 2 {
-			buckets[i] = buckets[i][:2]
+		idx := min(int((span.Timestamp-t.startTime)/bucketSize), bucketCount-1)
+		if len(buckets[idx]) < 2 {
+			buckets[idx] = append(buckets[idx], span)
 		}
 	}
+	var result []*FlamegraphSpan
 	for _, bucket := range buckets {
-		sampled = append(sampled, bucket...)
+		result = append(result, bucket...)
 	}
-
-	return sampled
+	return result
 }
 
 func getLevelIndex(levels [][]*FlamegraphSpan, spanID string) int {
