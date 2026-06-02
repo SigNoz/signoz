@@ -64,16 +64,16 @@ web:
   settings:
     posthog:
       # Whether to enable PostHog in web.
-      enabled: true
+      enabled: false
     appcues:
       # Whether to enable Appcues in web.
-      enabled: true
+      enabled: false
     sentry:
       # Whether to enable Sentry in web.
-      enabled: true
+      enabled: false
     pylon:
       # Whether to enable Pylon in web.
-      enabled: true
+      enabled: false
 
 ##################### Cache #####################
 cache:
