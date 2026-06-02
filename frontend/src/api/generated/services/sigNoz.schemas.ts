@@ -2844,28 +2844,28 @@ export interface CloudintegrationtypesStorableIntegrationDashboardDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: string;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
-	dashboardId?: string;
+	dashboardId: string;
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
-	provider?: string;
+	provider: string;
 	/**
 	 * @type string
 	 */
-	slug?: string;
+	slug: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: string;
+	updatedAt: string;
 }
 
 export interface CloudintegrationtypesServiceDashboardDTO {
