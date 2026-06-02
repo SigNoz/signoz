@@ -42,40 +42,19 @@ func NewFlamegraphTraceFromStorable(spans []StorableSpan, selectFields []telemet
 
 func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
 	var result [][]*FlamegraphSpan
-
-	type entry struct {
-		node  *FlamegraphSpan
-		depth int64
-	}
-
 	for _, root := range t.roots {
-		levelMap := make(map[int64][]*FlamegraphSpan)
-		maxDepth := int64(-1)
-
-		queue := []entry{{root, 0}}
-		for len(queue) > 0 {
-			curr := queue[0]
-			queue = queue[1:]
-			curr.node.Level = curr.depth
-			levelMap[curr.depth] = append(levelMap[curr.depth], curr.node)
-			if curr.depth > maxDepth {
-				maxDepth = curr.depth
+		currentLevel := []*FlamegraphSpan{root}
+		for depth := int64(0); len(currentLevel) > 0; depth++ {
+			var nextLevel []*FlamegraphSpan
+			for _, node := range currentLevel {
+				node.Level = depth
+				nextLevel = append(nextLevel, node.Children...)
 			}
-			for _, child := range curr.node.Children {
-				queue = append(queue, entry{child, curr.depth + 1})
-			}
-		}
-
-		for depth := int64(0); depth <= maxDepth; depth++ {
-			if spans, ok := levelMap[depth]; ok {
-				result = append(result, spans)
-			}
+			result = append(result, currentLevel)
+			currentLevel = nextLevel
 		}
 	}
 
-	for _, node := range t.nodeByID {
-		node.Children = nil
-	}
 	return result
 }
 
