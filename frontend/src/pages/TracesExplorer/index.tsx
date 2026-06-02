@@ -31,7 +31,6 @@ import TracesView from 'container/TracesExplorer/TracesView';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
@@ -100,8 +99,6 @@ function TracesExplorer(): JSX.Element {
 			setIsCancelled(false);
 		}
 	}, [isLoadingQueries]);
-
-	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const handleCancelQuery = useCallback(() => {
 		if (listQueryKeyRef.current) {

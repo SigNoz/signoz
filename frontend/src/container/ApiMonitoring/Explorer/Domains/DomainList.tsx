@@ -17,7 +17,6 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
 import { AppState } from 'store/reducers';
@@ -43,7 +42,7 @@ function DomainList(): JSX.Element {
 	);
 
 	const queryClient = useQueryClient();
-	const { currentQuery, handleRunQuery, stagedQuery } = useQueryBuilder();
+	const { currentQuery, handleRunQuery } = useQueryBuilder();
 	const query = useMemo(
 		() => currentQuery?.builder?.queryData[0] || null,
 		[currentQuery],
@@ -69,8 +68,6 @@ function DomainList(): JSX.Element {
 		queryClient.invalidateQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
 		handleRunQuery();
 	}, [queryClient, handleRunQuery]);
-
-	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const { data, isLoading, isFetching } = useListOverview({
 		start: minTime,

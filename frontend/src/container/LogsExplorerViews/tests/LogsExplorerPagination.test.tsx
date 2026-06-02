@@ -109,13 +109,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 }));
 
 jest.mock(
-	'container/TopNav/DateTimeSelectionV2/index.tsx',
-	() =>
-		function MockDateTimeSelection(): JSX.Element {
-			return <div>MockDateTimeSelection</div>;
-		},
-);
-jest.mock(
 	'container/LogsExplorerChart',
 	() =>
 		function MockLogsExplorerChart(): JSX.Element {

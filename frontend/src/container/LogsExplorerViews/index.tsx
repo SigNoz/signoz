@@ -37,7 +37,6 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
@@ -97,8 +96,6 @@ function LogsExplorerViewsContainer({
 
 	// Context
 	const { stagedQuery, panelType } = useQueryBuilder();
-
-	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const selectedPanelType = panelType || PANEL_TYPES.LIST;
 
