@@ -472,4 +472,98 @@ describe('computeVisualLayout', () => {
 		expect(aRow).toBeGreaterThan(1); // must NOT be at row 1
 		expect(aRow).toBe(3); // next free row after B at row 2 (A overlaps B)
 	});
+
+	// --- Wide-group fast path (> WIDE_GROUP_THRESHOLD siblings) ---
+	// Past the threshold the layout switches to exact overlap-only packing to
+	// avoid the O(N^2) connector-avoidance spiral. These lock in correctness and
+	// the no-overlap invariant at scale.
+
+	function noRowHasOverlap(
+		layout: ReturnType<typeof computeVisualLayout>,
+	): void {
+		for (const row of layout.visualRows) {
+			const sorted = [...row].sort((a, b) => a.timestamp - b.timestamp);
+			for (let i = 1; i < sorted.length; i++) {
+				const prevEnd = sorted[i - 1].timestamp + sorted[i - 1].durationNano / 1e6;
+				expect(sorted[i].timestamp).toBeGreaterThanOrEqual(prevEnd);
+			}
+		}
+	}
+
+	it('should pack thousands of sequential leaf siblings into 1 row (wide path)', () => {
+		const root = makeSpan({ spanId: 'root', timestamp: 0, durationNano: 1e12 });
+		const kids: FlamegraphSpan[] = [];
+		// 2000 strictly sequential (non-overlapping) children
+		for (let i = 0; i < 2000; i++) {
+			kids.push(
+				makeSpan({
+					spanId: `k${i}`,
+					parentSpanId: 'root',
+					timestamp: i * 10,
+					durationNano: 5e6, // 5ms, ends before next starts
+				}),
+			);
+		}
+
+		const layout = computeVisualLayout([[root], kids]);
+
+		expect(layout.spanToVisualRow['root']).toBe(0);
+		expect(layout.totalVisualRows).toBe(2); // all siblings share row 1
+		for (const k of kids) {
+			expect(layout.spanToVisualRow[k.spanId]).toBe(1);
+		}
+		noRowHasOverlap(layout);
+	});
+
+	it('should pack thousands of fully-overlapping leaf siblings without violations (wide path)', () => {
+		const root = makeSpan({ spanId: 'root', timestamp: 0, durationNano: 1e12 });
+		const kids: FlamegraphSpan[] = [];
+		// 1000 children all spanning the same window → each needs its own row
+		for (let i = 0; i < 1000; i++) {
+			kids.push(
+				makeSpan({
+					spanId: `k${i}`,
+					parentSpanId: 'root',
+					timestamp: 0,
+					durationNano: 100e6,
+				}),
+			);
+		}
+
+		const layout = computeVisualLayout([[root], kids]);
+
+		expect(layout.totalVisualRows).toBe(1001); // root + 1000 stacked rows
+		expect(Object.keys(layout.spanToVisualRow)).toHaveLength(1001);
+		noRowHasOverlap(layout);
+	});
+
+	it('should keep non-leaf subtrees adjacent within a wide mixed group (wide path)', () => {
+		const root = makeSpan({ spanId: 'root', timestamp: 0, durationNano: 1e12 });
+		const kids: FlamegraphSpan[] = [];
+		for (let i = 0; i < 1000; i++) {
+			kids.push(
+				makeSpan({
+					spanId: `k${i}`,
+					parentSpanId: 'root',
+					timestamp: i * 10,
+					durationNano: 5e6,
+				}),
+			);
+		}
+		// One of the wide siblings has a child of its own
+		const grandchild = makeSpan({
+			spanId: 'gc',
+			parentSpanId: 'k500',
+			timestamp: 5000,
+			durationNano: 2e6,
+		});
+
+		const layout = computeVisualLayout([[root], kids, [grandchild]]);
+
+		const parentRow = layout.spanToVisualRow['k500'];
+		const gcRow = layout.spanToVisualRow['gc'];
+		expect(gcRow - parentRow).toBe(1); // subtree adjacency preserved
+		expect(Object.keys(layout.spanToVisualRow)).toHaveLength(1002);
+		noRowHasOverlap(layout);
+	});
 });
