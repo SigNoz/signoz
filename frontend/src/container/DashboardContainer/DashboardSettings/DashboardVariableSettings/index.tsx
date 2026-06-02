@@ -18,7 +18,7 @@ import { convertVariablesToDbFormat } from 'container/DashboardContainer/Dashboa
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
+import { toast } from '@signozhq/ui/sonner';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -92,8 +92,6 @@ function VariablesSettings({
 
 	const { dashboardData, setDashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
-
-	const { notifications } = useNotifications();
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
@@ -202,9 +200,7 @@ function VariablesSettings({
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
 						setDashboardData(updatedDashboard.data);
-						notifications.success({
-							message: t('variable_updated_successfully'),
-						});
+						toast.success(t('variable_updated_successfully'));
 					}
 				},
 			},
@@ -289,9 +285,7 @@ function VariablesSettings({
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
 						setDashboardData(updatedDashboard.data);
-						notifications.success({
-							message: t('variable_updated_successfully'),
-						});
+						toast.success(t('variable_updated_successfully'));
 					}
 				},
 			},
