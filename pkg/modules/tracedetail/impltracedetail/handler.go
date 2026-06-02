@@ -88,7 +88,7 @@ func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.module.GetFlamegraph(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID)
+	result, err := h.module.GetFlamegraph(r.Context(), mux.Vars(r)["traceID"], req.SelectedSpanID, req.SelectFields)
 	if err != nil {
 		render.Error(rw, err)
 		return

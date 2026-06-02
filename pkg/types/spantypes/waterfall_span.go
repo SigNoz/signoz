@@ -279,6 +279,19 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 	return nil, false
 }
 
+func (item *StorableSpan) AttributeValue(name string) any {
+	if v, ok := item.AttributesString[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesNumber[name]; ok {
+		return v
+	}
+	if v, ok := item.AttributesBool[name]; ok {
+		return v
+	}
+	return nil
+}
+
 func (item *StorableSpan) Attributes() map[string]any {
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {

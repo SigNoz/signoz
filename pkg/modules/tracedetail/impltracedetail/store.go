@@ -154,6 +154,38 @@ func (s *traceStore) GetTraceSpansByIDs(ctx context.Context, traceID string, sta
 	return spans, nil
 }
 
+func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, start, end time.Time, spanIDs []string) ([]spantypes.StorableSpan, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"DISTINCT ON (span_id) span_id",
+		"parent_span_id", "timestamp", "duration_nano", "has_error", "name", "events",
+		"attributes_string", "attributes_number", "attributes_bool", "resources_string",
+	)
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	conditions := []string{
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", start.Unix()-1800),
+		sb.LE("ts_bucket_start", end.Unix()),
+	}
+	if len(spanIDs) > 0 {
+		ids := make([]any, len(spanIDs))
+		for i, id := range spanIDs {
+			ids[i] = id
+		}
+		conditions = append(conditions, sb.In("span_id", ids...))
+	}
+	sb.Where(conditions...)
+	sb.OrderByAsc("timestamp")
+	sb.OrderByAsc("name")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var spans []spantypes.StorableSpan
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying flamegraph spans")
+	}
+	return spans, nil
+}
+
 func (s *traceStore) GetSpanCountByField(ctx context.Context, traceID string, summary *spantypes.TraceSummary, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error) {
 	fieldExpr, err := buildFieldExpr(fieldKey)
 	if err != nil {

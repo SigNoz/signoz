@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // Handler exposes HTTP handlers for trace detail APIs.
@@ -20,5 +21,5 @@ type Module interface {
 	GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error)
 	GetWaterfallV4(ctx context.Context, traceID string, selectedSpanID string, uncollapsedSpans []string, selectAllLimit uint) (*spantypes.GettableWaterfallTrace, error)
 	GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error)
-	GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string) (*spantypes.GettableFlamegraphTrace, error)
+	GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error)
 }

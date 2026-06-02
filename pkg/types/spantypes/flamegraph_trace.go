@@ -2,6 +2,8 @@ package spantypes
 
 import (
 	"sort"
+
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // FlamegraphTrace holds the level wise tree built from minimal spans.
@@ -25,12 +27,12 @@ func NewFlamegraphTraceFromMinimal(spans []MinimalSpan) *FlamegraphTrace {
 	return t
 }
 
-func NewFlamegraphTraceFromStorable(spans []StorableSpan) *FlamegraphTrace {
+func NewFlamegraphTraceFromStorable(spans []StorableSpan, selectFields []telemetrytypes.TelemetryFieldKey) *FlamegraphTrace {
 	t := &FlamegraphTrace{
 		nodeByID: make(map[string]*FlamegraphSpan, len(spans)),
 	}
 	for i := range spans {
-		node := NewFlamegraphSpanFromStorable(&spans[i], 0) // level is set later by BFS
+		node := NewFlamegraphSpanFromStorable(&spans[i], 0, selectFields) // level is set later by BFS
 		t.updateTimeRange(node.Timestamp, node.DurationNano)
 		t.nodeByID[node.SpanID] = node
 	}
@@ -50,7 +52,7 @@ func (t *FlamegraphTrace) GetSelectedLevels(
 	return nil
 }
 
-func (t *FlamegraphTrace) EnrichSelectedSpans(selectedSpans []FlamegraphLevel, fullSpans []StorableSpan) [][]*FlamegraphSpan {
+func (t *FlamegraphTrace) EnrichSelectedSpans(selectedSpans []FlamegraphLevel, fullSpans []StorableSpan, selectFields []telemetrytypes.TelemetryFieldKey) [][]*FlamegraphSpan {
 	fullByID := make(map[string]*StorableSpan, len(fullSpans))
 	for i := range fullSpans {
 		fullByID[fullSpans[i].SpanID] = &fullSpans[i]
@@ -61,7 +63,7 @@ func (t *FlamegraphTrace) EnrichSelectedSpans(selectedSpans []FlamegraphLevel, f
 		result[i] = make([]*FlamegraphSpan, 0, len(lvl.SpanIDs))
 		for _, spanID := range lvl.SpanIDs {
 			if full, ok := fullByID[spanID]; ok {
-				result[i] = append(result[i], NewFlamegraphSpanFromStorable(full, lvl.Level))
+				result[i] = append(result[i], NewFlamegraphSpanFromStorable(full, lvl.Level, selectFields))
 			} else if lean, ok := t.nodeByID[spanID]; ok {
 				result[i] = append(result[i], lean)
 			}

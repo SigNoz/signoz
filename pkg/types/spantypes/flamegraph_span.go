@@ -1,8 +1,6 @@
 package spantypes
 
 import (
-	"maps"
-
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -49,10 +47,8 @@ func NewGettableFlamegraphTrace(spans [][]*FlamegraphSpan, startMs, endMs int64,
 	}
 }
 
-func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64) *FlamegraphSpan {
-	resources := make(map[string]string, len(s.ResourcesString))
-	maps.Copy(resources, s.ResourcesString)
-	return &FlamegraphSpan{
+func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []telemetrytypes.TelemetryFieldKey) *FlamegraphSpan {
+	span := &FlamegraphSpan{
 		SpanID:       s.SpanID,
 		ParentSpanID: s.ParentSpanID,
 		Timestamp:    uint64(s.StartTime.UnixNano()),
@@ -62,9 +58,29 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64) *FlamegraphSpan
 		Name:         s.Name,
 		Level:        level,
 		Events:       s.UnmarshalledEvents(),
-		Attributes:   s.Attributes(),
-		Resource:     resources,
 	}
+	if len(selectFields) == 0 {
+		return span
+	}
+	for _, field := range selectFields {
+		switch field.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			if v, ok := s.ResourcesString[field.Name]; ok && v != "" {
+				if span.Resource == nil {
+					span.Resource = make(map[string]string)
+				}
+				span.Resource[field.Name] = v
+			}
+		case telemetrytypes.FieldContextAttribute:
+			if v := s.AttributeValue(field.Name); v != nil {
+				if span.Attributes == nil {
+					span.Attributes = make(map[string]any)
+				}
+				span.Attributes[field.Name] = v
+			}
+		}
+	}
+	return span
 }
 
 // FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
