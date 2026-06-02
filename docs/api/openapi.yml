@@ -6527,7 +6527,6 @@ components:
         event:
           items:
             $ref: '#/components/schemas/SpantypesEvent'
-          nullable: true
           type: array
         hasError:
           type: boolean
@@ -6549,6 +6548,8 @@ components:
         timestamp:
           minimum: 0
           type: integer
+      required:
+      - event
       type: object
     SpantypesGettableFlamegraphTrace:
       properties:
@@ -6562,11 +6563,12 @@ components:
             items:
               $ref: '#/components/schemas/SpantypesFlamegraphSpan'
             type: array
-          nullable: true
           type: array
         startTimestampMillis:
           format: int64
           type: integer
+      required:
+      - spans
       type: object
     SpantypesGettableSpanMapperGroups:
       properties:

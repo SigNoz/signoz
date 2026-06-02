@@ -7690,9 +7690,9 @@ export interface SpantypesFlamegraphSpanDTO {
 	 */
 	durationNano?: number;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	event?: SpantypesEventDTO[] | null;
+	event: SpantypesEventDTO[];
 	/**
 	 * @type boolean
 	 */
@@ -7740,9 +7740,9 @@ export interface SpantypesGettableFlamegraphTraceDTO {
 	 */
 	hasMore?: boolean;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	spans?: SpantypesFlamegraphSpanDTO[][] | null;
+	spans: SpantypesFlamegraphSpanDTO[][];
 	/**
 	 * @type integer
 	 * @format int64
