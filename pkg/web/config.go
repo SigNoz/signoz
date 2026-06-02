@@ -24,7 +24,7 @@ type SettingsConfig struct {
 	Posthog PosthogConfig `mapstructure:"posthog"`
 	Appcues AppcuesConfig `mapstructure:"appcues"`
 	Sentry  SentryConfig  `mapstructure:"sentry"`
-	Pylon   PylonConfig   `mapstructure:"sentry"`
+	Pylon   PylonConfig   `mapstructure:"pylon"`
 }
 
 type PosthogConfig struct {
