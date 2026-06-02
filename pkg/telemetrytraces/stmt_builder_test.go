@@ -887,6 +887,8 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -1678,7 +1680,8 @@ func newSkipResourceFingerprintBuilder(
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(
