@@ -15,6 +15,8 @@ export interface SidebarItem {
 	isBeta?: boolean;
 	isNew?: boolean;
 	isEarlyAccess?: boolean;
+	/** Hover copy for the whole item row (e.g. Noz's early-access tagline). */
+	tooltip?: ReactNode;
 	isPinned?: boolean;
 	children?: SidebarItem[];
 	isExternal?: boolean;
