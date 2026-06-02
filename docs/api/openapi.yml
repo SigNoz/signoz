@@ -1290,6 +1290,13 @@ components:
         updatedAt:
           format: date-time
           type: string
+      required:
+      - id
+      - dashboardId
+      - provider
+      - slug
+      - createdAt
+      - updatedAt
       type: object
     CloudintegrationtypesSupportedSignals:
       properties:
