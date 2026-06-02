@@ -274,7 +274,6 @@ function VariablesSettings({
 			removeVariableReferencesFromDashboard(
 				dashboardData,
 				variableToDelete.current.name || '',
-				variableToDelete.current.dynamicVariablesAttribute,
 			) || dashboardData;
 
 		updateMutation.mutateAsync(

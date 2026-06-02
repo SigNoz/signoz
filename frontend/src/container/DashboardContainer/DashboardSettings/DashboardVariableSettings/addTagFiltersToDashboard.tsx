@@ -176,27 +176,6 @@ const matchesVariablePlaceholder = (
 	variableName: string,
 ): boolean => createVariablePlaceholderRegExp(variableName).test(text);
 
-const removeVariablePlaceholderFromFilterItems = (
-	items: TagFilterItem[],
-	variableName: string,
-): TagFilterItem[] =>
-	items
-		.map((item) => {
-			if (isArray(item.value)) {
-				const cleaned = (item.value as (string | number | boolean)[]).filter(
-					(v) => !matchesVariablePlaceholder(String(v), variableName),
-				);
-				return { ...item, value: cleaned };
-			}
-			return item;
-		})
-		.filter((item) => {
-			if (isArray(item.value)) {
-				return (item.value as unknown[]).length > 0;
-			}
-			return !matchesVariablePlaceholder(String(item.value), variableName);
-		});
-
 /**
  * Removes entire key-value clauses from a filter expression where the value
  * is a reference to the given variable. Uses the ANTLR-aware removeKeysFromExpression
@@ -238,8 +217,36 @@ const removeVariablePlaceholders = (
 		return '';
 	}
 
+	const tokenPattern = createVariablePlaceholderRegExp(variableName);
+
+	// Step 1: attempt clause-aware removal for SQL WHERE patterns.
+	// Strips the entire `key op $var` unit plus its adjacent AND/OR so we
+	// never leave a dangling `key = ` in unquoted ClickHouse SQL clauses.
+	// Handles three shapes:
+	//   (a) preceding conjunction:  AND key = $var
+	//   (b) following conjunction:  key = $var AND
+	//   (c) standalone clause:      key = $var  (end of expression)
+	const escapedToken = tokenPattern.source;
+	const clausePattern = new RegExp(
+		// (a) conjunction before the clause
+		`\\s*\\b(?:AND|OR)\\b\\s+[\\w."'\\[\\]]+\\s*(?:=|!=|<>|LIKE|ILIKE|IN|NOT\\s+IN)\\s*'?${escapedToken}'?` +
+			// (b)+(c) clause first, optional conjunction after
+			`|[\\w."'\\[\\]]+\\s*(?:=|!=|<>|LIKE|ILIKE|IN|NOT\\s+IN)\\s*'?${escapedToken}'?(?:\\s*\\b(?:AND|OR)\\b)?`,
+		'gi',
+	);
+
+	const withClauseRemoval = text.replace(clausePattern, '');
+	if (withClauseRemoval !== text) {
+		return withClauseRemoval
+			.replace(/\s{2,}/g, ' ')
+			.replace(/\bWHERE\s*$/i, '')
+			.trim();
+	}
+
+	// Step 2: fallback — bare variable usage outside a key-op-value pattern
+	// (e.g. SELECT $metric, LIMIT $n). Token-only removal is correct here.
 	return text
-		.replace(createVariablePlaceholderRegExp(variableName), '')
+		.replace(tokenPattern, '')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 };
@@ -247,80 +254,27 @@ const removeVariablePlaceholders = (
 const removeVariableReferencesFromQueryData = (
 	queryData: IBuilderQuery,
 	variableName: string,
-	dynamicVariablesAttribute?: string,
 ): IBuilderQuery => {
-	let updatedQueryData = { ...queryData };
-
-	if (dynamicVariablesAttribute) {
-		const filters = updatedQueryData.filters?.items || [];
-		const filteredItems = filters.filter((item) => {
-			if (item.key?.key !== dynamicVariablesAttribute) {
-				return true;
-			}
-			if (isArray(item.value)) {
-				return !(item.value as (string | number | boolean)[]).some((v) =>
-					matchesVariablePlaceholder(String(v), variableName),
-				);
-			}
-			return !matchesVariablePlaceholder(String(item.value), variableName);
-		});
-
-		updatedQueryData = {
-			...updatedQueryData,
-			filters: {
-				...updatedQueryData.filters,
-				items: filteredItems,
-				op: updatedQueryData.filters?.op || 'AND',
-			},
-			filter: {
-				...updatedQueryData.filter,
-				expression: removeKeysFromExpression(
-					updatedQueryData.filter?.expression ?? '',
-					[dynamicVariablesAttribute],
-					`$${variableName}`,
+	const updatedFilter = queryData.filter?.expression
+		? {
+				...queryData.filter,
+				expression: removeVariableFromExpression(
+					queryData.filter.expression,
+					variableName,
 				),
-			},
-			expression: removeKeysFromExpression(
-				updatedQueryData.expression ?? '',
-				[dynamicVariablesAttribute],
-				`$${variableName}`,
-			),
-		};
-	}
+			}
+		: queryData.filter;
 
-	updatedQueryData = {
-		...updatedQueryData,
-		filters: {
-			...updatedQueryData.filters,
-			items: removeVariablePlaceholderFromFilterItems(
-				updatedQueryData.filters?.items || [],
-				variableName,
-			),
-			op: updatedQueryData.filters?.op || 'AND',
-		},
-		filter: {
-			...updatedQueryData.filter,
-			// Use ANTLR-aware removal so the whole key-value clause is removed
-			// and no dangling AND/OR operators are left behind.
-			expression: removeVariableFromExpression(
-				updatedQueryData.filter?.expression,
-				variableName,
-			),
-		},
-		expression: removeVariableFromExpression(
-			updatedQueryData.expression,
-			variableName,
-		),
-		legend: removeVariablePlaceholders(updatedQueryData.legend, variableName),
-	};
+	const updatedExpression = queryData.expression
+		? removeVariableFromExpression(queryData.expression, variableName)
+		: queryData.expression;
 
-	return updatedQueryData;
+	return { ...queryData, filter: updatedFilter, expression: updatedExpression };
 };
 
 const removeVariableReferencesFromWidget = (
 	widget: Widgets,
 	variableName: string,
-	dynamicVariablesAttribute?: string,
 ): Widgets => {
 	let updatedWidget = { ...widget };
 
@@ -332,11 +286,7 @@ const removeVariableReferencesFromWidget = (
 				builder: {
 					...updatedWidget.query.builder,
 					queryData: updatedWidget.query.builder.queryData.map((queryData) =>
-						removeVariableReferencesFromQueryData(
-							queryData,
-							variableName,
-							dynamicVariablesAttribute,
-						),
+						removeVariableReferencesFromQueryData(queryData, variableName),
 					),
 				},
 			},
@@ -351,7 +301,6 @@ const removeVariableReferencesFromWidget = (
 				promql: updatedWidget.query.promql.map((promqlQuery) => ({
 					...promqlQuery,
 					query: removeVariablePlaceholders(promqlQuery.query, variableName),
-					legend: removeVariablePlaceholders(promqlQuery.legend, variableName),
 				})),
 			},
 		};
@@ -365,62 +314,10 @@ const removeVariableReferencesFromWidget = (
 				clickhouse_sql: updatedWidget.query.clickhouse_sql.map((sqlQuery) => ({
 					...sqlQuery,
 					query: removeVariablePlaceholders(sqlQuery.query, variableName),
-					legend: removeVariablePlaceholders(sqlQuery.legend, variableName),
 				})),
 			},
 		};
 	}
-
-	if (updatedWidget.query?.builder?.queryFormulas) {
-		updatedWidget = {
-			...updatedWidget,
-			query: {
-				...updatedWidget.query,
-				builder: {
-					...updatedWidget.query.builder,
-					queryFormulas: updatedWidget.query.builder.queryFormulas.map(
-						(formula) => ({
-							...formula,
-							expression: removeVariablePlaceholders(formula.expression, variableName),
-							legend: removeVariablePlaceholders(formula.legend, variableName),
-						}),
-					),
-				},
-			},
-		};
-	}
-
-	if (updatedWidget.query?.builder?.queryTraceOperator) {
-		updatedWidget = {
-			...updatedWidget,
-			query: {
-				...updatedWidget.query,
-				builder: {
-					...updatedWidget.query.builder,
-					queryTraceOperator: updatedWidget.query.builder.queryTraceOperator.map(
-						(traceQuery) =>
-							removeVariableReferencesFromQueryData(
-								traceQuery,
-								variableName,
-								dynamicVariablesAttribute,
-							),
-					),
-				},
-			},
-		};
-	}
-
-	updatedWidget = {
-		...updatedWidget,
-		title: removeVariablePlaceholders(
-			updatedWidget.title as string,
-			variableName,
-		),
-		description: removeVariablePlaceholders(
-			updatedWidget.description,
-			variableName,
-		),
-	};
 
 	return updatedWidget;
 };
@@ -428,7 +325,6 @@ const removeVariableReferencesFromWidget = (
 export const removeVariableReferencesFromDashboard = (
 	dashboard: Dashboard | undefined,
 	variableName: string,
-	dynamicVariablesAttribute?: string,
 ): Dashboard | undefined => {
 	if (!dashboard || !variableName) {
 		return dashboard;
@@ -440,11 +336,7 @@ export const removeVariableReferencesFromDashboard = (
 		updatedDashboard.data.widgets = updatedDashboard.data.widgets.map(
 			(widget) => {
 				if ('query' in widget) {
-					return removeVariableReferencesFromWidget(
-						widget as Widgets,
-						variableName,
-						dynamicVariablesAttribute,
-					);
+					return removeVariableReferencesFromWidget(widget as Widgets, variableName);
 				}
 				return widget;
 			},
