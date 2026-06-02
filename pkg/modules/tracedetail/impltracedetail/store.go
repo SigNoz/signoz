@@ -184,7 +184,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 	}
 	sb.Where(conditions...)
 	sb.GroupBy("span_id")
-	sb.OrderBy("any(timestamp) ASC", "any(name) ASC")
+	sb.OrderBy("timestamp ASC", "name ASC")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var spans []spantypes.StorableSpan
