@@ -155,40 +155,6 @@
 				}
 			}
 
-			.query-stats {
-				display: flex;
-				align-items: center;
-				gap: 12px;
-
-				align-self: flex-end;
-
-				.rows {
-					color: var(--l2-foreground);
-					font-family: 'Geist Mono';
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 150% */
-					letter-spacing: 0.36px;
-				}
-
-				.divider {
-					width: 1px;
-					height: 14px;
-					background: var(--l3-background);
-				}
-
-				.time {
-					color: var(--l2-foreground);
-					font-family: 'Geist Mono';
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 150% */
-					letter-spacing: 0.36px;
-				}
-			}
-
 			.ant-btn {
 				border: none;
 			}
