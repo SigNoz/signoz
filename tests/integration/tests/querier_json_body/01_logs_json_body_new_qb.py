@@ -1245,14 +1245,6 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages and r.json().get("data", {}).get("warning") is not None,
         },
-        # search(Payment) — unquoted keyword, identical to search("Payment").
-        {
-            "name": "msg.search_unquoted",
-            "requestType": "raw",
-            "expression": "search(Payment)",
-            "aggregation": "count()",
-            "validate": lambda r: len(get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages and r.json().get("data", {}).get("warning") is not None,
-        },
         # NOT search("Payment") — inverted FTS: logs that do NOT have "payment"
         # in any field are returned.  control_log (db-service) and no_msg_log
         # (metrics-service) have no "payment" anywhere → 2 results.

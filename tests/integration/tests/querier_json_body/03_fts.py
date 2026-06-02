@@ -206,6 +206,12 @@ def test_fts_across_contexts(
             "expression": f'"{TOK_BMSG}"',
             "validate": _only("body-msg-svc"),
         },
+        # TOK_SEV lives only in severity_text — free text (body_v2.message only) must return 0 rows
+        {
+            "name": "fts.free_text/non_body_token_returns_zero",
+            "expression": f'"{TOK_SEV}"',
+            "validate": lambda r: get_rows(r) == [],
+        },
         # ── Full Text Search (search()) ───────────────────────────────────────
         # severity_text — only reachable via search(), not bare/quoted Free Text Search
         {
