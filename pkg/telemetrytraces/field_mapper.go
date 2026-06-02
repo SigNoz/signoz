@@ -51,6 +51,7 @@ var (
 			ValueType: schema.ColumnTypeString,
 		}},
 		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":    {Name: "scope", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -176,7 +177,7 @@ func (m *defaultFieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
-		return []*schema.Column{}, qbtypes.ErrColumnNotFound
+		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
@@ -261,21 +262,28 @@ func (m *defaultFieldMapper) FieldFor(
 
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
-		// json is only supported for resource context as of now
-		if key.FieldContext != telemetrytypes.FieldContextResource {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
+		switch key.FieldContext {
+		case telemetrytypes.FieldContextScope:
+			switch key.Name {
+			case "scope.name", "scope.version":
+				return fmt.Sprintf("%s::String", key.Name), nil
+			default:
+				return fmt.Sprintf("%s.attributes.`%s`::String", column.Name, key.Name), nil
+			}
+		case telemetrytypes.FieldContextResource:
+			oldColumn := indexV3Columns["resources_string"]
+			oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
+			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+			// once clickHouse dependency is updated, we need to check if we can remove it.
+			if key.Materialized {
+				oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
+				oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
+			} else {
+				return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
+			}
 		}
-		oldColumn := indexV3Columns["resources_string"]
-		oldKeyName := fmt.Sprintf("%s['%s']", oldColumn.Name, key.Name)
-		// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
-		// once clickHouse dependency is updated, we need to check if we can remove it.
-		if key.Materialized {
-			oldKeyName = telemetrytypes.FieldKeyToMaterializedColumnName(key)
-			oldKeyNameExists := telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, %s==true, %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldKeyNameExists, oldKeyName), nil
-		} else {
-			return fmt.Sprintf("multiIf(%s.`%s` IS NOT NULL, %s.`%s`::String, mapContains(%s, '%s'), %s, NULL)", column.Name, key.Name, column.Name, key.Name, oldColumn.Name, key.Name, oldKeyName), nil
-		}
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "json column type only supported for resource and scope context, got %s", key.FieldContext.String)
 	case schema.ColumnTypeEnumString,
 		schema.ColumnTypeEnumUInt64,
 		schema.ColumnTypeEnumUInt32,
