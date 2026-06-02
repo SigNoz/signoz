@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
@@ -32,6 +33,18 @@ type FormValues = {
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
+	const location = useLocation();
+	const history = useHistory();
+
+	useEffect(() => {
+		const params = new URLSearchParams(location.search);
+		if (params.has('token')) {
+			history.replace(
+				`/login?callbackauthnerr=true&message=${encodeURIComponent('Your invite link is no longer valid. Please contact your admin.')}`
+			);
+		}
+	}, [location.search, history]);
 
 	const [formError, setFormError] = useState<APIError | null>();
 
