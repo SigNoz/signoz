@@ -59,6 +59,7 @@ type FilterExprVisitorOpts struct {
 	Builder            *sqlbuilder.SelectBuilder
 	FreeTextColumn     *telemetrytypes.TelemetryFieldKey
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
+	FTSCondition       qbtypes.FTSConditionFunc
 	BodyJSONEnabled    bool
 	SkipResourceFilter bool
 	SkipFreeTextFilter bool
@@ -68,9 +69,6 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
-	// FTSCondition builds the SQL condition for a single field context.
-	// Must be set whenever FTSContexts is non-nil.
-	FTSCondition qbtypes.FTSConditionFunc
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -84,6 +82,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		builder:            opts.Builder,
 		freeTextColumn:     opts.FreeTextColumn,
 		jsonKeyToKey:       opts.JsonKeyToKey,
+		ftsCondition:       opts.FTSCondition,
 		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFreeTextFilter: opts.SkipFreeTextFilter,
@@ -94,7 +93,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
 		endNs:              opts.EndNs,
-		ftsCondition:       opts.FTSCondition,
 	}
 }
 

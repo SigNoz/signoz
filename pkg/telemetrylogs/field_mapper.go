@@ -556,7 +556,6 @@ func ftsColumns(ctx context.Context, fieldContext telemetrytypes.FieldContext, u
 			logsV2Columns[LogsV2SpanIDColumn],
 		}
 	case telemetrytypes.FieldContextBody:
-		// TODO(Tushar): thread orgID here to evaluate correctly
 		if useJSONBody {
 			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}
 		}
