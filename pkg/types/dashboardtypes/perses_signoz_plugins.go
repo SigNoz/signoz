@@ -315,10 +315,11 @@ type LegendPosition struct{ valuer.String }
 var (
 	LegendPositionBottom = LegendPosition{valuer.NewString("bottom")} // default
 	LegendPositionRight  = LegendPosition{valuer.NewString("right")}
+	LegendPositionNone   = LegendPosition{valuer.NewString("none")}
 )
 
 func (LegendPosition) Enum() []any {
-	return []any{LegendPositionBottom, LegendPositionRight}
+	return []any{LegendPositionBottom, LegendPositionRight, LegendPositionNone}
 }
 
 func (l LegendPosition) ValueOrDefault() string {
@@ -335,7 +336,7 @@ func (l LegendPosition) MarshalJSON() ([]byte, error) {
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom`, `right` or `none`")
 	}
 	if v == "" {
 		*l = LegendPositionBottom
@@ -343,11 +344,11 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	}
 	lp := LegendPosition{valuer.NewString(v)}
 	switch lp {
-	case LegendPositionBottom, LegendPositionRight:
+	case LegendPositionBottom, LegendPositionRight, LegendPositionNone:
 		*l = lp
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom`, `right` or `none`", v)
 	}
 }
 

@@ -3154,6 +3154,7 @@ export interface DashboardtypesPanelFormattingDTO {
 export enum DashboardtypesLegendPositionDTO {
 	bottom = 'bottom',
 	right = 'right',
+	none = 'none',
 }
 export type DashboardtypesLegendDTOCustomColorsAnyOf = {
 	[key: string]: string;
