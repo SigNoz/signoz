@@ -220,6 +220,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFullText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
+	case *grammar.SearchCallContext:
+		return v.VisitSearchCall(t)
 	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
 	case *grammar.FunctionParamContext:
@@ -332,6 +334,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
+	} else if ctx.SearchCall() != nil {
+		return v.Visit(ctx.SearchCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -738,17 +742,70 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	return cond
 }
 
-// VisitFunctionCall handles function calls like has(), hasAny(), search(), etc.
-func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+// VisitSearchCall handles the search() function call.
+func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
 	if v.skipFunctionCalls {
 		return SkipConditionLiteral
 	}
+	// ftsFieldKeys == nil means search() is not enabled for this signal/query type.
+	// Only log statement builders set FTSFieldKeys; traces/metrics leave it nil.
+	if len(v.ftsFieldKeys) == 0 {
+		v.errors = append(v.errors, "search() is only supported for log queries")
+		return ErrorConditionLiteral
+	}
 
-	// search() must be handled before visiting params: unquoted tokens like
-	// search(error) are parsed as a key context, and visiting them through VisitKey
-	// would append "key not found" errors before we can treat the text as a search string.
-	if ctx.SEARCH() != nil {
-		return v.visitSearchFunction(ctx)
+	// Extract the search text directly from the parse tree — bypass VisitKey so that
+	// unquoted tokens like search(error) don't trigger "key not found" errors.
+	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
+	if len(paramCtxs) < 1 {
+		v.errors = append(v.errors, "search() requires exactly one value parameter, e.g. search('error') or search(error)")
+		return ErrorConditionLiteral
+	}
+	if len(paramCtxs) > 1 {
+		v.errors = append(v.errors, fmt.Sprintf("search() accepts exactly one parameter but got %d", len(paramCtxs)))
+		return ErrorConditionLiteral
+	}
+	paramCtx := paramCtxs[0]
+	var searchText string
+	if paramCtx.Value() != nil {
+		raw := v.Visit(paramCtx.Value())
+		searchText = fmt.Sprintf("%v", raw)
+	} else if paramCtx.Key() != nil {
+		// Unquoted word — use the raw token text, bypassing the key lookup.
+		searchText = paramCtx.Key().GetText()
+	} else {
+		v.errors = append(v.errors, "search() parameter must be a string value")
+		return ErrorConditionLiteral
+	}
+
+	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
+		v.errors = append(v.errors, "full text search is restricted to a maximum of 6-hour time window")
+		return ErrorConditionLiteral
+	}
+
+	formattedText := FormatFullTextSearch(searchText)
+	var ftsConds []string
+	for _, key := range v.ftsFieldKeys {
+		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
+		if err != nil {
+			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Name, err.Error()))
+			return ErrorConditionLiteral
+		}
+		ftsConds = append(ftsConds, cond)
+	}
+	if len(ftsConds) == 0 {
+		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")
+		return ErrorConditionLiteral
+	}
+
+	v.warnings = append(v.warnings, FullTextSearchDefaultWarning)
+	return v.builder.Or(ftsConds...)
+}
+
+// VisitFunctionCall handles function calls like has(), hasAny(), hasAll(), hasToken().
+func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
+	if v.skipFunctionCalls {
+		return SkipConditionLiteral
 	}
 
 	// Get function name based on which token is present
@@ -857,71 +914,6 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
-}
-
-// runSearchFunction fans a regex match for text across all ftsFieldKeys using OR.
-// Used by both explicit search() calls and implicit bare-expression FTS for logs.
-// Enforces the FTSMaxWindowNs guard so all callers share the same time-window limit.
-func (v *filterExpressionVisitor) runSearchFunction(text string) any {
-	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
-		v.errors = append(v.errors, "full text search is restricted to a maximum of 6-hour time window")
-		return ErrorConditionLiteral
-	}
-
-	formattedText := FormatFullTextSearch(text)
-	var ftsConds []string
-	for _, key := range v.ftsFieldKeys {
-		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
-		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for field %q: %s", key.Name, err.Error()))
-			return ErrorConditionLiteral
-		}
-		ftsConds = append(ftsConds, cond)
-	}
-	if len(ftsConds) == 0 {
-		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")
-		return ErrorConditionLiteral
-	}
-
-	v.warnings = append(v.warnings, FullTextSearchDefaultWarning)
-	return v.builder.Or(ftsConds...)
-}
-
-// visitSearchFunction handles the search() function call.
-// search('value') or search(value) fans out a regex match across all FTS column keys.
-func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallContext) any {
-	// ftsFieldKeys == nil means search() is not enabled for this signal/query type.
-	// Only log statement builders set FTSFieldKeys; traces/metrics leave it nil.
-	if len(v.ftsFieldKeys) == 0 {
-		v.errors = append(v.errors, "search() is only supported for log queries")
-		return ErrorConditionLiteral
-	}
-
-	// Extract the search text directly from the parse tree — bypass VisitKey so that
-	// unquoted tokens like search(error) don't trigger "key not found" errors.
-	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
-	if len(paramCtxs) < 1 {
-		v.errors = append(v.errors, "search() requires exactly one value parameter, e.g. search('error') or search(error)")
-		return ErrorConditionLiteral
-	}
-	if len(paramCtxs) > 1 {
-		v.errors = append(v.errors, fmt.Sprintf("search() accepts exactly one parameter but got %d", len(paramCtxs)))
-		return ErrorConditionLiteral
-	}
-	paramCtx := paramCtxs[0]
-	var searchText string
-	if paramCtx.Value() != nil {
-		raw := v.Visit(paramCtx.Value())
-		searchText = fmt.Sprintf("%v", raw)
-	} else if paramCtx.Key() != nil {
-		// Unquoted word — use the raw token text, bypassing the key lookup.
-		searchText = paramCtx.Key().GetText()
-	} else {
-		v.errors = append(v.errors, "search() parameter must be a string value")
-		return ErrorConditionLiteral
-	}
-
-	return v.runSearchFunction(searchText)
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

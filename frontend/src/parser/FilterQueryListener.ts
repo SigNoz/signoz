@@ -1,4 +1,4 @@
-// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
+// Generated from FilterQuery.g4 by ANTLR 4.13.2
 
 import {ParseTreeListener} from "antlr4";
 
@@ -15,6 +15,7 @@ import { NotInClauseContext } from "./FilterQueryParser.js";
 import { ValueListContext } from "./FilterQueryParser.js";
 import { FullTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
+import { SearchCallContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
 import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
@@ -147,6 +148,16 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitFunctionCall?: (ctx: FunctionCallContext) => void;
+	/**
+	 * Enter a parse tree produced by `FilterQueryParser.searchCall`.
+	 * @param ctx the parse tree
+	 */
+	enterSearchCall?: (ctx: SearchCallContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterQueryParser.searchCall`.
+	 * @param ctx the parse tree
+	 */
+	exitSearchCall?: (ctx: SearchCallContext) => void;
 	/**
 	 * Enter a parse tree produced by `FilterQueryParser.functionParamList`.
 	 * @param ctx the parse tree

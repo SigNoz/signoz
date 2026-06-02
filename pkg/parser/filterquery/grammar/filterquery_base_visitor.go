@@ -56,6 +56,10 @@ func (v *BaseFilterQueryVisitor) VisitFunctionCall(ctx *FunctionCallContext) int
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseFilterQueryVisitor) VisitSearchCall(ctx *SearchCallContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseFilterQueryVisitor) VisitFunctionParamList(ctx *FunctionParamListContext) interface{} {
 	return v.VisitChildren(ctx)
 }

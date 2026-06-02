@@ -44,6 +44,9 @@ type FilterQueryVisitor interface {
 	// Visit a parse tree produced by FilterQueryParser#functionCall.
 	VisitFunctionCall(ctx *FunctionCallContext) interface{}
 
+	// Visit a parse tree produced by FilterQueryParser#searchCall.
+	VisitSearchCall(ctx *SearchCallContext) interface{}
+
 	// Visit a parse tree produced by FilterQueryParser#functionParamList.
 	VisitFunctionParamList(ctx *FunctionParamListContext) interface{}
 
