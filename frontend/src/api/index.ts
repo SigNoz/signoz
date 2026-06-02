@@ -120,8 +120,8 @@ export const interceptorRejected = async (
 				!(
 					response.config.url === '/sessions' && response.config.method === 'delete'
 				) &&
-				!response.config.url?.endsWith('/authz/check') &&
-				!response.config.url?.endsWith('/api/v2/reset_password_tokens/verify')
+				response.config.url !== '/authz/check' &&
+				response.config.url !== '/api/v2/reset_password_tokens/verify'
 			) {
 				try {
 					const accessToken = getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN);
