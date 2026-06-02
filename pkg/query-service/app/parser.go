@@ -187,9 +187,9 @@ func parseSeriesRequest(r *http.Request) (*model.SeriesQueryParams, *model.ApiEr
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("no match[] parameter provided")}
 	}
 
-	now := time.Now()
-	start := now.Add(-5 * time.Minute)
-	end := now
+	// Default: start=Unix epoch, end=now — covers all stored data when omitted.
+	start := time.Unix(0, 0)
+	end := time.Now()
 
 	if s := r.FormValue("start"); s != "" {
 		var err error
@@ -206,10 +206,20 @@ func parseSeriesRequest(r *http.Request) (*model.SeriesQueryParams, *model.ApiEr
 		}
 	}
 
+	var limit int
+	if l := r.FormValue("limit"); l != "" {
+		v, err := strconv.Atoi(l)
+		if err != nil || v < 0 {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("limit must be a non-negative integer")}
+		}
+		limit = v
+	}
+
 	return &model.SeriesQueryParams{
 		Start:   start,
 		End:     end,
 		Matches: matches,
+		Limit:   limit,
 	}, nil
 }
 

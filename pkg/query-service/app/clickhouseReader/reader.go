@@ -281,7 +281,14 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 	return res, &qs, nil
 }
 
+const seriesResultHardLimit = 100_000
+
 func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQueryParams) ([]map[string]string, *model.ApiError) {
+	limit := params.Limit
+	if limit <= 0 || limit > seriesResultHardLimit {
+		limit = seriesResultHardLimit
+	}
+
 	mintMs := params.Start.UnixMilli()
 	maxtMs := params.End.UnixMilli()
 
@@ -291,7 +298,8 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 	}
 	defer querier.Close()
 
-	seen := map[uint64]struct{}{}
+	// Use string key (lbls.String()) to avoid false dedup from 64-bit hash collisions.
+	seen := map[string]struct{}{}
 	result := []map[string]string{}
 
 	for _, matchStr := range params.Matches {
@@ -304,11 +312,11 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 		ss := querier.Select(ctx, false, hints, matchers...)
 		for ss.Next() {
 			lbls := ss.At().Labels()
-			h := lbls.Hash()
-			if _, ok := seen[h]; ok {
+			key := lbls.String()
+			if _, ok := seen[key]; ok {
 				continue
 			}
-			seen[h] = struct{}{}
+			seen[key] = struct{}{}
 			m := make(map[string]string, lbls.Len())
 			lbls.Range(func(l labels.Label) {
 				if l.Name != prometheus.FingerprintAsPromLabelName {
@@ -316,6 +324,12 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 				}
 			})
 			result = append(result, m)
+			if len(result) >= limit {
+				return nil, &model.ApiError{
+					Typ: model.ErrorExec,
+					Err: fmt.Errorf("series count exceeds limit of %d; use match[] selectors or a narrower time range to reduce results", limit),
+				}
+			}
 		}
 		if ssErr := ss.Err(); ssErr != nil {
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: ssErr}
