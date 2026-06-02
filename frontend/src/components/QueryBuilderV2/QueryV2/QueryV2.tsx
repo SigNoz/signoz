@@ -73,8 +73,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 	});
 
 	const handleToggleDisableQuery = useCallback(() => {
-		handleChangeQueryData('disabled', !query.disabled);
-	}, [handleChangeQueryData, query]);
+		handleChangeQueryData('disabled', !query.disabled, { runAfterUpdate: true });
+	}, [handleChangeQueryData, query.disabled]);
 
 	const handleToggleCollapsQuery = (): void => {
 		setIsCollapsed(!isCollapsed);

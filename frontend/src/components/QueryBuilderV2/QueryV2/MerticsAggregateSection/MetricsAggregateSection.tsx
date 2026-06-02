@@ -66,7 +66,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 
 	const handleChangeGroupByKeys = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			handleChangeQueryData('groupBy', value);
+			handleChangeQueryData('groupBy', value, { runAfterUpdate: true });
 		},
 		[handleChangeQueryData],
 	);

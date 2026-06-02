@@ -56,6 +56,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
+import { HandleChangeQueryDataOptions } from 'types/common/operations.types';
 import {
 	DataSource,
 	IsDefaultQueryProps,
@@ -773,41 +774,6 @@ export function QueryBuilderProvider({
 		[panelType],
 	);
 
-	const handleSetQueryItemData = useCallback(
-		(
-			index: number,
-			type: EQueryType.PROM | EQueryType.CLICKHOUSE,
-			newQueryData: IPromQLQuery | IClickHouseQuery,
-		) => {
-			setCurrentQuery((prevState) => {
-				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState[type],
-					index,
-					newQueryData,
-				);
-
-				return {
-					...prevState,
-					[type]: updatedQueryBuilderData,
-				};
-			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setSupersetQuery((prevState) => {
-				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState[type],
-					index,
-					newQueryData,
-				);
-
-				return {
-					...prevState,
-					[type]: updatedQueryBuilderData,
-				};
-			});
-		},
-		[updateQueryBuilderData],
-	);
-
 	const handleSetQueryData = useCallback(
 		(index: number, newQueryData: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
@@ -1024,49 +990,106 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(() => {
-		const isExplorer =
-			location.pathname === ROUTES.LOGS_EXPLORER ||
-			location.pathname === ROUTES.TRACES_EXPLORER;
-		if (isExplorer) {
-			setCalledFromHandleRunQuery(true);
-		}
-		const currentQueryData = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					filter: {
-						...item.filter,
-						expression:
-							item.filter?.expression.trim() === ''
-								? ''
-								: (item.filter?.expression ?? ''),
-					},
-					filters: {
-						items: [],
-						op: 'AND',
-					},
-				})),
-			},
-		};
+	// `overrideQuery` lets callers run a query value that hasn't been committed
+	// to `currentQuery` state yet — e.g. a click handler that toggles a flag
+	// and wants to stage-and-run in the same tick, without waiting for the
+	// state update to flush.
+	const handleRunQuery = useCallback(
+		(overrideQuery?: Query) => {
+			const isExplorer =
+				location.pathname === ROUTES.LOGS_EXPLORER ||
+				location.pathname === ROUTES.TRACES_EXPLORER;
+			if (isExplorer) {
+				setCalledFromHandleRunQuery(true);
+			}
+			const sourceQuery = overrideQuery ?? currentQuery;
+			const currentQueryData = {
+				...sourceQuery,
+				builder: {
+					...sourceQuery.builder,
+					queryData: sourceQuery.builder.queryData.map((item) => ({
+						...item,
+						filter: {
+							...item.filter,
+							expression:
+								item.filter?.expression.trim() === ''
+									? ''
+									: (item.filter?.expression ?? ''),
+						},
+						filters: {
+							items: [],
+							op: 'AND',
+						},
+					})),
+				},
+			};
 
-		redirectWithQueryBuilderData({
-			...{
-				...currentQueryData,
-				...updateStepInterval({
-					builder: currentQueryData.builder,
-					clickhouse_sql: currentQueryData.clickhouse_sql,
-					promql: currentQueryData.promql,
-					id: currentQueryData.id,
+			redirectWithQueryBuilderData({
+				...{
+					...currentQueryData,
+					...updateStepInterval({
+						builder: currentQueryData.builder,
+						clickhouse_sql: currentQueryData.clickhouse_sql,
+						promql: currentQueryData.promql,
+						id: currentQueryData.id,
+						queryType,
+						unit: currentQueryData.unit,
+					}),
+				},
+				queryType,
+			});
+		},
+		[currentQuery, location.pathname, queryType, redirectWithQueryBuilderData],
+	);
+
+	const handleSetQueryItemData = useCallback(
+		(
+			index: number,
+			type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+			newQueryData: IPromQLQuery | IClickHouseQuery,
+			options?: HandleChangeQueryDataOptions,
+		) => {
+			setCurrentQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+
+			// `runAfterUpdate` lets callers stage-and-run inline. We pass the
+			// freshly-computed query straight to `handleRunQuery` because the
+			// setState above hasn't flushed yet.
+			if (options?.runAfterUpdate) {
+				handleRunQuery({
+					...currentQuery,
 					queryType,
-					unit: currentQueryData.unit,
-				}),
-			},
-			queryType,
-		});
-	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
+					[type]: currentQuery[type].map((item, i) =>
+						i === index ? newQueryData : item,
+					),
+				});
+			}
+		},
+		[updateQueryBuilderData, handleRunQuery, currentQuery, queryType],
+	);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {

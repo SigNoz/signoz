@@ -5,7 +5,8 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	MetricAggregateOperator,
@@ -331,5 +332,198 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				}),
 			);
 		});
+	});
+});
+
+describe('useQueryBuilderOperations - handleChangeQueryData runAfterUpdate', () => {
+	const mockHandleSetQueryData = jest.fn();
+	const mockHandleSetTraceOperatorData = jest.fn();
+	const mockHandleRunQuery = jest.fn();
+
+	const baseQuery: IBuilderQuery = {
+		dataSource: DataSource.METRICS,
+		aggregateOperator: MetricAggregateOperator.AVG,
+		aggregateAttribute: {
+			key: 'system.cpu.load',
+			dataType: DataTypes.Float64,
+			type: ATTRIBUTE_TYPES.GAUGE,
+		} as BaseAutocompleteData,
+		timeAggregation: MetricAggregateOperator.AVG,
+		spaceAggregation: '',
+		aggregations: [],
+		having: [],
+		limit: null,
+		queryName: 'A',
+		functions: [],
+		filters: { items: [], op: 'AND' },
+		groupBy: [],
+		orderBy: [],
+		stepInterval: 60,
+		expression: '',
+		disabled: false,
+		reduceTo: ReduceOperators.AVG,
+		legend: '',
+	};
+
+	const otherQuery: IBuilderQuery = { ...baseQuery, queryName: 'B' };
+
+	const buildCurrentQuery = (): Query => ({
+		queryType: EQueryType.QUERY_BUILDER,
+		promql: [],
+		clickhouse_sql: [],
+		id: 'q-1',
+		unit: '',
+		builder: {
+			queryData: [baseQuery, otherQuery],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		},
+	});
+
+	const setupMock = (overrides: Record<string, unknown> = {}): void => {
+		(useQueryBuilder as jest.Mock).mockReturnValue({
+			handleSetQueryData: mockHandleSetQueryData,
+			handleSetTraceOperatorData: mockHandleSetTraceOperatorData,
+			handleSetFormulaData: jest.fn(),
+			removeQueryBuilderEntityByIndex: jest.fn(),
+			setLastUsedQuery: jest.fn(),
+			redirectWithQueryBuilderData: jest.fn(),
+			handleRunQuery: mockHandleRunQuery,
+			panelType: 'time_series',
+			currentQuery: buildCurrentQuery(),
+			...overrides,
+		});
+	};
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		setupMock();
+	});
+
+	it('does not call handleRunQuery when options is omitted', () => {
+		const { result } = renderHook(() =>
+			useQueryOperations({
+				query: baseQuery,
+				index: 0,
+				entityVersion: ENTITY_VERSION_V4,
+			}),
+		);
+
+		act(() => {
+			result.current.handleChangeQueryData('legend', 'cpu-load');
+		});
+
+		expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+			0,
+			expect.objectContaining({ legend: 'cpu-load' }),
+		);
+		expect(mockHandleRunQuery).not.toHaveBeenCalled();
+	});
+
+	it('calls handleRunQuery with the freshly-changed query when runAfterUpdate is true', () => {
+		const { result } = renderHook(() =>
+			useQueryOperations({
+				query: baseQuery,
+				index: 0,
+				entityVersion: ENTITY_VERSION_V4,
+			}),
+		);
+
+		act(() => {
+			result.current.handleChangeQueryData('disabled', true, {
+				runAfterUpdate: true,
+			});
+		});
+
+		expect(mockHandleSetQueryData).toHaveBeenCalledWith(
+			0,
+			expect.objectContaining({ disabled: true }),
+		);
+		expect(mockHandleRunQuery).toHaveBeenCalledTimes(1);
+		const [override] = mockHandleRunQuery.mock.calls[0];
+		// Index 0 reflects the new value...
+		expect(override.builder.queryData[0]).toStrictEqual(
+			expect.objectContaining({ queryName: 'A', disabled: true }),
+		);
+		// ...siblings stay untouched.
+		expect(override.builder.queryData[1]).toStrictEqual(
+			expect.objectContaining({ queryName: 'B', disabled: false }),
+		);
+	});
+
+	it('applies the change at the correct index without disturbing other queries', () => {
+		const { result } = renderHook(() =>
+			useQueryOperations({
+				query: otherQuery,
+				index: 1,
+				entityVersion: ENTITY_VERSION_V4,
+			}),
+		);
+
+		act(() => {
+			result.current.handleChangeQueryData(
+				'groupBy',
+				[
+					{
+						key: 'host.name',
+						type: 'tag',
+						dataType: DataTypes.String,
+					} as BaseAutocompleteData,
+				],
+				{ runAfterUpdate: true },
+			);
+		});
+
+		const [override] = mockHandleRunQuery.mock.calls[0];
+		expect(override.builder.queryData[0]).toStrictEqual(
+			expect.objectContaining({ queryName: 'A', groupBy: [] }),
+		);
+		expect(override.builder.queryData[1]).toStrictEqual(
+			expect.objectContaining({
+				queryName: 'B',
+				groupBy: [expect.objectContaining({ key: 'host.name' })],
+			}),
+		);
+	});
+
+	it('keeps handleSetQueryData and handleRunQuery in sync for legend formatting', () => {
+		const { result } = renderHook(() =>
+			useQueryOperations({
+				query: baseQuery,
+				index: 0,
+				entityVersion: ENTITY_VERSION_V4,
+			}),
+		);
+
+		act(() => {
+			result.current.handleChangeQueryData('legend', '{{service.name}}', {
+				runAfterUpdate: true,
+			});
+		});
+
+		const [override] = mockHandleRunQuery.mock.calls[0];
+		const setCallLegend = mockHandleSetQueryData.mock.calls[0][1].legend;
+		expect(override.builder.queryData[0].legend).toBe(setCallLegend);
+	});
+
+	it('does not call handleRunQuery for trace-operator queries (early return)', () => {
+		const { result } = renderHook(() =>
+			useQueryOperations({
+				query: baseQuery,
+				index: 0,
+				entityVersion: ENTITY_VERSION_V4,
+				isForTraceOperator: true,
+			}),
+		);
+
+		act(() => {
+			result.current.handleChangeQueryData('disabled', true, {
+				runAfterUpdate: true,
+			});
+		});
+
+		expect(mockHandleSetTraceOperatorData).toHaveBeenCalledTimes(1);
+		expect(mockHandleSetQueryData).not.toHaveBeenCalled();
+		expect(mockHandleRunQuery).not.toHaveBeenCalled();
 	});
 });
