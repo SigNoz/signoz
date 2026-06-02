@@ -1,15 +1,23 @@
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import {
 	TabsContent,
 	TabsList,
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
+import Spinner from 'components/Spinner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
+import {
+	TraceDetailV3URLProps,
+	WaterfallAggregationRequest,
+} from 'types/api/trace/getTraceV3';
 
 import { useTraceStore } from '../../stores/traceStore';
 import {
@@ -35,9 +43,28 @@ function AnalyticsPanel({
 	onClose,
 	onTabChange,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const aggregations = useTraceStore((s) => s.aggregations);
-	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const colorByFieldName = colorByField.name;
 	const isDarkMode = useIsDarkMode();
+
+	// Fetch exec-time % + span count for the current color-by field only, and
+	// only while the panel is open. Changing the field refetches via the key.
+	const aggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
+		() => [
+			{ field: colorByField, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
+			{ field: colorByField, aggregation: AGGREGATIONS.SPAN_COUNT },
+		],
+		[colorByField],
+	);
+
+	const { data, isLoading, isError } = useGetTraceAggregations({
+		traceId: traceId || '',
+		aggregations: aggregationsRequest,
+		enabled: isOpen,
+	});
+
+	const aggregations = data?.data;
 
 	const execTimePct = useMemo(
 		() =>
@@ -93,6 +120,33 @@ function AnalyticsPanel({
 		return null;
 	}
 
+	// Loading / error / empty render inside the tab content so the tabs stay
+	// visible. Returns null when there are rows to show.
+	const renderState = (rowCount: number): JSX.Element | null => {
+		if (isLoading) {
+			return (
+				<div className={styles.state}>
+					<Spinner height="auto" />
+				</div>
+			);
+		}
+		if (isError) {
+			return (
+				<div className={styles.state}>
+					<Typography.Text>Couldn&apos;t load analytics</Typography.Text>
+				</div>
+			);
+		}
+		if (rowCount === 0) {
+			return (
+				<div className={styles.state}>
+					<Typography.Text>No data for {colorByFieldName}</Typography.Text>
+				</div>
+			);
+		}
+		return null;
+	};
+
 	return (
 		<FloatingPanel
 			isOpen
@@ -132,65 +186,69 @@ function AnalyticsPanel({
 
 					<div className={styles.tabsScroll}>
 						<TabsContent value="exec-time">
-							<div className={styles.list}>
-								{execTimeRows.map((row) => (
-									<>
-										<div
-											key={`${row.group}-dot`}
-											className={styles.dot}
-											style={{ backgroundColor: row.color }}
-										/>
-										<span key={`${row.group}-name`} className={styles.serviceName}>
-											{row.group}
-										</span>
-										<div key={`${row.group}-bar`} className={styles.barCell}>
-											<div className={styles.bar}>
-												<div
-													className={styles.barFill}
-													style={{
-														width: `${Math.min(row.percentage, 100)}%`,
-														backgroundColor: row.color,
-													}}
-												/>
-											</div>
-											<span className={cx(styles.value, styles.valueWide)}>
-												{row.percentage.toFixed(2)}%
+							{renderState(execTimeRows.length) ?? (
+								<div className={styles.list}>
+									{execTimeRows.map((row) => (
+										<>
+											<div
+												key={`${row.group}-dot`}
+												className={styles.dot}
+												style={{ backgroundColor: row.color }}
+											/>
+											<span key={`${row.group}-name`} className={styles.serviceName}>
+												{row.group}
 											</span>
-										</div>
-									</>
-								))}
-							</div>
+											<div key={`${row.group}-bar`} className={styles.barCell}>
+												<div className={styles.bar}>
+													<div
+														className={styles.barFill}
+														style={{
+															width: `${Math.min(row.percentage, 100)}%`,
+															backgroundColor: row.color,
+														}}
+													/>
+												</div>
+												<span className={cx(styles.value, styles.valueWide)}>
+													{row.percentage.toFixed(2)}%
+												</span>
+											</div>
+										</>
+									))}
+								</div>
+							)}
 						</TabsContent>
 
 						<TabsContent value="spans">
-							<div className={styles.list}>
-								{spanCountRows.map((row) => (
-									<>
-										<div
-											key={`${row.group}-dot`}
-											className={styles.dot}
-											style={{ backgroundColor: row.color }}
-										/>
-										<span key={`${row.group}-name`} className={styles.serviceName}>
-											{row.group}
-										</span>
-										<div key={`${row.group}-bar`} className={styles.barCell}>
-											<div className={styles.bar}>
-												<div
-													className={styles.barFill}
-													style={{
-														width: `${(row.count / row.max) * 100}%`,
-														backgroundColor: row.color,
-													}}
-												/>
-											</div>
-											<span className={cx(styles.value, styles.valueNarrow)}>
-												{row.count}
+							{renderState(spanCountRows.length) ?? (
+								<div className={styles.list}>
+									{spanCountRows.map((row) => (
+										<>
+											<div
+												key={`${row.group}-dot`}
+												className={styles.dot}
+												style={{ backgroundColor: row.color }}
+											/>
+											<span key={`${row.group}-name`} className={styles.serviceName}>
+												{row.group}
 											</span>
-										</div>
-									</>
-								))}
-							</div>
+											<div key={`${row.group}-bar`} className={styles.barCell}>
+												<div className={styles.bar}>
+													<div
+														className={styles.barFill}
+														style={{
+															width: `${(row.count / row.max) * 100}%`,
+															backgroundColor: row.color,
+														}}
+													/>
+												</div>
+												<span className={cx(styles.value, styles.valueNarrow)}>
+													{row.count}
+												</span>
+											</div>
+										</>
+									))}
+								</div>
+							)}
 						</TabsContent>
 					</div>
 				</TabsRoot>

@@ -3,7 +3,6 @@ import { UserPreference } from 'types/api/preferences/preference';
 
 import { COLOR_BY_OPTIONS, DEFAULT_COLOR_BY_FIELD } from '../../constants';
 import {
-	setTraceStoreAggregations,
 	setTraceStoreAvailableColorByFields,
 	setTraceStoreUserPreferences,
 	useTraceStore,
@@ -22,7 +21,6 @@ const optionNames = (): string[] =>
 describe('traceStore color-by gating', () => {
 	beforeEach(() => {
 		useTraceStore.setState({
-			aggregations: undefined,
 			availableColorByFieldNames: undefined,
 			userPreferences: null,
 			colorByField: DEFAULT_COLOR_BY_FIELD,
@@ -39,7 +37,7 @@ describe('traceStore color-by gating', () => {
 		);
 	});
 
-	it('offers the default plus any field the root span carries', () => {
+	it('offers the default plus any field present on loaded spans', () => {
 		setTraceStoreAvailableColorByFields(['host.name']);
 		expect(optionNames()).toStrictEqual([
 			DEFAULT_COLOR_BY_FIELD.name,
@@ -69,22 +67,5 @@ describe('traceStore color-by gating', () => {
 		// availableColorByFieldNames stays undefined (loading) — do not flip to default
 		setTraceStoreUserPreferences(colorByPref('host.name'));
 		expect(useTraceStore.getState().colorByField.name).toBe('host.name');
-	});
-
-	it('does not let aggregations affect color state', () => {
-		setTraceStoreAvailableColorByFields(['host.name']);
-		const before = useTraceStore.getState().colorByField;
-		setTraceStoreAggregations([
-			{
-				field: { name: 'k8s.node.name', fieldContext: 'resource' },
-				aggregation: 'execution_time_percentage',
-				value: { 'node-1': 50 },
-			} as never,
-		]);
-		expect(useTraceStore.getState().colorByField).toBe(before);
-		expect(optionNames()).toStrictEqual([
-			DEFAULT_COLOR_BY_FIELD.name,
-			'host.name',
-		]);
 	});
 });

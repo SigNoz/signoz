@@ -390,10 +390,7 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceStoreSync
-			aggregations={traceData?.payload?.aggregations}
-			availableColorByFields={availableColorByFields}
-		>
+		<TraceStoreSync availableColorByFields={availableColorByFields}>
 			<div className={styles.root}>
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}

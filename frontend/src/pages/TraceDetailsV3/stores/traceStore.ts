@@ -1,7 +1,6 @@
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { UserPreference } from 'types/api/preferences/preference';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { WaterfallAggregationResponse } from 'types/api/trace/getTraceV3';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { create } from 'zustand';
 
@@ -26,7 +25,6 @@ type MutateUserPreference = (
 
 interface TraceStoreState {
 	// --- Inputs synced from React layer via TraceStoreSync ---
-	aggregations: WaterfallAggregationResponse[] | undefined;
 	// Fields present on loaded spans; gates color-by options. `undefined` while
 	// loading so we keep trusting the persisted field.
 	availableColorByFieldNames: string[] | undefined;
@@ -40,9 +38,6 @@ interface TraceStoreState {
 	previewFields: TelemetryFieldKey[];
 
 	// --- Setters used only by TraceStoreSync ---
-	setAggregations: (
-		aggregations: WaterfallAggregationResponse[] | undefined,
-	) => void;
 	setAvailableColorByFields: (fieldNames: string[] | undefined) => void;
 	setUserPreferences: (userPreferences: UserPreference[] | null) => void;
 	setCallbacks: (callbacks: {
@@ -129,7 +124,6 @@ function derivePreviewFields(
 }
 
 export const useTraceStore = create<TraceStoreState>()((set, get) => ({
-	aggregations: undefined,
 	availableColorByFieldNames: undefined,
 	userPreferences: null,
 	updateUserPreferenceInContext: null,
@@ -140,9 +134,6 @@ export const useTraceStore = create<TraceStoreState>()((set, get) => ({
 		(opt) => opt.field.name === DEFAULT_COLOR_BY_FIELD.name,
 	),
 	previewFields: [],
-
-	// Display-only input for the Analytics panel; no longer drives color state.
-	setAggregations: (aggregations): void => set({ aggregations }),
 
 	setAvailableColorByFields: (availableColorByFieldNames): void => {
 		const { userPreferences } = get();
@@ -233,10 +224,6 @@ export const useTraceStore = create<TraceStoreState>()((set, get) => ({
 		);
 	},
 }));
-
-export const setTraceStoreAggregations = (
-	aggregations: WaterfallAggregationResponse[] | undefined,
-): void => useTraceStore.getState().setAggregations(aggregations);
 
 export const setTraceStoreAvailableColorByFields = (
 	fieldNames: string[] | undefined,
