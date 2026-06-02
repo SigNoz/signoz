@@ -130,8 +130,8 @@ type Dashboard struct {
 }
 
 type ServiceDashboard struct {
-	Title                string                `json:"title"`
-	Description          string                `json:"description"`
+	Title                string                `json:"title" required:"true"`
+	Description          string                `json:"description" required:"true"`
 	IntegrationDashboard *IntegrationDashboard `json:"integrationDashboard,omitempty" required:"false"`
 }
 

@@ -1239,6 +1239,9 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
         title:
           type: string
+      required:
+      - title
+      - description
       type: object
     CloudintegrationtypesServiceID:
       enum:
