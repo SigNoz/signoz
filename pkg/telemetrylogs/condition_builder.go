@@ -25,44 +25,46 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
-// ConditionForContext builds the ClickHouse match expression for a single physical
-// column in the FTS fan-out. The expression depends on the column type:
-//   - Map  → (arrayExists(x -> match(x, ?), mapKeys(col)) OR arrayExists(x -> match(x, ?), mapValues(col)))
-//   - JSON → match(LOWER(toString(col)), LOWER(?))
-//   - String/LowCardinality → match(LOWER(col), LOWER(?))
-//
-// Returns ("", nil) when the column should be skipped — currently only a JSON
-// column when useJSONBody is false.
+// ConditionForContext builds the search condition for all FTS columns belonging
+// to fieldContext. JSON columns are skipped when useJSONBody is disabled.
+// Returns ("", nil) when no searchable columns exist for the context.
 func (c *conditionBuilder) ConditionForContext(
 	ctx context.Context,
-	col schema.Column,
+	fieldContext telemetrytypes.FieldContext,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	// TODO(Tushar): thread orgID here to evaluate correctly
-	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	columns := c.fm.GetColumns(ctx, fieldContext)
 
-	if !useJSONBody && col.Type.GetType() == schema.ColumnTypeEnumJSON {
-		return "", nil
+	var conditions []string
+	for _, col := range columns {
+		switch col.Type.GetType() {
+		case schema.ColumnTypeEnumMap:
+			keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
+			valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
+			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+			}
+			conditions = append(conditions, sb.Or(
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
+			))
+		case schema.ColumnTypeEnumJSON:
+			conditions = append(conditions, fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)))
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+			conditions = append(conditions, fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)))
+		default:
+			return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
+		}
 	}
 
-	switch col.Type.GetType() {
-	case schema.ColumnTypeEnumMap:
-		keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
-		valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
-		if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
-			valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
-		}
-		return sb.Or(
-			fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
-			fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
-		), nil
-	case schema.ColumnTypeEnumJSON:
-		return fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)), nil
-	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
-		return fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)), nil
+	switch len(conditions) {
+	case 0:
+		return "", nil
+	case 1:
+		return conditions[0], nil
 	default:
-		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
+		return sb.Or(conditions...), nil
 	}
 }
 

@@ -199,6 +199,6 @@ func (c *conditionBuilder) ConditionFor(
 	return condition, nil
 }
 
-func (c *conditionBuilder) ConditionForContext(_ context.Context, _ schema.Column, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
+func (c *conditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
 	return "", nil
 }

@@ -27,16 +27,20 @@ type FieldMapper interface {
 	ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key.
 	ColumnExpressionFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	// GetColumns returns the physical columns to fan out across for FTS search()
+	// for the given field context. Non-log signal implementations return nil.
+	GetColumns(ctx context.Context, fieldContext telemetrytypes.FieldContext) []*schema.Column
 }
 
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
 	ConditionFor(ctx context.Context, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
-	// ConditionForContext builds the search expression for a single physical column in
-	// the FTS fan-out. Returns ("", nil) when the column should be skipped.
-	// Non-log implementations may return ("", nil) unconditionally.
-	ConditionForContext(ctx context.Context, col schema.Column, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+	// ConditionForContext builds the search expression for all FTS columns belonging
+	// to fieldContext. Returns ("", nil) when no searchable columns exist for the
+	// context (e.g. JSON body when useJSONBody is disabled). Non-log
+	// implementations may return ("", nil) unconditionally.
+	ConditionForContext(ctx context.Context, fieldContext telemetrytypes.FieldContext, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
 type AggExprRewriter interface {

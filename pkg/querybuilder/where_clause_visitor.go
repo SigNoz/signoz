@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -47,7 +46,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
-	ftsSet           map[telemetrytypes.FieldContext][]schema.Column
+	ftsContexts      []telemetrytypes.FieldContext
 }
 
 type FilterExprVisitorOpts struct {
@@ -65,12 +64,11 @@ type FilterExprVisitorOpts struct {
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
-	StartNs uint64
-	EndNs   uint64
-	// FTSSet enables search() for this query context. nil disables search()
+	StartNs            uint64
+	EndNs              uint64
+	// FTSContexts enables search() for this query context. nil disables search()
 	// (traces, metrics, and non-log callers leave this nil).
-	// Keys are iterated in sorted order for deterministic SQL output.
-	FTSSet map[telemetrytypes.FieldContext][]schema.Column
+	FTSContexts []telemetrytypes.FieldContext
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -90,10 +88,10 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		skipFunctionCalls:  opts.SkipFunctionCalls,
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
-		keysWithWarnings: make(map[string]bool),
-		startNs:          opts.StartNs,
-		endNs:            opts.EndNs,
-		ftsSet:           opts.FTSSet,
+		keysWithWarnings:   make(map[string]bool),
+		startNs:            opts.StartNs,
+		endNs:              opts.EndNs,
+		ftsContexts:        opts.FTSContexts,
 	}
 }
 
@@ -749,9 +747,9 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	if v.skipFunctionCalls {
 		return SkipConditionLiteral
 	}
-	// ftsSet == nil means search() is not enabled for this signal/query type.
-	// Only log statement builders set FTSSet; traces/metrics leave it nil.
-	if len(v.ftsSet) == 0 {
+	// ftsContexts == nil means search() is not enabled for this signal/query type.
+	// Only log statement builders set FTSContexts; traces/metrics leave it nil.
+	if len(v.ftsContexts) == 0 {
 		v.errors = append(v.errors, "search() is only supported for log queries")
 		return ErrorConditionLiteral
 	}
@@ -780,29 +778,15 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return ErrorConditionLiteral
 	}
 
-	// Sort contexts for deterministic SQL output.
-	contexts := make([]telemetrytypes.FieldContext, 0, len(v.ftsSet))
-	for fieldCtx := range v.ftsSet {
-		contexts = append(contexts, fieldCtx)
-	}
-	slices.SortFunc(contexts, func(a, b telemetrytypes.FieldContext) int {
-		return strings.Compare(a.StringValue(), b.StringValue())
-	})
-
 	formattedText := FormatFullTextSearch(searchText)
 	var ftsConds []string
-	for _, fieldCtx := range contexts {
-		for _, col := range v.ftsSet[fieldCtx] {
-			cond, err := v.conditionBuilder.ConditionForContext(v.context, col, formattedText, v.builder)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for column %q: %s", col.Name, err.Error()))
-				return ErrorConditionLiteral
-			}
-			if cond == "" {
-				continue // column skipped (e.g. JSON column when useJSONBody is false)
-			}
-			ftsConds = append(ftsConds, cond)
+	for _, fieldCtx := range v.ftsContexts {
+		cond, err := v.conditionBuilder.ConditionForContext(v.context, fieldCtx, formattedText, v.builder)
+		if err != nil {
+			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for context %q: %s", fieldCtx.StringValue(), err.Error()))
+			return ErrorConditionLiteral
 		}
+		ftsConds = append(ftsConds, cond)
 	}
 	if len(ftsConds) == 0 {
 		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")

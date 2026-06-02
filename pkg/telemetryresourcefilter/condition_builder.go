@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -208,6 +207,6 @@ func (b *defaultConditionBuilder) ConditionFor(
 	return "", qbtypes.ErrUnsupportedOperator
 }
 
-func (b *defaultConditionBuilder) ConditionForContext(_ context.Context, _ schema.Column, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
+func (b *defaultConditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
 	return "", nil
 }

@@ -116,3 +116,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }
+
+func (m *fieldMapper) GetColumns(_ context.Context, _ telemetrytypes.FieldContext) []*schema.Column {
+	return nil
+}

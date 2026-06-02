@@ -74,3 +74,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	}
 	return fmt.Sprintf("%s AS `%s`", fieldExpression, key.Name), nil
 }
+
+func (m *defaultFieldMapper) GetColumns(_ context.Context, _ telemetrytypes.FieldContext) []*schema.Column {
+	return nil
+}

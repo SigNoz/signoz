@@ -3,7 +3,6 @@ package telemetrylogs
 import (
 	"fmt"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -128,40 +127,14 @@ var (
 		},
 	}
 
-	// defaultFTSSet maps each field context to the physical columns that
-	// search() fans out across. ConditionForContext handles each column
-	// independently based on its ColumnType.
-	defaultFTSSet = map[telemetrytypes.FieldContext][]schema.Column{
-		telemetrytypes.FieldContextLog: {
-			{Name: LogsV2SeverityTextColumn, Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-			{Name: LogsV2TraceIDColumn, Type: schema.ColumnTypeString},
-			{Name: LogsV2SpanIDColumn, Type: schema.ColumnTypeString},
-		},
-		telemetrytypes.FieldContextBody: {
-			{Name: LogsV2BodyColumn, Type: schema.ColumnTypeString},
-			{Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{}},
-		},
-		telemetrytypes.FieldContextAttribute: {
-			{Name: LogsV2AttributesStringColumn, Type: schema.MapColumnType{
-				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-				ValueType: schema.ColumnTypeString,
-			}},
-			{Name: LogsV2AttributesNumberColumn, Type: schema.MapColumnType{
-				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-				ValueType: schema.ColumnTypeFloat64,
-			}},
-			{Name: LogsV2AttributesBoolColumn, Type: schema.MapColumnType{
-				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-				ValueType: schema.ColumnTypeBool,
-			}},
-		},
-		telemetrytypes.FieldContextResource: {
-			{Name: LogsV2ResourcesStringColumn, Type: schema.MapColumnType{
-				KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-				ValueType: schema.ColumnTypeString,
-			}},
-			{Name: LogsV2ResourceJSONColumn, Type: schema.JSONColumnType{}},
-		},
+	// ftsSupportedContexts is the ordered list of field contexts that search()
+	// fans out across. The field mapper's GetColumns is called for each to
+	// retrieve the physical columns.
+	ftsSupportedContexts = []telemetrytypes.FieldContext{
+		telemetrytypes.FieldContextLog,
+		telemetrytypes.FieldContextBody,
+		telemetrytypes.FieldContextAttribute,
+		telemetrytypes.FieldContextResource,
 	}
 )
 
