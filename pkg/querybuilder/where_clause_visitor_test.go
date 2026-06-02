@@ -744,10 +744,6 @@ func (b *resourceConditionBuilder) ConditionFor(
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 
-func (b *resourceConditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-	return "", nil
-}
-
 type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
@@ -760,10 +756,6 @@ func (b *conditionBuilder) ConditionFor(
 	_ *sqlbuilder.SelectBuilder,
 ) (string, error) {
 	return fmt.Sprintf("%s_cond", key.Name), nil
-}
-
-func (b *conditionBuilder) ConditionForContext(_ context.Context, fc telemetrytypes.FieldContext, _ any, sb *sqlbuilder.SelectBuilder) (string, error) {
-	return fmt.Sprintf("fts_%s_cond", fc.StringValue()), nil
 }
 
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
@@ -1704,7 +1696,9 @@ func TestVisitComparison_FullTextSearch(t *testing.T) {
 		SkipFreeTextFilter: false,
 		SkipFunctionCalls:  false,
 		IgnoreNotFoundKeys: false,
-		FTSContexts: []telemetrytypes.FieldContext{telemetrytypes.FieldContextResource},
+		FTSCondition: func(_ context.Context, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
+			return fmt.Sprintf("fts_cond"), nil
+		},
 	}
 
 	tests := []struct {

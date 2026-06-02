@@ -105,6 +105,3 @@ func (c *conditionBuilder) ConditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-func (c *conditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-	return "", nil
-}

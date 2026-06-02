@@ -136,6 +136,3 @@ func (c *conditionBuilder) ConditionFor(
 	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond), nil
 }
 
-func (c *conditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-	return "", nil
-}

@@ -212,6 +212,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -353,6 +354,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -483,6 +485,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -559,6 +562,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -654,6 +658,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -878,6 +883,7 @@ func TestAdjustKey(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 	)
 
@@ -1023,6 +1029,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				cb.ConditionForSearch,
 				fl,
 			)
 
@@ -1199,6 +1206,7 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				cb.ConditionForSearch,
 				fl,
 			)
 			startMs := uint64(1747947419000)

@@ -19,6 +19,11 @@ var (
 
 type JsonKeyToFieldFunc func(context.Context, *telemetrytypes.TelemetryFieldKey, FilterOperator, any) (string, any)
 
+// FTSConditionFunc builds the search() SQL condition for all FTS columns belonging
+// to fieldContext. Returns ("", nil) when no columns are searchable for the
+// context (e.g. body JSON when useJSONBody is off). Pass nil to disable search().
+type FTSConditionFunc func(ctx context.Context, value any, sb *sqlbuilder.SelectBuilder) (string, error)
+
 // FieldMapper maps the telemetry field key to the table field name.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
@@ -27,20 +32,12 @@ type FieldMapper interface {
 	ColumnFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
 	// ColumnExpressionFor returns the column expression for the given key.
 	ColumnExpressionFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
-	// GetColumns returns the physical columns to fan out across for FTS search()
-	// for the given field context. Non-log signal implementations return nil.
-	GetColumns(ctx context.Context, fieldContext telemetrytypes.FieldContext) []*schema.Column
 }
 
 // ConditionBuilder builds the condition for the filter.
 type ConditionBuilder interface {
 	// ConditionFor returns the condition for the given key, operator and value.
 	ConditionFor(ctx context.Context, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error)
-	// ConditionForContext builds the search expression for all FTS columns belonging
-	// to fieldContext. Returns ("", nil) when no searchable columns exist for the
-	// context (e.g. JSON body when useJSONBody is disabled). Non-log
-	// implementations may return ("", nil) unconditionally.
-	ConditionForContext(ctx context.Context, fieldContext telemetrytypes.FieldContext, value any, sb *sqlbuilder.SelectBuilder) (string, error)
 }
 
 type AggExprRewriter interface {

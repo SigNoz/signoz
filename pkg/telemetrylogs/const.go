@@ -126,16 +126,6 @@ var (
 			Direction: qbtypes.OrderDirectionDesc,
 		},
 	}
-
-	// ftsSupportedContexts is the ordered list of field contexts that search()
-	// fans out across. The field mapper's GetColumns is called for each to
-	// retrieve the physical columns.
-	ftsSupportedContexts = []telemetrytypes.FieldContext{
-		telemetrytypes.FieldContextLog,
-		telemetrytypes.FieldContextBody,
-		telemetrytypes.FieldContextAttribute,
-		telemetrytypes.FieldContextResource,
-	}
 )
 
 func bodyAliasExpression(bodyJSONEnabled bool) string {

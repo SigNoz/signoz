@@ -27,8 +27,9 @@ type logQueryStatementBuilder struct {
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fl                        flagger.Flagger
 
-	freeTextColumn *telemetrytypes.TelemetryFieldKey
-	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
+	freeTextColumn   *telemetrytypes.TelemetryFieldKey
+	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
+	ftsConditionFunc qbtypes.FTSConditionFunc
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*logQueryStatementBuilder)(nil)
@@ -41,6 +42,7 @@ func NewLogQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	freeTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	ftsConditionFunc qbtypes.FTSConditionFunc,
 	fl flagger.Flagger,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
@@ -65,8 +67,9 @@ func NewLogQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fl:                        fl,
-		freeTextColumn: freeTextColumn,
-		jsonKeyToKey:   jsonKeyToKey,
+		freeTextColumn:   freeTextColumn,
+		jsonKeyToKey:     jsonKeyToKey,
+		ftsConditionFunc: ftsConditionFunc,
 	}
 }
 
@@ -663,7 +666,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			EndNs:              end,
 		}
 		if enableFTS {
-			opts.FTSContexts = ftsSupportedContexts
+			opts.FTSCondition = b.ftsConditionFunc
 		}
 
 		// add filter expression

@@ -207,6 +207,3 @@ func (b *defaultConditionBuilder) ConditionFor(
 	return "", qbtypes.ErrUnsupportedOperator
 }
 
-func (b *defaultConditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-	return "", nil
-}

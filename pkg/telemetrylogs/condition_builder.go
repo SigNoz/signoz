@@ -25,47 +25,48 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
-// ConditionForContext builds the search condition for all FTS columns belonging
+// ConditionForSearch builds the search condition for all FTS columns belonging
 // to fieldContext. JSON columns are skipped when useJSONBody is disabled.
 // Returns ("", nil) when no searchable columns exist for the context.
-func (c *conditionBuilder) ConditionForContext(
+func (c *conditionBuilder) ConditionForSearch(
 	ctx context.Context,
-	fieldContext telemetrytypes.FieldContext,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	columns := c.fm.GetColumns(ctx, fieldContext)
+	contexts := []telemetrytypes.FieldContext{
+		telemetrytypes.FieldContextLog,
+		telemetrytypes.FieldContextBody,
+		telemetrytypes.FieldContextAttribute,
+		telemetrytypes.FieldContextResource,
+	}
+
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	var conditions []string
-	for _, col := range columns {
-		switch col.Type.GetType() {
-		case schema.ColumnTypeEnumMap:
-			keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
-			valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
-			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
-				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+	for _, fieldContext := range contexts {
+		for _, col := range ftsColumns(ctx, fieldContext, useJSONBody) {
+			switch col.Type.GetType() {
+			case schema.ColumnTypeEnumMap:
+				keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
+				valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
+				if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+					valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+				}
+				conditions = append(conditions, sb.Or(
+					fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
+					fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
+				))
+			case schema.ColumnTypeEnumJSON:
+				conditions = append(conditions, fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)))
+			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
+				conditions = append(conditions, fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)))
+			default:
+				return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
 			}
-			conditions = append(conditions, sb.Or(
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), keysExpr),
-				fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(value), valsExpr),
-			))
-		case schema.ColumnTypeEnumJSON:
-			conditions = append(conditions, fmt.Sprintf(`match(LOWER(toString(%s)), LOWER(%s))`, col.Name, sb.Var(value)))
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
-			conditions = append(conditions, fmt.Sprintf(`match(LOWER(%s), LOWER(%s))`, col.Name, sb.Var(value)))
-		default:
-			return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "FTS unsupported column type %s", col.Type)
 		}
 	}
 
-	switch len(conditions) {
-	case 0:
-		return "", nil
-	case 1:
-		return conditions[0], nil
-	default:
-		return sb.Or(conditions...), nil
-	}
+	return sb.Or(conditions...), nil
 }
 
 func (c *conditionBuilder) conditionFor(

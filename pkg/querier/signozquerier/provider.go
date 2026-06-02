@@ -120,6 +120,7 @@ func newProvider(
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+		logConditionBuilder.ConditionForSearch,
 		flagger,
 	)
 

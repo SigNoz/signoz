@@ -265,9 +265,6 @@ func (c *conditionBuilder) ConditionFor(
 	return condition, nil
 }
 
-func (c *conditionBuilder) ConditionForContext(_ context.Context, _ telemetrytypes.FieldContext, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-	return "", nil
-}
 
 func (c *conditionBuilder) isSpanScopeField(name string) bool {
 	keyName := strings.ToLower(name)

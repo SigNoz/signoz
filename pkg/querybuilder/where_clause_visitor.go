@@ -47,7 +47,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
-	ftsContexts      []telemetrytypes.FieldContext
+	ftsCondition     qbtypes.FTSConditionFunc
 }
 
 type FilterExprVisitorOpts struct {
@@ -68,9 +68,9 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
-	// FTSContexts enables search() for this query context. nil disables search()
-	// (traces, metrics, and non-log callers leave this nil).
-	FTSContexts []telemetrytypes.FieldContext
+	// FTSCondition builds the SQL condition for a single field context.
+	// Must be set whenever FTSContexts is non-nil.
+	FTSCondition qbtypes.FTSConditionFunc
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -94,7 +94,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
 		endNs:              opts.EndNs,
-		ftsContexts:        opts.FTSContexts,
+		ftsCondition:       opts.FTSCondition,
 	}
 }
 
@@ -750,9 +750,9 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	if v.skipFunctionCalls || v.skipFullTextSearch {
 		return SkipConditionLiteral
 	}
-	// ftsContexts == nil means search() is not enabled for this signal/query type.
-	// Only log statement builders set FTSContexts; traces/metrics leave it nil.
-	if len(v.ftsContexts) == 0 {
+	// ftsCondition nil means search() is not enabled for this signal.
+	// Only log statement builders set these; traces/metrics leave them nil.
+	if v.ftsCondition == nil {
 		v.errors = append(v.errors, "search() is only supported for log queries")
 		return ErrorConditionLiteral
 	}
@@ -782,22 +782,14 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	}
 
 	formattedText := FormatFullTextSearch(searchText)
-	var ftsConds []string
-	for _, fieldCtx := range v.ftsContexts {
-		cond, err := v.conditionBuilder.ConditionForContext(v.context, fieldCtx, formattedText, v.builder)
-		if err != nil {
-			v.errors = append(v.errors, fmt.Sprintf("search() could not build condition for context %q: %s", fieldCtx.StringValue(), err.Error()))
-			return ErrorConditionLiteral
-		}
-		ftsConds = append(ftsConds, cond)
-	}
-	if len(ftsConds) == 0 {
-		v.errors = append(v.errors, "search() failed: no searchable fields could be queried")
+	cond, err := v.ftsCondition(v.context, formattedText, v.builder)
+	if err != nil {
+		v.errors = append(v.errors, fmt.Sprintf("search() could not build condition: %s", err.Error()))
 		return ErrorConditionLiteral
 	}
 
 	v.warnings = append(v.warnings, FullTextSearchDefaultWarning)
-	return v.builder.Or(ftsConds...)
+	return cond
 }
 
 // VisitFunctionCall handles function calls like has(), hasAny(), hasAll(), hasToken().
