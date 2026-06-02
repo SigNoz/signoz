@@ -274,7 +274,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
-			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
+			FreeTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
 			StartNs:          start,
 			EndNs:            end,

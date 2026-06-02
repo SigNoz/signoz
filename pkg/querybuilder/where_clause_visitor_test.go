@@ -811,7 +811,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 		SkipFullTextFilter: false,
 		SkipFunctionCalls:  false,
 		IgnoreNotFoundKeys: false,
-		FullTextColumn:     bodyCol,
+		FreeTextColumn:     bodyCol,
 	}
 	return
 }

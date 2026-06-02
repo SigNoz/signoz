@@ -34,7 +34,7 @@ type filterExpressionVisitor struct {
 	errors             []string
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
-	fullTextColumn     *telemetrytypes.TelemetryFieldKey
+	freeTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	bodyJSONEnabled    bool
 	skipResourceFilter bool
@@ -56,7 +56,7 @@ type FilterExprVisitorOpts struct {
 	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
-	FullTextColumn     *telemetrytypes.TelemetryFieldKey
+	FreeTextColumn     *telemetrytypes.TelemetryFieldKey
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	BodyJSONEnabled    bool
 	SkipResourceFilter bool
@@ -80,7 +80,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
-		fullTextColumn:     opts.FullTextColumn,
+		freeTextColumn:     opts.FreeTextColumn,
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
@@ -342,7 +342,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return SkipConditionLiteral
 		}
 
-		if v.fullTextColumn == nil {
+		if v.freeTextColumn == nil {
 			v.errors = append(v.errors, "full text search is not supported")
 			return ErrorConditionLiteral
 		}
@@ -367,12 +367,12 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			}
 		}
 
-		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
+		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.freeTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
-		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+		if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
 			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 		}
 
@@ -721,17 +721,17 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		text = ctx.FREETEXT().GetText()
 	}
 
-	if v.fullTextColumn == nil {
+	if v.freeTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
 	}
-	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
+	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.freeTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ErrorConditionLiteral
 	}
 
-	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+	if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
 		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 	}
 

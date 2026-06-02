@@ -27,7 +27,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
+		FreeTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 
@@ -66,7 +66,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
+		FreeTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 

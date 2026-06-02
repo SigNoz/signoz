@@ -33,7 +33,7 @@ func TestFilterExprLogs(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
+		FreeTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
 		StartNs:          uint64(releaseTime.Add(-5 * time.Minute).UnixNano()),
 		EndNs:            uint64(releaseTime.Add(5 * time.Minute).UnixNano()),
@@ -2458,7 +2458,7 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
+		FreeTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
 

@@ -27,7 +27,7 @@ type logQueryStatementBuilder struct {
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fl                        flagger.Flagger
 
-	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	freeTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 	ftsFieldKeys   []*telemetrytypes.TelemetryFieldKey
 }
@@ -40,7 +40,7 @@ func NewLogQueryStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	aggExprRewriter qbtypes.AggExprRewriter,
-	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	freeTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	fl flagger.Flagger,
 ) *logQueryStatementBuilder {
@@ -53,7 +53,7 @@ func NewLogQueryStatementBuilder(
 		telemetrytypes.SignalLogs,
 		telemetrytypes.SourceUnspecified,
 		metadataStore,
-		fullTextColumn,
+		freeTextColumn,
 		jsonKeyToKey,
 		fl,
 	)
@@ -66,7 +66,7 @@ func NewLogQueryStatementBuilder(
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fl:                        fl,
-		fullTextColumn:            fullTextColumn,
+		freeTextColumn:            freeTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
 		ftsFieldKeys:              defaultFTSFieldKeys,
 	}
@@ -657,7 +657,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			BodyJSONEnabled:    bodyJSONEnabled,
-			FullTextColumn:     b.fullTextColumn,
+			FreeTextColumn:     b.freeTextColumn,
 			SkipResourceFilter: true,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
