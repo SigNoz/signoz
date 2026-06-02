@@ -7768,6 +7768,21 @@ export interface SpantypesGettableTraceAggregationsDTO {
 	aggregations: SpantypesSpanAggregationResultDTO[];
 }
 
+export interface SpantypesOtelSpanRefDTO {
+	/**
+	 * @type string
+	 */
+	refType?: string;
+	/**
+	 * @type string
+	 */
+	spanId?: string;
+	/**
+	 * @type string
+	 */
+	traceId?: string;
+}
+
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
 	[key: string]: unknown;
 };
@@ -7862,6 +7877,10 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @type string
 	 */
 	parent_span_id?: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
 	/**
 	 * @type object,null
 	 */
