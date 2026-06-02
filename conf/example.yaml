@@ -68,6 +68,12 @@ web:
     appcues:
       # Whether to enable Appcues in web.
       enabled: true
+    sentry:
+      # Whether to enable Sentry in web.
+      enabled: true
+    pylon:
+      # Whether to enable Pylon in web.
+      enabled: true
 
 ##################### Cache #####################
 cache:

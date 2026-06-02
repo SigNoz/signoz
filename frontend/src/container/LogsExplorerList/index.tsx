@@ -18,21 +18,19 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
 import type { TanStackTableHandle } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { useHiddenColumnIds } from 'components/TanStackTableView/useColumnStore';
+import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -69,10 +67,6 @@ function LogsExplorerList({
 	const [, setCopy] = useCopyToClipboard();
 	const isDarkMode = useIsDarkMode();
 	const { activeLogId } = useCopyLogLink();
-	const { logs: logsPreferences } = usePreferenceContext();
-	const hiddenColumnIds = useHiddenColumnIds(LOCALSTORAGE.LOGS_LIST_COLUMNS);
-	const hasReconciledHiddenColumnsRef = useRef(false);
-
 	const {
 		activeLog,
 		onAddToQuery,
@@ -81,7 +75,7 @@ function LogsExplorerList({
 		handleCloseLogDetail,
 	} = useLogDetailHandlers();
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator:
@@ -97,28 +91,15 @@ function LogsExplorerList({
 	);
 
 	const selectedFields = useMemo(
-		() =>
-			convertKeysToColumnFields([
-				...defaultLogsSelectedColumns,
-				...options.selectColumns,
-			]),
-		[options],
+		() => convertKeysToColumnFields(options.selectColumns),
+		[options.selectColumns],
 	);
 
-	const syncedSelectedColumns = useMemo(
-		() =>
-			options.selectColumns.filter(({ name }) => !hiddenColumnIds.includes(name)),
-		[options.selectColumns, hiddenColumnIds],
-	);
-
-	const handleColumnRemove = useCallback(
-		(columnId: string) => {
-			const updatedColumns = options.selectColumns.filter(
-				({ name }) => name !== columnId,
-			);
-			logsPreferences.updateColumns(updatedColumns);
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<ILog>[]): void => {
+			config?.addColumn?.onReorder(cols.map((c) => c.id));
 		},
-		[options.selectColumns, logsPreferences],
+		[config],
 	);
 
 	const logsColumns = useLogsTableColumns({
@@ -160,20 +141,6 @@ function LogsExplorerList({
 			});
 		}
 	}, [isLoading, isFetching, isError, logs.length]);
-
-	useEffect(() => {
-		if (hasReconciledHiddenColumnsRef.current) {
-			return;
-		}
-
-		hasReconciledHiddenColumnsRef.current = true;
-
-		if (syncedSelectedColumns.length === options.selectColumns.length) {
-			return;
-		}
-
-		logsPreferences.updateColumns(syncedSelectedColumns);
-	}, [logsPreferences, options.selectColumns.length, syncedSelectedColumns]);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
@@ -237,7 +204,8 @@ function LogsExplorerList({
 					ref={ref as React.Ref<TanStackTableHandle>}
 					columns={logsColumns}
 					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
-					onColumnRemove={handleColumnRemove}
+					onColumnRemove={config?.addColumn?.onRemove}
+					onColumnOrderChange={handleColumnOrderChange}
 					plainTextCellLineClamp={options.maxLines}
 					cellTypographySize={options.fontSize}
 					data={logs}

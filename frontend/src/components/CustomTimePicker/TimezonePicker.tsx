@@ -6,7 +6,7 @@ import {
 	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';

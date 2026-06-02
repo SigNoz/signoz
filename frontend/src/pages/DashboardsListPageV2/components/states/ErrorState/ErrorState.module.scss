@@ -1,0 +1,36 @@
+.wrapper {
+	composes: cardWrapper from '../states.module.scss';
+	padding: 105px 141px;
+	gap: 4px;
+}
+
+.img {
+	max-width: 100%;
+}
+
+.errorText {
+	composes: bodyText from '../states.module.scss';
+	color: var(--l1-foreground);
+	font-weight: var(--font-weight-medium);
+}
+
+.errorDetail {
+	composes: bodyText from '../states.module.scss';
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-normal);
+}
+
+.actionButtons {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	margin-top: 20px;
+}
+
+.learnMore {
+	composes: learnMoreLink from '../states.module.scss';
+}
+
+.learnMoreArrow {
+	composes: learnMoreArrow from '../states.module.scss';
+}

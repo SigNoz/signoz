@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Col, Form, Input as AntInput, Input, Row } from 'antd';
+// TODO(@signozhq/ui-input): migrate <Input> once @signozhq/ui Input
+// supports the `spellCheck` prop on the URL input below.
+import { Button, Col, Form, Input, Input as AntInput, Row } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { CONTEXT_LINK_FIELDS } from 'container/NewWidget/RightContainer/ContextLinks/constants';
 import {

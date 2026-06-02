@@ -3,7 +3,8 @@ import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
+import { History, Maximize2, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -137,9 +138,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
 				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
 				<div className={styles.header}>
-					<div className={styles.title}>
-						<Sparkles size={18} color="var(--primary)" />
-						<span>AI Assistant</span>
+					<div className={`${styles.title} noz-wave`}>
+						<Noz size={18} />
+						<span>Noz</span>
 					</div>
 
 					<div className={styles.actions}>

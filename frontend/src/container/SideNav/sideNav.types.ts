@@ -14,6 +14,7 @@ export interface SidebarItem {
 	label?: ReactNode;
 	isBeta?: boolean;
 	isNew?: boolean;
+	isEarlyAccess?: boolean;
 	isPinned?: boolean;
 	children?: SidebarItem[];
 	isExternal?: boolean;

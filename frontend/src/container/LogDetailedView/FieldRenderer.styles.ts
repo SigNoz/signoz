@@ -12,6 +12,7 @@ export const TagContainer = styled(Badge)`
 `;
 
 export const TagLabel = styled.span`
+	color: var(--foreground);
 	font-weight: 400;
 	font-size: 12px;
 `;

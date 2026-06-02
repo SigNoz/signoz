@@ -206,7 +206,6 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		dataType = telemetrytypes.FieldDataTypeFloat64
 	}
 
-	// 
 	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	// Handle *If functions with predicate + values
@@ -231,8 +230,8 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		if err != nil {
 			return err
 		}
-		// not possible for whereClause to be nil here but still adding a check.
-		if whereClause == nil {
+		// not possible for whereClause to be empty here but still adding a check.
+		if whereClause.IsEmpty() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid predicate argument for %q: %q", name, origPred)
 		}
 
