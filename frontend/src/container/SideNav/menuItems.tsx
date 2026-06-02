@@ -44,6 +44,7 @@ import {
 	SidebarItem,
 } from './sideNav.types';
 import { Style } from '@signozhq/design-tokens';
+import Noz from 'components/Noz/Noz';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -92,9 +93,10 @@ const AI_ASSISTANT_NAV_KEY = '/ai-assistant/new';
 
 export const aiAssistantMenuItem = {
 	key: AI_ASSISTANT_NAV_KEY,
-	label: 'AI Assistant',
-	icon: <Sparkles size={16} className="ai-assistant-icon" />,
+	label: 'Noz',
+	icon: <Noz size={16} />,
 	itemKey: 'ai-assistant',
+	isEarlyAccess: true,
 };
 
 export const shortcutMenuItem = {

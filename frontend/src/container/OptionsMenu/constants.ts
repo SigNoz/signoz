@@ -35,6 +35,32 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 	},
 ];
 
+const LOGS_REQUIRED_COLUMNS = ['timestamp', 'body'] as const;
+
+/**
+ * Always-on invariant: every logs selectColumns array must contain `body` and
+ * `timestamp`. Applied at both loader and writer boundaries so the picker, the
+ * table, and persisted state can never diverge into a "missing required
+ * column" state.
+ */
+export function ensureLogsRequiredColumns(
+	columns: TelemetryFieldKey[],
+): TelemetryFieldKey[] {
+	const missing = LOGS_REQUIRED_COLUMNS.filter(
+		(name) => !columns.some((c) => c.name === name),
+	);
+	if (missing.length === 0) {
+		return columns;
+	}
+	const defaultsByName = new Map(
+		defaultLogsSelectedColumns.map((c) => [c.name, c]),
+	);
+	const prepended = missing
+		.map((name) => defaultsByName.get(name))
+		.filter((c): c is TelemetryFieldKey => c !== undefined);
+	return [...prepended, ...columns];
+}
+
 export const defaultTraceSelectedColumns: TelemetryFieldKey[] = [
 	{
 		name: 'service.name',

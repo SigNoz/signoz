@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import cx from 'classnames';
 import { useLocation } from 'react-router-dom';
 import {
 	CommandDialog,
@@ -163,7 +164,11 @@ export function CmdKPalette({
 								value={it.name}
 								className={theme === 'light' ? 'cmdk-item-light' : 'cmdk-item'}
 							>
-								<span className="cmd-item-icon">{it.icon}</span>
+								<span
+									className={cx('cmd-item-icon', it.id === 'ai-assistant' && 'noz-icon')}
+								>
+									{it.icon}
+								</span>
 								{it.name}
 								{it.shortcut && it.shortcut.length > 0 && (
 									<CommandShortcut>{it.shortcut.join(' • ')}</CommandShortcut>

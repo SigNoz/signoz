@@ -42,11 +42,6 @@ export const k8sStatefulSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sSt
 		},
 	];
 
-export const k8sStatefulSetInitialFilters = [
-	QUERY_KEYS.K8S_STATEFUL_SET_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sStatefulSetInitialEventsFilter = (
 	item: K8sStatefulSetsData,
 ): ReturnType<typeof createFilterItem>[] => [

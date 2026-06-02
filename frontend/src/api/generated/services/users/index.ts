@@ -48,6 +48,7 @@ import type {
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesPostableRoleDTO,
+	TypesPostableVerifyResetPasswordTokenDTO,
 	TypesUpdatableUserDTO,
 	UpdateUserDeprecated200,
 	UpdateUserDeprecatedPathParameters,
@@ -946,6 +947,90 @@ export const useForgotPassword = <
 	TContext
 > => {
 	return useMutation(getForgotPasswordMutationOptions(options));
+};
+/**
+ * This endpoint verifies whether a reset password token exists and is not expired
+ * @summary Verify a reset password token
+ */
+export const verifyResetPasswordToken = (
+	typesPostableVerifyResetPasswordTokenDTO?: BodyType<TypesPostableVerifyResetPasswordTokenDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/reset_password_tokens/verify`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableVerifyResetPasswordTokenDTO,
+		signal,
+	});
+};
+
+export const getVerifyResetPasswordTokenMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+		TError,
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+	TError,
+	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	TContext
+> => {
+	const mutationKey = ['verifyResetPasswordToken'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return verifyResetPasswordToken(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type VerifyResetPasswordTokenMutationResult = NonNullable<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>
+>;
+export type VerifyResetPasswordTokenMutationBody =
+	| BodyType<TypesPostableVerifyResetPasswordTokenDTO>
+	| undefined;
+export type VerifyResetPasswordTokenMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Verify a reset password token
+ */
+export const useVerifyResetPasswordToken = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+		TError,
+		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
+	TError,
+	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	TContext
+> => {
+	return useMutation(getVerifyResetPasswordTokenMutationOptions(options));
 };
 /**
  * This endpoint returns the users having the role by role id
