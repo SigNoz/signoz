@@ -144,10 +144,7 @@ function AddedFields({
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}
-										isRequired={
-											requiredFields.includes(field.name) ||
-											requiredFields.includes(field.key as string)
-										}
+										isRequired={requiredFields.includes(field.key as string)}
 									/>
 								))}
 							</SortableContext>

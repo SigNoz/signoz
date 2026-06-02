@@ -25,7 +25,7 @@ describe('AddedFields — requiredFields', () => {
 		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(3);
 	});
 
-	it('hides the Remove button for fields whose name is in requiredFields', () => {
+	it('hides the Remove button for fields whose composite key is in requiredFields', () => {
 		const fields = [makeField('a'), makeField('b'), makeField('c')];
 
 		render(
@@ -33,7 +33,7 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['a', 'c']}
+				requiredFields={['log.a', 'log.c']}
 			/>,
 		);
 
@@ -50,7 +50,7 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['a']}
+				requiredFields={['log.a']}
 			/>,
 		);
 
@@ -58,9 +58,26 @@ describe('AddedFields — requiredFields', () => {
 		expect(screen.getByText('b')).toBeInTheDocument();
 	});
 
-	it('locks all variants of a required name regardless of fieldContext', () => {
-		// Two `body` fields with different contexts — both should lock when
-		// `body` is in requiredFields.
+	it('locks ONLY the canonical variant — a same-name field from another context stays removable', () => {
+		// Two `body` fields with different contexts. requiredFields holds the
+		// canonical composite key only, so the attribute variant is deletable.
+		const fields = [makeField('body', 'log'), makeField('body', 'attribute')];
+
+		render(
+			<AddedFields
+				inputValue=""
+				fields={fields}
+				onFieldsChange={jest.fn()}
+				requiredFields={['log.body']}
+			/>,
+		);
+
+		// One Remove button: the attribute variant. log variant is locked.
+		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(1);
+	});
+
+	it('does not lock anything when a bare name is passed (composite key required)', () => {
+		// Bare `body` no longer matches — matching is composite-key only now.
 		const fields = [makeField('body', 'log'), makeField('body', 'attribute')];
 
 		render(
@@ -72,11 +89,11 @@ describe('AddedFields — requiredFields', () => {
 			/>,
 		);
 
-		// Both 'body' variants locked → zero Remove buttons.
-		expect(screen.queryAllByRole('button', { name: /remove/i })).toHaveLength(0);
+		// Neither variant locked → both removable.
+		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(2);
 	});
 
-	it('treats requiredFields as exact-name match (substring does not lock)', () => {
+	it('treats requiredFields as exact composite-key match (substring does not lock)', () => {
 		const fields = [makeField('body'), makeField('body_extra')];
 
 		render(
@@ -84,30 +101,11 @@ describe('AddedFields — requiredFields', () => {
 				inputValue=""
 				fields={fields}
 				onFieldsChange={jest.fn()}
-				requiredFields={['body']}
-			/>,
-		);
-
-		// 'body' locked, 'body_extra' removable.
-		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(1);
-	});
-
-	it('also accepts composite IDs in requiredFields (locks a specific variant)', () => {
-		// Two `body` fields with different contexts.
-		const fields = [makeField('body', 'log'), makeField('body', 'attribute')];
-
-		render(
-			<AddedFields
-				inputValue=""
-				fields={fields}
-				onFieldsChange={jest.fn()}
-				// Composite ID — locks ONLY the log variant, attribute variant stays
-				// removable.
 				requiredFields={['log.body']}
 			/>,
 		);
 
-		// One Remove button: the attribute variant. log variant is locked.
+		// 'log.body' locked, 'log.body_extra' removable.
 		expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(1);
 	});
 });
