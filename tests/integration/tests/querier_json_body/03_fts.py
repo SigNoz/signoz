@@ -59,6 +59,7 @@ def test_fts_across_contexts(
     TOK_ANKEY = "xfts_ankey_008"  # → attributes_number key (string key of the map)
     TOK_RKEY = "xfts_rkey_009"  # → resources_string key
     TOK_RVAL = "xfts_rval_010"  # → resources_string value
+    TOK_BMSG = "xfts_bmsg_011"  # → body_v2.message — for bare/quoted FTS (fullTextColumn path)
 
     # Neutral body — does not contain any xfts_ token.
     _N = json.dumps({"message": "neutral log entry"})
@@ -140,6 +141,14 @@ def test_fts_across_contexts(
         body_promoted="",
         severity_text="INFO",
     )
+    # log_bmsg: unique token in body_v2.message — the column targeted by bare/quoted FTS
+    log_bmsg = Logs(
+        timestamp=now - timedelta(milliseconds=500),
+        resources={"service.name": "body-msg-svc"},
+        body_v2=json.dumps({"message": TOK_BMSG}),
+        body_promoted="",
+        severity_text="INFO",
+    )
 
     logs_list = [
         log_sev,
@@ -152,6 +161,7 @@ def test_fts_across_contexts(
         log_ankey,
         log_rkey,
         log_rval,
+        log_bmsg,
     ]
     not_search_count = len(logs_list) - 1
     export_json_types(logs_list)
@@ -180,19 +190,23 @@ def test_fts_across_contexts(
         return lambda r, s=svc: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == s and r.json().get("data", {}).get("warning") is not None
 
     # ── per-context isolation cases ───────────────────────────────────────────
+    # Free Text Search: bare/quoted tokens route through fullTextColumn (body_v2.message only).
+    # Full Text Search: search() fans out across all fields via ftsFieldKeys.
 
     cases = [
-        # severity_text (LowCardinality String — LOWER/match, case-insensitive)
+        # body_v2.message — Free Text Search
         {
-            "name": "fts.severity_text/bare",
-            "expression": TOK_SEV,
-            "validate": _only("severity-text-svc"),
+            "name": "fts.body_msg/bare",
+            "expression": TOK_BMSG,
+            "validate": _only("body-msg-svc"),
         },
         {
-            "name": "fts.severity_text/quoted",
-            "expression": f'"{TOK_SEV}"',
-            "validate": _only("severity-text-svc"),
+            "name": "fts.body_msg/quoted",
+            "expression": f'"{TOK_BMSG}"',
+            "validate": _only("body-msg-svc"),
         },
+        # ── Full Text Search (search()) ───────────────────────────────────────
+        # severity_text — only reachable via search(), not bare/quoted Free Text Search
         {
             "name": "fts.severity_text/search_quoted",
             "expression": f'search("{TOK_SEV}")',
@@ -203,12 +217,7 @@ def test_fts_across_contexts(
             "expression": f"search({TOK_SEV})",
             "validate": _only("severity-text-svc"),
         },
-        # trace_id (String — LOWER/match, case-insensitive)
-        {
-            "name": "fts.trace_id/bare",
-            "expression": TOK_TID,
-            "validate": _only("txid-svc"),
-        },
+        # trace_id (String — only reachable via search())
         {
             "name": "fts.trace_id/search",
             "expression": f'search("{TOK_TID}")',

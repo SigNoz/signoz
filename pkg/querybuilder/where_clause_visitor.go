@@ -342,9 +342,15 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return SkipConditionLiteral
 		}
 
+		if v.fullTextColumn == nil {
+			v.errors = append(v.errors, "full text search is not supported")
+			return ErrorConditionLiteral
+		}
+
 		child := ctx.GetChild(0)
 		var searchText string
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
+			// create a full text search condition on the body field
 			searchText = keyCtx.GetText()
 		} else if valCtx, ok := child.(*grammar.ValueContext); ok {
 			if valCtx.QUOTED_TEXT() != nil {
@@ -361,19 +367,15 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			}
 		}
 
-		if len(v.ftsFieldKeys) > 0 {
-			return v.runSearchFunction(searchText)
-		}
-
-		if v.fullTextColumn == nil {
-			v.errors = append(v.errors, "full text search is not supported")
-			return ErrorConditionLiteral
-		}
 		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
+		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+		}
+
 		return cond
 	}
 
@@ -719,10 +721,6 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		text = ctx.FREETEXT().GetText()
 	}
 
-	if len(v.ftsFieldKeys) > 0 {
-		return v.runSearchFunction(text)
-	}
-
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
@@ -731,6 +729,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ErrorConditionLiteral
+	}
+
+	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 	}
 
 	return cond

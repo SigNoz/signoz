@@ -657,6 +657,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			BodyJSONEnabled:    bodyJSONEnabled,
+			FullTextColumn:     b.fullTextColumn,
 			SkipResourceFilter: true,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,

@@ -1272,10 +1272,11 @@ func TestVisitComparison_Parens(t *testing.T) {
 	}
 }
 
-// TestVisitComparison_FullText covers full-text (bare string literal) expressions.
+// TestVisitComparison_FreeTextSearch covers Free Text Search — bare/quoted string literals
+// that route through fullTextColumn (body only). No search() involved.
 // rsbOpts has SkipFullTextFilter=true → TrueConditionLiteral.
 // sbOpts has SkipFullTextFilter=false, FullTextColumn=bodyCol → "body_cond".
-func TestVisitComparison_FullText(t *testing.T) {
+func TestVisitComparison_FreeTextSearch(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts(t)
 	tests := []visitComparisonCase{
 		{
@@ -1684,9 +1685,10 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 	}
 }
 
-// TestVisitComparison_SearchFunction covers search() function validation.
-// opts uses FTSFieldKeys so search() is enabled; invalid multi-param calls must error.
-func TestVisitComparison_SearchFunction(t *testing.T) {
+// TestVisitComparison_FullTextSearch covers Full Text Search — the explicit search()
+// function that fans out across all ftsFieldKeys. FTSFieldKeys must be set for
+// search() to be enabled; invalid param counts must error.
+func TestVisitComparison_FullTextSearch(t *testing.T) {
 	bodyKey := &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
 		FieldContext:  telemetrytypes.FieldContextResource,

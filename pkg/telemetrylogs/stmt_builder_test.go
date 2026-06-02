@@ -1044,7 +1044,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 	}
 }
 
-func TestStmtBuilderFTS(t *testing.T) {
+func TestStmtBuilderTextSearch(t *testing.T) {
 	cases := []struct {
 		name              string
 		requestType       qbtypes.RequestType
@@ -1056,8 +1056,11 @@ func TestStmtBuilderFTS(t *testing.T) {
 		startMs uint64
 		endMs   uint64
 	}{
+		// ── Free Text Search ──────────────────────────────────────────────────────────
+		// Bare/quoted tokens route through fullTextColumn (body / body_v2.message only).
+		// SQL: match(LOWER(<body_col>), LOWER(?))
 		{
-			name:        "fts",
+			name:        "free_text_search",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1068,13 +1071,13 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
-				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
 			},
 		},
 		{
-			name:        "fts_2",
+			name:        "free_text_search_2",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1085,13 +1088,13 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
-				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: []string{querybuilder.BodyFullTextSearchDefaultWarning},
 			},
 		},
 		{
-			name:        "fts_json_disabled",
+			name:        "free_text_search_json_disabled",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -1102,12 +1105,15 @@ func TestStmtBuilderFTS(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(severity_text, ?) OR match(trace_id, ?) OR match(span_id, ?) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
-				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Warnings: nil,
 			},
 		},
-		// search() function: uses a 2-hour window to stay under the 6-hour limit
+		// ── Full Text Search ──────────────────────────────────────────────────────────
+		// search() fans out via ftsFieldKeys across all fields (severity_text, trace_id,
+		// span_id, body, attributes_*, resources_*). Uses a 2-hour window to stay under
+		// the 6-hour limit.
 		{
 			name:        "search_fans_out_to_all_columns",
 			requestType: qbtypes.RequestTypeRaw,

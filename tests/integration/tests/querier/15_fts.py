@@ -168,19 +168,18 @@ def test_fts_across_contexts(
         return lambda r, s=svc: len(get_rows(r)) == 1 and get_rows(r)[0]["data"]["resources_string"].get("service.name") == s
 
     # ── per-context isolation cases ───────────────────────────────────────────
+    # Free Text Search: bare/quoted tokens route through fullTextColumn (body only).
+    # Full Text Search: search() fans out across all fields via ftsFieldKeys.
 
     cases = [
-        # severity_text (LowCardinality String — LOWER/match, case-insensitive)
+        # body — Free text search (body column only)
         {
-            "name": "fts.severity_text/bare",
-            "expression": TOK_SEV,
-            "validate": _only("severity-text-svc"),
+            "name": "fts.body/quoted",
+            "expression": f'"{TOK_BVAL}"',
+            "validate": _only("body-val-svc"),
         },
-        {
-            "name": "fts.severity_text/quoted",
-            "expression": f'"{TOK_SEV}"',
-            "validate": _only("severity-text-svc"),
-        },
+        # ── Full Text Search (search()) ───────────────────────────────────────
+        # severity_text — only reachable via search(), not bare/quoted Free Text Search
         {
             "name": "fts.severity_text/search_quoted",
             "expression": f'search("{TOK_SEV}")',
@@ -191,12 +190,7 @@ def test_fts_across_contexts(
             "expression": f"search({TOK_SEV})",
             "validate": _only("severity-text-svc"),
         },
-        # trace_id (String — LOWER/match, case-insensitive)
-        {
-            "name": "fts.trace_id/bare",
-            "expression": TOK_TID,
-            "validate": _only("trace-id-svc"),
-        },
+        # trace_id (String — only reachable via search())
         {
             "name": "fts.trace_id/search",
             "expression": f'search("{TOK_TID}")',
