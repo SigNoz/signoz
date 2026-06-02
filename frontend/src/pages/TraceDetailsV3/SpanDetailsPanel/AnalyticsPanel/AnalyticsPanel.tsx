@@ -22,6 +22,7 @@ import styles from './AnalyticsPanel.module.scss';
 interface AnalyticsPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
+	onTabChange: (tab: string) => void;
 }
 
 const PANEL_WIDTH = 350;
@@ -32,6 +33,7 @@ const PANEL_MARGIN_BOTTOM = 50;
 function AnalyticsPanel({
 	isOpen,
 	onClose,
+	onTabChange,
 }: AnalyticsPanelProps): JSX.Element | null {
 	const aggregations = useTraceStore((s) => s.aggregations);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
@@ -118,7 +120,7 @@ function AnalyticsPanel({
 			/>
 
 			<div className={styles.body}>
-				<TabsRoot defaultValue="exec-time">
+				<TabsRoot defaultValue="exec-time" onValueChange={onTabChange}>
 					<TabsList variant="secondary">
 						<TabsTrigger value="exec-time" variant="secondary">
 							% exec time
