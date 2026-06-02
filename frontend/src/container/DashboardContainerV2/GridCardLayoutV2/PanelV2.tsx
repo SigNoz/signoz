@@ -1,9 +1,22 @@
-import { useMemo } from 'react';
-import { Tooltip } from 'antd';
+import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports -- TODO: migrate global time dispatch off redux
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import { Tooltip, Spin } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
-import { EllipsisVertical } from '@signozhq/icons';
+import { EllipsisVertical, Loader } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { QueryParams } from 'constants/query';
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { getPanelDefinition } from 'container/DashboardContainerV2/Panels';
+import type { DashboardPreference } from 'container/DashboardContainerV2/Panels/types';
+import { usePanelQuery } from 'container/DashboardContainerV2/hooks/usePanelQuery';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
+import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { UpdateTimeInterval } from 'store/actions';
 
 interface Props {
 	panel: DashboardtypesPanelDTO | undefined;
@@ -13,11 +26,61 @@ interface Props {
 function PanelV2({ panel, panelId }: Props): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
-	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';
+	const fullKind = panel?.spec?.plugin?.kind;
+	const kind = fullKind?.replace(/^signoz\//, '') ?? 'unknown';
 	const queryCount = panel?.spec?.queries?.length ?? 0;
 
+	const panelDef = getPanelDefinition(fullKind);
+
+	const { data, isLoading, error } = usePanelQuery({
+		panel,
+		panelId,
+		enabled: !!panelDef,
+	});
+
+	const dispatch = useDispatch();
+	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const urlQuery = useUrlQuery();
+
+	// Dashboard-wide preferences propagated to every panel renderer on this
+	// dashboard. The hooks key off the dashboard id from the route param so
+	// preferences (cursor sync, tooltip filter) persist per-dashboard.
+	const { dashboardId } = useParams<{ dashboardId: string }>();
+	const [syncMode] = useDashboardCursorSyncMode(
+		dashboardId,
+		PanelMode.DASHBOARD_VIEW,
+	);
+	const [syncFilterMode] = useSyncTooltipFilterMode(dashboardId);
+	const dashboardPreference = useMemo<DashboardPreference>(
+		() => ({ syncMode, syncFilterMode, dashboardId }),
+		[syncMode, syncFilterMode, dashboardId],
+	);
+
+	/**
+	 * Handler for drag-selecting a time range on the chart. Updates the URL + global
+	 * time interval so every panel re-fetches against the same window.
+	 */
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			safeNavigate(`${pathname}?${urlQuery.toString()}`);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, safeNavigate, urlQuery],
+	);
+
 	const headerTitle = useMemo(() => {
-		if (!description) {return name;}
+		if (!description) {
+			return name;
+		}
 		return (
 			<Tooltip title={description}>
 				<span>{name}</span>
@@ -76,20 +139,61 @@ function PanelV2({ panel, panelId }: Props): JSX.Element {
 				style={{
 					flex: 1,
 					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					padding: 12,
-					color: 'var(--bg-vanilla-400, #8993ae)',
-					fontSize: 12,
-					textAlign: 'center',
+					minHeight: 0,
 				}}
 			>
-				<div>
-					<div style={{ marginBottom: 6 }}>{kind} panel</div>
-					<div>
-						{queryCount} {queryCount === 1 ? 'query' : 'queries'} · chart rendering coming next
+				{/* eslint-disable-next-line no-nested-ternary -- 3-way branch on shell state */}
+				{!panelDef ? (
+					<div
+						data-testid="panel-v2-unknown-kind-fallback"
+						style={{
+							flex: 1,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							padding: 12,
+							color: 'var(--bg-vanilla-400, #8993ae)',
+							fontSize: 12,
+							textAlign: 'center',
+						}}
+					>
+						<div>
+							<div style={{ marginBottom: 6 }}>{kind} panel</div>
+							<div>
+								{queryCount} {queryCount === 1 ? 'query' : 'queries'} · not yet
+								supported in V2
+							</div>
+						</div>
 					</div>
-				</div>
+				) : isLoading && !data ? (
+					// First-load only. During background refetches `data` is still
+					// populated, so the chart stays mounted and the user sees fresh
+					// data swap in without the panel blinking.
+					<div
+						data-testid="panel-v2-loading"
+						style={{
+							flex: 1,
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							padding: 12,
+						}}
+					>
+						<Spin indicator={<Loader size={14} className="animate-spin" />} />
+					</div>
+				) : (
+					<panelDef.Renderer
+						panelId={panelId}
+						panel={panel}
+						data={data}
+						isLoading={isLoading}
+						error={error}
+						onDragSelect={onDragSelect}
+						panelMode={PanelMode.DASHBOARD_VIEW}
+						enableDrillDown={false}
+						dashboardPreference={dashboardPreference}
+					/>
+				)}
 			</div>
 		</div>
 	);
