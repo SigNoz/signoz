@@ -78,17 +78,6 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	return m.getFullWaterfall(ctx, traceID, summary)
 }
 
-func (m *module) GetFlamegraph(ctx context.Context, traceID string, req *spantypes.PostableFlamegraph) (*spantypes.GettableFlamegraphTrace, error) {
-	summary, err := m.store.GetTraceSummary(ctx, traceID)
-	if err != nil {
-		return nil, err
-	}
-	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
-		return m.getFullFlamegraph(ctx, traceID, summary)
-	}
-	return m.getWindowedFlamegraph(ctx, traceID, req.SelectedSpanID, summary)
-}
-
 func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
 	summary, err := m.store.GetTraceSummary(ctx, traceID)
 	if err != nil {
@@ -129,6 +118,17 @@ func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *
 		results = append(results, result)
 	}
 	return &spantypes.GettableTraceAggregations{Aggregations: results}, nil
+}
+
+func (m *module) GetFlamegraph(ctx context.Context, traceID string, req *spantypes.PostableFlamegraph) (*spantypes.GettableFlamegraphTrace, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	if summary.NumSpans <= uint64(m.config.Flamegraph.SelectAllSpansLimit) {
+		return m.getFullFlamegraph(ctx, traceID, summary)
+	}
+	return m.getWindowedFlamegraph(ctx, traceID, req.SelectedSpanID, summary)
 }
 
 // getTraceData fetches all spans for a trace and builds the WaterfallTrace.

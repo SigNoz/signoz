@@ -87,6 +87,7 @@ func (h *handler) GetFlamegraph(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+
 	result, err := h.module.GetFlamegraph(r.Context(), mux.Vars(r)["traceID"], req)
 	if err != nil {
 		render.Error(rw, err)
