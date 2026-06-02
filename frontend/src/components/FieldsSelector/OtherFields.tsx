@@ -4,6 +4,7 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import {
 	FieldContext,
@@ -47,15 +48,22 @@ function OtherFields({
 
 	const otherFields: TelemetryFieldKey[] = useMemo(() => {
 		const suggestions = Object.values(data?.data.data.keys || {}).flat();
-		const addedNames = new Set(addedFields.map((f) => f.name));
-		return suggestions
-			.filter((attr) => !addedNames.has(attr.name))
-			.map((attr) => ({
+		// Normalize: synthesize `key` once so downstream reads can trust it.
+		const normalizedSuggestions: TelemetryFieldKey[] = suggestions.map(
+			(attr) => ({
 				...attr,
+				key: buildCompositeKey(attr.name, attr.fieldContext as string),
 				signal: attr.signal as SignalType,
 				fieldContext: attr.fieldContext as FieldContext,
 				fieldDataType: attr.fieldDataType as FieldDataType,
-			}));
+			}),
+		);
+		const addedIds = new Set(
+			addedFields.map((f) => f.key ?? buildCompositeKey(f.name, f.fieldContext)),
+		);
+		return normalizedSuggestions.filter(
+			(attr) => !addedIds.has(attr.key as string),
+		);
 	}, [data, addedFields]);
 
 	if (isFetching) {
@@ -64,8 +72,13 @@ function OtherFields({
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>
 				<div className={styles.otherList}>
 					{Array.from({ length: 5 }).map((_, i) => (
-						// eslint-disable-next-line react/no-array-index-key
-						<Skeleton.Input active size="small" key={i} />
+						<div
+							// eslint-disable-next-line react/no-array-index-key
+							key={i}
+							className={cx(styles.fieldItem, styles.otherFieldItem)}
+						>
+							<Skeleton.Input active size="small" block />
+						</div>
 					))}
 				</div>
 			</div>
@@ -83,7 +96,7 @@ function OtherFields({
 						) : (
 							otherFields.map((attr) => (
 								<div
-									key={attr.name}
+									key={attr.key}
 									className={cx(styles.fieldItem, styles.otherFieldItem)}
 								>
 									<span className={styles.fieldKey}>{attr.name}</span>

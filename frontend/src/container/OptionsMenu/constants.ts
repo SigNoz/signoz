@@ -35,7 +35,7 @@ export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 	},
 ];
 
-const LOGS_REQUIRED_COLUMNS = ['timestamp', 'body'] as const;
+export const LOGS_REQUIRED_COLUMNS = ['timestamp', 'body'] as const;
 
 /**
  * Always-on invariant: every logs selectColumns array must contain `body` and
