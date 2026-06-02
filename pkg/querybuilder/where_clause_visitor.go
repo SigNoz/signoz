@@ -38,7 +38,8 @@ type filterExpressionVisitor struct {
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	bodyJSONEnabled    bool
 	skipResourceFilter bool
-	skipFullTextFilter bool
+	skipFreeTextFilter bool
+	skipFullTextSearch bool
 	skipFunctionCalls  bool
 	ignoreNotFoundKeys bool
 	variables          map[string]qbtypes.VariableItem
@@ -60,7 +61,8 @@ type FilterExprVisitorOpts struct {
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
 	BodyJSONEnabled    bool
 	SkipResourceFilter bool
-	SkipFullTextFilter bool
+	SkipFreeTextFilter bool
+	SkipFullTextSearch bool
 	SkipFunctionCalls  bool
 	IgnoreNotFoundKeys bool
 	Variables          map[string]qbtypes.VariableItem
@@ -84,7 +86,8 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		jsonKeyToKey:       opts.JsonKeyToKey,
 		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
-		skipFullTextFilter: opts.SkipFullTextFilter,
+		skipFreeTextFilter: opts.SkipFreeTextFilter,
+		skipFullTextSearch: opts.SkipFullTextSearch,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
 		ignoreNotFoundKeys: opts.IgnoreNotFoundKeys,
 		variables:          opts.Variables,
@@ -342,12 +345,12 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
-		if v.skipFullTextFilter {
+		if v.skipFreeTextFilter {
 			return SkipConditionLiteral
 		}
 
 		if v.freeTextColumn == nil {
-			v.errors = append(v.errors, "full text search is not supported")
+			v.errors = append(v.errors, "free text search is not supported")
 			return ErrorConditionLiteral
 		}
 
@@ -710,7 +713,7 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 
 // VisitFullText handles standalone quoted strings for full-text search.
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
-	if v.skipFullTextFilter {
+	if v.skipFreeTextFilter {
 		// A skipped FT term must be treated as TrueConditionLiteral, not "".
 		// Returning "" would silently drop this branch from an OR, incorrectly
 		// excluding rows that could match the FT condition on the real table.
@@ -726,7 +729,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	}
 
 	if v.freeTextColumn == nil {
-		v.errors = append(v.errors, "full text search is not supported")
+		v.errors = append(v.errors, "free text search is not supported")
 		return ErrorConditionLiteral
 	}
 	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.freeTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
@@ -744,7 +747,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 // VisitSearchCall handles the search() function call.
 func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
-	if v.skipFunctionCalls {
+	if v.skipFunctionCalls || v.skipFullTextSearch {
 		return SkipConditionLiteral
 	}
 	// ftsContexts == nil means search() is not enabled for this signal/query type.
@@ -774,7 +777,7 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	}
 
 	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
-		v.errors = append(v.errors, "full text search is restricted to a maximum of 6-hour time window")
+		v.errors = append(v.errors, "search() is restricted to a maximum of 6-hour time window")
 		return ErrorConditionLiteral
 	}
 

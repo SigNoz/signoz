@@ -112,7 +112,7 @@ functionCall
     ;
 
 /*
- * Search call: search(field) or search("query text")
+ * Search call: search() function
  * First-class rule so search-specific semantics can be extended independently.
  */
 searchCall

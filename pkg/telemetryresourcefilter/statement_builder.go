@@ -155,7 +155,8 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			BodyJSONEnabled:    bodyJSONEnabled,
 			FreeTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
-			SkipFullTextFilter: true,
+			SkipFreeTextFilter: true,
+			SkipFullTextSearch: true,
 			SkipFunctionCalls:  true,
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
