@@ -218,7 +218,10 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	// The CTE only selects spans matching the filter. Aggregations, group by
 	// and order by run later in buildFinalQuery, so RequestTypeRaw is fine here.
-	adjustTraceKeys(ctx, b.stmtBuilder.logger, keys, query, qbtypes.RequestTypeRaw)
+	for _, action := range adjustTraceKeys(ctx, keys, query, qbtypes.RequestTypeRaw) {
+		// TODO: change to debug level once we are confident about the behavior
+		b.stmtBuilder.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+	}
 
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
@@ -540,9 +543,8 @@ func (b *traceOperatorCTEBuilder) adjustOperatorKeys(ctx context.Context, keys m
 		actions = append(actions, adjustTraceKey(&tmp.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
-	// Copy back the three slices that the helpers above can rewrite
-	// (AdjustDuplicateKeys reconstructs them, adjustTraceKey mutates in place).
-	// Aggregations is only read by the helpers, never reassigned, so no copy-back.
+	// Copy back the slices the helpers can rewrite.
+	b.operator.Aggregations = tmp.Aggregations
 	b.operator.SelectFields = tmp.SelectFields
 	b.operator.GroupBy = tmp.GroupBy
 	b.operator.Order = tmp.Order

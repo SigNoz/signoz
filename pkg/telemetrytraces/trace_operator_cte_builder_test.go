@@ -2,7 +2,6 @@ package telemetrytraces
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -730,8 +729,7 @@ func TestTraceOperatorStatementBuilderDeduplicatesKeys(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, 1, strings.Count(q.Query, "AS `http.method`"),
-		"http.method should appear once in SELECT after dedup, got: %s", q.Query)
-	require.NotContains(t, q.Query, "`http.method`, `http.method`",
-		"GROUP BY should list http.method once after dedup, got: %s", q.Query)
+
+	require.Contains(t, q.Query,
+		"SELECT toString(multiIf(mapContains(attributes_string, 'http.method') = ?, attributes_string['http.method'], NULL)) AS `http.method`, count() AS __result_0 FROM A GROUP BY `http.method` ORDER BY __result_0 DESC")
 }

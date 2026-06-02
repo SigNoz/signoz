@@ -1384,21 +1384,6 @@ func TestAdjustKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
-	statementBuilder := NewTraceQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		aggExprRewriter,
-		nil,
-		fl,
-	)
-
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			// Create a deep copy of the keys map to avoid modifying the original
@@ -1409,7 +1394,7 @@ func TestAdjustKeys(t *testing.T) {
 			}
 
 			// Call adjustKeys
-			adjustTraceKeys(context.Background(), statementBuilder.logger, keysMapCopy, &c.query, qbtypes.RequestTypeScalar)
+			adjustTraceKeys(context.Background(), keysMapCopy, &c.query, qbtypes.RequestTypeScalar)
 
 			// Verify select fields were adjusted
 			if c.expectedSelectFields != nil {

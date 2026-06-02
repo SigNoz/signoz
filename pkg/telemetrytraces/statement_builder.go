@@ -124,8 +124,10 @@ func (b *traceQueryStatementBuilder) Build(
 		-------------------------------- End of tech debt ----------------------------
 	*/
 
-	adjustTraceKeys(ctx, b.logger, keys, &query, requestType)
-
+	for _, action := range adjustTraceKeys(ctx, keys, &query, requestType) {
+		// TODO: change to debug level once we are confident about the behavior
+		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
+	}
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
@@ -211,7 +213,7 @@ func mergeDeprecatedTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKe
 	}
 }
 
-func adjustTraceKeys(ctx context.Context, logger *slog.Logger, keys map[string][]*telemetrytypes.TelemetryFieldKey, query *qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) {
+func adjustTraceKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query *qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], requestType qbtypes.RequestType) []string {
 
 	mergeDeprecatedTraceKeys(keys)
 
@@ -251,10 +253,7 @@ func adjustTraceKeys(ctx context.Context, logger *slog.Logger, keys map[string][
 		actions = append(actions, adjustTraceKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
 	}
 
-	for _, action := range actions {
-		// TODO: change to debug level once we are confident about the behavior
-		logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
-	}
+	return actions
 }
 
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
