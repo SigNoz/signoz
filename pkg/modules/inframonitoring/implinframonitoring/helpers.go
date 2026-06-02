@@ -403,7 +403,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return nil, err
 	}
 
-	if whereClause == nil || whereClause.WhereClause == nil {
+	if whereClause.IsEmpty() {
 		return sqlbuilder.NewWhereClause(), nil
 	}
 

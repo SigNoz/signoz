@@ -264,7 +264,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 ) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
-	var preparedWhereClause *querybuilder.PreparedWhereClause
+	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -311,7 +311,7 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 		sb.EQ("__normalized", false),
 	)
 
-	if preparedWhereClause != nil {
+	if !preparedWhereClause.IsEmpty() {
 		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 

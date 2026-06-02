@@ -46,11 +46,6 @@ export const k8sDeploymentDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDep
 		},
 	];
 
-export const k8sDeploymentInitialFilters = [
-	QUERY_KEYS.K8S_DEPLOYMENT_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sDeploymentInitialEventsFilter = (
 	item: K8sDeploymentsData,
 ): ReturnType<typeof createFilterItem>[] => [

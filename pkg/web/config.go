@@ -23,6 +23,8 @@ type Config struct {
 type SettingsConfig struct {
 	Posthog PosthogConfig `mapstructure:"posthog"`
 	Appcues AppcuesConfig `mapstructure:"appcues"`
+	Sentry  SentryConfig  `mapstructure:"sentry"`
+	Pylon   PylonConfig   `mapstructure:"sentry"`
 }
 
 type PosthogConfig struct {
@@ -30,6 +32,14 @@ type PosthogConfig struct {
 }
 
 type AppcuesConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type SentryConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type PylonConfig struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
@@ -44,10 +54,16 @@ func newConfig() factory.Config {
 		Directory: "/etc/signoz/web",
 		Settings: SettingsConfig{
 			Posthog: PosthogConfig{
-				Enabled: true,
+				Enabled: false,
 			},
 			Appcues: AppcuesConfig{
-				Enabled: true,
+				Enabled: false,
+			},
+			Sentry: SentryConfig{
+				Enabled: false,
+			},
+			Pylon: PylonConfig{
+				Enabled: false,
 			},
 		},
 	}

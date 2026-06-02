@@ -24,8 +24,6 @@ jobs:
       - name: dotenv-frontend
         working-directory: frontend
         run: |
-          echo 'VITE_INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
-          echo 'VITE_SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> .env
           echo 'VITE_SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> .env
           echo 'VITE_SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> .env
           echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> .env

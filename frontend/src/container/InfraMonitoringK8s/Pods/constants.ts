@@ -42,12 +42,6 @@ export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sPodsData>[
 		{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
 	];
 
-export const k8sPodInitialFilters = [
-	QUERY_KEYS.K8S_POD_NAME,
-	QUERY_KEYS.K8S_CLUSTER_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sPodInitialEventsFilter = (
 	pod: K8sPodsData,
 ): ReturnType<typeof createFilterItem>[] => [

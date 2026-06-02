@@ -105,6 +105,49 @@ func (m *module) getFullWaterfall(ctx context.Context, traceID string, summary *
 	return spantypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, nil, true, nil), nil
 }
 
+func (m *module) GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error) {
+	summary, err := m.store.GetTraceSummary(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	traceDurationNs := uint64(summary.End.UnixNano()) - uint64(summary.Start.UnixNano())
+
+	results := make([]spantypes.SpanAggregationResult, 0, len(req.Aggregations))
+	for _, agg := range req.Aggregations {
+		result := spantypes.SpanAggregationResult{Field: agg.Field, Aggregation: agg.Aggregation}
+		switch agg.Aggregation {
+		case spantypes.SpanAggregationSpanCount:
+			result.Value, err = m.store.GetSpanCountByField(ctx, traceID, summary, agg.Field)
+			if err != nil {
+				return nil, err
+			}
+		case spantypes.SpanAggregationDuration:
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			if err2 != nil {
+				return nil, err2
+			}
+			result.Value = make(map[string]uint64, len(durationNs))
+			for k, ns := range durationNs {
+				result.Value[k] = ns / 1_000_000
+			}
+		case spantypes.SpanAggregationExecutionTimePercentage:
+			durationNs, err2 := m.store.GetSpanDurationByField(ctx, traceID, summary, agg.Field)
+			if err2 != nil {
+				return nil, err2
+			}
+			result.Value = make(map[string]uint64, len(durationNs))
+			if traceDurationNs > 0 {
+				for k, ns := range durationNs {
+					result.Value[k] = ns * 100 / traceDurationNs
+				}
+			}
+		}
+		results = append(results, result)
+	}
+	return &spantypes.GettableTraceAggregations{Aggregations: results}, nil
+}
+
 // getWindowedWaterfall builds the waterfall tree with minimal data and then returns only a window of full spans.
 func (m *module) getWindowedWaterfall(ctx context.Context, traceID, selectedSpanID string, uncollapsedSpans []string, start, end time.Time) (*spantypes.GettableWaterfallTrace, error) {
 	// Step 1: minimal fetch → build full tree → select visible window

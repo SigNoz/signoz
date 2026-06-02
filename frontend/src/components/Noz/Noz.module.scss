@@ -1,0 +1,86 @@
+@keyframes noz-wave-wiggle {
+	0%,
+	100% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(20deg);
+	}
+	75% {
+		transform: rotate(-20deg);
+	}
+}
+
+.noz {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+	overflow: visible;
+
+	svg {
+		display: block;
+		overflow: visible;
+	}
+
+	:global {
+		.noz-arm-left {
+			transform-origin: 4.18383px 13.4752px;
+			transform: rotate(0deg);
+			transition: transform 0.55s cubic-bezier(0.34, 1.7, 0.5, 1);
+			will-change: transform;
+		}
+
+		.noz-arm-wiggle {
+			transform-origin: 4.18383px 13.4752px;
+			transform: rotate(0deg);
+			will-change: transform;
+		}
+
+		.noz-head {
+			transform-origin: 12.02px 18.37px;
+			transform: rotate(0deg);
+			transition: transform 0.5s cubic-bezier(0.34, 1.7, 0.5, 1);
+			will-change: transform;
+		}
+	}
+
+	&:hover {
+		:global(.noz-arm-left) {
+			transform: rotate(145deg) scale(1, 1.7);
+		}
+
+		:global(.noz-arm-wiggle) {
+			animation: noz-wave-wiggle 0.7s ease-in-out 0.2s infinite;
+		}
+
+		:global(.noz-head) {
+			transform: rotate(9deg);
+		}
+	}
+}
+
+:global(.noz-wave):hover {
+	:global(.noz-arm-left) {
+		transform: rotate(145deg) scale(1, 1.7);
+	}
+
+	:global(.noz-arm-wiggle) {
+		animation: noz-wave-wiggle 0.7s ease-in-out 0.2s infinite;
+	}
+
+	:global(.noz-head) {
+		transform: rotate(9deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.noz {
+		:global(.noz-arm-left),
+		:global(.noz-arm-wiggle),
+		:global(.noz-head) {
+			transition: none;
+			animation: none !important;
+		}
+	}
+}

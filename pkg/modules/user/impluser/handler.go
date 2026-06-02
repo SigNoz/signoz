@@ -410,6 +410,25 @@ func (handler *handler) CreateResetPasswordToken(w http.ResponseWriter, r *http.
 	render.Success(w, http.StatusCreated, token)
 }
 
+func (handler *handler) VerifyResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	req := new(types.PostableVerifyResetPasswordToken)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	err := handler.getter.VerifyResetPasswordToken(ctx, req.Token)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
+}
+
 func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
