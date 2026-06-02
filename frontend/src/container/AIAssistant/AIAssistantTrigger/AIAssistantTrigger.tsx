@@ -5,6 +5,7 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import Noz from 'components/Noz/Noz';
+import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 
 import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import { normalizePage } from '../hooks/useAIAssistantAnalyticsContext';
@@ -42,16 +43,15 @@ export default function AIAssistantTrigger(): JSX.Element | null {
 	}
 
 	return (
-		<TooltipSimple title="Noz">
+		<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
 			<Button
 				variant="solid"
 				color="primary"
 				className={`${styles.trigger} noz-wave`}
 				onClick={handleOpen}
 				aria-label="Open Noz"
-			>
-				<Noz size={24} />
-			</Button>
+				prefix={<Noz size={24} />}
+			/>
 		</TooltipSimple>
 	);
 }
