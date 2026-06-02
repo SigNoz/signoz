@@ -33,9 +33,9 @@ type PostableFlamegraph struct {
 // GettableFlamegraphTrace is the response for the v3 flamegraph API.
 type GettableFlamegraphTrace struct {
 	Spans                [][]*FlamegraphSpan `json:"spans" required:"true" nullable:"false"`
-	StartTimestampMillis int64               `json:"startTimestampMillis"`
-	EndTimestampMillis   int64               `json:"endTimestampMillis"`
-	HasMore              bool                `json:"hasMore"`
+	StartTimestampMillis int64               `json:"startTimestampMillis" required:"true"`
+	EndTimestampMillis   int64               `json:"endTimestampMillis" required:"true"`
+	HasMore              bool                `json:"hasMore" required:"true"`
 }
 
 func NewGettableFlamegraphTrace(spans [][]*FlamegraphSpan, startMs, endMs int64, hasMore bool) *GettableFlamegraphTrace {

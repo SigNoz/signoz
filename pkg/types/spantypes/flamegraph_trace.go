@@ -45,10 +45,7 @@ func (t *FlamegraphTrace) GetAllLevels() [][]*FlamegraphSpan {
 }
 
 // GetSelectedLevels returns the window of levels around selectedSpanID with sampling applied to dense levels.
-func (t *FlamegraphTrace) GetSelectedLevels(
-	selectedSpanID string,
-	levelLimit, spansPerLevel, topLatencyCount, bucketCount int,
-) []FlamegraphLevel {
+func (t *FlamegraphTrace) GetSelectedLevels(selectedSpanID string, levelLimit, spansPerLevel, topLatencyCount, bucketCount int) []FlamegraphLevel {
 	return nil
 }
 
