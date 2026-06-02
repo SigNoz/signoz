@@ -15,7 +15,14 @@ from http import HTTPStatus
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.querier import make_query_request
+from fixtures.querier import (
+    Aggregation,
+    BuilderQuery,
+    OrderBy,
+    TelemetryFieldKey,
+    get_rows,
+    make_query_request,
+)
 
 
 def _log(
@@ -67,32 +74,23 @@ def test_skip_resource_fingerprint_logs_use_cte_path(
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[
-            {
-                "type": "builder_query",
-                "spec": {
-                    "name": "A",
-                    "signal": "logs",
-                    "limit": 50,
-                    "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
-                    "filter": {"expression": "service.name = 'skip-logs-cte-svc'"},
-                    "selectFields": [
-                        {
-                            "name": "service.name",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        },
-                        {"name": "body"},
-                    ],
-                    "aggregations": [{"expression": "count()"}],
-                },
-            }
+            BuilderQuery(
+                signal="logs",
+                limit=50,
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
+                filter_expression="service.name = 'skip-logs-cte-svc'",
+                select_fields=[
+                    TelemetryFieldKey("service.name", "string", "resource"),
+                    TelemetryFieldKey("body"),
+                ],
+                aggregations=[Aggregation("count()")],
+            ).to_dict()
         ],
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
 
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    rows = get_rows(response)
     assert len(rows) == 2, f"expected 2 'skip-logs-cte-svc' rows, got {len(rows)}"
 
     bodies = [row["data"]["body"] for row in rows]
@@ -140,32 +138,23 @@ def test_skip_resource_fingerprint_logs_fallback_path(
         end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[
-            {
-                "type": "builder_query",
-                "spec": {
-                    "name": "A",
-                    "signal": "logs",
-                    "limit": 50,
-                    "order": [{"key": {"name": "timestamp"}, "direction": "asc"}],
-                    "filter": {"expression": "deployment.environment = 'skip-logs-fallback'"},
-                    "selectFields": [
-                        {
-                            "name": "service.name",
-                            "fieldDataType": "string",
-                            "fieldContext": "resource",
-                        },
-                        {"name": "body"},
-                    ],
-                    "aggregations": [{"expression": "count()"}],
-                },
-            }
+            BuilderQuery(
+                signal="logs",
+                limit=50,
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
+                filter_expression="deployment.environment = 'skip-logs-fallback'",
+                select_fields=[
+                    TelemetryFieldKey("service.name", "string", "resource"),
+                    TelemetryFieldKey("body"),
+                ],
+                aggregations=[Aggregation("count()")],
+            ).to_dict()
         ],
     )
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
 
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    rows = get_rows(response)
     assert len(rows) == 3, f"expected 3 fallback rows, got {len(rows)}"
 
     services = sorted(row["data"]["service.name"] for row in rows)
