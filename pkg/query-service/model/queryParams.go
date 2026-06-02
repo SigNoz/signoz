@@ -22,6 +22,7 @@ type SeriesQueryParams struct {
 	Start   time.Time
 	End     time.Time
 	Matches []string // raw match[] PromQL selector strings
+	Limit   int      // 0 means use the server-side default cap
 }
 
 const (
