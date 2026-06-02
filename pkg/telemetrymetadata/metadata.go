@@ -344,6 +344,11 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			})
 		}
 	}
+
+	if err = t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+		return nil, false, err
+	}
+
 	return keys, complete, nil
 }
 
@@ -689,7 +694,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
-	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+	if err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
 		return nil, false, err
 	}
 
@@ -2370,8 +2375,8 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
-// Get retrieves all evolutions for the given selectors from DB.
-func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+// updateColumnEvolutionMetadataForKeys updates the evolution field for keys.
+func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) error {
 
 	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
 	for _, keySelector := range keysToUpdate {
@@ -2385,7 +2390,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 
 	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
 
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
@@ -2416,7 +2421,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			}
 		}
 	}
-	return evolutionsByUniqueKey, nil
+	return nil
 }
 
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.
