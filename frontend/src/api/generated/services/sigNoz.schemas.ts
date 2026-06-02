@@ -2872,12 +2872,12 @@ export interface CloudintegrationtypesServiceDashboardDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	integrationDashboard?: CloudintegrationtypesStorableIntegrationDashboardDTO;
 	/**
 	 * @type string
 	 */
-	title?: string;
+	title: string;
 }
 
 export interface CloudintegrationtypesServiceAssetsDTO {
