@@ -49,7 +49,7 @@ def test_fts_across_contexts(
     # TOK_TID / TOK_SID: valid hex-format IDs; unique so no other inserted log matches them.
     # The remaining tokens are lowercase so they work for both case-insensitive
     # (String/JSON) and case-sensitive (Map) match().  Each token appears in exactly one log.
-    TOK_SEV = "TRACE"  # → severity_text (others use INFO)
+    TOK_SEV = "FATAL"  # → severity_text (others use INFO)
     TOK_TID = "0af7651916cd43dd8448eb211c80319c"  # → trace_id (valid 32-char hex, unique)
     TOK_SID = "6e0c63257de34c92"  # → span_id (valid 16-char hex, unique)
     TOK_BKEY = "xfts_bkey_004"  # → body JSON — key name
