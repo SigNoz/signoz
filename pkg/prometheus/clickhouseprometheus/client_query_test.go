@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/DATA-DOG/go-sqlmock"

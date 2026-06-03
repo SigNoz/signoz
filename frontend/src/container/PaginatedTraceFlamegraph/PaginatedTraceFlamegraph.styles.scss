@@ -87,12 +87,7 @@
 
 					.service-progress-indicator {
 						width: fit-content;
-						margin-inline-end: 0px !important;
-						margin-bottom: 0px !important;
-
-						.ant-progress-inner {
-							width: 30px;
-						}
+						--progress-width: 30px;
 					}
 
 					.percent-value {

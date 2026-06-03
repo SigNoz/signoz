@@ -1,6 +1,6 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Modal, Tag } from 'antd';
+import { Button, Modal } from 'antd';
 import { CircleAlert, X } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { useAppContext } from 'providers/App/App';
@@ -9,6 +9,7 @@ import APIError from 'types/api/error';
 import ErrorContent from './components/ErrorContent';
 
 import './ErrorModal.styles.scss';
+import { Badge } from '@signozhq/ui/badge';
 
 type Props = {
 	error: APIError;
@@ -45,14 +46,17 @@ function ErrorModal({
 	return (
 		<>
 			{!triggerComponent ? (
-				<Tag
+				<span
 					className="error-modal__trigger"
-					icon={<CircleAlert size={14} color={Color.BG_CHERRY_500} />}
-					color="error"
+					role="button"
+					tabIndex={0}
 					onClick={(): void => setVisible(true)}
+					onKeyDown={undefined}
 				>
-					error
-				</Tag>
+					<Badge color="error">
+						<CircleAlert size={14} color={Color.BG_CHERRY_500} /> error
+					</Badge>
+				</span>
 			) : (
 				React.cloneElement(triggerComponent, {
 					onClick: () => setVisible(true),

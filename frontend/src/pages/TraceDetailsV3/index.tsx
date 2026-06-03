@@ -20,7 +20,10 @@ import {
 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from './constants';
+import { TraceDetailEventKeys, TraceDetailEvents } from './events';
+import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
 import TraceStoreSync from './stores/TraceStoreSync';
+import { useTraceStore } from './stores/traceStore';
 import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
@@ -55,6 +58,14 @@ function TraceDetailsV3(): JSX.Element {
 
 	const selectedSpanId = urlQuery.get('spanId') || undefined;
 	const { safeNavigate } = useSafeNavigate();
+
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
+	// Tracks which traceId the load event already fired for, so navigating
+	// between traces (the route component stays mounted) re-fires it once each.
+	const dataLoadedFiredForRef = useRef('');
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const previewFieldsCount = useTraceStore((s) => s.previewFields.length);
+	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
 
 	const handleSpanDetailsClose = useCallback((): void => {
 		urlQuery.delete('spanId');
@@ -154,6 +165,46 @@ function TraceDetailsV3(): JSX.Element {
 		allSpansRef.current = allSpans;
 	}, [allSpans]);
 
+	useEffect(() => {
+		if (
+			!traceId ||
+			dataLoadedFiredForRef.current === traceId ||
+			!userPrefsReady
+		) {
+			return;
+		}
+		const payload = traceData?.payload;
+		if (!payload?.spans?.length) {
+			return;
+		}
+		dataLoadedFiredForRef.current = traceId;
+		const numServices = new Set(payload.spans.map((s) => s['service.name'])).size;
+		logTraceEvent(TraceDetailEvents.DataLoaded, {
+			[TraceDetailEventKeys.TotalSpansCount]: totalSpansCount,
+			[TraceDetailEventKeys.NumServices]: numServices,
+			[TraceDetailEventKeys.TraceDurationMs]:
+				payload.endTimestampMillis - payload.startTimestampMillis,
+			[TraceDetailEventKeys.HadErrors]: (payload.totalErrorSpansCount || 0) > 0,
+			[TraceDetailEventKeys.FlamegraphSampled]:
+				totalSpansCount > FLAMEGRAPH_SPAN_LIMIT,
+			[TraceDetailEventKeys.SpanPanelVariant]:
+				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION) ||
+				SpanDetailVariant.DOCKED_RIGHT,
+			[TraceDetailEventKeys.ColorByField]: colorByField.name,
+			[TraceDetailEventKeys.PreviewFieldsCount]: previewFieldsCount,
+			[TraceDetailEventKeys.EntryPreferOldView]:
+				getLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW) === 'true',
+		});
+	}, [
+		traceId,
+		userPrefsReady,
+		traceData,
+		totalSpansCount,
+		colorByField,
+		previewFieldsCount,
+		logTraceEvent,
+	]);
+
 	// Frontend mode: expand all parents by default when full data arrives
 	useEffect(() => {
 		if (isFullDataLoaded && allSpans.length > 0) {
@@ -233,6 +284,12 @@ function TraceDetailsV3(): JSX.Element {
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 
 	const handleCollapseChange = (key: string): void => {
+		logTraceEvent(
+			key === 'flame'
+				? TraceDetailEvents.FlameGraphToggled
+				: TraceDetailEvents.WaterfallToggled,
+			{ [TraceDetailEventKeys.Expanded]: !activeKeys.includes(key) },
+		);
 		setActiveKeys((prev) =>
 			prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
 		);
@@ -242,8 +299,12 @@ function TraceDetailsV3(): JSX.Element {
 		() =>
 			(getLocalStorageKey(
 				LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION,
-			) as SpanDetailVariant) || SpanDetailVariant.DIALOG,
+			) as SpanDetailVariant) || SpanDetailVariant.DOCKED_RIGHT,
 	);
+
+	const RIGHT_DOCK_MIN = 480;
+	const RIGHT_DOCK_MAX = 720;
+	const [rightDockWidth, setRightDockWidth] = useState(RIGHT_DOCK_MIN);
 
 	const handleVariantChange = useCallback(
 		(newVariant: SpanDetailVariant): void => {
@@ -291,7 +352,9 @@ function TraceDetailsV3(): JSX.Element {
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
 
 	const isDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
+	const isRightDocked = spanDetailVariant === SpanDetailVariant.DOCKED_RIGHT;
 	const isWaterfallDocked = panelState.isOpen && isDocked;
+	const showRightDock = panelState.isOpen && isRightDocked;
 
 	const waterfallChildren = (
 		<ResizableBox
@@ -332,94 +395,118 @@ function TraceDetailsV3(): JSX.Element {
 					<NoData />
 				) : (
 					<>
-						<div className={styles.content}>
-							<Collapse
-								// @ts-expect-error motion is passed through to rc-collapse to disable animation
-								motion={false}
-								activeKey={activeKeys.filter((k) => k === 'flame')}
-								onChange={(): void => handleCollapseChange('flame')}
-								size="small"
-								className={styles.flameCollapse}
-								items={[
-									{
-										key: 'flame',
-										label: (
-											<div className={styles.collapseLabel}>
-												<span className={styles.collapseTitle}>
-													Flame Graph
-													{traceData?.payload?.totalSpansCount &&
-														traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
-															<WarningPopover
-																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
-																placement="bottomLeft"
-															/>
-														)}
-												</span>
-												{traceData?.payload?.totalSpansCount ? (
-													<span className={styles.collapseCount}>
-														<span className={styles.collapseCountItem}>
-															<ChartNoAxesGantt size={13} />
-															Spans: {traceData.payload.totalSpansCount}
-														</span>
-														<span
-															className={cx(styles.collapseCountItem, {
-																[styles.hasErrors]: traceData.payload.totalErrorSpansCount > 0,
-															})}
-														>
-															<TriangleAlert size={13} />
-															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
-														</span>
+						<div className={styles.layoutRow}>
+							<div className={styles.content}>
+								<Collapse
+									// @ts-expect-error motion is passed through to rc-collapse to disable animation
+									motion={false}
+									activeKey={activeKeys.filter((k) => k === 'flame')}
+									onChange={(): void => handleCollapseChange('flame')}
+									size="small"
+									className={styles.flameCollapse}
+									items={[
+										{
+											key: 'flame',
+											label: (
+												<div className={styles.collapseLabel}>
+													<span className={styles.collapseTitle}>
+														Flame Graph
+														{traceData?.payload?.totalSpansCount &&
+															traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+																<WarningPopover
+																	message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
+																	placement="bottomLeft"
+																/>
+															)}
 													</span>
-												) : null}
-											</div>
-										),
-										children: (
-											<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
-												<TraceFlamegraph
-													filteredSpanIds={filteredSpanIds}
-													isFilterActive={isFilterActive}
-													selectedSpan={selectedSpan}
-													totalSpansCount={totalSpansCount}
-												/>
-											</ResizableBox>
-										),
-									},
-								]}
-							/>
+													{traceData?.payload?.totalSpansCount ? (
+														<span className={styles.collapseCount}>
+															<span className={styles.collapseCountItem}>
+																<ChartNoAxesGantt size={13} />
+																Spans: {traceData.payload.totalSpansCount}
+															</span>
+															<span
+																className={cx(styles.collapseCountItem, {
+																	[styles.hasErrors]: traceData.payload.totalErrorSpansCount > 0,
+																})}
+															>
+																<TriangleAlert size={13} />
+																Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+															</span>
+														</span>
+													) : null}
+												</div>
+											),
+											children: (
+												<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
+													<TraceFlamegraph
+														filteredSpanIds={filteredSpanIds}
+														isFilterActive={isFilterActive}
+														selectedSpan={selectedSpan}
+														totalSpansCount={totalSpansCount}
+													/>
+												</ResizableBox>
+											),
+										},
+									]}
+								/>
 
-							<Collapse
-								// @ts-expect-error motion is passed through to rc-collapse to disable animation
-								motion={false}
-								activeKey={activeKeys.filter((k) => k === 'waterfall')}
-								onChange={(): void => handleCollapseChange('waterfall')}
-								size="small"
-								className={cx(styles.waterfallCollapse, {
-									[styles.isDocked]: isWaterfallDocked,
-								})}
-								items={[
-									{
-										key: 'waterfall',
-										label: 'Waterfall',
-										children: activeKeys.includes('waterfall') ? waterfallChildren : null,
-									},
-								]}
-							/>
+								<Collapse
+									// @ts-expect-error motion is passed through to rc-collapse to disable animation
+									motion={false}
+									activeKey={activeKeys.filter((k) => k === 'waterfall')}
+									onChange={(): void => handleCollapseChange('waterfall')}
+									size="small"
+									className={cx(styles.waterfallCollapse, {
+										[styles.isDocked]: isWaterfallDocked,
+									})}
+									items={[
+										{
+											key: 'waterfall',
+											label: 'Waterfall',
+											children: activeKeys.includes('waterfall')
+												? waterfallChildren
+												: null,
+										},
+									]}
+								/>
 
-							{panelState.isOpen && isDocked && (
-								<div className={styles.dockedSpanDetails}>
+								{panelState.isOpen && isDocked && (
+									<div className={styles.dockedSpanDetails}>
+										<SpanDetailsPanel
+											panelState={panelState}
+											selectedSpan={selectedSpan}
+											variant={SpanDetailVariant.DOCKED}
+											onVariantChange={handleVariantChange}
+											traceStartTime={traceData?.payload?.startTimestampMillis}
+											traceEndTime={traceData?.payload?.endTimestampMillis}
+										/>
+									</div>
+								)}
+							</div>
+
+							{showRightDock && (
+								<ResizableBox
+									handle="left"
+									defaultWidth={rightDockWidth}
+									minWidth={RIGHT_DOCK_MIN}
+									maxWidth={RIGHT_DOCK_MAX}
+									onResize={setRightDockWidth}
+									className={styles.rightDock}
+								>
 									<SpanDetailsPanel
 										panelState={panelState}
 										selectedSpan={selectedSpan}
-										variant={SpanDetailVariant.DOCKED}
+										variant={SpanDetailVariant.DOCKED_RIGHT}
 										onVariantChange={handleVariantChange}
 										traceStartTime={traceData?.payload?.startTimestampMillis}
 										traceEndTime={traceData?.payload?.endTimestampMillis}
 									/>
-								</div>
+								</ResizableBox>
 							)}
 						</div>
 
-						{panelState.isOpen && !isDocked && (
+						{panelState.isOpen && spanDetailVariant === SpanDetailVariant.DIALOG && (
 							<SpanDetailsPanel
 								panelState={panelState}
 								selectedSpan={selectedSpan}

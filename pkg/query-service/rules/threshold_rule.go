@@ -38,13 +38,14 @@ func NewThresholdRule(
 	p *ruletypes.PostableRule,
 	querier querier.Querier,
 	logger *slog.Logger,
+	externalURL *url.URL,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
 	logger.Info("creating new ThresholdRule", slog.String("rule.id", id))
 
 	opts = append(opts, WithLogger(logger))
 
-	baseRule, err := NewBaseRule(id, orgID, p, opts...)
+	baseRule, err := NewBaseRule(id, orgID, p, externalURL, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,17 +54,6 @@ func NewThresholdRule(
 		BaseRule: baseRule,
 		querier:  querier,
 	}, nil
-}
-
-func (r *ThresholdRule) hostFromSource() string {
-	parsedURL, err := url.Parse(r.source)
-	if err != nil {
-		return ""
-	}
-	if parsedURL.Port() != "" {
-		return fmt.Sprintf("%s://%s:%s", parsedURL.Scheme, parsedURL.Hostname(), parsedURL.Port())
-	}
-	return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Hostname())
 }
 
 func (r *ThresholdRule) Type() ruletypes.RuleType {
@@ -95,19 +85,19 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 	return req, nil
 }
 
-func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) string {
+func (r *ThresholdRule) prepareParamsForLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
 	selectedQuery := r.SelectedQuery(ctx)
 
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
-		return ""
+		return nil
 	}
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
 	// TODO(srikanthccv): handle formula queries
 	if selectedQuery < "A" || selectedQuery > "Z" {
-		return ""
+		return nil
 	}
 
 	var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -122,7 +112,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lb
 	}
 
 	if q.Signal != telemetrytypes.SignalLogs {
-		return ""
+		return nil
 	}
 
 	filterExpr := ""
@@ -132,22 +122,22 @@ func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lb
 
 	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
 
-	return contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+	return contextlinks.PrepareParamsForLogsV5(start, end, whereClause)
 }
 
-func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) string {
+func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) url.Values {
 	selectedQuery := r.SelectedQuery(ctx)
 
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
-		return ""
+		return nil
 	}
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
 	// TODO(srikanthccv): handle formula queries
 	if selectedQuery < "A" || selectedQuery > "Z" {
-		return ""
+		return nil
 	}
 
 	var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
@@ -162,7 +152,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, 
 	}
 
 	if q.Signal != telemetrytypes.SignalTraces {
-		return ""
+		return nil
 	}
 
 	filterExpr := ""
@@ -172,7 +162,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, 
 
 	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
 
-	return contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause)
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
@@ -349,16 +339,18 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		// label set, but different timestamps, together.
 		switch r.typ {
 		case ruletypes.AlertTypeTraces:
-			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			params := r.prepareParamsForTraces(ctx, ts, smpl.Metric)
+			if len(params) > 0 {
+				link := r.ExternalURL("traces-explorer", params)
+				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", link))
+				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedTraces, Value: link})
 			}
 		case ruletypes.AlertTypeLogs:
-			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
-				annotations = append(annotations, ruletypes.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			params := r.prepareParamsForLogs(ctx, ts, smpl.Metric)
+			if len(params) > 0 {
+				link := r.ExternalURL("logs/logs-explorer", params)
+				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", link))
+				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogs, Value: link})
 			}
 		}
 

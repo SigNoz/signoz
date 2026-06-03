@@ -1,11 +1,5 @@
-.signoz-radio-group.ant-radio-group {
+.signoz-radio-group {
 	color: var(--l2-foreground);
-
-	&.ant-radio-group-disabled {
-		opacity: 0.5;
-		pointer-events: none;
-		cursor: not-allowed;
-	}
 
 	.view-title {
 		display: flex;
@@ -30,43 +24,41 @@
 		}
 	}
 
-	.tab {
+	> button {
 		border: 1px solid var(--l1-border);
 		background: var(--l1-background);
+
 		&:hover {
 			color: var(--l1-foreground);
 		}
 		&::before {
 			background: var(--l1-border);
 		}
-	}
 
-	.selected_view {
-		&,
-		&:hover {
-			background: var(--l3-background);
-			color: var(--l1-foreground);
-			border: 1px solid var(--l1-border);
+		&[data-state='on'] {
+			&,
+			&:hover {
+				background: var(--l3-background);
+				color: var(--l1-foreground);
+				border: 1px solid var(--l1-border);
+			}
+			&::before {
+				background: var(--l3-background);
+				border-left: 1px solid var(--l1-border);
+			}
 		}
-		&::before {
-			background: var(--l3-background);
-			border-left: 1px solid var(--l1-border);
-		}
-	}
 
-	&.ant-radio-group-disabled {
-		.tab,
-		.selected_view {
+		&[disabled],
+		&[data-disabled] {
 			background: var(--l2-background) !important;
 			border-color: var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
-		}
 
-		.tab:hover,
-		.selected_view:hover {
-			background: var(--l2-background) !important;
-			border-color: var(--l1-border) !important;
-			color: var(--l1-foreground) !important;
+			&:hover {
+				background: var(--l2-background) !important;
+				border-color: var(--l1-border) !important;
+				color: var(--l1-foreground) !important;
+			}
 		}
 	}
 }

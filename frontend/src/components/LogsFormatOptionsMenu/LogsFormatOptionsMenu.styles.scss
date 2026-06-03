@@ -256,6 +256,34 @@
 				}
 			}
 
+			.edit-columns-container {
+				padding: 12px;
+
+				.edit-columns-btn {
+					display: flex;
+					width: 100%;
+					height: 20px;
+					padding: 4px 0px;
+					justify-content: space-between;
+					align-items: center;
+					border: none !important;
+
+					.edit-columns-text {
+						color: var(--l2-foreground);
+						font-family: Inter;
+						font-size: 13px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: normal;
+						letter-spacing: 0.14px;
+					}
+				}
+
+				.edit-columns-btn:hover {
+					background-color: unset !important;
+				}
+			}
+
 			.add-new-column-container {
 				display: flex;
 				flex-direction: column;

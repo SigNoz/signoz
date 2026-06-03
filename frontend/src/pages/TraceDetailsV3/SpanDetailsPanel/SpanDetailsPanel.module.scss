@@ -3,6 +3,10 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+
+	:global(.details-header) {
+		height: 39px;
+	}
 }
 
 .body {
