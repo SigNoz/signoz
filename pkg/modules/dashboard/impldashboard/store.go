@@ -149,7 +149,7 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 	case dashboardtypes.ListSortCreatedAt:
 		return "dashboard.created_at", nil
 	case dashboardtypes.ListSortName:
-		return string(store.sqlstore.Formatter().JSONExtractString("dashboard.data", "$.data.display.name")), nil
+		return string(store.sqlstore.Formatter().JSONExtractString("dashboard.data", "$.spec.display.name")), nil
 	}
 	return "", errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardListInvalid,
 		"unsupported sort field %q", sort)

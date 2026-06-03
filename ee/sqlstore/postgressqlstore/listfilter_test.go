@@ -30,25 +30,25 @@ func TestListFilterCompile_Postgres(t *testing.T) {
 		{
 			name:     "name = uses Postgres -> / ->> chain",
 			query:    `name = 'overview'`,
-			wantSQL:  `"dashboard"."data"->'spec'->'display'->>'name' = ?`,
+			wantSQL:  `"dashboard"."data"::jsonb->'spec'->'display'->>'name' = ?`,
 			wantArgs: []any{"overview"},
 		},
 		{
 			name:     "name CONTAINS — same JSON path, LIKE pattern",
 			query:    `name CONTAINS 'overview'`,
-			wantSQL:  `"dashboard"."data"->'spec'->'display'->>'name' LIKE ?`,
+			wantSQL:  `"dashboard"."data"::jsonb->'spec'->'display'->>'name' LIKE ?`,
 			wantArgs: []any{"%overview%"},
 		},
 		{
 			name:     "name ILIKE — LOWER wraps the JSON path",
 			query:    `name ILIKE 'Prod%'`,
-			wantSQL:  `lower("dashboard"."data"->'spec'->'display'->>'name') LIKE LOWER(?)`,
+			wantSQL:  `lower("dashboard"."data"::jsonb->'spec'->'display'->>'name') LIKE LOWER(?)`,
 			wantArgs: []any{"Prod%"},
 		},
 		{
 			name:     "description = follows the same path shape",
 			query:    `description = 'd1'`,
-			wantSQL:  `"dashboard"."data"->'spec'->'display'->>'description' = ?`,
+			wantSQL:  `"dashboard"."data"::jsonb->'spec'->'display'->>'description' = ?`,
 			wantArgs: []any{"d1"},
 		},
 	}
