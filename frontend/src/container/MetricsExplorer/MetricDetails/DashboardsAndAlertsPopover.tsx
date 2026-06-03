@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Skeleton } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useGetMetricAlerts,
@@ -126,12 +127,11 @@ function DashboardsAndAlertsPopover({
 	return (
 		<div className="dashboards-and-alerts-popover-container">
 			{dashboardsPopoverContent && (
-				<Dropdown
+				<DropdownMenuSimple
 					menu={{
 						items: dashboardsPopoverContent,
 					}}
-					placement="bottomLeft"
-					trigger={['click']}
+					align="start"
 				>
 					<div
 						className="dashboards-and-alerts-popover dashboards-popover"
@@ -142,15 +142,14 @@ function DashboardsAndAlertsPopover({
 							{pluralize(dashboards.length, 'dashboard')}
 						</Typography.Text>
 					</div>
-				</Dropdown>
+				</DropdownMenuSimple>
 			)}
 			{alertsPopoverContent && (
-				<Dropdown
+				<DropdownMenuSimple
 					menu={{
 						items: alertsPopoverContent,
 					}}
-					placement="bottomLeft"
-					trigger={['click']}
+					align="start"
 				>
 					<div
 						className="dashboards-and-alerts-popover alerts-popover"
@@ -161,7 +160,7 @@ function DashboardsAndAlertsPopover({
 							{pluralize(alerts.length, 'alert rule')}
 						</Typography.Text>
 					</div>
-				</Dropdown>
+				</DropdownMenuSimple>
 			)}
 		</div>
 	);

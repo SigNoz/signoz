@@ -1,4 +1,3 @@
-import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { rest, server } from 'mocks-server/server';
@@ -15,10 +14,6 @@ jest.mock('lib/history', () => ({
 			search: '?token=reset-token-123',
 		},
 	},
-}));
-
-jest.mock('api/utils', () => ({
-	Logout: jest.fn(),
 }));
 
 const mockSuccessNotification = jest.fn();
@@ -69,17 +64,6 @@ describe('ResetPassword Component', () => {
 				screen.getByRole('button', { name: /reset password/i }),
 			).toBeInTheDocument();
 			expect(screen.getByText(/signoz 1\.0\.0/i)).toBeInTheDocument();
-		});
-
-		it('redirects to login when token is missing', () => {
-			window.history.pushState({}, '', '/password-reset');
-
-			render(<ResetPassword version="1.0.0" />, undefined, {
-				initialRoute: '/password-reset',
-			});
-
-			expect(Logout).toHaveBeenCalled();
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 

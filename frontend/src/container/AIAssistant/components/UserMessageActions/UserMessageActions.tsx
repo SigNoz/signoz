@@ -47,6 +47,7 @@ export default function UserMessageActions({
 					variant="ghost"
 					color="secondary"
 					onClick={handleCopy}
+					aria-label={copied ? 'Copied' : 'Copy message'}
 				>
 					{copied ? <Check size={12} /> : <Copy size={12} />}
 				</Button>

@@ -1,0 +1,154 @@
+{
+    "display": {
+        "name": "NV dashboard with sections",
+        "description": ""
+    },
+    "datasources": {
+        "SigNozDatasource": {
+            "default": true,
+            "plugin": {
+                "kind": "signoz/Datasource",
+                "spec": {}
+            }
+        }
+    },
+    "panels": {
+        "b424e23b": {
+            "kind": "Panel",
+            "spec": {
+                "display": {
+                    "name": ""
+                },
+                "plugin": {
+                    "kind": "signoz/NumberPanel",
+                    "spec": {
+                        "formatting": {
+                            "unit": "s",
+                            "decimalPrecision": "2"
+                        }
+                    }
+                },
+                "queries": [
+                    {
+                        "kind": "TimeSeriesQuery",
+                        "spec": {
+                            "plugin": {
+                                "kind": "signoz/BuilderQuery",
+                                "spec": {
+                                    "name": "A",
+                                    "signal": "metrics",
+                                    "aggregations": [
+                                        {
+                                            "metricName": "container.cpu.time",
+                                            "reduceTo": "sum",
+                                            "spaceAggregation": "sum",
+                                            "timeAggregation": "rate"
+                                        }
+                                    ],
+                                    "filter": {
+                                        "expression": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "251df4d5": {
+            "kind": "Panel",
+            "spec": {
+                "display": {
+                    "name": ""
+                },
+                "plugin": {
+                    "kind": "signoz/TimeSeriesPanel",
+                    "spec": {
+                        "visualization": {
+                            "fillSpans": false
+                        },
+                        "formatting": {
+                            "unit": "recommendations",
+                            "decimalPrecision": "2"
+                        },
+                        "chartAppearance": {
+                            "lineInterpolation": "spline",
+                            "showPoints": false,
+                            "lineStyle": "solid",
+                            "fillMode": "none",
+                            "spanGaps": {"fillOnlyBelow": true}
+                        },
+                        "legend": {
+                            "position": "bottom"
+                        }
+                    }
+                },
+                "queries": [
+                    {
+                        "kind": "TimeSeriesQuery",
+                        "spec": {
+                            "plugin": {
+                                "kind": "signoz/BuilderQuery",
+                                "spec": {
+                                    "name": "A",
+                                    "signal": "metrics",
+                                    "aggregations": [
+                                        {
+                                            "metricName": "app_recommendations_counter",
+                                            "reduceTo": "sum",
+                                            "spaceAggregation": "sum",
+                                            "timeAggregation": "rate"
+                                        }
+                                    ],
+                                    "filter": {
+                                        "expression": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "layouts": [
+        {
+            "kind": "Grid",
+            "spec": {
+                "display": {
+                    "title": "Bravo"
+                },
+                "items": [
+                    {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "content": {
+                            "$ref": "#/spec/panels/b424e23b"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "kind": "Grid",
+            "spec": {
+                "display": {
+                    "title": "Alpha"
+                },
+                "items": [
+                    {
+                        "x": 0,
+                        "y": 0,
+                        "width": 6,
+                        "height": 6,
+                        "content": {
+                            "$ref": "#/spec/panels/251df4d5"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

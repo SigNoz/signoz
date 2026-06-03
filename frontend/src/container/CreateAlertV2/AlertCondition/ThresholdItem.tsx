@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Input, Select, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';

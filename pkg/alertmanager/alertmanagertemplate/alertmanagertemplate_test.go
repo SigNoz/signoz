@@ -19,7 +19,7 @@ import (
 
 // testSetup returns an AlertTemplater and a context pre-populated with group key,
 // receiver name, and group labels for use in tests.
-func testSetup(t *testing.T) (Templater, context.Context) {
+func testSetup(t *testing.T) (alertmanagertypes.Templater, context.Context) {
 	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()

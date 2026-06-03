@@ -90,3 +90,26 @@ jobs:
         run: |
           cd frontend && pnpm generate:api
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)
+  web-settings:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install-frontend
+        run: cd frontend && pnpm install
+      - name: generate-web-settings
+        run: |
+          cd frontend && pnpm generate:config:web-settings
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated web settings types. Run pnpm generate:config:web-settings in frontend/ locally and commit."; exit 1)

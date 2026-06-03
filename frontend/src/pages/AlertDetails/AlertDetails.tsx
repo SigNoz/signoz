@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Divider } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
@@ -104,7 +104,7 @@ function AlertDetails(): JSX.Element {
 				/>
 
 				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
-				<Divider className="divider" />
+				<Divider className="alert-details__divider" />
 				<div className="tabs-and-filters">
 					<RouteTab
 						routes={routes}
