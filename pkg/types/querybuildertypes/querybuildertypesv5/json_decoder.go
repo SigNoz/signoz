@@ -128,15 +128,18 @@ func getJSONFieldNames(v any) []string {
 }
 
 // wrapUnmarshalError wraps UnmarshalJSONWithContext errors with appropriate context
-// It preserves errors that already have additional context or unknown field errors.
+// It preserves errors that already carry structured context or unknown field errors.
 func wrapUnmarshalError(err error, errorFormat string, args ...interface{}) error {
 	if err == nil {
 		return nil
 	}
 
-	// If it's already one of our wrapped errors with additional context, return as-is
+	// If it already carries structured context (additional hints, suggestions,
+	// or invalid references), return it as-is rather than flattening it into a
+	// fresh message and dropping those fields.
 	_, _, _, _, _, additionals := errors.Unwrapb(err)
-	if len(additionals) > 0 {
+	j := errors.AsJSON(err)
+	if len(additionals) > 0 || len(j.Suggestions) > 0 || len(j.InvalidReferences) > 0 {
 		return err
 	}
 
@@ -163,6 +166,7 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 
 	// Extract the underlying error details
 	_, _, innerMsg, _, _, additionals := errors.Unwrapb(err)
+	inner := errors.AsJSON(err)
 
 	// Create a new error with the provided format
 	newErr := errors.NewInvalidInputf(
@@ -172,9 +176,15 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 		innerMsg,
 	)
 
-	// Add any additional context from the inner error
+	// Carry over the structured context from the inner error.
 	if len(additionals) > 0 {
 		newErr = newErr.WithAdditional(additionals...)
+	}
+	if len(inner.Suggestions) > 0 {
+		newErr = newErr.WithSuggestions(inner.Suggestions...)
+	}
+	if len(inner.InvalidReferences) > 0 {
+		newErr = newErr.WithInvalidReferences(inner.InvalidReferences...)
 	}
 
 	return newErr
