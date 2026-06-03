@@ -276,6 +276,44 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableServicesMetadata(services))
 }
 
+func (handler *handler) ListAccountServicesMetadata(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(nil, err)
+		return
+	}
+
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
+	if err != nil {
+		render.Error(nil, err)
+		return
+	}
+
+	accountID, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(nil, err)
+		return
+	}
+
+	// check if integration account exists and is not removed.
+	_, err = handler.module.GetConnectedAccount(ctx, valuer.MustNewUUID(claims.OrgID), accountID, provider)
+	if err != nil {
+		render.Error(nil, err)
+		return
+	}
+
+	services, err := handler.module.ListServicesMetadata(ctx, valuer.MustNewUUID(claims.OrgID), provider, accountID)
+	if err != nil {
+		render.Error(nil, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, cloudintegrationtypes.NewGettableServicesMetadata(services))
+}
+
 func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -440,4 +478,3 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAgentCheckIn(provider, resp))
 }
-
