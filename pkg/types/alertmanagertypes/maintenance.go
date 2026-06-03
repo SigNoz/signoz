@@ -60,11 +60,11 @@ type StorablePlannedMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string    `bun:"name,type:text,notnull"`
-	Description string    `bun:"description,type:text"`
-	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string    `bun:"org_id,type:text"`
-	Scope       string    `bun:"scope,type:text"`
+	Name        string `bun:"name,type:text,notnull"`
+	Description string `bun:"description,type:text"`
+	Schedule    string `bun:"schedule,type:text,notnull"`
+	OrgID       string `bun:"org_id,type:text"`
+	Scope       string `bun:"scope,type:text"`
 }
 
 type PlannedMaintenance struct {
@@ -391,26 +391,29 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance {
-	ruleIDs := []string{}
-	if m.Rules != nil {
-		for _, storableMaintenanceRule := range m.Rules {
-			ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
-		}
+func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() (*PlannedMaintenance, error) {
+	schedule := &Schedule{}
+	if err := json.Unmarshal([]byte(m.Schedule), &schedule); err != nil {
+		return nil, err
+	}
+
+	ruleIDs := make([]string, 0, len(m.Rules))
+	for _, storableMaintenanceRule := range m.Rules {
+		ruleIDs = append(ruleIDs, storableMaintenanceRule.RuleID.StringValue())
 	}
 
 	return &PlannedMaintenance{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
-		Schedule:    m.Schedule,
+		Schedule:    schedule,
 		RuleIDs:     ruleIDs,
 		Scope:       m.Scope,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		CreatedBy:   m.CreatedBy,
 		UpdatedBy:   m.UpdatedBy,
-	}
+	}, nil
 }
 
 type ListPlannedMaintenanceParams struct {

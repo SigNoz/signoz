@@ -46,7 +46,7 @@ func NewFactory(
 ) factory.ProviderFactory[ruler.Ruler, ruler.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config ruler.Config) (ruler.Ruler, error) {
 		ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
-		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore)
+		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstore, providerSettings)
 
 		managerOpts := &rules.ManagerOptions{
 			TelemetryStore:         telemetryStore,

@@ -2,9 +2,12 @@ package sqlalertmanagerstore
 
 import (
 	"context"
+	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -14,11 +17,13 @@ import (
 
 type maintenance struct {
 	sqlstore sqlstore.SQLStore
+	logger   *slog.Logger
 }
 
-func NewMaintenanceStore(store sqlstore.SQLStore) alertmanagertypes.MaintenanceStore {
+func NewMaintenanceStore(store sqlstore.SQLStore, providerSettings factory.ProviderSettings) alertmanagertypes.MaintenanceStore {
 	return &maintenance{
 		sqlstore: store,
+		logger:   providerSettings.Logger,
 	}
 }
 
@@ -35,12 +40,20 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 		return nil, err
 	}
 
-	gettablePlannedMaintenance := make([]*alertmanagertypes.PlannedMaintenance, 0)
+	plannedMaintenances := make([]*alertmanagertypes.PlannedMaintenance, 0, len(gettableMaintenancesRules))
 	for _, gettableMaintenancesRule := range gettableMaintenancesRules {
-		gettablePlannedMaintenance = append(gettablePlannedMaintenance, gettableMaintenancesRule.ToPlannedMaintenance())
+		pm, err := gettableMaintenancesRule.ToPlannedMaintenance()
+		if err != nil {
+			// Don't return an error because we want to process all the valid records.
+			// Log and skip instead.
+			r.logger.WarnContext(ctx, "skipping planned maintenance", slog.String("maintenance_id", gettableMaintenancesRule.ID.StringValue()), errors.Attr(err))
+			continue
+		}
+
+		plannedMaintenances = append(plannedMaintenances, pm)
 	}
 
-	return gettablePlannedMaintenance, nil
+	return plannedMaintenances, nil
 }
 
 func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
@@ -56,11 +69,16 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "planned maintenance with ID: %s does not exist", id.StringValue())
 	}
 
-	return storableMaintenanceRule.ToPlannedMaintenance(), nil
+	return storableMaintenanceRule.ToPlannedMaintenance()
 }
 
 func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *alertmanagertypes.PostablePlannedMaintenance) (*alertmanagertypes.PlannedMaintenance, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	schedule, err := json.Marshal(maintenance.Schedule)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +97,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		},
 		Name:        maintenance.Name,
 		Description: maintenance.Description,
-		Schedule:    maintenance.Schedule,
+		Schedule:    string(schedule),
 		OrgID:       claims.OrgID,
 		Scope:       maintenance.Scope,
 	}
@@ -127,18 +145,21 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		return nil, err
 	}
 
-	return &alertmanagertypes.PlannedMaintenance{
+	pm := &alertmanagertypes.PlannedMaintenance{
 		ID:          storablePlannedMaintenance.ID,
 		Name:        storablePlannedMaintenance.Name,
 		Description: storablePlannedMaintenance.Description,
-		Schedule:    storablePlannedMaintenance.Schedule,
 		RuleIDs:     maintenance.AlertIds,
 		Scope:       maintenance.Scope,
 		CreatedAt:   storablePlannedMaintenance.CreatedAt,
 		CreatedBy:   storablePlannedMaintenance.CreatedBy,
 		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,
 		UpdatedBy:   storablePlannedMaintenance.UpdatedBy,
-	}, nil
+	}
+	if err = json.Unmarshal([]byte(storablePlannedMaintenance.Schedule), &pm.Schedule); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
 func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
@@ -166,6 +187,11 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		return err
 	}
 
+	schedule, err := json.Marshal(maintenance.Schedule)
+	if err != nil {
+		return err
+	}
+
 	storablePlannedMaintenance := alertmanagertypes.StorablePlannedMaintenance{
 		Identifiable: types.Identifiable{
 			ID: id,
@@ -180,7 +206,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		},
 		Name:        maintenance.Name,
 		Description: maintenance.Description,
-		Schedule:    maintenance.Schedule,
+		Schedule:    string(schedule),
 		OrgID:       claims.OrgID,
 		Scope:       maintenance.Scope,
 	}
