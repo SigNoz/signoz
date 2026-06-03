@@ -109,7 +109,7 @@ func (t *FlamegraphTrace) buildSpanTree() {
 
 func flamegraphSpanIndex(spans []*FlamegraphSpan, spanID string) int {
 	for i, s := range spans {
-		if s != nil && s.SpanID == spanID {
+		if s.SpanID == spanID {
 			return i
 		}
 	}
