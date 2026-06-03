@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
+import { useNavigationType } from 'react-router-dom-v5-compat';
 import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -20,7 +20,6 @@ import {
 } from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
@@ -54,6 +53,7 @@ import {
 	Time,
 	TimeRange,
 } from './types';
+import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 
@@ -90,10 +90,12 @@ function DateTimeSelection({
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const urlQuery = useUrlQuery();
-	const searchStartTime = urlQuery.get('startTime');
-	const searchEndTime = urlQuery.get('endTime');
-	const relativeTimeFromUrl = urlQuery.get(QueryParams.relativeTime);
+	const currentSearchParams = getUnstableCurrentSearchParams();
+	const searchStartTime = currentSearchParams.get(QueryParams.startTime);
+	const searchEndTime = currentSearchParams.get(QueryParams.endTime);
+	const relativeTimeFromUrl = currentSearchParams.get(QueryParams.relativeTime);
+	const hasTimeParamsInUrl =
+		(searchStartTime && searchEndTime) || relativeTimeFromUrl;
 
 	// Prioritize props for initial modal time, fallback to URL params
 	let initialModalStartTime = 0;
@@ -114,8 +116,6 @@ function DateTimeSelection({
 		initialModalStartTime,
 	);
 	const [modalEndTime, setModalEndTime] = useState<number>(initialModalEndTime);
-
-	const [searchParams] = useSearchParams();
 
 	// Effect to update modal time state when props change
 	useEffect(() => {
@@ -323,14 +323,15 @@ function DateTimeSelection({
 				return;
 			}
 
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			const urlQuery = getUnstableCurrentSearchParams();
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 
 			urlQuery.set(QueryParams.relativeTime, value);
 			// Remove Hidden Filters from URL query parameters on time change
 			urlQuery.delete(QueryParams.activeLogId);
 
-			if (searchParams.has(QueryParams.compositeQuery)) {
+			if (urlQuery.has(QueryParams.compositeQuery)) {
 				const updatedCompositeQuery = getUpdatedCompositeQuery();
 				urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 			}
@@ -349,8 +350,6 @@ function DateTimeSelection({
 			getUpdatedCompositeQuery,
 			updateLocalStorageForRoutes,
 			updateTimeInterval,
-			urlQuery,
-			searchParams,
 		],
 	);
 
@@ -414,6 +413,7 @@ function DateTimeSelection({
 
 				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
+				const urlQuery = getUnstableCurrentSearchParams();
 				urlQuery.set(
 					QueryParams.startTime,
 					startTime?.toDate().getTime().toString(),
@@ -421,7 +421,7 @@ function DateTimeSelection({
 				urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 				urlQuery.delete(QueryParams.relativeTime);
 
-				if (searchParams.has(QueryParams.compositeQuery)) {
+				if (urlQuery.has(QueryParams.compositeQuery)) {
 					const updatedCompositeQuery = getUpdatedCompositeQuery();
 					urlQuery.set(QueryParams.compositeQuery, updatedCompositeQuery);
 				}
@@ -441,8 +441,9 @@ function DateTimeSelection({
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
 
-		urlQuery.delete('startTime');
-		urlQuery.delete('endTime');
+		const urlQuery = getUnstableCurrentSearchParams();
+		urlQuery.delete(QueryParams.startTime);
+		urlQuery.delete(QueryParams.endTime);
 
 		urlQuery.set(QueryParams.relativeTime, dateTimeStr);
 
@@ -595,13 +596,12 @@ function DateTimeSelection({
 
 		// set the default relative time for alert history and overview pages if relative time is not specified
 		if (
-			(!urlQuery.has(QueryParams.startTime) ||
-				!urlQuery.has(QueryParams.endTime)) &&
-			!urlQuery.has(QueryParams.relativeTime) &&
+			!hasTimeParamsInUrl &&
 			(currentRoute === ROUTES.ALERT_OVERVIEW ||
 				currentRoute === ROUTES.ALERT_HISTORY)
 		) {
 			updateTimeInterval(defaultRelativeTime);
+			const urlQuery = getUnstableCurrentSearchParams();
 			urlQuery.set(QueryParams.relativeTime, defaultRelativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			safeNavigate(generatedUrl);
@@ -625,9 +625,10 @@ function DateTimeSelection({
 			updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 		}
 
+		const urlQuery = getUnstableCurrentSearchParams();
 		if (updatedTime !== 'custom') {
-			urlQuery.delete('startTime');
-			urlQuery.delete('endTime');
+			urlQuery.delete(QueryParams.startTime);
+			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
 			const startTime = preStartTime.toString();

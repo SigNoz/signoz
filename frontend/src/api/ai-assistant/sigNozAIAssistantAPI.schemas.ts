@@ -37,6 +37,16 @@ export enum ApplyFilterSignalDTO {
 	traces = 'traces',
 	metrics = 'metrics',
 }
+export enum ApprovalStateDTO {
+	pending = 'pending',
+	approved = 'approved',
+	rejected = 'rejected',
+	superseded = 'superseded',
+}
+export enum ApprovalActionTypeDTO {
+	modify = 'modify',
+	delete = 'delete',
+}
 /**
  * Resolved approval (approved/rejected/superseded) anchored on the assistant message that proposed it. Pending approvals never appear here - they live at the top-level pendingApproval slot.
  */
@@ -63,16 +73,6 @@ export interface ApprovalActionSummaryDTO {
 	resolvedAt: string;
 }
 
-export enum ApprovalActionTypeDTO {
-	modify = 'modify',
-	delete = 'delete',
-}
-export enum ApprovalStateDTO {
-	pending = 'pending',
-	approved = 'approved',
-	rejected = 'rejected',
-	superseded = 'superseded',
-}
 export type ApprovalSummaryDTODiff = { [key: string]: unknown };
 
 export interface ApprovalSummaryDTO {
@@ -139,6 +139,16 @@ export interface CancelRequestDTO {
 	threadId: string;
 }
 
+export enum ExecutionStateDTO {
+	queued = 'queued',
+	running = 'running',
+	awaiting_approval = 'awaiting_approval',
+	awaiting_clarification = 'awaiting_clarification',
+	resumed = 'resumed',
+	completed = 'completed',
+	failed = 'failed',
+	canceled = 'canceled',
+}
 export interface CancelResponseDTO {
 	/**
 	 * @type string
@@ -153,6 +163,13 @@ export type ClarificationFieldDTOOptions = string[] | null;
 
 export type ClarificationFieldDTODefault = string | string[] | null;
 
+export enum ClarificationFieldTypeDTO {
+	text = 'text',
+	number = 'number',
+	select = 'select',
+	multi_select = 'multi_select',
+	boolean = 'boolean',
+}
 export interface ClarificationFieldDTO {
 	/**
 	 * @type string
@@ -175,13 +192,6 @@ export interface ClarificationFieldDTO {
 	default?: ClarificationFieldDTODefault;
 }
 
-export enum ClarificationFieldTypeDTO {
-	text = 'text',
-	number = 'number',
-	select = 'select',
-	multi_select = 'multi_select',
-	boolean = 'boolean',
-}
 export enum ClarificationStateDTO {
 	pending = 'pending',
 	submitted = 'submitted',
@@ -252,178 +262,21 @@ export interface ClarifyResponseDTO {
 	executionId: string;
 }
 
-export type CreateMessageRequestDTOContexts = MessageContextDTO[] | null;
-
-export type CreateMessageRequestDTOForkFromMessageId = string | null;
-
-export interface CreateMessageRequestDTO {
-	/**
-	 * @type string
-	 * @maxLength 20000
-	 * @minLength 1
-	 */
-	content: string;
-	contexts?: CreateMessageRequestDTOContexts;
-	forkFromMessageId?: CreateMessageRequestDTOForkFromMessageId;
-}
-
-export interface CreateMessageResponseDTO {
-	/**
-	 * @type string
-	 * @format uuid
-	 */
-	executionId: string;
-}
-
-export type CreateThreadRequestDTOTitle = string | null;
-
-export interface CreateThreadRequestDTO {
-	title?: CreateThreadRequestDTOTitle;
-}
-
-export interface CreateThreadResponseDTO {
-	/**
-	 * @type string
-	 * @format uuid
-	 */
-	threadId: string;
-}
-
-export type ErrorBodyDTOErrors = ErrorResponseAdditionalDTO[] | null;
-
-export type ErrorBodyDTOUrl = string | null;
-
 /**
- * Inner error object — matches Go ErrorsJSON.
- */
-export interface ErrorBodyDTO {
-	/**
-	 * @type string
-	 * @pattern ^[a-z_]+$
-	 */
-	code: string;
-	/**
-	 * @type string
-	 */
-	message: string;
-	errors?: ErrorBodyDTOErrors;
-	url?: ErrorBodyDTOUrl;
-}
-
-/**
- * Top-level error envelope — matches Go RenderErrorResponse.
- */
-export interface ErrorResponseDTO {
-	/**
-	 * @type string
-	 */
-	status?: string;
-	error: ErrorBodyDTO;
-}
-
-/**
- * Single sub-error entry — matches Go ErrorsResponseerroradditional.
- */
-export interface ErrorResponseAdditionalDTO {
-	/**
-	 * @type string
-	 */
-	message: string;
-}
-
-export enum ExecutionStateDTO {
-	queued = 'queued',
-	running = 'running',
-	awaiting_approval = 'awaiting_approval',
-	awaiting_clarification = 'awaiting_clarification',
-	resumed = 'resumed',
-	completed = 'completed',
-	failed = 'failed',
-	canceled = 'canceled',
-}
-export enum FeedbackRatingDTO {
-	positive = 'positive',
-	negative = 'negative',
-}
-export type FeedbackRequestDTOComment = string | null;
-
-export interface FeedbackRequestDTO {
-	rating: FeedbackRatingDTO;
-	comment?: FeedbackRequestDTOComment;
-}
-
-export interface FeedbackResponseDTO {
-	[key: string]: unknown;
-}
-
-export interface HTTPValidationErrorDTO {
-	/**
-	 * @type array
-	 */
-	detail?: ValidationErrorDTO[];
-}
-
-export const HealthResponseDTOValue = {
-	/**
-	 * @type string
-	 */
-	status: 'ok',
-} as const;
-export type HealthResponseDTO = typeof HealthResponseDTOValue;
-
-export type MessageActionDTOActionMetadataId = string | null;
-
-export type MessageActionDTOResourceType = string | null;
-
-export type MessageActionDTOResourceId = string | null;
-
-export type MessageActionDTOState = string | null;
-
-export type MessageActionDTOInputAnyOf = { [key: string]: unknown };
-
-export type MessageActionDTOInput = MessageActionDTOInputAnyOf | null;
-
-export type MessageActionDTOTooltip = string | null;
-
-export type MessageActionDTOSignal = ApplyFilterSignalDTO | null;
-
-export type MessageActionDTOQueryAnyOf = { [key: string]: unknown };
-
-export type MessageActionDTOQuery = MessageActionDTOQueryAnyOf | null;
-
-export type MessageActionDTOUrl = string | null;
-
-/**
- * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url.
- */
-export interface MessageActionDTO {
-	kind: MessageActionKindDTO;
-	/**
-	 * @type string
-	 */
-	label: string;
-	actionMetadataId?: MessageActionDTOActionMetadataId;
-	resourceType?: MessageActionDTOResourceType;
-	resourceId?: MessageActionDTOResourceId;
-	state?: MessageActionDTOState;
-	input?: MessageActionDTOInput;
-	tooltip?: MessageActionDTOTooltip;
-	signal?: MessageActionDTOSignal;
-	query?: MessageActionDTOQuery;
-	url?: MessageActionDTOUrl;
-}
-
-export enum MessageActionKindDTO {
-	undo = 'undo',
-	revert = 'revert',
-	restore = 'restore',
-	follow_up = 'follow_up',
-	open_resource = 'open_resource',
-	open_docs = 'open_docs',
-	apply_filter = 'apply_filter',
-}
-export enum MessageContentTypeDTO {
-	markdown = 'markdown',
+   * Identifier exposed on the wire for each counter row.
+  
+  Mirrors the ``RateLimitCounterType`` model enum minus the cost
+  counter. The daily-cost limit is enforced internally (Redis
+  counter + 429 from the pre-flight gate) but never surfaced on the
+  customer-facing API: shipping the raw provider cost to tenant users
+  pins our public pricing model to what we pay Anthropic and forecloses
+  markup, per-seat bundling, or tiered pricing. Cost stays internal on
+  ``assistant_executions`` + Redis for billing.
+   */
+export enum CounterTypeNameDTO {
+	hourly_message = 'hourly_message',
+	daily_message = 'daily_message',
+	daily_token = 'daily_token',
 }
 /**
  * "auto" if derived from current page; "mention" if explicitly @-picked.
@@ -482,6 +335,193 @@ export interface MessageContextDTO {
 	metadata?: MessageContextDTOMetadata;
 }
 
+export type CreateMessageRequestDTOContexts = MessageContextDTO[] | null;
+
+export type CreateMessageRequestDTOForkFromMessageId = string | null;
+
+export interface CreateMessageRequestDTO {
+	/**
+	 * @type string
+	 * @maxLength 20000
+	 * @minLength 1
+	 */
+	content: string;
+	contexts?: CreateMessageRequestDTOContexts;
+	forkFromMessageId?: CreateMessageRequestDTOForkFromMessageId;
+}
+
+export interface CreateMessageResponseDTO {
+	/**
+	 * @type string
+	 * @format uuid
+	 */
+	executionId: string;
+}
+
+export type CreateThreadRequestDTOTitle = string | null;
+
+export interface CreateThreadRequestDTO {
+	title?: CreateThreadRequestDTOTitle;
+}
+
+export interface CreateThreadResponseDTO {
+	/**
+	 * @type string
+	 * @format uuid
+	 */
+	threadId: string;
+}
+
+/**
+ * Single sub-error entry — matches Go ErrorsResponseerroradditional.
+ */
+export interface ErrorResponseAdditionalDTO {
+	/**
+	 * @type string
+	 */
+	message: string;
+}
+
+export type ErrorBodyDTOErrors = ErrorResponseAdditionalDTO[] | null;
+
+export type ErrorBodyDTOUrl = string | null;
+
+/**
+ * Inner error object — matches Go ErrorsJSON.
+ */
+export interface ErrorBodyDTO {
+	/**
+	 * @type string
+	 * @pattern ^[a-z_]+$
+	 */
+	code: string;
+	/**
+	 * @type string
+	 */
+	message: string;
+	errors?: ErrorBodyDTOErrors;
+	url?: ErrorBodyDTOUrl;
+}
+
+/**
+ * Top-level error envelope — matches Go RenderErrorResponse.
+ */
+export interface ErrorResponseDTO {
+	/**
+	 * @type string
+	 */
+	status?: string;
+	error: ErrorBodyDTO;
+}
+
+export enum FeedbackRatingDTO {
+	positive = 'positive',
+	negative = 'negative',
+}
+export type FeedbackRequestDTOComment = string | null;
+
+export interface FeedbackRequestDTO {
+	rating: FeedbackRatingDTO;
+	comment?: FeedbackRequestDTOComment;
+}
+
+export interface FeedbackResponseDTO {
+	[key: string]: unknown;
+}
+
+export type ValidationErrorDTOLocItem = string | number;
+
+export type ValidationErrorDTOCtx = { [key: string]: unknown };
+
+export interface ValidationErrorDTO {
+	/**
+	 * @type array
+	 */
+	loc: ValidationErrorDTOLocItem[];
+	/**
+	 * @type string
+	 */
+	msg: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	input?: unknown;
+	/**
+	 * @type object
+	 */
+	ctx?: ValidationErrorDTOCtx;
+}
+
+export interface HTTPValidationErrorDTO {
+	/**
+	 * @type array
+	 */
+	detail?: ValidationErrorDTO[];
+}
+
+export const HealthResponseDTOValue = {
+	/**
+	 * @type string
+	 */
+	status: 'ok',
+} as const;
+export type HealthResponseDTO = typeof HealthResponseDTOValue;
+
+export type MessageActionDTOActionMetadataId = string | null;
+
+export type MessageActionDTOResourceType = string | null;
+
+export type MessageActionDTOResourceId = string | null;
+
+export type MessageActionDTOState = string | null;
+
+export type MessageActionDTOInputAnyOf = { [key: string]: unknown };
+
+export type MessageActionDTOInput = MessageActionDTOInputAnyOf | null;
+
+export type MessageActionDTOTooltip = string | null;
+
+export type MessageActionDTOSignal = ApplyFilterSignalDTO | null;
+
+export type MessageActionDTOQueryAnyOf = { [key: string]: unknown };
+
+export type MessageActionDTOQuery = MessageActionDTOQueryAnyOf | null;
+
+export type MessageActionDTOUrl = string | null;
+
+export enum MessageActionKindDTO {
+	undo = 'undo',
+	revert = 'revert',
+	restore = 'restore',
+	follow_up = 'follow_up',
+	open_resource = 'open_resource',
+	open_docs = 'open_docs',
+	apply_filter = 'apply_filter',
+}
+/**
+ * Assistant action. Kind-specific requirements: rollback actions require actionMetadataId/resourceType/resourceId; follow_up requires input.intent; open_resource requires resourceType/resourceId; apply_filter requires signal and query; open_docs requires a SigNoz docs url.
+ */
+export interface MessageActionDTO {
+	kind: MessageActionKindDTO;
+	/**
+	 * @type string
+	 */
+	label: string;
+	actionMetadataId?: MessageActionDTOActionMetadataId;
+	resourceType?: MessageActionDTOResourceType;
+	resourceId?: MessageActionDTOResourceId;
+	state?: MessageActionDTOState;
+	input?: MessageActionDTOInput;
+	tooltip?: MessageActionDTOTooltip;
+	signal?: MessageActionDTOSignal;
+	query?: MessageActionDTOQuery;
+	url?: MessageActionDTOUrl;
+}
+
+export enum MessageContentTypeDTO {
+	markdown = 'markdown',
+}
 export enum MessageRoleDTO {
 	user = 'user',
 	assistant = 'assistant',
@@ -616,6 +656,10 @@ export interface RevertRequestDTO {
 	actionMetadataId: string;
 }
 
+export enum ScopeDTO {
+	user = 'user',
+	org = 'org',
+}
 export type ThreadDetailResponseDTOTitle = string | null;
 
 export type ThreadDetailResponseDTOState = ExecutionStateDTO | null;
@@ -663,18 +707,6 @@ export interface ThreadDetailResponseDTO {
 
 export type ThreadListResponseDTONextCursor = string | null;
 
-export interface ThreadListResponseDTO {
-	/**
-	 * @type array
-	 */
-	threads: ThreadSummaryDTO[];
-	nextCursor?: ThreadListResponseDTONextCursor;
-	/**
-	 * @type boolean
-	 */
-	hasMore?: boolean;
-}
-
 export type ThreadSummaryDTOTitle = string | null;
 
 export type ThreadSummaryDTOState = ExecutionStateDTO | null;
@@ -709,6 +741,18 @@ export interface ThreadSummaryDTO {
 	updatedAt: string;
 }
 
+export interface ThreadListResponseDTO {
+	/**
+	 * @type array
+	 */
+	threads: ThreadSummaryDTO[];
+	nextCursor?: ThreadListResponseDTONextCursor;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+}
+
 export interface UndoRequestDTO {
 	/**
 	 * @type string
@@ -726,28 +770,29 @@ export interface UpdateThreadRequestDTO {
 	archived?: UpdateThreadRequestDTOArchived;
 }
 
-export type ValidationErrorDTOLocItem = string | number;
+export type UsageResponseDTONextPage = string | null;
 
-export type ValidationErrorDTOCtx = { [key: string]: unknown };
+/**
+ * One row in the ``GET /usage`` response.
+ */
+export interface UsageRowDTO {
+	type: CounterTypeNameDTO;
+	scope: ScopeDTO;
+	used: number;
+	limit: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	resetsAt: string;
+}
 
-export interface ValidationErrorDTO {
+export interface UsageResponseDTO {
 	/**
 	 * @type array
 	 */
-	loc: ValidationErrorDTOLocItem[];
-	/**
-	 * @type string
-	 */
-	msg: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	input?: unknown;
-	/**
-	 * @type object
-	 */
-	ctx?: ValidationErrorDTOCtx;
+	data: UsageRowDTO[];
+	nextPage?: UsageResponseDTONextPage;
 }
 
 export type ApprovalEventDTODiff = { [key: string]: unknown };
@@ -908,6 +953,20 @@ export interface ErrorEventDTO {
 	error: ErrorBodyDTO;
 	retryAction?: RetryActionDTO;
 }
+
+/**
+   * Per-connection SSE keep-alive emitted every `sse_heartbeat_interval_seconds`.
+  
+  Carries no `executionId` and no `eventId` — heartbeats are wire-level
+  keep-alives, not part of the replayable event log.
+   */
+export const HeartbeatEventDTOValue = {
+	/**
+	 * @type string
+	 */
+	type: 'heartbeat',
+} as const;
+export type HeartbeatEventDTO = typeof HeartbeatEventDTOValue;
 
 export type MessageActionEventDTOActionMetadataId = string | null;
 
@@ -1306,6 +1365,17 @@ export type SubmitFeedbackApiV1AssistantMessagesMessageIdFeedbackPostPathParamet
 		messageId: string;
 	};
 export type SubmitFeedbackApiV1AssistantMessagesMessageIdFeedbackPostHeaders = {
+	/**
+	 * @description SigNoz auth token (Bearer or raw JWT)
+	 */
+	authorization?: string | null;
+	/**
+	 * @description SigNoz instance base URL for multi-tenant deployments. Falls back to SIGNOZ_API_URL env var when omitted.
+	 */
+	'X-SigNoz-URL'?: string | null;
+};
+
+export type GetUsageApiV1AssistantUsageGetHeaders = {
 	/**
 	 * @description SigNoz auth token (Bearer or raw JWT)
 	 */

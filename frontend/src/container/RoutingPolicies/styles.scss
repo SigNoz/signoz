@@ -35,10 +35,7 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
-
-			.ant-btn {
-				margin-top: 8px;
-			}
+			margin-top: 12px;
 		}
 
 		.routing-policies-table {
@@ -189,13 +186,6 @@
 				font-style: normal;
 				font-weight: 400;
 				line-height: 20px;
-			}
-		}
-
-		.ant-modal-body {
-			.ant-divider {
-				margin: 16px 0;
-				border: 0.5px solid var(--l1-border);
 			}
 		}
 	}

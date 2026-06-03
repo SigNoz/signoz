@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/ui/button';
 import {
 	TabsContent,
 	TabsList,
@@ -7,19 +6,11 @@ import {
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
 import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
-import {
 	Bookmark,
 	CalendarClock,
 	ChartColumnBig,
-	Dock,
 	Link2,
 	List,
-	PanelBottom,
 	ScrollText,
 	Timer,
 } from '@signozhq/icons';
@@ -40,7 +31,12 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
+import {
+	TraceDetailEventKeys,
+	TraceDetailEvents,
+} from 'pages/TraceDetailsV3/events';
 import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
+import { useTraceDetailLogEvent } from 'pages/TraceDetailsV3/hooks/useTraceDetailLogEvent';
 import {
 	getSpanAttribute,
 	getSpanDisplayData,
@@ -61,6 +57,7 @@ import {
 	SpanDetailVariant,
 	VISIBLE_ACTIONS,
 } from './constants';
+import DockModeSwitcher from './DockModeSwitcher';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
 import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
@@ -94,6 +91,16 @@ function SpanDetailsContent({
 }): JSX.Element {
 	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 	const spanAttributeActions = useSpanAttributeActions();
+	const logTraceEvent = useTraceDetailLogEvent('v3', selectedSpan.trace_id);
+	const handleTabChange = useCallback(
+		(tab: string): void => {
+			logTraceEvent(TraceDetailEvents.SpanPanelTabChanged, {
+				[TraceDetailEventKeys.Tab]: tab,
+				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+			});
+		},
+		[logTraceEvent, selectedSpan.span_id],
+	);
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
 
@@ -384,7 +391,7 @@ function SpanDetailsContent({
 
 			<div className={styles.tabsSection}>
 				{/* Step 9: ContentTabs */}
-				<TabsRoot defaultValue="overview">
+				<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
 					<TabsList variant="secondary">
 						<TabsTrigger value="overview" variant="secondary">
 							<Bookmark size={14} /> Overview
@@ -492,31 +499,14 @@ function SpanDetailsPanel({
 		];
 
 		if (onVariantChange) {
-			const isDocked = variant === SpanDetailVariant.DOCKED;
 			actions.push({
-				key: 'dock-toggle',
+				key: 'dock-mode',
 				component: (
-					<TooltipProvider>
-						<TooltipRoot>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									onClick={(): void =>
-										onVariantChange(
-											isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
-										)
-									}
-								>
-									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className={styles.dockToggleTooltip}>
-								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
-							</TooltipContent>
-						</TooltipRoot>
-					</TooltipProvider>
+					<DockModeSwitcher
+						value={variant}
+						onChange={onVariantChange}
+						tooltipClassName={styles.dockToggleTooltip}
+					/>
 				),
 			});
 		}
@@ -553,7 +543,10 @@ function SpanDetailsPanel({
 		</>
 	);
 
-	if (variant === SpanDetailVariant.DOCKED) {
+	if (
+		variant === SpanDetailVariant.DOCKED ||
+		variant === SpanDetailVariant.DOCKED_RIGHT
+	) {
 		return <div className={styles.root}>{content}</div>;
 	}
 

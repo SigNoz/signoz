@@ -769,6 +769,43 @@ def test_hosts_orderby_correctness(
     assert cpu_values == expected, f"cpu {direction} not sorted; got {cpu_values}"
 
 
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_hosts_orderby_by_host_name(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+    direction: str,
+) -> None:
+    """orderBy=host.name with empty groupBy returns hosts sorted alphabetically
+    via the metadata-name branch (hosts.go:218-219, PaginateMetadataByName)."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/hosts_orderby.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = _post(
+        signoz,
+        token,
+        {
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": "host.name"}, "direction": direction},
+            "filter": {"expression": "host.name CONTAINS 'order-'"},
+        },
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    names = [r["hostName"] for r in data["records"]]
+    expected = sorted(names, reverse=(direction == "desc"))
+    assert names == expected, f"host.name {direction} not sorted; got {names}"
+
+
 @pytest.mark.parametrize(
     "payload_override,err_substr",
     [

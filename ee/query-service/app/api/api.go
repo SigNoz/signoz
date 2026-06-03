@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -24,7 +23,6 @@ type APIHandlerOptions struct {
 	DataConnector                 interfaces.Reader
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
-	CloudIntegrationsController   *cloudintegrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	GatewayUrl                    string
 	// Querier Influx Interval
@@ -42,7 +40,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
 		IntegrationsController:        opts.IntegrationsController,
-		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
@@ -88,17 +85,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
 
 	ah.APIHandler.RegisterRoutes(router, am)
-
-}
-
-func (ah *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
-
-	ah.APIHandler.RegisterCloudIntegrationsRoutes(router, am)
-
-	router.HandleFunc(
-		"/api/v1/cloud-integrations/{cloudProvider}/accounts/generate-connection-params",
-		am.EditAccess(ah.CloudIntegrationsGenerateConnectionParams),
-	).Methods(http.MethodGet)
 
 }
 

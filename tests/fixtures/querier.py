@@ -28,6 +28,42 @@ class TelemetryFieldKey:
         }
 
 
+class RequestType:
+    RAW = "raw"
+    TIME_SERIES = "time_series"
+    SCALAR = "scalar"
+    TABLE = "table"
+
+
+@dataclass
+class Aggregation:
+    expression: str
+    alias: str | None = None
+
+    def to_dict(self) -> dict:
+        agg: dict[str, Any] = {"expression": self.expression}
+        if self.alias:
+            agg["alias"] = self.alias
+        return agg
+
+
+@dataclass
+class MetricAggregation:
+    metric_name: str
+    time_aggregation: str
+    space_aggregation: str
+    temporality: str = "cumulative"
+
+    def to_dict(self) -> dict:
+        agg: dict[str, Any] = {
+            "metricName": self.metric_name,
+            "timeAggregation": self.time_aggregation,
+            "spaceAggregation": self.space_aggregation,
+            "temporality": self.temporality,
+        }
+        return agg
+
+
 @dataclass
 class OrderBy:
     key: TelemetryFieldKey
@@ -46,6 +82,8 @@ class BuilderQuery:
     filter_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
     order: list[OrderBy] | None = None
+    aggregations: list[Aggregation | MetricAggregation] | None = None
+    step_interval: int | None = None
 
     def to_dict(self) -> dict:
         spec: dict[str, Any] = {
@@ -62,6 +100,11 @@ class BuilderQuery:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
+        if self.aggregations:
+            spec["aggregations"] = [agg.to_dict() if hasattr(agg, "to_dict") else agg for agg in self.aggregations]
+        if self.step_interval is not None:
+            spec["stepInterval"] = self.step_interval
+
         return {"type": "builder_query", "spec": spec}
 
 
@@ -72,6 +115,7 @@ class TraceOperatorQuery:
     return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
+    select_fields: list[TelemetryFieldKey] | None = None
 
     def to_dict(self) -> dict:
         spec: dict[str, Any] = {
@@ -84,6 +128,8 @@ class TraceOperatorQuery:
             spec["limit"] = self.limit
         if self.order:
             spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
+        if self.select_fields:
+            spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
@@ -114,7 +160,7 @@ def make_query_request(
     end_ms: int,
     queries: list[dict],
     *,
-    request_type: str = "time_series",
+    request_type: str = RequestType.TIME_SERIES,
     format_options: dict | None = None,
     variables: dict | None = None,
     no_cache: bool = True,
@@ -403,6 +449,21 @@ def index_series_by_label(
     return series_by_label
 
 
+def assert_grouped_series(
+    series_by_group: dict[str, dict],
+    expected_values_by_group: dict[str, dict[int, int]],
+) -> None:
+    assert set(series_by_group.keys()) == set(expected_values_by_group.keys())
+
+    for group_name, expected_by_ts in expected_values_by_group.items():
+        actual_values = sorted(
+            series_by_group[group_name]["values"],
+            key=lambda value: value["timestamp"],
+        )
+        expected_values = [{"timestamp": timestamp, "value": value} for timestamp, value in sorted(expected_by_ts.items())]
+        assert actual_values == expected_values
+
+
 def find_named_result(
     results: list[dict[str, Any]],
     name: str,
@@ -411,6 +472,57 @@ def find_named_result(
         (r for r in results if r.get("name") == name or r.get("queryName") == name or (r.get("spec") or {}).get("name") == name),
         None,
     )
+
+
+def assert_scalar_value(
+    response: requests.Response,
+    name: str,
+    expected: Any,
+    *,
+    row: int = 0,
+    col: int = 0,
+) -> None:
+    """Assert that the named scalar result has `expected` at data[row][col]."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    assert result["data"][row][col] == expected, f"expected {expected} at [{row}][{col}], got {result['data'][row][col]}"
+
+
+def assert_grouped_scalar(
+    response: requests.Response,
+    name: str,
+    *,
+    expected_groups: int,
+    expected_columns: int,
+    last_col_value: Any | None = None,
+) -> None:
+    """Assert grouped scalar result has the expected column count and group count.
+    If `last_col_value` is set and there is exactly one group, also assert the
+    last column of that single row equals it (a common aggregation-value check)."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    columns = result["columns"]
+    rows = result["data"]
+    assert len(columns) == expected_columns, f"expected {expected_columns} columns, got {len(columns)}: {columns}"
+    assert len(rows) == expected_groups, f"expected {expected_groups} groups, got {len(rows)}: {rows}"
+    if last_col_value is not None and expected_groups == 1:
+        assert rows[0][-1] == last_col_value, f"expected last col {last_col_value}, got row {rows[0]}"
+
+
+def assert_raw_row_subset(
+    response: requests.Response,
+    name: str,
+    expected: dict[str, Any],
+    *,
+    row: int = 0,
+) -> None:
+    """Assert that the named raw result's rows[row]['data'] is a superset of `expected`."""
+    result = find_named_result(response.json()["data"]["data"]["results"], name)
+    assert result is not None, f"no result for query {name}"
+    rows = result["rows"]
+    assert rows is not None, f"no rows for query {name}"
+    data = rows[row]["data"]
+    assert expected.items() <= data.items(), f"expected subset {expected}, got data {data}"
 
 
 def build_scalar_query(
@@ -599,6 +711,28 @@ def assert_identical_query_response(response1: requests.Response, response2: req
     if response1.status_code == HTTPStatus.OK:
         assert response1.json()["status"] == response2.json()["status"], "Response statuses do not match"
         assert response1.json()["data"]["data"]["results"] == response2.json()["data"]["data"]["results"], "Response data do not match"
+
+
+# we already create the evolution for resource during schema migration
+# since we have to create test data around it, we need to get the evolution time
+def get_resource_evolution_time(signoz: types.SigNoz, signal: str) -> datetime:
+    result = signoz.telemetrystore.conn.query(
+        """
+        SELECT release_time
+        FROM signoz_metadata.distributed_column_evolution_metadata
+        WHERE signal = %(signal)s
+          AND field_context = 'resource'
+          AND field_name = '__all__'
+          AND column_name = 'resource'
+        LIMIT 1
+        """,
+        parameters={"signal": signal},
+    ).result_rows
+
+    assert result, f"Expected {signal} resource evolution metadata to exist"
+
+    release_time_ns = int(result[0][0])
+    return datetime.fromtimestamp(release_time_ns / 1e9, tz=UTC)
 
 
 def generate_logs_with_corrupt_metadata() -> list[Logs]:

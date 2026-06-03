@@ -1,37 +1,18 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    assert_grouped_series,
     build_group_by_field,
     build_logs_aggregation,
+    get_resource_evolution_time,
     index_series_by_label,
     make_query_request,
 )
-
-
-# we already create the evolution for resource during schema migration
-# since we have to create test data around it, we need to get the evolution time
-def _get_logs_resource_evolution_time_json(signoz: types.SigNoz) -> datetime:
-    result = signoz.telemetrystore.conn.query(
-        """
-        SELECT release_time
-        FROM signoz_metadata.distributed_column_evolution_metadata
-        WHERE signal = 'logs'
-          AND field_context = 'resource'
-          AND field_name = '__all__'
-          AND column_name = 'resource'
-        LIMIT 1
-        """
-    ).result_rows
-
-    assert result, "Expected logs resource evolution metadata to exist"
-
-    release_time_ns = int(result[0][0])
-    return datetime.fromtimestamp(release_time_ns / 1e9, tz=UTC)
 
 
 # Logs with timestamps before the evolution time will have resources written only to resources_string.
@@ -97,21 +78,6 @@ def _query_grouped_log_series(
     return index_series_by_label(aggregations[0]["series"], group_by)
 
 
-def _assert_grouped_series(
-    series_by_group: dict[str, dict],
-    expected_values_by_group: dict[str, dict[int, int]],
-) -> None:
-    assert set(series_by_group.keys()) == set(expected_values_by_group.keys())
-
-    for group_name, expected_by_ts in expected_values_by_group.items():
-        actual_values = sorted(
-            series_by_group[group_name]["values"],
-            key=lambda value: value["timestamp"],
-        )
-        expected_values = [{"timestamp": timestamp, "value": value} for timestamp, value in sorted(expected_by_ts.items())]
-        assert actual_values == expected_values
-
-
 def _test_logs_resource_evolution(
     signoz: types.SigNoz,
     token: str,
@@ -125,7 +91,7 @@ def _test_logs_resource_evolution(
     # 5. Query the logs after the evolution time.
     # Both aggregation and group by should be checked.
     """
-    evolution_time = _get_logs_resource_evolution_time_json(signoz)
+    evolution_time = get_resource_evolution_time(signoz, "logs")
     evolution_time = evolution_time.replace(second=0, microsecond=0)
 
     before_2 = evolution_time - timedelta(minutes=10)
@@ -163,7 +129,7 @@ def _test_logs_resource_evolution(
     )
 
     before_series = _query_grouped_log_series(signoz, token, before_2 - timedelta(minutes=1), before_1 + timedelta(minutes=1))
-    _assert_grouped_series(
+    assert_grouped_series(
         before_series,
         expected_values_by_group={
             "svc-before-2": {
@@ -176,7 +142,7 @@ def _test_logs_resource_evolution(
     )
 
     after_series = _query_grouped_log_series(signoz, token, after_1 - timedelta(minutes=1), after_2 + timedelta(minutes=1))
-    _assert_grouped_series(
+    assert_grouped_series(
         after_series,
         expected_values_by_group={
             "svc-after-1": {
@@ -189,7 +155,7 @@ def _test_logs_resource_evolution(
     )
 
     spanning_series = _query_grouped_log_series(signoz, token, before_2, after_2 + timedelta(minutes=1))
-    _assert_grouped_series(
+    assert_grouped_series(
         spanning_series,
         expected_values_by_group={
             "svc-before-2": {
@@ -216,7 +182,7 @@ def _test_logs_resource_evolution(
         group_by="deployment.environment",
         aggregation="count_distinct(service.name)",
     )
-    _assert_grouped_series(
+    assert_grouped_series(
         aggregation_series,
         expected_values_by_group={
             "integration": {

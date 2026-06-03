@@ -10,17 +10,13 @@ import {
 	PopoverPosition,
 	useCoordinates,
 } from 'periscope/components/ContextMenu';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 interface UseTimeSeriesContextMenuParams {
 	widget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	enableDrillDown?: boolean;
 }
 
