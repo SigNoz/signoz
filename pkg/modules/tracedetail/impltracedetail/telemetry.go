@@ -2,7 +2,13 @@ package impltracedetail
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+)
+
+const (
+	attrResponseType         = attribute.Key("response_type")
+	attrResponseTypeWindowed = "windowed"
 )
 
 type moduleMetrics struct {
@@ -25,7 +31,7 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 
 	requestCount, err := meter.Int64Counter(
 		"signoz.traces.waterfall.request.count",
-		metric.WithDescription("Total number of waterfall requests that used the windowed path."),
+		metric.WithDescription("Total number of waterfall requests, by response_type."),
 		metric.WithUnit("{request}"),
 	)
 	if err != nil {
@@ -34,7 +40,7 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 
 	spanCount, err := meter.Int64Counter(
 		"signoz.traces.waterfall.span.count",
-		metric.WithDescription("Total number of spans across all waterfall requests that used the windowed path."),
+		metric.WithDescription("Total number of spans across waterfall requests, by response_type."),
 		metric.WithUnit("{span}"),
 	)
 	if err != nil {
