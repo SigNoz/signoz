@@ -2645,25 +2645,13 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
-    DashboardtypesJSONPatchDocument:
-      items:
-        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
-      nullable: true
-      type: array
     DashboardtypesJSONPatchOperation:
       properties:
         from:
           description: Source JSON Pointer for move/copy ops; ignored for other ops.
           type: string
         op:
-          enum:
-          - add
-          - remove
-          - replace
-          - move
-          - copy
-          - test
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
         path:
           description: JSON Pointer (RFC 6901) into the dashboard's postable shape
             — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
@@ -2968,6 +2956,20 @@ components:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
@@ -13182,11 +13184,13 @@ paths:
       - dashboard
     patch:
       deprecated: false
-      description: This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+      description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
         The patch is applied against the postable view of the dashboard (metadata,
         data, tags), so individual panels, queries, variables, layouts, or tags can
-        be updated without re-sending the rest of the dashboard. Locked dashboards
-        are rejected.
+        be updated without re-sending the rest of the dashboard. Apply is lenient:
+        `remove` on a missing path is a no-op (idempotent) and `add` creates any missing
+        parent objects, rather than failing as strict RFC 6902 would. The resulting
+        dashboard is still validated. Locked dashboards are rejected.'
       operationId: PatchDashboardV2
       parameters:
       - in: path
@@ -13198,7 +13202,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesJSONPatchDocument'
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
       responses:
         "200":
           content:

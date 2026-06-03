@@ -4653,7 +4653,7 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
-export enum DashboardtypesJSONPatchOperationDTOOp {
+export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
 	replace = 'replace',
@@ -4667,11 +4667,7 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
 	 */
 	from?: string;
-	/**
-	 * @enum add,remove,replace,move,copy,test
-	 * @type string
-	 */
-	op: DashboardtypesJSONPatchOperationDTOOp;
+	op: DashboardtypesPatchOpDTO;
 	/**
 	 * @type string
 	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-.
@@ -4682,13 +4678,6 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	 */
 	value?: unknown;
 }
-
-/**
- * @nullable
- */
-export type DashboardtypesJSONPatchDocumentDTO =
-	| DashboardtypesJSONPatchOperationDTO[]
-	| null;
 
 export enum DashboardtypesListOrderDTO {
 	asc = 'asc',
@@ -4775,6 +4764,13 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
+/**
+ * @nullable
+ */
+export type DashboardtypesPatchableDashboardV2DTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type boolean

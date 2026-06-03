@@ -12,9 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/perses/perses/pkg/model/api/v1/common"
-	"github.com/swaggest/jsonschema-go"
-	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -370,48 +369,46 @@ func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
 // Patchable
 // ════════════════════════════════════════════════════════════════════════
 
-// PatchableDashboardV2 is an RFC 6902 JSON Patch document applied against a
-// PostableDashboardV2-shaped view of an existing dashboard. Patch ops can
-// target any field — including individual entries inside `data.panels`,
-// `data.panels.<id>.spec.queries`, or `tags` — without re-sending the rest of
-// the dashboard.
-type PatchableDashboardV2 struct {
-	patch jsonpatch.Patch
-}
+type PatchableDashboardV2 []JSONPatchOperation
 
-// JSONPatchDocument is the OpenAPI-facing schema for an RFC 6902 patch body.
-// PatchableDashboardV2 has only an internal `jsonpatch.Patch` field, so the
-// reflector would emit an empty schema; the handler def points at this type
-// instead so consumers see the array-of-ops shape.
-type JSONPatchDocument []JSONPatchOperation
-
-// JSONPatchOperation is one RFC 6902 op. Not every field is valid on every
-// op kind (e.g. `value` is required for add/replace/test, ignored for remove;
-// `from` is required for move/copy) — the JSON Patch RFC governs that.
 type JSONPatchOperation struct {
-	Op    string `json:"op" required:"true"`
-	Path  string `json:"path" required:"true" description:"JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-."`
-	Value any    `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
-	From  string `json:"from,omitempty" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
+	Op   PatchOp `json:"op" required:"true"`
+	Path string  `json:"path" required:"true" description:"JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-."`
+	// `value` is required for add/replace/test.
+	Value any `json:"value,omitempty" description:"Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy."`
+	// `from` is required for move/copy.
+	From string `json:"from,omitempty" description:"Source JSON Pointer for move/copy ops; ignored for other ops."`
 }
 
-// PrepareJSONSchema constrains the `op` field to the six RFC 6902 verbs.
-func (JSONPatchOperation) PrepareJSONSchema(s *jsonschema.Schema) error {
-	op, ok := s.Properties["op"]
-	if !ok || op.TypeObject == nil {
-		return errors.NewInternalf(errors.CodeInternal, "JSONPatchOperation schema missing `op` property")
-	}
-	op.TypeObject.WithEnum("add", "remove", "replace", "move", "copy", "test")
-	s.Properties["op"] = op
-	return nil
+// PatchOp covers the six RFC 6902 JSON Patch verbs.
+type PatchOp struct{ valuer.String }
+
+var (
+	PatchOpAdd     = PatchOp{valuer.NewString("add")}
+	PatchOpRemove  = PatchOp{valuer.NewString("remove")}
+	PatchOpReplace = PatchOp{valuer.NewString("replace")}
+	PatchOpMove    = PatchOp{valuer.NewString("move")}
+	PatchOpCopy    = PatchOp{valuer.NewString("copy")}
+	PatchOpTest    = PatchOp{valuer.NewString("test")}
+)
+
+func (PatchOp) Enum() []any {
+	return []any{PatchOpAdd, PatchOpRemove, PatchOpReplace, PatchOpMove, PatchOpCopy, PatchOpTest}
 }
 
 func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
-	patch, err := jsonpatch.DecodePatch(data)
-	if err != nil {
+	// DecodePatch rejects unknown verbs, add/replace ops missing a value, move/copy ops missing a
+	// from, and malformed paths — so callers get an InvalidInput error up front rather
+	// than deep inside Apply.
+	if _, err := jsonpatch.DecodePatch(data); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
-	p.patch = patch
+	type alias PatchableDashboardV2
+	var ops alias
+	if err := json.Unmarshal(data, &ops); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	*p = PatchableDashboardV2(ops)
 	return nil
 }
 
@@ -421,7 +418,15 @@ func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboard
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal existing dashboard for patch")
 	}
-	patched, err := p.patch.Apply(raw)
+	rawPatch, err := json.Marshal(p)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal patch document")
+	}
+	patch, err := jsonpatch.DecodePatch(rawPatch)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	patched, err := patch.ApplyWithOptions(raw, &jsonpatch.ApplyOptions{AllowMissingPathOnRemove: true, EnsurePathExistsOnAdd: true})
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
