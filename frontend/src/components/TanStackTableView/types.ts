@@ -152,6 +152,8 @@ export type TanStackTableProps<TData> = {
 	columns: TableColumnDef<TData>[];
 	/** Storage key for column state persistence (visibility, sizing, ordering). When set, enables unified column management. */
 	columnStorageKey?: string;
+	/** When false, the table renders columns in their natural array order and the persisted columnOrder slot is ignored on read and skipped on write. Use when an external source (e.g. preferences.selectColumns) is the canonical order. Default true. */
+	respectColumnOrder?: boolean;
 	columnSizing?: ColumnSizingState;
 	onColumnSizingChange?: Dispatch<SetStateAction<ColumnSizingState>>;
 	onColumnOrderChange?: (cols: TableColumnDef<TData>[]) => void;

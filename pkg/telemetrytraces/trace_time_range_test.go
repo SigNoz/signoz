@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -16,12 +17,13 @@ import (
 )
 
 func TestTraceTimeRangeOptimization(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	mockMetadataStore.KeysMap["trace_id"] = []*telemetrytypes.TelemetryFieldKey{{
 		Name:          "trace_id",
 		FieldContext:  telemetrytypes.FieldContextSpan,
@@ -44,8 +46,10 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		fm,
 		cb,
 		aggExprRewriter,
-		nil, // telemetryStore is nil - optimization won't happen but code path is tested
+		nil, // telemetryStore is nil - adaptive path is disabled
 		fl,
+		false,
+		100000,
 	)
 
 	tests := []struct {

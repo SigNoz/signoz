@@ -1,4 +1,5 @@
-import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
+import { Button, Tabs, TabsProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { CableCar, Group } from '@signozhq/icons';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
@@ -21,11 +22,18 @@ function IntegrationDetailContent(
 ): JSX.Element {
 	const { activeDetailTab, integrationData, integrationId, setActiveDetailTab } =
 		props;
-	const items: TabItemProps[] = [
+	const items: TabsProps['items'] = [
 		{
 			key: 'overview',
-			label: 'Overview',
-			prefixIcon: <CableCar size={14} />,
+			label: (
+				<Button
+					type="text"
+					className="integration-tab-btns"
+					icon={<CableCar size={14} />}
+				>
+					<Typography.Text className="typography">Overview</Typography.Text>
+				</Button>
+			),
 			children: (
 				<Overview
 					categories={integrationData.categories}
@@ -36,8 +44,15 @@ function IntegrationDetailContent(
 		},
 		{
 			key: 'configuration',
-			label: 'Configure',
-			prefixIcon: <ConfigureIcon />,
+			label: (
+				<Button
+					type="text"
+					className="integration-tab-btns"
+					icon={<ConfigureIcon />}
+				>
+					<Typography.Text className="typography">Configure</Typography.Text>
+				</Button>
+			),
 			children: (
 				<Configure
 					configuration={integrationData.configuration}
@@ -47,8 +62,15 @@ function IntegrationDetailContent(
 		},
 		{
 			key: 'dataCollected',
-			label: 'Data Collected',
-			prefixIcon: <Group size={14} />,
+			label: (
+				<Button
+					type="text"
+					className="integration-tab-btns"
+					icon={<Group size={14} />}
+				>
+					<Typography.Text className="typography">Data Collected</Typography.Text>
+				</Button>
+			),
 			children: (
 				<DataCollected
 					logsData={integrationData.data_collected.logs}
@@ -59,7 +81,11 @@ function IntegrationDetailContent(
 	];
 	return (
 		<div className="integration-detail-container">
-			<Tabs value={activeDetailTab} items={items} onChange={setActiveDetailTab} />
+			<Tabs
+				activeKey={activeDetailTab}
+				items={items}
+				onChange={setActiveDetailTab}
+			/>
 		</div>
 	);
 }

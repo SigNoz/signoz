@@ -5,9 +5,11 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import {
+	MetricQueryRangeSuccessResponse,
+	MetricRangePayloadProps,
+} from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
@@ -21,10 +23,7 @@ export interface GraphVisibilityLegendEntryProps {
 
 export interface WidgetGraphComponentProps {
 	widget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	errorMessage: string | undefined;
 	version?: string;
 	threshold?: ReactNode;

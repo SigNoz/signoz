@@ -254,7 +254,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 	var evolutionsEntries []*telemetrytypes.EvolutionEntry
 	if len(key.Evolutions) > 0 {
 		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+		newColumns, evolutionsEntries, err = qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
 		if err != nil {
 			return "", err
 		}

@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Tabs, TabItemProps } from '@signozhq/ui/tabs';
+import { Tabs, TabsProps } from 'antd';
 import { QueryParams } from 'constants/query';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
@@ -24,7 +24,7 @@ function MetricsApplication(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 
-	const items: TabItemProps[] = [
+	const items: TabsProps['items'] = [
 		{
 			label: TAB_KEY_VS_LABEL[MetricsApplicationTab.OVER_METRICS],
 			key: MetricsApplicationTab.OVER_METRICS,
@@ -53,8 +53,9 @@ function MetricsApplication(): JSX.Element {
 			<ApDexApplication />
 			<Tabs
 				items={items}
-				value={activeKey}
+				activeKey={activeKey}
 				className="service-route-tab"
+				destroyInactiveTabPane
 				onChange={onTabChange}
 			/>
 		</div>
