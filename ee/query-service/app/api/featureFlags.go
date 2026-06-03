@@ -89,6 +89,15 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
+	useDashboardV2 := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseDashboardV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
+		Active:     useDashboardV2,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
 	if constants.IsDotMetricsEnabled {
 		for idx, feature := range featureSet {
 			if feature.Name == licensetypes.DotMetricsEnabled {

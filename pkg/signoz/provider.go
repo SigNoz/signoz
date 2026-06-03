@@ -205,6 +205,12 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRoleCRUDTuplesFactory(sqlstore),
 		sqlmigration.NewAddIntegrationDashboardFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSourceToDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateCloudIntegrationDashboardsFactory(sqlstore),
+		sqlmigration.NewAddScopeToPlannedMaintenanceFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateInstalledIntegrationDashboardsFactory(sqlstore),
+		sqlmigration.NewAddDashboardNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewFixChangelogOperationTypeFactory(sqlstore, sqlschema),
+		sqlmigration.NewCloudIntegrationRemoveCascadeDeleteFactory(sqlschema),
 	)
 }
 

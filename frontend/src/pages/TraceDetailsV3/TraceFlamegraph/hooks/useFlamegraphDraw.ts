@@ -1,6 +1,5 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react';
-import { themeColors } from 'constants/theme';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
@@ -118,7 +117,11 @@ function drawLevel(args: DrawLevelArgs): void {
 		width = clamp(width, 1, Infinity);
 
 		const groupValue = getFlamegraphSpanGroupValue(span, colorByField);
-		const color = getSpanColor({ span, isDarkMode, groupValue });
+		const { color, colorDark } = getSpanColor({
+			span,
+			isDarkMode,
+			groupValue,
+		});
 
 		const isDimmedByFilter =
 			!!isFilterActiveInLevel &&
@@ -135,6 +138,7 @@ function drawLevel(args: DrawLevelArgs): void {
 			spanRectsArray,
 			eventRectsArray,
 			color,
+			colorDark,
 			isDarkMode,
 			metrics,
 			selectedSpanId,
@@ -155,6 +159,7 @@ interface DrawConnectorLinesArgs {
 	viewportHeight: number;
 	metrics: FlamegraphRowMetrics;
 	colorByField: TelemetryFieldKey;
+	isDarkMode: boolean;
 }
 
 function drawConnectorLines(args: DrawConnectorLinesArgs): void {
@@ -168,6 +173,7 @@ function drawConnectorLines(args: DrawConnectorLinesArgs): void {
 		viewportHeight,
 		metrics,
 		colorByField,
+		isDarkMode,
 	} = args;
 
 	ctx.save();
@@ -197,8 +203,8 @@ function drawConnectorLines(args: DrawConnectorLinesArgs): void {
 			{ serviceName: conn.serviceName, resource: conn.resource },
 			colorByField,
 		);
-		const color = generateColor(groupValue, themeColors.traceDetailColorsV3);
-		ctx.strokeStyle = color;
+		const pair = generateColorPair(groupValue);
+		ctx.strokeStyle = isDarkMode ? pair.color : pair.colorDark;
 
 		const x = clamp(xFrac * cssWidth, 0, cssWidth);
 		ctx.beginPath();
@@ -294,6 +300,7 @@ export function useFlamegraphDraw(
 			viewportHeight,
 			metrics,
 			colorByField,
+			isDarkMode,
 		});
 
 		const spanRectsArray: SpanRect[] = [];

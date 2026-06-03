@@ -150,6 +150,10 @@ func paginateWithBackfill(
 	offset, limit int,
 ) []map[string]string {
 
+	// note: we took a stand here that we are NOT removing those metricGroups from the array that are not in metadataMap.
+	// we are relying on time adjustment logic from alignedMetricWindow. In future if a user complains about seeing metric groups
+	// with missing metadata, we can consider removing those groups from the metricGroups array here before paginating.
+
 	metricKeySet := make(map[string]bool, len(metricGroups))
 	for _, g := range metricGroups {
 		metricKeySet[g.compositeKey] = true
@@ -314,18 +318,19 @@ func parseFullQueryResponse(
 // Please use the samplesAdjustedStartMs with samples table and tsAdjustedStartMs with ts tables.
 // Both can use the same flooredEndMs.
 func alignedMetricWindow(startMs, endMs int64) (
-	samplesAdjustedStartMs uint64,
-	flooredEndMs uint64,
-	tsAdjustedStartMs uint64,
-	distributedTSTable string,
-	localTSTable string,
-	distributedSamplesTable string,
-	localSamplesTable string,
+	uint64, // samplesAdjustedStartMs
+	uint64, // flooredEndMs
+	uint64, // tsAdjustedStartMs
+	string, // distributedTSTable
+	string, // localTSTable
+	string, // distributedSamplesTable
+	string, // localSamplesTable
 ) {
-	samplesAdjustedStartMs = uint64(startMs)
-	flooredEndMs = uint64(endMs)
+	samplesAdjustedStartMs := uint64(startMs)
+	flooredEndMs := uint64(endMs)
 	stepSecs := querybuilder.RecommendedStepIntervalForMetric(samplesAdjustedStartMs, flooredEndMs)
-	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange
+	// note: this is the same flooring logic as in querybuilder.AdjustedMetricTimeRange. Duplicated code.
+	// TODO(nikhilmantri0902): if the querybuilder.AdjustMetricTimeRange logic changes, this needs to be updated too.
 	if stepSecs > 0 {
 		samplesAdjustedStartMs = samplesAdjustedStartMs - (samplesAdjustedStartMs % (stepSecs * 1000))
 		adjustStep := stepSecs
@@ -335,17 +340,16 @@ func alignedMetricWindow(startMs, endMs int64) (
 		flooredEndMs = flooredEndMs - (flooredEndMs % (adjustStep * 1000))
 	}
 
-	tsAdjustedStartMs, _, distributedTSTable, localTSTable = telemetrymetrics.WhichTSTableToUse(
+	tsAdjustedStartMs, _, distributedTSTable, localTSTable := telemetrymetrics.WhichTSTableToUse(
 		samplesAdjustedStartMs, flooredEndMs, nil,
 	)
 
-	distributedSamplesTable = telemetrymetrics.WhichSamplesTableToUse(
+	distributedSamplesTable, localSamplesTable := telemetrymetrics.WhichSamplesTableToUse(
 		samplesAdjustedStartMs, flooredEndMs,
 		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
 	)
-	localSamplesTable = strings.TrimPrefix(distributedSamplesTable, "distributed_")
 
-	return
+	return samplesAdjustedStartMs, flooredEndMs, tsAdjustedStartMs, distributedTSTable, localTSTable, distributedSamplesTable, localSamplesTable
 }
 
 // buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
@@ -399,7 +403,7 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		return nil, err
 	}
 
-	if whereClause == nil || whereClause.WhereClause == nil {
+	if whereClause.IsEmpty() {
 		return sqlbuilder.NewWhereClause(), nil
 	}
 

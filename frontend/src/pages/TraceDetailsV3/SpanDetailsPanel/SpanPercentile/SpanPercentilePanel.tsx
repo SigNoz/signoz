@@ -1,6 +1,8 @@
-import { Checkbox, Input, Select, Skeleton } from 'antd';
+import { Select, Skeleton } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -104,12 +106,12 @@ function SpanPercentilePanel({
 							.map((attr) => (
 								<div className={styles.resourceSelectorItem} key={attr.key}>
 									<Checkbox
-										checked={attr.isSelected}
-										onChange={(e): void => {
+										value={attr.isSelected}
+										onChange={(checked): void => {
 											handleResourceAttributeChange(
 												attr.key,
 												attr.value,
-												e.target.checked,
+												checked === true,
 											);
 										}}
 										disabled={

@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { Button, Col, Popover, Row, Select, Space } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';

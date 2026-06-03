@@ -1,0 +1,189 @@
+.alertListContainer {
+	margin-top: auto;
+	margin-bottom: auto;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.alertListViewContent {
+	width: calc(100% - 30px);
+	max-width: 836px;
+}
+
+.title {
+	color: var(--l1-foreground);
+	font-size: var(--font-size-lg);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 28px;
+	letter-spacing: -0.09px;
+}
+
+.subtitle {
+	color: var(--l2-foreground);
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.emptyAlertInfoContainer {
+	display: flex;
+	padding: 71px 193.5px;
+	justify-content: center;
+	align-items: center;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+	margin-top: 16px;
+}
+
+.alertContent {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.heading {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.icons {
+	color: white;
+}
+
+.emptyAlertAction {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 24px;
+	letter-spacing: -0.07px;
+}
+
+.emptyInfo {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 24px;
+	letter-spacing: -0.07px;
+}
+
+.actionContainer {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	padding-top: 24px;
+	padding-bottom: 24px;
+	width: 100%;
+}
+
+.buttonGroup {
+	display: flex;
+	gap: 8px;
+}
+
+.buttonContent {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+
+.getStartedText {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 16px;
+	margin-top: 24px;
+	margin-bottom: 24px;
+	width: 100%;
+
+	:global(.ant-divider)::before,
+	:global(.ant-divider)::after {
+		border-bottom: 2px dotted var(--l1-border);
+		border-top: 2px dotted var(--l1-border);
+		height: 8px;
+	}
+
+	:global(.ant-typography) {
+		color: var(--l2-foreground);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.48px;
+		text-transform: uppercase;
+		padding-top: 8px;
+	}
+}
+
+.alertInfoCard {
+	display: flex;
+	padding: 16px;
+	justify-content: space-between;
+	align-items: center;
+	border-radius: 6px;
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	margin-bottom: 16px;
+
+	&:hover {
+		cursor: pointer;
+	}
+}
+
+.alertCardText {
+	display: flex;
+	gap: 2px;
+	flex-direction: column;
+}
+
+.alertCardTextHeader {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
+
+.alertCardTextSubheader {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+}
+
+.infoText {
+	color: var(--primary);
+	font-family: Inter;
+	font-size: 12px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 16px;
+	letter-spacing: -0.06px;
+	margin: 0 8px;
+	white-space: nowrap;
+}
+
+.infoLinkContainer {
+	svg {
+		color: var(--primary);
+	}
+
+	&:hover {
+		cursor: pointer;
+	}
+}
