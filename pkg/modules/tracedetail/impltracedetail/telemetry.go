@@ -6,44 +6,44 @@ import (
 )
 
 type moduleMetrics struct {
-	waterfallMaxLimitToSelectAllSpans metric.Int64Gauge
-	waterfallWindowedResponseCount    metric.Int64Counter
-	waterfallWindowedTraceSpanCount   metric.Int64Counter
+	waterfallSpanLimit    metric.Int64Gauge
+	waterfallRequestCount metric.Int64Counter
+	waterfallSpanCount    metric.Int64Counter
 }
 
 func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 	var errs error
 
-	maxLimitGauge, err := meter.Int64Gauge(
-		"signoz.traces.waterfall.max_limit_to_select_all_spans",
+	spanLimit, err := meter.Int64Gauge(
+		"signoz.traces.waterfall.span.limit",
 		metric.WithDescription("The span count limit above which windowed waterfall is returned instead of the full waterfall."),
-		metric.WithUnit("{spans}"),
+		metric.WithUnit("{span}"),
 	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	windowedCounter, err := meter.Int64Counter(
-		"signoz.traces.waterfall.windowed_responses",
+	requestCount, err := meter.Int64Counter(
+		"signoz.traces.waterfall.request.count",
 		metric.WithDescription("Total number of waterfall requests that used the windowed path."),
-		metric.WithUnit("{count}"),
+		metric.WithUnit("{request}"),
 	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	windowedSpanCount, err := meter.Int64Counter(
-		"signoz.traces.waterfall.windowed_trace_span_count",
+	spanCount, err := meter.Int64Counter(
+		"signoz.traces.waterfall.span.count",
 		metric.WithDescription("Total number of spans across all waterfall requests that used the windowed path."),
-		metric.WithUnit("{spans}"),
+		metric.WithUnit("{span}"),
 	)
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
 	return &moduleMetrics{
-		waterfallMaxLimitToSelectAllSpans: maxLimitGauge,
-		waterfallWindowedResponseCount:    windowedCounter,
-		waterfallWindowedTraceSpanCount:   windowedSpanCount,
+		waterfallSpanLimit:    spanLimit,
+		waterfallRequestCount: requestCount,
+		waterfallSpanCount:    spanCount,
 	}, errs
 }

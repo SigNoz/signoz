@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type module struct {
@@ -32,7 +34,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 		metrics:  metrics,
 	}
 
-	m.metrics.waterfallMaxLimitToSelectAllSpans.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans))
+	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attribute.String("response_type", "windowed")))
 
 	return m
 }
@@ -93,8 +95,9 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	}
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
-		m.metrics.waterfallWindowedResponseCount.Add(ctx, 1)
-		m.metrics.waterfallWindowedTraceSpanCount.Add(ctx, int64(summary.NumSpans))
+		attrs := metric.WithAttributes(attribute.String("response_type", "windowed"))
+		m.metrics.waterfallRequestCount.Add(ctx, 1, attrs)
+		m.metrics.waterfallSpanCount.Add(ctx, int64(summary.NumSpans), attrs)
 		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
