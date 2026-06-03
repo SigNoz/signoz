@@ -26,6 +26,7 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 	windowedCounter, err := meter.Int64Counter(
 		"signoz.traces.waterfall.windowed_responses",
 		metric.WithDescription("Total number of waterfall requests that used the windowed path."),
+		metric.WithUnit("{count}"),
 	)
 	if err != nil {
 		errs = errors.Join(errs, err)
