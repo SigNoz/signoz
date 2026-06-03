@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Checkbox, Input } from 'antd';
+import { Input } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -320,10 +321,8 @@ function AnomalyAlertEvaluationView({
 								{filteredSeriesKeys.length > 0 && (
 									<Checkbox
 										className="anomaly-alert-evaluation-view-series-list-item"
-										type="checkbox"
 										name="series"
-										value="all"
-										checked={selectedSeries === null}
+										value={selectedSeries === null}
 										onChange={(): void => handleSeriesChange(null)}
 									>
 										Show All
@@ -335,10 +334,8 @@ function AnomalyAlertEvaluationView({
 										<Checkbox
 											className="anomaly-alert-evaluation-view-series-list-item"
 											key={seriesKey}
-											type="checkbox"
 											name="series"
-											value={seriesKey}
-											checked={selectedSeries === seriesKey}
+											value={selectedSeries === seriesKey}
 											onChange={(): void => handleSeriesChange(seriesKey)}
 										>
 											<div

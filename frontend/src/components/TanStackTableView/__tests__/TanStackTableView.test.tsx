@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -23,12 +23,15 @@ jest.mock('../TanStackTable.module.scss', () => ({
 	},
 }));
 
-// Mock ResizeObserver for combobox tests
-global.ResizeObserver = class ResizeObserver {
-	observe(): void {}
-	unobserve(): void {}
-	disconnect(): void {}
-};
+beforeAll(() => {
+	// jsdom doesn't include ResizeObserver — must direct-assign rather than
+	// spyOn (spyOn requires the property to already exist).
+	window.ResizeObserver = jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+});
 
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
@@ -400,6 +403,22 @@ describe('TanStackTableView Integration', () => {
 			await waitFor(() => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
 			});
+		});
+
+		it('preserves page from URL on initial mount', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				queryParams: { page: '3' },
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page3Button = within(nav).getByRole('button', { name: '3' });
+
+			// Page 3 should be active (from URL), not reset to defaultPage 1
+			expect(page3Button).toHaveAttribute('aria-current', 'page');
 		});
 
 		it('resets page to 1 when limit changes', async () => {
@@ -848,6 +867,112 @@ describe('TanStackTableView Integration', () => {
 
 			// When onEndReached is provided, pagination should not render
 			expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('hasSingleColumn — gates the Remove popover per-column', () => {
+		const hasSingleColumnFlagPresent = (): boolean =>
+			Boolean(document.querySelector('th[data-single-column="true"]'));
+
+		it('is true when only one non-pinned column exists', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(true);
+		});
+
+		it('is false when multiple non-pinned columns exist (all removable)', async () => {
+			renderTanStackTable({});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 3 default columns (id/name/value), none pinned, none non-removable
+			// → table is not single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('is false when removable + non-removable mix exists (the body/timestamp case)', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Timestamp',
+							accessorKey: 'name',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'value',
+							header: 'Body',
+							accessorKey: 'value',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'id',
+							header: 'User',
+							accessorKey: 'id',
+							enableRemove: true,
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('does not count pinned columns toward the total', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'stateIndicator',
+							header: '',
+							pin: 'left',
+							accessorKey: 'id',
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 1 pinned + 1 non-pinned → only the non-pinned counts → single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(true);
 		});
 	});
 });

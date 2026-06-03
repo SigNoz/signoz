@@ -18,7 +18,8 @@ import {
 	RefreshCw,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select } from 'antd';
+import { Button, Select } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
@@ -749,7 +750,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					tabIndex={isActive ? 0 : -1}
 				>
 					<Checkbox
-						checked={isSelected}
+						value={isSelected}
 						className="option-checkbox"
 						onClick={(e): void => {
 							e.stopPropagation();
@@ -1584,7 +1585,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 						>
 							<div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-								<Checkbox checked={allOptionsSelected} className="option-checkbox">
+								<Checkbox value={allOptionsSelected} className="option-checkbox">
 									<div className="option-content">
 										<div className="all-option-text">ALL</div>
 									</div>

@@ -9,10 +9,10 @@ import {
 	useState,
 } from 'react';
 import { useMutation, useQuery } from 'react-query';
+import { Input } from '@signozhq/ui/input';
 import {
 	Button,
 	Checkbox,
-	Input,
 	Modal,
 	Select,
 	Skeleton,

@@ -88,6 +88,7 @@ const ROUTES = {
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
 	AI_ASSISTANT: '/ai-assistant/:conversationId',
+	AI_ASSISTANT_BASE: '/ai-assistant',
 	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
 } as const;

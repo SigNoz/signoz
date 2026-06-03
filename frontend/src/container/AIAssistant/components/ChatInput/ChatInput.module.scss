@@ -8,12 +8,7 @@
 	border-radius: var(--radius-2);
 	padding: 8px;
 	border: 1px solid var(--l1-border);
-	transition: border-color 0.15s;
 	position: relative;
-
-	&:focus-within {
-		border-color: var(--l1-border);
-	}
 }
 
 .attachments {
@@ -129,6 +124,18 @@
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: 4px;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+
+	// Scope the focus ring to the textarea row only — the surrounding
+	// chrome (context chips, "Add Context", mic, send) sits outside this
+	// element and stays unaffected when the cursor enters the textarea.
+	&:focus-within {
+		border-color: var(--accent-primary);
+		box-shadow: 0 0 0 1px
+			color-mix(in srgb, var(--accent-primary), transparent 70%);
+	}
 }
 
 .footer {
@@ -244,16 +251,24 @@
 }
 
 .contextPopoverCategoryItem {
+	// Override DS Button's centered layout.
+	--button-justify-content: flex-start;
 	display: flex;
 	align-items: center;
+	justify-content: flex-start;
 	gap: 8px;
+	width: 100%;
 	height: 32px;
 	padding: 0 8px;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
+	background: transparent;
+	color: inherit;
+	font: inherit;
 	font-size: 12px;
 	font-weight: 550;
 	text-align: left;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	appearance: none;
 	cursor: pointer;
 	transition:
 		background 0.15s ease,
@@ -309,17 +324,24 @@
 }
 
 .contextPopoverEntityItem {
+	// Override DS Button's centered layout.
+	--button-justify-content: flex-start;
 	display: flex;
 	align-items: center;
+	justify-content: flex-start;
 	gap: 10px;
+	width: 100%;
 	padding: 8px;
-	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: var(--radius-2);
+	background: transparent;
 	color: var(--l1-foreground);
+	font: inherit;
 	font-size: 12px;
 	font-weight: 500;
 	line-height: 1.35;
 	text-align: left;
+	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
+	border-radius: var(--radius-2);
+	appearance: none;
 	cursor: pointer;
 	// Required for the inner span's `text-overflow: ellipsis` to engage —
 	// flex items default to `min-width: auto` (intrinsic width) and would
@@ -385,6 +407,11 @@
 	border-radius: 50%;
 	border: none;
 	cursor: pointer;
+	// Reset native <button> defaults so the 24px circle isn't inflated by
+	// browser-default padding / font metrics.
+	padding: 0;
+	font: inherit;
+	appearance: none;
 }
 
 .micDiscard {

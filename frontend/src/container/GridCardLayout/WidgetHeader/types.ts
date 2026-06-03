@@ -6,6 +6,7 @@ export interface MenuItem {
 	key: MenuItemKeys;
 	icon: ReactNode;
 	label: ReactNode;
+	rightIcon?: ReactNode;
 	isVisible: boolean;
 	disabled: boolean;
 	danger?: boolean;

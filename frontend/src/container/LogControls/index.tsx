@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Button, Divider, Flex } from 'antd';
+import { Button, Flex } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
 import Download from 'container/Download/Download';

@@ -18,13 +18,22 @@ function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
+	const isClosable =
+		queryData.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled);
+
 	return (
 		<QueryChipContainer>
-			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
-			<QueryChipItem>{queryData.operator}</QueryChipItem>
+			<QueryChipItem color="vanilla">
+				{convertMetricKeyToTrace(queryData.tagKey)}
+			</QueryChipItem>
+			<QueryChipItem color="vanilla">{queryData.operator}</QueryChipItem>
 			<QueryChipItem
-				closable={queryData.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled)}
-				onClose={onCloseHandler}
+				color="vanilla"
+				closable={isClosable}
+				onClose={(e): void => {
+					e.preventDefault();
+					onCloseHandler();
+				}}
 			>
 				{queryData.tagValue.join(', ')}
 			</QueryChipItem>

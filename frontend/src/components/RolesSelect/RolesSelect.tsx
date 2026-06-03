@@ -1,5 +1,6 @@
 import { CircleAlert, RefreshCw } from '@signozhq/icons';
-import { Checkbox, Select } from 'antd';
+import { Select } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -146,12 +147,11 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 				options={options}
 				optionFilterProp="label"
 				optionRender={(option): JSX.Element => (
-					<Checkbox
-						checked={value.includes(option.value as string)}
-						style={{ pointerEvents: 'none' }}
-					>
-						{option.label}
-					</Checkbox>
+					<div style={{ pointerEvents: 'none' }}>
+						<Checkbox value={value.includes(option.value as string)}>
+							{option.label}
+						</Checkbox>
+					</div>
 				)}
 				getPopupContainer={getPopupContainer}
 				disabled={disabled}

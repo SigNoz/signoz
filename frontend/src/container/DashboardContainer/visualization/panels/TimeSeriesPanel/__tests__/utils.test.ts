@@ -303,6 +303,27 @@ describe('TimeSeriesPanel utils', () => {
 			expect(seriesConfig!.stroke).toBe('#ff0000');
 		});
 
+		it('passes result metric to each series for cross-panel sync', () => {
+			const metric = { host: 'server1', __name__: 'cpu' };
+			const apiResponse = createApiResponse([
+				{
+					metric,
+					queryName: 'Q',
+					values: [
+						[1000, '1'],
+						[2000, '2'],
+					],
+				} as MetricRangePayloadProps['data']['result'][0],
+			]);
+
+			const config = prepareUPlotConfig({
+				...baseParams,
+				apiResponse,
+			}).getConfig();
+
+			expect(config.series?.[1]).toMatchObject({ metric });
+		});
+
 		it('adds multiple series when result has multiple items', () => {
 			const apiResponse = createApiResponse([
 				{

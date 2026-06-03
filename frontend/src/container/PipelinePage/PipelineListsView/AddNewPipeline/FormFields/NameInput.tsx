@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input } from 'antd';
-
+import { Input } from '@signozhq/ui/input';
+import { Form } from 'antd';
 import { ProcessorFormField } from '../../AddNewProcessor/config';
 import { formValidationRules } from '../../config';
 

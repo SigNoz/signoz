@@ -16,8 +16,10 @@ import {
 	Plus,
 	X,
 } from '@signozhq/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Button, Card, Modal, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -506,9 +508,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			{(tags?.length || 0) > 0 && (
 				<div className="dashboard-tags">
 					{tags?.map((tag) => (
-						<Tag key={tag} className="tag">
+						<Badge key={tag} className="tag" color="vanilla">
 							{tag}
-						</Tag>
+						</Badge>
 					))}
 				</div>
 			)}

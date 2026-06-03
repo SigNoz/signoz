@@ -1,11 +1,13 @@
-import { memo } from 'react';
-import { OptionFormatTypes } from 'constants/optionsFormatTypes';
+import { memo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Settings } from '@signozhq/icons';
+import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
-import OptionsMenu from 'container/OptionsMenu';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
+import { DataSource } from 'types/common/queryBuilder';
 
-import { Container } from './styles';
+import styles from './Controls.module.scss';
 
 function TraceExplorerControls({
 	isLoading,
@@ -14,6 +16,9 @@ function TraceExplorerControls({
 	config,
 	showSizeChanger = true,
 }: TraceExplorerControlsProps): JSX.Element | null {
+	const { t } = useTranslation(['trace']);
+	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
+
 	const {
 		pagination,
 		handleCountItemsPerPageChange,
@@ -22,12 +27,25 @@ function TraceExplorerControls({
 	} = useQueryPagination(totalCount, perPageOptions);
 
 	return (
-		<Container>
-			{config && (
-				<OptionsMenu
-					selectedOptionFormat={OptionFormatTypes.LIST} // Defaulting it to List view as options are shown only in the List view tab
-					config={{ addColumn: config?.addColumn }}
-				/>
+		<div className={styles.container}>
+			{config?.fieldsSelector && (
+				<>
+					<div
+						className={styles.optionsTrigger}
+						onClick={(): void => setIsFieldsSelectorOpen(true)}
+					>
+						{t('options_menu.options')}
+						<Settings size="md" />
+					</div>
+					<FieldsSelector
+						isOpen={isFieldsSelectorOpen}
+						title="Edit columns"
+						fields={config.fieldsSelector.value}
+						onFieldsChange={config.fieldsSelector.onFieldsChange}
+						onClose={(): void => setIsFieldsSelectorOpen(false)}
+						signal={DataSource.TRACES}
+					/>
+				</>
 			)}
 
 			<Controls
@@ -41,7 +59,7 @@ function TraceExplorerControls({
 				handleNavigatePrevious={handleNavigatePrevious}
 				showSizeChanger={showSizeChanger}
 			/>
-		</Container>
+		</div>
 	);
 }
 
