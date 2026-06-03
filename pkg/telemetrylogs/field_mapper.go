@@ -436,7 +436,7 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 // GetColumns returns the physical columns for the given field context that
 // search() fans out across. For FieldContextBody the active column set depends
 // on the useJSONBody feature flag.
-func ftsColumns(ctx context.Context, fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
+func ftsColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
 	switch fieldContext {
 	case telemetrytypes.FieldContextLog:
 		return []*schema.Column{

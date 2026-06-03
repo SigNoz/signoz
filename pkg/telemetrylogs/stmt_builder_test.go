@@ -2,8 +2,8 @@ package telemetrylogs
 
 import (
 	"context"
-	"strings"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -1382,6 +1382,7 @@ func newSkipResourceFingerprintLogsBuilder(
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		cb.ConditionForSearch,
 		fl,
 		telemetryStore,
 		skipEnable,

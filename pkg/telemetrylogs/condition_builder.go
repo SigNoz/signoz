@@ -44,7 +44,7 @@ func (c *conditionBuilder) ConditionForSearch(
 
 	var conditions []string
 	for _, fieldContext := range contexts {
-		for _, col := range ftsColumns(ctx, fieldContext, useJSONBody) {
+		for _, col := range ftsColumns(fieldContext, useJSONBody) {
 			switch col.Type.GetType() {
 			case schema.ColumnTypeEnumMap:
 				keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
