@@ -373,6 +373,49 @@ def export_json_types(
     clickhouse.conn.query(f"TRUNCATE TABLE signoz_metadata.field_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC")
 
 
+@pytest.fixture(name="export_promoted_paths", scope="function")
+def export_promoted_paths(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[list[str], datetime.datetime], None], Any]:
+    """
+    Seeds signoz_metadata.distributed_column_evolution_metadata with promoted-path
+    entries so the query builder treats body_promoted as active from promotion_ts onward.
+
+    The base evolutions for body (version=0) and body_v2 (version=1) with
+    field_name='__all__' must already exist from schema migrations.
+
+    Teardown removes all body_promoted entries inserted during the test.
+
+    Args:
+        paths:        Field names to promote (e.g. ["user.name", "user.age", "education"]).
+        promotion_ts: Datetime from which body_promoted is active.
+    """
+    inserted: list[str] = []
+
+    def _export_promoted_paths(paths: list[str], promotion_ts: datetime.datetime) -> None:
+        # release_time is stored as Float64 nanoseconds in a SimpleAggregateFunction(min, Float64)
+        release_ns = float(int(promotion_ts.timestamp() * 1e9))
+        data = [
+            ["logs", "body_promoted", "JSON()", "body", path, np.uint32(2), release_ns]
+            for path in paths
+        ]
+        clickhouse.conn.insert(
+            database="signoz_metadata",
+            table="distributed_column_evolution_metadata",
+            data=data,
+            column_names=["signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time"],
+        )
+        inserted.extend(paths)
+
+    yield _export_promoted_paths
+
+    if inserted:
+        cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+        clickhouse.conn.query(
+            f"TRUNCATE TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' SYNC"
+        )
+
+
 @pytest.fixture(name="create_json_index", scope="function")
 def create_json_index(
     signoz: types.SigNoz,
