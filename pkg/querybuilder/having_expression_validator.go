@@ -314,7 +314,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithInvalidReferences(v.invalid...).WithSuggestions(suggestions...)
+		).WithSuggestions(suggestions...)
 		return "", havingErr
 	}
 

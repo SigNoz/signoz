@@ -7,14 +7,13 @@ import (
 )
 
 type JSON struct {
-	Type              string                    `json:"type,omitempty"`
-	Code              string                    `json:"code" required:"true"`
-	Message           string                    `json:"message" required:"true"`
-	Url               string                    `json:"url,omitempty"`
-	Errors            []responseerroradditional `json:"errors,omitempty"`
-	Retry             *responseretryjson        `json:"retry,omitempty"`
-	Suggestions       []string                  `json:"suggestions,omitempty"`
-	InvalidReferences []string                  `json:"invalidReferences,omitempty"`
+	Type        string                    `json:"type,omitempty"`
+	Code        string                    `json:"code" required:"true"`
+	Message     string                    `json:"message" required:"true"`
+	Url         string                    `json:"url,omitempty"`
+	Errors      []responseerroradditional `json:"errors,omitempty"`
+	Retry       *responseretryjson        `json:"retry,omitempty"`
+	Suggestions []string                  `json:"suggestions,omitempty"`
 }
 
 type responseretryjson struct {
@@ -40,14 +39,13 @@ func AsJSON(cause error) *JSON {
 	}
 
 	return &JSON{
-		Type:              t.String(),
-		Code:              c.String(),
-		Message:           m,
-		Url:               u,
-		Errors:            rea,
-		Retry:             retry,
-		Suggestions:       suggestionsOf(cause),
-		InvalidReferences: invalidReferencesOf(cause),
+		Type:        t.String(),
+		Code:        c.String(),
+		Message:     m,
+		Url:         u,
+		Errors:      rea,
+		Retry:       retry,
+		Suggestions: suggestionsOf(cause),
 	}
 }
 

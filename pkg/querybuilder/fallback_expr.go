@@ -81,12 +81,7 @@ func CollisionHandledFinalExpr(
 			// - it is not a static field
 			// - the next best thing to do is see if there is a typo
 			// and suggest a correction
-			correction, found := telemetrytypes.SuggestCorrection(field.Name, maps.Keys(keys))
-			wrappedErr := errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
-			if found {
-				// we found a close match, attach the suggestion
-				wrappedErr = wrappedErr.WithSuggestions(errors.DidYouMean(correction))
-			}
+			wrappedErr := errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name).WithSuggestions(errors.Suggestions(field.Name, maps.Keys(keys))...)
 			return "", nil, wrappedErr
 		} else {
 			for _, key := range keysForField {

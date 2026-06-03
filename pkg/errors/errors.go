@@ -30,9 +30,6 @@ type base struct {
 	// suggestions is a list of user-facing suggestions related to the error, if present.
 	// For example, narrow the time range window or typo suggestion
 	suggestions []string
-	// invalidReferences is a list of references that were invalid and contributed to the error, if present.
-	// For example, a typo from user avg(sum), we return invalidRefences: ['sum']
-	invalidReferences []string
 }
 
 // Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
@@ -47,16 +44,15 @@ func (b *base) Stacktrace() string {
 // and returns a new base error.
 func (b *base) WithStacktrace(s string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 rawStacktrace(s),
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           rawStacktrace(s),
+		r:           b.r,
+		suggestions: b.suggestions,
 	}
 }
 
@@ -112,7 +108,6 @@ func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
 	if inner, ok := cause.(*base); ok {
 		b.r = inner.r
 		b.suggestions = inner.suggestions
-		b.invalidReferences = inner.invalidReferences
 		b.a = inner.a
 	}
 
@@ -137,7 +132,6 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 	if inner, ok := cause.(*base); ok {
 		b.r = inner.r
 		b.suggestions = inner.suggestions
-		b.invalidReferences = inner.invalidReferences
 		b.a = inner.a
 	}
 
@@ -152,16 +146,15 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 		s = original.s
 	}
 	b := &base{
-		t:                 t,
-		c:                 c,
-		m:                 m,
-		e:                 e,
-		u:                 u,
-		a:                 a,
-		s:                 s,
-		r:                 retryOf(cause),
-		suggestions:       suggestionsOf(cause),
-		invalidReferences: invalidReferencesOf(cause),
+		t:           t,
+		c:           c,
+		m:           m,
+		e:           e,
+		u:           u,
+		a:           a,
+		s:           s,
+		r:           retryOf(cause),
+		suggestions: suggestionsOf(cause),
 	}
 
 	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
@@ -170,80 +163,60 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 // WithUrl adds a url to the base error and returns a new base error.
 func (b *base) WithUrl(u string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           u,
+		a:           b.a,
+		s:           b.s,
+		r:           b.r,
+		suggestions: b.suggestions,
 	}
 }
 
 // WithAdditional adds additional messages to the base error and returns a new base error.
 func (b *base) WithAdditional(a ...string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           a,
+		s:           b.s,
+		r:           b.r,
+		suggestions: b.suggestions,
 	}
 }
 
 // withRetry adds retry metadata to the base error and returns a new base error.
 func (b *base) withRetry(r retry) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 &r,
-		suggestions:       b.suggestions,
-		invalidReferences: b.invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           b.s,
+		r:           &r,
+		suggestions: b.suggestions,
 	}
 }
 
 // WithSuggestions replaces the list of suggestions on the base error.
 func (b *base) WithSuggestions(suggestions ...string) *base {
 	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       suggestions,
-		invalidReferences: b.invalidReferences,
-	}
-}
-
-// WithInvalidReferences replaces the list of invalid references on the base error.
-func (b *base) WithInvalidReferences(invalidReferences ...string) *base {
-	return &base{
-		t:                 b.t,
-		c:                 b.c,
-		m:                 b.m,
-		e:                 b.e,
-		u:                 b.u,
-		a:                 b.a,
-		s:                 b.s,
-		r:                 b.r,
-		suggestions:       b.suggestions,
-		invalidReferences: invalidReferences,
+		t:           b.t,
+		c:           b.c,
+		m:           b.m,
+		e:           b.e,
+		u:           b.u,
+		a:           b.a,
+		s:           b.s,
+		r:           b.r,
+		suggestions: suggestions,
 	}
 }
 
@@ -396,14 +369,6 @@ func suggestionsOf(err error) []string {
 	base, ok := err.(*base)
 	if ok {
 		return base.suggestions
-	}
-	return nil
-}
-
-func invalidReferencesOf(err error) []string {
-	base, ok := err.(*base)
-	if ok {
-		return base.invalidReferences
 	}
 	return nil
 }

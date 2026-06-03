@@ -149,7 +149,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			errors.CodeInvalidInput,
 			"unknown query type %q",
 			shadow.Type,
-		).WithInvalidReferences(shadow.Type.StringValue()).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
+		).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
 	}
 
 	return nil
@@ -193,7 +193,7 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 			errors.CodeInvalidInput,
 			"invalid signal %q",
 			header.Signal.StringValue(),
-		).WithInvalidReferences(header.Signal.StringValue()).WithSuggestions(enumReferencesSuggestion(telemetrytypes.Signal{}.Enum()))
+		).WithSuggestions(enumReferencesSuggestion(telemetrytypes.Signal{}.Enum()))
 	}
 }
 
@@ -238,12 +238,7 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
-			).WithInvalidReferences(field)
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.DidYouMean(suggestion))
-			} else {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.ValidReferences(fieldNames...))
-			}
+			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
 			return unknownFieldErr
 		}
 	}
@@ -568,12 +563,7 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
-			).WithInvalidReferences(field)
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.DidYouMean(suggestion))
-			} else {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.ValidReferences(fieldNames...))
-			}
+			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
 			return unknownFieldErr
 		}
 	}

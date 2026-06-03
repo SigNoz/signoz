@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // UnmarshalJSONWithSuggestions unmarshals JSON data into the target struct
@@ -54,21 +53,11 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 				errorMsg = "unknown field %q in " + context
 			}
 
-			// Find closest match with max distance of 3 (reasonable for typos)
-			if suggestion, found := telemetrytypes.SuggestCorrection(unknownField, validFields); found {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					errorMsg,
-					unknownField,
-				).WithInvalidReferences(unknownField).WithSuggestions(errors.DidYouMean(suggestion))
-			}
-
-			// No close typo match; suggest the full set of valid fields.
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				errorMsg,
 				unknownField,
-			).WithInvalidReferences(unknownField).WithSuggestions(errors.ValidReferences(validFields...))
+			).WithSuggestions(errors.Suggestions(unknownField, validFields)...)
 		}
 	}
 
@@ -124,12 +113,12 @@ func wrapUnmarshalError(err error, errorFormat string, args ...interface{}) erro
 		return nil
 	}
 
-	// If it already carries structured context (additional hints, suggestions,
-	// or invalid references), return it as-is rather than flattening it into a
-	// fresh message and dropping those fields.
+	// If it already carries structured context (additional hints or
+	// suggestions), return it as-is rather than flattening it into a fresh
+	// message and dropping those fields.
 	_, _, _, _, _, additionals := errors.Unwrapb(err)
 	j := errors.AsJSON(err)
-	if len(additionals) > 0 || len(j.Suggestions) > 0 || len(j.InvalidReferences) > 0 {
+	if len(additionals) > 0 || len(j.Suggestions) > 0 {
 		return err
 	}
 
@@ -172,9 +161,6 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 	}
 	if len(inner.Suggestions) > 0 {
 		newErr = newErr.WithSuggestions(inner.Suggestions...)
-	}
-	if len(inner.InvalidReferences) > 0 {
-		newErr = newErr.WithInvalidReferences(inner.InvalidReferences...)
 	}
 
 	return newErr

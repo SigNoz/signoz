@@ -81,24 +81,11 @@ func TestWithRetryAfter(t *testing.T) {
 	assert.Equal(t, 5, int(r.delay.Microseconds()))
 }
 
-func TestWithInvalidReferences(t *testing.T) {
-	// WithInvalidReferences populates the list.
-	err := New(TypeInvalidInput, MustNewCode("bad_ref"), "bad ref").
-		WithInvalidReferences("queries[0]", "queries[1]")
-	assert.Equal(t, []string{"queries[0]", "queries[1]"}, invalidReferencesOf(err))
-
-	// WithInvalidReferences replaces the entire list on each call.
-	err = err.WithInvalidReferences("queries[2]")
-	assert.Equal(t, []string{"queries[2]"}, invalidReferencesOf(err),
-		"WithInvalidReferences must replace the entire list")
-}
-
 func TestAsJSONBaseError(t *testing.T) {
 	err := New(TypeInvalidInput, MustNewCode("bad_input"), "field foo is bad").
 		WithUrl("https://docs/bad_input").
 		WithAdditional("hint1", "hint2").
-		WithSuggestions("try this").
-		WithInvalidReferences("queries[0]")
+		WithSuggestions("try this")
 
 	j := AsJSON(err)
 
@@ -113,15 +100,13 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Nil(t, j.Retry, "bare New(...) should not populate a retry block")
 
 	assert.Equal(t, []string{"try this"}, j.Suggestions)
-	assert.Equal(t, []string{"queries[0]"}, j.InvalidReferences)
 }
 
 func TestAsJSONWrappedErrorPreservesHints(t *testing.T) {
 	// An inner base carries the user-facing hints (e.g. produced inside an
 	// UnmarshalJSON), then gets re-wrapped (e.g. WrapInvalidInputf). suggestionsOf
-	// /invalidReferencesOf must walk the cause chain so the hints still surface.
+	// must walk the cause chain so the hints still surface.
 	inner := NewInvalidInputf(MustNewCode("bad_kind"), "unknown panel kind %q", "boom").
-		WithInvalidReferences("boom").
 		WithSuggestions("valid references: a, b, c")
 
 	wrapped := WrapInvalidInputf(inner, MustNewCode("outer"), "%s", inner.Error())
@@ -129,8 +114,6 @@ func TestAsJSONWrappedErrorPreservesHints(t *testing.T) {
 	j := AsJSON(wrapped)
 	assert.Equal(t, []string{"valid references: a, b, c"}, j.Suggestions,
 		"suggestions on an inner base must survive wrapping")
-	assert.Equal(t, []string{"boom"}, j.InvalidReferences,
-		"invalid references on an inner base must survive wrapping")
 }
 
 func TestAsJSONRetryBlock(t *testing.T) {
@@ -164,7 +147,6 @@ func TestAsJSONRetryBlock(t *testing.T) {
 func TestAsJSONOptionalFieldsOmittedWhenEmpty(t *testing.T) {
 	j := AsJSON(New(TypeInternal, MustNewCode("boom"), "boom"))
 	assert.Nil(t, j.Suggestions, "no suggestions set => Suggestions must be nil so json omitempty drops it")
-	assert.Nil(t, j.InvalidReferences, "no invalid references set => InvalidReferences must be nil so json omitempty drops it")
 }
 
 func TestWithStacktrace(t *testing.T) {
