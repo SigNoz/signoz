@@ -72,8 +72,20 @@
 	.alert-rule-scope {
 		margin-bottom: 12px;
 
-		.ant-radio-wrapper {
-			color: var(--l1-foreground);
+		// `.createForm label` styles field labels (font-weight 500, 14px,
+		// 6px bottom padding). Those bleed into the @signozhq/ui RadioGroup
+		// option labels, making them bold and vertically misaligned with the
+		// radio control. Reset them back to plain option-text styling.
+		label {
+			padding: 0;
+			font-weight: 400;
+			line-height: normal;
+		}
+
+		// Loosen the design-system default (grid gap 0.5rem) between options.
+		.silence-alerts-radio-group {
+			margin-top: 8px;
+			gap: 12px;
 		}
 	}
 
@@ -144,10 +156,7 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
-
-			.ant-btn {
-				margin-top: 8px;
-			}
+			margin-top: 12px;
 		}
 
 		.schedule-created-at {

@@ -14,6 +14,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTestTraceOperatorStatementBuilder(t *testing.T) *traceOperatorStatementBuilder {
+	t.Helper()
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
+	fl := flaggertest.New(t)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
+	traceStmtBuilder := NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore, fm, cb, aggExprRewriter, nil, fl, false, 100000,
+	)
+	return NewTraceOperatorStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore, fm, cb, traceStmtBuilder, aggExprRewriter, fl,
+	)
+}
+
 func TestTraceOperatorStatementBuilder(t *testing.T) {
 	cases := []struct {
 		name           string
@@ -463,32 +482,7 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
-
-	traceStmtBuilder := NewTraceQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		aggExprRewriter,
-		nil,
-		fl,
-	)
-
-	statementBuilder := NewTraceOperatorStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		traceStmtBuilder,
-		aggExprRewriter,
-		fl,
-	)
+	statementBuilder := newTestTraceOperatorStatementBuilder(t)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -579,32 +573,7 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-	fl := flaggertest.New(t)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
-
-	traceStmtBuilder := NewTraceQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		aggExprRewriter,
-		nil,
-		fl,
-	)
-
-	statementBuilder := NewTraceOperatorStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		traceStmtBuilder,
-		aggExprRewriter,
-		fl,
-	)
+	statementBuilder := newTestTraceOperatorStatementBuilder(t)
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -625,4 +594,143 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 			require.Contains(t, err.Error(), c.expectedErr)
 		})
 	}
+}
+
+func TestTraceOperatorStatementBuilderAdjustsKeys(t *testing.T) {
+	cases := []struct {
+		name          string
+		requestType   qbtypes.RequestType
+		operator      qbtypes.QueryBuilderTraceOperator
+		builderFilter string
+		wantSQL       string
+		wantArgs      []any
+	}{
+		{
+			name:        "deprecated duration filter in referenced builder query",
+			requestType: qbtypes.RequestTypeRaw,
+			operator: qbtypes.QueryBuilderTraceOperator{
+				Expression: "A",
+				Limit:      10,
+			},
+			builderFilter: "durationNano = '3s'",
+			wantSQL:       "duration_nano = ?",
+			wantArgs:      []any{int64(3000000000)},
+		},
+		{
+			name:        "context-prefixed aggregation alias in order by",
+			requestType: qbtypes.RequestTypeScalar,
+			operator: qbtypes.QueryBuilderTraceOperator{
+				Expression: "A",
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "count()",
+						Alias:      "span.count_",
+					},
+				},
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name:         "count_",
+								FieldContext: telemetrytypes.FieldContextSpan,
+							},
+						},
+						Direction: qbtypes.OrderDirectionDesc,
+					},
+				},
+			},
+			wantSQL: "ORDER BY __result_0 desc",
+		},
+	}
+
+	statementBuilder := newTestTraceOperatorStatementBuilder(t)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.operator.ParseExpression()
+			require.NoError(t, err)
+
+			filter := c.builderFilter
+			if filter == "" {
+				filter = "service.name = 'frontend'"
+			}
+
+			q, err := statementBuilder.Build(
+				context.Background(),
+				1747947419000,
+				1747983448000,
+				c.requestType,
+				c.operator,
+				&qbtypes.CompositeQuery{
+					Queries: []qbtypes.QueryEnvelope{
+						{
+							Type: qbtypes.QueryTypeBuilder,
+							Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalTraces,
+								Filter: &qbtypes.Filter{Expression: filter},
+							},
+						},
+					},
+				},
+			)
+
+			require.NoError(t, err)
+			require.Contains(t, q.Query, c.wantSQL)
+			for _, arg := range c.wantArgs {
+				require.Contains(t, q.Args, arg)
+			}
+		})
+	}
+}
+
+// TestTraceOperatorStatementBuilderDeduplicatesKeys checks that a trace
+// operator with the same field name listed twice in GroupBy (once with a
+// context, once without) ends up with a single column in the outer SELECT
+// and a single entry in GROUP BY.
+func TestTraceOperatorStatementBuilderDeduplicatesKeys(t *testing.T) {
+	statementBuilder := newTestTraceOperatorStatementBuilder(t)
+
+	operator := qbtypes.QueryBuilderTraceOperator{
+		Expression: "A",
+		Aggregations: []qbtypes.TraceAggregation{
+			{Expression: "count()"},
+		},
+		GroupBy: []qbtypes.GroupByKey{
+			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name:         "http.method",
+				FieldContext: telemetrytypes.FieldContextAttribute,
+			}},
+			// Same name, no context — should be merged with the entry above.
+			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+				Name: "http.method",
+			}},
+		},
+	}
+	require.NoError(t, operator.ParseExpression())
+
+	q, err := statementBuilder.Build(
+		context.Background(),
+		1747947419000,
+		1747983448000,
+		qbtypes.RequestTypeScalar,
+		operator,
+		&qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: "service.name = 'frontend'"},
+					},
+				},
+			},
+		},
+	)
+
+	require.NoError(t, err)
+
+	require.Contains(t, q.Query,
+		"SELECT toString(multiIf(mapContains(attributes_string, 'http.method') = ?, attributes_string['http.method'], NULL)) AS `http.method`, count() AS __result_0 FROM A GROUP BY `http.method` ORDER BY __result_0 DESC")
 }

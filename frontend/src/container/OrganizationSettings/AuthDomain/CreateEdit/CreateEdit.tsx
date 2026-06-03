@@ -103,7 +103,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 
 		return {
 			...rest,
-			...(domainToAdminEmail && { domainToAdminEmail }),
+			domainToAdminEmail: domainToAdminEmail ?? {},
 		};
 	}, [form]);
 
@@ -129,7 +129,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 
 		return {
 			...rest,
-			...(groupMappings && { groupMappings }),
+			groupMappings: groupMappings ?? {},
 		};
 	}, [form]);
 
