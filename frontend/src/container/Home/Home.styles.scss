@@ -574,30 +574,7 @@
 
 		.home-data-item-tag {
 			display: flex;
-
-			.ant-tag {
-				display: flex;
-				padding: 2px 12px;
-				justify-content: center;
-				align-items: center;
-				gap: 4px;
-				border-radius: 20px;
-				border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
-				background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
-
-				color: var(--bg-sienna-400);
-				text-align: center;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-			}
-
-			.firing-tag {
-				color: var(--bg-sakura-500);
-				background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-			}
+			gap: 6px;
 		}
 
 		&.services-list-container {

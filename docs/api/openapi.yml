@@ -129,6 +129,8 @@ components:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
         status:
           $ref: '#/components/schemas/AlertmanagertypesMaintenanceStatus'
         updatedAt:
@@ -272,6 +274,8 @@ components:
           type: string
         schedule:
           $ref: '#/components/schemas/AlertmanagertypesSchedule'
+        scope:
+          type: string
       required:
       - name
       - schedule
@@ -1318,6 +1322,18 @@ components:
       required:
       - config
       type: object
+    CommonDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
+    CommonJSONRef:
+      properties:
+        $ref:
+          type: string
+      type: object
     ConfigAuthorization:
       properties:
         credentials:
@@ -2327,6 +2343,133 @@ components:
       - metaresource
       - telemetryresource
       type: string
+    DashboardGridItem:
+      properties:
+        content:
+          $ref: '#/components/schemas/CommonJSONRef'
+        height:
+          type: integer
+        width:
+          type: integer
+        x:
+          type: integer
+        "y":
+          type: integer
+      type: object
+    DashboardGridLayoutCollapse:
+      properties:
+        open:
+          type: boolean
+      type: object
+    DashboardGridLayoutDisplay:
+      properties:
+        collapse:
+          $ref: '#/components/schemas/DashboardGridLayoutCollapse'
+        title:
+          type: string
+      type: object
+    DashboardGridLayoutSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/DashboardGridLayoutDisplay'
+        items:
+          items:
+            $ref: '#/components/schemas/DashboardGridItem'
+          nullable: true
+          type: array
+        repeatVariable:
+          type: string
+      type: object
+    DashboardTextVariableSpec:
+      properties:
+        constant:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/VariableDisplay'
+        name:
+          type: string
+        value:
+          type: string
+      type: object
+    DashboardtypesAxes:
+      properties:
+        isLogScale:
+          type: boolean
+        softMax:
+          nullable: true
+          type: number
+        softMin:
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesBarChartPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBarChartVisualization'
+      type: object
+    DashboardtypesBarChartVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        stackedBarChart:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBasicVisualization:
+      properties:
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesBuilderQuerySpec:
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregation'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
+    DashboardtypesComparisonOperator:
+      enum:
+      - above
+      - below
+      - above_or_equal
+      - below_or_equal
+      - equal
+      - not_equal
+      type: string
+    DashboardtypesComparisonThreshold:
+      properties:
+        color:
+          type: string
+        format:
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesCustomVariableSpec:
+      properties:
+        customValue:
+          type: string
+      required:
+      - customValue
+      type: object
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -2350,6 +2493,124 @@ components:
         updatedBy:
           type: string
       type: object
+    DashboardtypesDashboardSpec:
+      properties:
+        datasources:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesDatasourceSpec'
+          type: object
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
+        duration:
+          type: string
+        layouts:
+          items:
+            $ref: '#/components/schemas/DashboardtypesLayout'
+          nullable: true
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/V1Link'
+          type: array
+        panels:
+          additionalProperties:
+            $ref: '#/components/schemas/DashboardtypesPanel'
+          nullable: true
+          type: object
+        refreshInterval:
+          type: string
+        variables:
+          items:
+            $ref: '#/components/schemas/DashboardtypesVariable'
+          type: array
+      type: object
+    DashboardtypesDatasourcePlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesDatasourcePluginVariantStruct'
+    DashboardtypesDatasourcePluginKind:
+      enum:
+      - signoz/Datasource
+      type: string
+    DashboardtypesDatasourcePluginVariantStruct:
+      properties:
+        kind:
+          enum:
+          - signoz/Datasource
+          type: string
+        spec:
+          nullable: true
+          type: object
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesDatasourceSpec:
+      properties:
+        default:
+          type: boolean
+        display:
+          $ref: '#/components/schemas/CommonDisplay'
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesDatasourcePlugin'
+      type: object
+    DashboardtypesDynamicVariableSpec:
+      properties:
+        name:
+          type: string
+        signal:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      required:
+      - name
+      type: object
+    DashboardtypesFillMode:
+      enum:
+      - solid
+      - gradient
+      - none
+      type: string
+    DashboardtypesGettableDashboardV2:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
@@ -2366,6 +2627,270 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesHistogramBuckets:
+      properties:
+        bucketCount:
+          nullable: true
+          type: number
+        bucketWidth:
+          nullable: true
+          type: number
+        mergeAllActiveQueries:
+          type: boolean
+      type: object
+    DashboardtypesHistogramPanelSpec:
+      properties:
+        histogramBuckets:
+          $ref: '#/components/schemas/DashboardtypesHistogramBuckets'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+      type: object
+    DashboardtypesLayout:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      properties:
+        kind:
+          enum:
+          - Grid
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardGridLayoutSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesLegend:
+      properties:
+        customColors:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        position:
+          $ref: '#/components/schemas/DashboardtypesLegendPosition'
+      type: object
+    DashboardtypesLegendPosition:
+      enum:
+      - bottom
+      - right
+      type: string
+    DashboardtypesLineInterpolation:
+      enum:
+      - linear
+      - spline
+      - step_after
+      - step_before
+      type: string
+    DashboardtypesLineStyle:
+      enum:
+      - solid
+      - dashed
+      type: string
+    DashboardtypesListPanelSpec:
+      properties:
+        selectFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      type: object
+    DashboardtypesListVariableSpec:
+      properties:
+        allowAllValue:
+          type: boolean
+        allowMultiple:
+          type: boolean
+        capturingRegexp:
+          type: string
+        customAllValue:
+          type: string
+        defaultValue:
+          $ref: '#/components/schemas/VariableDefaultValue'
+        display:
+          $ref: '#/components/schemas/VariableDisplay'
+        name:
+          type: string
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesVariablePlugin'
+        sort:
+          nullable: true
+          type: string
+      type: object
+    DashboardtypesNumberPanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesPanel:
+      properties:
+        kind:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesPanelSpec'
+      type: object
+    DashboardtypesPanelFormatting:
+      properties:
+        decimalPrecision:
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+        unit:
+          type: string
+      type: object
+    DashboardtypesPanelPlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+    DashboardtypesPanelPluginKind:
+      enum:
+      - signoz/TimeSeriesPanel
+      - signoz/BarChartPanel
+      - signoz/NumberPanel
+      - signoz/PieChartPanel
+      - signoz/TablePanel
+      - signoz/HistogramPanel
+      - signoz/ListPanel
+      type: string
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/BarChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/HistogramPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesHistogramPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/ListPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/NumberPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesNumberPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/PieChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TablePanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTablePanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/TimeSeriesPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/V1PanelDisplay'
+        links:
+          items:
+            $ref: '#/components/schemas/V1Link'
+          type: array
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesPanelPlugin'
+        queries:
+          items:
+            $ref: '#/components/schemas/DashboardtypesQuery'
+          type: array
+      type: object
+    DashboardtypesPieChartPanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesPostableDashboardV2:
+      properties:
+        generateName:
+          type: boolean
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - tags
+      - spec
+      type: object
     DashboardtypesPostablePublicDashboard:
       properties:
         defaultTimeRange:
@@ -2373,14 +2898,254 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
+    DashboardtypesPrecisionOption:
+      enum:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - full
+      type: string
+    DashboardtypesQuery:
+      properties:
+        kind:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesQuerySpec'
+      type: object
+    DashboardtypesQueryPlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery'
+      - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator'
+    DashboardtypesQueryPluginKind:
+      enum:
+      - signoz/BuilderQuery
+      - signoz/CompositeQuery
+      - signoz/Formula
+      - signoz/PromQLQuery
+      - signoz/ClickHouseSQL
+      - signoz/TraceOperator
+      type: string
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec:
+      properties:
+        kind:
+          enum:
+          - signoz/BuilderQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesBuilderQuerySpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5ClickHouseQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/ClickHouseSQL
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5ClickHouseQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/CompositeQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery:
+      properties:
+        kind:
+          enum:
+          - signoz/PromQLQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5PromQuery'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula:
+      properties:
+        kind:
+          enum:
+          - signoz/Formula
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderFormula'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderTraceOperator:
+      properties:
+        kind:
+          enum:
+          - signoz/TraceOperator
+          type: string
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderTraceOperator'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesQuerySpec:
+      properties:
+        name:
+          type: string
+        plugin:
+          $ref: '#/components/schemas/DashboardtypesQueryPlugin'
+      type: object
+    DashboardtypesQueryVariableSpec:
+      properties:
+        queryValue:
+          type: string
+      required:
+      - queryValue
+      type: object
     DashboardtypesSource:
       enum:
       - user
       - system
       - integration
       type: object
+    DashboardtypesSpanGaps:
+      properties:
+        fillLessThan:
+          type: string
+        fillOnlyBelow:
+          type: boolean
+      type: object
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
+      type: object
+    DashboardtypesTableFormatting:
+      properties:
+        columnUnits:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        decimalPrecision:
+          $ref: '#/components/schemas/DashboardtypesPrecisionOption'
+      type: object
+    DashboardtypesTablePanelSpec:
+      properties:
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesTableFormatting'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesTableThreshold'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+      type: object
+    DashboardtypesTableThreshold:
+      properties:
+        color:
+          type: string
+        columnName:
+          type: string
+        format:
+          $ref: '#/components/schemas/DashboardtypesThresholdFormat'
+        operator:
+          $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      - columnName
+      type: object
+    DashboardtypesThresholdFormat:
+      enum:
+      - text
+      - background
+      type: string
+    DashboardtypesThresholdWithLabel:
+      properties:
+        color:
+          type: string
+        label:
+          type: string
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      - label
+      type: object
+    DashboardtypesTimePreference:
+      enum:
+      - global_time
+      - last_5_min
+      - last_15_min
+      - last_30_min
+      - last_1_hr
+      - last_6_hr
+      - last_1_day
+      - last_3_days
+      - last_1_week
+      - last_1_month
+      type: string
+    DashboardtypesTimeSeriesChartAppearance:
+      properties:
+        fillMode:
+          $ref: '#/components/schemas/DashboardtypesFillMode'
+        lineInterpolation:
+          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+        lineStyle:
+          $ref: '#/components/schemas/DashboardtypesLineStyle'
+        showPoints:
+          type: boolean
+        spanGaps:
+          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+      type: object
+    DashboardtypesTimeSeriesPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesTimeSeriesVisualization'
+      type: object
+    DashboardtypesTimeSeriesVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
     DashboardtypesUpdatablePublicDashboard:
       properties:
@@ -2388,6 +3153,81 @@ components:
           type: string
         timeRangeEnabled:
           type: boolean
+      type: object
+    DashboardtypesVariable:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
+      properties:
+        kind:
+          enum:
+          - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardTextVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec:
+      properties:
+        kind:
+          enum:
+          - ListVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesListVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePlugin:
+      oneOf:
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec'
+      - $ref: '#/components/schemas/DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec'
+    DashboardtypesVariablePluginKind:
+      enum:
+      - signoz/DynamicVariable
+      - signoz/QueryVariable
+      - signoz/CustomVariable
+      type: string
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/CustomVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesCustomVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/DynamicVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDynamicVariableSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesQueryVariableSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/QueryVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesQueryVariableSpec'
+      required:
+      - kind
+      - spec
       type: object
     ErrorsJSON:
       properties:
@@ -2397,7 +3237,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -2409,6 +3261,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -2689,7 +3546,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesClusterRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2759,7 +3615,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDaemonSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2829,7 +3684,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesDeploymentRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2908,7 +3762,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesHostRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -2984,7 +3837,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesJobRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3032,7 +3884,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNamespaceRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3110,7 +3961,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesNodeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3209,7 +4059,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesPodRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3554,7 +4403,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesStatefulSetRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -3615,7 +4463,6 @@ components:
         records:
           items:
             $ref: '#/components/schemas/InframonitoringtypesVolumeRecord'
-          nullable: true
           type: array
         requiredMetricsCheck:
           $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
@@ -5651,6 +6498,19 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
+    SpantypesEvent:
+      properties:
+        attributeMap:
+          additionalProperties: {}
+          type: object
+        isError:
+          type: boolean
+        name:
+          type: string
+        timeUnixNano:
+          minimum: 0
+          type: integer
+      type: object
     SpantypesFieldContext:
       enum:
       - attribute
@@ -5664,6 +6524,62 @@ components:
           type: array
       required:
       - items
+      type: object
+    SpantypesGettableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          type: array
+      required:
+      - aggregations
+      type: object
+    SpantypesGettableWaterfallTrace:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          nullable: true
+          type: array
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        hasMore:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        spans:
+          items:
+            $ref: '#/components/schemas/SpantypesWaterfallSpan'
+          nullable: true
+          type: array
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
       type: object
     SpantypesPostableSpanMapper:
       properties:
@@ -5692,6 +6608,66 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          type: array
+      required:
+      - aggregations
+      type: object
+    SpantypesPostableWaterfall:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          nullable: true
+          type: array
+        limit:
+          minimum: 0
+          type: integer
+        selectedSpanId:
+          type: string
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    SpantypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/SpantypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
+      type: object
+    SpantypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/SpantypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      required:
+      - field
+      - aggregation
+      - value
+      type: object
+    SpantypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     SpantypesSpanMapper:
       properties:
         config:
@@ -5822,6 +6798,94 @@ components:
           nullable: true
           type: string
       type: object
+    SpantypesWaterfallSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        db_name:
+          type: string
+        db_operation:
+          type: string
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          nullable: true
+          type: array
+        external_http_method:
+          type: string
+        external_http_url:
+          type: string
+        flags:
+          minimum: 0
+          type: integer
+        has_children:
+          type: boolean
+        has_error:
+          type: boolean
+        http_host:
+          type: string
+        http_method:
+          type: string
+        http_url:
+          type: string
+        is_remote:
+          type: string
+        kind_string:
+          type: string
+        level:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
+        resource:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        response_status_code:
+          type: string
+        span_id:
+          type: string
+        status_code:
+          type: integer
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        sub_tree_node_count:
+          minimum: 0
+          type: integer
+        time_unix:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+        trace_state:
+          type: string
+      required:
+      - references
+      type: object
+    TagtypesPostableTag:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -5914,179 +6978,6 @@ components:
     TimeDuration:
       format: int64
       type: integer
-    TracedetailtypesEvent:
-      properties:
-        attributeMap:
-          additionalProperties: {}
-          type: object
-        isError:
-          type: boolean
-        name:
-          type: string
-        timeUnixNano:
-          minimum: 0
-          type: integer
-      type: object
-    TracedetailtypesGettableWaterfallTrace:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
-          nullable: true
-          type: array
-        endTimestampMillis:
-          minimum: 0
-          type: integer
-        hasMissingSpans:
-          type: boolean
-        hasMore:
-          type: boolean
-        rootServiceEntryPoint:
-          type: string
-        rootServiceName:
-          type: string
-        serviceNameToTotalDurationMap:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
-        spans:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesWaterfallSpan'
-          nullable: true
-          type: array
-        startTimestampMillis:
-          minimum: 0
-          type: integer
-        totalErrorSpansCount:
-          minimum: 0
-          type: integer
-        totalSpansCount:
-          minimum: 0
-          type: integer
-        uncollapsedSpans:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    TracedetailtypesPostableWaterfall:
-      properties:
-        aggregations:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
-          nullable: true
-          type: array
-        limit:
-          minimum: 0
-          type: integer
-        selectedSpanId:
-          type: string
-        uncollapsedSpans:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    TracedetailtypesSpanAggregation:
-      properties:
-        aggregation:
-          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
-        field:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-      type: object
-    TracedetailtypesSpanAggregationResult:
-      properties:
-        aggregation:
-          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
-        field:
-          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-        value:
-          additionalProperties:
-            minimum: 0
-            type: integer
-          nullable: true
-          type: object
-      type: object
-    TracedetailtypesSpanAggregationType:
-      enum:
-      - span_count
-      - execution_time_percentage
-      - duration
-      type: string
-    TracedetailtypesWaterfallSpan:
-      properties:
-        attributes:
-          additionalProperties: {}
-          nullable: true
-          type: object
-        db_name:
-          type: string
-        db_operation:
-          type: string
-        duration_nano:
-          minimum: 0
-          type: integer
-        events:
-          items:
-            $ref: '#/components/schemas/TracedetailtypesEvent'
-          nullable: true
-          type: array
-        external_http_method:
-          type: string
-        external_http_url:
-          type: string
-        flags:
-          minimum: 0
-          type: integer
-        has_children:
-          type: boolean
-        has_error:
-          type: boolean
-        http_host:
-          type: string
-        http_method:
-          type: string
-        http_url:
-          type: string
-        is_remote:
-          type: string
-        kind_string:
-          type: string
-        level:
-          minimum: 0
-          type: integer
-        name:
-          type: string
-        parent_span_id:
-          type: string
-        resource:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
-        response_status_code:
-          type: string
-        span_id:
-          type: string
-        status_code:
-          type: integer
-        status_code_string:
-          type: string
-        status_message:
-          type: string
-        sub_tree_node_count:
-          minimum: 0
-          type: integer
-        time_unix:
-          minimum: 0
-          type: integer
-        trace_id:
-          type: string
-        trace_state:
-          type: string
-      type: object
     TypesAlertStatus:
       properties:
         inhibitedBy:
@@ -6234,6 +7125,13 @@ components:
       required:
       - name
       type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
+      type: object
     TypesResetPasswordToken:
       properties:
         expiresAt:
@@ -6277,6 +7175,37 @@ components:
           type: string
       required:
       - id
+      type: object
+    V1Link:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    V1PanelDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
+    VariableDefaultValue:
+      type: object
+    VariableDisplay:
+      properties:
+        description:
+          type: string
+        hidden:
+          type: boolean
+        name:
+          type: string
       type: object
     ZeustypesGettableHost:
       properties:
@@ -11376,6 +12305,75 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/traces/{traceID}/aggregations:
+    post:
+      deprecated: false
+      description: Computes span aggregations grouped by requested field.
+      operationId: GetTraceAggregations
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableTraceAggregations'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceAggregations'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get aggregations for a trace
+      tags:
+      - tracedetail
   /api/v1/user:
     get:
       deprecated: false
@@ -11800,6 +12798,110 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/dashboards:
+    post:
+      deprecated: false
+      description: This endpoint creates a dashboard in the v2 format that follows
+        Perses spec.
+      operationId: CreateDashboardV2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns a v2-shape dashboard.
+      operationId: GetDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get dashboard (v2)
+      tags:
+      - dashboard
   /api/v2/factor_password/forgot:
     post:
       deprecated: false
@@ -13880,6 +14982,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false
@@ -18906,7 +20043,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TracedetailtypesPostableWaterfall'
+              $ref: '#/components/schemas/SpantypesPostableWaterfall'
       responses:
         "200":
           content:
@@ -18914,7 +20051,78 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TracedetailtypesGettableWaterfallTrace'
+                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get waterfall view for a trace
+      tags:
+      - tracedetail
+  /api/v4/traces/{traceID}/waterfall:
+    post:
+      deprecated: false
+      description: Returns the waterfall view of spans including all spans if total
+        spans are under a limit, a max count otherwise. Aggregations are dropped compared
+        to v3
+      operationId: GetWaterfallV4
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableWaterfall'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
                   status:
                     type: string
                 required:

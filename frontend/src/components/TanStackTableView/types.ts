@@ -74,6 +74,7 @@ export type TableColumnDef<
 		min?: number | string;
 		default?: number | string;
 		max?: number | string;
+		ignoreLastColumnFill?: boolean;
 	};
 };
 
@@ -111,6 +112,14 @@ export type TableRowContext<TData> = {
 	enableAlternatingRowColors?: boolean;
 };
 
+export type AutoPageSizeConfig = {
+	rowHeight?: number;
+	headerHeight?: number;
+	paginationHeight?: number;
+	minPageSize?: number;
+	maxPageSize?: number;
+};
+
 export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
@@ -123,6 +132,12 @@ export type PaginationProps = {
 	onLimitChange?: (limit: number) => void;
 	showTotalCount?: boolean;
 	totalCountLabel?: string;
+	/**
+	 * Auto-calculated page size for the current container.
+	 * When set, shows as "Auto (N)" option in the page size dropdown.
+	 * Consumer is responsible for calculating this via useCalculatedPageSize.
+	 */
+	calculatedPageSize?: number | null;
 };
 
 export type TanstackTableQueryParamsConfig = {
@@ -137,6 +152,8 @@ export type TanStackTableProps<TData> = {
 	columns: TableColumnDef<TData>[];
 	/** Storage key for column state persistence (visibility, sizing, ordering). When set, enables unified column management. */
 	columnStorageKey?: string;
+	/** When false, the table renders columns in their natural array order and the persisted columnOrder slot is ignored on read and skipped on write. Use when an external source (e.g. preferences.selectColumns) is the canonical order. Default true. */
+	respectColumnOrder?: boolean;
 	columnSizing?: ColumnSizingState;
 	onColumnSizingChange?: Dispatch<SetStateAction<ColumnSizingState>>;
 	onColumnOrderChange?: (cols: TableColumnDef<TData>[]) => void;

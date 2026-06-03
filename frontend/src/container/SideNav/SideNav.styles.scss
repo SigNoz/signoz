@@ -579,7 +579,8 @@
 	}
 
 	.nav-item-beta,
-	.nav-item-new {
+	.nav-item-new,
+	.nav-item-early-access {
 		display: none;
 	}
 
@@ -623,6 +624,23 @@
 		background: var(--l3-background);
 	}
 
+	.sidenav-early-access-tag {
+		font-variant-numeric: lining-nums tabular-nums slashed-zero;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
+		font-family: Inter;
+		font-size: 9px;
+		font-style: normal;
+		font-weight: 300;
+		line-height: 12px;
+		letter-spacing: 0.3px;
+		text-transform: uppercase;
+		border-radius: 12px;
+	}
+
 	&:not(.pinned) {
 		.nav-item {
 			.nav-item-data {
@@ -662,7 +680,7 @@
 		}
 	}
 
-	&:not(.pinned):hover,
+	&:not(.pinned).is-hovered,
 	&.dropdown-open {
 		flex: 0 0 240px;
 		max-width: 240px;
@@ -839,7 +857,8 @@
 		}
 
 		.nav-item-beta,
-		.nav-item-new {
+		.nav-item-new,
+		.nav-item-early-access {
 			display: block;
 		}
 	}
@@ -1012,7 +1031,8 @@
 		}
 
 		.nav-item-beta,
-		.nav-item-new {
+		.nav-item-new,
+		.nav-item-early-access {
 			display: block;
 		}
 	}
@@ -1120,6 +1140,7 @@
 
 		.user-settings-dropdown-logout-section {
 			color: var(--danger-background);
+			pointer-events: auto;
 		}
 	}
 }

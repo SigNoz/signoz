@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
@@ -96,14 +95,16 @@ func buildPodRecords(
 			}
 		}
 
-		if attrs, ok := metadataMap[compositeKey]; ok && isPodUIDInGroupBy {
-			// the condition above ensures we deduce age only if pod uid is in group by because if
-			// it's not in group by then we might have multiple pod uids in the same group and hence then podAge wont make sense
-			if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
-				if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
-					startTimeMs := t.UnixMilli()
-					if startTimeMs > 0 {
-						record.PodAge = reqEnd - startTimeMs
+		if attrs, ok := metadataMap[compositeKey]; ok {
+			// podAge only makes sense when pod uid is in groupBy. Otherwise the
+			// group can contain multiple pods with different start times.
+			if isPodUIDInGroupBy {
+				if startTimeStr, exists := attrs[podStartTimeAttrKey]; exists && startTimeStr != "" {
+					if t, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
+						startTimeMs := t.UnixMilli()
+						if startTimeMs > 0 {
+							record.PodAge = reqEnd - startTimeMs
+						}
 					}
 				}
 			}
@@ -124,6 +125,9 @@ func (m *module) getTopPodGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.PodNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToPodsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -206,15 +210,9 @@ func (m *module) getPerGroupPodPhaseCounts(
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
-	// Resolve tables. Same convention as hosts (distributed names from helpers).
-	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
-		uint64(start), uint64(end), nil,
-	)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(start), uint64(end),
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
-	)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
@@ -231,8 +229,8 @@ func (m *module) getPerGroupPodPhaseCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", podPhaseMetricName),
-		timeSeriesFPs.GE("unix_milli", adjustedStart),
-		timeSeriesFPs.L("unix_milli", adjustedEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
@@ -264,12 +262,12 @@ func (m *module) getPerGroupPodPhaseCounts(
 	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
 	latestPhasePerPod.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, samplesTable,
+		telemetrymetrics.DBName, distributedSamplesTable,
 	))
 	latestPhasePerPod.Where(
 		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
-		latestPhasePerPod.GE("samples.unix_milli", start),
-		latestPhasePerPod.L("samples.unix_milli", end),
+		latestPhasePerPod.GE("samples.unix_milli", samplesStartMs),
+		latestPhasePerPod.L("samples.unix_milli", flooredEndMs),
 		"tsfp.pod_uid != ''",
 	)
 	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)

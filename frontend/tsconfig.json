@@ -48,7 +48,9 @@
 		"node_modules",
 		"src/parser/*.ts",
 		"src/parser/TraceOperatorParser/*.ts",
-		"orval.config.ts"
+		"orval.config.ts",
+		"src/pages/DashboardsListPageV2/**/*",
+		"src/pages/DashboardPageV2/**/*"
 	],
 	"include": [
 		"./src",

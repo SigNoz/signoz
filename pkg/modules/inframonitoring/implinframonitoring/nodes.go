@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
-	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
@@ -33,7 +32,7 @@ func buildNodeRecords(
 	records := make([]inframonitoringtypes.NodeRecord, 0, len(pageGroups))
 	for _, labels := range pageGroups {
 		compositeKey := compositeKeyFromLabels(labels, groupBy)
-		nodeName := labels[nodeNameAttrKey]
+		nodeName := labels[inframonitoringtypes.NodeNameAttrKey]
 
 		record := inframonitoringtypes.NodeRecord{ // initialize with default values
 			NodeName:              nodeName,
@@ -105,6 +104,9 @@ func (m *module) getTopNodeGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
+		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -187,21 +189,15 @@ func (m *module) getPerGroupNodeConditionCounts(
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
 
-	// Resolve tables. Same convention as pods.
-	adjustedStart, adjustedEnd, _, localTimeSeriesTable := telemetrymetrics.WhichTSTableToUse(
-		uint64(start), uint64(end), nil,
-	)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(start), uint64(end),
-		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil,
-	)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(samplesTable)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
+	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// ----- timeSeriesFPs -----
 	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
 	timeSeriesFPsSelectCols := []string{
 		"fingerprint",
-		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(nodeNameAttrKey)),
+		fmt.Sprintf("JSONExtractString(labels, %s) AS node_name", timeSeriesFPs.Var(inframonitoringtypes.NodeNameAttrKey)),
 	}
 	for _, key := range groupBy {
 		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
@@ -212,8 +208,8 @@ func (m *module) getPerGroupNodeConditionCounts(
 	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
 	timeSeriesFPs.Where(
 		timeSeriesFPs.E("metric_name", nodeConditionMetricName),
-		timeSeriesFPs.GE("unix_milli", adjustedStart),
-		timeSeriesFPs.L("unix_milli", adjustedEnd),
+		timeSeriesFPs.GE("unix_milli", tsAdjustedStartMs),
+		timeSeriesFPs.LE("unix_milli", flooredEndMs),
 	)
 	if mergedFilterExpr != "" {
 		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
@@ -246,12 +242,12 @@ func (m *module) getPerGroupNodeConditionCounts(
 	latestConditionPerNode.Select(latestConditionPerNodeSelectCols...)
 	latestConditionPerNode.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, samplesTable,
+		telemetrymetrics.DBName, distributedSamplesTable,
 	))
 	latestConditionPerNode.Where(
 		latestConditionPerNode.E("samples.metric_name", nodeConditionMetricName),
-		latestConditionPerNode.GE("samples.unix_milli", start),
-		latestConditionPerNode.L("samples.unix_milli", end),
+		latestConditionPerNode.GE("samples.unix_milli", samplesStartMs),
+		latestConditionPerNode.L("samples.unix_milli", flooredEndMs),
 		"tsfp.node_name != ''",
 	)
 	latestConditionPerNode.GroupBy(latestConditionPerNodeGroupBy...)

@@ -1,0 +1,122 @@
+{{ define "email.signoz.html" }}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{.Title}}</title>
+  <style>
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px;
+    }
+    pre {
+      background: #f0f0f0;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+    }
+    table:not([role="presentation"]) {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    table:not([role="presentation"]) th {
+      font-weight: 600;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 2px solid #d0d0d0;
+    }
+    table:not([role="presentation"]) td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    table:not([role="presentation"]) tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+</head>
+
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;background:#fff">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff">
+    <tr>
+      <td align="center" style="padding:0">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;border:1px solid #e2e2e2;border-radius:12px;overflow:hidden">
+
+          <tr>
+            <td align="center" style="padding:20px 20px 12px">
+              <h2 style="margin:0 0 8px;font-size:20px;color:#333">{{.Title}}</h2>
+              <p style="margin:0;font-size:14px;color:#666">
+                Status: <strong>{{.Alert.Status}}</strong>
+                {{if .Alert.TotalFiring}} | Firing: <strong style="color:#e53e3e">{{.Alert.TotalFiring}}</strong>{{end}}
+                {{if .Alert.TotalResolved}} | Resolved: <strong style="color:#38a169">{{.Alert.TotalResolved}}</strong>{{end}}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 20px">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td style="border-top:1px solid #e2e2e2;font-size:0;line-height:0" height="1">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          {{range .Bodies}}
+          <tr>
+            <td style="padding:8px 20px">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding:16px;background:#fafafa;border:1px solid #e8e8e8;border-radius:6px">
+                    {{.}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{end}}
+
+          {{if .NotificationTemplateData.ExternalURL}}
+          <tr>
+            <td style="padding:16px 20px">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{.NotificationTemplateData.ExternalURL}}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:600;color:#fff;background:#4E74F8;text-decoration:none;border-radius:4px">
+                      View in SigNoz
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{end}}
+
+          <tr>
+            <td align="center" style="padding:8px 16px 16px">
+              <p style="margin:0;font-size:12px;color:#999;line-height:1.5">
+                Sent by SigNoz AlertManager
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
+{{ end }}

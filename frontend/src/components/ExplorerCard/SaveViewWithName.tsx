@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Card, Form, Input } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Card, Form } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

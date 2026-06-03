@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	ensureLogsRequiredColumns,
+} from 'container/OptionsMenu/constants';
 import { defaultSelectedColumns as defaultTracesSelectedColumns } from 'container/TracesExplorer/ListView/configs';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { DataSource } from 'types/common/queryBuilder';
@@ -54,9 +57,10 @@ export function usePreferenceSync({
 		let columns: TelemetryFieldKey[] = [];
 		let formatting: FormattingOptions | undefined;
 		if (dataSource === DataSource.LOGS) {
-			columns =
+			columns = ensureLogsRequiredColumns(
 				updateExtraDataSelectColumns(parsedExtraData?.selectColumns) ||
-				defaultLogsSelectedColumns;
+					defaultLogsSelectedColumns,
+			);
 			formatting = {
 				maxLines: parsedExtraData?.maxLines ?? 1,
 				format: parsedExtraData?.format ?? 'table',
