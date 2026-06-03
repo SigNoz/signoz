@@ -2645,25 +2645,13 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
-    DashboardtypesJSONPatchDocument:
-      items:
-        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
-      nullable: true
-      type: array
     DashboardtypesJSONPatchOperation:
       properties:
         from:
           description: Source JSON Pointer for move/copy ops; ignored for other ops.
           type: string
         op:
-          enum:
-          - add
-          - remove
-          - replace
-          - move
-          - copy
-          - test
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
         path:
           description: JSON Pointer (RFC 6901) into the dashboard's postable shape
             — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
@@ -2896,6 +2884,20 @@ components:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
@@ -12995,7 +12997,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesJSONPatchDocument'
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
       responses:
         "200":
           content:
