@@ -2,18 +2,35 @@ package telemetrytraces
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
+
+type regexQueryMatcher struct{}
+
+func (m *regexQueryMatcher) Match(expectedSQL, actualSQL string) error {
+	re, err := regexp.Compile(expectedSQL)
+	if err != nil {
+		return err
+	}
+	if !re.MatchString(actualSQL) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "expected query to match %s, got %s", expectedSQL, actualSQL)
+	}
+	return nil
+}
 
 func TestStatementBuilder(t *testing.T) {
 	// releaseTime is chosen so it lands inside the standard [1747947419000, 1747983448000]ms
@@ -370,6 +387,8 @@ func TestStatementBuilder(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	vars := map[string]qbtypes.VariableItem{
@@ -666,6 +685,8 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	for _, c := range cases {
@@ -794,6 +815,8 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				aggExprRewriter,
 				nil,
 				fl,
+				false,
+				100000,
 			)
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -864,6 +887,8 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -1029,6 +1054,8 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 		aggExprRewriter,
 		nil,
 		fl,
+		false,
+		100000,
 	)
 
 	for _, c := range cases {
@@ -1560,4 +1587,116 @@ func TestAdjustKeys(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSkipResourceFingerprint exercises the three resolver outcomes when
+// skip_resource_fingerprint is enabled: use-CTE (count < threshold),
+// fallback (count >= threshold), and the legacy path (feature disabled).
+func TestSkipResourceFingerprint(t *testing.T) {
+	const (
+		startMs   = uint64(1747947419000)
+		endMs     = uint64(1747983448000)
+		threshold = uint64(10)
+	)
+
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal: telemetrytypes.SignalTraces,
+		Filter: &qbtypes.Filter{
+			Expression: "service.name = 'redis-manual'",
+		},
+		SelectFields: []telemetrytypes.TelemetryFieldKey{
+			{
+				Name:          "name",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		Limit: 5,
+	}
+
+	t.Run("disabled uses the legacy CTE", func(t *testing.T) {
+		sb := newSkipResourceFingerprintBuilder(t, nil, false, threshold)
+
+		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		require.NoError(t, err)
+		require.Contains(t, stmt.Query, "__resource_filter AS (SELECT fingerprint")
+		require.Contains(t, stmt.Query, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+	})
+
+	t.Run("CTE attached when count below threshold", func(t *testing.T) {
+		mockStore := telemetrystoretest.New(telemetrystore.Config{}, &regexQueryMatcher{})
+		mock := mockStore.Mock()
+
+		// Only the count query runs against the telemetry store; the CTE
+		// itself is embedded as SQL in the main query (no extra round trip).
+		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_traces\.distributed_traces_v3_resource`).
+			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
+				{Name: "count", Type: "UInt64"},
+			}, []any{uint64(2)}))
+
+		sb := newSkipResourceFingerprintBuilder(t, mockStore, true, threshold)
+
+		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		require.NoError(t, err)
+
+		require.Contains(t, stmt.Query, "__resource_filter AS (SELECT fingerprint")
+		require.Contains(t, stmt.Query, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("fallback when count at or above threshold", func(t *testing.T) {
+		mockStore := telemetrystoretest.New(telemetrystore.Config{}, &regexQueryMatcher{})
+		mock := mockStore.Mock()
+
+		mock.ExpectQueryRow(`SELECT count\(\) FROM \(SELECT fingerprint FROM signoz_traces\.distributed_traces_v3_resource`).
+			WillReturnRow(cmock.NewRow([]cmock.ColumnType{
+				{Name: "count", Type: "UInt64"},
+			}, []any{threshold}))
+
+		sb := newSkipResourceFingerprintBuilder(t, mockStore, true, threshold)
+
+		stmt, err := sb.Build(context.Background(), startMs, endMs, qbtypes.RequestTypeRaw, query, nil)
+		require.NoError(t, err)
+
+		require.NotContains(t, stmt.Query, "__resource_filter AS")
+		require.NotContains(t, stmt.Query, "resource_fingerprint")
+		// resource conditions are pushed onto the main table via the
+		// resource.`service.name` / resources_string lookup
+		require.Contains(t, stmt.Query, "service.name")
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func newSkipResourceFingerprintBuilder(
+	t *testing.T,
+	telemetryStore telemetrystore.TelemetryStore,
+	skipEnable bool,
+	threshold uint64,
+) *traceQueryStatementBuilder {
+	t.Helper()
+
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
+
+	fl := flaggertest.New(t)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(
+		instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl,
+	)
+
+	return NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		aggExprRewriter,
+		telemetryStore,
+		fl,
+		skipEnable,
+		threshold,
+	)
 }

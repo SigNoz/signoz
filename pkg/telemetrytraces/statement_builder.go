@@ -24,13 +24,13 @@ var (
 )
 
 type traceQueryStatementBuilder struct {
-	logger                    *slog.Logger
-	metadataStore             telemetrytypes.MetadataStore
-	fm                        qbtypes.FieldMapper
-	cb                        qbtypes.ConditionBuilder
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	aggExprRewriter           qbtypes.AggExprRewriter
-	telemetryStore            telemetrystore.TelemetryStore
+	logger                         *slog.Logger
+	metadataStore                  telemetrytypes.MetadataStore
+	fm                             qbtypes.FieldMapper
+	cb                             qbtypes.ConditionBuilder
+	resourceFilterResolver         *telemetryresourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
+	aggExprRewriter                qbtypes.AggExprRewriter
+	skipResourceFingerprintEnabled bool
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -43,10 +43,12 @@ func NewTraceQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,
 	flagger flagger.Flagger,
+	skipResourceFingerprintEnable bool,
+	skipResourceFingerprintThreshold uint64,
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 
-	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.TraceAggregation](
+	resourceFilterResolver := telemetryresourcefilter.NewResolver[qbtypes.TraceAggregation](
 		settings,
 		DBName,
 		TracesResourceV3TableName,
@@ -56,16 +58,18 @@ func NewTraceQueryStatementBuilder(
 		nil,
 		nil,
 		flagger,
+		telemetryStore,
+		skipResourceFingerprintThreshold,
 	)
 
 	return &traceQueryStatementBuilder{
-		logger:                    tracesSettings.Logger(),
-		metadataStore:             metadataStore,
-		fm:                        fieldMapper,
-		cb:                        conditionBuilder,
-		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
-		aggExprRewriter:           aggExprRewriter,
-		telemetryStore:            telemetryStore,
+		logger:                         tracesSettings.Logger(),
+		metadataStore:                  metadataStore,
+		fm:                             fieldMapper,
+		cb:                             conditionBuilder,
+		resourceFilterResolver:         resourceFilterResolver,
+		aggExprRewriter:                aggExprRewriter,
+		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
 }
 
@@ -308,9 +312,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" {
+	}
+	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -328,7 +334,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -389,15 +395,17 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, distSB, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, distSB, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" {
+	}
+	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, distSB, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, distSB, start, end, query, keys, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -498,9 +506,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" {
+	}
+	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -541,7 +551,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -650,9 +660,11 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		cteArgs      [][]any
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" && !skipResourceCTE {
+	}
+	if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -694,7 +706,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -757,6 +769,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	skipResourceFilter bool,
 ) (querybuilder.PreparedWhereClause, error) {
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
@@ -770,7 +783,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
-			SkipResourceFilter: true,
+			SkipResourceFilter: skipResourceFilter,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
@@ -811,34 +824,30 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
-) (cteSQL string, cteArgs []any, err error) {
+) (cteSQL string, cteArgs []any, skipResourceFilter bool, err error) {
 
-	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
+	if b.skipResourceFingerprintEnabled {
+		decision, err := b.resourceFilterResolver.Resolve(ctx, query, start, end, variables)
+		if err != nil {
+			return "", nil, true, err
+		}
+		switch decision {
+		case qbtypes.ResourceFilterResolveKindNoOp:
+			return "", nil, true, nil
+		case qbtypes.ResourceFilterResolveKindFallback:
+			return "", nil, false, nil
+		}
+	}
+
+	stmt, err := b.resourceFilterResolver.StatementBuilder().Build(
+		ctx, start, end, qbtypes.RequestTypeRaw, query, variables,
+	)
 	if err != nil {
-		return "", nil, err
+		return "", nil, true, err
 	}
 	if stmt == nil {
-		return "", nil, nil
+		return "", nil, true, nil
 	}
-
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-
-	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
-}
-
-func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
-	ctx context.Context,
-	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
-	start, end uint64,
-	variables map[string]qbtypes.VariableItem,
-) (*qbtypes.Statement, error) {
-
-	return b.resourceFilterStmtBuilder.Build(
-		ctx,
-		start,
-		end,
-		qbtypes.RequestTypeRaw,
-		query,
-		variables,
-	)
+	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, true, nil
 }
