@@ -8,6 +8,7 @@ import (
 type moduleMetrics struct {
 	waterfallMaxLimitToSelectAllSpans metric.Int64Gauge
 	waterfallWindowedResponseCount    metric.Int64Counter
+	waterfallWindowedTraceSpanCount   metric.Int64Counter
 }
 
 func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
@@ -30,8 +31,18 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 		errs = errors.Join(errs, err)
 	}
 
+	windowedSpanCount, err := meter.Int64Counter(
+		"signoz.traces.waterfall.windowed_trace_span_count",
+		metric.WithDescription("Total number of spans across all waterfall requests that used the windowed path."),
+		metric.WithUnit("{spans}"),
+	)
+	if err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	return &moduleMetrics{
 		waterfallMaxLimitToSelectAllSpans: maxLimitGauge,
 		waterfallWindowedResponseCount:    windowedCounter,
+		waterfallWindowedTraceSpanCount:   windowedSpanCount,
 	}, errs
 }

@@ -94,6 +94,7 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
 		m.metrics.waterfallWindowedResponseCount.Add(ctx, 1)
+		m.metrics.waterfallWindowedTraceSpanCount.Add(ctx, int64(summary.NumSpans))
 		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
