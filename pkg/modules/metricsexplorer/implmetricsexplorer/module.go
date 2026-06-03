@@ -972,8 +972,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 	}
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
-	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	// Timeseries counts per metric
 	tsSB := sqlbuilder.NewSelectBuilder()
@@ -996,7 +996,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	samplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	samplesSB.Where(samplesSB.Between("unix_milli", req.Start, req.End))
 	samplesSB.Where("NOT startsWith(metric_name, 'signoz')")
 
