@@ -3237,10 +3237,6 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
-        invalidReferences:
-          items:
-            type: string
-          type: array
         message:
           type: string
         retry:

@@ -2065,10 +2065,6 @@ export interface ErrorsJSONDTO {
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
 	/**
-	 * @type array
-	 */
-	invalidReferences?: string[];
-	/**
 	 * @type string
 	 */
 	message: string;
