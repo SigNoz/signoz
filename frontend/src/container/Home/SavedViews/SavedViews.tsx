@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Button, Skeleton } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import ROUTES from 'constants/routes';
@@ -249,9 +250,9 @@ export default function SavedViews({
 								}
 
 								return (
-									<Tag color={tag} key={tag}>
+									<Badge color="sienna" key={tag}>
 										{tag}
-									</Tag>
+									</Badge>
 								);
 							})}
 						</div>

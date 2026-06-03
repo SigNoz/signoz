@@ -27,11 +27,9 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
@@ -45,7 +43,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
@@ -63,7 +60,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
@@ -114,8 +110,6 @@ type APIHandler struct {
 
 	IntegrationsController *integrations.Controller
 
-	CloudIntegrationsController *cloudintegrations.Controller
-
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -153,9 +147,6 @@ type APIHandlerOpts struct {
 
 	// Integrations
 	IntegrationsController *integrations.Controller
-
-	// Cloud Provider Integrations
-	CloudIntegrationsController *cloudintegrations.Controller
 
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -208,7 +199,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.Signoz.Ruler,
 		IntegrationsController:        opts.IntegrationsController,
-		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -968,7 +958,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
 
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
 			} else if rule.AlertType == ruletypes.AlertTypeTraces {
 				// TODO(srikanthccv): re-visit this and support multiple queries
 				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
@@ -988,7 +978,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				}
 
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
 			}
 		}
 	}
@@ -1107,44 +1097,19 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
-		render.Error(rw, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "id is missing in the path"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
 		return
 	}
 
-	dashboard := new(dashboardtypes.Dashboard)
-
-	if _, _, _, err := cloudintegrationtypes.ParseCloudIntegrationDashboardID(id); err == nil {
-		cloudIntegrationDashboard, err := aH.Signoz.Modules.CloudIntegration.GetDashboardByID(ctx, orgID, id)
-		if err != nil && !errorsV2.Ast(err, errorsV2.TypeLicenseUnavailable) {
-			render.Error(rw, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-			return
-		}
-
-		if cloudIntegrationDashboard == nil {
-			render.Error(rw, errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "dashboard not found"))
-			return
-		}
-
-		dashboard = cloudIntegrationDashboard
-	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
-		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
-		if apiErr != nil {
-			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
-			return
-		}
-		dashboard = integrationDashboard
-	} else {
-		dashboardID, err := valuer.NewUUID(id)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		sqlDashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		dashboard = sqlDashboard
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
 	}
 
 	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
@@ -1172,30 +1137,10 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboards := make([]*dashboardtypes.Dashboard, 0)
-	sqlDashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
-	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+	dashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		render.Error(rw, err)
 		return
-	}
-	if sqlDashboards != nil {
-		dashboards = append(dashboards, sqlDashboards...)
-	}
-
-	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
-	if apiErr != nil {
-		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", errors.Attr(apiErr))
-	} else {
-		dashboards = append(dashboards, installedIntegrationDashboards...)
-	}
-
-	cloudIntegrationDashboards, err := aH.Signoz.Modules.CloudIntegration.ListDashboards(ctx, orgID)
-	if err != nil {
-		if !errors.Ast(err, errorsV2.TypeLicenseUnavailable) {
-			aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(err))
-		}
-	} else {
-		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}
 
 	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
@@ -1674,20 +1619,20 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		render.Error(w, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
 	var params retentiontypes.CustomRetentionTTLParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Invalid data"))
 		return
 	}
 
 	// Context is not used here as TTL is long duration DB operation
 	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, &params)
 	if apiErr != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInternal, apiErr.Error()))
 		return
 	}
 
@@ -1698,13 +1643,13 @@ func (aH *APIHandler) getCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	claims, errv2 := authtypes.ClaimsFromContext(ctx)
 	if errv2 != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get org id from context"))
+		render.Error(w, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to get org id from context"))
 		return
 	}
 
 	result, apiErr := aH.reader.GetCustomRetentionTTL(r.Context(), claims.OrgID)
 	if apiErr != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInternal, apiErr.Error()))
 		return
 	}
 
@@ -1788,6 +1733,15 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
 		Active:     fineGrainedAuthz,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	useDashboardV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseDashboardV2, evalCtx)
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
+		Active:     useDashboardV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -3286,7 +3240,7 @@ func (aH *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	}
 
 	integration, apiErr := aH.IntegrationsController.Install(
-		r.Context(), claims.OrgID, &req,
+		r.Context(), claims.OrgID, &req, claims.Email, valuer.MustNewUUID(claims.IdentityID()),
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3318,528 +3272,6 @@ func (aH *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Reques
 	}
 
 	aH.Respond(w, map[string]interface{}{})
-}
-
-// cloud provider integrations
-func (aH *APIHandler) RegisterCloudIntegrationsRoutes(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/api/v1/cloud-integrations").Subrouter()
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/generate-connection-url", am.EditAccess(aH.CloudIntegrationsGenerateConnectionUrl),
-	).Methods(http.MethodPost)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts", am.ViewAccess(aH.CloudIntegrationsListConnectedAccounts),
-	).Methods(http.MethodGet)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/{accountId}/status", am.ViewAccess(aH.CloudIntegrationsGetAccountStatus),
-	).Methods(http.MethodGet)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/{accountId}/config", am.EditAccess(aH.CloudIntegrationsUpdateAccountConfig),
-	).Methods(http.MethodPost)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/accounts/{accountId}/disconnect", am.EditAccess(aH.CloudIntegrationsDisconnectAccount),
-	).Methods(http.MethodPost)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/agent-check-in", am.ViewAccess(aH.CloudIntegrationsAgentCheckIn),
-	).Methods(http.MethodPost)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/services", am.ViewAccess(aH.CloudIntegrationsListServices),
-	).Methods(http.MethodGet)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/services/{serviceId}", am.ViewAccess(aH.CloudIntegrationsGetServiceDetails),
-	).Methods(http.MethodGet)
-
-	subRouter.HandleFunc(
-		"/{cloudProvider}/services/{serviceId}/config", am.EditAccess(aH.CloudIntegrationsUpdateServiceConfig),
-	).Methods(http.MethodPost)
-
-}
-
-func (aH *APIHandler) CloudIntegrationsListConnectedAccounts(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, apiErr := aH.CloudIntegrationsController.ListConnectedAccounts(
-		r.Context(), claims.OrgID, cloudProvider,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) CloudIntegrationsGenerateConnectionUrl(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-
-	req := cloudintegrations.GenerateConnectionUrlRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, apiErr := aH.CloudIntegrationsController.GenerateConnectionUrl(
-		r.Context(), claims.OrgID, cloudProvider, req,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, result)
-}
-
-func (aH *APIHandler) CloudIntegrationsGetAccountStatus(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	accountId := mux.Vars(r)["accountId"]
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, apiErr := aH.CloudIntegrationsController.GetAccountStatus(
-		r.Context(), claims.OrgID, cloudProvider, accountId,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) CloudIntegrationsAgentCheckIn(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-
-	req := cloudintegrations.AgentCheckInRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, err := aH.CloudIntegrationsController.CheckInAsAgent(
-		r.Context(), claims.OrgID, cloudProvider, req,
-	)
-
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, result)
-}
-
-func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	accountId := mux.Vars(r)["accountId"]
-
-	req := cloudintegrations.UpdateAccountConfigRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, apiErr := aH.CloudIntegrationsController.UpdateAccountConfig(
-		r.Context(), claims.OrgID, cloudProvider, accountId, req,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, result)
-}
-
-func (aH *APIHandler) CloudIntegrationsDisconnectAccount(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	accountId := mux.Vars(r)["accountId"]
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, apiErr := aH.CloudIntegrationsController.DisconnectAccount(
-		r.Context(), claims.OrgID, cloudProvider, accountId,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-
-	aH.Respond(w, result)
-}
-
-func (aH *APIHandler) CloudIntegrationsListServices(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-
-	var cloudAccountId *string
-
-	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
-	if len(cloudAccountIdQP) > 0 {
-		cloudAccountId = &cloudAccountIdQP
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, apiErr := aH.CloudIntegrationsController.ListServices(
-		r.Context(), claims.OrgID, cloudProvider, cloudAccountId,
-	)
-
-	if apiErr != nil {
-		RespondError(w, apiErr, nil)
-		return
-	}
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) CloudIntegrationsGetServiceDetails(
-	w http.ResponseWriter, r *http.Request,
-) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	serviceId := mux.Vars(r)["serviceId"]
-
-	var cloudAccountId *string
-
-	cloudAccountIdQP := r.URL.Query().Get("cloud_account_id")
-	if len(cloudAccountIdQP) > 0 {
-		cloudAccountId = &cloudAccountIdQP
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resp, err := aH.CloudIntegrationsController.GetServiceDetails(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, cloudAccountId,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// Add connection status for the 2 signals.
-	if cloudAccountId != nil {
-		connStatus, apiErr := aH.calculateCloudIntegrationServiceConnectionStatus(
-			r.Context(), orgID, cloudProvider, *cloudAccountId, resp,
-		)
-		if apiErr != nil {
-			RespondError(w, apiErr, nil)
-			return
-		}
-		resp.ConnectionStatus = connStatus
-	}
-
-	aH.Respond(w, resp)
-}
-
-func (aH *APIHandler) calculateCloudIntegrationServiceConnectionStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	cloudProvider string,
-	cloudAccountId string,
-	svcDetails *cloudintegrations.ServiceDetails,
-) (*cloudintegrations.ServiceConnectionStatus, *model.ApiError) {
-	if cloudProvider != "aws" {
-		// TODO(Raj): Make connection check generic for all providers in a follow up change
-		return nil, model.BadRequest(
-			fmt.Errorf("unsupported cloud provider: %s", cloudProvider),
-		)
-	}
-
-	telemetryCollectionStrategy := svcDetails.Strategy
-	if telemetryCollectionStrategy == nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"service doesn't have telemetry collection strategy: %s", svcDetails.Id,
-		))
-	}
-
-	result := &cloudintegrations.ServiceConnectionStatus{}
-	errors := []*model.ApiError{}
-	var resultLock sync.Mutex
-
-	var wg sync.WaitGroup
-
-	// Calculate metrics connection status
-	if telemetryCollectionStrategy.AWSMetrics != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			metricsConnStatus, apiErr := aH.calculateAWSIntegrationSvcMetricsConnectionStatus(
-				ctx, cloudAccountId, telemetryCollectionStrategy.AWSMetrics, svcDetails.DataCollected.Metrics,
-			)
-
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			if apiErr != nil {
-				errors = append(errors, apiErr)
-			} else {
-				result.Metrics = metricsConnStatus
-			}
-		}()
-	}
-
-	// Calculate logs connection status
-	if telemetryCollectionStrategy.AWSLogs != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			logsConnStatus, apiErr := aH.calculateAWSIntegrationSvcLogsConnectionStatus(
-				ctx, orgID, cloudAccountId, telemetryCollectionStrategy.AWSLogs,
-			)
-
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			if apiErr != nil {
-				errors = append(errors, apiErr)
-			} else {
-				result.Logs = logsConnStatus
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	if len(errors) > 0 {
-		return nil, errors[0]
-	}
-
-	return result, nil
-
-}
-func (aH *APIHandler) calculateAWSIntegrationSvcMetricsConnectionStatus(
-	ctx context.Context,
-	cloudAccountId string,
-	strategy *services.AWSMetricsStrategy,
-	metricsCollectedBySvc []services.CollectedMetric,
-) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.StreamFilters) < 1 {
-		return nil, nil
-	}
-
-	expectedLabelValues := map[string]string{
-		"cloud_provider":   "aws",
-		"cloud_account_id": cloudAccountId,
-	}
-
-	metricsNamespace := strategy.StreamFilters[0].Namespace
-	metricsNamespaceParts := strings.Split(metricsNamespace, "/")
-
-	if len(metricsNamespaceParts) >= 2 {
-		expectedLabelValues["service_namespace"] = metricsNamespaceParts[0]
-		expectedLabelValues["service_name"] = metricsNamespaceParts[1]
-	} else {
-		// metrics for single word namespaces like "CWAgent" do not
-		// have the service_namespace label populated
-		expectedLabelValues["service_name"] = metricsNamespaceParts[0]
-	}
-
-	metricNamesCollectedBySvc := []string{}
-	for _, cm := range metricsCollectedBySvc {
-		metricNamesCollectedBySvc = append(metricNamesCollectedBySvc, cm.Name)
-	}
-
-	statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-		ctx, metricNamesCollectedBySvc, expectedLabelValues,
-	)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	if statusForLastReceivedMetric != nil {
-		return &cloudintegrations.SignalConnectionStatus{
-			LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
-			LastReceivedFrom:     "signoz-aws-integration",
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	cloudAccountId string,
-	strategy *services.AWSLogsStrategy,
-) (*cloudintegrations.SignalConnectionStatus, *model.ApiError) {
-	if strategy == nil || len(strategy.Subscriptions) < 1 {
-		return nil, nil
-	}
-
-	logGroupNamePrefix := strategy.Subscriptions[0].LogGroupNamePrefix
-	if len(logGroupNamePrefix) < 1 {
-		return nil, nil
-	}
-
-	logsConnTestFilter := &v3.FilterSet{
-		Operator: "AND",
-		Items: []v3.FilterItem{
-			{
-				Key: v3.AttributeKey{
-					Key:      "cloud.account.id",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeResource,
-				},
-				Operator: "=",
-				Value:    cloudAccountId,
-			},
-			{
-				Key: v3.AttributeKey{
-					Key:      "aws.cloudwatch.log_group_name",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeResource,
-				},
-				Operator: "like",
-				Value:    logGroupNamePrefix + "%",
-			},
-		},
-	}
-
-	// TODO(Raj): Receive this as a param from UI in the future.
-	lookbackSeconds := int64(30 * 60)
-
-	qrParams := &v3.QueryRangeParamsV3{
-		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
-		End:   time.Now().UnixMilli(),
-		CompositeQuery: &v3.CompositeQuery{
-			PanelType: v3.PanelTypeList,
-			QueryType: v3.QueryTypeBuilder,
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"A": {
-					PageSize:          1,
-					Filters:           logsConnTestFilter,
-					QueryName:         "A",
-					DataSource:        v3.DataSourceLogs,
-					Expression:        "A",
-					AggregateOperator: v3.AggregateOperatorNoOp,
-				},
-			},
-		},
-	}
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "app",
-		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
-	})
-	queryRes, _, err := aH.querier.QueryRange(
-		ctx, orgID, qrParams,
-	)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not query for integration connection status: %w", err,
-		))
-	}
-	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
-		lastLog := queryRes[0].List[0]
-
-		return &cloudintegrations.SignalConnectionStatus{
-			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
-			LastReceivedFrom:     "signoz-aws-integration",
-		}, nil
-	}
-
-	return nil, nil
-}
-
-func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(
-	w http.ResponseWriter, r *http.Request,
-) {
-	cloudProvider := mux.Vars(r)["cloudProvider"]
-	serviceId := mux.Vars(r)["serviceId"]
-
-	req := cloudintegrations.UpdateServiceConfigRequest{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
-
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	result, err := aH.CloudIntegrationsController.UpdateServiceConfig(
-		r.Context(), claims.OrgID, cloudProvider, serviceId, &req,
-	)
-
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	aH.Respond(w, result)
 }
 
 // logs
@@ -3973,7 +3405,7 @@ func (aH *APIHandler) listLogsPipelines(ctx context.Context, orgID valuer.UUID) 
 	// get latest agent config
 	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, orgID, opamptypes.ElementTypeLogPipelines)
-	if err != nil && !errorsV2.Ast(err, errorsV2.TypeNotFound) {
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
@@ -4817,7 +4249,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
@@ -4825,7 +4257,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "failed to build domain list query", errors.Attr(err))
-		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
@@ -4838,7 +4270,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))
-		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
@@ -4877,7 +4309,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
 		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, apiErr.Error()))
 		return
 	}
 
@@ -4885,7 +4317,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "failed to build domain info query", errors.Attr(err))
-		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
@@ -4898,7 +4330,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))
-		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
+		apiErrObj := errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}

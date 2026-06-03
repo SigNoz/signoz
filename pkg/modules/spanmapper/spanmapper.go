@@ -4,12 +4,16 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // Module defines the business logic for span attribute mapping groups and mappers.
 type Module interface {
+	// Since this module interacts with OpAMP, it must implement the AgentFeature interface.
+	agentConf.AgentFeature
+
 	// Group operations
 	ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error)
 	GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes.SpanMapperGroup, error)

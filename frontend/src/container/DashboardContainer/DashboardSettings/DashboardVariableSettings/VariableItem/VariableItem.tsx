@@ -5,7 +5,9 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag } from 'antd';
+import { Button, Collapse, Input, Select } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
@@ -516,7 +518,6 @@ function VariableItem({
 										size={14}
 										style={{
 											color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-											marginTop: 1,
 										}}
 									/>
 								}
@@ -541,9 +542,9 @@ function VariableItem({
 								}}
 							>
 								Dynamic
-								<Tag bordered={false} className="sidenav-beta-tag" color="geekblue">
+								<Badge color="robin" className="sidenav-beta-tag">
 									Beta
-								</Tag>
+								</Badge>
 							</Button>
 							<Button
 								type="text"
@@ -598,9 +599,9 @@ function VariableItem({
 								}}
 							>
 								Query
-								<Tag bordered={false} className="sidenav-beta-tag" color="warning">
+								<Badge color="amber" className="sidenav-beta-tag">
 									Not Recommended
-								</Tag>
+								</Badge>
 								<div onClick={(e): void => e.stopPropagation()}>
 									<TextToolTip
 										text="Learn why we don't recommend"
@@ -612,7 +613,6 @@ function VariableItem({
 												size={14}
 												style={{
 													color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-													marginTop: 1,
 												}}
 											/>
 										}
@@ -732,7 +732,9 @@ function VariableItem({
 										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 									) : (
 										map(previewValues, (value, idx) => (
-											<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
+											<Badge key={`${value}${idx}`} color="vanilla">
+												{value.toString()}
+											</Badge>
 										))
 									)}
 								</div>
@@ -763,7 +765,7 @@ function VariableItem({
 									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableMultiSelect}
+									value={variableMultiSelect}
 									onChange={(e): void => {
 										setVariableMultiSelect(e);
 										if (!e) {
@@ -780,7 +782,7 @@ function VariableItem({
 										</Typography>
 									</LabelContainer>
 									<Switch
-										checked={variableShowALLOption}
+										value={variableShowALLOption}
 										onChange={(e): void => setVariableShowALLOption(e)}
 									/>
 								</VariableItemRow>

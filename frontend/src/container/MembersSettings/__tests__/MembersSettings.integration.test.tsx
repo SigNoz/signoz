@@ -1,4 +1,5 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
+import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
@@ -76,14 +77,15 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 
-		fireEvent.click(screen.getByRole('button', { name: /all members/i }));
+		await user.click(screen.getByRole('button', { name: /all members/i }));
 
 		const pendingOption = await screen.findByText(/pending invites/i);
-		fireEvent.click(pendingOption);
+		await user.click(pendingOption);
 
 		await screen.findByText('charlie@signoz.io');
 		expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();

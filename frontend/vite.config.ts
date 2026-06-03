@@ -23,6 +23,22 @@ function devBasePathPlugin(basePath: string): Plugin {
 	};
 }
 
+function devBootDataPlugin(env: Record<string, string>): Plugin {
+	return {
+		name: 'dev-boot-data',
+		apply: 'serve',
+		transformIndexHtml(html): string {
+			const settings = {
+				posthog: { enabled: env.VITE_POSTHOG_ENABLED !== 'false' },
+				appcues: { enabled: env.VITE_APPCUES_ENABLED !== 'false' },
+				sentry: { enabled: env.VITE_SENTRY_ENABLED !== 'false' },
+				pylon: { enabled: env.VITE_PYLON_ENABLED !== 'false' },
+			};
+			return html.replaceAll('[[.Settings]]', JSON.stringify(settings));
+		},
+	};
+}
+
 function rawMarkdownPlugin(): Plugin {
 	return {
 		name: 'raw-markdown',
@@ -47,6 +63,7 @@ export default defineConfig(({ mode }): UserConfig => {
 		tsconfigPaths(),
 		rawMarkdownPlugin(),
 		devBasePathPlugin(basePath),
+		devBootDataPlugin(env),
 		react(),
 		createHtmlPlugin({
 			inject: {

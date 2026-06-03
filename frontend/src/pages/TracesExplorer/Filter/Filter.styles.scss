@@ -47,10 +47,9 @@
 	}
 }
 
-.divider {
-	background-color: var(--l1-border);
-	margin: 0;
-	border-color: var(--l1-border);
+.section-body__divider {
+	--divider-color: var(--l1-border);
+	--divider-margin: 0;
 }
 
 .filter-header {

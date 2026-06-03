@@ -30,7 +30,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -86,17 +85,10 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	// initiate opamp
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
 
-	integrationsController, err := integrations.NewController(signoz.SQLStore)
+	integrationsController, err := integrations.NewController(signoz.SQLStore, signoz.Modules.Dashboard)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't create integrations controller: %w", err,
-		)
-	}
-
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create cloud provider integrations controller: %w", err,
 		)
 	}
 
@@ -134,7 +126,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		DataConnector:                 reader,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		GatewayUrl:                    config.Gateway.URL.String(),
@@ -200,7 +191,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
-	apiHandler.RegisterCloudIntegrationsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterInfraMetricsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)

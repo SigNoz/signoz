@@ -1,9 +1,5 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 export default function BetaTag(): JSX.Element {
-	return (
-		<Tag bordered={false} color="geekblue">
-			Beta
-		</Tag>
-	);
+	return <Badge color="robin">Beta</Badge>;
 }

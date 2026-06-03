@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -371,10 +369,6 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
-	}
-
 	deleter, err := module.store.GetUser(ctx, valuer.MustNewUUID(deletedBy))
 	if err != nil {
 		return err
@@ -543,7 +537,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	if resetPasswordToken.IsExpired() {
-		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "reset password token has expired")
+		return errors.New(errors.TypeUnauthenticated, types.ErrCodeResetPasswordTokenExpired, "reset password token has expired")
 	}
 
 	password, err := module.store.GetPassword(ctx, resetPasswordToken.PasswordID)
