@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
@@ -50,9 +50,6 @@ interface K8sHeaderProps<TData> {
 	cancelQuery: () => void;
 }
 
-// TODO(H4ad): Update Query Seach to work without onChange
-const NOOP = (): void => {};
-
 function K8sHeader<TData>({
 	controlListPrefix,
 	leftFilters,
@@ -64,6 +61,7 @@ function K8sHeader<TData>({
 	cancelQuery,
 }: K8sHeaderProps<TData>): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
+	const stagedExpressionRef = useRef<string>('');
 
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
@@ -133,8 +131,12 @@ function K8sHeader<TData>({
 	);
 
 	const handleStageRunQuery = useCallback((): void => {
-		handleRunQuery();
+		handleRunQuery(stagedExpressionRef.current);
 	}, [handleRunQuery]);
+
+	const handleExpressionChange = useCallback((value: string): void => {
+		stagedExpressionRef.current = value;
+	}, []);
 
 	const handleCancelQuery = useCallback((): void => {
 		cancelQuery();
@@ -268,7 +270,7 @@ function K8sHeader<TData>({
 				<QuerySearch
 					queryData={queryData}
 					dataSource={DataSource.METRICS}
-					onChange={NOOP}
+					onChange={handleExpressionChange}
 					onRun={handleRunQuery}
 					signalSource=""
 					showFilterSuggestionsWithoutMetric
