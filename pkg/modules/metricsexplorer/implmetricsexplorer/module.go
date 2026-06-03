@@ -256,28 +256,16 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 		return nil, err
 	}
 
-	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
-	filterWhereClause, err := m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
-	if err != nil {
-		return nil, err
-	}
-
-	var entries []metricsexplorertypes.TreemapEntry
-
 	resp := &metricsexplorertypes.TreemapResponse{}
 	switch req.Mode {
 	case metricsexplorertypes.TreemapModeSamples:
-		if hasFilter {
-			entries, err = m.computeSamplesTreemap(ctx, req, filterWhereClause)
-		} else {
-			entries, err = m.computeSamplesTreemapFastPath(ctx, req)
-		}
+		entries, err := m.computeSamplesTreemap(ctx, req)
 		if err != nil {
 			return nil, err
 		}
 		resp.Samples = entries
 	default: // TreemapModeTimeSeries
-		entries, err = m.computeTimeseriesTreemap(ctx, req, filterWhereClause)
+		entries, err := m.computeTimeseriesTreemap(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -1099,8 +1087,18 @@ func (m *module) fetchMetricsStatsWithSamples(
 	return metricStats, total, nil
 }
 
-func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeTimeseriesTreemap")
+
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+	var filterWhereClause *sqlbuilder.WhereClause
+	if hasFilter {
+		var err error
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
@@ -1165,8 +1163,18 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	return entries, nil
 }
 
-func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemap")
+
+	hasFilter := req.Filter != nil && strings.TrimSpace(req.Filter.Expression) != ""
+	var filterWhereClause *sqlbuilder.WhereClause
+	if hasFilter {
+		var err error
+		filterWhereClause, err = m.buildFilterClause(ctx, req.Filter, req.Start, req.End)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
@@ -1248,84 +1256,6 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	rows, err := db.Query(valueCtx, query, args...)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap query")
-	}
-	defer rows.Close()
-
-	entries := make([]metricsexplorertypes.TreemapEntry, 0)
-	for rows.Next() {
-		var treemapEntry metricsexplorertypes.TreemapEntry
-		if err := rows.Scan(&treemapEntry.MetricName, &treemapEntry.TotalValue, &treemapEntry.Percentage); err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan samples treemap row")
-		}
-		entries = append(entries, treemapEntry)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating samples treemap rows")
-	}
-
-	return entries, nil
-}
-
-func (m *module) computeSamplesTreemapFastPath(ctx context.Context, req *metricsexplorertypes.TreemapRequest) ([]metricsexplorertypes.TreemapEntry, error) {
-
-	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemapFastPath")
-
-	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
-	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
-
-	candidateLimit := req.Limit + 50
-
-	metricCandidatesSB := sqlbuilder.NewSelectBuilder()
-	metricCandidatesSB.Select("metric_name")
-	metricCandidatesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
-	metricCandidatesSB.Where("NOT startsWith(metric_name, 'signoz')")
-	metricCandidatesSB.Where(metricCandidatesSB.E("__normalized", false))
-	metricCandidatesSB.Where(metricCandidatesSB.Between("unix_milli", start, end))
-	metricCandidatesSB.GroupBy("metric_name")
-	metricCandidatesSB.OrderBy("uniq(fingerprint) DESC")
-	metricCandidatesSB.Limit(candidateLimit)
-
-	totalSamplesSB := sqlbuilder.NewSelectBuilder()
-	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
-	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
-	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
-
-	sampleCountsSB := sqlbuilder.NewSelectBuilder()
-	sampleCountsSB.Select(
-		"metric_name",
-		fmt.Sprintf("%s AS samples", countExp),
-	)
-	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
-	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
-	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
-	sampleCountsSB.GroupBy("metric_name")
-
-	cteBuilder := sqlbuilder.With(
-		sqlbuilder.CTEQuery("__metric_candidates").As(metricCandidatesSB),
-		sqlbuilder.CTEQuery("__sample_counts").As(sampleCountsSB),
-		sqlbuilder.CTEQuery("__total_samples").As(totalSamplesSB),
-	)
-
-	finalSB := cteBuilder.Select(
-		"mc.metric_name",
-		"COALESCE(sc.samples, 0) AS samples",
-		"CASE WHEN ts.total_samples = 0 THEN 0 ELSE (COALESCE(sc.samples, 0) * 100.0 / ts.total_samples) END AS percentage",
-	)
-	finalSB.From("__metric_candidates mc")
-	finalSB.JoinWithOption(sqlbuilder.LeftJoin, "__sample_counts sc", "mc.metric_name = sc.metric_name")
-	finalSB.Join("__total_samples ts", "1=1")
-	finalSB.OrderBy("percentage DESC")
-	finalSB.Limit(req.Limit)
-
-	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
-	db := m.telemetryStore.ClickhouseDB()
-	rows, err := db.Query(valueCtx, query, args...)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to execute samples treemap fastpath query")
 	}
 	defer rows.Close()
 
