@@ -3251,6 +3251,27 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
+    DashboardtypesUpdateableDashboardV2:
+      properties:
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
@@ -12990,6 +13011,12 @@ paths:
                 - data
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13086,6 +13113,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13098,6 +13131,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13146,6 +13185,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13158,6 +13203,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13187,7 +13238,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
+              $ref: '#/components/schemas/DashboardtypesUpdateableDashboardV2'
       responses:
         "200":
           content:
@@ -13203,6 +13254,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13215,6 +13272,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13248,6 +13311,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13260,6 +13329,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13292,6 +13367,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13304,6 +13385,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:

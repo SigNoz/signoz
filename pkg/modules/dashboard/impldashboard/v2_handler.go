@@ -2,7 +2,6 @@ package impldashboard
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -204,7 +203,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dashboardtypes.UpdateableDashboardV2{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -246,7 +245,7 @@ func (handler *handler) PatchV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dashboardtypes.PatchableDashboardV2{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
 	}

@@ -4820,6 +4820,26 @@ export interface DashboardtypesUpdatablePublicDashboardDTO {
 	timeRangeEnabled?: boolean;
 }
 
+export interface DashboardtypesUpdateableDashboardV2DTO {
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
+}
+
 export enum DashboardtypesVariablePluginKindDTO {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 	'signoz/QueryVariable' = 'signoz/QueryVariable',
