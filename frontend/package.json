@@ -128,7 +128,7 @@
     "timestamp-nano": "^1.0.0",
     "typescript": "5.9.3",
     "uplot": "1.6.31",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-html": "3.2.2",
     "zod": "4.3.6",
@@ -180,7 +180,6 @@
     "@types/redux-mock-store": "1.0.4",
     "@types/styled-components": "^5.1.4",
     "@types/testing-library__jest-dom": "^5.14.5",
-    "@types/uuid": "^8.3.1",
     "@typescript/native-preview": "7.0.0-dev.20260430.1",
     "eslint-plugin-sonarjs": "4.0.2",
     "glob": "^13.0.6",
@@ -238,9 +237,21 @@
     "prismjs": "1.30.0",
     "got": "11.8.5",
     "form-data": "4.0.4",
-    "brace-expansion": "^2.0.2",
+    "brace-expansion": "^2.0.3",
     "on-headers": "^1.1.0",
-    "tmp": "0.2.4",
-    "vite": "npm:rolldown-vite@7.3.1"
+    "tmp": "^0.2.6",
+    "vite": "npm:rolldown-vite@7.3.1",
+    "js-cookie": "^3.0.7",
+    "js-yaml": "^3.14.2",
+    "dompurify": "^3.4.0",
+    "protocol-buffers-schema": "^3.6.1",
+    "ws": "^8.20.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "yaml@1": "^1.10.3",
+      "yaml@2": "^2.8.3",
+      "hast-util-raw>mdast-util-to-hast": "^13.2.1"
+    }
   }
 }
