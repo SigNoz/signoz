@@ -14,7 +14,7 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 	var errs error
 
 	maxLimitGauge, err := meter.Int64Gauge(
-		"signoz.tracedetail.waterfall.max_limit_to_select_all_spans",
+		"signoz.traces.waterfall.max_limit_to_select_all_spans",
 		metric.WithDescription("The span count limit above which windowed waterfall is returned instead of the full waterfall."),
 		metric.WithUnit("{spans}"),
 	)
@@ -23,7 +23,7 @@ func newModuleMetrics(meter metric.Meter) (*moduleMetrics, error) {
 	}
 
 	windowedCounter, err := meter.Int64Counter(
-		"signoz.tracedetail.waterfall.windowed_responses",
+		"signoz.traces.waterfall.windowed_responses",
 		metric.WithDescription("Total number of waterfall requests that used the windowed path."),
 	)
 	if err != nil {
