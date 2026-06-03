@@ -378,7 +378,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return ErrorConditionLiteral
 		}
 		if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
-			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+			v.warnings = append(v.warnings, BodyFreeTextSearchWarning)
 		}
 
 		return cond
@@ -737,7 +737,7 @@ func (v *filterExpressionVisitor) VisitFreeText(ctx *grammar.FreeTextContext) an
 	}
 
 	if v.bodyJSONEnabled && v.freeTextColumn.Name == "body" {
-		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+		v.warnings = append(v.warnings, BodyFreeTextSearchWarning)
 	}
 
 	return cond
