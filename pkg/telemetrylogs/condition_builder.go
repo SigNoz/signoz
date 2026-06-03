@@ -26,7 +26,7 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 }
 
 // ConditionForSearch builds the search condition for all FTS columns belonging
-// to fieldContext. JSON columns are skipped when useJSONBody is disabled.
+// to fieldContext. Body JSON column is skipped when useJSONBody is disabled.
 // Returns ("", nil) when no searchable columns exist for the context.
 func (c *conditionBuilder) ConditionForSearch(
 	ctx context.Context,

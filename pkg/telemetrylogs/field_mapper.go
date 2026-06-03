@@ -433,9 +433,8 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }
 
-// GetColumns returns the physical columns for the given field context that
-// search() fans out across. For FieldContextBody the active column set depends
-// on the useJSONBody feature flag.
+// ftsColumns returns the physical columns for the given field context that
+// search() fans out across.
 func ftsColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
 	switch fieldContext {
 	case telemetrytypes.FieldContextLog:
