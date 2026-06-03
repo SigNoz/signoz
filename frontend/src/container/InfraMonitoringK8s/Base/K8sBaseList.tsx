@@ -218,7 +218,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 	);
 
 	useEffect(() => {
-		logEvent(InfraMonitoringEvents.PageVisited, {
+		void logEvent(InfraMonitoringEvents.PageVisited, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.ListPage,
 			category: eventCategory,
@@ -229,10 +229,10 @@ export function K8sBaseList<T extends K8sEntityData>({
 	const handleRowClick = useCallback(
 		(_record: T, itemKey: string): void => {
 			if (groupBy.length === 0) {
-				setSelectedItem(itemKey);
+				void setSelectedItem(itemKey);
 			}
 
-			logEvent(InfraMonitoringEvents.ItemClicked, {
+			void logEvent(InfraMonitoringEvents.ItemClicked, {
 				entity: InfraMonitoringEvents.K8sEntity,
 				page: InfraMonitoringEvents.ListPage,
 				category: eventCategory,
@@ -252,7 +252,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 			url.searchParams.set('selectedItem', itemKey);
 			openInNewTab(url.pathname + url.search);
 
-			logEvent(InfraMonitoringEvents.ItemClicked, {
+			void logEvent(InfraMonitoringEvents.ItemClicked, {
 				entity: InfraMonitoringEvents.K8sEntity,
 				page: InfraMonitoringEvents.ListPage,
 				category: eventCategory,
