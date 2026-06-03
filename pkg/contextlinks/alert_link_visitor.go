@@ -175,8 +175,8 @@ func (r *WhereClauseRewriter) VisitPrimary(ctx *parser.PrimaryContext) interface
 		ctx.FunctionCall().Accept(r)
 	} else if ctx.SearchCall() != nil {
 		ctx.SearchCall().Accept(r)
-	} else if ctx.FullText() != nil {
-		ctx.FullText().Accept(r)
+	} else if ctx.FreeText() != nil {
+		ctx.FreeText().Accept(r)
 	} else if ctx.Key() != nil {
 		ctx.Key().Accept(r)
 	} else if ctx.Value() != nil {
@@ -360,8 +360,8 @@ func (r *WhereClauseRewriter) VisitValueList(ctx *parser.ValueListContext) inter
 	return nil
 }
 
-// VisitFullText visits full text expressions.
-func (r *WhereClauseRewriter) VisitFullText(ctx *parser.FullTextContext) interface{} {
+// VisitFreeText visits free text expressions.
+func (r *WhereClauseRewriter) VisitFreeText(ctx *parser.FreeTextContext) interface{} {
 	r.rewritten.WriteString(ctx.GetText())
 	return nil
 }

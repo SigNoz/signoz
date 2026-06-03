@@ -217,8 +217,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitNotInClause(t)
 	case *grammar.ValueListContext:
 		return v.VisitValueList(t)
-	case *grammar.FullTextContext:
-		return v.VisitFullText(t)
+	case *grammar.FreeTextContext:
+		return v.VisitFreeText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.SearchCallContext:
@@ -337,8 +337,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.SearchCall() != nil {
 		return v.Visit(ctx.SearchCall())
-	} else if ctx.FullText() != nil {
-		return v.Visit(ctx.FullText())
+	} else if ctx.FreeText() != nil {
+		return v.Visit(ctx.FreeText())
 	}
 
 	// Handle standalone key/value as a full text search term
@@ -709,8 +709,8 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 	return parts
 }
 
-// VisitFullText handles standalone quoted strings for full-text search.
-func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
+// VisitFreeText handles standalone quoted strings for full-text search.
+func (v *filterExpressionVisitor) VisitFreeText(ctx *grammar.FreeTextContext) any {
 	if v.skipFreeTextFilter {
 		// A skipped FT term must be treated as TrueConditionLiteral, not "".
 		// Returning "" would silently drop this branch from an OR, incorrectly

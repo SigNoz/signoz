@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.2
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 
 import {ParseTreeVisitor} from 'antlr4';
 
@@ -13,7 +13,7 @@ import { ComparisonContext } from "./FilterQueryParser.js";
 import { InClauseContext } from "./FilterQueryParser.js";
 import { NotInClauseContext } from "./FilterQueryParser.js";
 import { ValueListContext } from "./FilterQueryParser.js";
-import { FullTextContext } from "./FilterQueryParser.js";
+import { FreeTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
 import { SearchCallContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
@@ -92,11 +92,11 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 */
 	visitValueList?: (ctx: ValueListContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FilterQueryParser.fullText`.
+	 * Visit a parse tree produced by `FilterQueryParser.freeText`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitFullText?: (ctx: FullTextContext) => Result;
+	visitFreeText?: (ctx: FreeTextContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FilterQueryParser.functionCall`.
 	 * @param ctx the parse tree

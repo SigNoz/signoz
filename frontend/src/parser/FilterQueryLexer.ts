@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.2
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 import {
 	ATN,

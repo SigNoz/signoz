@@ -44,7 +44,7 @@ func filterqueryParserInit() {
 	}
 	staticData.RuleNames = []string{
 		"query", "expression", "orExpression", "andExpression", "unaryExpression",
-		"primary", "comparison", "inClause", "notInClause", "valueList", "fullText",
+		"primary", "comparison", "inClause", "notInClause", "valueList", "freeText",
 		"functionCall", "searchCall", "functionParamList", "functionParam",
 		"array", "value", "key",
 	}
@@ -232,7 +232,7 @@ const (
 	FilterQueryParserRULE_inClause          = 7
 	FilterQueryParserRULE_notInClause       = 8
 	FilterQueryParserRULE_valueList         = 9
-	FilterQueryParserRULE_fullText          = 10
+	FilterQueryParserRULE_freeText          = 10
 	FilterQueryParserRULE_functionCall      = 11
 	FilterQueryParserRULE_searchCall        = 12
 	FilterQueryParserRULE_functionParamList = 13
@@ -1015,7 +1015,7 @@ type IPrimaryContext interface {
 	Comparison() IComparisonContext
 	FunctionCall() IFunctionCallContext
 	SearchCall() ISearchCallContext
-	FullText() IFullTextContext
+	FreeText() IFreeTextContext
 	Key() IKeyContext
 	Value() IValueContext
 
@@ -1127,10 +1127,10 @@ func (s *PrimaryContext) SearchCall() ISearchCallContext {
 	return t.(ISearchCallContext)
 }
 
-func (s *PrimaryContext) FullText() IFullTextContext {
+func (s *PrimaryContext) FreeText() IFreeTextContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFullTextContext); ok {
+		if _, ok := ctx.(IFreeTextContext); ok {
 			t = ctx.(antlr.RuleContext)
 			break
 		}
@@ -1140,7 +1140,7 @@ func (s *PrimaryContext) FullText() IFullTextContext {
 		return nil
 	}
 
-	return t.(IFullTextContext)
+	return t.(IFreeTextContext)
 }
 
 func (s *PrimaryContext) Key() IKeyContext {
@@ -1263,7 +1263,7 @@ func (p *FilterQueryParser) Primary() (localctx IPrimaryContext) {
 		p.EnterOuterAlt(localctx, 5)
 		{
 			p.SetState(70)
-			p.FullText()
+			p.FreeText()
 		}
 
 	case 6:
@@ -2646,8 +2646,8 @@ errorExit:
 	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
-// IFullTextContext is an interface to support dynamic dispatch.
-type IFullTextContext interface {
+// IFreeTextContext is an interface to support dynamic dispatch.
+type IFreeTextContext interface {
 	antlr.ParserRuleContext
 
 	// GetParser returns the parser.
@@ -2657,83 +2657,83 @@ type IFullTextContext interface {
 	QUOTED_TEXT() antlr.TerminalNode
 	FREETEXT() antlr.TerminalNode
 
-	// IsFullTextContext differentiates from other interfaces.
-	IsFullTextContext()
+	// IsFreeTextContext differentiates from other interfaces.
+	IsFreeTextContext()
 }
 
-type FullTextContext struct {
+type FreeTextContext struct {
 	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
-func NewEmptyFullTextContext() *FullTextContext {
-	var p = new(FullTextContext)
+func NewEmptyFreeTextContext() *FreeTextContext {
+	var p = new(FreeTextContext)
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = FilterQueryParserRULE_fullText
+	p.RuleIndex = FilterQueryParserRULE_freeText
 	return p
 }
 
-func InitEmptyFullTextContext(p *FullTextContext) {
+func InitEmptyFreeTextContext(p *FreeTextContext) {
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = FilterQueryParserRULE_fullText
+	p.RuleIndex = FilterQueryParserRULE_freeText
 }
 
-func (*FullTextContext) IsFullTextContext() {}
+func (*FreeTextContext) IsFreeTextContext() {}
 
-func NewFullTextContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FullTextContext {
-	var p = new(FullTextContext)
+func NewFreeTextContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FreeTextContext {
+	var p = new(FreeTextContext)
 
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
-	p.RuleIndex = FilterQueryParserRULE_fullText
+	p.RuleIndex = FilterQueryParserRULE_freeText
 
 	return p
 }
 
-func (s *FullTextContext) GetParser() antlr.Parser { return s.parser }
+func (s *FreeTextContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FullTextContext) QUOTED_TEXT() antlr.TerminalNode {
+func (s *FreeTextContext) QUOTED_TEXT() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserQUOTED_TEXT, 0)
 }
 
-func (s *FullTextContext) FREETEXT() antlr.TerminalNode {
+func (s *FreeTextContext) FREETEXT() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserFREETEXT, 0)
 }
 
-func (s *FullTextContext) GetRuleContext() antlr.RuleContext {
+func (s *FreeTextContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
 
-func (s *FullTextContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+func (s *FreeTextContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-func (s *FullTextContext) EnterRule(listener antlr.ParseTreeListener) {
+func (s *FreeTextContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(FilterQueryListener); ok {
-		listenerT.EnterFullText(s)
+		listenerT.EnterFreeText(s)
 	}
 }
 
-func (s *FullTextContext) ExitRule(listener antlr.ParseTreeListener) {
+func (s *FreeTextContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(FilterQueryListener); ok {
-		listenerT.ExitFullText(s)
+		listenerT.ExitFreeText(s)
 	}
 }
 
-func (s *FullTextContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+func (s *FreeTextContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 	switch t := visitor.(type) {
 	case FilterQueryVisitor:
-		return t.VisitFullText(s)
+		return t.VisitFreeText(s)
 
 	default:
 		return t.VisitChildren(s)
 	}
 }
 
-func (p *FilterQueryParser) FullText() (localctx IFullTextContext) {
-	localctx = NewFullTextContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 20, FilterQueryParserRULE_fullText)
+func (p *FilterQueryParser) FreeText() (localctx IFreeTextContext) {
+	localctx = NewFreeTextContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 20, FilterQueryParserRULE_freeText)
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)

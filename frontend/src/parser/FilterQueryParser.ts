@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.2
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 import {
@@ -63,7 +63,7 @@ export default class FilterQueryParser extends Parser {
 	public static readonly RULE_inClause = 7;
 	public static readonly RULE_notInClause = 8;
 	public static readonly RULE_valueList = 9;
-	public static readonly RULE_fullText = 10;
+	public static readonly RULE_freeText = 10;
 	public static readonly RULE_functionCall = 11;
 	public static readonly RULE_searchCall = 12;
 	public static readonly RULE_functionParamList = 13;
@@ -100,7 +100,7 @@ export default class FilterQueryParser extends Parser {
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
 		"query", "expression", "orExpression", "andExpression", "unaryExpression", 
-		"primary", "comparison", "inClause", "notInClause", "valueList", "fullText", 
+		"primary", "comparison", "inClause", "notInClause", "valueList", "freeText", 
 		"functionCall", "searchCall", "functionParamList", "functionParam", "array", 
 		"value", "key",
 	];
@@ -359,7 +359,7 @@ export default class FilterQueryParser extends Parser {
 				this.enterOuterAlt(localctx, 5);
 				{
 				this.state = 70;
-				this.fullText();
+				this.freeText();
 				}
 				break;
 			case 6:
@@ -813,9 +813,9 @@ export default class FilterQueryParser extends Parser {
 		return localctx;
 	}
 	// @RuleVersion(0)
-	public fullText(): FullTextContext {
-		let localctx: FullTextContext = new FullTextContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 20, FilterQueryParser.RULE_fullText);
+	public freeText(): FreeTextContext {
+		let localctx: FreeTextContext = new FreeTextContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 20, FilterQueryParser.RULE_freeText);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
@@ -1383,8 +1383,8 @@ export class PrimaryContext extends ParserRuleContext {
 	public searchCall(): SearchCallContext {
 		return this.getTypedRuleContext(SearchCallContext, 0) as SearchCallContext;
 	}
-	public fullText(): FullTextContext {
-		return this.getTypedRuleContext(FullTextContext, 0) as FullTextContext;
+	public freeText(): FreeTextContext {
+		return this.getTypedRuleContext(FreeTextContext, 0) as FreeTextContext;
 	}
 	public key(): KeyContext {
 		return this.getTypedRuleContext(KeyContext, 0) as KeyContext;
@@ -1649,7 +1649,7 @@ export class ValueListContext extends ParserRuleContext {
 }
 
 
-export class FullTextContext extends ParserRuleContext {
+export class FreeTextContext extends ParserRuleContext {
 	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
@@ -1661,22 +1661,22 @@ export class FullTextContext extends ParserRuleContext {
 		return this.getToken(FilterQueryParser.FREETEXT, 0);
 	}
     public get ruleIndex(): number {
-    	return FilterQueryParser.RULE_fullText;
+    	return FilterQueryParser.RULE_freeText;
 	}
 	public enterRule(listener: FilterQueryListener): void {
-	    if(listener.enterFullText) {
-	 		listener.enterFullText(this);
+	    if(listener.enterFreeText) {
+	 		listener.enterFreeText(this);
 		}
 	}
 	public exitRule(listener: FilterQueryListener): void {
-	    if(listener.exitFullText) {
-	 		listener.exitFullText(this);
+	    if(listener.exitFreeText) {
+	 		listener.exitFreeText(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
-		if (visitor.visitFullText) {
-			return visitor.visitFullText(this);
+		if (visitor.visitFreeText) {
+			return visitor.visitFreeText(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

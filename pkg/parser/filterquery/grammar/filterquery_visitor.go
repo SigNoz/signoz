@@ -38,8 +38,8 @@ type FilterQueryVisitor interface {
 	// Visit a parse tree produced by FilterQueryParser#valueList.
 	VisitValueList(ctx *ValueListContext) interface{}
 
-	// Visit a parse tree produced by FilterQueryParser#fullText.
-	VisitFullText(ctx *FullTextContext) interface{}
+	// Visit a parse tree produced by FilterQueryParser#freeText.
+	VisitFreeText(ctx *FreeTextContext) interface{}
 
 	// Visit a parse tree produced by FilterQueryParser#functionCall.
 	VisitFunctionCall(ctx *FunctionCallContext) interface{}

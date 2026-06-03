@@ -32,13 +32,13 @@ unaryExpression
     ;
 
 // Primary constructs: grouped expressions, a comparison (key op value),
-// a function call, a search call, or a full-text string
+// a function call, a search call, or a free-text search string
 primary
     : LPAREN orExpression RPAREN
     | comparison
     | functionCall
     | searchCall
-    | fullText
+    | freeText
     | key
     | value
     ;
@@ -94,9 +94,9 @@ valueList
     : value ( COMMA value )*
     ;
 
-// Full-text search: a standalone quoted string is allowed as a "primary"
+// Free-text search: a standalone quoted string or bare word is allowed as a "primary"
 // e.g. `"Waiting for response" http.status_code=200`
-fullText
+freeText
     : QUOTED_TEXT
     | FREETEXT
     ;

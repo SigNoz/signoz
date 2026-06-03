@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.2
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 
 import {ParseTreeListener} from "antlr4";
 
@@ -13,7 +13,7 @@ import { ComparisonContext } from "./FilterQueryParser.js";
 import { InClauseContext } from "./FilterQueryParser.js";
 import { NotInClauseContext } from "./FilterQueryParser.js";
 import { ValueListContext } from "./FilterQueryParser.js";
-import { FullTextContext } from "./FilterQueryParser.js";
+import { FreeTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
 import { SearchCallContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
@@ -129,15 +129,15 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 */
 	exitValueList?: (ctx: ValueListContext) => void;
 	/**
-	 * Enter a parse tree produced by `FilterQueryParser.fullText`.
+	 * Enter a parse tree produced by `FilterQueryParser.freeText`.
 	 * @param ctx the parse tree
 	 */
-	enterFullText?: (ctx: FullTextContext) => void;
+	enterFreeText?: (ctx: FreeTextContext) => void;
 	/**
-	 * Exit a parse tree produced by `FilterQueryParser.fullText`.
+	 * Exit a parse tree produced by `FilterQueryParser.freeText`.
 	 * @param ctx the parse tree
 	 */
-	exitFullText?: (ctx: FullTextContext) => void;
+	exitFreeText?: (ctx: FreeTextContext) => void;
 	/**
 	 * Enter a parse tree produced by `FilterQueryParser.functionCall`.
 	 * @param ctx the parse tree

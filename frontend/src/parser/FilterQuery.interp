@@ -81,7 +81,7 @@ comparison
 inClause
 notInClause
 valueList
-fullText
+freeText
 functionCall
 searchCall
 functionParamList
