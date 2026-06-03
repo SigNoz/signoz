@@ -1,7 +1,8 @@
 import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -11,11 +12,12 @@ describe('ListAlertRules — new alert button', () => {
 	});
 
 	it('plain click navigates to ALERTS_NEW with newTab:false', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.click(screen.getByRole('button', { name: /new alert/i }));
+		await user.click(screen.getByRole('button', { name: /new alert/i }));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -27,11 +29,12 @@ describe('ListAlertRules — new alert button', () => {
 	});
 
 	it('logs Alert: New alert button clicked', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.click(screen.getByRole('button', { name: /new alert/i }));
+		await user.click(screen.getByRole('button', { name: /new alert/i }));
 
 		await waitFor(() => {
 			expect(logEventMock).toHaveBeenCalledWith(
@@ -42,13 +45,14 @@ describe('ListAlertRules — new alert button', () => {
 	});
 
 	it('ctrl+click on New Alert opens in a new tab (newTab:true)', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.click(screen.getByRole('button', { name: /new alert/i }), {
-			ctrlKey: true,
-		});
+		await user.keyboard('{Control>}');
+		await user.click(screen.getByRole('button', { name: /new alert/i }));
+		await user.keyboard('{/Control}');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();

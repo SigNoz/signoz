@@ -1,4 +1,5 @@
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -15,11 +16,12 @@ describe('ListAlertRules — columns selector', () => {
 	});
 
 	it('opens columns popover and lists toggleable columns', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.click(screen.getByTestId('alert-columns-button'));
+		await user.click(screen.getByTestId('alert-columns-button'));
 
 		// Popover should reveal "Toggle Columns" heading + per-column labels.
 		await screen.findByText('Toggle Columns');
@@ -43,6 +45,7 @@ describe('ListAlertRules — columns selector', () => {
 	});
 
 	it('toggling Created At on writes to localStorage and adds the header', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
@@ -52,12 +55,12 @@ describe('ListAlertRules — columns selector', () => {
 		);
 		expect(headersBefore.some((t) => t.includes('Created At'))).toBe(false);
 
-		fireEvent.click(screen.getByTestId('alert-columns-button'));
+		await user.click(screen.getByTestId('alert-columns-button'));
 		await screen.findByText('Toggle Columns');
 
 		const checkbox = document.getElementById('col-createdAt');
 		expect(checkbox).not.toBeNull();
-		fireEvent.click(checkbox as HTMLElement);
+		await user.click(checkbox as HTMLElement);
 
 		await waitFor(() => {
 			const stored = window.localStorage.getItem(COLUMN_STORAGE_KEY);

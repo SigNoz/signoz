@@ -1,7 +1,8 @@
+import userEvent from '@testing-library/user-event';
 import { alertRulesPaginationFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderListAlertRules } from './_helpers';
@@ -42,12 +43,13 @@ describe('ListAlertRules — pagination', () => {
 	});
 
 	it('navigates to page 2 and shows remaining rows', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('Pag Rule 0');
 
 		const nextBtn = screen.getByLabelText('Go to next page');
-		fireEvent.click(nextBtn);
+		await user.click(nextBtn);
 
 		await waitFor(() => {
 			expect(screen.getByText('Pag Rule 10')).toBeInTheDocument();

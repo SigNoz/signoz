@@ -1,9 +1,10 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, screen } from 'tests/test-utils';
+import { screen } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -13,6 +14,8 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders AlertsEmptyState when API returns no rules', async () => {
+		const user = userEvent.setup({ delay: null });
+
 		server.use(
 			rest.get('http://localhost/api/v2/rules', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [], status: 'success' })),
@@ -27,7 +30,7 @@ describe('ListAlertRules — empty states', () => {
 		).toBeInTheDocument();
 
 		// New Alert Rule button is visible and triggers safeNavigate to ALERTS_NEW.
-		fireEvent.click(screen.getByTestId('add-alert'));
+		await user.click(screen.getByTestId('add-alert'));
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.ALERTS_NEW,
 			expect.objectContaining({ newTab: false }),
@@ -35,6 +38,8 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders ErrorEmptyState when API returns 500; refresh triggers a refetch', async () => {
+		const user = userEvent.setup({ delay: null });
+
 		let callCount = 0;
 		server.use(
 			rest.get('http://localhost/api/v2/rules', (_, res, ctx) => {
@@ -53,20 +58,22 @@ describe('ListAlertRules — empty states', () => {
 
 		await screen.findByTestId('error-empty-state');
 
-		fireEvent.click(screen.getByTestId('error-refresh-button'));
+		await user.click(screen.getByTestId('error-refresh-button'));
 
 		const rule = await screen.findByText('High CPU Alert');
 		expect(rule).toBeInTheDocument();
 	});
 
 	it('renders NoResultsEmptyState when search yields no match; Clear Search resets', async () => {
+		const user = userEvent.setup({ delay: null });
+
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.change(screen.getByTestId('list-alerts-search-input'), {
-			target: { value: 'totally-not-found' },
-		});
+		const searchInput = screen.getByTestId('list-alerts-search-input');
+		await user.clear(searchInput);
+		await user.type(searchInput, 'totally-not-found');
 
 		await screen.findByTestId('no-results-empty-state');
 		expect(screen.getByTestId('no-results-title')).toHaveTextContent(
@@ -76,7 +83,7 @@ describe('ListAlertRules — empty states', () => {
 			'No alert rules match your search. Try adjusting your search criteria.',
 		);
 
-		fireEvent.click(screen.getByTestId('no-results-clear-button'));
+		await user.click(screen.getByTestId('no-results-clear-button'));
 
 		const rule = await screen.findByText('High CPU Alert');
 		expect(rule).toBeInTheDocument();

@@ -1,4 +1,5 @@
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from 'tests/test-utils';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderListAlertRules } from './_helpers';
@@ -13,11 +14,13 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('filters rows by alert name with debounce', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.change(getSearchInput(), { target: { value: 'CPU' } });
+		await user.clear(getSearchInput());
+		await user.type(getSearchInput(), 'CPU');
 
 		await waitFor(() => {
 			expect(screen.getByText('High CPU Alert')).toBeInTheDocument();
@@ -26,11 +29,13 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('filters rows by label values (severity)', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.change(getSearchInput(), { target: { value: 'warning' } });
+		await user.clear(getSearchInput());
+		await user.type(getSearchInput(), 'warning');
 
 		await waitFor(() => {
 			expect(screen.getByText('Memory Pending Alert')).toBeInTheDocument();
@@ -39,17 +44,19 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('restores all rows when search is cleared', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.change(getSearchInput(), { target: { value: 'CPU' } });
+		await user.clear(getSearchInput());
+		await user.type(getSearchInput(), 'CPU');
 
 		await waitFor(() => {
 			expect(screen.queryByText('Memory Pending Alert')).not.toBeInTheDocument();
 		});
 
-		fireEvent.change(getSearchInput(), { target: { value: '' } });
+		await user.clear(getSearchInput());
 
 		await waitFor(() => {
 			expect(screen.getByText('High CPU Alert')).toBeInTheDocument();
@@ -59,13 +66,13 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('shows no-results state when no match', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		fireEvent.change(getSearchInput(), {
-			target: { value: 'zzzzzz-no-match' },
-		});
+		await user.clear(getSearchInput());
+		await user.type(getSearchInput(), 'zzzzzz-no-match');
 
 		await waitFor(() => {
 			expect(screen.getByTestId('no-results-empty-state')).toBeInTheDocument();
@@ -76,12 +83,14 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it('resets page to 1 when search debounce fires', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules({ initialRoute: '/?page=2' });
 
 		// Page 2 of the 4-rule fixture has no rows; we only need the search input
 		// to be mounted, which happens before data is fetched.
 		const input = await screen.findByTestId('list-alerts-search-input');
-		fireEvent.change(input, { target: { value: 'CPU' } });
+		await user.clear(input);
+		await user.type(input, 'CPU');
 
 		await waitFor(() => {
 			expect(getCurrentNuqsQueryString()).not.toContain('page=2');

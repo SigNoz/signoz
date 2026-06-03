@@ -1,5 +1,6 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -9,13 +10,14 @@ describe('ListAlertRules — row click navigation', () => {
 	});
 
 	it('clicking a row calls safeNavigate to alerts/overview with composite query + ruleId', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		const ruleCell = await screen.findByText('High CPU Alert');
 
 		const td = ruleCell.closest('td');
 		expect(td).not.toBeNull();
-		fireEvent.click(td as HTMLElement);
+		await user.click(td as HTMLElement);
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -29,12 +31,15 @@ describe('ListAlertRules — row click navigation', () => {
 	});
 
 	it('ctrl+click on a row navigates with newTab option', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		const ruleCell = await screen.findByText('High CPU Alert');
 
 		const td = ruleCell.closest('td');
-		fireEvent.click(td as HTMLElement, { ctrlKey: true });
+		await user.keyboard('{Control>}');
+		await user.click(td as HTMLElement);
+		await user.keyboard('{/Control}');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();

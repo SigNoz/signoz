@@ -3,7 +3,7 @@ import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, screen, waitFor } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 
 import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
 
@@ -35,6 +35,7 @@ describe('TriggeredAlerts — row click', () => {
 	});
 
 	it('opens in a new tab when ctrl+clicked', async () => {
+		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -43,10 +44,11 @@ describe('TriggeredAlerts — row click', () => {
 			).toBeInTheDocument(),
 		);
 
-		fireEvent.click(
+		await user.keyboard('{Control>}');
+		await user.click(
 			screen.getByTestId(getTriggeredAlertRowTestId('fp-warning-1', 'name')),
-			{ ctrlKey: true },
 		);
+		await user.keyboard('{/Control}');
 
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			'/alerts/overview?ruleId=rule-2',
