@@ -4064,7 +4064,7 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
 
-export enum Querybuildertypesv5RequestTypeDTO {
+export enum DashboardtypesQueryKindDTO {
 	scalar = 'scalar',
 	time_series = 'time_series',
 	raw = 'raw',
@@ -4375,7 +4375,7 @@ export interface DashboardtypesQuerySpecDTO {
 }
 
 export interface DashboardtypesQueryDTO {
-	kind?: Querybuildertypesv5RequestTypeDTO;
+	kind?: DashboardtypesQueryKindDTO;
 	spec?: DashboardtypesQuerySpecDTO;
 }
 
@@ -6886,6 +6886,13 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
 
+export enum Querybuildertypesv5RequestTypeDTO {
+	scalar = 'scalar',
+	time_series = 'time_series',
+	raw = 'raw',
+	raw_stream = 'raw_stream',
+	trace = 'trace',
+}
 /**
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
