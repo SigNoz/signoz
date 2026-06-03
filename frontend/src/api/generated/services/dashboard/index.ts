@@ -25,6 +25,7 @@ import type {
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
+	DashboardtypesUpdateableDashboardV2DTO,
 	DeletePublicDashboardPathParameters,
 	GetDashboardV2200,
 	GetDashboardV2PathParameters,
@@ -929,14 +930,14 @@ export const usePatchDashboardV2 = <
  */
 export const updateDashboardV2 = (
 	{ id }: UpdateDashboardV2PathParameters,
-	dashboardtypesPostableDashboardV2DTO?: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	dashboardtypesUpdateableDashboardV2DTO?: BodyType<DashboardtypesUpdateableDashboardV2DTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<UpdateDashboardV2200>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesPostableDashboardV2DTO,
+		data: dashboardtypesUpdateableDashboardV2DTO,
 		signal,
 	});
 };
@@ -950,7 +951,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -959,7 +960,7 @@ export const getUpdateDashboardV2MutationOptions = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 	},
 	TContext
 > => {
@@ -976,7 +977,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		Awaited<ReturnType<typeof updateDashboardV2>>,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -991,7 +992,7 @@ export type UpdateDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateDashboardV2>>
 >;
 export type UpdateDashboardV2MutationBody =
-	| BodyType<DashboardtypesPostableDashboardV2DTO>
+	| BodyType<DashboardtypesUpdateableDashboardV2DTO>
 	| undefined;
 export type UpdateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
@@ -1007,7 +1008,7 @@ export const useUpdateDashboardV2 = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -1016,7 +1017,7 @@ export const useUpdateDashboardV2 = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 	},
 	TContext
 > => {
