@@ -1206,6 +1206,9 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStat
 		GetBodyJSONKey,
 		cb.ConditionForSearch,
 		fl,
+		nil,
+		false,
+		100000,
 	)
 
 	return statementBuilder, mockMetadataStore

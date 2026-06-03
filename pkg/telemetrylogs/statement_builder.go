@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -19,13 +20,14 @@ import (
 )
 
 type logQueryStatementBuilder struct {
-	logger                    *slog.Logger
-	metadataStore             telemetrytypes.MetadataStore
-	fm                        qbtypes.FieldMapper
-	cb                        qbtypes.ConditionBuilder
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
-	aggExprRewriter           qbtypes.AggExprRewriter
-	fl                        flagger.Flagger
+	logger                         *slog.Logger
+	metadataStore                  telemetrytypes.MetadataStore
+	fm                             qbtypes.FieldMapper
+	cb                             qbtypes.ConditionBuilder
+	resourceFilterResolver         *telemetryresourcefilter.ResourceFingerprintResolver[qbtypes.LogAggregation]
+	aggExprRewriter                qbtypes.AggExprRewriter
+	fl                             flagger.Flagger
+	skipResourceFingerprintEnabled bool
 
 	freeTextColumn   *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey     qbtypes.JsonKeyToFieldFunc
@@ -44,10 +46,13 @@ func NewLogQueryStatementBuilder(
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 	ftsConditionFunc qbtypes.FTSConditionFunc,
 	fl flagger.Flagger,
+	telemetryStore telemetrystore.TelemetryStore,
+	skipResourceFingerprintEnable bool,
+	skipResourceFingerprintThreshold uint64,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
-	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.LogAggregation](
+	resourceFilterResolver := telemetryresourcefilter.NewResolver[qbtypes.LogAggregation](
 		settings,
 		DBName,
 		LogsResourceV2TableName,
@@ -57,19 +62,22 @@ func NewLogQueryStatementBuilder(
 		freeTextColumn,
 		jsonKeyToKey,
 		fl,
+		telemetryStore,
+		skipResourceFingerprintThreshold,
 	)
 
 	return &logQueryStatementBuilder{
-		logger:                    logsSettings.Logger(),
-		metadataStore:             metadataStore,
-		fm:                        fieldMapper,
-		cb:                        conditionBuilder,
-		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
-		aggExprRewriter:           aggExprRewriter,
-		fl:                        fl,
-		freeTextColumn:   freeTextColumn,
-		jsonKeyToKey:     jsonKeyToKey,
-		ftsConditionFunc: ftsConditionFunc,
+		logger:                         logsSettings.Logger(),
+		metadataStore:                  metadataStore,
+		fm:                             fieldMapper,
+		cb:                             conditionBuilder,
+		resourceFilterResolver:         resourceFilterResolver,
+		aggExprRewriter:                aggExprRewriter,
+		fl:                             fl,
+		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
+		freeTextColumn:                 freeTextColumn,
+		jsonKeyToKey:                   jsonKeyToKey,
+		ftsConditionFunc:               ftsConditionFunc,
 	}
 }
 
@@ -273,9 +281,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" {
+	}
+	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -317,7 +327,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, true)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, true)
 
 	if err != nil {
 		return nil, err
@@ -375,9 +385,11 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" {
+	}
+	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -421,7 +433,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Add FROM clause
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, true)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, true)
 
 	if err != nil {
 		return nil, err
@@ -533,9 +545,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables)
+	if err != nil {
 		return nil, err
-	} else if frag != "" && !skipResourceCTE {
+	}
+	if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
 	}
@@ -578,7 +592,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	sb.From(fmt.Sprintf("%s.%s", DBName, LogsV2TableName))
 
 	// Add filter conditions
-	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, false)
+	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables, skipResourceFilter, false)
 
 	if err != nil {
 		return nil, err
@@ -642,6 +656,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	skipResourceFilter bool,
 	enableFTS bool,
 ) (querybuilder.PreparedWhereClause, error) {
 
@@ -659,7 +674,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			BodyJSONEnabled:    bodyJSONEnabled,
 			FreeTextColumn:     b.freeTextColumn,
-			SkipResourceFilter: true,
+			SkipResourceFilter: skipResourceFilter,
+			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
@@ -714,33 +730,30 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
 	variables map[string]qbtypes.VariableItem,
-) (cteSQL string, cteArgs []any, err error) {
+) (cteSQL string, cteArgs []any, skipResourceFilter bool, err error) {
 
-	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
+	if b.skipResourceFingerprintEnabled {
+		decision, err := b.resourceFilterResolver.Resolve(ctx, query, start, end, variables)
+		if err != nil {
+			return "", nil, true, err
+		}
+		switch decision {
+		case qbtypes.ResourceFilterResolveKindNoOp:
+			return "", nil, true, nil
+		case qbtypes.ResourceFilterResolveKindFallback:
+			return "", nil, false, nil
+		}
+	}
+
+	stmt, err := b.resourceFilterResolver.StatementBuilder().Build(
+		ctx, start, end, qbtypes.RequestTypeRaw, query, variables,
+	)
 	if err != nil {
-		return "", nil, err
+		return "", nil, true, err
 	}
 	if stmt == nil {
-		return "", nil, nil
+		return "", nil, true, nil
 	}
-
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
-
-	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
-}
-
-func (b *logQueryStatementBuilder) buildResourceFilterCTE(
-	ctx context.Context,
-	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
-	start, end uint64,
-	variables map[string]qbtypes.VariableItem,
-) (*qbtypes.Statement, error) {
-	return b.resourceFilterStmtBuilder.Build(
-		ctx,
-		start,
-		end,
-		qbtypes.RequestTypeRaw,
-		query,
-		variables,
-	)
+	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, true, nil
 }
