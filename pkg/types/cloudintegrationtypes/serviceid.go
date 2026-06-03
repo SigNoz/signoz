@@ -1,7 +1,10 @@
 package cloudintegrationtypes
 
 import (
+	"strings"
+
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -73,10 +76,31 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 }
 
 func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
-	for _, s := range SupportedServices[provider] {
+	// The valid set is provider-scoped (AWS and Azure expose different
+	// services), so surface it as a structured suggestion along with a
+	// closest-match correction for typos.
+	supported := SupportedServices[provider]
+	validServices := make([]string, 0, len(supported))
+	for _, s := range supported {
 		if s.StringValue() == service {
 			return s, nil
 		}
+		validServices = append(validServices, s.StringValue())
 	}
-	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for %s cloud provider", service, provider.StringValue())
+
+	invalidErr := errors.NewInvalidInputf(ErrCodeInvalidServiceID,
+		"invalid service id %q for %s cloud provider", service, provider.StringValue()).
+		WithInvalidReferences(service)
+
+	var suggestions []string
+	if match, ok := telemetrytypes.SuggestCorrection(service, validServices); ok {
+		suggestions = append(suggestions, "did you mean: `"+match+"`")
+	}
+	quoted := make([]string, len(validServices))
+	for i, v := range validServices {
+		quoted[i] = "`" + v + "`"
+	}
+	suggestions = append(suggestions, "valid references: "+strings.Join(quoted, ", "))
+
+	return ServiceID{}, invalidErr.WithSuggestions(suggestions...)
 }

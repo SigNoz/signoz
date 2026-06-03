@@ -35,8 +35,7 @@ func (p *PanelPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := panelPluginSpecs[PanelPluginKind(kind)]
 	if !ok {
-		allowed := allowedValuesForKind(slices.Sorted(maps.Keys(panelPluginSpecs)))
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown panel plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(panelPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -88,8 +87,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := queryPluginSpecs[QueryPluginKind(kind)]
 	if !ok {
-		allowed := allowedValuesForKind(slices.Sorted(maps.Keys(queryPluginSpecs)))
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown query plugin kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown query plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(queryPluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -140,8 +138,7 @@ func (p *VariablePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := variablePluginSpecs[VariablePluginKind(kind)]
 	if !ok {
-		allowed := allowedValuesForKind(slices.Sorted(maps.Keys(variablePluginSpecs)))
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(variablePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {
@@ -189,8 +186,7 @@ func (p *DatasourcePlugin) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := datasourcePluginSpecs[DatasourcePluginKind(kind)]
 	if !ok {
-		allowed := allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs)))
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown datasource plugin kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(datasourcePluginSpecs))))
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {

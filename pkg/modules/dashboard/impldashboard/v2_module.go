@@ -11,7 +11,7 @@ import (
 
 func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, source dashboardtypes.Source, postable dashboardtypes.PostableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if !source.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardInvalidSource, "invalid dashboard source %q", source.StringValue()).WithInvalidReferences(source.StringValue()).WithSuggestions(dashboardtypes.EnumReferences(dashboardtypes.Source{}.Enum()))
+		return nil, errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source.StringValue())
 	}
 	if err := postable.Validate(); err != nil {
 		return nil, err

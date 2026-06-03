@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -72,9 +71,7 @@ func (d *DashboardSpec) Validate() error {
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	if !slices.Contains(allowed, plugin.Kind) {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind).
-			WithInvalidReferences(string(plugin.Kind)).
-			WithSuggestions(queryKindReferences(allowed))
+			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
 	}
 
 	if plugin.Kind != QueryKindComposite {
@@ -93,49 +90,10 @@ func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind,
 		if !slices.Contains(allowed, subKind) {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 				"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
-				path, si, sub.Type, panelKind).
-				WithInvalidReferences(sub.Type.StringValue()).
-				WithSuggestions(allowedSubQueryTypeReferences(allowed))
+				path, si, sub.Type, panelKind)
 		}
 	}
 	return nil
-}
-
-// EnumReferences renders an Enum() value list as a backtick-delimited
-// "valid references: `a`, `b`" suggestion string for invalid-input errors.
-func EnumReferences(values []any) string {
-	parts := make([]string, 0, len(values))
-	for _, v := range values {
-		if sv, ok := v.(interface{ StringValue() string }); ok {
-			parts = append(parts, "`"+sv.StringValue()+"`")
-		} else {
-			parts = append(parts, "`"+fmt.Sprintf("%v", v)+"`")
-		}
-	}
-	return "valid references: " + strings.Join(parts, ", ")
-}
-
-// queryKindReferences renders the allowed query kinds for a panel as a
-// "valid references" suggestion string.
-func queryKindReferences(allowed []QueryPluginKind) string {
-	parts := make([]string, 0, len(allowed))
-	for _, k := range allowed {
-		parts = append(parts, "`"+string(k)+"`")
-	}
-	return "valid references: " + strings.Join(parts, ", ")
-}
-
-// allowedSubQueryTypeReferences renders the composite sub-query types whose
-// plugin kind is allowed for the panel as a "valid references" suggestion.
-func allowedSubQueryTypeReferences(allowed []QueryPluginKind) string {
-	parts := make([]string, 0, len(compositeSubQueryTypeToPluginKind))
-	for qt, kind := range compositeSubQueryTypeToPluginKind {
-		if slices.Contains(allowed, kind) {
-			parts = append(parts, "`"+qt.StringValue()+"`")
-		}
-	}
-	slices.Sort(parts)
-	return "valid references: " + strings.Join(parts, ", ")
 }
 
 var (

@@ -34,7 +34,7 @@ func (s Source) StringValue() string { return s.s.StringValue() }
 
 func (s Source) Value() (driver.Value, error) {
 	if !s.IsValid() {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q", s.s.StringValue()).WithInvalidReferences(s.s.StringValue()).WithSuggestions(EnumReferences(Source{}.Enum()))
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", s.s.StringValue())
 	}
 	return s.s.Value()
 }
@@ -54,7 +54,7 @@ func (s *Source) UnmarshalJSON(data []byte) error {
 func NewSource(source string) (Source, error) {
 	candidate := Source{s: valuer.NewString(source)}
 	if !candidate.IsValid() {
-		return Source{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q", source).WithInvalidReferences(source).WithSuggestions(EnumReferences(Source{}.Enum()))
+		return Source{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidSource, "invalid dashboard source %q, must be one of user, system, integration", source)
 	}
 	return candidate, nil
 }

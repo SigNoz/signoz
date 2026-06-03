@@ -306,7 +306,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		*t = tp
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(TimePreference{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
 	}
 }
 
@@ -347,7 +347,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		*l = lp
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(LegendPosition{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
 	}
 }
 
@@ -388,7 +388,7 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 		*f = tf
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(ThresholdFormat{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
 	}
 }
 
@@ -436,7 +436,7 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		*o = co
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(ComparisonOperator{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
 	}
 }
 
@@ -479,7 +479,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		*li = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(LineInterpolation{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
 	}
 }
 
@@ -520,7 +520,7 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		*ls = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(LineStyle{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
 	}
 }
 
@@ -562,7 +562,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		*fm = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(FillMode{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
 	}
 }
 
@@ -609,7 +609,7 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 			p.String = valuer.NewString(strconv.Itoa(n))
 			return nil
 		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d", n).WithInvalidReferences(strconv.Itoa(n)).WithSuggestions(EnumReferences(PrecisionOption{}.Enum()))
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be `0`, `1`, `2`, `3`, `4`, or `full`", n)
 		}
 	}
 	var v string
@@ -626,6 +626,6 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 		*p = val
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q", v).WithInvalidReferences(v).WithSuggestions(EnumReferences(PrecisionOption{}.Enum()))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
 	}
 }
