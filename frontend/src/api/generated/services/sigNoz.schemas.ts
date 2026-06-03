@@ -4690,6 +4690,15 @@ export type DashboardtypesJSONPatchDocumentDTO =
 	| DashboardtypesJSONPatchOperationDTO[]
 	| null;
 
+export enum DashboardtypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum DashboardtypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
 export interface DashboardtypesListedDashboardV2SpecDTO {
 	display?: CommonDisplayDTO;
 }
@@ -9588,15 +9597,13 @@ export type ListDashboardsV2Params = {
 	 */
 	query?: string;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	sort?: string;
+	sort?: DashboardtypesListSortDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	order?: string;
+	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type integer
 	 * @description undefined

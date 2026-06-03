@@ -2723,6 +2723,11 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
     DashboardtypesListPanelSpec:
       properties:
         selectFields:
@@ -2730,6 +2735,12 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
       type: object
+    DashboardtypesListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
     DashboardtypesListVariableSpec:
       properties:
         allowAllValue:
@@ -12932,11 +12943,11 @@ paths:
       - in: query
         name: sort
         schema:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListSort'
       - in: query
         name: order
         schema:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListOrder'
       - in: query
         name: limit
         schema:

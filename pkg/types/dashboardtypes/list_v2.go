@@ -1,7 +1,7 @@
 package dashboardtypes
 
 import (
-	"strings"
+	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -17,20 +17,36 @@ const (
 
 // ListSort is the sort field for the dashboard list endpoint. The value is a
 // stable enum so callers can't ask for arbitrary columns.
-type ListSort string
+type ListSort struct{ valuer.String }
 
-const (
-	ListSortUpdatedAt ListSort = "updated_at"
-	ListSortCreatedAt ListSort = "created_at"
-	ListSortName      ListSort = "name"
+var (
+	ListSortUpdatedAt = ListSort{valuer.NewString("updated_at")}
+	ListSortCreatedAt = ListSort{valuer.NewString("created_at")}
+	ListSortName      = ListSort{valuer.NewString("name")}
 )
 
-type ListOrder string
+func (ListSort) Enum() []any {
+	return []any{ListSortUpdatedAt, ListSortCreatedAt, ListSortName}
+}
 
-const (
-	ListOrderAsc  ListOrder = "asc"
-	ListOrderDesc ListOrder = "desc"
+func (s ListSort) IsValid() bool {
+	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
+}
+
+type ListOrder struct{ valuer.String }
+
+var (
+	ListOrderAsc  = ListOrder{valuer.NewString("asc")}
+	ListOrderDesc = ListOrder{valuer.NewString("desc")}
 )
+
+func (ListOrder) Enum() []any {
+	return []any{ListOrderAsc, ListOrderDesc}
+}
+
+func (o ListOrder) IsValid() bool {
+	return slices.ContainsFunc(o.Enum(), func(v any) bool { return v == o })
+}
 
 var ErrCodeDashboardListInvalid = errors.MustNewCode("dashboard_list_invalid")
 
@@ -44,31 +60,21 @@ type ListDashboardsV2Params struct {
 
 // Validate fills in defaults (sort=updated_at, order=desc, limit=20) and
 // rejects out-of-allowlist sort/order values and bad limit/offset. Limit is
-// clamped to MaxListLimit on the high side. Lowercases sort/order so callers
-// can pass them in any case.
+// clamped to MaxListLimit on the high side. Sort/order are case-insensitive —
+// valuer.String lowercases them at bind time.
 func (p *ListDashboardsV2Params) Validate() error {
-	if p.Sort == "" {
+	if p.Sort.IsZero() {
 		p.Sort = ListSortUpdatedAt
-	} else {
-		p.Sort = ListSort(strings.ToLower(string(p.Sort)))
-		switch p.Sort {
-		case ListSortUpdatedAt, ListSortCreatedAt, ListSortName:
-		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-				"invalid sort %q — expected one of: updated_at, created_at, name", p.Sort)
-		}
+	} else if !p.Sort.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid sort %q — expected one of: `updated_at`, `created_at`, `name`", p.Sort)
 	}
 
-	if p.Order == "" {
+	if p.Order.IsZero() {
 		p.Order = ListOrderDesc
-	} else {
-		p.Order = ListOrder(strings.ToLower(string(p.Order)))
-		switch p.Order {
-		case ListOrderAsc, ListOrderDesc:
-		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
-				"invalid order %q — expected asc or desc", p.Order)
-		}
+	} else if !p.Order.IsValid() {
+		return errors.NewInvalidInputf(ErrCodeDashboardListInvalid,
+			"invalid order %q — expected `asc` or `desc`", p.Order)
 	}
 
 	if p.Limit == 0 {

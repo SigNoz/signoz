@@ -114,7 +114,7 @@ func (store *store) ListV2(
 	}
 	q = q.
 		OrderExpr("is_pinned DESC").
-		OrderExpr(sortExpr + " " + strings.ToUpper(string(params.Order))).
+		OrderExpr(sortExpr + " " + strings.ToUpper(params.Order.StringValue())).
 		Limit(params.Limit).
 		Offset(params.Offset)
 
