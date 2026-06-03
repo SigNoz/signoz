@@ -10,6 +10,7 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { AppState } from 'store/reducers';
 import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
 
 import { PANEL_KIND_TO_PANEL_TYPE, type PanelKind } from '../Panels/types';
 
@@ -62,9 +63,14 @@ export function usePanelQuery({
 	enabled = true,
 }: UsePanelQueryArgs): UsePanelQueryResult {
 	const fullKind = panel?.spec?.plugin?.kind;
-	const graphType =
+	// HISTOGRAM and BAR panels both bin/derive from raw time-series data
+	// client-side, so the backend `requestType` for them is `time_series`.
+	// `getGraphType` encodes the V1-established mapping — using it keeps
+	// V2 in lockstep with how the API has always been called.
+	const panelType =
 		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind as PanelKind]) ??
 		PANEL_TYPES.TIME_SERIES;
+	const graphType = getGraphType(panelType);
 
 	const query = useMemo(
 		() => fromPerses(panel?.spec?.queries ?? []),
