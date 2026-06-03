@@ -43,7 +43,6 @@ import defaultRoutes, {
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
-import { getCurrentEnvironment } from 'AppRoutes/getCurrentEnvironment';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -349,12 +348,10 @@ function App(): JSX.Element {
 				!isSentryInitialized &&
 				(window.signozBootData?.settings?.sentry.enabled ?? true)
 			) {
-				const sentryEnvironment = getCurrentEnvironment();
-
 				Sentry.init({
 					dsn: process.env.SENTRY_DSN,
 					tunnel: process.env.TUNNEL_URL,
-					environment: sentryEnvironment,
+					environment: process.env.ENVIRONMENT,
 					integrations: [
 						Sentry.replayIntegration({
 							maskAllText: false,

@@ -155,6 +155,7 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
+			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
 		},
 		// In production, use relative paths so assets work with any base path injected by the backend.
 		// In dev, use the configured base path for proper HMR and routing.
