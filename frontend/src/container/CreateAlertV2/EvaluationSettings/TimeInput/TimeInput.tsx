@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Input } from '@signozhq/ui/input';
+import { Input } from 'antd';
+
 import './TimeInput.scss';
 
 export interface TimeInputProps {

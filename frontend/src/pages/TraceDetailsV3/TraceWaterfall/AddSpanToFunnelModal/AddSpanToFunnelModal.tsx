@@ -1,7 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
-import { Spin } from 'antd';
+import { Input, Spin } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SignozModal from 'components/SignozModal/SignozModal';

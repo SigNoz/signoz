@@ -1,5 +1,4 @@
-import { Input } from '@signozhq/ui/input';
-import { Collapse } from 'antd';
+import { Collapse, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import { useCreateAlertState } from '../context';

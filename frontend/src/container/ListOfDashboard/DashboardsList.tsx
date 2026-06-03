@@ -12,9 +12,17 @@ import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Input } from '@signozhq/ui/input';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
-import { Button, Flex, Modal, Popover, Skeleton, Table, Tooltip } from 'antd';
+import {
+	Button,
+	Flex,
+	Input,
+	Modal,
+	Popover,
+	Skeleton,
+	Table,
+	Tooltip,
+} from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';

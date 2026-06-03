@@ -22,6 +22,7 @@ import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	ColorPicker,
+	Input,
 	Modal,
 	RefSelectProps,
 	Select,
@@ -29,7 +30,6 @@ import {
 } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import { Input } from '@signozhq/ui/input';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Input } from '@signozhq/ui/input';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { X } from '@signozhq/icons';

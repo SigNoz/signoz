@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Input } from '@signozhq/ui/input';
-import { Button, Collapse, Select, Spin } from 'antd';
+import { Button, Collapse, Input, Select, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {

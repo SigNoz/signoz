@@ -5,12 +5,12 @@ import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import {
 	Col,
 	Collapse,
 	DatePicker,
 	Form,
+	Input,
 	InputNumber,
 	Modal,
 	Row,

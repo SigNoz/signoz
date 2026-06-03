@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Input } from '@signozhq/ui/input';
+import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';

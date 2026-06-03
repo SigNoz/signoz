@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { SquareX, X } from '@signozhq/icons';
-import { Input } from '@signozhq/ui/input';
-import { Button, Select } from 'antd';
+import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
 	ConditionalOperators,

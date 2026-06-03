@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Input } from '@signozhq/ui/input';
-import { Button, Skeleton } from 'antd';
+import { Button, Input, Skeleton } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';

@@ -41,22 +41,14 @@ $item-spacing: 8px;
 		width: 100%;
 		background: transparent;
 		border: none;
-		border-radius: 0;
-		box-shadow: none;
 		outline: none;
-		height: auto;
 		color: var(--l1-foreground);
 		font-size: 14px;
 		line-height: 20px;
 		letter-spacing: -0.07px;
 		padding: 0;
-
-		&:focus,
-		&:focus-visible,
-		&:hover {
-			border: none;
+		&.ant-input:focus {
 			box-shadow: none;
-			outline: none;
 		}
 
 		&::placeholder {

@@ -1,7 +1,6 @@
 import { ChangeEvent } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Input } from '@signozhq/ui/input';
-import { Button, Popover, Tooltip } from 'antd';
+import { Button, Input, Popover, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowDownWideNarrow, Check, Plus, Search } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';

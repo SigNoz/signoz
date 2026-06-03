@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LoaderCircle, Check } from '@signozhq/icons';
-import { Input } from '@signozhq/ui/input';
-import { Button, Space } from 'antd';
+import { Button, Input, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
