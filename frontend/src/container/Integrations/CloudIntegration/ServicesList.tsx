@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Skeleton } from 'antd';
-import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
+import { useListAccountServicesMetadata } from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { IntegrationType } from 'container/Integrations/types';
@@ -20,17 +20,11 @@ function ServicesList({
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const hasValidCloudAccountId = Boolean(cloudAccountId);
-	const serviceQueryParams = hasValidCloudAccountId
-		? { cloud_integration_id: cloudAccountId }
-		: undefined;
 
-	const { data: servicesMetadata, isLoading } = useListServicesMetadata(
-		{
-			cloudProvider: type,
-		},
-		serviceQueryParams,
-	);
+	const { data: servicesMetadata, isLoading } = useListAccountServicesMetadata({
+		cloudProvider: type,
+		id: cloudAccountId,
+	});
 
 	const awsServices = useMemo(
 		() => servicesMetadata?.data?.services ?? [],

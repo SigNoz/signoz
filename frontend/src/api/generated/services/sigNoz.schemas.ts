@@ -8623,6 +8623,18 @@ export type UpdateAccountPathParameters = {
 	cloudProvider: string;
 	id: string;
 };
+export type ListAccountServicesMetadataPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type ListAccountServicesMetadata200 = {
+	data: CloudintegrationtypesGettableServicesMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateServicePathParameters = {
 	cloudProvider: string;
 	id: string;
