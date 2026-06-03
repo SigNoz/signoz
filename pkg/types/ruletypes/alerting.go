@@ -2,10 +2,7 @@ package ruletypes
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/url"
 	"sort"
-	"strings"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -191,35 +188,3 @@ func (rc *RuleCondition) String() string {
 	return string(data)
 }
 
-// PrepareRuleGeneratorURL creates an appropriate url for the rule. The URL is
-// sent in Slack messages as well as to other systems and allows backtracking
-// to the rule definition from the third party systems.
-func PrepareRuleGeneratorURL(ruleID string, source string) string {
-	if source == "" {
-		return source
-	}
-
-	// check if source is a valid url
-	parsedSource, err := url.Parse(source)
-	if err != nil {
-		return ""
-	}
-	// since we capture window.location when a new rule is created
-	// we end up with rulesource host:port/alerts/new. in this case
-	// we want to replace new with rule id parameter
-
-	hasNew := strings.LastIndex(source, "new")
-	if hasNew > -1 {
-		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", source[0:hasNew], ruleID)
-		return ruleURL
-	}
-
-	// The source contains the encoded query, start and end time
-	// and other parameters. We don't want to include them in the generator URL
-	// mainly to keep the URL short and lower the alert body contents
-	// The generator URL with /alerts/edit?ruleId= is enough
-	if parsedSource.Port() != "" {
-		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleID)
-	}
-	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleID)
-}

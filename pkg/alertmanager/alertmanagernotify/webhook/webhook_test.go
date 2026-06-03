@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
@@ -27,13 +29,15 @@ import (
 )
 
 func TestWebhookRetry(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL("http://example.com"),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	if err != nil {
 		require.NoError(t, err)
@@ -96,13 +100,16 @@ func TestWebhookRedactedURL(t *testing.T) {
 	defer fn()
 
 	secret := "secret"
+	tmpl := test.CreateTmpl(t)
+	templater := alertmanagertemplate.New(tmpl, slog.Default())
 	notifier, err := New(
 		&config.WebhookConfig{
 			URL:        config.SecretTemplateURL(u.String()),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		templater,
 	)
 	require.NoError(t, err)
 
@@ -118,13 +125,15 @@ func TestWebhookReadingURLFromFile(t *testing.T) {
 	_, err = f.WriteString(u.String() + "\n")
 	require.NoError(t, err, "writing to temp file failed")
 
+	tmpl := test.CreateTmpl(t)
 	notifier, err := New(
 		&config.WebhookConfig{
 			URLFile:    f.Name(),
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
 		},
-		test.CreateTmpl(t),
+		tmpl,
 		promslog.NewNopLogger(),
+		alertmanagertemplate.New(tmpl, slog.Default()),
 	)
 	require.NoError(t, err)
 
@@ -178,13 +187,15 @@ func TestWebhookURLTemplating(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			calledURL = "" // Reset for each test
 
+			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.WebhookConfig{
 					URL:        config.SecretTemplateURL(tc.url),
 					HTTPConfig: &commoncfg.HTTPClientConfig{},
 				},
-				test.CreateTmpl(t),
+				tmpl,
 				promslog.NewNopLogger(),
+				alertmanagertemplate.New(tmpl, slog.Default()),
 			)
 			require.NoError(t, err)
 

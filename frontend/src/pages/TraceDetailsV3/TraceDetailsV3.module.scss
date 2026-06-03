@@ -4,11 +4,26 @@
 	flex-direction: column;
 }
 
+.layoutRow {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
 .content {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	min-width: 0;
 	overflow: hidden;
+}
+
+.rightDock {
+	display: flex;
+	flex-direction: column;
+	border-left: 1px solid var(--l2-border);
+	min-width: 0;
 }
 
 // Shared Ant Collapse chrome reset for both the flamegraph and waterfall

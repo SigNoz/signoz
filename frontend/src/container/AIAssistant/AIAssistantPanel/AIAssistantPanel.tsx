@@ -3,7 +3,8 @@ import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
+import { History, Maximize2, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -137,9 +138,9 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
 				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
 				<div className={styles.header}>
-					<div className={styles.title}>
-						<Sparkles size={18} color="var(--primary)" />
-						<span>AI Assistant</span>
+					<div className={`${styles.title} noz-wave`}>
+						<Noz size={18} />
+						<span>Noz</span>
 					</div>
 
 					<div className={styles.actions}>
@@ -150,9 +151,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={(): void => setShowHistory((v) => !v)}
 								aria-label="Toggle conversations"
-							>
-								<History size={14} />
-							</Button>
+								prefix={<History size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="New conversation">
@@ -162,9 +162,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={handleNew}
 								aria-label="New conversation"
-							>
-								<Plus size={14} />
-							</Button>
+								prefix={<Plus size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="Open full screen">
@@ -175,9 +174,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
-							>
-								<Maximize2 size={14} />
-							</Button>
+								prefix={<Maximize2 size={14} />}
+							/>
 						</TooltipSimple>
 
 						<TooltipSimple title="Close">
@@ -187,9 +185,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								color="secondary"
 								onClick={closeDrawer}
 								aria-label="Close panel"
-							>
-								<X size={14} />
-							</Button>
+								prefix={<X size={14} />}
+							/>
 						</TooltipSimple>
 					</div>
 				</div>

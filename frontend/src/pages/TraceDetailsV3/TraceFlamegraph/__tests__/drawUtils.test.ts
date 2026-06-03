@@ -87,6 +87,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray,
 				eventRectsArray: [],
 				color: '#1890ff',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -94,7 +95,9 @@ describe('Canvas Draw Utils', () => {
 			expect(ctx.beginPath).toHaveBeenCalled();
 			expect(ctx.roundRect).toHaveBeenCalledWith(10, 1, 100, 22, 2);
 			expect(ctx.fill).toHaveBeenCalled();
-			expect(ctx.stroke).not.toHaveBeenCalled();
+			// Rest state draws a subtle 1px rgba(0,0,0,0.3) outline to match spec
+			expect(ctx.stroke).toHaveBeenCalled();
+			expect(ctx.strokeStyle).toBe('rgba(0, 0, 0, 0.3)');
 			expect(spanRectsArray).toHaveLength(1);
 			expect(spanRectsArray[0]).toMatchObject({
 				x: 10,
@@ -126,15 +129,17 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray,
 				eventRectsArray: [],
 				color: '#2F80ED',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 				selectedSpanId: 'sel',
 			});
 
-			// Selected spans get solid l2-background fill + dashed border
+			// Selected spans get solid l2-background fill + dashed border.
+			// Light mode uses colorDark for the stroke for contrast against l2-background.
 			expect(ctx.fill).toHaveBeenCalled();
 			expect(ctx.setLineDash).toHaveBeenCalledWith(DASHED_BORDER_LINE_DASH);
-			expect(ctx.strokeStyle).toBe('#2F80ED');
+			expect(ctx.strokeStyle).toBe('#000');
 			expect(ctx.lineWidth).toBe(2);
 			expect(ctx.stroke).toHaveBeenCalled();
 			expect(ctx.setLineDash).toHaveBeenLastCalledWith([]);
@@ -161,6 +166,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray,
 				eventRectsArray: [],
 				color: '#2F80ED',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 				hoveredSpanId: 'hov',
@@ -193,6 +199,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray,
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -230,6 +237,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray,
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -254,6 +262,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -279,6 +288,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -314,6 +324,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -344,6 +355,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});
@@ -371,8 +383,8 @@ describe('Canvas Draw Utils', () => {
 			expect(ctx.save).toHaveBeenCalled();
 			expect(ctx.translate).toHaveBeenCalledWith(50, 11);
 			expect(ctx.rotate).toHaveBeenCalledWith(Math.PI / 4);
-			expect(ctx.fillStyle).toBe('rgb(220, 38, 38)');
-			expect(ctx.strokeStyle).toBe('rgb(153, 27, 27)');
+			expect(ctx.fillStyle).toBe('#FC4E4E');
+			expect(ctx.strokeStyle).toBe('#fd2c2c');
 			expect(ctx.fillRect).toHaveBeenCalledWith(-3, -3, 6, 6);
 			expect(ctx.strokeRect).toHaveBeenCalledWith(-3, -3, 6, 6);
 			expect(ctx.restore).toHaveBeenCalled();
@@ -408,8 +420,8 @@ describe('Canvas Draw Utils', () => {
 				eventDotSize: 6,
 			});
 
-			expect(ctx.fillStyle).toBe('rgb(239, 68, 68)');
-			expect(ctx.strokeStyle).toBe('rgb(185, 28, 28)');
+			expect(ctx.fillStyle).toBe('#FC4E4E');
+			expect(ctx.strokeStyle).toBe('#fd2c2c');
 		});
 
 		it('falls back to cyan/blue for unparseable span colors', () => {
@@ -461,6 +473,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 				hoveredSpanId: 'p',
@@ -483,6 +496,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 				selectedSpanId: 'p',
@@ -524,6 +538,7 @@ describe('Canvas Draw Utils', () => {
 				spanRectsArray: [],
 				eventRectsArray: [],
 				color: '#000',
+				colorDark: '#000',
 				isDarkMode: false,
 				metrics: METRICS,
 			});

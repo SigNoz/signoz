@@ -2,7 +2,13 @@ import { useCallback } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { orange } from '@ant-design/colors';
 import { Settings } from '@signozhq/icons';
-import { Dropdown, MenuProps } from 'antd';
+import {
+	type BaseMenuItem,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
 import {
 	negateOperator,
 	OPERATORS,
@@ -135,41 +141,38 @@ function BodyTitleRenderer({
 		viewName,
 	]);
 
-	const onClickHandler: MenuProps['onClick'] = (props): void => {
+	const onClickHandler = (key: string): void => {
 		const mapper = {
 			[DROPDOWN_KEY.FILTER_IN]: filterHandler(true),
 			[DROPDOWN_KEY.FILTER_OUT]: filterHandler(false),
 			[DROPDOWN_KEY.GROUP_BY]: groupByHandler,
 		};
 
-		const handler = mapper[props.key];
+		const handler = mapper[key];
 
 		if (handler) {
 			handler();
 		}
 	};
 
-	const menu: MenuProps = {
-		items: [
-			{
-				key: DROPDOWN_KEY.FILTER_IN,
-				label: `Filter for ${value}`,
-			},
-			{
-				key: DROPDOWN_KEY.FILTER_OUT,
-				label: `Filter out ${value}`,
-			},
-			...(isGroupBySupported
-				? [
-						{
-							key: DROPDOWN_KEY.GROUP_BY,
-							label: `Group by ${nodeKey}`,
-						},
-					]
-				: []),
-		],
-		onClick: onClickHandler,
-	};
+	const menuItems: BaseMenuItem[] = [
+		{
+			key: DROPDOWN_KEY.FILTER_IN,
+			label: `Filter for ${value}`,
+		},
+		{
+			key: DROPDOWN_KEY.FILTER_OUT,
+			label: `Filter out ${value}`,
+		},
+		...(isGroupBySupported
+			? [
+					{
+						key: DROPDOWN_KEY.GROUP_BY,
+						label: `Group by ${nodeKey}`,
+					},
+				]
+			: []),
+	];
 
 	const handleNodeClick = useCallback(
 		(e: React.MouseEvent): void => {
@@ -218,15 +221,23 @@ function BodyTitleRenderer({
 					}}
 					onMouseDown={(e): void => e.preventDefault()}
 				>
-					<Dropdown
-						menu={menu}
-						trigger={['click']}
-						dropdownRender={(originNode): React.ReactNode => (
-							<div data-log-detail-ignore="true">{originNode}</div>
-						)}
-					>
-						<Settings style={{ marginRight: 8 }} className="hover-reveal" />
-					</Dropdown>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Settings style={{ marginRight: 8 }} className="hover-reveal" />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent>
+							<div data-log-detail-ignore="true">
+								{menuItems.map((item) => (
+									<DropdownMenuItem
+										key={item.key}
+										onSelect={(): void => onClickHandler(item.key as string)}
+									>
+										{item.label}
+									</DropdownMenuItem>
+								))}
+							</div>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</span>
 			)}
 			{title.toString()}{' '}
