@@ -176,16 +176,16 @@ export function K8sExpandedRow<T>({
 
 	const handleRowClick = useCallback(
 		(_row: T, itemKey: string): void => {
-			setSelectedItem(itemKey);
+			void setSelectedItem(itemKey);
 		},
 		[setSelectedItem],
 	);
 
 	const handleViewAllClick = (): void => {
-		setGroupBy([]);
-		setCurrentPage(1);
+		void setGroupBy([]);
+		void setCurrentPage(1);
 		if (orderBy) {
-			setMainOrderBy(orderBy);
+			void setMainOrderBy(orderBy);
 		}
 
 		const updatedQuery = {
