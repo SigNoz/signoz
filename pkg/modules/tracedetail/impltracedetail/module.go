@@ -7,21 +7,35 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type module struct {
 	store    spantypes.TraceStore
 	settings factory.ScopedProviderSettings
 	config   tracedetail.Config
+	metrics  *moduleMetrics
 }
 
 func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
-	return &module{
+
+	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
+	if err != nil {
+		scopedProviderSettings.Logger().Warn("tracedetail: failed to initialize metrics", "error", err)
+	}
+
+	m := &module{
 		config:   cfg,
 		store:    traceStore,
 		settings: scopedProviderSettings,
+		metrics:  metrics,
 	}
+
+	m.metrics.waterfallMaxLimitToSelectAllSpans.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans))
+
+	return m
 }
 
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
@@ -80,6 +94,10 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	}
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
+		m.metrics.waterfallWindowedResponseCount.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("trace_id", traceID),
+			attribute.Int64("spans_count", int64(summary.NumSpans)),
+		))
 		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
