@@ -9,7 +9,7 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
-	TooltipClickData,
+	ChartClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -22,10 +22,10 @@ interface BaseChartProps {
 	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
 	pinKey?: string;
 	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
-	onClick?: (clickData: TooltipClickData) => void;
+	onClick?: (clickData: ChartClickData) => void;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
-	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
+	pinnedTooltipElement?: (clickData: ChartClickData) => React.ReactNode;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
