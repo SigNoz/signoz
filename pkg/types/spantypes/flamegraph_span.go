@@ -81,6 +81,18 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 	return span
 }
 
+func NewMissingParentFlamegraphSpan(node *FlamegraphSpan) *FlamegraphSpan {
+	return &FlamegraphSpan{
+		SpanID:       node.ParentSpanID,
+		Name:         "Missing Span",
+		Timestamp:    node.Timestamp,
+		DurationNano: node.DurationNano,
+		Events:       []Event{},
+		References:   []OtelSpanRef{},
+		Children:     []*FlamegraphSpan{node},
+	}
+}
+
 // FlamegraphWindowSpanIDs collects all span IDs from a level window into a flat slice.
 func FlamegraphWindowSpanIDs(window []FlamegraphLevel) []string {
 	total := 0

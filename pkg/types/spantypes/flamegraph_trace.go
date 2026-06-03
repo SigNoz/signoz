@@ -84,13 +84,7 @@ func (t *FlamegraphTrace) buildSpanTree() {
 			if parent, ok := t.nodeByID[node.ParentSpanID]; ok {
 				parent.Children = append(parent.Children, node)
 			} else {
-				missing := &FlamegraphSpan{
-					SpanID:       node.ParentSpanID,
-					Name:         "Missing Span",
-					Timestamp:    node.Timestamp,
-					DurationNano: node.DurationNano,
-					Children:     []*FlamegraphSpan{node},
-				}
+				missing := NewMissingParentFlamegraphSpan(node)
 				t.nodeByID[missing.SpanID] = missing
 				t.roots = append(t.roots, missing)
 			}
