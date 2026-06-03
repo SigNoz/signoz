@@ -1,0 +1,40 @@
+.wrapper {
+	composes: cardWrapper from '../states.module.scss';
+	padding: 105px 141px;
+}
+
+.image {
+	width: 32px;
+	height: 32px;
+}
+
+.copy {
+	margin-top: 4px;
+}
+
+.noDashboard {
+	composes: bodyText from '../states.module.scss';
+	color: var(--l1-foreground);
+	font-weight: var(--font-weight-medium);
+}
+
+.info {
+	composes: bodyText from '../states.module.scss';
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-normal);
+}
+
+.actions {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	margin-top: 24px;
+}
+
+.learnMore {
+	composes: learnMoreLink from '../states.module.scss';
+}
+
+.learnMoreArrow {
+	composes: learnMoreArrow from '../states.module.scss';
+}

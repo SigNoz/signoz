@@ -46,11 +46,6 @@ export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDaem
 		},
 	];
 
-export const k8sDaemonSetInitialFilters = [
-	QUERY_KEYS.K8S_DAEMON_SET_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sDaemonSetInitialEventsFilter = (
 	item: K8sDaemonSetsData,
 ): ReturnType<typeof createFilterItem>[] => [

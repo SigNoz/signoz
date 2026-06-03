@@ -7,7 +7,14 @@ import {
 	DropResult,
 } from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Dropdown, Input, MenuProps, Tooltip } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Tooltip } from 'antd';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { FieldDataType } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -159,34 +166,12 @@ function ExplorerColumnsRenderer({
 		debouncedSetQuerySearchText(e.target.value);
 	};
 
-	const items: MenuProps['items'] = [
-		{
-			key: 'search',
-			label: (
-				<Input
-					type="text"
-					placeholder="Search"
-					className="explorer-columns-search"
-					value={searchText}
-					onChange={handleSearchChange}
-					prefix={<Search size={16} style={{ padding: '6px' }} />}
-				/>
-			),
-		},
-		{
-			key: 'columns',
-			label: (
-				<ExplorerAttributeColumns
-					isLoading={isLoading}
-					data={data}
-					searchText={searchText}
-					isAttributeKeySelected={isAttributeKeySelected}
-					handleCheckboxChange={handleCheckboxChange}
-					dataSource={initialDataSource}
-				/>
-			),
-		},
-	];
+	const handleOpenChange = (nextOpen: boolean): void => {
+		setOpen(nextOpen);
+		if (nextOpen) {
+			setSearchText('');
+		}
+	};
 
 	const removeSelectedLogField = (name: string): void => {
 		if (
@@ -238,13 +223,6 @@ function ExplorerColumnsRenderer({
 		}
 	};
 
-	const toggleDropdown = (): void => {
-		setOpen(!open);
-		if (!open) {
-			setSearchText('');
-		}
-	};
-
 	const isDarkMode = useIsDarkMode();
 
 	return (
@@ -257,7 +235,7 @@ function ExplorerColumnsRenderer({
 					</Tooltip>
 				)}
 			</div>
-			<Divider />
+			<Divider className="explorer-columns-renderer__divider" />
 			{!isError && (
 				<div className="explorer-columns-contents">
 					<DragDropContext onDragEnd={onDragEnd}>
@@ -327,25 +305,38 @@ function ExplorerColumnsRenderer({
 						</Droppable>
 					</DragDropContext>
 					<div>
-						<Dropdown
-							menu={{ items }}
-							arrow
-							placement="top"
-							open={open}
-							overlayClassName="explorer-columns-dropdown"
-						>
-							<Button
-								className="action-btn"
-								data-testid="add-columns-button"
-								icon={
-									<CirclePlus
-										size={16}
-										color={isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100}
-									/>
-								}
-								onClick={toggleDropdown}
-							/>
-						</Dropdown>
+						<DropdownMenu open={open} onOpenChange={handleOpenChange}>
+							<DropdownMenuTrigger asChild>
+								<Button
+									className="action-btn"
+									data-testid="add-columns-button"
+									icon={
+										<CirclePlus
+											size={16}
+											color={isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100}
+										/>
+									}
+								/>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent side="top" className="explorer-columns-dropdown">
+								<Input
+									type="text"
+									placeholder="Search"
+									className="explorer-columns-search"
+									value={searchText}
+									onChange={handleSearchChange}
+									prefix={<Search size={16} style={{ padding: '6px' }} />}
+								/>
+								<ExplorerAttributeColumns
+									isLoading={isLoading}
+									data={data}
+									searchText={searchText}
+									isAttributeKeySelected={isAttributeKeySelected}
+									handleCheckboxChange={handleCheckboxChange}
+									dataSource={initialDataSource}
+								/>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
 			)}

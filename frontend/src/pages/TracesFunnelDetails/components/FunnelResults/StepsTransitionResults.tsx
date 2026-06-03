@@ -38,7 +38,7 @@ function StepsTransitionResults(): JSX.Element {
 				<SignozRadioGroup
 					value={selectedTransition}
 					options={stepTransitions}
-					onChange={(e): void => setSelectedTransition(e.target.value)}
+					onChange={setSelectedTransition}
 				/>
 			</div>
 			<div className="steps-transition-results__results">

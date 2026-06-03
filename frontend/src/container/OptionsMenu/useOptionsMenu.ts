@@ -36,7 +36,7 @@ import {
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import { buildCompositeKey, getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
@@ -187,30 +187,6 @@ const useOptionsMenu = ({
 			searchedAttributesDataV5?.data.data.keys || {},
 		).flat();
 		if (searchedAttributesDataList.length) {
-			if (dataSource === DataSource.LOGS) {
-				const logsSelectedColumns: TelemetryFieldKey[] =
-					defaultLogsSelectedColumns.map((e) => ({
-						...e,
-						name: e.name,
-						signal: e.signal as SignalType,
-						fieldContext: e.fieldContext as FieldContext,
-						fieldDataType: e.fieldDataType as FieldDataType,
-					}));
-				return [
-					...logsSelectedColumns,
-					...searchedAttributesDataList
-						.filter((attribute) => attribute.name !== 'body')
-						// eslint-disable-next-line sonarjs/no-identical-functions
-						.map((e) => ({
-							...e,
-							name: e.name,
-							signal: e.signal as SignalType,
-							fieldContext: e.fieldContext as FieldContext,
-							fieldDataType: e.fieldDataType as FieldDataType,
-						})),
-				];
-			}
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			return searchedAttributesDataList.map((e) => ({
 				...e,
 				name: e.name,
@@ -297,57 +273,27 @@ const useOptionsMenu = ({
 				return [...acc, column];
 			}, [] as TelemetryFieldKey[]);
 
-			const optionsData: OptionsQuery = {
-				...defaultOptionsQuery,
-				selectColumns: newSelectedColumns,
-				format: preferences?.formatting?.format || defaultOptionsQuery.format,
-				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
-			};
-
 			updateColumns(newSelectedColumns);
-			handleRedirectWithOptionsData(optionsData);
 		},
-		[
-			searchedAttributeKeys,
-			selectedColumnKeys,
-			preferences,
-			handleRedirectWithOptionsData,
-			updateColumns,
-		],
+		[searchedAttributeKeys, selectedColumnKeys, preferences, updateColumns],
 	);
 
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(f) => buildCompositeKey(f.name, f.fieldContext) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
 				notifications.error({
 					message: 'There must be at least one selected column',
 				});
-			} else {
-				const optionsData: OptionsQuery = {
-					...defaultOptionsQuery,
-					selectColumns: newSelectedColumns || [],
-					format: preferences?.formatting?.format || defaultOptionsQuery.format,
-					maxLines:
-						preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-					fontSize:
-						preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
-				};
-				updateColumns(newSelectedColumns || []);
-				handleRedirectWithOptionsData(optionsData);
+				return;
 			}
+
+			updateColumns(newSelectedColumns || []);
 		},
-		[
-			dataSource,
-			notifications,
-			preferences,
-			handleRedirectWithOptionsData,
-			updateColumns,
-		],
+		[dataSource, notifications, preferences, updateColumns],
 	);
 
 	const handleFormatChange = useCallback(
@@ -414,6 +360,20 @@ const useOptionsMenu = ({
 		setSearchText(value);
 	}, []);
 
+	const reorderSelectColumns = useCallback(
+		(orderedIds: string[]): void => {
+			const current = preferences?.columns ?? [];
+			const byCompositeKey = new Map(
+				current.map((f) => [buildCompositeKey(f.name, f.fieldContext), f]),
+			);
+			const reordered = orderedIds
+				.map((id) => byCompositeKey.get(id))
+				.filter((f): f is TelemetryFieldKey => f !== undefined);
+			updateColumns(reordered);
+		},
+		[preferences, updateColumns],
+	);
+
 	const handleFocus = (): void => {
 		setIsFocused(true);
 	};
@@ -436,6 +396,11 @@ const useOptionsMenu = ({
 				onSelect: handleSelectColumns,
 				onRemove: handleRemoveSelectedColumn,
 				onSearch: handleSearchAttribute,
+				onReorder: reorderSelectColumns,
+			},
+			fieldsSelector: {
+				value: preferences?.columns ?? [],
+				onFieldsChange: updateColumns,
 			},
 			format: {
 				value: preferences?.formatting?.format || defaultOptionsQuery.format,
@@ -457,6 +422,8 @@ const useOptionsMenu = ({
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,
+			reorderSelectColumns,
+			updateColumns,
 			handleFormatChange,
 			handleMaxLinesChange,
 			handleFontSizeChange,

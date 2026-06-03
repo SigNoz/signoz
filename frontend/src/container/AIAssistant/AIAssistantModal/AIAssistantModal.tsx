@@ -4,13 +4,14 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
+import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
 import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents } from '../events';
+import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
 import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
@@ -65,7 +66,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					startNewConversation();
 					setShowHistory(false);
 					void logEvent(AIAssistantEvents.Opened, {
-						source: 'shortcut',
+						source: AIAssistantOpenSource.Shortcut,
 						currentPage: normalizePage(pathname),
 					});
 					openModal();
@@ -142,15 +143,15 @@ export default function AIAssistantModal(): JSX.Element | null {
 				className={styles.backdrop}
 				role="dialog"
 				aria-modal="true"
-				aria-label="AI Assistant"
+				aria-label="Noz"
 				onClick={handleBackdropClick}
 			>
 				<div className={styles.modal}>
 					{/* Header */}
 					<div className={styles.header}>
-						<div className={styles.title}>
-							<Sparkles size={16} color="var(--primary)" />
-							<span>AI Assistant</span>
+						<div className={`${styles.title} noz-wave`}>
+							<Noz size={16} />
+							<span>Noz</span>
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>
@@ -162,57 +163,57 @@ export default function AIAssistantModal(): JSX.Element | null {
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
 									className={showHistory ? styles.toggleBtnActive : ''}
-								>
-									<History size={14} />
-								</Button>
+									prefix={<History size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="New conversation">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleNew}
 									aria-label="New conversation"
-								>
-									<Plus size={14} />
-								</Button>
+									prefix={<Plus size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Open full screen">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleExpand}
 									disabled={!activeConversationId}
 									aria-label="Open full screen"
-								>
-									<Maximize2 size={14} />
-								</Button>
+									prefix={<Maximize2 size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Minimize to side panel">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={handleMinimize}
 									aria-label="Minimize to side panel"
-								>
-									<Minus size={14} />
-								</Button>
+									prefix={<Minus size={14} />}
+								/>
 							</TooltipSimple>
 
 							<TooltipSimple title="Close">
 								<Button
 									variant="ghost"
 									size="icon"
+									color="secondary"
 									onClick={closeModal}
 									aria-label="Close"
-								>
-									<X size={14} />
-								</Button>
+									prefix={<X size={14} />}
+								/>
 							</TooltipSimple>
 						</div>
 					</div>

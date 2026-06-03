@@ -4,7 +4,7 @@ import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
@@ -101,31 +101,22 @@ function EditKeyForm({
 						name="expiryMode"
 						control={control}
 						render={({ field }): JSX.Element => (
-							<ToggleGroup
+							<ToggleGroupSimple
 								type="single"
 								value={field.value}
-								onChange={(val): void => {
+								onChange={(val: string): void => {
 									if (val && canUpdate) {
 										field.onChange(val);
 									}
 								}}
+								size="sm"
+								disabled={!canUpdate}
 								className="edit-key-modal__expiry-toggle"
-							>
-								<ToggleGroupItem
-									value={ExpiryMode.NONE}
-									disabled={!canUpdate}
-									className="edit-key-modal__expiry-toggle-btn"
-								>
-									No Expiration
-								</ToggleGroupItem>
-								<ToggleGroupItem
-									value={ExpiryMode.DATE}
-									disabled={!canUpdate}
-									className="edit-key-modal__expiry-toggle-btn"
-								>
-									Set Expiration Date
-								</ToggleGroupItem>
-							</ToggleGroup>
+								items={[
+									{ value: ExpiryMode.NONE, label: 'No Expiration' },
+									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
+								]}
+							/>
 						)}
 					/>
 				</div>

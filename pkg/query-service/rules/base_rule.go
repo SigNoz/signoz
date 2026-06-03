@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"sync"
 	"time"
 
@@ -23,7 +24,7 @@ type BaseRule struct {
 	id             string
 	name           string
 	orgID          valuer.UUID
-	source         string
+	externalURL    *url.URL
 	handledRestart bool
 
 	// Type of the rule
@@ -138,7 +139,13 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 	}
 }
 
-func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts ...RuleOption) (*BaseRule, error) {
+func NewBaseRule(
+	id string,
+	orgID valuer.UUID,
+	p *ruletypes.PostableRule,
+	externalURL *url.URL,
+	opts ...RuleOption,
+) (*BaseRule, error) {
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -151,8 +158,8 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts .
 	baseRule := &BaseRule{
 		id:                id,
 		orgID:             orgID,
+		externalURL:       externalURL,
 		name:              p.AlertName,
-		source:            p.Source,
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        p.EvalWindow,
@@ -241,7 +248,17 @@ func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
-	return ruletypes.PrepareRuleGeneratorURL(r.ID(), r.source)
+	params := url.Values{}
+	params.Set("ruleId", r.id)
+	return r.ExternalURL("alerts/overview", params)
+}
+
+func (r *BaseRule) ExternalURL(path string, params url.Values) string {
+	u := r.externalURL.JoinPath(path)
+	if len(params) > 0 {
+		u.RawQuery = params.Encode()
+	}
+	return u.String()
 }
 
 func (r *BaseRule) SelectedQuery(ctx context.Context) string {

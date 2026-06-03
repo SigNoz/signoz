@@ -118,6 +118,9 @@ go.mod @therealpandey
 
 /tests/integration/ @therealpandey
 
+# e2e tests
+/tests/e2e/ @AshwinBhatkal
+
 # Flagger Owners
 
 /pkg/flagger/ @therealpandey
@@ -162,3 +165,26 @@ go.mod @therealpandey
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
+
+## Dashboard V2
+/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
+
+## Infrastructure Monitoring
+/frontend/src/pages/InfrastructureMonitoring/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringHosts/ @SigNoz/pulse-frontend
+/frontend/src/container/InfraMonitoringK8s/ @SigNoz/pulse-frontend
+
+## Alerts
+/frontend/src/pages/AlertList/ @SigNoz/pulse-frontend
+/frontend/src/pages/AlertDetails/ @SigNoz/pulse-frontend
+/frontend/src/pages/CreateAlert/ @SigNoz/pulse-frontend
+/frontend/src/pages/EditRules/ @SigNoz/pulse-frontend
+/frontend/src/container/AlertHistory/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertRule/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/FormAlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
+/frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend

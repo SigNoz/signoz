@@ -3,7 +3,6 @@ package implcloudintegration
 import (
 	"context"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -11,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -23,6 +23,7 @@ import (
 
 type module struct {
 	store             cloudintegrationtypes.Store
+	dashboardModule   dashboard.Module
 	gateway           gateway.Gateway
 	zeus              zeus.Zeus
 	licensing         licensing.Licensing
@@ -34,6 +35,7 @@ type module struct {
 
 func NewModule(
 	store cloudintegrationtypes.Store,
+	dashboardModule dashboard.Module,
 	global global.Global,
 	zeus zeus.Zeus,
 	gateway gateway.Gateway,
@@ -44,6 +46,7 @@ func NewModule(
 ) (cloudintegration.Module, error) {
 	return &module{
 		store:             store,
+		dashboardModule:   dashboardModule,
 		global:            global,
 		zeus:              zeus,
 		gateway:           gateway,
@@ -254,7 +257,41 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	return module.store.RemoveAccount(ctx, orgID, accountID, provider)
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		services, err := module.store.ListServices(ctx, accountID)
+		if err != nil {
+			return err
+		}
+
+		sharedServices, err := module.store.ListSharedServices(ctx, orgID, provider, accountID)
+		if err != nil {
+			return err
+		}
+
+		for _, svc := range services {
+			svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, svc.Config)
+			if err != nil {
+				return err
+			}
+			if !svcCfg.IsMetricsEnabled(provider) {
+				continue
+			}
+
+			if cloudintegrationtypes.IsServiceSharedWithMetricsEnabled(provider, sharedServices[svc.Type]) {
+				continue
+			}
+
+			if err := module.deprovisionDashboards(ctx, orgID, provider, svc.Type); err != nil {
+				return err
+			}
+		}
+
+		if err := module.store.DeleteServicesByCloudIntegrationID(ctx, orgID, accountID); err != nil {
+			return err
+		}
+
+		return module.store.RemoveAccount(ctx, orgID, accountID, provider)
+	})
 }
 
 func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
@@ -331,12 +368,16 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, service
 
 			integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
 		}
+
+		if err := module.enrichDashboardIDs(ctx, orgID, provider, serviceID, serviceDefinition); err != nil {
+			return nil, err
+		}
 	}
 
 	return cloudintegrationtypes.NewService(*serviceDefinition, integrationService), nil
 }
 
-func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -357,10 +398,21 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 		return err
 	}
 
-	return module.store.CreateService(ctx, cloudintegrationtypes.NewStorableCloudIntegrationService(service, string(configJSON)))
+	metricsEnabled := service.Config.IsMetricsEnabled(provider)
+	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(service, string(configJSON))
+
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.CreateService(ctx, storableService); err != nil {
+			return err
+		}
+		if metricsEnabled {
+			return module.provisionDashboards(ctx, orgID, createdBy, creator, provider, service, serviceDefinition)
+		}
+		return nil
+	})
 }
 
-func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -381,43 +433,28 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 		return err
 	}
 
+	metricsEnabled := integrationService.Config.IsMetricsEnabled(provider)
 	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(integrationService, string(configJSON))
 
-	return module.store.UpdateService(ctx, storableService)
-}
-
-func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
-	_, err := module.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
-
-	_, _, _, err = cloudintegrationtypes.ParseCloudIntegrationDashboardID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	allDashboards, err := module.listDashboards(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range allDashboards {
-		if d.ID == id {
-			return d, nil
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.UpdateService(ctx, storableService); err != nil {
+			return err
 		}
-	}
 
-	return nil, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration dashboard not found")
-}
+		if metricsEnabled {
+			return module.provisionDashboards(ctx, orgID, createdBy, creator, provider, integrationService, serviceDefinition)
+		}
 
-func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	_, err := module.licensing.GetActive(ctx, orgID)
-	if err != nil {
-		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
-	}
+		sharedServices, err := module.store.ListSharedServices(ctx, orgID, provider, integrationService.CloudIntegrationID)
+		if err != nil {
+			return err
+		}
+		if cloudintegrationtypes.IsServiceSharedWithMetricsEnabled(provider, sharedServices[integrationService.Type]) {
+			return nil
+		}
 
-	return module.listDashboards(ctx, orgID)
+		return module.deprovisionDashboards(ctx, orgID, provider, integrationService.Type)
+	})
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
@@ -493,52 +530,73 @@ func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, 
 	return factorAPIKey.Key, nil
 }
 
-func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	var allDashboards []*dashboardtypes.Dashboard
+// provisionDashboards creates dashboard and integration_dashboard rows for each dashboard in the service definition.
+// Must be called within a transaction (ctx carries the tx).
+func (module *module) provisionDashboards(ctx context.Context, orgID valuer.UUID, createdBy string, creator valuer.UUID, provider cloudintegrationtypes.CloudProviderType, service *cloudintegrationtypes.CloudIntegrationService, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
+	// TODO: DB calls are in for loop, can be optimized later.
+	for _, dashboard := range serviceDefinition.Assets.Dashboards {
+		slug := cloudintegrationtypes.CloudIntegrationDashboardSlug(provider, service.Type, dashboard.ID)
 
-	for provider := range module.cloudProvidersMap {
-		cloudProvider, err := module.getCloudProvider(provider)
-		if err != nil {
-			return nil, err
+		existing, err := module.store.GetIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		if existing != nil {
+			continue
 		}
 
-		connectedAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+		createdDashboard, err := module.dashboardModule.Create(ctx, orgID, createdBy, creator, dashboardtypes.SourceIntegration, dashboardtypes.PostableDashboard(dashboard.Definition))
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		for _, storableAccount := range connectedAccounts {
-			storedServices, err := module.store.ListServices(ctx, storableAccount.ID)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, storedSvc := range storedServices {
-				serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedSvc.Config)
-				if err != nil || !serviceConfig.IsMetricsEnabled(provider) {
-					continue
-				}
-
-				svcDef, err := cloudProvider.GetServiceDefinition(ctx, storedSvc.Type)
-				if err != nil || svcDef == nil {
-					continue
-				}
-
-				dashboards := cloudintegrationtypes.GetDashboardsFromAssets(
-					storedSvc.Type.StringValue(),
-					orgID,
-					provider,
-					storableAccount.CreatedAt,
-					svcDef.Assets,
-				)
-				allDashboards = append(allDashboards, dashboards...)
-			}
+		integrationDashboard := cloudintegrationtypes.NewStorableIntegrationDashboard(createdDashboard.ID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
+		if err := module.store.CreateIntegrationDashboard(ctx, integrationDashboard); err != nil {
+			return err
 		}
 	}
 
-	sort.Slice(allDashboards, func(i, j int) bool {
-		return allDashboards[i].ID < allDashboards[j].ID
-	})
+	return nil
+}
 
-	return allDashboards, nil
+// deprovisionDashboards deletes all dashboard and integration_dashboard rows for the given service.
+// make sure to call this within a transaction.
+func (module *module) deprovisionDashboards(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID) error {
+	slugPrefix := cloudintegrationtypes.CloudIntegrationDashboardSlugPrefix(provider, serviceID)
+	rows, err := module.store.ListIntegrationDashboardsBySlugPrefix(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slugPrefix)
+	if err != nil {
+		return err
+	}
+	for _, row := range rows {
+		dashID, err := valuer.NewUUID(row.DashboardID)
+		if err != nil {
+			return err
+		}
+
+		if err := module.store.DeleteIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, row.Slug); err != nil {
+			return err
+		}
+
+		if err := module.dashboardModule.DeleteUnsafe(ctx, orgID, dashID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// enrichDashboardIDs replaces the raw dashboard name in each Dashboard.ID with the provisioned UUID.
+// TODO: remove this hack and send idiomatic response to client.
+func (module *module) enrichDashboardIDs(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, serviceID cloudintegrationtypes.ServiceID, serviceDefinition *cloudintegrationtypes.ServiceDefinition) error {
+	for i, d := range serviceDefinition.Assets.Dashboards {
+		slug := cloudintegrationtypes.CloudIntegrationDashboardSlug(provider, serviceID, d.ID)
+		row, err := module.store.GetIntegrationDashboardBySlug(ctx, orgID, cloudintegrationtypes.IntegrationDashboardProviderCloudIntegration, slug)
+		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				continue
+			}
+			return err
+		}
+		serviceDefinition.Assets.Dashboards[i].ID = row.DashboardID
+	}
+	return nil
 }
