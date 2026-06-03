@@ -2,7 +2,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
 import ExplorerPage from 'container/MeterExplorer/Explorer';
-import { Compass, TowerControl } from 'lucide-react';
+import { Compass, TowerControl } from '@signozhq/icons';
 import SaveView from 'pages/SaveView';
 
 export const Explorer: TabRoutes = {

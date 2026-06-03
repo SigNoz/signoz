@@ -1,0 +1,35 @@
+exporters:
+    otlp:
+        endpoint: localhost:4317
+processors:
+    batch: {}
+    signozllmpricing:
+        attrs:
+            model: gen_ai.request.model
+            in: gen_ai.usage.input_tokens
+            out: gen_ai.usage.output_tokens
+            cache_read: gen_ai.usage.cache_read.input_tokens
+            cache_write: gen_ai.usage.cache_creation.input_tokens
+        default_pricing:
+            unit: per_million_tokens
+            rules: []
+        output_attrs:
+            in: _signoz.gen_ai.cost_input
+            out: _signoz.gen_ai.cost_output
+            cache_read: _signoz.gen_ai.cost_cache_read
+            cache_write: _signoz.gen_ai.cost_cache_write
+            total: _signoz.gen_ai.total_cost
+receivers:
+    otlp:
+        protocols:
+            grpc: null
+service:
+    pipelines:
+        traces:
+            exporters:
+                - otlp
+            processors:
+                - batch
+                - signozllmpricing
+            receivers:
+                - otlp

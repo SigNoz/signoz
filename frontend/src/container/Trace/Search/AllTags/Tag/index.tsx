@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
+import { X } from '@signozhq/icons';
 import { Select } from 'antd';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -157,7 +157,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
-				<CloseOutlined />
+				<X size="md" />
 			</IconContainer>
 		</Container>
 	);

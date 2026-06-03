@@ -96,7 +96,7 @@ describe('useLegendsSync', () => {
 			expect.any(Function),
 		);
 
-		expect(result.current.legendItemsMap).toEqual(initialItems);
+		expect(result.current.legendItemsMap).toStrictEqual(initialItems);
 	});
 
 	it('updates focusedSeriesIndex when a series gains focus via setSeries by default', async () => {
@@ -168,7 +168,7 @@ describe('useLegendsSync', () => {
 		invokeSetSeries(1, { show: true });
 
 		const after = result.current.legendItemsMap;
-		expect(after).toEqual(before);
+		expect(after).toStrictEqual(before);
 	});
 
 	it('cancels pending visibility RAF on unmount', () => {

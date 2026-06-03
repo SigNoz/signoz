@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { CircleMinus, CirclePlus } from '@signozhq/icons';
 import { Button, Col, Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
@@ -30,11 +30,11 @@ function ActionItem({
 		() => (
 			<Col>
 				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.IN)}>
-					<PlusCircleOutlined size={12} /> Filter for value
+					<CirclePlus size={12} /> Filter for value
 				</Button>
 				<br />
 				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.NIN)}>
-					<MinusCircleOutlined size={12} /> Filter out value
+					<CircleMinus size={12} /> Filter out value
 				</Button>
 			</Col>
 		),

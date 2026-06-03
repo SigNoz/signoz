@@ -1,0 +1,98 @@
+.backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 1050;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.45);
+	backdrop-filter: blur(2px);
+	animation: backdropIn 0.15s ease;
+}
+
+@keyframes backdropIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.modal {
+	display: flex;
+	flex-direction: column;
+	width: 70vw;
+	height: 80vh;
+	background: var(--l1-background);
+	border: 1px solid var(--l1-border);
+	border-radius: var(--radius-2);
+	overflow: hidden;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+	animation: modalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+	from {
+		opacity: 0;
+		transform: scale(0.96) translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+	background: var(--l1-background);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+}
+
+.shortcut {
+	font-size: 10px;
+	font-family: var(--font-mono, monospace);
+	font-weight: 500;
+	color: var(--l3-foreground);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	padding: 1px 5px;
+	letter-spacing: 0;
+	line-height: 1.6;
+
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.body {
+	flex: 1;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.toggleBtnActive {
+	background: var(--l2-background) !important;
+	color: var(--accent-primary) !important;
+}

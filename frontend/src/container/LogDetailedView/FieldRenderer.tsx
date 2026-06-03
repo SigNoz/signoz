@@ -1,10 +1,16 @@
-import { Divider, Tooltip, Typography } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
 import { getFieldAttributes } from './utils';
 
 import './FieldRenderer.styles.scss';
+
+const TOOLTIP_CONTENT_PROPS = {
+	className: 'field-renderer-tooltip-content',
+};
 
 function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 	const { dataType, newField, logType } = getFieldAttributes(field);
@@ -13,11 +19,16 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 		<span className="field-renderer-container">
 			{dataType && newField && logType ? (
 				<>
-					<Tooltip placement="left" title={newField} mouseLeaveDelay={0}>
-						<Typography.Text ellipsis className="label">
+					<TooltipSimple
+						title={newField}
+						side="left"
+						tooltipContentProps={TOOLTIP_CONTENT_PROPS}
+						arrow
+					>
+						<Typography.Text truncate={1} className="label">
 							{newField}{' '}
 						</Typography.Text>
-					</Tooltip>
+					</TooltipSimple>
 
 					<div className="tags">
 						<TagContainer>

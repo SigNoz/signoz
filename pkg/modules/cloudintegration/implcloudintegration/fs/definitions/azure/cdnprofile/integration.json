@@ -134,6 +134,24 @@
         "unit": "Count",
         "type": "Gauge",
         "description": ""
+      },
+      {
+        "name": "azure_webapplicationfirewallcaptcharequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_webapplicationfirewalljsrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_websocketconnections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
       }
     ],
     "logs": [

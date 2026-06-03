@@ -1,4 +1,7 @@
-import { Input, Typography } from 'antd';
+// TODO(@signozhq/ui-input): migrate this styled(Input) once @signozhq/ui
+// Input supports `addonAfter` (the consumer renders `<InputComponent addonAfter="ms">`).
+import { Typography } from '@signozhq/ui/typography';
+import { Input } from 'antd';
 import styled from 'styled-components';
 
 export const DurationText = styled.div`

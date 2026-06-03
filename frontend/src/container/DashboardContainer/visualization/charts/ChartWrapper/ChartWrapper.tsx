@@ -29,10 +29,12 @@ export default function ChartWrapper({
 	onClick,
 	syncMode,
 	syncKey,
+	syncFilterMode,
 	onDestroy = noop,
 	children,
 	layoutChildren,
 	yAxisUnit,
+	groupByPerQuery,
 	customTooltip,
 	pinnedTooltipElement,
 	'data-testid': testId,
@@ -68,8 +70,10 @@ export default function ChartWrapper({
 	const syncMetadata = useMemo(
 		() => ({
 			yAxisUnit,
+			groupByPerQuery,
+			filterMode: syncFilterMode,
 		}),
-		[yAxisUnit],
+		[yAxisUnit, groupByPerQuery, syncFilterMode],
 	);
 
 	return (

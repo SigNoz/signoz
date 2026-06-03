@@ -12,21 +12,12 @@ import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Dropdown,
-	Flex,
-	Input,
-	MenuProps,
-	Modal,
-	Popover,
-	Skeleton,
-	Switch,
-	Table,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Button, Flex, Modal, Popover, Skeleton, Table, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Switch } from '@signozhq/ui/switch';
+import { Typography } from '@signozhq/ui/typography';
 import type { TableProps } from 'antd/lib';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -73,7 +64,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -102,6 +93,7 @@ import {
 	filterDashboards,
 } from './utils';
 
+import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -419,15 +411,15 @@ function DashboardsList(): JSX.Element {
 								{dashboard?.tags && dashboard.tags.length > 0 && (
 									<div className="dashboard-tags">
 										{dashboard.tags.slice(0, 3).map((tag) => (
-											<Tag className="tag" key={tag}>
+											<Badge className="tag" color="vanilla" key={tag}>
 												{tag}
-											</Tag>
+											</Badge>
 										))}
 
 										{dashboard.tags.length > 3 && (
-											<Tag className="tag" key={dashboard.tags[3]}>
+											<Badge className="tag" color="vanilla" key={dashboard.tags[3]}>
 												+ <span> {dashboard.tags.length - 3} </span>
-											</Tag>
+											</Badge>
 										)}
 									</div>
 								)}
@@ -435,64 +427,60 @@ function DashboardsList(): JSX.Element {
 
 							{action && (
 								<Popover
-									trigger="click"
 									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Expand size={12} />}
-													onClick={onClickHandler}
-												>
-													View
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														openInNewTab(getLink());
-													}}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Link2 size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(getAbsoluteUrl(getLink()));
-													}}
-												>
-													Copy Link
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<FileJson size={12} />}
-													onClick={handleJsonExport}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
+										<div className={styles.actionContent}>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Expand size={12} />}
+												onClick={onClickHandler}
+											>
+												View
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<SquareArrowOutUpRight size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													openInNewTab(getLink());
+												}}
+											>
+												Open in New Tab
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<Link2 size={12} />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													setCopy(getAbsoluteUrl(getLink()));
+												}}
+											>
+												Copy Link
+											</Button>
+											<Button
+												type="text"
+												className={styles.actionBtn}
+												icon={<FileJson size={12} />}
+												onClick={handleJsonExport}
+											>
+												Export JSON
+											</Button>
+											<DeleteButton
+												name={dashboard.name}
+												id={dashboard.id}
+												isLocked={dashboard.isLocked}
+												createdBy={dashboard.createdBy}
+											/>
 										</div>
 									}
 									placement="bottomRight"
 									arrow={false}
 									rootClassName="dashboard-actions"
+									trigger="click"
 								>
 									<EllipsisVertical
 										className="dashboard-action-icon"
@@ -556,7 +544,7 @@ function DashboardsList(): JSX.Element {
 	];
 
 	const getCreateDashboardItems = useMemo(() => {
-		const menuItems: MenuProps['items'] = [
+		const menuItems: MenuItem[] = [
 			{
 				label: (
 					<div
@@ -714,11 +702,11 @@ function DashboardsList(): JSX.Element {
 
 						{createNewDashboard && (
 							<section className="actions">
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
+								<DropdownMenuSimple
+									className="new-dashboard-menu"
 									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
+									side="bottom"
+									align="end"
 								>
 									<Button
 										type="text"
@@ -730,7 +718,7 @@ function DashboardsList(): JSX.Element {
 									>
 										New Dashboard
 									</Button>
-								</Dropdown>
+								</DropdownMenuSimple>
 								<Button
 									type="text"
 									className="learn-more"
@@ -759,11 +747,11 @@ function DashboardsList(): JSX.Element {
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
+								<DropdownMenuSimple
+									className="new-dashboard-menu"
 									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
+									side="bottom"
+									align="end"
 								>
 									<Button
 										type="primary"
@@ -776,7 +764,7 @@ function DashboardsList(): JSX.Element {
 									>
 										New dashboard
 									</Button>
-								</Dropdown>
+								</DropdownMenuSimple>
 							)}
 						</div>
 
@@ -968,8 +956,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked
+									value
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -988,9 +975,8 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
 									disabled
-									checked
+									value
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1008,8 +994,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedAt}
+									value={visibleColumns.updatedAt}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -1027,8 +1012,7 @@ function DashboardsList(): JSX.Element {
 							<div className="connection-line" />
 							<div className="right">
 								<Switch
-									size="small"
-									checked={visibleColumns.updatedBy}
+									value={visibleColumns.updatedBy}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,

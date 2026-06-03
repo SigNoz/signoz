@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Checkbox, Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Typography } from '@signozhq/ui/typography';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
@@ -173,12 +175,11 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			<Checkbox
 				disabled={isLoading || filterLoading}
 				onClick={onCheckHandler}
-				checked={isCheckBoxSelected}
-				defaultChecked
+				value={isCheckBoxSelected}
 				key={keyValue}
 			>
 				<Tooltip overlay={TooTipOverLay}>
-					<ParaGraph ellipsis>{keyValue}</ParaGraph>
+					<ParaGraph truncate={1}>{keyValue}</ParaGraph>
 				</Tooltip>
 			</Checkbox>
 			{isCheckBoxSelected ? (

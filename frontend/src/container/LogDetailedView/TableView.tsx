@@ -2,15 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { LinkOutlined } from '@ant-design/icons';
+import { Link, Pin } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Space,
-	TableColumnsType as ColumnsType,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
@@ -26,7 +21,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
-import { Pin } from 'lucide-react';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
@@ -112,10 +106,20 @@ function TableView({
 		isListViewPanel,
 	]);
 
-	const flattenLogData: Record<string, string> | null = useMemo(
-		() => (logData ? flattenObject(logData) : null),
-		[logData],
-	);
+	// When USE_JSON_BODY is enabled, body arrives as a pre-parsed object. Serialize it
+	// back to a string so flattenObject keeps `body` as a single table row instead of
+	// recursively expanding it into dotted sub-keys (body.message, body.foo.bar, …),
+	// which would break the tree view in BodyContent that relies on record.field === 'body'.
+	const flattenLogData: Record<string, string> | null = useMemo(() => {
+		if (!logData) {
+			return null;
+		}
+		const normalizedLog =
+			typeof logData.body === 'object' && logData.body !== null
+				? { ...logData, body: JSON.stringify(logData.body) }
+				: logData;
+		return flattenObject(normalizedLog);
+	}, [logData]);
 
 	const handleClick = (
 		operator: string,
@@ -262,11 +266,7 @@ function TableView({
 											onTraceHandler(record, event);
 										}}
 									>
-										<LinkOutlined
-											style={{
-												width: '15px',
-											}}
-										/>
+										<Link size={15} />
 									</Button>
 								</Tooltip>
 							)}

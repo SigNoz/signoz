@@ -171,6 +171,10 @@ export enum FillMode {
 	None = 'none',
 }
 
+export type ExtendedSeries = Series & {
+	metric?: { [key: string]: string };
+};
+
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
@@ -194,6 +198,7 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	fillMode?: FillMode;
 	isDarkMode?: boolean;
 	stepInterval?: number;
+	metric?: { [key: string]: string };
 }
 
 export interface LegendItem {

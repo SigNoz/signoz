@@ -696,6 +696,59 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			errMsg:  "raw request type is not supported for metric queries",
 		},
 		{
+			name: "timeseries request with group by timestamp should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{Expression: "count()"},
+								},
+								GroupBy: []GroupByKey{
+									{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "group by on timestamp is not allowed",
+		},
+		{
+			name: "scalar request with group by timestamp should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{Expression: "count()"},
+								},
+								GroupBy: []GroupByKey{
+									{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "raw request with log query without aggregations should pass",
 			request: QueryRangeRequest{
 				Start:       1640995200000,

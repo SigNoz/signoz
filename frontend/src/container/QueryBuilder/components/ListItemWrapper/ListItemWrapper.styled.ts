@@ -1,8 +1,8 @@
-import { CloseCircleOutlined } from '@ant-design/icons';
+import { CircleX } from '@signozhq/icons';
 import { Row } from 'antd';
 import styled from 'styled-components';
 
-export const StyledDeleteEntity = styled(CloseCircleOutlined)`
+export const StyledDeleteEntity = styled(CircleX)`
 	position: absolute;
 	top: 0.5rem;
 	right: 0.9375rem;

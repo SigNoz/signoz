@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, RadioChangeEvent, Typography } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Drawer } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
+import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { QueryParams } from 'constants/query';
@@ -13,7 +15,7 @@ import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BarChart2, Compass, X } from 'lucide-react';
+import { BarChart, Compass, X } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
@@ -81,8 +83,8 @@ function SpanRelatedSignals({
 		isDrawerOpen: isOpen,
 	});
 
-	const handleTabChange = useCallback((e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleTabChange = useCallback((value: string): void => {
+		setSelectedView(value as RelatedSignalsViews);
 	}, []);
 
 	const tabOptions = useMemo(() => {
@@ -103,7 +105,7 @@ function SpanRelatedSignals({
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 				),
@@ -177,7 +179,10 @@ function SpanRelatedSignals({
 			width="50%"
 			title={
 				<>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className="span-related-signals-drawer__divider"
+					/>
 					<Typography.Text className="title">
 						Related Signals - {selectedSpan.name}
 					</Typography.Text>
@@ -192,7 +197,7 @@ function SpanRelatedSignals({
 			}}
 			className="span-related-signals-drawer"
 			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			closeIcon={<X size={16} />}
 		>
 			{selectedSpan && (
 				<div className="span-related-signals-drawer__content">

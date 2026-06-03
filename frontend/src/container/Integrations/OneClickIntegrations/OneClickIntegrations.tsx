@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
@@ -22,6 +22,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 		if (!query) {
 			return ONE_CLICK_INTEGRATIONS;
 		}
+
 		return ONE_CLICK_INTEGRATIONS.filter(
 			(integration) =>
 				integration.title.toLowerCase().includes(query) ||

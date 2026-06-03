@@ -4,17 +4,16 @@ import {
 	ButtonProps,
 	Col,
 	ColProps,
-	Divider,
-	DividerProps,
 	Row,
 	RowProps,
 	Space,
 	SpaceProps,
-	TabsProps,
-	Typography,
 } from 'antd';
-import type { TextProps } from 'antd/lib/typography/Text';
-import type { TitleProps } from 'antd/lib/typography/Title';
+import {
+	Typography,
+	TypographyTextProps,
+	TypographyTitleProps,
+} from '@signozhq/ui/typography';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
@@ -32,18 +31,8 @@ const StyledRow = styled(Row)<TStyledRow>`
 	${styledClass}
 `;
 
-type TStyledDivider = DividerProps & IStyledClass;
-const StyledDivider = styled(Divider)<TStyledDivider>`
-	${styledClass}
-`;
-
 type TStyledSpace = SpaceProps & IStyledClass;
 const StyledSpace = styled(Space)<TStyledSpace>`
-	${styledClass}
-`;
-
-type TStyledTabs = TabsProps & IStyledClass;
-const StyledTabs = styled(Divider)<TStyledTabs>`
 	${styledClass}
 `;
 
@@ -53,13 +42,13 @@ const StyledButton = styled(Button)<TStyledButton>`
 `;
 
 const { Text } = Typography;
-type TStyledTypographyText = TextProps & IStyledClass;
+type TStyledTypographyText = TypographyTextProps & IStyledClass;
 const StyledTypographyText = styled(Text)<TStyledTypographyText>`
 	${styledClass}
 `;
 
 const { Title } = Typography;
-type TStyledTypographyTitle = TitleProps & IStyledClass;
+type TStyledTypographyTitle = TypographyTitleProps & IStyledClass;
 const StyledTypographyTitle = styled(Title)<TStyledTypographyTitle>`
 	${styledClass}
 `;
@@ -77,9 +66,7 @@ export {
 	StyledButton,
 	StyledCol,
 	StyledDiv,
-	StyledDivider,
 	StyledRow,
 	StyledSpace,
-	StyledTabs,
 	StyledTypography,
 };

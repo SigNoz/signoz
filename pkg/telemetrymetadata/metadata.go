@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -19,10 +20,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -63,6 +66,7 @@ type telemetryMetaStore struct {
 
 	fm                 qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
+	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
 
@@ -94,8 +98,12 @@ func NewTelemetryMetaStore(
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
 	columnEvolutionMetadataTblName string,
+	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
 
 	t := &telemetryMetaStore{
 		logger:                         metadataSettings.Logger(),
@@ -129,13 +137,10 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
+		fl:               fl,
+		fm:               fm,
+		conditionBuilder: conditionBuilder,
 	}
-
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
-
-	t.fm = fm
-	t.conditionBuilder = conditionBuilder
 
 	return t
 }
@@ -339,6 +344,11 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			})
 		}
 	}
+
+	if err = t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+		return nil, false, err
+	}
+
 	return keys, complete, nil
 }
 
@@ -416,7 +426,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// body keys are gated behind the feature flag
-	queryBodyTable = queryBodyTable && querybuilder.BodyJSONQueryEnabled
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	queryBodyTable = queryBodyTable && t.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	// requestedFieldKeySelectors is the set of names the user explicitly asked for.
 	// Used to ensure a name that is both a parent path AND a directly requested field still surfaces
@@ -676,13 +687,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
-	if querybuilder.BodyJSONQueryEnabled {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypes); err != nil {
 			return nil, false, err
 		}
 	}
 
-	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+	if err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
 		return nil, false, err
 	}
 
@@ -1360,6 +1372,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		instrumentationtypes.CodeFunctionName: "getRelatedValues",
 	})
 
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := t.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
 		return nil, true, nil
@@ -1409,11 +1424,12 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
+			BodyJSONEnabled:  bodyJSONEnabled,
 		})
 		if err != nil {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
 		}
-		if whereClause != nil {
+		if !whereClause.IsEmpty() {
 			sb.AddWhereClause(whereClause.WhereClause)
 		}
 	}
@@ -2359,8 +2375,8 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	return entries, nil
 }
 
-// Get retrieves all evolutions for the given selectors from DB.
-func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+// updateColumnEvolutionMetadataForKeys updates the evolution field for keys.
+func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) error {
 
 	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
 	for _, keySelector := range keysToUpdate {
@@ -2374,7 +2390,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 
 	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
 	if err != nil {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
 
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
@@ -2405,7 +2421,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			}
 		}
 	}
-	return evolutionsByUniqueKey, nil
+	return nil
 }
 
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.

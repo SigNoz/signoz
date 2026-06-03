@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { green, orange, volcano } from '@ant-design/colors';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Card, Col } from 'antd';
 import { TStatus } from 'types/api/settings/getRetention';
 
@@ -58,7 +58,7 @@ function StatusMessage({
 				}}
 			>
 				<Col xs={1}>
-					<InfoCircleOutlined style={{ fontSize: '1rem' }} />
+					<SolidInfoCircle size="md" />
 				</Col>
 
 				<Col

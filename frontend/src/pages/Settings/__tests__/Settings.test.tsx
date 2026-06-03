@@ -78,16 +78,20 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['workspace', 'account'])('renders "%s" element', (id) => {
-			expect(screen.getByTestId(id)).toBeInTheDocument();
-		});
-
-		it.each(['billing', 'roles', 'mcp-server'])(
-			'does not render "%s" element',
+		it.each(['workspace', 'account', 'roles', 'service-accounts'])(
+			'renders "%s" element',
 			(id) => {
-				expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+				expect(screen.getByTestId(id)).toBeInTheDocument();
 			},
 		);
+
+		it.each(['billing'])('does not render "%s" element', (id) => {
+			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+		});
+
+		it('renders "mcp-server" element', () => {
+			expect(screen.getByTestId('mcp-server')).toBeInTheDocument();
+		});
 	});
 
 	describe('Self-hosted Admin', () => {

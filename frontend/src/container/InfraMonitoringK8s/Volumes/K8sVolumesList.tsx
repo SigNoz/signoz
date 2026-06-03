@@ -14,14 +14,13 @@ import {
 	k8sVolumeGetEntityName,
 	k8sVolumeGetSelectedItemFilters,
 	k8sVolumeInitialEventsFilter,
-	k8sVolumeInitialFilters,
 	k8sVolumeInitialLogTracesFilter,
 	volumeWidgetInfo,
 } from './constants';
 import {
-	k8sVolumesColumns,
+	getK8sVolumeItemKey,
+	getK8sVolumeRowKey,
 	k8sVolumesColumnsConfig,
-	k8sVolumesRenderRowData,
 } from './table.config';
 
 function K8sVolumesList({
@@ -91,10 +90,10 @@ function K8sVolumesList({
 			<K8sBaseList<K8sVolumesData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.VOLUMES}
-				tableColumnsDefinitions={k8sVolumesColumns}
 				tableColumns={k8sVolumesColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sVolumesRenderRowData}
+				getRowKey={getK8sVolumeRowKey}
+				getItemKey={getK8sVolumeItemKey}
 				eventCategory={InfraMonitoringEvents.Volumes}
 			/>
 
@@ -106,7 +105,6 @@ function K8sVolumesList({
 				getEntityName={k8sVolumeGetEntityName}
 				getInitialLogTracesFilters={k8sVolumeInitialLogTracesFilter}
 				getInitialEventsFilters={k8sVolumeInitialEventsFilter}
-				primaryFilterKeys={k8sVolumeInitialFilters}
 				metadataConfig={k8sVolumeDetailsMetadataConfig}
 				entityWidgetInfo={volumeWidgetInfo}
 				getEntityQueryPayload={getVolumeMetricsQueryPayload}

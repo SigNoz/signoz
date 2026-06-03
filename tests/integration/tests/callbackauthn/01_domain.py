@@ -86,7 +86,7 @@ def test_create_and_get_domain(
             "domain-google.integration.test",
             "domain-saml.integration.test",
         ]
-        assert domain["ssoType"] in ["google_auth", "saml"]
+        assert domain["config"]["ssoType"] in ["google_auth", "saml"]
 
 
 def test_create_invalid(

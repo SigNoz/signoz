@@ -1,6 +1,9 @@
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Form, FormInstance, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
@@ -81,8 +84,8 @@ function FormAlertChannels({
 					name="send_resolved"
 				>
 					<Switch
-						defaultChecked={initialValue?.send_resolved}
-						data-testid="field-send-resolved-checkbox"
+						defaultValue={initialValue?.send_resolved}
+						testId="field-send-resolved-checkbox"
 						onChange={(value): void => {
 							setSelectedConfig((state) => ({
 								...state,

@@ -1,5 +1,5 @@
 import SignozModal from 'components/SignozModal/SignozModal';
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
 import './DeleteFunnelStep.styles.scss';

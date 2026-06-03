@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
@@ -25,7 +27,8 @@ var (
 )
 
 var (
-	roleNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+	roleNameRegex     = regexp.MustCompile("^[a-z-]{1,50}$")
+	managedRolePrefix = "signoz"
 )
 
 var (
@@ -34,13 +37,13 @@ var (
 )
 
 var (
-	SigNozAnonymousRoleName        = "signoz-anonymous"
+	SigNozAnonymousRoleName        = coretypes.SigNozAnonymousRoleName
 	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
-	SigNozAdminRoleName            = "signoz-admin"
+	SigNozAdminRoleName            = coretypes.SigNozAdminRoleName
 	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to SigNoz resources."
-	SigNozEditorRoleName           = "signoz-editor"
+	SigNozEditorRoleName           = coretypes.SigNozEditorRoleName
 	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges."
-	SigNozViewerRoleName           = "signoz-viewer"
+	SigNozViewerRoleName           = coretypes.SigNozViewerRoleName
 	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to SigNoz resources."
 )
 
@@ -56,10 +59,6 @@ var (
 		SigNozEditorRoleName: types.RoleEditor,
 		SigNozViewerRoleName: types.RoleViewer,
 	}
-)
-
-var (
-	TypeableResourcesRoles = MustNewTypeableMetaResources(MustNewName("roles"))
 )
 
 type Role struct {
@@ -143,7 +142,11 @@ func (role *PostableRole) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := roleNameRegex.MatchString(shadowRole.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must conform to the regex: %s", roleNameRegex.String())
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
+	}
+
+	if strings.HasPrefix(shadowRole.Name, managedRolePrefix) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
 	}
 
 	role.Name = shadowRole.Name
@@ -171,25 +174,23 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
-		transactionTuples, err := typeable.Tuples(
+		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
+		transactionTuples := NewTuples(
+			resource,
 			MustNewSubject(
-				TypeableRole,
+				coretypes.NewResourceRole(),
 				name,
 				orgID,
-				&RelationAssignee,
+				&coretypes.VerbAssignee,
 			),
 			relation,
-			[]Selector{object.Selector},
+			[]coretypes.Selector{object.Selector},
 			orgID,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		tuples = append(tuples, transactionTuples...)
 	}
@@ -197,25 +198,23 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additi
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
-		transactionTuples, err := typeable.Tuples(
+		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
+		transactionTuples := NewTuples(
+			resource,
 			MustNewSubject(
-				TypeableRole,
+				coretypes.NewResourceRole(),
 				name,
 				orgID,
-				&RelationAssignee,
+				&coretypes.VerbAssignee,
 			),
 			relation,
-			[]Selector{object.Selector},
+			[]coretypes.Selector{object.Selector},
 			orgID,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		tuples = append(tuples, transactionTuples...)
 	}

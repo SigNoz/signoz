@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addGatewayRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.GetIngestionKeys), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.GetIngestionKeys), handler.OpenAPIDef{
 		ID:                  "GetIngestionKeys",
 		Tags:                []string{"gateway"},
 		Summary:             "Get ingestion keys for workspace",
@@ -28,7 +28,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/search", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.SearchIngestionKeys), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/search", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.SearchIngestionKeys), handler.OpenAPIDef{
 		ID:                  "SearchIngestionKeys",
 		Tags:                []string{"gateway"},
 		Summary:             "Search ingestion keys for workspace",
@@ -46,7 +46,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.CreateIngestionKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKey), handler.OpenAPIDef{
 		ID:                  "CreateIngestionKey",
 		Tags:                []string{"gateway"},
 		Summary:             "Create ingestion key for workspace",
@@ -63,7 +63,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.UpdateIngestionKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKey), handler.OpenAPIDef{
 		ID:                  "UpdateIngestionKey",
 		Tags:                []string{"gateway"},
 		Summary:             "Update ingestion key for workspace",
@@ -80,7 +80,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.DeleteIngestionKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKey), handler.OpenAPIDef{
 		ID:                  "DeleteIngestionKey",
 		Tags:                []string{"gateway"},
 		Summary:             "Delete ingestion key for workspace",
@@ -97,7 +97,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.CreateIngestionKeyLimit), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKeyLimit), handler.OpenAPIDef{
 		ID:                  "CreateIngestionKeyLimit",
 		Tags:                []string{"gateway"},
 		Summary:             "Create limit for the ingestion key",
@@ -114,7 +114,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.UpdateIngestionKeyLimit), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKeyLimit), handler.OpenAPIDef{
 		ID:                  "UpdateIngestionKeyLimit",
 		Tags:                []string{"gateway"},
 		Summary:             "Update limit for the ingestion key",
@@ -131,7 +131,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authZ.EditAccess(provider.gatewayHandler.DeleteIngestionKeyLimit), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKeyLimit), handler.OpenAPIDef{
 		ID:                  "DeleteIngestionKeyLimit",
 		Tags:                []string{"gateway"},
 		Summary:             "Delete limit for the ingestion key",

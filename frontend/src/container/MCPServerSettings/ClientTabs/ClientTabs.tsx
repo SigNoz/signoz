@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Tabs } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tabs } from '@signozhq/ui/tabs';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Download } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';

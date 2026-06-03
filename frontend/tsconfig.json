@@ -32,25 +32,25 @@
 			],
 			"@/*": [
 				"./src/*"
+			],
+			"test-mocks/*": [
+				"./__mocks__/*"
 			]
 		},
-		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": [
-			"vite/client",
-			"node",
-			"jest"
-		]
+		"types": ["vite/client", "node", "jest", "testing-library__jest-dom"]
 	},
 	"exclude": [
 		"node_modules",
 		"src/parser/*.ts",
 		"src/parser/TraceOperatorParser/*.ts",
-		"orval.config.ts"
+		"orval.config.ts",
+		"src/pages/DashboardsListPageV2/**/*",
+		"src/pages/DashboardPageV2/**/*"
 	],
 	"include": [
 		"./src",

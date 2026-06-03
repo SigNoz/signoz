@@ -3,17 +3,23 @@ import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
-import { PlusOutlined } from '@ant-design/icons';
 import {
-	Button,
-	Card,
-	Input,
-	Modal,
-	Popover,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
+	Check,
+	ClipboardCopy,
+	Ellipsis,
+	FileJson,
+	FolderKanban,
+	Fullscreen,
+	Globe,
+	LockKeyhole,
+	PenLine,
+	Plus,
+	X,
+} from '@signozhq/icons';
+import { Button, Card, Modal, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
+import { Typography } from '@signozhq/ui/typography';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -27,18 +33,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty } from 'lodash-es';
-import {
-	Check,
-	ClipboardCopy,
-	Ellipsis,
-	FileJson,
-	FolderKanban,
-	Fullscreen,
-	Globe,
-	LockKeyhole,
-	PenLine,
-	X,
-} from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import {
@@ -502,7 +496,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						<Button
 							className="add-panel-btn"
 							onClick={onEmptyWidgetHandler}
-							icon={<PlusOutlined />}
+							icon={<Plus size="md" />}
 							type="primary"
 							data-testid="add-panel-header"
 						>
@@ -514,9 +508,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			{(tags?.length || 0) > 0 && (
 				<div className="dashboard-tags">
 					{tags?.map((tag) => (
-						<Tag key={tag} className="tag">
+						<Badge key={tag} className="tag" color="vanilla">
 							{tag}
-						</Tag>
+						</Badge>
 					))}
 				</div>
 			)}

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Callout, Input } from '@signozhq/ui';
-import { Select, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Input } from '@signozhq/ui/input';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import AuthError from 'components/AuthError/AuthError';
@@ -11,10 +14,10 @@ import {
 	ArrowRight,
 	ChevronDown,
 	CircleAlert,
-	Loader2,
+	LoaderCircle,
 	Plus,
 	Trash2,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
@@ -372,7 +375,7 @@ function InviteTeamMembers({
 						disabled={isInviteButtonDisabled}
 						suffix={
 							isButtonDisabled ? (
-								<Loader2 className="animate-spin" size={12} />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<ArrowRight size={12} />
 							)

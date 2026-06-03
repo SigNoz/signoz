@@ -1,0 +1,11 @@
+.root {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.loadingSkeleton {
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+}

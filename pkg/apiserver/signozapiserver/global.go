@@ -9,7 +9,7 @@ import (
 )
 
 func (provider *provider) addGlobalRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/global/config", handler.New(provider.authZ.OpenAccess(provider.globalHandler.GetConfig), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/global/config", handler.New(provider.authzMiddleware.OpenAccess(provider.globalHandler.GetConfig), handler.OpenAPIDef{
 		ID:                  "GetGlobalConfig",
 		Tags:                []string{"global"},
 		Summary:             "Get global config",

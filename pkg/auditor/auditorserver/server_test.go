@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,16 +20,16 @@ func newTestSettings() factory.ScopedProviderSettings {
 	return factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "auditorserver_test")
 }
 
-func newTestEvent(resource string, action audittypes.Action) audittypes.AuditEvent {
+func newTestEvent(resource string, action coretypes.Verb) audittypes.AuditEvent {
 	return audittypes.AuditEvent{
 		Timestamp: time.Now(),
-		EventName: audittypes.NewEventName(resource, action),
+		EventName: audittypes.NewEventName(coretypes.MustNewKind(resource), action),
 		AuditAttributes: audittypes.AuditAttributes{
 			Action:  action,
 			Outcome: audittypes.OutcomeSuccess,
 		},
 		ResourceAttributes: audittypes.ResourceAttributes{
-			ResourceKind: resource,
+			ResourceKind: coretypes.MustNewKind(resource),
 		},
 	}
 }
@@ -83,7 +84,7 @@ func TestAdd_FlushesOnBatchSize(t *testing.T) {
 	go func() { _ = server.Start(ctx) }()
 
 	for i := 0; i < 3; i++ {
-		server.Add(ctx, newTestEvent("dashboard", audittypes.ActionCreate))
+		server.Add(ctx, newTestEvent("dashboard", coretypes.VerbCreate))
 	}
 
 	assert.Eventually(t, func() bool {
@@ -112,7 +113,7 @@ func TestAdd_FlushesOnInterval(t *testing.T) {
 
 	go func() { _ = server.Start(ctx) }()
 
-	server.Add(ctx, newTestEvent("user", audittypes.ActionUpdate))
+	server.Add(ctx, newTestEvent("user", coretypes.VerbUpdate))
 
 	assert.Eventually(t, func() bool {
 		return exported.Load() == 1
@@ -130,9 +131,9 @@ func TestAdd_DropsWhenBufferFull(t *testing.T) {
 
 	ctx := context.Background()
 
-	server.Add(ctx, newTestEvent("dashboard", audittypes.ActionCreate))
-	server.Add(ctx, newTestEvent("dashboard", audittypes.ActionUpdate))
-	server.Add(ctx, newTestEvent("dashboard", audittypes.ActionDelete))
+	server.Add(ctx, newTestEvent("dashboard", coretypes.VerbCreate))
+	server.Add(ctx, newTestEvent("dashboard", coretypes.VerbUpdate))
+	server.Add(ctx, newTestEvent("dashboard", coretypes.VerbDelete))
 
 	assert.Equal(t, 2, server.queueLen())
 }
@@ -155,7 +156,7 @@ func TestStop_DrainsRemainingEvents(t *testing.T) {
 	go func() { _ = server.Start(ctx) }()
 
 	for i := 0; i < 5; i++ {
-		server.Add(ctx, newTestEvent("alert-rule", audittypes.ActionCreate))
+		server.Add(ctx, newTestEvent("alert-rule", coretypes.VerbCreate))
 	}
 
 	require.NoError(t, server.Stop(ctx))
@@ -180,8 +181,8 @@ func TestAdd_ContinuesAfterExportFailure(t *testing.T) {
 
 	go func() { _ = server.Start(ctx) }()
 
-	server.Add(ctx, newTestEvent("user", audittypes.ActionDelete))
-	server.Add(ctx, newTestEvent("user", audittypes.ActionDelete))
+	server.Add(ctx, newTestEvent("user", coretypes.VerbDelete))
+	server.Add(ctx, newTestEvent("user", coretypes.VerbDelete))
 
 	assert.Eventually(t, func() bool {
 		return calls.Load() >= 1
@@ -212,7 +213,7 @@ func TestAdd_ConcurrentSafety(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			server.Add(ctx, newTestEvent("dashboard", audittypes.ActionCreate))
+			server.Add(ctx, newTestEvent("dashboard", coretypes.VerbCreate))
 		}()
 	}
 	wg.Wait()

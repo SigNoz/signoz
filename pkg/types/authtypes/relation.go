@@ -1,59 +1,31 @@
 package authtypes
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"encoding/json"
+
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
-var (
-	ErrCodeAuthZInvalidRelation = errors.MustNewCode("authz_invalid_relation")
-	ErrCodeInvalidPatchObject   = errors.MustNewCode("authz_invalid_patch_objects")
-)
-
-var (
-	RelationCreate   = Relation{valuer.NewString("create")}
-	RelationRead     = Relation{valuer.NewString("read")}
-	RelationUpdate   = Relation{valuer.NewString("update")}
-	RelationDelete   = Relation{valuer.NewString("delete")}
-	RelationList     = Relation{valuer.NewString("list")}
-	RelationAssignee = Relation{valuer.NewString("assignee")}
-)
-
-var TypeableRelations = map[Type][]Relation{
-	TypeUser:           {RelationRead, RelationUpdate, RelationDelete},
-	TypeServiceAccount: {RelationRead, RelationUpdate, RelationDelete},
-	TypeRole:           {RelationAssignee, RelationRead, RelationUpdate, RelationDelete},
-	TypeOrganization:   {RelationRead, RelationUpdate, RelationDelete},
-	TypeMetaResource:   {RelationRead, RelationUpdate, RelationDelete},
-	TypeMetaResources:  {RelationCreate, RelationList},
+type Relation struct {
+	coretypes.Verb
 }
 
-var RelationsTypeable = map[Relation][]Type{
-	RelationCreate:   {TypeMetaResources},
-	RelationRead:     {TypeUser, TypeServiceAccount, TypeRole, TypeOrganization, TypeMetaResource},
-	RelationList:     {TypeMetaResources},
-	RelationUpdate:   {TypeUser, TypeServiceAccount, TypeRole, TypeOrganization, TypeMetaResource},
-	RelationDelete:   {TypeUser, TypeServiceAccount, TypeRole, TypeOrganization, TypeMetaResource},
-	RelationAssignee: {TypeRole},
+func (Relation) Enum() []any {
+	return coretypes.Verb{}.Enum()
 }
 
-type Relation struct{ valuer.String }
-
-func NewRelation(relation string) (Relation, error) {
-	switch relation {
-	case "create":
-		return RelationCreate, nil
-	case "read":
-		return RelationRead, nil
-	case "update":
-		return RelationUpdate, nil
-	case "delete":
-		return RelationDelete, nil
-	case "list":
-		return RelationList, nil
-	case "assignee":
-		return RelationAssignee, nil
-	default:
-		return Relation{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s", relation)
+func (rel *Relation) UnmarshalJSON(data []byte) error {
+	str := ""
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
 	}
+
+	alias, err := coretypes.NewVerb(str)
+	if err != nil {
+		return err
+	}
+
+	*rel = Relation{alias}
+	return nil
 }

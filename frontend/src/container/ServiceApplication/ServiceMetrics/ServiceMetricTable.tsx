@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { WarningFilled } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { SolidAlertTriangle } from '@signozhq/icons';
+import { Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
@@ -101,8 +102,8 @@ function ServiceMetricTable({
 		<div className="service-metric-table-container">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
-					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
-						<WarningFilled /> {getText('rps_over_100')}
+					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>
+						<SolidAlertTriangle size="md" /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
 					</Typography.Title>
 				</Flex>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper, toast } from '@signozhq/ui';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -15,12 +16,14 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
+import { buildAPIKeyUpdatePermission } from 'hooks/useAuthZ/permissions/service-account.permissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
-import { RevokeKeyContent } from '../RevokeKeyModal';
+import { RevokeKeyFooter } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
@@ -68,6 +71,16 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 
 	const expiryMode = watch('expiryMode');
 
+	const { permissions: editPermissions, isLoading: isAuthZLoading } = useAuthZ(
+		editKeyId ? [buildAPIKeyUpdatePermission(editKeyId)] : [],
+		{ enabled: !!editKeyId },
+	);
+
+	const canUpdate = isAuthZLoading
+		? false
+		: (editPermissions?.[buildAPIKeyUpdatePermission(editKeyId ?? '')]
+				?.isGranted ?? true);
+
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
@@ -114,7 +127,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 		});
 
 	function handleClose(): void {
-		setEditKeyId(null);
+		void setEditKeyId(null);
 		setIsRevokeConfirmOpen(false);
 	}
 
@@ -158,17 +171,27 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
 			className={
-				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
+				isRevokeConfirmOpen ? 'alert-dialog sa-delete-dialog' : 'edit-key-modal'
 			}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={isErrorModalVisible}
+			footer={
+				isRevokeConfirmOpen ? (
+					<RevokeKeyFooter
+						isRevoking={isRevoking}
+						onCancel={(): void => setIsRevokeConfirmOpen(false)}
+						onConfirm={handleRevoke}
+						accountId={selectedAccountId ?? undefined}
+						keyId={keyItem?.id ?? undefined}
+					/>
+				) : undefined
+			}
 		>
 			{isRevokeConfirmOpen ? (
-				<RevokeKeyContent
-					isRevoking={isRevoking}
-					onCancel={(): void => setIsRevokeConfirmOpen(false)}
-					onConfirm={handleRevoke}
-				/>
+				<>
+					Revoking this key will permanently invalidate it. Any systems using this
+					key will lose access immediately.
+				</>
 			) : (
 				<EditKeyForm
 					register={register}
@@ -181,6 +204,8 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					onClose={handleClose}
 					onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
 					formatTimezoneAdjustedTimestamp={formatTimezoneAdjustedTimestamp}
+					canUpdate={canUpdate}
+					accountId={selectedAccountId ?? ''}
 				/>
 			)}
 		</DialogWrapper>

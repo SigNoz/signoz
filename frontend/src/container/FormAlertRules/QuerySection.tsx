@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Tabs, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
@@ -13,7 +14,7 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from 'lucide-react';
+import { Atom, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
@@ -55,7 +56,9 @@ function QuerySection({
 
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
 
-	const renderChQueryUI = (): JSX.Element => <ChQuerySection />;
+	const renderChQueryUI = (): JSX.Element => (
+		<ChQuerySection alertType={alertType} />
+	);
 
 	const isDarkMode = useIsDarkMode();
 

@@ -14,14 +14,13 @@ import {
 	k8sPodGetEntityName,
 	k8sPodGetSelectedItemFilters,
 	k8sPodInitialEventsFilter,
-	k8sPodInitialFilters,
 	k8sPodInitialLogTracesFilter,
 	podWidgetInfo,
 } from './constants';
 import {
-	k8sPodColumns,
+	getK8sPodItemKey,
+	getK8sPodRowKey,
 	k8sPodColumnsConfig,
-	k8sPodRenderRowData,
 } from './table.config';
 
 function K8sPodsList({
@@ -91,10 +90,10 @@ function K8sPodsList({
 			<K8sBaseList<K8sPodsData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.PODS}
-				tableColumnsDefinitions={k8sPodColumns}
 				tableColumns={k8sPodColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sPodRenderRowData}
+				getRowKey={getK8sPodRowKey}
+				getItemKey={getK8sPodItemKey}
 				eventCategory={InfraMonitoringEvents.Pod}
 			/>
 
@@ -106,7 +105,6 @@ function K8sPodsList({
 				getEntityName={k8sPodGetEntityName}
 				getInitialLogTracesFilters={k8sPodInitialLogTracesFilter}
 				getInitialEventsFilters={k8sPodInitialEventsFilter}
-				primaryFilterKeys={k8sPodInitialFilters}
 				metadataConfig={k8sPodDetailsMetadataConfig}
 				entityWidgetInfo={podWidgetInfo}
 				getEntityQueryPayload={getPodMetricsQueryPayload}

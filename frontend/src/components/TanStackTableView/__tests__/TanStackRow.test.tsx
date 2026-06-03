@@ -183,7 +183,7 @@ describe('TanStackRowCells', () => {
 				</tbody>
 			</table>,
 		);
-		expect(await screen.findByText('expanded-r1')).toBeInTheDocument();
+		await expect(screen.findByText('expanded-r1')).resolves.toBeInTheDocument();
 	});
 
 	describe('new tab click', () => {

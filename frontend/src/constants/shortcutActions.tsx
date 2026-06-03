@@ -3,9 +3,9 @@ import ROUTES from 'constants/routes';
 import { GlobalShortcutsName } from 'constants/shortcuts/globalShortcuts';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 import {
-	BarChart2,
+	BarChart,
 	BellDot,
-	BugIcon,
+	Bug,
 	Compass,
 	DraftingCompass,
 	Expand,
@@ -17,7 +17,8 @@ import {
 	Settings,
 	TowerControl,
 	Workflow,
-} from 'lucide-react';
+} from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 import { ROLES } from 'types/roles';
 
 export type CmdAction = {
@@ -34,12 +35,20 @@ export type CmdAction = {
 type ActionDeps = {
 	navigate: (path: string) => void;
 	handleThemeChange: (mode: string) => void;
+	/**
+	 * Provided only when the AI Assistant feature is available for the current
+	 * tenant. When present, the palette surfaces an "Open AI Assistant" entry
+	 * at the top; when absent, the action is omitted entirely.
+	 */
+	aiAssistant?: {
+		open: () => void;
+	};
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange } = deps;
+	const { navigate, handleThemeChange, aiAssistant } = deps;
 
-	return [
+	const actions: CmdAction[] = [
 		{
 			id: 'home',
 			name: 'Go to Home',
@@ -86,7 +95,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToExceptions],
 			keywords: 'exceptions errors',
 			section: 'Navigation',
-			icon: <BugIcon size={14} />,
+			icon: <Bug size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.ALL_ERROR),
 		},
@@ -140,7 +149,7 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			shortcut: [GlobalShortcutsName.NavigateToMetricsSummary],
 			keywords: 'metrics summary',
 			section: 'Metrics',
-			icon: <BarChart2 size={14} />,
+			icon: <BarChart size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.METRICS_EXPLORER),
 		},
@@ -279,4 +288,19 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			perform: (): void => navigate(ROUTES.MEMBERS_SETTINGS),
 		},
 	];
+
+	if (aiAssistant) {
+		actions.unshift({
+			id: 'ai-assistant',
+			name: 'Open Noz',
+			shortcut: ['cmd+j'],
+			keywords: 'noz ai assistant chat ask sparkles copilot',
+			section: 'Noz',
+			icon: <Noz size={16} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: aiAssistant.open,
+		});
+	}
+
+	return actions;
 }

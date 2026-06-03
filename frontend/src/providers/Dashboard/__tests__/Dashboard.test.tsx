@@ -269,12 +269,12 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 				.getAll()
 				.map((query) => query.queryKey);
 			expect(cacheKeys).toHaveLength(2);
-			expect(cacheKeys[0]).toEqual([
+			expect(cacheKeys[0]).toStrictEqual([
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
 				dashboardId1,
 				true, // globalTime.isAutoRefreshDisabled
 			]);
-			expect(cacheKeys[1]).toEqual([
+			expect(cacheKeys[1]).toStrictEqual([
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
 				dashboardId2,
 				true, // globalTime.isAutoRefreshDisabled
@@ -475,7 +475,10 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 
 				// The selectedValue should be updated with normalized URL values
 				expect(parsedVariables.environment.selectedValue).toBe('development');
-				expect(parsedVariables.services.selectedValue).toEqual(['db', 'cache']);
+				expect(parsedVariables.services.selectedValue).toStrictEqual([
+					'db',
+					'cache',
+				]);
 
 				// allSelected should be set to false when URL values override
 				expect(parsedVariables.environment.allSelected).toBe(false);

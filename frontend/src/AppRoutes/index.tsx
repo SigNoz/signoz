@@ -18,6 +18,7 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -58,14 +59,23 @@ function App(): JSX.Element {
 		isLoggedIn: isLoggedInState,
 		featureFlags,
 		org,
+		isPreflightLoading,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
+	const [pathname, setPathname] = useState(history.location.pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	useEffect(() => {
+		return history.listen((location) => {
+			setPathname(location.pathname);
+		});
+	}, []);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -212,6 +222,27 @@ function App(): JSX.Element {
 		activeLicenseFetchError,
 	]);
 
+	useEffect(() => {
+		if (!isLoggedInState) {
+			return;
+		}
+
+		setRoutes((prev) => {
+			const hasAi = prev.some((r) => r.key === 'AI_ASSISTANT');
+			if (isAIAssistantEnabled === hasAi) {
+				return prev;
+			}
+			if (isAIAssistantEnabled) {
+				const aiRoute = defaultRoutes.find((r) => r.key === 'AI_ASSISTANT');
+				if (!aiRoute) {
+					return prev;
+				}
+				return [...prev.filter((r) => r.key !== 'AI_ASSISTANT'), aiRoute];
+			}
+			return prev.filter((r) => r.key !== 'AI_ASSISTANT');
+		});
+	}, [isLoggedInState, isAIAssistantEnabled]);
+
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
@@ -221,7 +252,9 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (
 			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/')
+			pathname.startsWith('/public/dashboard/') ||
+			pathname === '/ai-assistant' ||
+			pathname.startsWith('/ai-assistant/')
 		) {
 			window.Pylon?.('hideChatBubble');
 		} else {
@@ -258,7 +291,8 @@ function App(): JSX.Element {
 				isLoggedInState &&
 				isChatSupportEnabled &&
 				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser)
+				(isCloudUser || isEnterpriseSelfHostedUser) &&
+				(window.signozBootData?.settings?.pylon.enabled ?? true)
 			) {
 				const email = user.email || '';
 				const secret = process.env.PYLON_IDENTITY_SECRET || '';
@@ -300,14 +334,20 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (process.env.POSTHOG_KEY) {
+			if (
+				(window.signozBootData?.settings?.posthog.enabled ?? true) &&
+				process.env.POSTHOG_KEY
+			) {
 				posthog.init(process.env.POSTHOG_KEY, {
 					api_host: 'https://us.i.posthog.com',
 					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 				});
 			}
 
-			if (!isSentryInitialized) {
+			if (
+				!isSentryInitialized &&
+				(window.signozBootData?.settings?.sentry.enabled ?? true)
+			) {
 				Sentry.init({
 					dsn: process.env.SENTRY_DSN,
 					tunnel: process.env.TUNNEL_URL,
@@ -327,6 +367,11 @@ function App(): JSX.Element {
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 					beforeSend(event) {
+						// Drop the event if its level is 'warning' or 'info'
+						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
 						const sessionReplayUrl = posthog.get_session_replay_url?.({
 							withTimestamp: true,
 						});
@@ -349,6 +394,10 @@ function App(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
+
+	if (isPreflightLoading) {
+		return <Spinner tip="Loading..." />;
+	}
 
 	// if the user is in logged in state
 	if (isLoggedInState) {

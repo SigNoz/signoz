@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Button, Collapse, Input, Select, Spin, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Collapse, Select, Spin } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,
@@ -21,7 +23,7 @@ import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/uti
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
-import { Edit2, Save, X } from 'lucide-react';
+import { PenLine, Save, X } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
@@ -332,7 +334,7 @@ function Metadata({
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 				>
-					<Edit2 size={14} />
+					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>
 				</Button>
 			</div>

@@ -6,9 +6,12 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -22,6 +25,7 @@ type resourceFilterStatementBuilder[T any] struct {
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
 	source           telemetrytypes.Source
+	flagger          flagger.Flagger
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -42,6 +46,7 @@ func New[T any](
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	fl flagger.Flagger,
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
 	fm := NewFieldMapper()
@@ -55,6 +60,7 @@ func New[T any](
 		metadataStore:    metadataStore,
 		signal:           signal,
 		source:           source,
+		flagger:          fl,
 		fullTextColumn:   fullTextColumn,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
@@ -110,10 +116,33 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, nil //nolint:nilnil
 	}
 
+	// Group by fingerprint instead of using DISTINCT; on ClickHouse GROUP BY
+	// parallelizes across multiple threads and is faster for deduplication.
+	q.GroupBy("fingerprint")
+
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
 		Query: stmt,
 		Args:  args,
+	}, nil
+}
+
+// BuildCount returns a statement that counts the distinct fingerprints matching
+// the resource filter. Returns (nil, nil) when the filter is a no-op.
+func (b *resourceFilterStatementBuilder[T]) BuildCount(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	inner, err := b.Build(ctx, start, end, qbtypes.RequestTypeRaw, query, variables)
+	if err != nil || inner == nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{
+		Query: fmt.Sprintf("SELECT count() FROM (%s)", inner.Query),
+		Args:  inner.Args,
 	}, nil
 }
 
@@ -128,6 +157,10 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (bool, error) {
+
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
 
@@ -138,6 +171,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
+			BodyJSONEnabled:    bodyJSONEnabled,
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
@@ -152,7 +186,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		if err != nil {
 			return false, err
 		}
-		if filterWhereClause == nil {
+		if filterWhereClause.IsEmpty() {
 			// this means all conditions evaluated to no-op (non-resource fields, unknown keys, skipped full-text/functions)
 			// the CTE would select all fingerprints, so skip it entirely
 			return true, nil

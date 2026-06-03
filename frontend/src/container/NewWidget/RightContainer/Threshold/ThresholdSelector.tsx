@@ -4,7 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Button } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
-import { Plus } from 'lucide-react';
+import { Plus } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';

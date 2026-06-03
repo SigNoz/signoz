@@ -1,0 +1,32 @@
+@mixin scrollbar($width: 0.3rem) {
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+	transition: scrollbar-color 0.2s;
+
+	&:hover {
+		scrollbar-color: var(--l3-border) transparent;
+	}
+
+	&::-webkit-scrollbar {
+		width: $width;
+		height: $width;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: transparent;
+		border-radius: 999px;
+		transition: background 0.2s;
+	}
+
+	&:hover::-webkit-scrollbar-thumb {
+		background: var(--l3-border);
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--l3-foreground);
+	}
+}

@@ -28,7 +28,7 @@ import {
 	Sparkles,
 	User,
 	Users,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import MembersSettings from 'pages/MembersSettings';
 import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';

@@ -1,5 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Input, Select, Typography } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 
 import './DropRateView.styles.scss';
 

@@ -251,20 +251,20 @@ describe('ContextLogRenderer', () => {
 			const afterQuery = (afterPayload.compositeQuery as any).queries[0].spec;
 
 			// Verify timestamps remain constant
-			expect(afterStart).toEqual(initialPayload.start);
-			expect(afterEnd).toEqual(initialPayload.end);
+			expect(afterStart).toStrictEqual(initialPayload.start);
+			expect(afterEnd).toStrictEqual(initialPayload.end);
 
 			// Verify offset changes
-			expect(initialQuery.offset).toEqual(0);
-			expect(afterQuery.offset).toEqual(10);
+			expect(initialQuery.offset).toBe(0);
+			expect(afterQuery.offset).toBe(10);
 
 			// Verify filter changes
 			expect(initialQuery.filter.expression).toContain(expectedOpChange.before);
 			expect(afterQuery.filter.expression).toContain(expectedOpChange.after);
 
 			// Verify query structure remains consistent
-			expect(initialQuery.name).toEqual(afterQuery.name);
-			expect(initialQuery.signal).toEqual(afterQuery.signal);
+			expect(initialQuery.name).toStrictEqual(afterQuery.name);
+			expect(initialQuery.signal).toStrictEqual(afterQuery.signal);
 		};
 
 		it('should keep the start and end timestamps constant on clicking load more (prev / next) pages', async () => {

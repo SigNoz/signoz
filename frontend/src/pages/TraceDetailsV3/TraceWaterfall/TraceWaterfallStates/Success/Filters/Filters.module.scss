@@ -1,0 +1,142 @@
+.root {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+
+	// ToggleGroup children use generated class names; nest the global selectors
+	// under the local row so they only apply inside this filter row.
+	:global([class*='toggle-group']) {
+		flex-shrink: 0;
+
+		:global([class*='toggle-group-item']) {
+			flex: 0 0 auto;
+		}
+	}
+}
+
+// Expanded-mode root: grows to fill .filter wrapper, and lets the search
+// input flex within. In collapsed mode none of these grow — the whole
+// Filters region is content-sized (just the pill + result + toggle).
+.isExpanded {
+	flex: 1;
+
+	.searchInput {
+		flex: 1;
+	}
+
+	.searchAndNav {
+		flex: 1;
+	}
+}
+
+.categoryControls {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.searchInput {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.searchPill {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.searchAndNav {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.searchContainer {
+	flex: 1;
+	min-width: 0;
+}
+
+.resultActions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.expandedActions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.highlightControl {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.pill {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	cursor: pointer;
+	max-width: 220px;
+	min-width: 120px;
+	height: 32px;
+	background: var(--l1-background);
+
+	&:hover {
+		border-color: var(--l3-border);
+	}
+}
+
+.pillText {
+	font-size: 12px;
+	color: var(--l2-foreground);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	flex: 1;
+}
+
+.pillIndicator {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--primary-background);
+	flex-shrink: 0;
+}
+
+.pillPopover {
+	max-width: 400px;
+}
+
+.pillPopoverHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.pillPopoverExpression {
+	font-family: 'Geist Mono', 'Fira Code', monospace;
+	font-size: 12px;
+	color: var(--l1-foreground);
+	word-break: break-all;
+	padding: 6px 8px;
+	background: var(--l2-background);
+	border-radius: 4px;
+}
+
+.highlightErrorsToggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+	white-space: nowrap;
+}

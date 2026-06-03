@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Card, Skeleton, Typography } from 'antd';
+import { Button, Card, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import {
@@ -20,14 +21,17 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
-import { prepareStatusCodeBarChartsConfig } from './utils';
+import {
+	getStepIntervalForQuery,
+	getTracesTimeRangeFromStepInterval,
+	prepareStatusCodeBarChartsConfig,
+} from './utils';
 
 function StatusCodeBarCharts({
 	endPointStatusCodeBarChartsDataQuery,
@@ -134,6 +138,18 @@ function StatusCodeBarCharts({
 		[domainName, filters],
 	);
 
+	const activeApiResponse = useMemo(
+		() =>
+			currentWidgetInfoIndex === 0
+				? formattedEndPointStatusCodeBarChartsDataPayload
+				: formattedEndPointStatusCodeLatencyBarChartsDataPayload,
+		[
+			currentWidgetInfoIndex,
+			formattedEndPointStatusCodeBarChartsDataPayload,
+			formattedEndPointStatusCodeLatencyBarChartsDataPayload,
+		],
+	);
+
 	const graphClickHandler = useCallback(
 		(
 			xValue: number,
@@ -143,11 +159,14 @@ function StatusCodeBarCharts({
 			metric?: { [key: string]: string },
 			queryData?: { queryName: string; inFocusOrNot: boolean },
 		): void => {
-			const TWO_AND_HALF_MINUTES_IN_MILLISECONDS = 2.5 * 60 * 1000; // 150,000 milliseconds
 			const customFilters = getCustomFiltersForBarChart(metric);
-			const { start, end } = getStartAndEndTimesInMilliseconds(
+			const stepInterval = getStepIntervalForQuery(
+				activeApiResponse,
+				queryData?.queryName,
+			);
+			const { start, end } = getTracesTimeRangeFromStepInterval(
 				xValue,
-				TWO_AND_HALF_MINUTES_IN_MILLISECONDS,
+				stepInterval,
 			);
 
 			handleGraphClick({
@@ -170,6 +189,7 @@ function StatusCodeBarCharts({
 			});
 		},
 		[
+			activeApiResponse,
 			widget,
 			navigateToExplorerPages,
 			navigateToExplorer,

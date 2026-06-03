@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
@@ -8,7 +9,7 @@ import { DOCS_BASE_URL } from 'constants/app';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from '@signozhq/icons';
 import { withBasePath } from 'utils/basePath';
 
 import './IngestionDetails.styles.scss';

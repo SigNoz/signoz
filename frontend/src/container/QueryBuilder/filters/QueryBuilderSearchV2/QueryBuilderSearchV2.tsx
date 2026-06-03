@@ -8,7 +8,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin, Tag, Tooltip } from 'antd';
+import { Select, Spin, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
@@ -38,7 +39,7 @@ import {
 	isUndefined,
 	unset,
 } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -954,16 +955,18 @@ function QueryBuilderSearchV2(
 
 		return (
 			<span className="qb-search-bar-tokenised-tags">
-				<Tag
-					closable={!searchValue && closable}
-					onClose={onCloseHandler}
+				<Badge
+					color="vanilla"
 					className={tagDetails?.key?.type || ''}
+					closable={!searchValue && closable}
+					onClose={(e): void => {
+						e.preventDefault();
+						onCloseHandler();
+					}}
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
 								if (!isDisabled) {
@@ -974,7 +977,7 @@ function QueryBuilderSearchV2(
 							{chipValue}
 						</TypographyText>
 					</Tooltip>
-				</Tag>
+				</Badge>
 			</span>
 		);
 	};

@@ -10,7 +10,7 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GalleryVerticalEnd, Pyramid } from 'lucide-react';
+import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import AlertDetails from 'pages/AlertDetails';
 
 import { AlertListSubTabs, AlertListTabs } from './types';
@@ -29,12 +29,13 @@ function AllAlertList(): JSX.Element {
 
 	const handleConfigurationTabChange = useCallback(
 		(subTab: string): void => {
-			urlQuery.set('tab', AlertListTabs.CONFIGURATION);
-			urlQuery.set('subTab', subTab);
-			urlQuery.delete('search');
-			safeNavigate(`/alerts?${urlQuery.toString()}`);
+			const queryParams = new URLSearchParams();
+
+			queryParams.set('tab', AlertListTabs.CONFIGURATION);
+			queryParams.set('subTab', subTab);
+			safeNavigate(`/alerts?${queryParams.toString()}`);
 		},
-		[safeNavigate, urlQuery],
+		[safeNavigate],
 	);
 
 	const configurationTab = useMemo(() => {
@@ -103,21 +104,20 @@ function AllAlertList(): JSX.Element {
 			items={items}
 			activeKey={tab || AlertListTabs.ALERT_RULES}
 			onChange={(tab): void => {
-				urlQuery.set('tab', tab);
+				const queryParams = new URLSearchParams();
+
+				queryParams.set('tab', tab);
 
 				// If navigating to Configuration tab, set default subTab
 				if (tab === AlertListTabs.CONFIGURATION) {
 					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
-					urlQuery.set('subTab', currentSubTab);
+					queryParams.set('subTab', currentSubTab);
 				} else {
 					// Clear subTab when navigating out of Configuration tab
-					urlQuery.delete('subTab');
+					queryParams.delete('subTab');
 				}
 
-				// Clear search when navigating to any tab
-				urlQuery.delete('search');
-
-				safeNavigate(`/alerts?${urlQuery.toString()}`);
+				safeNavigate(`/alerts?${queryParams.toString()}`);
 			}}
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview ? 'alert-details-tabs' : ''

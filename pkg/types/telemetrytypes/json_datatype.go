@@ -1,11 +1,5 @@
 package telemetrytypes
 
-type JSONDataTypeIndex struct {
-	Type             JSONDataType
-	ColumnExpression string
-	IndexExpression  string
-}
-
 type JSONDataType struct {
 	str            string // Store the correct case for ClickHouse
 	IsArray        bool
@@ -32,18 +26,17 @@ var (
 	ArrayJSON    = JSONDataType{"Array(JSON)", true, "JSON", false}
 )
 
-var MappingStringToJSONDataType = map[string]JSONDataType{
-	"String":                   String,
-	"Int64":                    Int64,
-	"Float64":                  Float64,
-	"Bool":                     Bool,
-	"Dynamic":                  Dynamic,
-	"Array(Nullable(String))":  ArrayString,
-	"Array(Nullable(Int64))":   ArrayInt64,
-	"Array(Nullable(Float64))": ArrayFloat64,
-	"Array(Nullable(Bool))":    ArrayBool,
-	"Array(Dynamic)":           ArrayDynamic,
-	"Array(JSON)":              ArrayJSON,
+var MappingJSONDataTypeToFieldDataType = map[string]FieldDataType{
+	"String":                   FieldDataTypeString,
+	"Int64":                    FieldDataTypeInt64,
+	"Float64":                  FieldDataTypeFloat64,
+	"Bool":                     FieldDataTypeBool,
+	"Array(Nullable(String))":  FieldDataTypeArrayString,
+	"Array(Nullable(Int64))":   FieldDataTypeArrayInt64,
+	"Array(Nullable(Float64))": FieldDataTypeArrayFloat64,
+	"Array(Nullable(Bool))":    FieldDataTypeArrayBool,
+	"Array(Dynamic)":           FieldDataTypeArrayDynamic,
+	"Array(JSON)":              FieldDataTypeArrayJSON,
 }
 
 var MappingFieldDataTypeToJSONDataType = map[FieldDataType]JSONDataType{

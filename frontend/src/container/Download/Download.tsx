@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { CloudDownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { CloudDownload } from '@signozhq/icons';
+import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import { Button, Flex } from 'antd';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
@@ -67,17 +68,19 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	};
 
 	return (
-		<Dropdown menu={menu} trigger={['click']}>
+		<DropdownMenuSimple menu={menu}>
 			<Button
 				className="download-button"
 				loading={isLoading || isDownloading}
 				size="small"
 				type="link"
 			>
-				<CloudDownloadOutlined />
-				Download
+				<Flex align="center" gap={4}>
+					<CloudDownload size="md" />
+					Download
+				</Flex>
 			</Button>
-		</Dropdown>
+		</DropdownMenuSimple>
 	);
 }
 

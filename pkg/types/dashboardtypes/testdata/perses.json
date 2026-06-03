@@ -76,11 +76,7 @@
                 "display": {
                     "name": "textboxvar"
                 },
-                "value": "defaultvaluegoeshere",
-                "plugin": {
-                    "kind": "signoz/TextboxVariable",
-                    "spec": {}
-                }
+                "value": "defaultvaluegoeshere"
             }
         }
     ],
@@ -321,14 +317,14 @@
                         "thresholds": [
                             {
                                 "value": 1200000,
-                                "operator": ">",
+                                "operator": "above",
                                 "unit": "none",
                                 "color": "Red",
                                 "format": "text"
                             },
                             {
                                 "value": 1200000,
-                                "operator": "<=",
+                                "operator": "below_or_equal",
                                 "unit": "none",
                                 "color": "Green",
                                 "format": "text"
@@ -469,7 +465,7 @@
                         "thresholds": [
                             {
                                 "value": 1,
-                                "operator": ">",
+                                "operator": "above",
                                 "unit": "min",
                                 "color": "Red",
                                 "format": "text",

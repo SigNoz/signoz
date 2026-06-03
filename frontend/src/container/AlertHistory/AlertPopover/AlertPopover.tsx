@@ -5,7 +5,7 @@ import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { DraftingCompass } from 'lucide-react';
+import { DraftingCompass } from '@signozhq/icons';
 
 import './AlertPopover.styles.scss';
 

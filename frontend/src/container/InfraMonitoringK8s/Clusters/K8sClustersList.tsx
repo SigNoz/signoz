@@ -15,13 +15,12 @@ import {
 	k8sClusterGetEntityName,
 	k8sClusterGetSelectedItemFilters,
 	k8sClusterInitialEventsFilter,
-	k8sClusterInitialFilters,
 	k8sClusterInitialLogTracesFilter,
 } from './constants';
 import {
-	k8sClustersColumns,
+	getK8sClusterItemKey,
+	getK8sClusterRowKey,
 	k8sClustersColumnsConfig,
-	k8sClustersRenderRowData,
 } from './table.config';
 
 function K8sClustersList({
@@ -91,10 +90,10 @@ function K8sClustersList({
 			<K8sBaseList<K8sClusterData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.CLUSTERS}
-				tableColumnsDefinitions={k8sClustersColumns}
 				tableColumns={k8sClustersColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sClustersRenderRowData}
+				getRowKey={getK8sClusterRowKey}
+				getItemKey={getK8sClusterItemKey}
 				eventCategory={InfraMonitoringEvents.Cluster}
 			/>
 
@@ -106,7 +105,6 @@ function K8sClustersList({
 				getEntityName={k8sClusterGetEntityName}
 				getInitialLogTracesFilters={k8sClusterInitialLogTracesFilter}
 				getInitialEventsFilters={k8sClusterInitialEventsFilter}
-				primaryFilterKeys={k8sClusterInitialFilters}
 				metadataConfig={k8sClusterDetailsMetadataConfig}
 				entityWidgetInfo={clusterWidgetInfo}
 				getEntityQueryPayload={getClusterMetricsQueryPayload}

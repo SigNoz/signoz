@@ -1,0 +1,104 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	margin-bottom: 6px;
+}
+
+.zapIcon {
+	color: var(--accent-amber);
+	flex-shrink: 0;
+}
+
+.headerLabel {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--l2-foreground);
+}
+
+.description {
+	margin: 0 0 10px;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	line-height: 1.5;
+}
+
+.params {
+	list-style: none;
+	margin: 0 0 10px;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.param {
+	display: flex;
+	gap: 6px;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.paramKey {
+	color: var(--l3-foreground);
+	flex-shrink: 0;
+
+	&::after {
+		content: ':';
+	}
+}
+
+.paramVal {
+	color: var(--l1-foreground);
+	font-family: var(--font-mono, monospace);
+	word-break: break-all;
+}
+
+.actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.spinner {
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+// Answered / terminal state container layout (composed with .block from Block.module.scss).
+.applied,
+.dismissed,
+.loading,
+.error {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	opacity: 0.8;
+}
+
+.statusIcon {
+	flex-shrink: 0;
+
+	&.ok {
+		color: var(--accent-forest);
+	}
+	&.no {
+		color: var(--l3-foreground);
+	}
+	&.err {
+		color: var(--accent-cherry);
+	}
+}
+
+.statusText {
+	font-size: 13px;
+	color: var(--l1-foreground);
+}

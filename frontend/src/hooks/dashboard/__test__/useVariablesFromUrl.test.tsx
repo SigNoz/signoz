@@ -20,7 +20,7 @@ describe('useVariablesFromUrl', () => {
 			),
 		});
 
-		expect(result.current.getUrlVariables()).toEqual({});
+		expect(result.current.getUrlVariables()).toStrictEqual({});
 	});
 
 	it('should correctly parse variables from URL', () => {
@@ -41,7 +41,7 @@ describe('useVariablesFromUrl', () => {
 			),
 		});
 
-		expect(result.current.getUrlVariables()).toEqual(mockVariables);
+		expect(result.current.getUrlVariables()).toStrictEqual(mockVariables);
 	});
 
 	it('should handle malformed URL parameters gracefully', () => {
@@ -56,7 +56,7 @@ describe('useVariablesFromUrl', () => {
 		});
 
 		// Should return empty object when JSON parsing fails
-		expect(result.current.getUrlVariables()).toEqual({});
+		expect(result.current.getUrlVariables()).toStrictEqual({});
 	});
 
 	it('should set variables to URL correctly', () => {
@@ -84,7 +84,7 @@ describe('useVariablesFromUrl', () => {
 		const urlVariables = searchParams.get(QueryParams.variables);
 
 		expect(urlVariables).toBeTruthy();
-		expect(JSON.parse(decodeURIComponent(urlVariables || ''))).toEqual(
+		expect(JSON.parse(decodeURIComponent(urlVariables || ''))).toStrictEqual(
 			mockVariables,
 		);
 	});
@@ -140,8 +140,8 @@ describe('useVariablesFromUrl', () => {
 
 		// Check if only the specified variable was updated
 		const updatedVariables = result.current.getUrlVariables();
-		expect(updatedVariables.var1).toEqual(newValue);
-		expect(updatedVariables.var2).toEqual(initialVariables.var2);
+		expect(updatedVariables.var1).toStrictEqual(newValue);
+		expect(updatedVariables.var2).toStrictEqual(initialVariables.var2);
 	});
 
 	it('should preserve other URL parameters when updating variables', () => {
@@ -194,8 +194,8 @@ describe('useVariablesFromUrl', () => {
 		expect(urlVariables.stringVar).toBe('production');
 		expect(urlVariables.numberVar).toBe(123);
 		expect(urlVariables.booleanVar).toBe(true);
-		expect(urlVariables.arrayVar).toEqual(['service1', 'service2']);
-		expect(urlVariables.mixedArrayVar).toEqual(['string', 456, false]);
+		expect(urlVariables.arrayVar).toStrictEqual(['service1', 'service2']);
+		expect(urlVariables.mixedArrayVar).toStrictEqual(['string', 456, false]);
 		expect(urlVariables.nullVar).toBeNull();
 	});
 
@@ -221,8 +221,8 @@ describe('useVariablesFromUrl', () => {
 
 		const urlVariables = result.current.getUrlVariables();
 		expect(urlVariables.emptyString).toBe('');
-		expect(urlVariables.emptyArray).toEqual([]);
-		expect(urlVariables.singleItemArray).toEqual(['solo']);
+		expect(urlVariables.emptyArray).toStrictEqual([]);
+		expect(urlVariables.singleItemArray).toStrictEqual(['solo']);
 		expect(urlVariables.undefinedVar).toBeUndefined();
 	});
 
@@ -243,7 +243,7 @@ describe('useVariablesFromUrl', () => {
 
 		// Should parse successfully via the raw fallback, not throw or return {}
 		const vars = result.current.getUrlVariables();
-		expect(vars).toEqual({ threshold: '50%' });
+		expect(vars).toStrictEqual({ threshold: '50%' });
 	});
 
 	it('should return empty object when URL param is completely unparseable', () => {
@@ -258,7 +258,7 @@ describe('useVariablesFromUrl', () => {
 			),
 		});
 
-		expect(result.current.getUrlVariables()).toEqual({});
+		expect(result.current.getUrlVariables()).toStrictEqual({});
 	});
 
 	it('should update variables with array values correctly', () => {
@@ -283,6 +283,6 @@ describe('useVariablesFromUrl', () => {
 		});
 
 		const updatedVariables = result.current.getUrlVariables();
-		expect(updatedVariables.multiSelectVar).toEqual(arrayValue);
+		expect(updatedVariables.multiSelectVar).toStrictEqual(arrayValue);
 	});
 });

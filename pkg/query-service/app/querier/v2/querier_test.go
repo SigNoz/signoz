@@ -3,9 +3,9 @@ package v2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -26,7 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

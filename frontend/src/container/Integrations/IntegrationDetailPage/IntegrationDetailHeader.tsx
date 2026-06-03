@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Modal, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
@@ -9,7 +10,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowLeftRight, Cable, Check } from 'lucide-react';
+import { ArrowLeftRight, Cable, Check } from '@signozhq/icons';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
@@ -250,7 +251,7 @@ function IntegrationDetailHeader(
 									key={latestData.last_received_from}
 									placement="right"
 								>
-									<Typography.Text className="last-value" ellipsis>
+									<Typography.Text className="last-value" truncate={1}>
 										{latestData.last_received_from}
 									</Typography.Text>
 								</Tooltip>
@@ -277,7 +278,7 @@ function IntegrationDetailHeader(
 									}
 									placement="right"
 								>
-									<Typography.Text className="last-value" ellipsis>
+									<Typography.Text className="last-value" truncate={1}>
 										{latestData.last_received_ts_ms
 											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,

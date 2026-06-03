@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Trash2, X } from '@signozhq/icons';
-import { Button, toast } from '@signozhq/ui';
+import { Plus, Trash2, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -75,7 +75,7 @@ function AuthDomain(): JSX.Element {
 			{
 				onSuccess: () => {
 					toast.success('Domain deleted successfully');
-					refetchAuthDomainListResponse();
+					void refetchAuthDomainListResponse();
 					hideDeleteModal();
 				},
 				onError: (error) => {
@@ -121,14 +121,14 @@ function AuthDomain(): JSX.Element {
 			},
 			{
 				title: 'Enforce SSO',
-				dataIndex: 'ssoEnabled',
+				dataIndex: ['config', 'ssoEnabled'],
 				key: 'ssoEnabled',
 				width: 80,
 				render: (
 					value: boolean,
 					record: AuthtypesGettableAuthDomainDTO,
 				): JSX.Element => (
-					<SSOEnforcementToggle isDefaultChecked={value} record={record} />
+					<SSOEnforcementToggle isDefaultChecked={!!value} record={record} />
 				),
 			},
 			{
@@ -158,7 +158,7 @@ function AuthDomain(): JSX.Element {
 							onClick={(): void => setRecord(record)}
 							variant="link"
 						>
-							Configure {SSOType.get(record.ssoType || '')}
+							Configure {SSOType.get(record.config?.ssoType || '')}
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"
@@ -179,7 +179,7 @@ function AuthDomain(): JSX.Element {
 			<section className="auth-domain-header">
 				<h3 className="auth-domain-title">Authenticated Domains</h3>
 				<Button
-					prefix={<PlusOutlined />}
+					prefix={<Plus size="md" />}
 					onClick={(): void => {
 						setAddDomain(true);
 					}}

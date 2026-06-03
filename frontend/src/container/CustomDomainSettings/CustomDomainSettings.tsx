@@ -9,8 +9,15 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { Button, Callout, toast } from '@signozhq/ui';
-import { Dropdown, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuTrigger,
+} from '@signozhq/ui/dropdown-menu';
+import { toast } from '@signozhq/ui/sonner';
+import { Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
 	ZeustypesHostDTO,
@@ -177,11 +184,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
-				<Skeleton
-					active
-					title={{ width: '40%' }}
-					paragraph={{ rows: 1, width: '60%' }}
-				/>
+				<Skeleton active paragraph={{ rows: 1, width: '60%' }} />
 			</div>
 		);
 	}
@@ -202,9 +205,15 @@ export default function CustomDomainSettings(): JSX.Element {
 							!workspaceName ? 'workspace-name-hidden' : ''
 						}`}
 					>
-						<Dropdown
-							trigger={['click']}
-							dropdownRender={(): JSX.Element => (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="link" color="none" disabled={isFetchingHosts}>
+									<Link2 size={12} />
+									<span>{stripProtocol(activeHost?.url ?? '')}</span>
+									<ChevronDown size={12} />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start">
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
 										All Workspace URLs
@@ -237,19 +246,8 @@ export default function CustomDomainSettings(): JSX.Element {
 										);
 									})}
 								</div>
-							)}
-						>
-							<Button
-								className="workspace-url-trigger"
-								disabled={isFetchingHosts}
-								variant="link"
-								color="none"
-							>
-								<Link2 size={12} />
-								<span>{stripProtocol(activeHost?.url ?? '')}</span>
-								<ChevronDown size={12} />
-							</Button>
-						</Dropdown>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<span className="custom-domain-card-meta-timezone">
 							<Clock size={11} />
 							{timezone.offset}

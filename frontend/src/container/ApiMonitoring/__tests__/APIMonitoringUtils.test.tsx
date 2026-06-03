@@ -303,7 +303,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(url);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '8080',
 				endpoint: '/api/endpoint?param=value',
 			});
@@ -317,7 +317,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(url);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '-',
 				endpoint: '/api/endpoint',
 			});
@@ -331,7 +331,7 @@ describe('API Monitoring Utils', () => {
 			const result = extractPortAndEndpoint(nonUrl);
 
 			// Assert
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				port: '-',
 				endpoint: nonUrl,
 			});
@@ -379,7 +379,7 @@ describe('API Monitoring Utils', () => {
 			const result = getFormattedEndPointDropDownData([]);
 
 			// Assert
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle undefined input', () => {
@@ -392,7 +392,7 @@ describe('API Monitoring Utils', () => {
 			// Assert
 			// If the implementation doesn't handle undefined, just check that it returns something predictable
 			// Based on the error, it seems the function returns undefined for undefined input
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle items without URL path', () => {
@@ -460,7 +460,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Check first item
 			expect(result[0].statusCode).toBe('200');
@@ -493,7 +493,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(1);
+			expect(result).toHaveLength(1);
 			expect(result[0].statusCode).toBe('-');
 			expect(result[0].count).toBe('-');
 			expect(result[0].p99Latency).toBe('-');
@@ -506,7 +506,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle undefined input', () => {
@@ -518,7 +518,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle mixed status code formats and preserve order', () => {
@@ -555,7 +555,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(3);
+			expect(result).toHaveLength(3);
 
 			// Check order preservation - should maintain the same order as input
 			expect(result[0].statusCode).toBe('404');
@@ -675,7 +675,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.data.result).toEqual([]);
+			expect(result.data.result).toStrictEqual([]);
 		});
 
 		it('should handle empty result array', () => {
@@ -695,7 +695,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.data.result).toEqual([]);
+			expect(result.data.result).toStrictEqual([]);
 		});
 	});
 
@@ -779,7 +779,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Should have two filters, one for >= start code and one for <= end code
 			const startRangeFilter = result.find((item) => item.op === '>=');
@@ -811,7 +811,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			const startRangeFilter = result.find((item) => item.op === '>=');
 			const endRangeFilter = result.find((item) => item.op === '<=');
@@ -832,7 +832,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle empty metric object', () => {
@@ -841,7 +841,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle metric without response_status_code', () => {
@@ -855,7 +855,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result).toEqual([]);
+			expect(result).toStrictEqual([]);
 		});
 
 		it('should handle unsupported status code range', () => {
@@ -869,7 +869,7 @@ describe('API Monitoring Utils', () => {
 
 			// Assert
 			expect(result).toBeDefined();
-			expect(result.length).toBe(2);
+			expect(result).toHaveLength(2);
 
 			// Should still have two filters
 			const startRangeFilter = result.find((item) => item.op === '>=');

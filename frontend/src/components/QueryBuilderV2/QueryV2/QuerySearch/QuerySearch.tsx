@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircleFilled } from '@ant-design/icons';
+import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -14,7 +14,8 @@ import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
-import { Button, Card, Collapse, Popover, Tag, Tooltip } from 'antd';
+import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
@@ -30,7 +31,6 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -47,6 +47,7 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
+import { combineInitialAndUserExpression } from './utils';
 
 import './QuerySearch.styles.scss';
 
@@ -85,6 +86,8 @@ interface QuerySearchProps {
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 	showFilterSuggestionsWithoutMetric?: boolean;
+	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
+	initialExpression?: string;
 }
 
 function QuerySearch({
@@ -96,6 +99,7 @@ function QuerySearch({
 	signalSource,
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
+	initialExpression,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -112,18 +116,26 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = useCallback((newExpression: string): void => {
-		try {
-			const validationResponse = validateQuery(newExpression);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
-	}, []);
+	const isScopedFilter = initialExpression !== undefined;
+
+	const validateExpressionForEditor = useCallback(
+		(editorDoc: string): void => {
+			const toValidate = isScopedFilter
+				? combineInitialAndUserExpression(initialExpression ?? '', editorDoc)
+				: editorDoc;
+			try {
+				const validationResponse = validateQuery(toValidate);
+				setValidation(validationResponse);
+			} catch (error) {
+				setValidation({
+					isValid: false,
+					message: 'Failed to process query',
+					errors: [error as IDetailedError],
+				});
+			}
+		},
+		[initialExpression, isScopedFilter],
+	);
 
 	const getCurrentExpression = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
@@ -165,6 +177,8 @@ function QuerySearch({
 		setIsEditorReady(true);
 	}, []);
 
+	const prevQueryDataExpressionRef = useRef<string | undefined>();
+
 	useEffect(
 		() => {
 			if (!isEditorReady) {
@@ -173,13 +187,22 @@ function QuerySearch({
 
 			const newExpression = queryData.filter?.expression || '';
 			const currentExpression = getCurrentExpression();
+			const prevExpression = prevQueryDataExpressionRef.current;
 
-			// Do not update codemirror editor if the expression is the same
-			if (newExpression !== currentExpression && !isFocused) {
+			// Only sync editor when queryData.filter?.expression actually changed from external source
+			// Not when focus changed (which would reset uncommitted user input)
+			const queryDataExpressionChanged = prevExpression !== newExpression;
+			prevQueryDataExpressionRef.current = newExpression;
+
+			if (
+				queryDataExpressionChanged &&
+				newExpression !== currentExpression &&
+				!isFocused
+			) {
 				updateEditorValue(newExpression, { skipOnChange: true });
-				if (newExpression) {
-					handleQueryValidation(newExpression);
-				}
+			}
+			if (!isFocused) {
+				validateExpressionForEditor(currentExpression);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,7 +307,7 @@ function QuerySearch({
 						}
 					});
 				}
-				setKeySuggestions(Array.from(merged.values()));
+				setKeySuggestions([...merged.values()]);
 
 				// Force reopen the completion if editor is available and focused
 				if (editorRef.current) {
@@ -337,7 +360,7 @@ function QuerySearch({
 		// If value contains single quotes, escape them and wrap in single quotes
 		if (value.includes("'")) {
 			// Replace single quotes with escaped single quotes
-			const escapedValue = value.replace(/'/g, "\\'");
+			const escapedValue = value.replaceAll(/'/g, "\\'");
 			return `'${escapedValue}'`;
 		}
 
@@ -614,7 +637,7 @@ function QuerySearch({
 
 	const handleBlur = (): void => {
 		const currentExpression = getCurrentExpression();
-		handleQueryValidation(currentExpression);
+		validateExpressionForEditor(currentExpression);
 		setIsFocused(false);
 	};
 
@@ -632,7 +655,6 @@ function QuerySearch({
 	);
 
 	const handleExampleClick = (exampleQuery: string): void => {
-		// If there's an existing query, append the example with AND
 		const currentExpression = getCurrentExpression();
 		const newExpression = currentExpression
 			? `${currentExpression} AND ${exampleQuery}`
@@ -643,26 +665,26 @@ function QuerySearch({
 	// Helper function to render a badge for the current context mode
 	const renderContextBadge = (): JSX.Element => {
 		if (!editingMode) {
-			return <Tag>Unknown</Tag>;
+			return <Badge color="vanilla">Unknown</Badge>;
 		}
 
 		switch (editingMode) {
 			case 'key':
-				return <Tag color="blue">Key</Tag>;
+				return <Badge color="robin">Key</Badge>;
 			case 'operator':
-				return <Tag color="purple">Operator</Tag>;
+				return <Badge color="sakura">Operator</Badge>;
 			case 'value':
-				return <Tag color="green">Value</Tag>;
+				return <Badge color="forest">Value</Badge>;
 			case 'conjunction':
-				return <Tag color="orange">Conjunction</Tag>;
+				return <Badge color="amber">Conjunction</Badge>;
 			case 'function':
-				return <Tag color="cyan">Function</Tag>;
+				return <Badge color="aqua">Function</Badge>;
 			case 'parenthesis':
-				return <Tag color="magenta">Parenthesis</Tag>;
+				return <Badge color="sakura">Parenthesis</Badge>;
 			case 'bracketList':
-				return <Tag color="red">Bracket List</Tag>;
+				return <Badge color="cherry">Bracket List</Badge>;
 			default:
-				return <Tag>Unknown</Tag>;
+				return <Badge color="vanilla">Unknown</Badge>;
 		}
 	};
 
@@ -897,12 +919,12 @@ function QuerySearch({
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
 			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
-				const usedKeys = queryContext.queryPairs.map((pair) => pair.key);
+				const usedKeys = new Set(queryContext.queryPairs.map((pair) => pair.key));
 
 				// Add boost to unused keys to prioritize them
 				options = options.map((option) => ({
 					...option,
-					boost: usedKeys.includes(option.label) ? -10 : 10,
+					boost: usedKeys.has(option.label) ? -10 : 10,
 				}));
 			}
 
@@ -1283,40 +1305,56 @@ function QuerySearch({
 					Currently editing: {renderContextBadge()}
 					{queryContext?.keyToken && (
 						<span className="triplet-info">
-							Key: <Tag>{queryContext.keyToken}</Tag>
+							Key: <Badge color="vanilla">{queryContext.keyToken}</Badge>
 						</span>
 					)}
 					{queryContext?.operatorToken && (
 						<span className="triplet-info">
-							Operator: <Tag>{queryContext.operatorToken}</Tag>
+							Operator: <Badge color="vanilla">{queryContext.operatorToken}</Badge>
 						</span>
 					)}
 					{queryContext?.valueToken && (
 						<span className="triplet-info">
-							Value: <Tag>{queryContext.valueToken}</Tag>
+							Value: <Badge color="vanilla">{queryContext.valueToken}</Badge>
 						</span>
 					)}
 					{queryContext?.currentPair && (
 						<span className="triplet-info query-pair-info">
-							Current pair: <Tag color="blue">{queryContext.currentPair.key}</Tag>
-							<Tag color="purple">{queryContext.currentPair.operator}</Tag>
+							Current pair: <Badge color="robin">{queryContext.currentPair.key}</Badge>
+							<Badge color="sakura">{queryContext.currentPair.operator}</Badge>
 							{queryContext.currentPair.value && (
-								<Tag color="green">{queryContext.currentPair.value}</Tag>
+								<Badge color="forest">{queryContext.currentPair.value}</Badge>
 							)}
-							<Tag color={queryContext.currentPair.isComplete ? 'success' : 'warning'}>
+							<Badge
+								color={queryContext.currentPair.isComplete ? 'success' : 'warning'}
+							>
 								{queryContext.currentPair.isComplete ? 'Complete' : 'Incomplete'}
-							</Tag>
+							</Badge>
 						</span>
 					)}
 					{queryContext?.queryPairs && queryContext.queryPairs.length > 0 && (
 						<span className="triplet-info">
-							Total pairs: <Tag color="blue">{queryContext.queryPairs.length}</Tag>
+							Total pairs:{' '}
+							<Badge color="robin">{queryContext.queryPairs.length}</Badge>
 						</span>
 					)}
 				</div>
 			)}
 
 			<div className="query-where-clause-editor-container">
+				{isScopedFilter ? (
+					<Tooltip title={initialExpression || ''} placement="left">
+						<div className="query-search-initial-scope-label">
+							<Filter
+								size={14}
+								style={{
+									opacity: 0.9,
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+								}}
+							/>
+						</div>
+					</Tooltip>
+				) : null}
 				<Tooltip
 					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
 					placement="left"
@@ -1356,6 +1394,7 @@ function QuerySearch({
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
+						hasInitialExpression: isScopedFilter,
 					})}
 					extensions={[
 						autocompletion({
@@ -1390,7 +1429,12 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(getCurrentExpression());
+											const user = getCurrentExpression();
+											onRun(
+												isScopedFilter
+													? combineInitialAndUserExpression(initialExpression ?? '', user)
+													: user,
+											);
 										}
 										return true;
 									},
@@ -1445,7 +1489,7 @@ function QuerySearch({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (
@@ -1555,6 +1599,7 @@ QuerySearch.defaultProps = {
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
+	initialExpression: undefined,
 };
 
 export default QuerySearch;

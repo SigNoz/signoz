@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Typography } from 'antd';
-import type { RadioChangeEvent } from 'antd/lib';
+import { Button, Drawer } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Divider } from '@signozhq/ui/divider';
+import { Typography } from '@signozhq/ui/typography';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import GetMinMax from 'lib/getMinMax';
-import { ArrowDown, ArrowUp, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, X } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -54,9 +56,9 @@ function DomainDetails({
 	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
 		useState<IBuilderQuery['filters']>(domainListFilters);
 
-	const handleTabChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
-		setParams({ selectedView: e.target.value });
+	const handleTabChange = (value: string): void => {
+		setSelectedView(value as VIEWS);
+		setParams({ selectedView: value });
 	};
 
 	const handleEndPointChange = (name: string): void => {
@@ -223,38 +225,17 @@ function DomainDetails({
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
-						<Radio.Group
-							className="views-tabs"
+						<ToggleGroupSimple
+							type="single"
 							onChange={handleTabChange}
 							value={selectedView}
-						>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.ALL_ENDPOINTS ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.ALL_ENDPOINTS}
-							>
-								<div className="view-title">All Endpoints</div>
-							</Radio.Button>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.ENDPOINT_STATS
-										? 'tab selected_view'
-										: 'tab'
-								}
-								value={VIEW_TYPES.ENDPOINT_STATS}
-							>
-								<div className="view-title">Endpoint(s) Stats</div>
-							</Radio.Button>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.TOP_ERRORS ? 'tab selected_view' : 'tab'
-								}
-								value={VIEW_TYPES.TOP_ERRORS}
-							>
-								<div className="view-title">Top 10 Errors</div>
-							</Radio.Button>
-						</Radio.Group>
+							size="lg"
+							items={[
+								{ value: VIEW_TYPES.ALL_ENDPOINTS, label: 'All Endpoints' },
+								{ value: VIEW_TYPES.ENDPOINT_STATS, label: 'Endpoint(s) Stats' },
+								{ value: VIEW_TYPES.TOP_ERRORS, label: 'Top 10 Errors' },
+							]}
+						/>
 					</div>
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
 						<AllEndPoints

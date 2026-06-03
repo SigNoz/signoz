@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 
 import './LearnMore.styles.scss';

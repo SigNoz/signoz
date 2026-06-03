@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
-import { Input } from '@signozhq/ui';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
@@ -10,7 +10,7 @@ import ROUTES from 'constants/routes';
 import { useCreateFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 
 import '../RenameFunnel/RenameFunnel.styles.scss';
 

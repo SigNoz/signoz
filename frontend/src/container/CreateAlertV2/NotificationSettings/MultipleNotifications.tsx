@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
-import { Select, Tooltip, Typography } from 'antd';
+import { Select, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Info } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
@@ -98,9 +99,9 @@ function MultipleNotifications(): JSX.Element {
 					data-testid="multiple-notifications-select"
 				/>
 				{isMultipleNotificationsEnabled && (
-					<Typography.Paragraph className="multiple-notifications-select-description">
+					<Typography.Text className="multiple-notifications-select-description">
 						{groupByDescription}
-					</Typography.Paragraph>
+					</Typography.Text>
 				)}
 			</div>
 		);

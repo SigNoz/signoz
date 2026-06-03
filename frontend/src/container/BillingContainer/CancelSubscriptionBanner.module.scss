@@ -1,0 +1,69 @@
+.banner {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	padding: var(--padding-4);
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	background-color: var(--l2-background);
+	margin: var(--spacing-4) 0 var(--spacing-12);
+}
+
+.info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.titleRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.title {
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
+	color: var(--l1-foreground);
+}
+
+.subtitle {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--l2-foreground);
+	padding-left: 20px;
+}
+
+.dialogBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.dialogDescription {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--l2-foreground);
+	margin: 0;
+}
+
+.dialogConfirmLabel {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--l2-foreground);
+	margin: 0;
+
+	code {
+		font-family: var(--font-mono);
+		color: var(--l1-foreground);
+	}
+}
+
+.cancelButton {
+	background: var(--secondary-background);
+	border: 1px solid var(--l1-border);
+}

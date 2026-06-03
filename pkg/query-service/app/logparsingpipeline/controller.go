@@ -11,15 +11,16 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -38,18 +39,21 @@ type LogParsingPipelineController struct {
 	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error)
 	// TODO(Piyush): remove with qbv5 migration
 	reader interfaces.Reader
+	fl     flagger.Flagger
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
 	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error),
 	reader interfaces.Reader,
+	fl flagger.Flagger,
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
 		Repo:                    repo,
 		GetIntegrationPipelines: getIntegrationPipelines,
 		reader:                  reader,
+		fl:                      fl,
 	}, nil
 }
 
@@ -363,14 +367,14 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 // RecommendAgentConfig generates the collector config to be sent to agents.
-// The normalize pipeline (when BodyJSONQueryEnabled) is injected here, after
+// The normalize pipeline (when use_json_body feature flag is on) is injected here, after
 // rawPipelineData is serialized. So it is only present in the config sent to
 // the collector and never persisted to the database as part of the user's pipeline list.
 //
 // NOTE: The configId sent to agents is derived from the pipeline version number
 // (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
-// the generated YAML without bumping the version (e.g. toggling BodyJSONQueryEnabled
-// or updating operator IfExpressions), agents that already applied that version will
+// the generated YAML without bumping the version (e.g. toggling the use_json_body
+// flag or updating operator IfExpressions), agents that already applied that version will
 // not re-apply the new config. In such cases, users must save a new pipeline version
 // via the API to force agents to pick up the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
@@ -398,7 +402,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	if querybuilder.BodyJSONQueryEnabled {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgId)) {
 		// add default normalize pipeline at the beginning, only for sending to collector
 		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
 	}

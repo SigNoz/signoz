@@ -9,9 +9,13 @@ import type { TooltipSyncMetadata } from './types';
  *
  * Receivers use this to make decisions such as:
  * - Whether to show the horizontal crosshair line (matching yAxisUnit)
- * - Future: what to render inside the tooltip (matching groupBy, etc.)
+ * - Which series to highlight when panels share the same groupBy
  */
 const metadataBySyncKey = new Map<string, TooltipSyncMetadata | undefined>();
+const activeSeriesMetricBySyncKey = new Map<
+	string,
+	Record<string, string> | null
+>();
 
 export const syncCursorRegistry = {
 	setMetadata(syncKey: string, metadata: TooltipSyncMetadata | undefined): void {
@@ -20,5 +24,16 @@ export const syncCursorRegistry = {
 
 	getMetadata(syncKey: string): TooltipSyncMetadata | undefined {
 		return metadataBySyncKey.get(syncKey);
+	},
+
+	setActiveSeriesMetric(
+		syncKey: string,
+		metric: Record<string, string> | null,
+	): void {
+		activeSeriesMetricBySyncKey.set(syncKey, metric);
+	},
+
+	getActiveSeriesMetric(syncKey: string): Record<string, string> | null {
+		return activeSeriesMetricBySyncKey.get(syncKey) ?? null;
 	},
 };

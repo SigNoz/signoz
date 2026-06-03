@@ -123,6 +123,7 @@
 				&__row {
 					display: flex;
 					flex-direction: row;
+					flex-wrap: wrap;
 					align-items: flex-end;
 					max-width: 825px;
 					gap: 25px;

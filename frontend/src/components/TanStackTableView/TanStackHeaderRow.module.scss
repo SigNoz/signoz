@@ -2,7 +2,10 @@
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top, 0.3rem)
+		var(--tanstack-cell-padding-right, 0.3rem)
+		var(--tanstack-cell-padding-bottom, 0.3rem)
+		var(--tanstack-cell-padding-left, 0.3rem);
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
@@ -19,7 +22,17 @@
 	}
 
 	border: none !important;
-	background-color: var(--l2-background) !important;
+	background-color: var(
+		--tanstack-table-header-cell-bg,
+		var(--l2-background)
+	) !important;
+
+	&:first-child {
+		background-color: var(
+			--tanstack-first-column-header-bg,
+			var(--tanstack-table-header-cell-bg, var(--l2-background))
+		) !important;
+	}
 }
 
 .tanstackHeaderContent {
@@ -61,7 +74,7 @@
 	width: 12px;
 	height: 12px;
 	cursor: grab;
-	color: var(--l2-foreground);
+	color: var(--tanstack-table-header-cell-color, var(--l2-foreground));
 	opacity: 1;
 	touch-action: none;
 }
@@ -74,7 +87,7 @@
 	height: 20px;
 	cursor: pointer;
 	flex-shrink: 0;
-	color: var(--l2-foreground);
+	color: var(--tanstack-table-header-cell-color, var(--l2-foreground));
 
 	margin-left: auto;
 }
@@ -82,8 +95,9 @@
 .tanstackColumnActionsContent {
 	width: 140px;
 	padding: 0;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
+	background: var(--tanstack-table-header-cell-bg, var(--l2-background));
+	border: 1px solid
+		var(--tanstack-table-header-cell-actions-border-color, var(--l2-border));
 	border-radius: 4px;
 	box-shadow: none;
 }
@@ -137,7 +151,7 @@
 }
 
 .tanstackHeaderCell.isResizing .cursorColResize {
-	background: var(--bg-robin-300);
+	background: var(--tanstack-table-resize-active-bg, var(--bg-robin-300));
 }
 
 .tanstackResizeHandleLine {
@@ -147,7 +161,7 @@
 	left: 50%;
 	width: 4px;
 	transform: translateX(-50%);
-	background: var(--l2-background);
+	background: var(--tanstack-table-resize-handle-bg, var(--l2-background));
 	opacity: 1;
 	pointer-events: none;
 	transition:
@@ -155,13 +169,34 @@
 		width 120ms ease;
 }
 
+.tanstackHeaderCell:first-child .tanstackResizeHandleLine {
+	background: var(
+		--tanstack-first-column-header-bg,
+		var(--tanstack-table-resize-handle-bg, var(--l2-background))
+	);
+}
+
 .cursorColResize:hover .tanstackResizeHandleLine {
-	background: var(--l2-border);
+	background: var(--tanstack-table-resize-handle-hover-bg, var(--l2-border));
+}
+
+.tanstackHeaderCell:first-child
+	.cursorColResize:hover
+	.tanstackResizeHandleLine {
+	background: color-mix(
+		in srgb,
+		var(
+				--tanstack-first-column-header-bg,
+				var(--tanstack-table-resize-handle-bg, var(--l2-background))
+			)
+			60%,
+		black
+	);
 }
 
 .tanstackHeaderCell.isResizing .tanstackResizeHandleLine {
 	width: 2px;
-	background: var(--bg-robin-500);
+	background: var(--tanstack-table-resize-handle-active-bg, var(--bg-robin-500));
 	transition: none;
 }
 
@@ -213,7 +248,12 @@
 	flex-shrink: 0;
 	width: 14px;
 	height: 14px;
-	color: var(--l2-foreground);
+	color: var(--l3-foreground);
+
+	&[data-sort-direction='asc'],
+	&[data-sort-direction='desc'] {
+		color: var(--primary);
+	}
 }
 
 .isSortable {

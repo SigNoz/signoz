@@ -14,14 +14,13 @@ import {
 	k8sStatefulSetGetEntityName,
 	k8sStatefulSetGetSelectedItemFilters,
 	k8sStatefulSetInitialEventsFilter,
-	k8sStatefulSetInitialFilters,
 	k8sStatefulSetInitialLogTracesFilter,
 	statefulSetWidgetInfo,
 } from './constants';
 import {
-	k8sStatefulSetsColumns,
+	getK8sStatefulSetItemKey,
+	getK8sStatefulSetRowKey,
 	k8sStatefulSetsColumnsConfig,
-	k8sStatefulSetsRenderRowData,
 } from './table.config';
 
 function K8sStatefulSetsList({
@@ -91,10 +90,10 @@ function K8sStatefulSetsList({
 			<K8sBaseList<K8sStatefulSetsData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.STATEFULSETS}
-				tableColumnsDefinitions={k8sStatefulSetsColumns}
 				tableColumns={k8sStatefulSetsColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sStatefulSetsRenderRowData}
+				getRowKey={getK8sStatefulSetRowKey}
+				getItemKey={getK8sStatefulSetItemKey}
 				eventCategory={InfraMonitoringEvents.StatefulSet}
 			/>
 
@@ -106,7 +105,6 @@ function K8sStatefulSetsList({
 				getEntityName={k8sStatefulSetGetEntityName}
 				getInitialLogTracesFilters={k8sStatefulSetInitialLogTracesFilter}
 				getInitialEventsFilters={k8sStatefulSetInitialEventsFilter}
-				primaryFilterKeys={k8sStatefulSetInitialFilters}
 				metadataConfig={k8sStatefulSetDetailsMetadataConfig}
 				entityWidgetInfo={statefulSetWidgetInfo}
 				getEntityQueryPayload={getStatefulSetMetricsQueryPayload}

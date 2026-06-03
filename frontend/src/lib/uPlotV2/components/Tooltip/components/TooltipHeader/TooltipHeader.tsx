@@ -3,7 +3,7 @@ import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { Pin } from 'lucide-react';
+import { Pin } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 

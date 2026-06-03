@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -6,8 +6,17 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import KeysTab from '../KeysTab';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('components/AuthZTooltip/AuthZTooltip', () => ({
+	__esModule: true,
+	default: ({
+		children,
+	}: {
+		children: React.ReactElement;
+	}): React.ReactElement => children,
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -20,14 +29,14 @@ const keys: ServiceaccounttypesGettableFactorAPIKeyDTO[] = [
 		id: 'key-1',
 		name: 'Production Key',
 		expiresAt: 0,
-		lastObservedAt: null as any,
+		lastObservedAt: null as unknown as string,
 		serviceAccountId: 'sa-1',
 	},
 	{
 		id: 'key-2',
 		name: 'Staging Key',
 		expiresAt: 1924905600, // 2030-12-31
-		lastObservedAt: new Date('2026-03-10T10:00:00Z'),
+		lastObservedAt: '2026-03-10T10:00:00Z',
 		serviceAccountId: 'sa-1',
 	},
 ];

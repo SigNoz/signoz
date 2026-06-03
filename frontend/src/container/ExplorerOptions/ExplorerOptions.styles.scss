@@ -23,6 +23,10 @@
 			}
 		}
 	}
+
+	&__divider {
+		--divider-vertical-margin: 0;
+	}
 }
 
 .hide-update {
@@ -55,12 +59,6 @@
 	.hidden {
 		display: none;
 	}
-
-	.ant-divider {
-		margin: 0;
-		height: 28px;
-		border: 1px solid var(--l1-border);
-	}
 }
 
 .explorer-options {
@@ -86,7 +84,7 @@
 	.view-options,
 	.actions {
 		.info-icon {
-			padding: 8px;
+			margin: 8px;
 		}
 
 		.hidden {
@@ -218,6 +216,9 @@
 			justify-content: flex-end;
 			padding: 16px 16px;
 			margin: 0;
+			.save-button {
+				display: flex;
+			}
 		}
 	}
 	.title {

@@ -1,0 +1,31 @@
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 2px 0;
+	// User bubbles are right-aligned; mirror the alignment so the chips
+	// hug the bubble's right edge.
+	align-self: flex-end;
+	// Driven by MessageBubble's --feedback-opacity (0 normally, 1 on hover).
+	opacity: var(--feedback-opacity, 0);
+	transition: opacity 0.15s ease;
+}
+
+.btn {
+	width: 24px !important;
+	height: 24px !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	color: var(--l3-foreground) !important;
+
+	&:hover {
+		color: var(--l1-foreground) !important;
+	}
+
+	&.active {
+		color: var(--accent-forest) !important;
+	}
+}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -36,6 +37,7 @@ func NewAuditQueryStatementBuilder(
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	flagger flagger.Flagger,
 ) *auditQueryStatementBuilder {
 	auditSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryaudit")
 
@@ -48,6 +50,7 @@ func NewAuditQueryStatementBuilder(
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,
+		flagger,
 	)
 
 	return &auditQueryStatementBuilder{
@@ -279,12 +282,10 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -319,7 +320,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
 		if err != nil {
 			return nil, err
 		}
@@ -419,12 +420,10 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -456,7 +455,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, false)
 		if err != nil {
 			return nil, err
 		}
@@ -523,12 +522,10 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
 
 	stmt := &qbtypes.Statement{
-		Query: finalSQL,
-		Args:  finalArgs,
-	}
-	if preparedWhereClause != nil {
-		stmt.Warnings = preparedWhereClause.Warnings
-		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+		Query:          finalSQL,
+		Args:           finalArgs,
+		Warnings:       preparedWhereClause.Warnings,
+		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
 	return stmt, nil
@@ -541,8 +538,8 @@ func (b *auditQueryStatementBuilder) addFilterCondition(
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) (*querybuilder.PreparedWhereClause, error) {
-	var preparedWhereClause *querybuilder.PreparedWhereClause
+) (querybuilder.PreparedWhereClause, error) {
+	var preparedWhereClause querybuilder.PreparedWhereClause
 	var err error
 
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -561,11 +558,11 @@ func (b *auditQueryStatementBuilder) addFilterCondition(
 		})
 
 		if err != nil {
-			return nil, err
+			return preparedWhereClause, err
 		}
 	}
 
-	if preparedWhereClause != nil {
+	if !preparedWhereClause.IsEmpty() {
 		sb.AddWhereClause(preparedWhereClause.WhereClause)
 	}
 

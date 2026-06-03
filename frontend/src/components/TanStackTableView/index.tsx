@@ -3,8 +3,10 @@ import TanStackTableText from './TanStackTableText';
 
 export * from './TanStackTableStateContext';
 export * from './types';
+export * from './useCalculatedPageSize';
 export * from './useColumnState';
 export * from './useColumnStore';
+export * from './usePreferredPageSize.store';
 export * from './useTableParams';
 
 /**
@@ -171,6 +173,88 @@ export * from './useTableParams';
  *   tableScrollerProps={{ className: 'my-table-scroll', 'data-testid': 'logs-scroller' }}
  * />
  * ```
+ *
+ * @example Disable virtual scroll — useful for nested tables inside expanded rows.
+ * Virtual scroll requires a fixed height container, which is problematic for nested tables
+ * that need dynamic height. Use `disableVirtualScroll` when rendering tables inside
+ * `renderExpandedRow` to allow the nested table to grow based on content.
+ * Note: Cannot be combined with `onEndReached` (infinite scroll requires virtualization).
+ * ```tsx
+ * // Parent table with expandable rows
+ * <TanStackTable
+ *   data={parentData}
+ *   columns={parentColumns}
+ *   renderExpandedRow={(row) => (
+ *     // Nested table without virtualization — height adapts to content
+ *     <TanStackTable
+ *       data={row.children}
+ *       columns={childColumns}
+ *       disableVirtualScroll
+ *     />
+ *   )}
+ * />
+ * ```
+ *
+ * @example useTableParams — manages pagination state with URL sync and persistence
+ *
+ * The `useTableParams` hook handles page, limit, orderBy, and expanded state. It can sync
+ * to URL params, persist user's page size preference, and auto-calculate page size from
+ * container height.
+ *
+ * **Priority chain for limit**: URL > preferred (localStorage) > calculated > explicit default > 50
+ *
+ * ```tsx
+ * import { useCalculatedPageSize, useTableParams } from 'components/TanStackTableView';
+ *
+ * const QUERY_PARAMS = { page: 'page', limit: 'limit', orderBy: 'orderBy' } as const;
+ *
+ * function MyTable({ data, columns }) {
+ *   // Auto-calculate page size based on container height
+ *   const { containerRef, calculatedPageSize } = useCalculatedPageSize({ rowHeight: 42 });
+ *
+ *   // useTableParams options:
+ *   // - storageKey: persists user's page size selection to localStorage
+ *   // - calculatedPageSize: uses this when no URL/preferred value exists
+ *   // - cleanupOnUnmount: clears URL params when component unmounts
+ *   const { page, limit, setLimit, orderBy } = useTableParams(QUERY_PARAMS, {
+ *     page: 1,
+ *     limit: 10,
+ *     storageKey: 'my-table',
+ *     calculatedPageSize,
+ *     cleanupOnUnmount: true,
+ *   });
+ *
+ *   const paginatedData = useMemo(() => {
+ *     const start = (page - 1) * limit;
+ *     return data.slice(start, start + limit);
+ *   }, [data, page, limit]);
+ *
+ *   return (
+ *     <div ref={containerRef} style={{ height: '100%' }}>
+ *       <TanStackTable
+ *         data={paginatedData}
+ *         columns={columns}
+ *         enableQueryParams={QUERY_PARAMS}
+ *         pagination={{
+ *           total: data.length,
+ *           calculatedPageSize,
+ *           onLimitChange: setLimit,
+ *         }}
+ *       />
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * **useTableParams options:**
+ * - `storageKey`: Persists user's page size to localStorage. When user selects a size
+ *   different from calculated, it's saved. Selecting calculated size clears preference.
+ * - `calculatedPageSize`: From `useCalculatedPageSize`. Used as default when no URL/preferred.
+ * - `cleanupOnUnmount`: Clears URL params (page, limit, orderBy, expanded) on unmount.
+ *   Use when navigating away should reset table state.
+ *
+ * **Pagination shows "Auto" option** when `calculatedPageSize` is passed, allowing users
+ * to reset to auto-calculated size.
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,

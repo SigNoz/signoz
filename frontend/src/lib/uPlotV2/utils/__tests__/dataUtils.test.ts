@@ -105,8 +105,8 @@ describe('dataUtils', () => {
 
 			const result = insertLargeGapNullsIntoAlignedData(data, options);
 
-			expect(result[0]).toEqual([0, 50, 100]);
-			expect(result[1]).toEqual([1, null, 2]);
+			expect(result[0]).toStrictEqual([0, 50, 100]);
+			expect(result[1]).toStrictEqual([1, null, 2]);
 		});
 
 		it('inserts nulls at every gap that exceeds the threshold', () => {
@@ -120,8 +120,8 @@ describe('dataUtils', () => {
 
 			const result = insertLargeGapNullsIntoAlignedData(data, options);
 
-			expect(result[0]).toEqual([0, 50, 100, 110, 160, 210]);
-			expect(result[1]).toEqual([1, null, 2, 3, null, 4]);
+			expect(result[0]).toStrictEqual([0, 50, 100, 110, 160, 210]);
+			expect(result[1]).toStrictEqual([1, null, 2, 3, null, 4]);
 		});
 
 		it('inserts null for all series at a gap triggered by any one series', () => {
@@ -140,9 +140,9 @@ describe('dataUtils', () => {
 
 			const result = insertLargeGapNullsIntoAlignedData(data, options);
 
-			expect(result[0]).toEqual([0, 50, 100]);
-			expect(result[1]).toEqual([1, null, 2]);
-			expect(result[2]).toEqual([3, null, 4]);
+			expect(result[0]).toStrictEqual([0, 50, 100]);
+			expect(result[1]).toStrictEqual([1, null, 2]);
+			expect(result[2]).toStrictEqual([3, null, 4]);
 		});
 
 		it('ignores boolean spanGaps options (only numeric values trigger insertion)', () => {
@@ -187,8 +187,8 @@ describe('dataUtils', () => {
 
 			const result = insertLargeGapNullsIntoAlignedData(data, options);
 
-			expect(result[0]).toEqual([0, 50, 100, 110]);
-			expect(result[1]).toEqual([1, null, null, 2]);
+			expect(result[0]).toStrictEqual([0, 50, 100, 110]);
+			expect(result[1]).toStrictEqual([1, null, null, 2]);
 		});
 	});
 
@@ -209,7 +209,7 @@ describe('dataUtils', () => {
 
 			const result = applySpanGapsToAlignedData(data, options);
 
-			expect(result[1]).toEqual(ys);
+			expect(result[1]).toStrictEqual(ys);
 		});
 
 		it('converts nulls to undefined when spanGaps is true', () => {
@@ -219,7 +219,7 @@ describe('dataUtils', () => {
 
 			const result = applySpanGapsToAlignedData(data, options);
 
-			expect(result[1]).toEqual([1, undefined, 2, undefined]);
+			expect(result[1]).toStrictEqual([1, undefined, 2, undefined]);
 		});
 
 		it('leaves data unchanged when spanGaps is false', () => {
@@ -229,7 +229,7 @@ describe('dataUtils', () => {
 
 			const result = applySpanGapsToAlignedData(data, options);
 
-			expect(result[1]).toEqual(ys);
+			expect(result[1]).toStrictEqual(ys);
 		});
 
 		it('inserts a null break point when a gap exceeds the numeric threshold', () => {
@@ -242,8 +242,8 @@ describe('dataUtils', () => {
 
 			const result = applySpanGapsToAlignedData(data, options);
 
-			expect(result[0]).toEqual([0, 50, 100, 110]);
-			expect(result[1]).toEqual([1, null, 2, 3]);
+			expect(result[0]).toStrictEqual([0, 50, 100, 110]);
+			expect(result[1]).toStrictEqual([1, null, 2, 3]);
 		});
 
 		it('returns original data when no gap exceeds the numeric threshold', () => {
@@ -273,11 +273,11 @@ describe('dataUtils', () => {
 			const result = applySpanGapsToAlignedData(data, options);
 
 			// x-axis extended with the inserted midpoint
-			expect(result[0]).toEqual([0, 50, 100]);
+			expect(result[0]).toStrictEqual([0, 50, 100]);
 			// series 0: null at midpoint breaks the line
-			expect(result[1]).toEqual([1, null, 2]);
+			expect(result[1]).toStrictEqual([1, null, 2]);
 			// series 1: null at midpoint converted to undefined → line spans over it
-			expect(result[2]).toEqual([3, undefined, 4]);
+			expect(result[2]).toStrictEqual([3, undefined, 4]);
 		});
 	});
 });

@@ -15,13 +15,12 @@ import {
 	k8sJobGetEntityName,
 	k8sJobGetSelectedItemFilters,
 	k8sJobInitialEventsFilter,
-	k8sJobInitialFilters,
 	k8sJobInitialLogTracesFilter,
 } from './constants';
 import {
-	k8sJobsColumns,
+	getK8sJobItemKey,
+	getK8sJobRowKey,
 	k8sJobsColumnsConfig,
-	k8sJobsRenderRowData,
 } from './table.config';
 
 function K8sJobsList({
@@ -91,10 +90,10 @@ function K8sJobsList({
 			<K8sBaseList<K8sJobsData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.JOBS}
-				tableColumnsDefinitions={k8sJobsColumns}
 				tableColumns={k8sJobsColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sJobsRenderRowData}
+				getRowKey={getK8sJobRowKey}
+				getItemKey={getK8sJobItemKey}
 				eventCategory={InfraMonitoringEvents.Job}
 			/>
 
@@ -106,7 +105,6 @@ function K8sJobsList({
 				getEntityName={k8sJobGetEntityName}
 				getInitialLogTracesFilters={k8sJobInitialLogTracesFilter}
 				getInitialEventsFilters={k8sJobInitialEventsFilter}
-				primaryFilterKeys={k8sJobInitialFilters}
 				metadataConfig={k8sJobDetailsMetadataConfig}
 				entityWidgetInfo={jobWidgetInfo}
 				getEntityQueryPayload={getJobMetricsQueryPayload}

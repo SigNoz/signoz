@@ -47,10 +47,16 @@ function TanStackCustomTableRow<TData>({
 	const isActive = context?.isRowActive?.(rowData) ?? false;
 	const extraClass = context?.getRowClassName?.(rowData) ?? '';
 	const rowStyle = context?.getRowStyle?.(rowData);
+	const enableAlternatingRowColors =
+		context?.enableAlternatingRowColors ?? false;
 
 	const rowClassName = cx(
 		tableStyles.tableRow,
 		isActive && tableStyles.tableRowActive,
+		enableAlternatingRowColors &&
+			(item.row.index % 2 === 0
+				? tableStyles.tableRowEven
+				: tableStyles.tableRowOdd),
 		extraClass,
 	);
 
@@ -103,6 +109,12 @@ function areTableRowPropsEqual<TData>(
 		return false;
 	}
 	if (prev.context?.columnVisibilityKey !== next.context?.columnVisibilityKey) {
+		return false;
+	}
+	if (
+		prev.context?.enableAlternatingRowColors !==
+		next.context?.enableAlternatingRowColors
+	) {
 		return false;
 	}
 

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -22,6 +22,16 @@ jest.mock('../TanStackTable.module.scss', () => ({
 		tableViewRowActions: 'tableViewRowActions',
 	},
 }));
+
+beforeAll(() => {
+	// jsdom doesn't include ResizeObserver — must direct-assign rather than
+	// spyOn (spyOn requires the property to already exist).
+	window.ResizeObserver = jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+});
 
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
@@ -188,6 +198,284 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByTestId('suffix-content')).toBeInTheDocument();
 			});
 		});
+
+		it('renders total count when showTotalCount is true', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 100');
+			});
+		});
+
+		it('renders total count with label when totalCountLabel is provided', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 50,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+						totalCountLabel: 'Pods',
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 50 Pods');
+			});
+		});
+
+		it('does not render total count when showTotalCount is false', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: false,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not render total count when total is 0', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 0,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('table')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows page size selector by default (showPageSize undefined)', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			// Page size combobox trigger should be visible by default (button with aria-haspopup)
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).toBeInTheDocument();
+		});
+
+		it('shows page size selector when showPageSize is true', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showPageSize: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).toBeInTheDocument();
+		});
+
+		it('hides page size selector when showPageSize is false', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showPageSize: false,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			);
+			expect(comboboxTrigger).not.toBeInTheDocument();
+		});
+
+		it('calls onPageChange callback when page changes', async () => {
+			const user = userEvent.setup();
+			const onPageChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
+
+			await waitFor(() => {
+				expect(onPageChange).toHaveBeenCalledWith(2);
+			});
+		});
+
+		it('calls onLimitChange callback when limit changes', async () => {
+			const user = userEvent.setup();
+			const onLimitChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						onLimitChange,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(
+					document.querySelector('button[aria-haspopup="dialog"]'),
+				).toBeInTheDocument();
+			});
+
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			// Select a different page size option
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			await waitFor(() => {
+				expect(onLimitChange).toHaveBeenCalledWith(20);
+			});
+		});
+
+		it('preserves page from URL on initial mount', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				queryParams: { page: '3' },
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page3Button = within(nav).getByRole('button', { name: '3' });
+
+			// Page 3 should be active (from URL), not reset to defaultPage 1
+			expect(page3Button).toHaveAttribute('aria-current', 'page');
+		});
+
+		it('resets page to 1 when limit changes', async () => {
+			const user = userEvent.setup();
+			const onUrlUpdate = jest.fn<void, [UrlUpdateEvent]>();
+			const onPageChange = jest.fn();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10, onPageChange },
+					enableQueryParams: true,
+				},
+				onUrlUpdate,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			// Navigate to page 2
+			const nav = screen.getByRole('navigation');
+			const page2 = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2) {
+				throw new Error('Page 2 button not found in pagination');
+			}
+			await user.click(page2);
+
+			await waitFor(() => {
+				const lastPage = onUrlUpdate.mock.calls
+					.map((call) => call[0].searchParams.get('page'))
+					.filter(Boolean)
+					.pop();
+				expect(lastPage).toBe('2');
+			});
+
+			// Change page size
+			const comboboxTrigger = document.querySelector(
+				'button[aria-haspopup="dialog"]',
+			) as HTMLElement;
+			await user.click(comboboxTrigger);
+
+			const option20 = await screen.findByRole('option', { name: '20' });
+			await user.click(option20);
+
+			// Verify page reset to 1 (nuqs removes default values from URL)
+			await waitFor(() => {
+				const lastCall = onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1];
+				const lastPage = lastCall[0].searchParams.get('page');
+				expect(lastPage === '1' || lastPage === null).toBe(true);
+				expect(lastCall[0].searchParams.get('limit')).toBe('20');
+			});
+
+			// Verify onPageChange callback was called with 1
+			expect(onPageChange).toHaveBeenCalledWith(1);
+		});
 	});
 
 	describe('sorting', () => {
@@ -249,6 +537,55 @@ describe('TanStackTableView Integration', () => {
 					const parsed = JSON.parse(lastOrderBy);
 					expect(parsed.order).toBe('desc');
 				}
+			});
+		});
+
+		it('calls onSort callback when sorting', async () => {
+			const user = userEvent.setup();
+			const onSort = jest.fn();
+
+			renderTanStackTable({
+				props: { onSort },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			const sortButton = screen.getByTitle('ID');
+			await user.click(sortButton);
+
+			await waitFor(() => {
+				expect(onSort).toHaveBeenCalledWith(
+					expect.objectContaining({ columnName: 'id', order: 'asc' }),
+				);
+			});
+		});
+
+		it('calls onSort with null when sort is cleared', async () => {
+			const user = userEvent.setup();
+			const onSort = jest.fn();
+
+			renderTanStackTable({
+				props: { onSort },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			const sortButton = screen.getByTitle('ID');
+
+			// First click - asc
+			await user.click(sortButton);
+			// Second click - desc
+			await user.click(sortButton);
+			// Third click - clear
+			await user.click(sortButton);
+
+			await waitFor(() => {
+				const lastCall = onSort.mock.calls[onSort.mock.calls.length - 1];
+				expect(lastCall[0]).toBeNull();
 			});
 		});
 	});
@@ -389,6 +726,101 @@ describe('TanStackTableView Integration', () => {
 			// by checking the table renders without errors
 			expect(screen.getByRole('table')).toBeInTheDocument();
 		});
+
+		it('renders without errors when expanded state exists but expansion is disabled', async () => {
+			// This tests that the table handles the case where URL has expanded state
+			// but renderExpandedRow is undefined (expansion disabled).
+			// The table's useEffect should reset expanded state automatically.
+			renderTanStackTable({
+				props: {
+					enableQueryParams: true,
+					// renderExpandedRow is undefined - expansion disabled
+				},
+				queryParams: { expanded: '["1"]' },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// Table should render without any expanded rows
+			expect(screen.queryByTestId('expanded-content')).not.toBeInTheDocument();
+		});
+
+		it('renders expanded rows with unique keys in non-virtualized mode', async () => {
+			// This tests that row and expansion items have unique keys to avoid
+			// React's "duplicate key" warning when disableVirtualScroll is true
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+					enableQueryParams: true,
+					renderExpandedRow: (row) => (
+						<div data-testid={`expanded-${row.id}`}>Expanded: {row.name}</div>
+					),
+					getRowCanExpand: () => true,
+					getRowKey: (row) => row.id,
+				},
+				queryParams: { expanded: '["1"]' },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// Both the row and its expansion content should be rendered
+			expect(screen.getByTestId('expanded-1')).toBeInTheDocument();
+			expect(screen.getByText('Expanded: Item 1')).toBeInTheDocument();
+
+			// Verify all 3 data rows plus 1 expansion row = 4 tr elements in tbody
+			const tbody = screen.getByRole('table').querySelector('tbody');
+			expect(tbody?.querySelectorAll('tr')).toHaveLength(4);
+		});
+	});
+
+	describe('disableVirtualScroll', () => {
+		it('throws error when used with onEndReached', () => {
+			expect(() => {
+				renderTanStackTable({
+					props: {
+						disableVirtualScroll: true,
+						onEndReached: jest.fn(),
+					},
+				});
+			}).toThrow(
+				'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
+			);
+		});
+
+		it('renders all rows without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+				expect(screen.getByText('Item 2')).toBeInTheDocument();
+				expect(screen.getByText('Item 3')).toBeInTheDocument();
+			});
+
+			// Verify table structure exists
+			expect(screen.getByRole('table')).toBeInTheDocument();
+		});
+
+		it('renders column headers without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('ID')).toBeInTheDocument();
+				expect(screen.getByText('Name')).toBeInTheDocument();
+				expect(screen.getByText('Value')).toBeInTheDocument();
+			});
+		});
 	});
 
 	describe('infinite scroll', () => {
@@ -435,6 +867,112 @@ describe('TanStackTableView Integration', () => {
 
 			// When onEndReached is provided, pagination should not render
 			expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('hasSingleColumn — gates the Remove popover per-column', () => {
+		const hasSingleColumnFlagPresent = (): boolean =>
+			Boolean(document.querySelector('th[data-single-column="true"]'));
+
+		it('is true when only one non-pinned column exists', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(true);
+		});
+
+		it('is false when multiple non-pinned columns exist (all removable)', async () => {
+			renderTanStackTable({});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 3 default columns (id/name/value), none pinned, none non-removable
+			// → table is not single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('is false when removable + non-removable mix exists (the body/timestamp case)', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Timestamp',
+							accessorKey: 'name',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'value',
+							header: 'Body',
+							accessorKey: 'value',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'id',
+							header: 'User',
+							accessorKey: 'id',
+							enableRemove: true,
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('does not count pinned columns toward the total', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'stateIndicator',
+							header: '',
+							pin: 'left',
+							accessorKey: 'id',
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 1 pinned + 1 non-pinned → only the non-pinned counts → single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(true);
 		});
 	});
 });

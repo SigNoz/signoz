@@ -272,7 +272,7 @@ describe('DashboardVariableSelection', () => {
 				);
 			});
 
-			expect(callOrder).toEqual([
+			expect(callOrder).toStrictEqual([
 				'updateDashboardVariablesStore',
 				'enqueueDescendantsOfVariable',
 			]);

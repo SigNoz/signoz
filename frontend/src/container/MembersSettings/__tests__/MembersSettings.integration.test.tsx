@@ -1,11 +1,12 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
+import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -20,7 +21,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Alice Smith',
 		email: 'alice@signoz.io',
 		status: 'active',
-		createdAt: new Date('2024-01-01T00:00:00.000Z'),
+		createdAt: '2024-01-01T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -28,7 +29,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Bob Jones',
 		email: 'bob@signoz.io',
 		status: 'active',
-		createdAt: new Date('2024-01-02T00:00:00.000Z'),
+		createdAt: '2024-01-02T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -36,7 +37,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: '',
 		email: 'charlie@signoz.io',
 		status: 'pending_invite',
-		createdAt: new Date('2024-01-03T00:00:00.000Z'),
+		createdAt: '2024-01-03T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 	{
@@ -44,7 +45,7 @@ const mockUsers: TypesUserDTO[] = [
 		displayName: 'Dave Deleted',
 		email: 'dave@signoz.io',
 		status: 'deleted',
-		createdAt: new Date('2024-01-04T00:00:00.000Z'),
+		createdAt: '2024-01-04T00:00:00.000Z',
 		orgId: 'org-1',
 	},
 ];
@@ -77,7 +78,6 @@ describe('MembersSettings (integration)', () => {
 
 	it('filters to pending invites via the filter dropdown', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
@@ -92,16 +92,13 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters members by name using the search input', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 
-		await user.type(
-			screen.getByPlaceholderText(/Search by name or email/i),
-			'bob',
-		);
+		fireEvent.change(screen.getByPlaceholderText(/Search by name or email/i), {
+			target: { value: 'bob' },
+		});
 
 		await screen.findByText('Bob Jones');
 		expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
@@ -109,34 +106,28 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('opens EditMemberDrawer when an active member row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(await screen.findByText('Alice Smith'));
+		fireEvent.click(await screen.findByText('Alice Smith'));
 
 		await screen.findByText('Member Details');
 	});
 
 	it('opens EditMemberDrawer when a deleted member row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(await screen.findByText('Dave Deleted'));
+		fireEvent.click(await screen.findByText('Dave Deleted'));
 
 		expect(screen.queryByText('Member Details')).toBeInTheDocument();
 	});
 
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
 		render(<MembersSettings />);
 
-		await user.click(screen.getByRole('button', { name: /invite member/i }));
+		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
 
-		expect(await screen.findAllByPlaceholderText('john@signoz.io')).toHaveLength(
-			3,
-		);
+		await expect(
+			screen.findAllByPlaceholderText('john@signoz.io'),
+		).resolves.toHaveLength(3);
 	});
 });

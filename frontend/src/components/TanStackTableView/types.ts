@@ -74,6 +74,7 @@ export type TableColumnDef<
 		min?: number | string;
 		default?: number | string;
 		max?: number | string;
+		ignoreLastColumnFill?: boolean;
 	};
 };
 
@@ -107,19 +108,43 @@ export type TableRowContext<TData> = {
 	columnOrderKey: string;
 	/** Column visibility key for memo invalidation on visibility change */
 	columnVisibilityKey: string;
+	/** Enable alternating row background colors (zebra striping) */
+	enableAlternatingRowColors?: boolean;
+};
+
+export type AutoPageSizeConfig = {
+	rowHeight?: number;
+	headerHeight?: number;
+	paginationHeight?: number;
+	minPageSize?: number;
+	maxPageSize?: number;
 };
 
 export type PaginationProps = {
 	total: number;
 	defaultPage?: number;
 	defaultLimit?: number;
+	/**
+	 * @default true
+	 */
+	showPageSize?: boolean;
+	onPageChange?: (page: number) => void;
+	onLimitChange?: (limit: number) => void;
+	showTotalCount?: boolean;
+	totalCountLabel?: string;
+	/**
+	 * Auto-calculated page size for the current container.
+	 * When set, shows as "Auto (N)" option in the page size dropdown.
+	 * Consumer is responsible for calculating this via useCalculatedPageSize.
+	 */
+	calculatedPageSize?: number | null;
 };
 
 export type TanstackTableQueryParamsConfig = {
-	page: string;
-	limit: string;
-	orderBy: string;
-	expanded: string;
+	page?: string;
+	limit?: string;
+	orderBy?: string;
+	expanded?: string;
 };
 
 export type TanStackTableProps<TData> = {
@@ -127,6 +152,8 @@ export type TanStackTableProps<TData> = {
 	columns: TableColumnDef<TData>[];
 	/** Storage key for column state persistence (visibility, sizing, ordering). When set, enables unified column management. */
 	columnStorageKey?: string;
+	/** When false, the table renders columns in their natural array order and the persisted columnOrder slot is ignored on read and skipped on write. Use when an external source (e.g. preferences.selectColumns) is the canonical order. Default true. */
+	respectColumnOrder?: boolean;
 	columnSizing?: ColumnSizingState;
 	onColumnSizingChange?: Dispatch<SetStateAction<ColumnSizingState>>;
 	onColumnOrderChange?: (cols: TableColumnDef<TData>[]) => void;
@@ -137,6 +164,9 @@ export type TanStackTableProps<TData> = {
 	skeletonRowCount?: number;
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig;
 	pagination?: PaginationProps;
+	paginationClassname?: string;
+	/** Callback when sort changes. */
+	onSort?: (sort: SortState | null) => void;
 	onEndReached?: (index: number) => void;
 	/** Function to get the unique key for a row (before duplicate handling).
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */
@@ -176,6 +206,10 @@ export type TanStackTableProps<TData> = {
 	prefixPaginationContent?: ReactNode;
 	/** Content rendered after the pagination controls */
 	suffixPaginationContent?: ReactNode;
+	/** Enable alternating row background colors (zebra striping) */
+	enableAlternatingRowColors?: boolean;
+	/** Disable virtual scrolling and render all rows at once. Cannot be used with onEndReached. */
+	disableVirtualScroll?: boolean;
 };
 
 export type TanStackTableHandle = TableVirtuosoHandle & {

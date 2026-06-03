@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	CloseCircleFilled,
-	ExclamationCircleOutlined,
-} from '@ant-design/icons';
-import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
+import { CircleAlert, CircleX } from '@signozhq/icons';
+import { Button, Input, InputRef, message, Modal, Tooltip } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 import { tagInputStyle } from '../PipelineListsView/config';
 import { TagInputWrapper } from './styles';
@@ -66,7 +64,7 @@ function TagInput({
 	const handleClearAll = (): void => {
 		Modal.confirm({
 			title: 'Confirm',
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert />,
 			content: t('remove_label_confirm'),
 			onOk() {
 				setTagsListData([]);
@@ -93,22 +91,26 @@ function TagInput({
 		}
 		const isLongTag = tag.length > 20;
 		const tagElem = (
-			<Tag
+			<Badge
 				key={tag}
-				closable
+				color="vanilla"
 				style={{ userSelect: 'none' }}
-				onClose={handleClose(tag)}
+				closable
+				onClose={(e): void => {
+					e.preventDefault();
+					handleClose(tag)();
+				}}
 			>
 				<span
-					onDoubleClick={(e): void => {
+					onDoubleClick={(ev): void => {
 						setEditInputIndex(index);
 						setEditInputValue(tag);
-						e.preventDefault();
+						ev.preventDefault();
 					}}
 				>
 					{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 				</span>
-			</Tag>
+			</Badge>
 		);
 		return isLongTag ? (
 			<Tooltip title={tag} key={tag}>
@@ -142,7 +144,7 @@ function TagInput({
 			/>
 
 			{isButtonVisible ? (
-				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
+				<Button onClick={handleClearAll} icon={<CircleX />} type="text" />
 			) : null}
 		</TagInputWrapper>
 	);

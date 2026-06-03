@@ -37,8 +37,19 @@ func (provider *provider) GetConfig(context.Context) *globaltypes.Config {
 		mcpURL = &s
 	}
 
+	var aiAssistantURL *string
+	if provider.config.AIAssistantURL != nil {
+		s := provider.config.AIAssistantURL.String()
+		aiAssistantURL = &s
+	}
+
 	return globaltypes.NewConfig(
-		globaltypes.NewEndpoint(provider.config.ExternalURL.String(), provider.config.IngestionURL.String(), mcpURL),
+		globaltypes.NewEndpoint(
+			provider.config.ExternalURL.String(),
+			provider.config.IngestionURL.String(),
+			mcpURL,
+			aiAssistantURL,
+		),
 		globaltypes.NewIdentNConfig(
 			globaltypes.TokenizerConfig{Enabled: provider.identNConfig.Tokenizer.Enabled},
 			globaltypes.APIKeyConfig{Enabled: provider.identNConfig.APIKeyConfig.Enabled},

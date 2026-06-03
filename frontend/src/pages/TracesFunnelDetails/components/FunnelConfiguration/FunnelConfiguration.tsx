@@ -1,9 +1,10 @@
 import { memo, useState } from 'react';
-import { Button, Divider, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
-import { PencilLine } from 'lucide-react';
+import { PencilLine } from '@signozhq/icons';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
@@ -76,7 +77,7 @@ function FunnelConfiguration({
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
-						<Divider type="vertical" />
+						<Divider type="vertical" className="funnel-configuration__divider" />
 						<FunnelItemPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}

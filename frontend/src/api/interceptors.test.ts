@@ -76,10 +76,10 @@ describe('interceptorRejected', () => {
 		}
 
 		const mockAxiosFn = axios as unknown as jest.Mock;
-		expect(mockAxiosFn.mock.calls.length).toBe(1);
+		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(Array.isArray(JSON.parse(retryCallConfig.data))).toBe(true);
-		expect(JSON.parse(retryCallConfig.data)).toEqual(arrayPayload);
+		expect(JSON.parse(retryCallConfig.data)).toStrictEqual(arrayPayload);
 	});
 
 	it('should preserve object payload structure when retrying a 401 request', async () => {
@@ -112,9 +112,9 @@ describe('interceptorRejected', () => {
 		}
 
 		const mockAxiosFn = axios as unknown as jest.Mock;
-		expect(mockAxiosFn.mock.calls.length).toBe(1);
+		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
-		expect(JSON.parse(retryCallConfig.data)).toEqual(objectPayload);
+		expect(JSON.parse(retryCallConfig.data)).toStrictEqual(objectPayload);
 	});
 
 	it('should handle undefined data gracefully when retrying', async () => {
@@ -145,7 +145,7 @@ describe('interceptorRejected', () => {
 		}
 
 		const mockAxiosFn = axios as unknown as jest.Mock;
-		expect(mockAxiosFn.mock.calls.length).toBe(1);
+		expect(mockAxiosFn.mock.calls).toHaveLength(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(retryCallConfig.data).toBeUndefined();
 	});

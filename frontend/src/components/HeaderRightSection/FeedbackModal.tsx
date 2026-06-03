@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/ui';
-import { Button, Input, Radio, RadioChangeEvent, Typography } from 'antd';
+import { toast } from '@signozhq/ui/sonner';
+import { Button, Input } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -100,13 +102,12 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 	return (
 		<div className="feedback-modal-container">
 			<div className="feedback-modal-header">
-				<Radio.Group
+				<ToggleGroupSimple
+					type="single"
 					value={activeTab}
-					defaultValue={activeTab}
-					optionType="button"
 					className="feedback-modal-tabs"
-					options={items}
-					onChange={(e: RadioChangeEvent): void => setActiveTab(e.target.value)}
+					onChange={setActiveTab}
+					items={items}
 				/>
 			</div>
 			<div className="feedback-modal-content">

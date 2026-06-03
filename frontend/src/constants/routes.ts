@@ -8,6 +8,7 @@ const ROUTES = {
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
+	TRACE_DETAIL_OLD: '/trace-old/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	ONBOARDING: '/onboarding',
 	GET_STARTED: '/get-started',
@@ -28,7 +29,6 @@ const ROUTES = {
 	ALERTS_NEW: '/alerts/new',
 	ALERT_HISTORY: '/alerts/history',
 	ALERT_OVERVIEW: '/alerts/overview',
-	ALERT_TYPE_SELECTION: '/alerts/type-selection',
 	ALL_CHANNELS: '/settings/channels',
 	CHANNELS_NEW: '/settings/channels/new',
 	CHANNELS_EDIT: '/settings/channels/edit/:channelId',
@@ -87,6 +87,9 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
+	AI_ASSISTANT: '/ai-assistant/:conversationId',
+	AI_ASSISTANT_BASE: '/ai-assistant',
+	AI_ASSISTANT_ICON_PREVIEW: '/ai-assistant-icon-preview',
 	MCP_SERVER: '/settings/mcp-server',
 } as const;
 

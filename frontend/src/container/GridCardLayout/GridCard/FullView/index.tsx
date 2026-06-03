@@ -9,11 +9,7 @@ import React, {
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import {
-	LoadingOutlined,
-	SearchOutlined,
-	SyncOutlined,
-} from '@ant-design/icons';
+import { Loader, RefreshCw, Search } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -296,6 +292,8 @@ function FullView({
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
+	const showEditBtn = editWidget && dashboardEditView;
+
 	return (
 		<div className="full-view-container">
 			<OverlayScrollbar>
@@ -310,7 +308,7 @@ function FullView({
 												Reset Query
 											</Button>
 										)}
-										{editWidget && (
+										{showEditBtn && (
 											<Button
 												className="switch-edit-btn"
 												disabled={response.isFetching || response.isLoading}
@@ -338,7 +336,10 @@ function FullView({
 								)}
 								<div className="time-container">
 									{response.isFetching && (
-										<Spin spinning indicator={<LoadingOutlined spin />} />
+										<Spin
+											spinning
+											indicator={<Loader size="md" className="animate-spin" />}
+										/>
 									)}
 									<TimePreference
 										selectedTime={selectedTime}
@@ -352,7 +353,7 @@ function FullView({
 											response.refetch();
 										}}
 										type="primary"
-										icon={<SyncOutlined />}
+										icon={<RefreshCw size="md" />}
 									/>
 								</div>
 							</TimeContainer>
@@ -395,7 +396,7 @@ function FullView({
 						>
 							{isTablePanel && (
 								<Input
-									addonBefore={<SearchOutlined size={14} />}
+									addonBefore={<Search size={14} />}
 									className="global-search"
 									placeholder="Search..."
 									allowClear

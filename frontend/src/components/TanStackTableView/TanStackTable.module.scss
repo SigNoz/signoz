@@ -1,4 +1,22 @@
 .tanStackTable {
+	--tanstack-cell-padding: var(--tanstack-cell-padding-override, 0.3rem);
+	--tanstack-cell-padding-left: var(
+		--tanstack-cell-padding-left-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-right: var(
+		--tanstack-cell-padding-right-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-top: var(
+		--tanstack-cell-padding-top-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-bottom: var(
+		--tanstack-cell-padding-bottom-override,
+		var(--tanstack-cell-padding)
+	);
+
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
@@ -26,7 +44,7 @@
 	line-clamp: var(--tanstack-plain-body-line-clamp, 1);
 	font-size: var(--tanstack-plain-cell-font-size, 14px);
 	line-height: var(--tanstack-plain-cell-line-height, 18px);
-	color: var(--l2-foreground);
+	color: var(--tanstack-table-cell-color, var(--l2-foreground));
 	max-width: 100%;
 	word-break: break-all;
 }
@@ -42,13 +60,35 @@
 }
 
 .tableCell {
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
+		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
+	height: var(--tanstack-table-row-height, auto);
 	font-style: normal;
 	font-weight: 400;
 	letter-spacing: -0.07px;
 	font-size: var(--tanstack-plain-cell-font-size, 14px);
 	line-height: var(--tanstack-plain-cell-line-height, 18px);
-	color: var(--l2-foreground);
+	color: var(--tanstack-table-cell-color, var(--l2-foreground));
+	background-color: var(--tanstack-table-cell-bg, transparent);
+
+	&:first-child {
+		padding: var(
+				--tanstack-cell-padding-top-first-column,
+				var(--tanstack-cell-padding-top)
+			)
+			var(
+				--tanstack-cell-padding-right-first-column,
+				var(--tanstack-cell-padding-right)
+			)
+			var(
+				--tanstack-cell-padding-bottom-first-column,
+				var(--tanstack-cell-padding-bottom)
+			)
+			var(
+				--tanstack-cell-padding-left-first-column,
+				var(--tanstack-cell-padding-left)
+			);
+	}
 }
 
 .tableRow {
@@ -58,19 +98,69 @@
 
 	&:hover {
 		.tableCell {
-			background-color: var(--row-hover-bg) !important;
+			background-color: var(
+				--tanstack-table-row-hover-bg,
+				var(--row-hover-bg)
+			) !important;
 		}
 	}
 
 	&.tableRowActive {
 		.tableCell {
-			background-color: var(--row-active-bg) !important;
+			background-color: var(
+				--tanstack-table-row-active-bg,
+				var(--row-active-bg)
+			) !important;
 		}
+	}
+
+	&.tableRowOdd {
+		.tableCell {
+			background-color: var(--tanstack-table-row-odd-bg, transparent);
+		}
+	}
+
+	&.tableRowEven {
+		.tableCell {
+			background-color: var(--tanstack-table-row-even-bg, transparent);
+		}
+	}
+
+	.tableCell:first-child {
+		background-color: var(
+			--tanstack-first-column-bg,
+			var(--tanstack-table-cell-bg, transparent)
+		);
+		color: var(
+			--tanstack-first-column-color,
+			var(--tanstack-table-cell-color, var(--l2-foreground))
+		);
+	}
+
+	&.tableRowOdd .tableCell:first-child {
+		background-color: var(
+			--tanstack-first-column-odd-bg,
+			var(
+				--tanstack-first-column-bg,
+				var(--tanstack-table-row-odd-bg, transparent)
+			)
+		);
+	}
+
+	&.tableRowEven .tableCell:first-child {
+		background-color: var(
+			--tanstack-first-column-even-bg,
+			var(
+				--tanstack-first-column-bg,
+				var(--tanstack-table-row-even-bg, transparent)
+			)
+		);
 	}
 }
 
 .tableHeaderCell {
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
+		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
 	height: 36px;
 	text-align: left;
 	font-size: 14px;
@@ -78,20 +168,40 @@
 	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.07px;
-	color: var(--l1-foreground);
-
-	// TODO: Remove this once background color (l1) is matching the actual background color of the page
-	&[data-dark-mode='true'] {
-		background: #0b0c0d;
-	}
-
-	&[data-dark-mode='false'] {
-		background: #fdfdfd;
-	}
+	color: var(--tanstack-table-header-cell-color, var(--l1-foreground));
+	background: var(--tanstack-table-header-cell-bg, var(--l1-background));
+	border-bottom: 1px solid var(--tanstack-table-header-border-color, transparent);
 }
 
 .tableRowExpansion {
 	display: table-row;
+
+	.tableCellExpansion {
+		background-color: var(--tanstack-table-header-cell-bg, var(--l1-background));
+		color: var(--tanstack-table-header-cell-color, var(--l1-foreground));
+	}
+
+	& > td {
+		padding: 0;
+	}
+
+	& thead th:first-child {
+		padding-left: var(
+			--tanstack-expansion-first-col-padding-left,
+			calc(var(--spacing-3) - 1px)
+		);
+	}
+
+	& tbody td:first-child {
+		padding-left: var(
+			--tanstack-expansion-first-col-padding-left,
+			calc(var(--spacing-20) + var(--spacing-4))
+		);
+	}
+
+	:global(thead) {
+		position: unset !important;
+	}
 }
 
 .tableCellExpansion {

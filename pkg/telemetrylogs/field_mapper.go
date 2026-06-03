@@ -3,18 +3,16 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
-	"sort"
-	"strconv"
 	"strings"
-	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -66,13 +64,15 @@ var (
 	}
 )
 
-type fieldMapper struct{}
-
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+type fieldMapper struct {
+	fl flagger.Flagger
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
+	return &fieldMapper{fl: fl}
+}
+
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
@@ -96,7 +96,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
-		if querybuilder.BodyJSONQueryEnabled {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
@@ -105,7 +106,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
-		if key.Name == LogsV2BodyColumn && querybuilder.BodyJSONQueryEnabled {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if key.Name == LogsV2BodyColumn && m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
@@ -113,7 +115,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if querybuilder.BodyJSONQueryEnabled {
+				// TODO(Tushar): thread orgID here to evaluate correctly
+				if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
 					// based on the query range time.
@@ -130,113 +133,6 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-// selectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
-// Logic:
-//   - Finds the latest base evolution (<= tsStartTime) across ALL columns
-//   - Rejects all evolutions before this latest base evolution
-//   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
-//   - For each column, includes its evolution if it's >= latest base evolution and <= tsEndTime
-//   - Results are sorted by ReleaseTime descending (newest first)
-func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetrytypes.EvolutionEntry, tsStart, tsEnd uint64) ([]*schema.Column, []*telemetrytypes.EvolutionEntry, error) {
-
-	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
-	copy(sortedEvolutions, evolutions)
-
-	// sort the evolutions by ReleaseTime ascending
-	sort.Slice(sortedEvolutions, func(i, j int) bool {
-		return sortedEvolutions[i].ReleaseTime.Before(sortedEvolutions[j].ReleaseTime)
-	})
-
-	tsStartTime := time.Unix(0, int64(tsStart))
-	tsEndTime := time.Unix(0, int64(tsEnd))
-
-	// Build evolution map: column name -> evolution
-	evolutionMap := make(map[string]*telemetrytypes.EvolutionEntry)
-	for _, evolution := range sortedEvolutions {
-		if _, exists := evolutionMap[evolution.ColumnName+":"+evolution.FieldName+":"+strconv.Itoa(int(evolution.Version))]; exists {
-			// since if there is duplicate we would just use the oldest one.
-			continue
-		}
-		evolutionMap[evolution.ColumnName+":"+evolution.FieldName+":"+strconv.Itoa(int(evolution.Version))] = evolution
-	}
-
-	// Find the latest base evolution (<= tsStartTime) across ALL columns
-	// Evolutions are sorted, so we can break early
-	var latestBaseEvolutionAcrossAll *telemetrytypes.EvolutionEntry
-	for _, evolution := range sortedEvolutions {
-		if evolution.ReleaseTime.After(tsStartTime) {
-			break
-		}
-		latestBaseEvolutionAcrossAll = evolution
-	}
-
-	// We shouldn't reach this, it basically means there is something wrong with the evolutions data
-	if latestBaseEvolutionAcrossAll == nil {
-		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
-	}
-
-	columnLookUpMap := make(map[string]*schema.Column)
-	for _, column := range columns {
-		columnLookUpMap[column.Name] = column
-	}
-
-	// Collect column-evolution pairs
-	type colEvoPair struct {
-		column    *schema.Column
-		evolution *telemetrytypes.EvolutionEntry
-	}
-	pairs := []colEvoPair{}
-
-	for _, evolution := range evolutionMap {
-		// Reject evolutions before the latest base evolution
-		if evolution.ReleaseTime.Before(latestBaseEvolutionAcrossAll.ReleaseTime) {
-			continue
-		}
-		// skip evolutions after tsEndTime
-		if evolution.ReleaseTime.After(tsEndTime) || evolution.ReleaseTime.Equal(tsEndTime) {
-			continue
-		}
-
-		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
-		}
-
-		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})
-	}
-
-	// If no pairs found, fall back to latestBaseEvolutionAcrossAll for matching columns
-	if len(pairs) == 0 {
-		for _, column := range columns {
-			// Use latestBaseEvolutionAcrossAll if this column name matches its column name
-			if column.Name == latestBaseEvolutionAcrossAll.ColumnName {
-				pairs = append(pairs, colEvoPair{column, latestBaseEvolutionAcrossAll})
-			}
-		}
-	}
-
-	// Sort by ReleaseTime descending (newest first)
-	slices.SortFunc(pairs, func(a, b colEvoPair) int {
-		// Sort by ReleaseTime descending (newest first)
-		if a.evolution.ReleaseTime.After(b.evolution.ReleaseTime) {
-			return -1
-		}
-		if a.evolution.ReleaseTime.Before(b.evolution.ReleaseTime) {
-			return 1
-		}
-		return 0
-	})
-
-	// Extract results
-	newColumns := make([]*schema.Column, len(pairs))
-	evolutionsEntries := make([]*telemetrytypes.EvolutionEntry, len(pairs))
-	for i, pair := range pairs {
-		newColumns[i] = pair.column
-		evolutionsEntries[i] = pair.evolution
-	}
-
-	return newColumns, evolutionsEntries, nil
-}
-
 func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
@@ -247,7 +143,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 	var evolutionsEntries []*telemetrytypes.EvolutionEntry
 	if len(key.Evolutions) > 0 {
 		// we will use the corresponding column and its evolution entry for the query
-		newColumns, evolutionsEntries, err = selectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+		newColumns, evolutionsEntries, err = qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
 		if err != nil {
 			return "", err
 		}
