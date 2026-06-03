@@ -1055,6 +1055,14 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
+			mockMetadataStore.KeysMap["service.name"] = []*telemetrytypes.TelemetryFieldKey{
+				{
+					Name:          "service.name",
+					Signal:        telemetrytypes.SignalLogs,
+					FieldContext:  telemetrytypes.FieldContextResource,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				},
+			}
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -1167,12 +1175,12 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "search('error')"},
 				Limit:  10,
 			},
-			enableUseJSONBody: false,
+			enableUseJSONBody: true,
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?))) OR match(LOWER(body), LOWER(?)) OR ((arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool))))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(toString(body_v2)), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
 		},
@@ -1188,8 +1196,8 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE NOT (((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?))) OR match(LOWER(body), LOWER(?)) OR ((arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool))))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE NOT ((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?)))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "healthcheck", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
 		},
@@ -1198,15 +1206,15 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "search('error') AND severity_text = 'ERROR'"},
+				Filter: &qbtypes.Filter{Expression: "search('error') AND severity_text = 'ERROR' AND service.name = 'cartservice'"},
 				Limit:  10,
 			},
 			enableUseJSONBody: false,
 			startMs:           1705309200000,
 			endMs:             1705316400000,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?))) OR match(LOWER(body), LOWER(?)) OR ((arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool))))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string)))) AND severity_text = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "ERROR", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR match(LOWER(body), LOWER(?)) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR (arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR (arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))) OR match(LOWER(toString(resource)), LOWER(?))) AND severity_text = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705307400), uint64(1705316400), "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "error", "ERROR", "1705309200000000000", uint64(1705307400), "1705316400000000000", uint64(1705316400), 10},
 				Warnings: []string{querybuilder.FullTextSearchDefaultWarning},
 			},
 		},
@@ -1231,6 +1239,7 @@ func TestStmtBuilderTextSearch(t *testing.T) {
 			cb := NewConditionBuilder(fm, fl)
 			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC))
 			for _, field := range IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
