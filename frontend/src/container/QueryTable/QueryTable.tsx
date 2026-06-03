@@ -33,11 +33,19 @@ export function QueryTable({
 	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
-	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
+	const {
+		isDownloadEnabled = false,
+		fileName = '',
+		dataFormatter,
+		isDataDownloadable,
+		placement = 'overlay',
+	} = downloadOption || {};
 	const isQueryTypeBuilder = query.queryType === 'builder';
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = encodedServiceName
+		? decodeURIComponent(encodedServiceName)
+		: '';
 	const { loading, enableDrillDown = false, contextLinks } = props;
 
 	const {
@@ -81,9 +89,22 @@ export function QueryTable({
 		renderColumnCell,
 	]);
 
-	const downloadableData = createDownloadableData(newDataSource);
-
 	const tableColumns = modifyColumns ? modifyColumns(newColumns) : newColumns;
+
+	const downloadableData = dataFormatter
+		? dataFormatter(newDataSource, tableColumns)
+		: createDownloadableData(newDataSource);
+	const shouldShowDownload =
+		isDownloadEnabled &&
+		(isDataDownloadable
+			? isDataDownloadable(downloadableData)
+			: downloadableData.length > 0);
+	const downloadFileName =
+		typeof fileName === 'function'
+			? fileName
+			: servicename
+				? `${fileName}-${servicename}`
+				: fileName;
 
 	const handleColumnClick = useCallback(
 		(
@@ -162,11 +183,15 @@ export function QueryTable({
 	return (
 		<>
 			<div className="query-table">
-				{isDownloadEnabled && (
-					<div className="query-table--download">
+				{shouldShowDownload && (
+					<div
+						className={cx('query-table--download', {
+							'query-table--download-block': placement === 'block',
+						})}
+					>
 						<Download
 							data={downloadableData}
-							fileName={`${fileName}-${servicename}`}
+							fileName={downloadFileName}
 							isLoading={loading as boolean}
 						/>
 					</div>
