@@ -424,7 +424,7 @@ func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboard
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
-	patched, err := patch.Apply(raw)
+	patched, err := patch.ApplyWithOptions(raw, &jsonpatch.ApplyOptions{AllowMissingPathOnRemove: true, EnsurePathExistsOnAdd: true})
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}

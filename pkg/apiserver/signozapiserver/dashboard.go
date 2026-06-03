@@ -70,7 +70,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:          "PatchDashboardV2",
 		Tags:        []string{"dashboard"},
 		Summary:     "Patch dashboard (v2)",
-		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Locked dashboards are rejected.",
+		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Apply is lenient: `remove` on a missing path is a no-op (idempotent) and `add` creates any missing parent objects, rather than failing as strict RFC 6902 would. The resulting dashboard is still validated. Locked dashboards are rejected.",
 		Request:     new(dashboardtypes.PatchableDashboardV2),
 		// Strictly per RFC 6902 the content type is `application/json-patch+json`,
 		// but our OpenAPI generator only reflects schemas for content types it
