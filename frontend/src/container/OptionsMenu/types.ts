@@ -42,4 +42,8 @@ export type OptionsMenuConfig = {
 		onRemove: (key: string) => void;
 		onReorder: (orderedIds: string[]) => void;
 	};
+	fieldsSelector?: {
+		value: TelemetryFieldKey[];
+		onFieldsChange: (next: TelemetryFieldKey[]) => void;
+	};
 };

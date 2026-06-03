@@ -5,6 +5,7 @@ import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -26,33 +27,36 @@ interface FieldsSelectorProps {
 	onClose: () => void;
 	signal: DataSource;
 	maxFields?: number;
+	requiredFields?: readonly string[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
 }
 
-function FieldsSelector({
-	isOpen,
+type FieldsSelectorContentProps = Omit<FieldsSelectorProps, 'isOpen'>;
+
+// Inner component: holds all hooks + UI. Gets mounted/unmounted via the
+// outer gate so opening always seeds a fresh draft from `fields`.
+// Assumes `fields` arrives normalized (key populated) — see outer gate.
+function FieldsSelectorContent({
 	title,
 	fields,
 	onFieldsChange,
 	onClose,
 	signal,
 	maxFields,
+	requiredFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
-}: FieldsSelectorProps): JSX.Element | null {
-	if (!isOpen) {
-		return null;
-	}
-
+}: FieldsSelectorContentProps): JSX.Element {
 	const resolvedHeight =
 		height ?? window.innerHeight - DEFAULT_PANEL_HEIGHT_OFFSET;
 	const resolvedPosition = defaultPosition ?? {
 		x: window.innerWidth - width - DEFAULT_PANEL_RIGHT_INSET,
 		y: DEFAULT_PANEL_TOP_INSET,
 	};
+
 	const [draftFields, setDraftFields] = useState<TelemetryFieldKey[]>(fields);
 	const [inputValue, setInputValue] = useState('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState('');
@@ -72,15 +76,17 @@ function FieldsSelector({
 
 	const handleAdd = useCallback(
 		(field: TelemetryFieldKey): void => {
-			if (maxFields !== undefined && draftFields.length >= maxFields) {
-				return;
-			}
-			if (draftFields.some((f) => f.name === field.name)) {
-				return;
-			}
-			setDraftFields((prev) => [...prev, field]);
+			setDraftFields((prev) => {
+				if (maxFields !== undefined && prev.length >= maxFields) {
+					return prev;
+				}
+				if (prev.some((f) => f.key === field.key)) {
+					return prev;
+				}
+				return [...prev, field];
+			});
 		},
-		[draftFields, maxFields],
+		[maxFields],
 	);
 
 	const handleSave = useCallback((): void => {
@@ -99,7 +105,7 @@ function FieldsSelector({
 		() =>
 			!(
 				draftFields.length === fields.length &&
-				draftFields.every((f, i) => f.name === fields[i]?.name)
+				draftFields.every((f, i) => f.key === fields[i]?.key)
 			),
 		[draftFields, fields],
 	);
@@ -138,6 +144,7 @@ function FieldsSelector({
 					fields={draftFields}
 					onFieldsChange={setDraftFields}
 					maxFields={maxFields}
+					requiredFields={requiredFields}
 				/>
 
 				<OtherFields
@@ -171,6 +178,29 @@ function FieldsSelector({
 			</div>
 		</FloatingPanel>
 	);
+}
+
+// Outer gate: normalizes `fields` once (populates `key` so downstream code
+// can read it directly) and decides whether the inner component renders.
+// When isOpen flips false→true, the inner remounts → draft state seeds fresh.
+function FieldsSelector({
+	isOpen,
+	fields,
+	...rest
+}: FieldsSelectorProps): JSX.Element | null {
+	const normalizedFields = useMemo<TelemetryFieldKey[]>(
+		() =>
+			fields.map((f) => ({
+				...f,
+				key: f.key ?? buildCompositeKey(f.name, f.fieldContext),
+			})),
+		[fields],
+	);
+
+	if (!isOpen) {
+		return null;
+	}
+	return <FieldsSelectorContent {...rest} fields={normalizedFields} />;
 }
 
 export default FieldsSelector;
