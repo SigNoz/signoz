@@ -3089,6 +3089,40 @@ export interface DashboardGridLayoutSpecDTO {
 	repeatVariable?: string;
 }
 
+export interface DashboardLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface DashboardPanelDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
+
 export interface VariableDisplayDTO {
 	/**
 	 * @type string
@@ -3786,40 +3820,9 @@ export type DashboardtypesDashboardSpecDTODatasources = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
 
-export interface V1PanelDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
+export enum DashboardtypesPanelKindDTO {
+	Panel = 'Panel',
 }
-
-export interface V1LinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4061,6 +4064,13 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
 
+export enum Querybuildertypesv5RequestTypeDTO {
+	scalar = 'scalar',
+	time_series = 'time_series',
+	raw = 'raw',
+	raw_stream = 'raw_stream',
+	trace = 'trace',
+}
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
 }
@@ -4365,19 +4375,16 @@ export interface DashboardtypesQuerySpecDTO {
 }
 
 export interface DashboardtypesQueryDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: Querybuildertypesv5RequestTypeDTO;
 	spec?: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
-	display?: V1PanelDisplayDTO;
+	display?: DashboardPanelDisplayDTO;
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	plugin?: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4386,10 +4393,7 @@ export interface DashboardtypesPanelSpecDTO {
 }
 
 export interface DashboardtypesPanelDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: DashboardtypesPanelKindDTO;
 	spec?: DashboardtypesPanelSpecDTO;
 }
 
@@ -4403,20 +4407,20 @@ export type DashboardtypesDashboardSpecDTOPanelsAnyOf = {
 export type DashboardtypesDashboardSpecDTOPanels =
 	DashboardtypesDashboardSpecDTOPanelsAnyOf | null;
 
-export enum DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind {
+export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
 }
-export interface DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO {
+export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO {
 	/**
 	 * @enum Grid
 	 * @type string
 	 */
-	kind: DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind;
+	kind: DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind;
 	spec: DashboardGridLayoutSpecDTO;
 }
 
 export type DashboardtypesLayoutDTO =
-	DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO;
+	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO;
 
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
@@ -4520,21 +4524,21 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO {
+export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind;
+	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
 	spec: DashboardTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -4553,7 +4557,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	/**
 	 * @type object,null
 	 */
@@ -6882,13 +6886,6 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
 
-export enum Querybuildertypesv5RequestTypeDTO {
-	scalar = 'scalar',
-	time_series = 'time_series',
-	raw = 'raw',
-	raw_stream = 'raw_stream',
-	trace = 'trace',
-}
 /**
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */

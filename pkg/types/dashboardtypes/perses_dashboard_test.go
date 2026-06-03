@@ -134,6 +134,21 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 			wantContain: "NonExistentPanel",
 		},
 		{
+			name: "unknown panel envelope kind",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Row",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "unknown panel kind",
+		},
+		{
 			name: "unknown query plugin",
 			data: `{
 				"panels": {
