@@ -3,7 +3,9 @@ package sqlmigration
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/uptrace/bun"
@@ -12,6 +14,7 @@ import (
 
 type migrateRecurrenceBounds struct {
 	sqlstore sqlstore.SQLStore
+	logger   *slog.Logger
 }
 
 type plannedMaintenanceScheduleRow struct {
@@ -25,7 +28,7 @@ func NewMigrateRecurrenceBoundsFactory(sqlstore sqlstore.SQLStore) factory.Provi
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_recurrence_bounds"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &migrateRecurrenceBounds{sqlstore: sqlstore}, nil
+			return &migrateRecurrenceBounds{sqlstore: sqlstore, logger: ps.Logger}, nil
 		},
 	)
 }
@@ -66,7 +69,9 @@ func (migration *migrateRecurrenceBounds) Up(ctx context.Context, db *bun.DB) er
 	for _, row := range rows {
 		schedule := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Schedule), &schedule); err != nil {
-			return err
+			// A single corrupt row must not abort the whole migration (which would block startup).
+			migration.logger.WarnContext(ctx, "skipping planned maintenance with unreadable schedule", slog.String("maintenance_id", row.ID), errors.Attr(err))
+			continue
 		}
 
 		recurrenceRaw, ok := schedule["recurrence"]
@@ -76,7 +81,8 @@ func (migration *migrateRecurrenceBounds) Up(ctx context.Context, db *bun.DB) er
 
 		recurrence := make(map[string]json.RawMessage)
 		if err := json.Unmarshal(recurrenceRaw, &recurrence); err != nil {
-			return err
+			migration.logger.WarnContext(ctx, "skipping planned maintenance with unreadable recurrence", slog.String("maintenance_id", row.ID), errors.Attr(err))
+			continue
 		}
 
 		// Promote the recurrence bounds (source of truth) to the schedule

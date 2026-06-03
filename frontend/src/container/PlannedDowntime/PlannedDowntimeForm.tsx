@@ -296,7 +296,7 @@ export function PlannedDowntimeForm(
 			timezone: schedule?.timezone as string,
 			scope: initialValues.scope || '',
 		};
-	}, [initialValues, alertOptions]);
+	}, [initialValues, isEditMode, alertOptions]);
 
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
@@ -340,7 +340,7 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = endTime.format(TIME_FORMAT);
 		const formattedEndDate = endTime.format(DATE_FORMAT);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType]);
+	}, [formData]);
 
 	return (
 		<Modal
