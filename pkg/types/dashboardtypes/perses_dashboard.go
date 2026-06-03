@@ -176,7 +176,7 @@ func (p *PostableDashboardV2) Validate() error {
 	if err := p.validateName(); err != nil {
 		return err
 	}
-	if err := p.validateTags(); err != nil {
+	if err := validateDashboardTags(p.Tags); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -243,11 +243,11 @@ func generateDashboardName(displayName string) string {
 	return prefix + "-" + string(suffix)
 }
 
-func (p *PostableDashboardV2) validateTags() error {
-	if len(p.Tags) > MaxTagsPerDashboard {
+func validateDashboardTags(tags []tagtypes.PostableTag) error {
+	if len(tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	for _, tag := range p.Tags {
+	for _, tag := range tags {
 		if _, reserved := reservedDSLKeys[DSLKey(strings.ToLower(strings.TrimSpace(tag.Key)))]; reserved {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "tag key %q is reserved", tag.Key)
 		}
@@ -317,10 +317,46 @@ type StorableDashboardV2Metadata = DashboardV2MetadataBase
 // Updateable
 // ════════════════════════════════════════════════════════════════════════
 
-type UpdateableDashboardV2 = PostableDashboardV2
+type UpdateableDashboardV2 struct {
+	DashboardV2MetadataBase
+	Name string                 `json:"name" required:"true"`
+	Tags []tagtypes.PostableTag `json:"tags" required:"true"`
+	Spec DashboardSpec          `json:"spec" required:"true"`
+}
+
+func (u *UpdateableDashboardV2) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias UpdateableDashboardV2
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	*u = UpdateableDashboardV2(tmp)
+	if u.Spec.Display == nil {
+		u.Spec.Display = &common.Display{}
+	}
+	if u.Spec.Display.Name == "" {
+		u.Spec.Display.Name = u.Name
+	}
+	return u.Validate()
+}
+
+func (u *UpdateableDashboardV2) Validate() error {
+	if u.SchemaVersion != SchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, u.SchemaVersion)
+	}
+	if err := validateDashboardName(u.Name); err != nil {
+		return err
+	}
+	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	return u.Spec.Validate()
+}
 
 func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
-	return PostableDashboardV2{
+	return UpdateableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
 		Name:                    d.Name,
 		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
