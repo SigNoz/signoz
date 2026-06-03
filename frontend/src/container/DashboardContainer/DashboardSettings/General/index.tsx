@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Col, Input, Radio, Select, Space, Tooltip } from 'antd';
+import { Col, Input, Select, Space, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
-import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
+import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddBadges';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -213,18 +214,18 @@ function GeneralDashboardSettings(): JSX.Element {
 							Sync crosshair and tooltip across all the dashboard panels
 						</Typography.Text>
 					</div>
-					<Radio.Group
+					<ToggleGroupSimple
+						type="single"
 						value={cursorSyncMode}
-						onChange={(e): void => {
-							setCursorSyncMode(e.target.value as DashboardCursorSync);
+						onChange={(value: string): void => {
+							setCursorSyncMode(value as DashboardCursorSync);
 						}}
-					>
-						<Radio.Button value={DashboardCursorSync.None}>No Sync</Radio.Button>
-						<Radio.Button value={DashboardCursorSync.Crosshair}>
-							Crosshair
-						</Radio.Button>
-						<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
-					</Radio.Group>
+						items={[
+							{ value: DashboardCursorSync.None, label: 'No Sync' },
+							{ value: DashboardCursorSync.Crosshair, label: 'Crosshair' },
+							{ value: DashboardCursorSync.Tooltip, label: 'Tooltip' },
+						]}
+					/>
 				</div>
 				{cursorSyncMode === DashboardCursorSync.Tooltip && (
 					<div className={styles.crossPanelSyncRow}>
@@ -237,21 +238,21 @@ function GeneralDashboardSettings(): JSX.Element {
 								matching ones highlighted
 							</Typography.Text>
 						</div>
-						<Radio.Group
+						<ToggleGroupSimple
+							type="single"
 							value={syncTooltipFilterMode}
-							onChange={(e): void => {
+							onChange={(value: string): void => {
 								logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
 									path: getAbsoluteUrl(window.location.pathname),
-									mode: e.target.value,
+									mode: value,
 								});
-								setSyncTooltipFilterMode(e.target.value as SyncTooltipFilterMode);
+								setSyncTooltipFilterMode(value as SyncTooltipFilterMode);
 							}}
-						>
-							<Radio.Button value={SyncTooltipFilterMode.All}>All</Radio.Button>
-							<Radio.Button value={SyncTooltipFilterMode.Filtered}>
-								Filtered
-							</Radio.Button>
-						</Radio.Group>
+							items={[
+								{ value: SyncTooltipFilterMode.All, label: 'All' },
+								{ value: SyncTooltipFilterMode.Filtered, label: 'Filtered' },
+							]}
+						/>
 					</div>
 				)}
 			</Col>

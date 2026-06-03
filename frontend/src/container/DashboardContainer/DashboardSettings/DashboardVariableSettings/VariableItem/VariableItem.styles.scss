@@ -127,6 +127,15 @@
 					align-items: center;
 					justify-content: center;
 					gap: 4px;
+
+					.sidenav-beta-tag {
+						margin-left: 4px;
+					}
+
+					div {
+						display: flex;
+						align-items: center;
+					}
 				}
 
 				.variable-type-btn + .variable-type-btn {
@@ -177,6 +186,7 @@
 
 		.multiple-values-section {
 			justify-content: space-between;
+			align-items: flex-start;
 			margin-bottom: 0;
 
 			.typography-variables {
@@ -193,6 +203,7 @@
 
 		.all-option-section {
 			justify-content: space-between;
+			align-items: flex-start;
 			margin-bottom: 0;
 
 			.typography-variables {
@@ -359,7 +370,7 @@
 				flex-flow: wrap;
 				gap: 8px;
 
-				.ant-tag {
+				[data-slot='badge'] {
 					height: 30px;
 					color: var(--l1-foreground);
 					font-family: 'Space Mono';

@@ -21,26 +21,25 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
 <div
     class="c0"
   >
-    <button
-      aria-checked="true"
-      class="ant-switch css-dev-only-do-not-override-2i2tap ant-switch-checked"
-      role="switch"
-      type="button"
+    <div
+      class="_switch-wrapper_jbsv7_1"
     >
-      <div
-        class="ant-switch-handle"
-      />
-      <span
-        class="ant-switch-inner"
+      <button
+        aria-checked="true"
+        class="_switch_jbsv7_1"
+        data-color="robin"
+        data-state="checked"
+        id=":r0:"
+        role="switch"
+        type="button"
+        value="on"
       >
         <span
-          class="ant-switch-inner-checked"
+          class="_switch__thumb_jbsv7_59"
+          data-state="checked"
         />
-        <span
-          class="ant-switch-inner-unchecked"
-        />
-      </span>
-    </button>
+      </button>
+    </div>
     <svg
       style="font-size: 1rem; cursor: move;"
     />

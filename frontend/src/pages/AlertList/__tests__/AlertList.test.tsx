@@ -20,8 +20,6 @@ jest.mock('react-router-dom', () => ({
 }));
 
 let mockUrlQuery: URLSearchParams;
-const mockSet = jest.fn();
-const mockDelete = jest.fn();
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockUrlQuery,
@@ -78,25 +76,11 @@ const mockLocation = (pathname: string): void => {
 };
 
 const mockQueryParams = (params: Record<string, string | null>): void => {
-	const realUrlQuery = new URLSearchParams();
+	mockUrlQuery = new URLSearchParams();
 	Object.entries(params).forEach(([key, value]) => {
 		if (value !== null) {
-			realUrlQuery.set(key, value);
+			mockUrlQuery.set(key, value);
 		}
-	});
-
-	mockSet.mockImplementation((key: string, value: string) => {
-		realUrlQuery.set(key, value);
-	});
-	mockDelete.mockImplementation((key: string) => {
-		realUrlQuery.delete(key);
-	});
-
-	mockUrlQuery = Object.create(URLSearchParams.prototype, {
-		set: { value: mockSet },
-		delete: { value: mockDelete },
-		toString: { value: (): string => realUrlQuery.toString() },
-		get: { value: (key: string): string | null => realUrlQuery.get(key) },
 	});
 };
 
@@ -170,8 +154,6 @@ describe('AlertList', () => {
 
 			clickTab(TRIGGERED_ALERTS_TEXT);
 
-			expect(mockSet).toHaveBeenCalledWith('tab', 'TriggeredAlerts');
-			expect(mockDelete).toHaveBeenCalledWith('subTab');
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=TriggeredAlerts');
 		});
 
@@ -183,8 +165,6 @@ describe('AlertList', () => {
 
 			clickTab(ALERT_RULES_TEXT);
 
-			expect(mockSet).toHaveBeenCalledWith('tab', 'AlertRules');
-			expect(mockDelete).toHaveBeenCalledWith('subTab');
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
 		});
 	});
@@ -224,8 +204,6 @@ describe('AlertList', () => {
 
 				clickTab(CONFIGURATION_TEXT);
 
-				expect(mockSet).toHaveBeenCalledWith('tab', CONFIGURATION_TEXT);
-				expect(mockSet).toHaveBeenCalledWith('subTab', PLANNED_DOWNTIME_SUB_TAB);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
 					`/alerts?tab=Configuration&subTab=${PLANNED_DOWNTIME_SUB_TAB}`,
 				);
@@ -255,7 +233,6 @@ describe('AlertList', () => {
 
 				clickTab(ALERT_RULES_TEXT);
 
-				expect(mockDelete).toHaveBeenCalledWith('subTab');
 				expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
 			});
 		});
