@@ -87,6 +87,9 @@ export default defineConfig(({ mode }): UserConfig => {
 				authToken: env.VITE_SENTRY_AUTH_TOKEN,
 				org: env.VITE_SENTRY_ORG,
 				project: env.VITE_SENTRY_PROJECT_ID,
+				// Pin the sourcemap-upload release to the same value injected as
+				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
+				release: { name: env.VITE_VERSION || 'dev' },
 			}),
 		);
 	}
@@ -156,6 +159,7 @@ export default defineConfig(({ mode }): UserConfig => {
 			'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 			'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			'process.env.ENVIRONMENT': JSON.stringify(env.VITE_ENVIRONMENT),
+			'process.env.VERSION': JSON.stringify(env.VITE_VERSION || 'dev'),
 		},
 		// In production, use relative paths so assets work with any base path injected by the backend.
 		// In dev, use the configured base path for proper HMR and routing.

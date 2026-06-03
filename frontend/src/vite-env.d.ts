@@ -25,6 +25,7 @@ interface ImportMetaEnv {
 	readonly VITE_TUNNEL_DOMAIN: string;
 	readonly VITE_DOCS_BASE_URL: string;
 	readonly VITE_ENVIRONMENT: string;
+	readonly VITE_VERSION: string;
 }
 
 interface ImportMeta {
