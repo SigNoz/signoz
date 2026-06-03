@@ -353,6 +353,9 @@ function App(): JSX.Element {
 					tunnel: process.env.TUNNEL_URL,
 					environment: process.env.ENVIRONMENT,
 					integrations: [
+						// Kept for the `transaction` tag used in routing, even though
+						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
+						Sentry.browserTracingIntegration(),
 						Sentry.replayIntegration({
 							maskAllText: false,
 							blockAllMedia: false,
