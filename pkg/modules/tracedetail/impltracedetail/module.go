@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
@@ -21,7 +22,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 
 	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
 	if err != nil {
-		scopedProviderSettings.Logger().Warn("tracedetail: failed to initialize metrics", "error", err)
+		scopedProviderSettings.Logger().WarnContext(context.Background(), "tracedetail: failed to initialize metrics", errors.Attr(err))
 	}
 
 	m := &module{
