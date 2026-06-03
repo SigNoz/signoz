@@ -88,6 +88,54 @@ function emptyPanel(): DashboardtypesPanelDTO {
 	} as unknown as DashboardtypesPanelDTO;
 }
 
+function histogramPanel(): DashboardtypesPanelDTO {
+	return {
+		kind: 'Panel',
+		spec: {
+			plugin: { kind: 'signoz/HistogramPanel', spec: {} },
+			queries: [
+				{
+					kind: 'TimeSeriesQuery',
+					spec: {
+						plugin: {
+							kind: 'signoz/BuilderQuery',
+							spec: {
+								name: 'A',
+								signal: 'metrics',
+								filter: { expression: '' },
+							},
+						},
+					},
+				},
+			],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
+function barPanel(): DashboardtypesPanelDTO {
+	return {
+		kind: 'Panel',
+		spec: {
+			plugin: { kind: 'signoz/BarChartPanel', spec: {} },
+			queries: [
+				{
+					kind: 'TimeSeriesQuery',
+					spec: {
+						plugin: {
+							kind: 'signoz/BuilderQuery',
+							spec: {
+								name: 'A',
+								signal: 'metrics',
+								filter: { expression: '' },
+							},
+						},
+					},
+				},
+			],
+		},
+	} as unknown as DashboardtypesPanelDTO;
+}
+
 const DEFAULT_GLOBAL_TIME = {
 	selectedTime: 'GLOBAL_TIME',
 	minTime: 1000,
@@ -134,6 +182,23 @@ describe('usePanelQuery', () => {
 		);
 		const [requestArg] = mockUseGetQueryRange.mock.calls[0];
 		expect(requestArg.graphType).toBe(PANEL_TYPES.LIST);
+	});
+
+	// HISTOGRAM and BAR panels bin/derive from raw time-series data
+	// client-side, so the backend must receive `time_series` (matches V1's
+	// `getGraphType` translation). Without this remap, V5's
+	// `mapPanelTypeToRequestType` would send `distribution` for histograms,
+	// returning a shape `prepareHistogramData` can't bin.
+	it('remaps graphType=HISTOGRAM to TIME_SERIES (V1 parity)', () => {
+		renderHook(() => usePanelQuery({ panel: histogramPanel(), panelId: 'p1' }));
+		const [requestArg] = mockUseGetQueryRange.mock.calls[0];
+		expect(requestArg.graphType).toBe(PANEL_TYPES.TIME_SERIES);
+	});
+
+	it('remaps graphType=BAR to TIME_SERIES (V1 parity)', () => {
+		renderHook(() => usePanelQuery({ panel: barPanel(), panelId: 'p1' }));
+		const [requestArg] = mockUseGetQueryRange.mock.calls[0];
+		expect(requestArg.graphType).toBe(PANEL_TYPES.TIME_SERIES);
 	});
 
 	it('passes V5 entity version to useGetQueryRange', () => {
