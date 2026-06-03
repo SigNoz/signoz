@@ -7,8 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 )
 
 type module struct {
@@ -94,10 +92,7 @@ func (m *module) GetWaterfallV4(ctx context.Context, traceID string, selectedSpa
 	}
 	effectiveLimit := min(selectAllLimit, m.config.Waterfall.MaxLimitToSelectAllSpans)
 	if summary.NumSpans > uint64(effectiveLimit) {
-		m.metrics.waterfallWindowedResponseCount.Add(ctx, 1, metric.WithAttributes(
-			attribute.String("trace_id", traceID),
-			attribute.Int64("spans_count", int64(summary.NumSpans)),
-		))
+		m.metrics.waterfallWindowedResponseCount.Add(ctx, 1)
 		return m.getWindowedWaterfall(ctx, traceID, selectedSpanID, uncollapsedSpans, summary.Start, summary.End)
 	}
 	return m.getFullWaterfall(ctx, traceID, summary)
