@@ -2934,10 +2934,18 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+          $ref: '#/components/schemas/DashboardtypesQueryKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
+    DashboardtypesQueryKind:
+      enum:
+      - scalar
+      - time_series
+      - raw
+      - raw_stream
+      - trace
+      type: string
     DashboardtypesQueryPlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec'

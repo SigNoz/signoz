@@ -44,7 +44,7 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 					},
 					Queries: []Query{
 						{
-							Kind: qb.RequestTypeTimeSeries,
+							Kind: QueryKind(qb.RequestTypeTimeSeries),
 							Spec: QuerySpec{
 								Plugin: QueryPlugin{
 									Kind: QueryKindPromQL,

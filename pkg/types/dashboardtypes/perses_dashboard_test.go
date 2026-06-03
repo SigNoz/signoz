@@ -157,7 +157,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						"spec": {
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
-								"kind": "TimeSeriesQuery",
+								"kind": "time_series",
 								"spec": {
 									"plugin": {"kind": "FakeQueryPlugin", "spec": {}}
 								}
@@ -168,6 +168,48 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 				"layouts": []
 			}`,
 			wantContain: "FakeQueryPlugin",
+		},
+		{
+			name: "unknown query envelope kind",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+							"queries": [{
+								"kind": "TimeSeriesQuery",
+								"spec": {
+									"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}
+								}
+							}]
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "unknown query kind",
+		},
+		{
+			name: "empty query envelope kind",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+							"queries": [{
+								"kind": "",
+								"spec": {
+									"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}
+								}
+							}]
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "unknown query kind",
 		},
 		{
 			name: "unknown variable plugin",
@@ -261,7 +303,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 						"spec": {
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
-								"kind": "TimeSeriesQuery",
+								"kind": "time_series",
 								"spec": {
 									"plugin": {
 										"kind": "signoz/PromQLQuery",
@@ -339,7 +381,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						"spec": {
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
-								"kind": "TimeSeriesQuery",
+								"kind": "time_series",
 								"spec": {
 									"plugin": {
 										"kind": "signoz/PromQLQuery",
@@ -404,7 +446,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 								"spec": {}
 							},
 							"queries": [{
-								"kind": "TimeSeriesQuery",
+								"kind": "time_series",
 								"spec": {
 									"plugin": {
 										"kind": "signoz/BuilderQuery",
@@ -635,8 +677,8 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 				"spec": {
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
-						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}},
-						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "B", "signal": "metrics"}}}}
+						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}},
+						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "B", "signal": "metrics"}}}}
 					]
 				}
 			}
@@ -753,7 +795,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
 					},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -801,7 +843,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
 					},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -862,7 +904,7 @@ func TestStorageRoundTrip(t *testing.T) {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
 					},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			},
 			"p2": {
@@ -872,7 +914,7 @@ func TestStorageRoundTrip(t *testing.T) {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
 					},
-					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -1077,7 +1119,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		return []byte(`{
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
+				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
 			}}},
 			"layouts": []
 		}`)
@@ -1086,7 +1128,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		return []byte(`{
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
+				"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
 					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
 				}}}}]
 			}}},
