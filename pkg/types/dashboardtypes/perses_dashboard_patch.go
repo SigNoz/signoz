@@ -6,9 +6,27 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/swaggest/jsonschema-go"
 )
 
-type PatchableDashboardV2 []JSONPatchOperation
+// PatchableDashboardV2 is an RFC 6902 patch request.
+type PatchableDashboardV2 struct {
+	// Ops shapes the OpenAPI schema; tagged so swaggest reflects it.
+	Ops []JSONPatchOperation `json:"ops"`
+	// patch holds the decoded payload, set by UnmarshalJSON.
+	patch jsonpatch.Patch
+}
+
+// PrepareJSONSchema collapses the struct's object schema into the bare ops array.
+func (PatchableDashboardV2) PrepareJSONSchema(s *jsonschema.Schema) error {
+	// Called on several passes; only the one with built properties carries `ops`.
+	ops, ok := s.Properties["ops"]
+	if !ok || ops.TypeObject == nil {
+		return nil
+	}
+	*s = *ops.TypeObject
+	return nil
+}
 
 type JSONPatchOperation struct {
 	Op   PatchOp `json:"op" required:"true"`
@@ -36,18 +54,14 @@ func (PatchOp) Enum() []any {
 }
 
 func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
-	// DecodePatch rejects unknown verbs, add/replace ops missing a value, move/copy ops missing a
-	// from, and malformed paths — so callers get an InvalidInput error up front rather
-	// than deep inside Apply.
-	if _, err := jsonpatch.DecodePatch(data); err != nil {
+	patch, err := jsonpatch.DecodePatch(data)
+	if err != nil {
 		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
-	type alias PatchableDashboardV2
-	var ops alias
-	if err := json.Unmarshal(data, &ops); err != nil {
-		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document")
+	if err := json.Unmarshal(data, &p.Ops); err != nil {
+		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
-	*p = PatchableDashboardV2(ops)
+	p.patch = patch
 	return nil
 }
 
@@ -57,15 +71,7 @@ func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboard
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal existing dashboard for patch")
 	}
-	rawPatch, err := json.Marshal(p)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal patch document")
-	}
-	patch, err := jsonpatch.DecodePatch(rawPatch)
-	if err != nil {
-		return nil, errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
-	}
-	patched, err := patch.ApplyWithOptions(raw, &jsonpatch.ApplyOptions{AllowMissingPathOnRemove: true, EnsurePathExistsOnAdd: true})
+	patched, err := p.patch.ApplyWithOptions(raw, &jsonpatch.ApplyOptions{AllowMissingPathOnRemove: true, EnsurePathExistsOnAdd: true})
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "JSON Patch could not be applied to the target dashboard")
 	}
