@@ -1,7 +1,10 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { LogViewMode } from 'container/LogsTable';
-import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
+import {
+	defaultLogsSelectedColumns,
+	defaultOptionsQuery,
+} from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import {
 	FormattingOptions,
@@ -85,18 +88,21 @@ describe('logsUpdaterConfig', () => {
 
 		logsUpdater.updateColumns(newColumns, PreferenceMode.DIRECT);
 
+		// Writer guards body+timestamp via ensureLogsRequiredColumns invariant
+		const guardedColumns = [...defaultLogsSelectedColumns, ...newColumns];
+
 		// Should update URL
 		expect(redirectWithOptionsData).toHaveBeenCalledWith({
 			...defaultOptionsQuery,
 			...mockPreferences.formatting,
-			selectColumns: newColumns,
+			selectColumns: guardedColumns,
 		});
 
-		// Should update localStorage
+		// Should update localStorage with the guarded shape
 		const storedData = JSON.parse(
 			mockLocalStorage[LOCALSTORAGE.LOGS_LIST_OPTIONS],
 		);
-		expect(storedData.selectColumns).toStrictEqual(newColumns);
+		expect(storedData.selectColumns).toStrictEqual(guardedColumns);
 		expect(storedData.maxLines).toBe(1); // Should preserve other fields
 
 		// Should not update saved view preferences

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer } from 'antd';
+import { Drawer } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';

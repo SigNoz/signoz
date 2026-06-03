@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
-import type { MenuProps } from 'antd';
-import { Dropdown } from 'antd';
 import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
@@ -95,7 +94,7 @@ function MembersSettings(): JSX.Element {
 	).length;
 	const totalCount = allMembers.length;
 
-	const filterMenuItems: MenuProps['items'] = [
+	const filterMenuItems: MenuItem[] = [
 		{
 			key: FilterMode.All,
 			label: (
@@ -171,10 +170,9 @@ function MembersSettings(): JSX.Element {
 				</div>
 
 				<div className="members-settings__controls">
-					<Dropdown
+					<DropdownMenuSimple
 						menu={{ items: filterMenuItems }}
-						trigger={['click']}
-						overlayClassName="members-filter-dropdown"
+						className="members-filter-dropdown"
 					>
 						<Button
 							variant="solid"
@@ -184,7 +182,7 @@ function MembersSettings(): JSX.Element {
 							<span>{filterLabel}</span>
 							<ChevronDown size={12} className="members-filter-trigger__chevron" />
 						</Button>
-					</Dropdown>
+					</DropdownMenuSimple>
 
 					<div className="members-settings__search">
 						<Input

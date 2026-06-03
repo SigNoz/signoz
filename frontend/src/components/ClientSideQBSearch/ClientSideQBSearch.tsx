@@ -9,7 +9,7 @@ import {
 	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Select, Tag, Tooltip } from 'antd';
+import { Select, Tooltip } from 'antd';
 import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
@@ -51,6 +51,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import './ClientSideQBSearch.styles.scss';
+import { Badge } from '@signozhq/ui/badge';
 
 export interface AttributeKey {
 	key: string;
@@ -547,10 +548,14 @@ function ClientSideQBSearch(
 
 		return (
 			<span className="qb-search-bar-tokenised-tags">
-				<Tag
-					closable={!searchValue && closable}
-					onClose={onCloseHandler}
+				<Badge
+					color="vanilla"
 					className={tagDetails?.key?.type || ''}
+					closable={!searchValue && closable}
+					onClose={(e): void => {
+						e.preventDefault();
+						onCloseHandler();
+					}}
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
@@ -566,7 +571,7 @@ function ClientSideQBSearch(
 							{chipValue}
 						</TypographyText>
 					</Tooltip>
-				</Tag>
+				</Badge>
 			</span>
 		);
 	};

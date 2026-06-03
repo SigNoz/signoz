@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Info } from '@signozhq/icons';
+import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Flex, Form, Input, Space, Tooltip } from 'antd';
+import { Flex, Form, Space, Tooltip } from 'antd';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { PREDEFINED_MAPPING } from '../config';
