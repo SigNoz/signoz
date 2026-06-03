@@ -119,16 +119,11 @@ func NewModules(
 	retentionGetter retention.Getter,
 	fl flagger.Flagger,
 	tagModule tag.Module,
-) (Modules, error) {
+) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
 	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
-
-	traceDetail, err := impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail)
-	if err != nil {
-		return Modules{}, err
-	}
 
 	return Modules{
 		OrgGetter:        orgGetter,
@@ -154,9 +149,9 @@ func NewModules(
 		LogsPipeline:     impllogspipeline.NewModule(sqlstore),
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
-		TraceDetail:      traceDetail,
+		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
 		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
 		Tag:              tagModule,
-	}, nil
+	}
 }

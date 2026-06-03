@@ -59,8 +59,7 @@ func TestNewHandlers(t *testing.T) {
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
-	modules, err := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, retentionGetter, flagger, tagModule)
-	require.NoError(t, err)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, retentionGetter, flagger, tagModule)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)
 	registryHandler := factory.NewHandler(nil)

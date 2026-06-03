@@ -63,8 +63,7 @@ func TestNewModules(t *testing.T) {
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
-	modules, err := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule)
-	require.NoError(t, err)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {
