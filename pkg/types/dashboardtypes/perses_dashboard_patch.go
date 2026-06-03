@@ -40,12 +40,12 @@ func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
 	// from, and malformed paths — so callers get an InvalidInput error up front rather
 	// than deep inside Apply.
 	if _, err := jsonpatch.DecodePatch(data); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	type alias PatchableDashboardV2
 	var ops alias
 	if err := json.Unmarshal(data, &ops); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document")
 	}
 	*p = PatchableDashboardV2(ops)
 	return nil
@@ -63,11 +63,11 @@ func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboard
 	}
 	patch, err := jsonpatch.DecodePatch(rawPatch)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+		return nil, errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	patched, err := patch.ApplyWithOptions(raw, &jsonpatch.ApplyOptions{AllowMissingPathOnRemove: true, EnsurePathExistsOnAdd: true})
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+		return nil, errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "JSON Patch could not be applied to the target dashboard")
 	}
 	out := &UpdateableDashboardV2{}
 	if err := json.Unmarshal(patched, out); err != nil {
