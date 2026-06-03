@@ -76,11 +76,8 @@
 	min-height: 0;
 	overflow: hidden;
 
-	// Ant Skeleton.Input rendered inside the loading state — override its
-	// hard-coded width.
 	:global(.ant-skeleton-input) {
-		width: 300px;
-		margin: 8px 12px;
+		width: 50% !important;
 	}
 }
 
@@ -95,7 +92,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 6px 12px;
+	height: 36px;
+	padding: 0 12px;
 	border-radius: 4px;
 	user-select: none;
 	font-size: 13px;
@@ -132,7 +130,7 @@
 }
 
 .isDragDisabled {
-	padding: 6px 12px;
+	cursor: default;
 }
 
 .otherFieldItem {

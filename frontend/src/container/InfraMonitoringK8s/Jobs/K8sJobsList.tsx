@@ -15,7 +15,6 @@ import {
 	k8sJobGetEntityName,
 	k8sJobGetSelectedItemFilters,
 	k8sJobInitialEventsFilter,
-	k8sJobInitialFilters,
 	k8sJobInitialLogTracesFilter,
 } from './constants';
 import {
@@ -106,7 +105,6 @@ function K8sJobsList({
 				getEntityName={k8sJobGetEntityName}
 				getInitialLogTracesFilters={k8sJobInitialLogTracesFilter}
 				getInitialEventsFilters={k8sJobInitialEventsFilter}
-				primaryFilterKeys={k8sJobInitialFilters}
 				metadataConfig={k8sJobDetailsMetadataConfig}
 				entityWidgetInfo={jobWidgetInfo}
 				getEntityQueryPayload={getJobMetricsQueryPayload}

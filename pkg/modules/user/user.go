@@ -94,6 +94,9 @@ type Getter interface {
 
 	// OnBeforeRoleDelete checks if any users are assigned to the role and rejects deletion if so.
 	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+
+	// VerifyResetPasswordToken checks if a reset password token exists and is not expired.
+	VerifyResetPasswordToken(ctx context.Context, token string) error
 }
 
 type Handler interface {
@@ -121,6 +124,7 @@ type Handler interface {
 	GetResetPasswordTokenDeprecated(http.ResponseWriter, *http.Request)
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
 	CreateResetPasswordToken(http.ResponseWriter, *http.Request)
+	VerifyResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)

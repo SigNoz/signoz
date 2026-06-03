@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { Form, Input, Select, Space, Switch } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Switch } from '@signozhq/ui/switch';
+import { Form, Select, Space } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { ProcessorData } from 'types/api/pipeline/def';
 
@@ -75,9 +77,7 @@ function ProcessorFieldInput({
 			}
 		>
 			{!fieldData?.compact && (
-				<PipelineIndexIcon size="small">
-					{Number(fieldData.id) + 1}
-				</PipelineIndexIcon>
+				<PipelineIndexIcon>{Number(fieldData.id) + 1}</PipelineIndexIcon>
 			)}
 			<FormWrapper>
 				{fieldData.name === 'enable_flattening' ? (
@@ -92,8 +92,7 @@ function ProcessorFieldInput({
 					>
 						<Space>
 							<Switch
-								size="small"
-								checked={form.getFieldValue('enable_flattening')}
+								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);
 								}}

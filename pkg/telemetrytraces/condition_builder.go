@@ -161,7 +161,33 @@ func (c *conditionBuilder) conditionFor(
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 
 		var value any
-		switch columns[0].Type.GetType() {
+		column := columns[0]
+		if len(key.Evolutions) > 0 {
+			// we will use the corresponding column and its evolution entry for the query
+			newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+			if err != nil {
+				return "", err
+			}
+
+			if len(newColumns) == 0 {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no valid evolution found for field %s in the given time range", key.Name)
+			}
+
+			// Multiple columns means fieldExpression is a multiIf returning NULL when none match,
+			// so a simple null check is sufficient.
+			if len(newColumns) > 1 {
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(fieldExpression), nil
+				} else {
+					return sb.IsNull(fieldExpression), nil
+				}
+			}
+
+			// otherwise we have to find the correct exist operator based on the column type
+			column = newColumns[0]
+		}
+
+		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(fieldExpression), nil
@@ -178,7 +204,7 @@ func (c *conditionBuilder) conditionFor(
 				return sb.E(fieldExpression, value), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := columns[0].Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
+			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
 			case schema.ColumnTypeEnumString:
 				value = ""
 				if operator == qbtypes.FilterOperatorExists {
@@ -202,14 +228,14 @@ func (c *conditionBuilder) conditionFor(
 				return sb.E(fieldExpression, value), nil
 			}
 		case schema.ColumnTypeEnumMap:
-			keyType := columns[0].Type.(schema.MapColumnType).KeyType
+			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, columns[0].Type)
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
 
-			switch valueType := columns[0].Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+				leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
 				if key.Materialized {
 					leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
 				}
@@ -222,7 +248,7 @@ func (c *conditionBuilder) conditionFor(
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", columns[0].Type)
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for column type %s", column.Type)
 		}
 	}
 	return "", nil

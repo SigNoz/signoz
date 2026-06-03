@@ -5,23 +5,22 @@ import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import {
 	Col,
 	Collapse,
 	DatePicker,
 	Form,
-	Input,
 	InputNumber,
 	Modal,
 	Row,
 	Select,
-	Switch,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
-	Tag,
 	Tooltip,
 } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
@@ -41,7 +40,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
-import Tags from 'components/Tags/Tags';
+import Badges from 'components/Badges/Badges';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -1055,7 +1054,10 @@ function MultiIngestionSettings(): JSX.Element {
 													<div className="ingestion-key-tags">
 														{APIKey.tags.map((tag, index) => (
 															// eslint-disable-next-line react/no-array-index-key
-															<Tag key={`${tag}-${index}`}> {tag} </Tag>
+															<Badge key={`${tag}-${index}`} color="vanilla">
+																{' '}
+																{tag}{' '}
+															</Badge>
 														))}
 													</div>
 												</div>
@@ -1180,8 +1182,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableDailyLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.day?.enabled}
+																								value={activeSignal?.config?.day?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev
@@ -1270,8 +1271,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					<div className="limit-enable-disable-toggle">
 																						<Form.Item name="enableSecondLimit">
 																							<Switch
-																								size="small"
-																								checked={activeSignal?.config?.second?.enabled}
+																								value={activeSignal?.config?.second?.enabled}
 																								onChange={(value): void => {
 																									setActiveSignal((prev) =>
 																										prev
@@ -1836,7 +1836,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">
-						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+						<Badges tags={updatedTags} setTags={setUpdatedTags} />
 					</Form.Item>
 
 					<Form.Item
@@ -1926,7 +1926,7 @@ function MultiIngestionSettings(): JSX.Element {
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">
-						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+						<Badges tags={updatedTags} setTags={setUpdatedTags} />
 					</Form.Item>
 				</Form>
 			</Modal>

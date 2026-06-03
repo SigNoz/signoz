@@ -7,8 +7,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
-import { SuccessResponse, Warning } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,16 +18,13 @@ export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: PANEL_TYPES | null,
 	version: string,
-	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	options?: UseQueryOptions<MetricQueryRangeSuccessResponse, Error>,
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
 	keyRef?: MutableRefObject<any>,
 	headers?: Record<string, string>,
 	selectedTimeInterval?: GetQueryResultsProps['globalSelectedInterval'],
-): UseQueryResult<
-	SuccessResponse<MetricRangePayloadProps> & { warning?: Warning },
-	Error
-> => {
+): UseQueryResult<MetricQueryRangeSuccessResponse, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const {
 		selectedTime: globalSelectedInterval,

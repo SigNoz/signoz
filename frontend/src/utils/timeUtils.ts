@@ -171,6 +171,24 @@ export const normalizeTimeToMs = (timestamp: number | string): number => {
 	return isNanoSeconds ? Math.floor(ts / 1_000_000) : ts;
 };
 
+/**
+ * Calculates milliseconds elapsed since the given timestamp.
+ * Returns 0 for undefined/invalid timestamps.
+ */
+export function getElapsedMs(startsAt: Date | string | undefined): number {
+	if (!startsAt) {
+		return 0;
+	}
+	const timestamp =
+		typeof startsAt === 'string'
+			? new Date(startsAt).getTime()
+			: startsAt.getTime();
+	if (Number.isNaN(timestamp)) {
+		return 0;
+	}
+	return Date.now() - timestamp;
+}
+
 export const hasDatePassed = (expiresAt: string): boolean => {
 	const date = dayjs(expiresAt);
 

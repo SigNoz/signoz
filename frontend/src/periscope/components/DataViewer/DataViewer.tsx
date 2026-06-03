@@ -4,6 +4,7 @@ import { ChevronDown, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { JsonView } from 'periscope/components/JsonView';
 import { PrettyView } from 'periscope/components/PrettyView';
 import { PrettyViewProps } from 'periscope/components/PrettyView';
@@ -11,6 +12,8 @@ import { PrettyViewProps } from 'periscope/components/PrettyView';
 import './DataViewer.styles.scss';
 
 type ViewMode = 'pretty' | 'json';
+
+const VIEW_MODE_CHANGED_EVENT = 'Data Viewer: View mode changed';
 
 const VIEW_MODE_OPTIONS: { label: string; value: ViewMode }[] = [
 	{ label: 'Pretty', value: 'pretty' },
@@ -34,6 +37,20 @@ function DataViewer({
 
 	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
 
+	const handleViewModeChange = (value: string): void => {
+		const next = value as ViewMode;
+		setViewMode(next);
+		try {
+			logEvent(VIEW_MODE_CHANGED_EVENT, {
+				viewMode: next,
+				path: window.location.pathname,
+				drawerKey,
+			});
+		} catch {
+			// No op
+		}
+	};
+
 	const handleCopy = (): void => {
 		const text = JSON.stringify(data, null, 2);
 		setCopy(text);
@@ -56,7 +73,7 @@ function DataViewer({
 							{
 								type: 'radio-group',
 								value: viewMode,
-								onChange: (value): void => setViewMode(value as ViewMode),
+								onChange: handleViewModeChange,
 								children: VIEW_MODE_OPTIONS.map((opt) => ({
 									type: 'radio',
 									key: opt.value,

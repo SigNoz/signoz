@@ -111,7 +111,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
-	var filterWhere *querybuilder.PreparedWhereClause
+	var filterWhere querybuilder.PreparedWhereClause
 	var err error
 	stepSec := int64(query.StepInterval.Seconds())
 
@@ -161,7 +161,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			return "", nil, err
 		}
 	}
-	if filterWhere != nil {
+	if !filterWhere.IsEmpty() {
 		sb.AddWhereClause(filterWhere.WhereClause)
 	}
 
@@ -195,7 +195,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
-	var filterWhere *querybuilder.PreparedWhereClause
+	var filterWhere querybuilder.PreparedWhereClause
 	var err error
 
 	stepSec := int64(query.StepInterval.Seconds())
@@ -250,7 +250,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 			return "", nil, err
 		}
 	}
-	if filterWhere != nil {
+	if !filterWhere.IsEmpty() {
 		sb.AddWhereClause(filterWhere.WhereClause)
 	}
 
@@ -273,7 +273,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (string, []any, error) {
-	var filterWhere *querybuilder.PreparedWhereClause
+	var filterWhere querybuilder.PreparedWhereClause
 	var err error
 	stepSec := int64(query.StepInterval.Seconds())
 
@@ -320,7 +320,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			return "", nil, err
 		}
 	}
-	if filterWhere != nil {
+	if !filterWhere.IsEmpty() {
 		baseSb.AddWhereClause(filterWhere.WhereClause)
 	}
 

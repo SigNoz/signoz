@@ -1,6 +1,7 @@
-import { Input } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Select } from 'antd';
+// TODO(@signozhq/ui-input): migrate this <Input> once @signozhq/ui Input
+// supports the `onWheel` handler (used to blur on scroll for number inputs).
+import { Input, Select } from 'antd';
 import classNames from 'classnames';
 
 import { TIME_AGGREGATION_OPTIONS } from './constants';

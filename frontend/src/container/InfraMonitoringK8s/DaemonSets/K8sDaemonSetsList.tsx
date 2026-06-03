@@ -15,7 +15,6 @@ import {
 	k8sDaemonSetGetEntityName,
 	k8sDaemonSetGetSelectedItemFilters,
 	k8sDaemonSetInitialEventsFilter,
-	k8sDaemonSetInitialFilters,
 	k8sDaemonSetInitialLogTracesFilter,
 } from './constants';
 import {
@@ -106,7 +105,6 @@ function K8sDaemonSetsList({
 				getEntityName={k8sDaemonSetGetEntityName}
 				getInitialLogTracesFilters={k8sDaemonSetInitialLogTracesFilter}
 				getInitialEventsFilters={k8sDaemonSetInitialEventsFilter}
-				primaryFilterKeys={k8sDaemonSetInitialFilters}
 				metadataConfig={k8sDaemonSetDetailsMetadataConfig}
 				entityWidgetInfo={daemonSetWidgetInfo}
 				getEntityQueryPayload={getDaemonSetMetricsQueryPayload}
