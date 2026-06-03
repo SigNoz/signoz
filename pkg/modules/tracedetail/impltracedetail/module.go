@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
@@ -18,12 +17,12 @@ type module struct {
 	metrics  *moduleMetrics
 }
 
-func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
+func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) (*module, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 
 	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
 	if err != nil {
-		scopedProviderSettings.Logger().WarnContext(context.Background(), "tracedetail: failed to initialize metrics", errors.Attr(err))
+		return nil, err
 	}
 
 	m := &module{
@@ -35,7 +34,7 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 
 	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed)))
 
-	return m
+	return m, nil
 }
 
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *spantypes.PostableWaterfall) (*spantypes.GettableWaterfallTrace, error) {
