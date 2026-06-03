@@ -1261,6 +1261,7 @@ components:
       - sqs
       - storageaccountsblob
       - cdnprofile
+      - appservice
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
