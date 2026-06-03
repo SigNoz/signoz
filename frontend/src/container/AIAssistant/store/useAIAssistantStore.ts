@@ -1,10 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 import type {
+	ErrorResponseDTO,
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
@@ -21,7 +23,6 @@ import {
 	regenerateMessage,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
-	SSEStreamError,
 	streamEvents,
 	submitFeedback,
 	ThreadSummary,
@@ -194,12 +195,74 @@ function resetStreamingState(
 }
 
 /**
+ * Marker thrown by `runStreamingLoop` when an SSE event reports
+ * `invalid_token`. Callers that own an originating action (sendMessage /
+ * approve / clarify / regenerate) catch this and re-issue that action via
+ * `streamWithAuthRetry`; the retry's first REST call will 401, at which point
+ * the shared axios `interceptorRejected` rotates the access token and replays.
+ */
+class AuthExpiredError extends Error {
+	constructor() {
+		super('Access token expired during execution');
+		this.name = 'AuthExpiredError';
+	}
+}
+
+/**
+ * Runs the originating action (e.g. sendMessage POST) and streams the
+ * resulting execution. On `AuthExpiredError`, re-issues `start` once — the
+ * retry's REST call hits 401, the shared axios interceptor rotates the
+ * access token and replays, and the new SSE picks up the rotated token from
+ * localStorage. Backend signals `retryAction: 'manual'` for `invalid_token`,
+ * so the dead execution can't be resumed — only a fresh one helps.
+ */
+async function streamWithAuthRetry(
+	conversationId: string,
+	start: () => Promise<string>,
+	set: StoreSetter,
+): Promise<void> {
+	for (let attempt = 0; attempt <= 1; attempt += 1) {
+		if (attempt > 0) {
+			// Drop any partial content/events from the previous attempt so the
+			// retried execution's stream isn't concatenated with the dead one.
+			set((s) => {
+				resetStreamingState(s, conversationId);
+			});
+		}
+		// eslint-disable-next-line no-await-in-loop
+		const executionId = await start();
+		const ctrl = newStreamController(conversationId);
+		try {
+			// eslint-disable-next-line no-await-in-loop
+			await runStreamingLoop(executionId, {
+				conversationId,
+				set,
+				signal: ctrl.signal,
+			});
+			streamControllers.delete(conversationId);
+			return;
+		} catch (err) {
+			streamControllers.delete(conversationId);
+			if (err instanceof AuthExpiredError && attempt < 1) {
+				continue;
+			}
+			throw err;
+		}
+	}
+}
+
+/**
  * Runs one SSE execution stream, updating the per-conversation stream state.
  *
  * Breaks early and sets pendingApproval / pendingClarification when the
  * agent needs user input before it can continue.
  *
- * Throws on `error` events — the caller's catch block handles UI feedback.
+ * On an `invalid_token` error event (e.g. MCP auth expired mid-execution),
+ * throws `AuthExpiredError` so the caller can re-issue the originating
+ * action via `streamWithAuthRetry`. We don't refresh here ourselves — the
+ * retry's REST call will 401 and the shared axios `interceptorRejected`
+ * handles rotation + replay. Throws on any other `error` event — the
+ * caller's catch block handles UI feedback.
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 async function runStreamingLoop(
@@ -325,6 +388,15 @@ async function runStreamingLoop(
 			});
 			break;
 		} else if (event.type === 'error') {
+			// MCP/SigNoz auth expired mid-execution — signal the caller to
+			// re-issue the originating action. The retry's REST call will hit
+			// 401 and the shared axios `interceptorRejected` will rotate the
+			// access token + replay, so we don't refresh here ourselves.
+			// (Backend sets `retryAction: 'manual'`, so the failed execution
+			// can't itself be resumed — only a fresh one helps.)
+			if (event.error.code === 'invalid_token') {
+				throw new AuthExpiredError();
+			}
 			throw Object.assign(new Error(event.error.message), {
 				retryAction: event.retryAction,
 			});
@@ -412,13 +484,41 @@ function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
 	return Boolean(stream?.pendingApproval || stream?.pendingClarification);
 }
 
+function parseErrorBody(value: unknown): string | null {
+	if (typeof value === 'string') {
+		try {
+			return parseErrorBody(JSON.parse(value));
+		} catch {
+			return null;
+		}
+	}
+	const message = (value as ErrorResponseDTO | undefined)?.error?.message;
+	return typeof message === 'string' && message.length > 0 ? message : null;
+}
+
 /**
- * Commits an error message and removes the stream entry.
+ * Returns the backend's `error.message` when `err` is a 429 axios response
+ * (typically from the threads API surface — createThread, sendMessage, approve,
+ * clarify, regenerate). Returns null for any other error so callers fall
+ * through to their generic copy.
+ */
+function rateLimitMessage(err: unknown): string | null {
+	if (axios.isAxiosError(err) && err.response?.status === 429) {
+		return parseErrorBody(err.response.data);
+	}
+	return null;
+}
+
+/**
+ * Commits an error message and removes the stream entry. When `isRateLimit`
+ * is true, the committed message is flagged so the feedback/regenerate bar
+ * is hidden — clicking regenerate would just 429 again.
  */
 function finalizeStreamingError(
 	conversationId: string,
 	errorContent: string,
 	set: StoreSetter,
+	isRateLimit = false,
 ): void {
 	set((s) => {
 		const conv = s.conversations[conversationId];
@@ -428,6 +528,7 @@ function finalizeStreamingError(
 				role: 'assistant',
 				content: errorContent,
 				createdAt: Date.now(),
+				...(isRateLimit ? { isRateLimitError: true } : {}),
 			});
 			conv.updatedAt = Date.now();
 		}
@@ -801,7 +902,12 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					});
 
 					// Reconnect to SSE if backend execution is still running
-					// and we don't already have an active SSE reader for this thread
+					// and we don't already have an active SSE reader for this
+					// thread. No auth-retry wrapper here: on `invalid_token`
+					// there's no "originating action" to redo — reopening the
+					// same dead executionId would just re-emit the failure.
+					// Let the error bubble; the user can send a new message,
+					// which will go through `streamWithAuthRetry`.
 					if (
 						detail.activeExecutionId &&
 						!streamControllers.has(threadId) &&
@@ -1052,14 +1158,12 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							}
 						});
 					}
-					const executionId = await sendMessageToThread(threadId, text, contexts);
-					const ctrl = newStreamController(convId);
-					await runStreamingLoop(executionId, {
-						conversationId: convId,
+					const tid = threadId;
+					await streamWithAuthRetry(
+						convId,
+						() => sendMessageToThread(tid, text, contexts),
 						set,
-						signal: ctrl.signal,
-					});
-					streamControllers.delete(convId);
+					);
 
 					if (!hasPendingInput(convId, get)) {
 						finalizeStreamingMessage(convId, set, get);
@@ -1070,11 +1174,14 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] sendMessage failed:', err);
-					const message =
-						err instanceof SSEStreamError && err.status === 429
-							? 'You sent that a bit too quickly. Please wait a moment and try again.'
-							: 'Something went wrong while fetching the response. Please try again.';
-					finalizeStreamingError(convId, message, set);
+					const rateLimit = rateLimitMessage(err);
+					finalizeStreamingError(
+						convId,
+						rateLimit ??
+							'Something went wrong while fetching the response. Please try again.',
+						set,
+						rateLimit !== null,
+					);
 				}
 			},
 
@@ -1094,14 +1201,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 
 				try {
-					const executionId = await approveExecution(approvalId);
-					const ctrl = newStreamController(conversationId);
-					await runStreamingLoop(executionId, {
+					await streamWithAuthRetry(
 						conversationId,
+						() => approveExecution(approvalId),
 						set,
-						signal: ctrl.signal,
-					});
-					streamControllers.delete(conversationId);
+					);
 					if (!hasPendingInput(conversationId, get)) {
 						finalizeStreamingMessage(conversationId, set, get);
 					}
@@ -1110,10 +1214,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] approveAction failed:', err);
+					const rateLimit = rateLimitMessage(err);
 					finalizeStreamingError(
 						conversationId,
-						'Something went wrong while processing the approval. Please try again.',
+						rateLimit ??
+							'Something went wrong while processing the approval. Please try again.',
 						set,
+						rateLimit !== null,
 					);
 				}
 			},
@@ -1176,14 +1283,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 
 				try {
-					const executionId = await regenerateMessage(messageId);
-					const ctrl = newStreamController(conversationId);
-					await runStreamingLoop(executionId, {
+					await streamWithAuthRetry(
 						conversationId,
+						() => regenerateMessage(messageId),
 						set,
-						signal: ctrl.signal,
-					});
-					streamControllers.delete(conversationId);
+					);
 					if (!hasPendingInput(conversationId, get)) {
 						finalizeStreamingMessage(conversationId, set, get);
 					}
@@ -1192,10 +1296,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] regenerateAssistantMessage failed:', err);
+					const rateLimit = rateLimitMessage(err);
 					finalizeStreamingError(
 						conversationId,
-						'Something went wrong while regenerating the response. Please try again.',
+						rateLimit ??
+							'Something went wrong while regenerating the response. Please try again.',
 						set,
+						rateLimit !== null,
 					);
 				}
 			},
@@ -1245,14 +1352,11 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				});
 
 				try {
-					const executionId = await clarifyExecution(clarificationId, answers);
-					const ctrl = newStreamController(conversationId);
-					await runStreamingLoop(executionId, {
+					await streamWithAuthRetry(
 						conversationId,
+						() => clarifyExecution(clarificationId, answers),
 						set,
-						signal: ctrl.signal,
-					});
-					streamControllers.delete(conversationId);
+					);
 					if (!hasPendingInput(conversationId, get)) {
 						finalizeStreamingMessage(conversationId, set, get);
 					}
@@ -1261,10 +1365,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						return;
 					}
 					console.error('[AIAssistant] submitClarification failed:', err);
+					const rateLimit = rateLimitMessage(err);
 					finalizeStreamingError(
 						conversationId,
-						'Something went wrong while processing your answers. Please try again.',
+						rateLimit ??
+							'Something went wrong while processing your answers. Please try again.',
 						set,
+						rateLimit !== null,
 					);
 				}
 			},

@@ -105,7 +105,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 			return err
 		}
 
-		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+		return module.store.Update(ctx, orgID, storable)
 	})
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 			return err
 		}
 
-		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+		return module.store.Update(ctx, orgID, storable)
 	})
 	if err != nil {
 		return nil, err
@@ -172,16 +172,6 @@ func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer
 	})
 }
 
-// CreatePublicV2 is not supported in the community build.
-func (module *module) CreatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
-// UpdatePublicV2 is not supported in the community build.
-func (module *module) UpdatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.UpdatablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
-}
-
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	existing, err := module.GetV2(ctx, orgID, id)
 	if err != nil {
@@ -194,7 +184,7 @@ func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id va
 	if err != nil {
 		return err
 	}
-	return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
+	return module.store.Update(ctx, orgID, storable)
 }
 
 func (module *module) PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error {

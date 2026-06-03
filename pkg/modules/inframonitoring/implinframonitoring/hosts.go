@@ -34,9 +34,8 @@ func (m *module) getPerGroupHostStatusCounts(
 	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
 
-	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
-		uint64(req.Start), uint64(req.End), nil,
-	)
+	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
+	samplesStartMs, flooredEndMs, tsAdjustedStartMs, distributedTimeSeriesTableName, _, _, localSamplesTable := alignedMetricWindow(req.Start, req.End)
 
 	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", inframonitoringtypes.HostNameAttrKey)
 
@@ -55,15 +54,15 @@ func (m *module) getPerGroupHostStatusCounts(
 	)
 
 	// Build a fingerprint subquery to restrict to fingerprints with actual sample
-	// data in the original time range (not the wider timeseries table window).
-	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, req.Start, req.End)
+	// data in the floored time range.
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
 
 	sb.Select(selectCols...)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
-		sb.GE("unix_milli", adjustedStart),
-		sb.L("unix_milli", adjustedEnd),
+		sb.GE("unix_milli", tsAdjustedStartMs),
+		sb.LE("unix_milli", flooredEndMs),
 		fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
 	)
 

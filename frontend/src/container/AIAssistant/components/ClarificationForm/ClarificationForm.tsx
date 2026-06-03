@@ -63,7 +63,14 @@ export default function ClarificationForm({
 		setAnswers((prev) => ({ ...prev, [id]: value }));
 	};
 
+	const isFormValid = fields.every(
+		(f) => !f.required || isFieldFilled(f, answers[f.id]),
+	);
+
 	const handleSubmit = async (): Promise<void> => {
+		if (!isFormValid) {
+			return;
+		}
 		setSubmitted(true);
 		// Approximate queryLength as the JSON encoding of the form answers — the
 		// clarification API doesn't render a single user-visible string, but the
@@ -136,7 +143,7 @@ export default function ClarificationForm({
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
-					disabled={isStreaming}
+					disabled={isStreaming || !isFormValid}
 					prefix={<Send />}
 				>
 					Submit
@@ -162,8 +169,9 @@ export default function ClarificationForm({
 
 /**
  * Per-type seed value. The DTO's `default` is `string | string[] | null`,
- * which doesn't fit boolean fields cleanly — we coerce 'true'/'false' strings
- * for them, fall back to `[]` for multi_select, and the raw string otherwise.
+ * which doesn't fit boolean / number fields cleanly — we coerce 'true'/'false'
+ * strings for booleans, parse number defaults out of the string form,
+ * fall back to `[]` for multi_select, and the raw string otherwise.
  */
 function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
 	const raw = f.default;
@@ -175,7 +183,39 @@ function initialAnswerFor(f: ClarificationFieldEventDTO): unknown {
 	if (f.type === ClarificationFieldTypeDTO.multi_select) {
 		return Array.isArray(raw) ? raw : [];
 	}
+	if (f.type === ClarificationFieldTypeDTO.number) {
+		// Server sends number defaults as strings (e.g. `"5"`). Parse so the
+		// stored value is a real `number` — otherwise `isFieldFilled` (which
+		// requires `typeof === 'number'`) rejects a visibly-filled field and
+		// Submit stays disabled.
+		if (typeof raw !== 'string' || raw === '') {
+			return null;
+		}
+		const parsed = Number(raw);
+		return Number.isNaN(parsed) ? null : parsed;
+	}
 	return raw ?? '';
+}
+
+// Whether a required field has been answered. Booleans are always considered
+// filled (they're initialised to a concrete true/false). For other types we
+// reject empty strings, empty arrays, NaN numbers, and `null` (which the
+// number input emits when its raw value is `''` — `Number('')` would
+// otherwise silently coerce to `0` and read as a valid answer).
+function isFieldFilled(
+	field: ClarificationFieldEventDTO,
+	value: unknown,
+): boolean {
+	switch (field.type) {
+		case ClarificationFieldTypeDTO.multi_select:
+			return Array.isArray(value) && value.length > 0;
+		case ClarificationFieldTypeDTO.boolean:
+			return true;
+		case ClarificationFieldTypeDTO.number:
+			return typeof value === 'number' && !Number.isNaN(value);
+		default:
+			return typeof value === 'string' && value.trim().length > 0;
+	}
 }
 
 interface FieldInputProps {
@@ -216,13 +256,21 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 			<div className={styles.field}>
 				<label className={styles.label} htmlFor={id}>
 					{label}
-					{required && <span className={styles.required}>*</span>}
+					{required && (
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
+					)}
 				</label>
 				<Select
 					value={isCustom ? CUSTOM_OPTION_SENTINEL : String(value ?? '')}
 					onChange={handleSelectChange}
 				>
-					<SelectTrigger id={id} placeholder="Select…" />
+					<SelectTrigger
+						id={id}
+						placeholder="Select…"
+						aria-required={required || undefined}
+					/>
 					{/* Pin the dropdown width to the trigger via Radix's
 					    `--radix-select-trigger-width`; otherwise the popover
 					    sizes to its widest item and looks misaligned. */}
@@ -267,7 +315,11 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 					onChange={(): void => onChange(!checked)}
 				>
 					{label}
-					{required && <span className={styles.required}>*</span>}
+					{required && (
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
+					)}
 				</Checkbox>
 			</div>
 		);
@@ -312,11 +364,21 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 		};
 
 		return (
-			<div className={styles.field}>
-				<span className={styles.label}>
+			// `fieldset` + `legend` is the WCAG-recommended grouping for
+			// related checkboxes (1.3.1). SRs announce the legend before each
+			// option, so users hear the group label as context.
+			<fieldset
+				className={styles.multiSelectFieldset}
+				aria-required={required || undefined}
+			>
+				<legend className={styles.label}>
 					{label}
-					{required && <span className={styles.required}>*</span>}
-				</span>
+					{required && (
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
+					)}
+				</legend>
 				<div className={styles.checkboxGroup}>
 					{options?.map((opt) => (
 						<Checkbox
@@ -347,7 +409,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 						onChange={(e): void => updateCustomValue(e.target.value)}
 					/>
 				)}
-			</div>
+			</fieldset>
 		);
 	}
 
@@ -356,16 +418,29 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 		<div className={styles.field}>
 			<label className={styles.label} htmlFor={id}>
 				{label}
-				{required && <span className={styles.required}>*</span>}
+				{required && (
+					<span className={styles.required} aria-hidden="true">
+						*
+					</span>
+				)}
 			</label>
 			<Input
 				id={id}
 				type={type === 'number' ? 'number' : 'text'}
 				className={styles.input}
 				value={String(value ?? '')}
-				onChange={(e): void =>
-					onChange(type === 'number' ? Number(e.target.value) : e.target.value)
-				}
+				aria-required={required || undefined}
+				onChange={(e): void => {
+					if (type === 'number') {
+						const raw = e.target.value;
+						// Map empty input to `null` instead of `Number('') === 0`
+						// so a required numeric field cleared after typing doesn't
+						// silently read as a valid `0` in `isFieldFilled`.
+						onChange(raw === '' ? null : Number(raw));
+					} else {
+						onChange(e.target.value);
+					}
+				}}
 				placeholder={label}
 			/>
 		</div>

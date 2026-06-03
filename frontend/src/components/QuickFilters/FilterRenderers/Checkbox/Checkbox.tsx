@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Skeleton } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
@@ -634,10 +636,12 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 									)}
 									<div className="value">
 										<Checkbox
-											onChange={(e): void => onChange(value, e.target.checked, false)}
-											checked={currentFilterState[value]}
+											onChange={(checked): void =>
+												onChange(value, checked === true, false)
+											}
+											value={currentFilterState[value]}
 											disabled={isFilterDisabled}
-											rootClassName="check-box"
+											className="check-box"
 										/>
 
 										<div

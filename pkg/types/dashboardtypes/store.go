@@ -36,11 +36,6 @@ type Store interface {
 	// ════════════════════════════════════════════════════════════════════════
 	// v2 dashboard methods
 	// ════════════════════════════════════════════════════════════════════════
-	GetV2(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, *StorablePublicDashboard, error)
-
-	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data StorableDashboardData) error
-
-	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, locked bool, updatedBy string) error
 
 	// int64 return is the total row count for the filter (pre-limit/offset),
 	ListV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*DashboardListRow, int64, error)

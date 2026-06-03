@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer } from 'antd';
+import { Drawer } from 'antd';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { RowData } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
