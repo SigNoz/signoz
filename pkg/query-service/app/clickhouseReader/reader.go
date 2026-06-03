@@ -339,6 +339,96 @@ func (r *ClickHouseReader) GetSeries(ctx context.Context, params *model.SeriesQu
 	return result, nil
 }
 
+func (r *ClickHouseReader) GetLabels(ctx context.Context, params *model.LabelQueryParams) ([]string, *model.ApiError) {
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	querier, err := r.prometheus.Storage().Querier(mintMs, maxtMs)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	defer querier.Close()
+
+	if len(params.Matches) == 0 {
+		names, _, err := querier.LabelNames(ctx, nil)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		return filterInternalLabels(names), nil
+	}
+
+	seen := map[string]struct{}{}
+	result := []string{}
+	for _, matchStr := range params.Matches {
+		matchers, parseErr := parser.ParseMetricSelector(matchStr)
+		if parseErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
+		}
+		names, _, err := querier.LabelNames(ctx, nil, matchers...)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		for _, name := range filterInternalLabels(names) {
+			if _, ok := seen[name]; !ok {
+				seen[name] = struct{}{}
+				result = append(result, name)
+			}
+		}
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
+func (r *ClickHouseReader) GetLabelValues(ctx context.Context, labelName string, params *model.LabelQueryParams) ([]string, *model.ApiError) {
+	mintMs := params.Start.UnixMilli()
+	maxtMs := params.End.UnixMilli()
+
+	querier, err := r.prometheus.Storage().Querier(mintMs, maxtMs)
+	if err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+	defer querier.Close()
+
+	if len(params.Matches) == 0 {
+		values, _, err := querier.LabelValues(ctx, labelName, nil)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		return values, nil
+	}
+
+	seen := map[string]struct{}{}
+	result := []string{}
+	for _, matchStr := range params.Matches {
+		matchers, parseErr := parser.ParseMetricSelector(matchStr)
+		if parseErr != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: parseErr}
+		}
+		values, _, err := querier.LabelValues(ctx, labelName, nil, matchers...)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		}
+		for _, v := range values {
+			if _, ok := seen[v]; !ok {
+				seen[v] = struct{}{}
+				result = append(result, v)
+			}
+		}
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
+func filterInternalLabels(names []string) []string {
+	out := names[:0]
+	for _, n := range names {
+		if n != prometheus.FingerprintAsPromLabelName {
+			out = append(out, n)
+		}
+	}
+	return out
+}
+
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),

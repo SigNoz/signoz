@@ -27,6 +27,12 @@ type SeriesQueryParams struct {
 	Limit   int      // 0 means use the server-side default cap
 }
 
+type LabelQueryParams struct {
+	Start   time.Time
+	End     time.Time
+	Matches []string // optional match[] PromQL selector strings
+}
+
 const (
 	StringTagMapCol   = "stringTagMap"
 	NumberTagMapCol   = "numberTagMap"
