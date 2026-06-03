@@ -818,6 +818,22 @@ func aggOrderBy(k qbtypes.OrderBy, q qbtypes.QueryBuilderQuery[qbtypes.TraceAggr
 	return 0, false
 }
 
+// maybeAttachResourceFilter decides whether to pre-filter on the resource table.
+//
+// The resource table maps resource attributes (e.g. service.name) to fingerprints.
+// When it helps, we look up the matching fingerprints there first and feed them to the
+// main query as a CTE, so the main table only scans those fingerprints.
+//
+// There are three outcomes:
+//
+//  1. Skip it — the filter has nothing we can pre-resolve. This happens when the filter
+//     is empty,no resource filter, or when its resource conditions sit under an OR (e.g.
+//     `name='GET' OR service.name='abc'`), because then we can't reduce to a fixed set
+//     of fingerprints. The main query filters on resource attributes inline instead.
+//  2. Skip it — too many fingerprints match (over the configured threshold), so the CTE
+//     would not be selective enough to be worth it. Again, filter inline on the main table.
+//  3. Use it — attach the matching fingerprints as the __resource_filter CTE and join
+//     the main table on resource_fingerprint.
 func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,

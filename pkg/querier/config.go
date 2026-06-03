@@ -54,7 +54,7 @@ func (c Config) Validate() error {
 	if c.MaxConcurrentQueries <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "max_concurrent_queries must be positive, got %v", c.MaxConcurrentQueries)
 	}
-	if c.SkipResourceFingerprint.Enabled && c.SkipResourceFingerprint.Threshold == 0 {
+	if c.SkipResourceFingerprint.Enabled && c.SkipResourceFingerprint.Threshold <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "skip_resource_fingerprint.threshold must be > 0 when enabled")
 	}
 	return nil
