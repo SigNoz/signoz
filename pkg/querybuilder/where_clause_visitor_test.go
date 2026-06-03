@@ -1697,7 +1697,7 @@ func TestVisitComparison_FullTextSearch(t *testing.T) {
 		SkipFunctionCalls:  false,
 		IgnoreNotFoundKeys: false,
 		FTSCondition: func(_ context.Context, _ any, _ *sqlbuilder.SelectBuilder) (string, error) {
-			return fmt.Sprintf("fts_cond"), nil
+			return "fts_cond", nil
 		},
 	}
 
