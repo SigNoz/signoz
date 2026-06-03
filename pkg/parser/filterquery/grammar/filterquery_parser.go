@@ -45,8 +45,8 @@ func filterqueryParserInit() {
 	staticData.RuleNames = []string{
 		"query", "expression", "orExpression", "andExpression", "unaryExpression",
 		"primary", "comparison", "inClause", "notInClause", "valueList", "freeText",
-		"functionCall", "searchCall", "functionParamList", "functionParam",
-		"array", "value", "key",
+		"functionCall", "fullText", "functionParamList", "functionParam", "array",
+		"value", "key",
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
@@ -234,7 +234,7 @@ const (
 	FilterQueryParserRULE_valueList         = 9
 	FilterQueryParserRULE_freeText          = 10
 	FilterQueryParserRULE_functionCall      = 11
-	FilterQueryParserRULE_searchCall        = 12
+	FilterQueryParserRULE_fullText          = 12
 	FilterQueryParserRULE_functionParamList = 13
 	FilterQueryParserRULE_functionParam     = 14
 	FilterQueryParserRULE_array             = 15
@@ -1014,7 +1014,7 @@ type IPrimaryContext interface {
 	RPAREN() antlr.TerminalNode
 	Comparison() IComparisonContext
 	FunctionCall() IFunctionCallContext
-	SearchCall() ISearchCallContext
+	FullText() IFullTextContext
 	FreeText() IFreeTextContext
 	Key() IKeyContext
 	Value() IValueContext
@@ -1111,10 +1111,10 @@ func (s *PrimaryContext) FunctionCall() IFunctionCallContext {
 	return t.(IFunctionCallContext)
 }
 
-func (s *PrimaryContext) SearchCall() ISearchCallContext {
+func (s *PrimaryContext) FullText() IFullTextContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(ISearchCallContext); ok {
+		if _, ok := ctx.(IFullTextContext); ok {
 			t = ctx.(antlr.RuleContext)
 			break
 		}
@@ -1124,7 +1124,7 @@ func (s *PrimaryContext) SearchCall() ISearchCallContext {
 		return nil
 	}
 
-	return t.(ISearchCallContext)
+	return t.(IFullTextContext)
 }
 
 func (s *PrimaryContext) FreeText() IFreeTextContext {
@@ -1256,7 +1256,7 @@ func (p *FilterQueryParser) Primary() (localctx IPrimaryContext) {
 		p.EnterOuterAlt(localctx, 4)
 		{
 			p.SetState(69)
-			p.SearchCall()
+			p.FullText()
 		}
 
 	case 5:
@@ -2935,8 +2935,8 @@ errorExit:
 	goto errorExit // Trick to prevent compiler error if the label is not used
 }
 
-// ISearchCallContext is an interface to support dynamic dispatch.
-type ISearchCallContext interface {
+// IFullTextContext is an interface to support dynamic dispatch.
+type IFullTextContext interface {
 	antlr.ParserRuleContext
 
 	// GetParser returns the parser.
@@ -2948,51 +2948,51 @@ type ISearchCallContext interface {
 	FunctionParamList() IFunctionParamListContext
 	RPAREN() antlr.TerminalNode
 
-	// IsSearchCallContext differentiates from other interfaces.
-	IsSearchCallContext()
+	// IsFullTextContext differentiates from other interfaces.
+	IsFullTextContext()
 }
 
-type SearchCallContext struct {
+type FullTextContext struct {
 	antlr.BaseParserRuleContext
 	parser antlr.Parser
 }
 
-func NewEmptySearchCallContext() *SearchCallContext {
-	var p = new(SearchCallContext)
+func NewEmptyFullTextContext() *FullTextContext {
+	var p = new(FullTextContext)
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = FilterQueryParserRULE_searchCall
+	p.RuleIndex = FilterQueryParserRULE_fullText
 	return p
 }
 
-func InitEmptySearchCallContext(p *SearchCallContext) {
+func InitEmptyFullTextContext(p *FullTextContext) {
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
-	p.RuleIndex = FilterQueryParserRULE_searchCall
+	p.RuleIndex = FilterQueryParserRULE_fullText
 }
 
-func (*SearchCallContext) IsSearchCallContext() {}
+func (*FullTextContext) IsFullTextContext() {}
 
-func NewSearchCallContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *SearchCallContext {
-	var p = new(SearchCallContext)
+func NewFullTextContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FullTextContext {
+	var p = new(FullTextContext)
 
 	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
 
 	p.parser = parser
-	p.RuleIndex = FilterQueryParserRULE_searchCall
+	p.RuleIndex = FilterQueryParserRULE_fullText
 
 	return p
 }
 
-func (s *SearchCallContext) GetParser() antlr.Parser { return s.parser }
+func (s *FullTextContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *SearchCallContext) SEARCH() antlr.TerminalNode {
+func (s *FullTextContext) SEARCH() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserSEARCH, 0)
 }
 
-func (s *SearchCallContext) LPAREN() antlr.TerminalNode {
+func (s *FullTextContext) LPAREN() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserLPAREN, 0)
 }
 
-func (s *SearchCallContext) FunctionParamList() IFunctionParamListContext {
+func (s *FullTextContext) FunctionParamList() IFunctionParamListContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFunctionParamListContext); ok {
@@ -3008,43 +3008,43 @@ func (s *SearchCallContext) FunctionParamList() IFunctionParamListContext {
 	return t.(IFunctionParamListContext)
 }
 
-func (s *SearchCallContext) RPAREN() antlr.TerminalNode {
+func (s *FullTextContext) RPAREN() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserRPAREN, 0)
 }
 
-func (s *SearchCallContext) GetRuleContext() antlr.RuleContext {
+func (s *FullTextContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
 
-func (s *SearchCallContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+func (s *FullTextContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-func (s *SearchCallContext) EnterRule(listener antlr.ParseTreeListener) {
+func (s *FullTextContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(FilterQueryListener); ok {
-		listenerT.EnterSearchCall(s)
+		listenerT.EnterFullText(s)
 	}
 }
 
-func (s *SearchCallContext) ExitRule(listener antlr.ParseTreeListener) {
+func (s *FullTextContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(FilterQueryListener); ok {
-		listenerT.ExitSearchCall(s)
+		listenerT.ExitFullText(s)
 	}
 }
 
-func (s *SearchCallContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+func (s *FullTextContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 	switch t := visitor.(type) {
 	case FilterQueryVisitor:
-		return t.VisitSearchCall(s)
+		return t.VisitFullText(s)
 
 	default:
 		return t.VisitChildren(s)
 	}
 }
 
-func (p *FilterQueryParser) SearchCall() (localctx ISearchCallContext) {
-	localctx = NewSearchCallContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 24, FilterQueryParserRULE_searchCall)
+func (p *FilterQueryParser) FullText() (localctx IFullTextContext) {
+	localctx = NewFullTextContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 24, FilterQueryParserRULE_fullText)
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(200)

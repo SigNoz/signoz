@@ -191,7 +191,7 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 	} else if ctx.FunctionCall() != nil {
 		// Handle function calls if needed
 		return nil
-	} else if ctx.SearchCall() != nil {
+	} else if ctx.FullText() != nil {
 		// Handle search calls if needed
 		return nil
 	} else if ctx.FreeText() != nil {

@@ -111,8 +111,8 @@ func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFreeText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
-	case *grammar.SearchCallContext:
-		return v.VisitSearchCall(t)
+	case *grammar.FullTextContext:
+		return v.VisitFullText(t)
 	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
 	case *grammar.FunctionParamContext:
@@ -205,8 +205,8 @@ func (v *variableReplacementVisitor) VisitPrimary(ctx *grammar.PrimaryContext) a
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
-	} else if ctx.SearchCall() != nil {
-		return v.Visit(ctx.SearchCall())
+	} else if ctx.FullText() != nil {
+		return v.Visit(ctx.FullText())
 	} else if ctx.FreeText() != nil {
 		return v.Visit(ctx.FreeText())
 	}
@@ -395,7 +395,7 @@ func (v *variableReplacementVisitor) VisitFreeText(ctx *grammar.FreeTextContext)
 	return ""
 }
 
-func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+func (v *variableReplacementVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 	params := v.Visit(ctx.FunctionParamList()).(string)
 	return "search(" + params + ")"
 }

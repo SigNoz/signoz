@@ -83,7 +83,7 @@ notInClause
 valueList
 freeText
 functionCall
-searchCall
+fullText
 functionParamList
 functionParam
 array

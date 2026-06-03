@@ -221,8 +221,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFreeText(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
-	case *grammar.SearchCallContext:
-		return v.VisitSearchCall(t)
+	case *grammar.FullTextContext:
+		return v.VisitFullText(t)
 	case *grammar.FunctionParamListContext:
 		return v.VisitFunctionParamList(t)
 	case *grammar.FunctionParamContext:
@@ -335,8 +335,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
-	} else if ctx.SearchCall() != nil {
-		return v.Visit(ctx.SearchCall())
+	} else if ctx.FullText() != nil {
+		return v.Visit(ctx.FullText())
 	} else if ctx.FreeText() != nil {
 		return v.Visit(ctx.FreeText())
 	}
@@ -743,8 +743,8 @@ func (v *filterExpressionVisitor) VisitFreeText(ctx *grammar.FreeTextContext) an
 	return cond
 }
 
-// VisitSearchCall handles the search() function call.
-func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+// VisitFullText handles the search() function call.
+func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 	if v.skipFunctionCalls || v.skipFullTextSearch {
 		return SkipConditionLiteral
 	}

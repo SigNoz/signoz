@@ -32,12 +32,12 @@ unaryExpression
     ;
 
 // Primary constructs: grouped expressions, a comparison (key op value),
-// a function call, a search call, or a free-text search string
+// a function call, a fullText (search() call), or a free-text search string
 primary
     : LPAREN orExpression RPAREN
     | comparison
     | functionCall
-    | searchCall
+    | fullText
     | freeText
     | key
     | value
@@ -112,10 +112,9 @@ functionCall
     ;
 
 /*
- * Search call: search() function
- * First-class rule so search-specific semantics can be extended independently.
+ * Full-text search call: search() function
  */
-searchCall
+fullText
     : SEARCH LPAREN functionParamList RPAREN
     ;
 

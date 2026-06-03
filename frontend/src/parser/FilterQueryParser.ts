@@ -65,7 +65,7 @@ export default class FilterQueryParser extends Parser {
 	public static readonly RULE_valueList = 9;
 	public static readonly RULE_freeText = 10;
 	public static readonly RULE_functionCall = 11;
-	public static readonly RULE_searchCall = 12;
+	public static readonly RULE_fullText = 12;
 	public static readonly RULE_functionParamList = 13;
 	public static readonly RULE_functionParam = 14;
 	public static readonly RULE_array = 15;
@@ -101,7 +101,7 @@ export default class FilterQueryParser extends Parser {
 	public static readonly ruleNames: string[] = [
 		"query", "expression", "orExpression", "andExpression", "unaryExpression", 
 		"primary", "comparison", "inClause", "notInClause", "valueList", "freeText", 
-		"functionCall", "searchCall", "functionParamList", "functionParam", "array", 
+		"functionCall", "fullText", "functionParamList", "functionParam", "array", 
 		"value", "key",
 	];
 	public get grammarFileName(): string { return "FilterQuery.g4"; }
@@ -352,7 +352,7 @@ export default class FilterQueryParser extends Parser {
 				this.enterOuterAlt(localctx, 4);
 				{
 				this.state = 69;
-				this.searchCall();
+				this.fullText();
 				}
 				break;
 			case 5:
@@ -885,9 +885,9 @@ export default class FilterQueryParser extends Parser {
 		return localctx;
 	}
 	// @RuleVersion(0)
-	public searchCall(): SearchCallContext {
-		let localctx: SearchCallContext = new SearchCallContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 24, FilterQueryParser.RULE_searchCall);
+	public fullText(): FullTextContext {
+		let localctx: FullTextContext = new FullTextContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 24, FilterQueryParser.RULE_fullText);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
@@ -1380,8 +1380,8 @@ export class PrimaryContext extends ParserRuleContext {
 	public functionCall(): FunctionCallContext {
 		return this.getTypedRuleContext(FunctionCallContext, 0) as FunctionCallContext;
 	}
-	public searchCall(): SearchCallContext {
-		return this.getTypedRuleContext(SearchCallContext, 0) as SearchCallContext;
+	public fullText(): FullTextContext {
+		return this.getTypedRuleContext(FullTextContext, 0) as FullTextContext;
 	}
 	public freeText(): FreeTextContext {
 		return this.getTypedRuleContext(FreeTextContext, 0) as FreeTextContext;
@@ -1734,7 +1734,7 @@ export class FunctionCallContext extends ParserRuleContext {
 }
 
 
-export class SearchCallContext extends ParserRuleContext {
+export class FullTextContext extends ParserRuleContext {
 	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
@@ -1752,22 +1752,22 @@ export class SearchCallContext extends ParserRuleContext {
 		return this.getToken(FilterQueryParser.RPAREN, 0);
 	}
     public get ruleIndex(): number {
-    	return FilterQueryParser.RULE_searchCall;
+    	return FilterQueryParser.RULE_fullText;
 	}
 	public enterRule(listener: FilterQueryListener): void {
-	    if(listener.enterSearchCall) {
-	 		listener.enterSearchCall(this);
+	    if(listener.enterFullText) {
+	 		listener.enterFullText(this);
 		}
 	}
 	public exitRule(listener: FilterQueryListener): void {
-	    if(listener.exitSearchCall) {
-	 		listener.exitSearchCall(this);
+	    if(listener.exitFullText) {
+	 		listener.exitFullText(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
-		if (visitor.visitSearchCall) {
-			return visitor.visitSearchCall(this);
+		if (visitor.visitFullText) {
+			return visitor.visitFullText(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

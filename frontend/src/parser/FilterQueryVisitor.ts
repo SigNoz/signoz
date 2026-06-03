@@ -15,7 +15,7 @@ import { NotInClauseContext } from "./FilterQueryParser.js";
 import { ValueListContext } from "./FilterQueryParser.js";
 import { FreeTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
-import { SearchCallContext } from "./FilterQueryParser.js";
+import { FullTextContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
 import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
@@ -104,11 +104,11 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 */
 	visitFunctionCall?: (ctx: FunctionCallContext) => Result;
 	/**
-	 * Visit a parse tree produced by `FilterQueryParser.searchCall`.
+	 * Visit a parse tree produced by `FilterQueryParser.fullText`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitSearchCall?: (ctx: SearchCallContext) => Result;
+	visitFullText?: (ctx: FullTextContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FilterQueryParser.functionParamList`.
 	 * @param ctx the parse tree

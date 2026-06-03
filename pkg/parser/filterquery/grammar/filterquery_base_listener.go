@@ -93,11 +93,11 @@ func (s *BaseFilterQueryListener) EnterFunctionCall(ctx *FunctionCallContext) {}
 // ExitFunctionCall is called when production functionCall is exited.
 func (s *BaseFilterQueryListener) ExitFunctionCall(ctx *FunctionCallContext) {}
 
-// EnterSearchCall is called when production searchCall is entered.
-func (s *BaseFilterQueryListener) EnterSearchCall(ctx *SearchCallContext) {}
+// EnterFullText is called when production fullText is entered.
+func (s *BaseFilterQueryListener) EnterFullText(ctx *FullTextContext) {}
 
-// ExitSearchCall is called when production searchCall is exited.
-func (s *BaseFilterQueryListener) ExitSearchCall(ctx *SearchCallContext) {}
+// ExitFullText is called when production fullText is exited.
+func (s *BaseFilterQueryListener) ExitFullText(ctx *FullTextContext) {}
 
 // EnterFunctionParamList is called when production functionParamList is entered.
 func (s *BaseFilterQueryListener) EnterFunctionParamList(ctx *FunctionParamListContext) {}
