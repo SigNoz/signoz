@@ -306,14 +306,10 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			// a simple string substitution produce a corrupt expression.
 			isFuncCall := strings.Contains(original, inv+"(")
 			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				suggestions = append(suggestions, "did you mean: `"+strings.ReplaceAll(original, inv, match)+"`")
+				suggestions = append(suggestions, errors.DidYouMean(strings.ReplaceAll(original, inv, match)))
 			}
 		}
-		quotedKeys := make([]string, len(validKeys))
-		for i, k := range validKeys {
-			quotedKeys[i] = "`" + k + "`"
-		}
-		suggestions = append(suggestions, "valid references: "+strings.Join(quotedKeys, ", "))
+		suggestions = append(suggestions, errors.ValidReferences(validKeys...))
 		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",

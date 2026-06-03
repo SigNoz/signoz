@@ -16,16 +16,6 @@ func UnmarshalJSONWithSuggestions(data []byte, target any) error {
 	return UnmarshalJSONWithContext(data, target, "")
 }
 
-// validReferencesSuggestion renders a backtick-delimited
-// "valid references: `a`, `b`" suggestion string.
-func validReferencesSuggestion(refs []string) string {
-	quoted := make([]string, len(refs))
-	for i, r := range refs {
-		quoted[i] = "`" + r + "`"
-	}
-	return "valid references: " + strings.Join(quoted, ", ")
-}
-
 // enumReferencesSuggestion renders an Enum() value list as a backtick-delimited
 // "valid references" suggestion string.
 func enumReferencesSuggestion(values []any) string {
@@ -35,7 +25,7 @@ func enumReferencesSuggestion(values []any) string {
 			refs = append(refs, sv.StringValue())
 		}
 	}
-	return validReferencesSuggestion(refs)
+	return errors.ValidReferences(refs...)
 }
 
 // UnmarshalJSONWithContext unmarshals JSON with context information for better error messages.
@@ -70,7 +60,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 					errors.CodeInvalidInput,
 					errorMsg,
 					unknownField,
-				).WithInvalidReferences(unknownField).WithSuggestions("did you mean: `" + suggestion + "`")
+				).WithInvalidReferences(unknownField).WithSuggestions(errors.DidYouMean(suggestion))
 			}
 
 			// No close typo match; suggest the full set of valid fields.
@@ -78,7 +68,7 @@ func UnmarshalJSONWithContext(data []byte, target any, context string) error {
 				errors.CodeInvalidInput,
 				errorMsg,
 				unknownField,
-			).WithInvalidReferences(unknownField).WithSuggestions(validReferencesSuggestion(validFields))
+			).WithInvalidReferences(unknownField).WithSuggestions(errors.ValidReferences(validFields...))
 		}
 	}
 

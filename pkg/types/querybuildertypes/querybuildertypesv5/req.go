@@ -240,9 +240,9 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 				field,
 			).WithInvalidReferences(field)
 			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				unknownFieldErr = unknownFieldErr.WithSuggestions("did you mean: `" + suggestion + "`")
+				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.DidYouMean(suggestion))
 			} else {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(validReferencesSuggestion(fieldNames))
+				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.ValidReferences(fieldNames...))
 			}
 			return unknownFieldErr
 		}
@@ -570,9 +570,9 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 				field,
 			).WithInvalidReferences(field)
 			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				unknownFieldErr = unknownFieldErr.WithSuggestions("did you mean: `" + suggestion + "`")
+				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.DidYouMean(suggestion))
 			} else {
-				unknownFieldErr = unknownFieldErr.WithSuggestions(validReferencesSuggestion(fieldNames))
+				unknownFieldErr = unknownFieldErr.WithSuggestions(errors.ValidReferences(fieldNames...))
 			}
 			return unknownFieldErr
 		}

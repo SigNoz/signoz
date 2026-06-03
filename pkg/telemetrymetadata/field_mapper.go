@@ -95,7 +95,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 				if found {
 					// we found a close match, attach the suggestion
-					wrappedErr = wrappedErr.WithSuggestions("did you mean: `" + correction + "`")
+					wrappedErr = wrappedErr.WithSuggestions(errors.DidYouMean(correction))
 				}
 				return "", wrappedErr
 			}

@@ -1,8 +1,6 @@
 package cloudintegrationtypes
 
 import (
-	"strings"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -94,13 +92,9 @@ func NewServiceID(provider CloudProviderType, service string) (ServiceID, error)
 
 	var suggestions []string
 	if match, ok := telemetrytypes.SuggestCorrection(service, validServices); ok {
-		suggestions = append(suggestions, "did you mean: `"+match+"`")
+		suggestions = append(suggestions, errors.DidYouMean(match))
 	}
-	quoted := make([]string, len(validServices))
-	for i, v := range validServices {
-		quoted[i] = "`" + v + "`"
-	}
-	suggestions = append(suggestions, "valid references: "+strings.Join(quoted, ", "))
+	suggestions = append(suggestions, errors.ValidReferences(validServices...))
 
 	return ServiceID{}, invalidErr.WithSuggestions(suggestions...)
 }
