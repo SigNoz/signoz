@@ -18,6 +18,7 @@ import {
 	TowerControl,
 	Workflow,
 } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 import { ROLES } from 'types/roles';
 
 export type CmdAction = {
@@ -34,12 +35,20 @@ export type CmdAction = {
 type ActionDeps = {
 	navigate: (path: string) => void;
 	handleThemeChange: (mode: string) => void;
+	/**
+	 * Provided only when the AI Assistant feature is available for the current
+	 * tenant. When present, the palette surfaces an "Open AI Assistant" entry
+	 * at the top; when absent, the action is omitted entirely.
+	 */
+	aiAssistant?: {
+		open: () => void;
+	};
 };
 
 export function createShortcutActions(deps: ActionDeps): CmdAction[] {
-	const { navigate, handleThemeChange } = deps;
+	const { navigate, handleThemeChange, aiAssistant } = deps;
 
-	return [
+	const actions: CmdAction[] = [
 		{
 			id: 'home',
 			name: 'Go to Home',
@@ -279,4 +288,19 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			perform: (): void => navigate(ROUTES.MEMBERS_SETTINGS),
 		},
 	];
+
+	if (aiAssistant) {
+		actions.unshift({
+			id: 'ai-assistant',
+			name: 'Open Noz',
+			shortcut: ['cmd+j'],
+			keywords: 'noz ai assistant chat ask sparkles copilot',
+			section: 'Noz',
+			icon: <Noz size={16} />,
+			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
+			perform: aiAssistant.open,
+		});
+	}
+
+	return actions;
 }

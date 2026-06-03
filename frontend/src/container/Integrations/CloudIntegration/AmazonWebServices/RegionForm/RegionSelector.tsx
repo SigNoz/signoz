@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Checkbox } from 'antd';
+import { Checkbox } from '@signozhq/ui/checkbox';
 import { useRegionSelection } from 'hooks/integration/aws/useRegionSelection';
 import { regions } from 'utils/regions';
 
@@ -21,18 +21,18 @@ export function RegionSelector({
 			setIncludeAllRegions,
 		});
 
+	const allSelected =
+		allRegionIds.length > 0 &&
+		allRegionIds.every((regionId) => selectedRegions.includes(regionId));
+	const someSelected =
+		selectedRegions.length > 0 && selectedRegions.length < allRegionIds.length;
+
 	return (
 		<div className="region-selector">
 			<div className="select-all">
 				<Checkbox
-					checked={
-						allRegionIds.length > 0 &&
-						allRegionIds.every((regionId) => selectedRegions.includes(regionId))
-					}
-					indeterminate={
-						selectedRegions.length > 0 && selectedRegions.length < allRegionIds.length
-					}
-					onChange={(e): void => handleSelectAll(e.target.checked)}
+					value={allSelected ? true : someSelected ? 'indeterminate' : false}
+					onChange={(checked): void => handleSelectAll(checked === true)}
 				>
 					Select All Regions
 				</Checkbox>
@@ -45,7 +45,7 @@ export function RegionSelector({
 						{region.subRegions.map((subRegion) => (
 							<Checkbox
 								key={subRegion.id}
-								checked={selectedRegions.includes(subRegion.id)}
+								value={selectedRegions.includes(subRegion.id)}
 								onChange={(): void => handleRegionSelect(subRegion.id)}
 							>
 								{subRegion.name}

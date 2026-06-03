@@ -8,9 +8,10 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Button, Drawer, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
@@ -100,10 +101,6 @@ export interface K8sBaseDetailsProps<T> {
 	getEntityName: (entity: T) => string;
 	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
 	getInitialEventsFilters: (entity: T) => TagFilterItem[];
-	/**
-	 * @deprecated It's not needed anymore, remove in the next PR
-	 */
-	primaryFilterKeys: string[];
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	entityWidgetInfo: {
 		title: string;
@@ -330,8 +327,8 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [getMinMaxTime, selectedTime]);
 
-	const handleTabChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleTabChange = (value: string): void => {
+		setSelectedView(value);
 		setLogFiltersParam(null);
 		setTracesFiltersParam(null);
 		setEventsFiltersParam(null);
@@ -339,7 +336,7 @@ export default function K8sBaseDetails<T>({
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
 			category: eventCategory,
-			view: e.target.value,
+			view: value,
 		});
 	};
 
@@ -520,102 +517,101 @@ export default function K8sBaseDetails<T>({
 
 					{!hideDetailViewTabs && (
 						<div className="views-tabs-container">
-							<Radio.Group
+							<ToggleGroupSimple
+								type="single"
 								className="views-tabs"
 								onChange={handleTabChange}
 								value={selectedView}
-							>
-								{tabVisibility.showMetrics && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.METRICS}
-									>
-										<div className="view-title">
-											<BarChart size={14} />
-											Metrics
-										</div>
-									</Radio.Button>
-								)}
-								{tabVisibility.showLogs && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.LOGS}
-									>
-										<div className="view-title">
-											<ScrollText size={14} />
-											Logs
-										</div>
-									</Radio.Button>
-								)}
-								{tabVisibility.showTraces && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.TRACES}
-									>
-										<div className="view-title">
-											<DraftingCompass size={14} />
-											Traces
-										</div>
-									</Radio.Button>
-								)}
-								{tabVisibility.showEvents && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.EVENTS}
-									>
-										<div className="view-title">
-											<ChevronsLeftRight size={14} />
-											Events
-										</div>
-									</Radio.Button>
-								)}
-								{tabVisibility.showContainers && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.CONTAINERS}
-									>
-										<div className="view-title">
-											<Package2 size={14} />
-											Containers
-										</div>
-									</Radio.Button>
-								)}
-								{tabVisibility.showProcesses && (
-									<Radio.Button
-										className={
-											selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
-										}
-										value={VIEW_TYPES.PROCESSES}
-									>
-										<div className="view-title">
-											<ChevronsLeftRight size={14} />
-											Processes
-										</div>
-									</Radio.Button>
-								)}
-								{customTabs?.map((tab) => (
-									<Radio.Button
-										key={tab.key}
-										className={selectedView === tab.key ? 'selected_view tab' : 'tab'}
-										value={tab.key}
-									>
-										<div className="view-title">
-											{tab.icon}
-											{tab.label}
-										</div>
-									</Radio.Button>
-								))}
-							</Radio.Group>
+								items={[
+									...(tabVisibility.showMetrics
+										? [
+												{
+													value: VIEW_TYPES.METRICS,
+													label: (
+														<div className="view-title">
+															<BarChart size={14} />
+															Metrics
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showLogs
+										? [
+												{
+													value: VIEW_TYPES.LOGS,
+													label: (
+														<div className="view-title">
+															<ScrollText size={14} />
+															Logs
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showTraces
+										? [
+												{
+													value: VIEW_TYPES.TRACES,
+													label: (
+														<div className="view-title">
+															<DraftingCompass size={14} />
+															Traces
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showEvents
+										? [
+												{
+													value: VIEW_TYPES.EVENTS,
+													label: (
+														<div className="view-title">
+															<ChevronsLeftRight size={14} />
+															Events
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showContainers
+										? [
+												{
+													value: VIEW_TYPES.CONTAINERS,
+													label: (
+														<div className="view-title">
+															<Package2 size={14} />
+															Containers
+														</div>
+													),
+												},
+											]
+										: []),
+									...(tabVisibility.showProcesses
+										? [
+												{
+													value: VIEW_TYPES.PROCESSES,
+													label: (
+														<div className="view-title">
+															<ChevronsLeftRight size={14} />
+															Processes
+														</div>
+													),
+												},
+											]
+										: []),
+									...(customTabs?.map((tab) => ({
+										value: tab.key,
+										label: (
+											<div className="view-title">
+												{tab.icon}
+												{tab.label}
+											</div>
+										),
+									})) ?? []),
+								]}
+							/>
 
 							{selectedView === VIEW_TYPES.LOGS && (
 								<Tooltip title="Go to Logs Explorer" placement="left">
