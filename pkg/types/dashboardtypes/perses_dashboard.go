@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/perses/pkg/model/api/v1/common"
 	"github.com/swaggest/jsonschema-go"
-	jsonpatch "gopkg.in/evanphx/json-patch.v4"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
