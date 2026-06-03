@@ -9,7 +9,6 @@ import {
 	SlidersHorizontal,
 } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import type {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
@@ -18,6 +17,11 @@ import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQuery
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DataSource } from 'types/common/queryBuilder';
+
+import type {
+	AnyPanelInteractionProps,
+	PanelInteractionMap,
+} from './interactions';
 
 export type PanelKind =
 	| 'signoz/TimeSeriesPanel'
@@ -100,7 +104,10 @@ export interface DashboardPreference {
 	dashboardId?: string;
 }
 
-export interface PanelRendererProps {
+// Kind-agnostic props every renderer receives, regardless of panel kind. The
+// kind-specific interaction props (onClick payload, onDragSelect) are layered
+// on per-kind by PanelRendererProps<K>.
+export interface BaseRendererProps {
 	panelId: string;
 	/**
 	 * The whole perses panel — renderers derive their concrete `spec` and the
@@ -111,16 +118,6 @@ export interface PanelRendererProps {
 	data: MetricQueryRangeSuccessResponse | undefined;
 	isLoading: boolean;
 	error: Error | null;
-	/**
-	 * Per-panel click handler — currently used by the uPlot onClick plugin to
-	 * surface point-level interactions (drill-down trigger, log-row jump, etc.).
-	 */
-	onClickHandler?: OnClickPluginOpts['onClick'];
-	/**
-	 * Drag-to-zoom callback. The renderer wires this into the chart so the
-	 * dashboard shell can update the global time range from a selection.
-	 */
-	onDragSelect: (start: number, end: number) => void;
 	/** Gate for the drill-down right-click menu. Off by default in V2. */
 	enableDrillDown?: boolean;
 	/**
@@ -136,19 +133,38 @@ export interface PanelRendererProps {
 	dashboardPreference?: DashboardPreference;
 }
 
-export interface PanelDefinition {
-	kind: PanelKind;
+// Renderer props for a specific panel kind: the shared base plus that kind's
+// interaction surface (PanelInteractionMap[K]). Each renderer annotates with
+// its own kind — e.g. PanelRendererProps<'signoz/TimeSeriesPanel'> — so it can
+// only reference the gestures that kind supports. Indexing PanelInteractionMap
+// here forces the map to cover every PanelKind. The default K = PanelKind
+// yields the widest surface (a union over all kinds).
+export type PanelRendererProps<K extends PanelKind = PanelKind> =
+	BaseRendererProps & PanelInteractionMap[K];
+
+export interface PanelDefinition<K extends PanelKind = PanelKind> {
+	kind: K;
 	displayName: string;
-	Renderer: ComponentType<PanelRendererProps>;
+	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
 	supportedSignals: DataSource[];
 }
 
-// Keyed map from PanelKind to its PanelDefinition. The Renderer signature is
-// uniform across kinds (each renderer narrows the panel.spec.plugin.spec union
-// internally), so no per-kind type parametrization is needed at the registry
-// level.
-export type PanelRegistry = Partial<Record<PanelKind, PanelDefinition>>;
+// Keyed registry that preserves the kind ↔ definition correlation: indexing
+// with a literal kind yields that kind's exactly-typed PanelDefinition.
+export type PanelRegistry = { [K in PanelKind]?: PanelDefinition<K> };
+
+// A PanelDefinition whose Renderer is widened to the kind-agnostic prop surface.
+// At the render boundary the concrete kind isn't known statically (a registry
+// lookup returns a union over kinds), so getPanelDefinition resolves to this —
+// concentrating the single unavoidable cast in one place instead of leaking it
+// to every call site.
+export interface RenderablePanelDefinition extends Omit<
+	PanelDefinition,
+	'Renderer'
+> {
+	Renderer: ComponentType<BaseRendererProps & AnyPanelInteractionProps>;
+}
 
 export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/TimeSeriesPanel': PANEL_TYPES.TIME_SERIES,
