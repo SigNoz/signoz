@@ -21,6 +21,8 @@ import {
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useThemeMode } from 'hooks/useDarkMode';
+import { ThemeMode } from 'hooks/useDarkMode/constant';
+import { useThemeSelection } from 'hooks/useDarkMode/useThemeSelection';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import history from 'lib/history';
 import { ROLES as UserRole } from 'types/roles';
@@ -48,7 +50,8 @@ export function CmdKPalette({
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
 
-	const { setAutoSwitch, setTheme, theme } = useThemeMode();
+	const { theme } = useThemeMode();
+	const selectTheme = useThemeSelection();
 	const location = useLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const startNewConversation = useAIAssistantStore(
@@ -81,14 +84,12 @@ export function CmdKPalette({
 
 	useEffect(cmdKEffect, [setOpen]);
 
-	function handleThemeChange(value: string): void {
+	function handleThemeChange(value: ThemeMode): void {
 		logEvent('Account Settings: Theme Changed', { theme: value });
-		if (value === 'auto') {
-			setAutoSwitch(true);
-		} else {
-			setAutoSwitch(false);
-			setTheme(value);
-		}
+		// Close the palette inside the same flushSync batch as the theme change
+		// so its dismissal is part of the captured "new" frame of the wipe;
+		// otherwise the dialog would be visible in both snapshots and flicker.
+		selectTheme(value, () => setOpen(false));
 	}
 
 	function onClickHandler(key: string): void {

@@ -116,17 +116,35 @@ jest.mock('hooks/useNotifications', (): unknown => ({
 }));
 
 // mock theme hook
-jest.mock('hooks/useDarkMode', (): unknown => ({
-	useThemeMode: (): {
+//
+// We spread jest.requireActual so additions to hooks/useDarkMode (new hooks,
+// re-exports, contexts) keep working in this test without needing the mock to
+// re-enumerate every export. We only override the hooks the palette actually
+// calls.
+jest.mock('hooks/useDarkMode', (): unknown => {
+	const actual = jest.requireActual('hooks/useDarkMode');
+	const useThemeModeMock = (): {
 		setAutoSwitch: jest.Mock;
 		setTheme: jest.Mock;
+		toggleTheme: jest.Mock;
 		theme: string;
+		autoSwitch: boolean;
 	} => ({
 		setAutoSwitch: jest.fn(),
 		setTheme: jest.fn(),
+		toggleTheme: jest.fn(),
 		theme: 'dark',
-	}),
-}));
+		autoSwitch: false,
+	});
+	return {
+		...actual,
+		__esModule: true,
+		default: useThemeModeMock,
+		useThemeMode: useThemeModeMock,
+		useIsDarkMode: (): boolean => true,
+		useSystemTheme: (): 'dark' | 'light' => 'dark',
+	};
+});
 
 // mock updateUserPreference API and react-query mutation
 jest.mock('api/v1/user/preferences/name/update', (): jest.Mock => jest.fn());

@@ -827,3 +827,22 @@ body.ai-assistant-panel-open {
 	--input-focus-outline-width: 0;
 	--radius-2: 4px;
 }
+
+// Scoped to .theme-wipe-active (toggled on <html> in runThemeTransition) so
+// these overrides don't leak into any unrelated view transitions added later.
+// We disable the default UA crossfade so the JS-driven clip-path wipe is the
+// only visible effect, and stack the new snapshot above the old.
+html.theme-wipe-active {
+	&::view-transition-old(root),
+	&::view-transition-new(root) {
+		animation: none;
+	}
+
+	&::view-transition-old(root) {
+		z-index: 1;
+	}
+
+	&::view-transition-new(root) {
+		z-index: 2;
+	}
+}
