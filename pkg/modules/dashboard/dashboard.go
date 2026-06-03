@@ -72,6 +72,8 @@ type Module interface {
 	PinV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, id valuer.UUID) error
 
 	UnpinV2(ctx context.Context, userID valuer.UUID, id valuer.UUID) error
+
+	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }
 
 type Handler interface {
@@ -115,4 +117,6 @@ type Handler interface {
 	PinV2(http.ResponseWriter, *http.Request)
 
 	UnpinV2(http.ResponseWriter, *http.Request)
+
+	DeleteV2(http.ResponseWriter, *http.Request)
 }
