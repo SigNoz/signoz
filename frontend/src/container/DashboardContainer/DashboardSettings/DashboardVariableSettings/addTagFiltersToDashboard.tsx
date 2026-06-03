@@ -1,9 +1,10 @@
 import {
 	convertFiltersToExpressionWithExistingQuery,
+	createVariablePlaceholderRegExp,
 	removeKeysFromExpression,
+	removeVariableFromExpression,
 } from 'components/QueryBuilderV2/utils';
 import { cloneDeep, isArray, isEmpty } from 'lodash-es';
-import { extractQueryPairs } from 'utils/queryContextUtils';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,
@@ -156,57 +157,6 @@ const updateAfterRemoval = (
 			},
 		},
 	};
-};
-
-const escapeRegExp = (value: string): string =>
-	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-const createVariablePlaceholderRegExp = (variableName: string): RegExp => {
-	const escapedName = escapeRegExp(variableName);
-	// (?![\w.]) prevents $env from matching inside $environment or $env.attr
-	return new RegExp(
-		`(\\$${escapedName}(?![\\w.])|\\{\\{\\s*\\.?${escapedName}\\s*\\}\\}|\\[\\[\\s*${escapedName}\\s*\\]\\])`,
-		'g',
-	);
-};
-
-// Create a fresh regex per call to avoid g-flag lastIndex state issues
-const matchesVariablePlaceholder = (
-	text: string,
-	variableName: string,
-): boolean => createVariablePlaceholderRegExp(variableName).test(text);
-
-/**
- * Removes entire key-value clauses from a filter expression where the value
- * is a reference to the given variable. Uses the ANTLR-aware removeKeysFromExpression
- * so that surrounding AND/OR operators are also cleaned up correctly (no dangling operators).
- */
-const removeVariableFromExpression = (
-	expression: string | undefined,
-	variableName: string,
-): string => {
-	if (!expression) {
-		return '';
-	}
-
-	const queryPairs = extractQueryPairs(expression);
-
-	const keysToRemove = queryPairs
-		.filter((pair) => {
-			const singleValue = pair.value?.toString() ?? '';
-			const listValues = (pair.valueList ?? []).join(' ');
-			return (
-				matchesVariablePlaceholder(singleValue, variableName) ||
-				matchesVariablePlaceholder(listValues, variableName)
-			);
-		})
-		.map((pair) => pair.key);
-
-	if (keysToRemove.length === 0) {
-		return expression;
-	}
-
-	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
 };
 
 const removeVariablePlaceholders = (
