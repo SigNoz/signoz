@@ -25,7 +25,7 @@ func newTestTraceOperatorStatementBuilder(t *testing.T) *traceOperatorStatementB
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore, fm, cb, aggExprRewriter, nil, fl,
+		mockMetadataStore, fm, cb, aggExprRewriter, nil, fl, false, 100000,
 	)
 	return NewTraceOperatorStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
