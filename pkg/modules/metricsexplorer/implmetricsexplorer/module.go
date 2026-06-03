@@ -1177,8 +1177,8 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 	}
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
-	samplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
-	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
+	distributedSamplesTable, _ := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
+	countExp := telemetrymetrics.CountExpressionForSamplesTable(distributedSamplesTable)
 
 	candidateLimit := req.Limit + 50
 
@@ -1201,7 +1201,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 	totalSamplesSB := sqlbuilder.NewSelectBuilder()
 	totalSamplesSB.Select(fmt.Sprintf("%s AS total_samples", countExp))
-	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	totalSamplesSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	totalSamplesSB.Where(totalSamplesSB.Between("unix_milli", req.Start, req.End))
 
 	sampleCountsSB := sqlbuilder.NewSelectBuilder()
@@ -1209,7 +1209,7 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 		"metric_name",
 		fmt.Sprintf("%s AS samples", countExp),
 	)
-	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	sampleCountsSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedSamplesTable))
 	sampleCountsSB.Where(sampleCountsSB.Between("unix_milli", req.Start, req.End))
 	sampleCountsSB.Where("metric_name GLOBAL IN (SELECT metric_name FROM __metric_candidates)")
 
