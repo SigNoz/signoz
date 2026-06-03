@@ -196,7 +196,11 @@ function Footer(): JSX.Element {
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [
@@ -224,7 +228,11 @@ function Footer(): JSX.Element {
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [

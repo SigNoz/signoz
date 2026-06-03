@@ -4,9 +4,10 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Drawer, Tooltip } from 'antd';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
-import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -197,8 +198,8 @@ function LogDetailInner({
 
 	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedView(e.target.value);
+	const handleModeChange = (value: string): void => {
+		setSelectedView(value as VIEWS);
 		setIsEdit(false);
 		setIsFilterVisible(false);
 	};
@@ -452,56 +453,50 @@ function LogDetailInner({
 				</div>
 
 				<div className="tabs-and-search">
-					<Radio.Group
+					<ToggleGroupSimple
+						type="single"
 						className="views-tabs"
 						onChange={handleModeChange}
 						value={selectedView}
-					>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.OVERVIEW}
-						>
-							<div className="view-title">
-								<Table size={14} />
-								Overview
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.JSON ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.JSON}
-						>
-							<div className="view-title">
-								<Braces size={14} />
-								JSON
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.CONTEXT ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.CONTEXT}
-						>
-							<div className="view-title">
-								<TextSelect size={14} />
-								Context
-							</div>
-						</Radio.Button>
-						<Radio.Button
-							className={
-								selectedView === VIEW_TYPES.INFRAMETRICS ? 'selected_view tab' : 'tab'
-							}
-							value={VIEW_TYPES.INFRAMETRICS}
-						>
-							<div className="view-title">
-								<Histogram size="md" />
-								Metrics
-							</div>
-						</Radio.Button>
-					</Radio.Group>
+						items={[
+							{
+								value: VIEW_TYPES.OVERVIEW,
+								label: (
+									<div className="view-title">
+										<Table size={14} />
+										Overview
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.JSON,
+								label: (
+									<div className="view-title">
+										<Braces size={14} />
+										JSON
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.CONTEXT,
+								label: (
+									<div className="view-title">
+										<TextSelect size={14} />
+										Context
+									</div>
+								),
+							},
+							{
+								value: VIEW_TYPES.INFRAMETRICS,
+								label: (
+									<div className="view-title">
+										<Histogram size="md" />
+										Metrics
+									</div>
+								),
+							},
+						]}
+					/>
 
 					<div className="log-detail-drawer__actions">
 						{selectedView === VIEW_TYPES.CONTEXT && (

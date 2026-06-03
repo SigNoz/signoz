@@ -4,7 +4,8 @@ import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
-import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';
+import { Maximize2, Plus, X } from '@signozhq/icons';
+import Noz from 'components/Noz/Noz';
 
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
@@ -46,9 +47,9 @@ export default function AIAssistantDrawer(): JSX.Element {
 			closeIcon={null}
 			title={
 				<div>
-					<div>
-						<MessageSquare size={16} />
-						<span>AI Assistant</span>
+					<div className="noz-wave">
+						<Noz size={16} />
+						<span>Noz</span>
 					</div>
 
 					<div>

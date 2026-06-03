@@ -24,9 +24,6 @@
 				align-items: center;
 			}
 			gap: 12px;
-			.ant-divider-vertical {
-				margin: 0;
-			}
 			.funnel-configuration__rename-btn {
 				padding: 4px;
 				width: 24px;
@@ -73,5 +70,8 @@
 		flex-direction: column;
 		gap: 12px;
 		padding: 16px;
+	}
+	&__divider {
+		--divider-margin: 0px;
 	}
 }

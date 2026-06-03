@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
+import { Divider } from '@signozhq/ui/divider';
+import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
@@ -11,7 +14,6 @@ import {
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
-import { CSSProperties } from 'styled-components';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -19,16 +21,6 @@ import { AlertHeaderProps } from '../AlertHeader';
 import RenameModal from './RenameModal';
 
 import './ActionButtons.styles.scss';
-
-const menuItemStyle: CSSProperties = {
-	fontSize: '14px',
-	letterSpacing: '0.14px',
-};
-
-const menuItemStyleV2: CSSProperties = {
-	fontSize: '13px',
-	letterSpacing: '0.13px',
-};
 
 function AlertActionButtons({
 	ruleId,
@@ -67,9 +59,7 @@ function AlertActionButtons({
 
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
-	const finalMenuItemStyle = isV2Alert ? menuItemStyleV2 : menuItemStyle;
-
-	const menuItems: MenuProps['items'] = [
+	const menuItems: MenuItem[] = [
 		...(!isV2Alert
 			? [
 					{
@@ -77,7 +67,6 @@ function AlertActionButtons({
 						label: 'Rename',
 						icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
 						onClick: handleRename,
-						style: finalMenuItemStyle,
 					},
 				]
 			: []),
@@ -86,17 +75,13 @@ function AlertActionButtons({
 			label: 'Duplicate',
 			icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
 			onClick: handleAlertDuplicate,
-			style: finalMenuItemStyle,
 		},
 		{
 			key: 'delete-rule',
 			label: 'Delete',
 			icon: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
 			onClick: handleAlertDelete,
-			style: {
-				...finalMenuItemStyle,
-				color: Color.BG_CHERRY_400,
-			},
+			danger: true,
 		},
 	];
 
@@ -132,27 +117,28 @@ function AlertActionButtons({
 			<div className="alert-action-buttons">
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
-						<Switch
-							size="small"
-							onChange={toggleAlertRule}
-							checked={!isAlertRuleDisabled}
-						/>
+						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
 					)}
 				</Tooltip>
 				<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" />
+				<Divider type="vertical" className="alert-action-buttons__divider" />
 
-				<Dropdown trigger={['click']} menu={{ items: menuItems }}>
-					<Tooltip title="More options">
-						<Ellipsis
-							size={16}
-							color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-							cursor="pointer"
-							className="dropdown-icon"
-						/>
-					</Tooltip>
-				</Dropdown>
+				<DropdownMenuSimple menu={{ items: menuItems }}>
+					<span className="dropdown-trigger-wrapper">
+						<Tooltip title="More options">
+							<Button
+								type="text"
+								icon={
+									<Ellipsis
+										size={16}
+										color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
+									/>
+								}
+							/>
+						</Tooltip>
+					</span>
+				</DropdownMenuSimple>
 			</div>
 
 			<RenameModal

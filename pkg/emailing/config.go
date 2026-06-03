@@ -65,7 +65,7 @@ func newConfig() factory.Config {
 	return &Config{
 		Enabled: false,
 		Templates: Templates{
-			Directory: "/root/templates",
+			Directory: "/root/templates/email",
 			Format: Format{
 				Header: Header{
 					Enabled: false,

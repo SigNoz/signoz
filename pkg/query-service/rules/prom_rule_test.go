@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pql "github.com/prometheus/prometheus/promql"
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -704,7 +704,8 @@ func TestPromRuleEval(t *testing.T) {
 			},
 		}
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil)
+		externalUrl := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -967,7 +968,8 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+		externalUrl := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -1083,7 +1085,8 @@ func TestPromRuleNoData(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+		externalUrl := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -1316,7 +1319,8 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+		externalUrl := mustParseURL(t, "http://localhost:8080")
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -1453,7 +1457,8 @@ func TestPromRule_NoData(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+			externalUrl := mustParseURL(t, "http://localhost:8080")
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 			require.NoError(t, err)
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
@@ -1603,7 +1608,8 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+			externalUrl := mustParseURL(t, "http://localhost:8080")
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 			require.NoError(t, err)
 
 			// First eval with data - should NOT alert, but populates lastTimestampWithDatapoints
@@ -1762,7 +1768,8 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
+			externalUrl := mustParseURL(t, "http://localhost:8080")
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider, externalUrl)
 			require.NoError(t, err)
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
