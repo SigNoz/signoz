@@ -3,11 +3,9 @@ package impldashboard
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes/listfilter"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -67,15 +65,14 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
-// ListV2 emits the joined dashboard ⨝ pinned_dashboard ⨝ public_dashboard
-// query the spec calls for. Aliases:
+// ListV2 emits the joined dashboard ⨝ pinned_dashboard query the spec calls
+// for. Aliases:
 //
 //	dashboard         — the visitor expects this
 //	pinned_dashboard  AS pin  — only used inside this query
-//	public_dashboard  AS pd   — the visitor expects this
 //
 // Sort is "is_pinned DESC, <sort> <order>" so pinned dashboards float to the
-// top inside the requested ordering. Title-sort goes through the same
+// top inside the requested ordering. Name-sort goes through the same
 // JSONExtractString path the visitor uses for name/description filtering.
 func (store *store) ListV2(
 	ctx context.Context,
@@ -92,12 +89,6 @@ func (store *store) ListV2(
 
 		IsPinned bool  `bun:"is_pinned"`
 		Total    int64 `bun:"total"`
-
-		PublicID               *valuer.UUID `bun:"public_id"`
-		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
-		PublicUpdatedAt        *time.Time   `bun:"public_updated_at"`
-		PublicTimeRangeEnabled *bool        `bun:"public_time_range_enabled"`
-		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
 	}
 
 	rows := make([]*listedRow, 0)
@@ -109,9 +100,7 @@ func (store *store) ListV2(
 		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.name, dashboard.data, dashboard.locked, dashboard.source, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
 		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
 		ColumnExpr("COUNT(*) OVER () AS total").
-		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
 		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = dashboard.id", userID).
-		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
 		Where("dashboard.org_id = ?", orgID).
 		Where("dashboard.source != ?", dashboardtypes.SourceSystem)
 
@@ -142,20 +131,10 @@ func (store *store) ListV2(
 
 	out := make([]*dashboardtypes.DashboardListRow, len(rows))
 	for i, r := range rows {
-		row := &dashboardtypes.DashboardListRow{
+		out[i] = &dashboardtypes.DashboardListRow{
 			Dashboard: r.StorableDashboard,
 			Pinned:    r.IsPinned,
 		}
-		if r.PublicID != nil {
-			row.Public = &dashboardtypes.StorablePublicDashboard{
-				Identifiable:     types.Identifiable{ID: *r.PublicID},
-				TimeAuditable:    types.TimeAuditable{CreatedAt: *r.PublicCreatedAt, UpdatedAt: *r.PublicUpdatedAt},
-				TimeRangeEnabled: *r.PublicTimeRangeEnabled,
-				DefaultTimeRange: *r.PublicDefaultTimeRange,
-				DashboardID:      r.ID.StringValue(),
-			}
-		}
-		out[i] = row
 	}
 	return out, total, nil
 }
