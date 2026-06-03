@@ -24,7 +24,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.ListableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -116,7 +116,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
@@ -169,7 +169,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodPut).GetError(); err != nil {
@@ -186,7 +186,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
