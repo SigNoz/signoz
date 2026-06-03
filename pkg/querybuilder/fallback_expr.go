@@ -85,7 +85,7 @@ func CollisionHandledFinalExpr(
 			wrappedErr := errors.WithAdditionalf(fieldForErr, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 			if found {
 				// we found a close match, attach the suggestion
-				wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
+				wrappedErr = wrappedErr.WithSuggestions("did you mean: `" + correction + "`")
 			}
 			return "", nil, wrappedErr
 		} else {
@@ -107,9 +107,9 @@ func CollisionHandledFinalExpr(
 
 		// first if condition covers the older tests and second if condition covers the array conditions
 		if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column").WithInvalidReferences(field.Name)
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
-			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name).WithInvalidReferences(field.Name)
+			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)
 		} else {
 			fieldExpression, _ = DataTypeCollisionHandledFieldName(field, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 		}

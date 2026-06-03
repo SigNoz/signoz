@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -15,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 

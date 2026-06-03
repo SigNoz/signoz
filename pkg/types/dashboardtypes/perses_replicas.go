@@ -89,7 +89,8 @@ func (v *Variable) UnmarshalJSON(data []byte) error {
 		v.Kind = variable.KindText
 		v.Spec = spec
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable kind %q; allowed values: %s", kind, allowedValuesForKind([]variable.Kind{variable.KindList, variable.KindText}))
+		allowed := allowedValuesForKind([]variable.Kind{variable.KindList, variable.KindText})
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown variable kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
 	}
 	return nil
 }
@@ -155,7 +156,8 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 	}
 	factory, ok := layoutSpecs[dashboard.LayoutKind(kind)]
 	if !ok {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown layout kind %q; allowed values: %s", kind, allowedValuesForKind(slices.Sorted(maps.Keys(layoutSpecs))))
+		allowed := allowedValuesForKind(slices.Sorted(maps.Keys(layoutSpecs)))
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown layout kind %q", kind).WithInvalidReferences(kind).WithSuggestions("valid references: " + allowed)
 	}
 	spec, err := decodeSpec(specJSON, factory(), kind)
 	if err != nil {

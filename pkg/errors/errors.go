@@ -96,24 +96,52 @@ func Newf(t typ, code Code, format string, args ...any) *base {
 // Wrapf returns a new error by formatting the error message with the supplied format specifier
 // and wrapping another error with base.
 func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
-	return &base{
+	b := &base{
 		t: t,
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: cause,
 		s: newStackTrace(),
 	}
+
+	// Carry the user-facing hints forward from the wrapped cause. Otherwise
+	// wrapping a structured error (e.g. one returned from an UnmarshalJSON) would
+	// silently drop its suggestions / invalid references from the response.
+	// Propagation is transitive: each Wrapf copies from its immediate cause, so
+	// the hints survive arbitrarily deep wrapping as long as it goes through Wrapf.
+	if inner, ok := cause.(*base); ok {
+		b.r = inner.r
+		b.suggestions = inner.suggestions
+		b.invalidReferences = inner.invalidReferences
+		b.a = inner.a
+	}
+
+	return b
 }
 
 // Wrap returns a new error by wrapping another error with base.
 func Wrap(cause error, t typ, code Code, message string) *base {
-	return &base{
+	b := &base{
 		t: t,
 		c: code,
 		m: message,
 		e: cause,
 		s: newStackTrace(),
 	}
+
+	// Carry the user-facing hints forward from the wrapped cause. Otherwise
+	// wrapping a structured error (e.g. one returned from an UnmarshalJSON) would
+	// silently drop its suggestions / invalid references from the response.
+	// Propagation is transitive: each Wrapf copies from its immediate cause, so
+	// the hints survive arbitrarily deep wrapping as long as it goes through Wrapf.
+	if inner, ok := cause.(*base); ok {
+		b.r = inner.r
+		b.suggestions = inner.suggestions
+		b.invalidReferences = inner.invalidReferences
+		b.a = inner.a
+	}
+
+	return b
 }
 
 // WithAdditionalf adds an additional error message to the existing error.

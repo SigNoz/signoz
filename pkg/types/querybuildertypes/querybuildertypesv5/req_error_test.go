@@ -44,7 +44,7 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 				}
 			}`,
 			wantErrMsg:      `unknown field "function" in query spec`,
-			wantSuggestions: []string{"did you mean: functions"},
+			wantSuggestions: []string{"did you mean: `functions`"},
 		},
 		{
 			name: "unknown field 'filters' in query spec",
@@ -70,7 +70,7 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 				}
 			}`,
 			wantErrMsg:      `unknown field "filters" in query spec`,
-			wantSuggestions: []string{"did you mean: filter"},
+			wantSuggestions: []string{"did you mean: `filter`"},
 		},
 		{
 			name: "unknown field at top level",
@@ -84,7 +84,7 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 				}
 			}`,
 			wantErrMsg:      `unknown field "compositeQueries"`,
-			wantSuggestions: []string{"did you mean: compositeQuery"},
+			wantSuggestions: []string{"did you mean: `compositeQuery`"},
 		},
 		{
 			name: "unknown field with no good suggestion",

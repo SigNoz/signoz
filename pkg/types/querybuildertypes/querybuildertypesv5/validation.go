@@ -670,9 +670,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			errors.CodeInvalidInput,
 			"unknown query type: %s",
 			envelope.Type,
-		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-		)
+		).WithInvalidReferences(envelope.Type.StringValue()).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
 	}
 }
 

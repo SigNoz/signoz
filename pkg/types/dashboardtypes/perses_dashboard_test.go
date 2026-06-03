@@ -64,8 +64,16 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 		"outer wrap should not smother the inner UnmarshalJSON message")
 	require.Contains(t, err.Error(), `"NonExistentPanel"`,
 		"the offending value should still appear in the error")
-	require.Contains(t, err.Error(), "allowed values:",
-		"the allowed-values hint should still appear in the error")
+	suggestions := errors.AsJSON(err).Suggestions
+	foundHint := false
+	for _, s := range suggestions {
+		if strings.Contains(s, "valid references:") {
+			foundHint = true
+			break
+		}
+	}
+	require.True(t, foundHint,
+		"the valid-references suggestion should appear in the structured error, got: %v", suggestions)
 
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput),
 		"outer wrap should classify the error as TypeInvalidInput")

@@ -567,7 +567,7 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
-			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "IN with end bracked missing",
@@ -626,7 +626,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [unknown_alias]",
-			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "typo in identifier suggests closest match",
@@ -636,7 +636,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [totol]",
-			wantSuggestions: []string{"did you mean: total > 100", "valid references: __result, __result0, count(), total"},
+			wantSuggestions: []string{"did you mean: `total > 100`", "valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "expression not in column map",
@@ -646,7 +646,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
-			wantSuggestions: []string{"valid references: __result, __result0, count()"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "one valid one invalid reference",
@@ -656,7 +656,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [ghost]",
-			wantSuggestions: []string{"valid references: __result, __result0, count(), total"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`, `total`"},
 		},
 		{
 			name:       "__result ambiguous with multiple aggregations",
@@ -667,7 +667,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [__result]",
-			wantSuggestions: []string{"did you mean: __result0 > 100", "valid references: __result0, __result1, count(), sum(bytes)"},
+			wantSuggestions: []string{"did you mean: `__result0 > 100`", "valid references: `__result0`, `__result1`, `count()`, `sum(bytes)`"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -677,7 +677,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [__result_9]",
-			wantSuggestions: []string{"did you mean: __result > 100", "valid references: __result, __result0, count()"},
+			wantSuggestions: []string{"did you mean: `__result > 100`", "valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "__result_1 out of range for single aggregation",
@@ -687,7 +687,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [__result_1]",
-			wantSuggestions: []string{"did you mean: __result > 100", "valid references: __result, __result0, count()"},
+			wantSuggestions: []string{"did you mean: `__result > 100`", "valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "cascaded function calls",
@@ -697,7 +697,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
-			wantSuggestions: []string{"valid references: __result, __result0, count()"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `count()`"},
 		},
 		{
 			name:       "function call with multiple args not in column map",
@@ -707,7 +707,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [sum]",
-			wantSuggestions: []string{"valid references: __result, __result0, sum(a)"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(a)`"},
 		},
 		{
 			name:       "unquoted string value treated as unknown identifier",
@@ -717,7 +717,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [xyz]",
-			wantSuggestions: []string{"valid references: __result, __result0, sum(bytes)"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(bytes)`"},
 		},
 	})
 }
@@ -987,7 +987,7 @@ func TestRewriteForMetrics(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [wrong_metric]",
-			wantSuggestions: []string{"valid references: __result, __result0, sum(cpu_usage)"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(cpu_usage)`"},
 		},
 		// --- Error: string literal (not allowed in HAVING) ---
 		{
@@ -1032,7 +1032,7 @@ func TestRewriteForMetrics(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrMsg:      "Invalid references in `Having` expression: [count]",
-			wantSuggestions: []string{"valid references: __result, __result0, sum(cpu_usage)"},
+			wantSuggestions: []string{"valid references: `__result`, `__result0`, `sum(cpu_usage)`"},
 		},
 	}
 

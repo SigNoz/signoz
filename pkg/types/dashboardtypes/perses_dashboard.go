@@ -121,7 +121,7 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 
 func (p *PostableDashboardV2) Validate() error {
 	if p.SchemaVersion != SchemaVersion {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, p.SchemaVersion)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid schemaVersion %q", p.SchemaVersion).WithInvalidReferences(p.SchemaVersion).WithSuggestions("valid references: `" + SchemaVersion + "`")
 	}
 	if err := p.validateName(); err != nil {
 		return err

@@ -116,6 +116,23 @@ func TestAsJSONBaseError(t *testing.T) {
 	assert.Equal(t, []string{"queries[0]"}, j.InvalidReferences)
 }
 
+func TestAsJSONWrappedErrorPreservesHints(t *testing.T) {
+	// An inner base carries the user-facing hints (e.g. produced inside an
+	// UnmarshalJSON), then gets re-wrapped (e.g. WrapInvalidInputf). suggestionsOf
+	// /invalidReferencesOf must walk the cause chain so the hints still surface.
+	inner := NewInvalidInputf(MustNewCode("bad_kind"), "unknown panel kind %q", "boom").
+		WithInvalidReferences("boom").
+		WithSuggestions("valid references: a, b, c")
+
+	wrapped := WrapInvalidInputf(inner, MustNewCode("outer"), "%s", inner.Error())
+
+	j := AsJSON(wrapped)
+	assert.Equal(t, []string{"valid references: a, b, c"}, j.Suggestions,
+		"suggestions on an inner base must survive wrapping")
+	assert.Equal(t, []string{"boom"}, j.InvalidReferences,
+		"invalid references on an inner base must survive wrapping")
+}
+
 func TestAsJSONRetryBlock(t *testing.T) {
 	t.Run("RetryAfterIncludesDuration", func(t *testing.T) {
 		err := NewTimeoutf(MustNewCode("slow"), "slow").WithRetryAfter(5 * time.Second)

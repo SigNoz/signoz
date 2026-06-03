@@ -149,9 +149,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			errors.CodeInvalidInput,
 			"unknown query type %q",
 			shadow.Type,
-		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
-		)
+		).WithInvalidReferences(shadow.Type.StringValue()).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
 	}
 
 	return nil
@@ -193,10 +191,9 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 	default:
 		return nil, errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
-			"invalid signal %q; allowed values: %v",
+			"invalid signal %q",
 			header.Signal.StringValue(),
-			telemetrytypes.Signal{}.Enum(),
-		)
+		).WithInvalidReferences(header.Signal.StringValue()).WithSuggestions(enumReferencesSuggestion(telemetrytypes.Signal{}.Enum()))
 	}
 }
 
@@ -227,32 +224,27 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Check for unknown fields at this level
-	validFields := map[string]bool{
-		"queries": true,
+	// Valid field names are derived from the struct itself so this stays in
+	// sync with the schema (and the generated OpenAPI spec) automatically.
+	fieldNames := getJSONFieldNames((*CompositeQuery)(nil))
+	validFields := make(map[string]bool, len(fieldNames))
+	for _, f := range fieldNames {
+		validFields[f] = true
 	}
 
 	for field := range check {
 		if !validFields[field] {
-			// Find closest match
-			var fieldNames []string
-			for f := range validFields {
-				fieldNames = append(fieldNames, f)
-			}
-
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"unknown field %q in composite query",
-					field,
-				).WithInvalidReferences(field).WithSuggestions("did you mean: " + suggestion)
-			}
-
-			return errors.NewInvalidInputf(
+			unknownFieldErr := errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
-			).WithInvalidReferences(field).WithSuggestions("valid references: " + strings.Join(fieldNames, ", "))
+			).WithInvalidReferences(field)
+			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
+				unknownFieldErr = unknownFieldErr.WithSuggestions("did you mean: `" + suggestion + "`")
+			} else {
+				unknownFieldErr = unknownFieldErr.WithSuggestions(validReferencesSuggestion(fieldNames))
+			}
+			return unknownFieldErr
 		}
 	}
 
@@ -562,39 +554,27 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Check for unknown fields at the top level
-	validFields := map[string]bool{
-		"schemaVersion":  true,
-		"start":          true,
-		"end":            true,
-		"requestType":    true,
-		"compositeQuery": true,
-		"variables":      true,
-		"noCache":        true,
-		"formatOptions":  true,
+	// Valid field names are derived from the struct itself so this stays in
+	// sync with the schema (and the generated OpenAPI spec) automatically.
+	fieldNames := getJSONFieldNames((*QueryRangeRequest)(nil))
+	validFields := make(map[string]bool, len(fieldNames))
+	for _, f := range fieldNames {
+		validFields[f] = true
 	}
 
 	for field := range check {
 		if !validFields[field] {
-			// Find closest match
-			var fieldNames []string
-			for f := range validFields {
-				fieldNames = append(fieldNames, f)
-			}
-
-			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
-				return errors.NewInvalidInputf(
-					errors.CodeInvalidInput,
-					"unknown field %q",
-					field,
-				).WithInvalidReferences(field).WithSuggestions("did you mean: " + suggestion)
-			}
-
-			return errors.NewInvalidInputf(
+			unknownFieldErr := errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
-			).WithInvalidReferences(field).WithSuggestions("valid references: " + strings.Join(fieldNames, ", "))
+			).WithInvalidReferences(field)
+			if suggestion, found := telemetrytypes.SuggestCorrection(field, fieldNames); found {
+				unknownFieldErr = unknownFieldErr.WithSuggestions("did you mean: `" + suggestion + "`")
+			} else {
+				unknownFieldErr = unknownFieldErr.WithSuggestions(validReferencesSuggestion(fieldNames))
+			}
+			return unknownFieldErr
 		}
 	}
 

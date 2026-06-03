@@ -205,7 +205,7 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		}
 
 		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.NewInternalf(errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns).WithInvalidReferences(evolution.ColumnName)
+			return nil, nil, errors.NewInternalf(errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
 		}
 
 		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})
@@ -302,7 +302,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			case schema.ColumnTypeEnumString:
 				exprs = append(exprs, column.Name)
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType).WithInvalidReferences(key.Text())
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
@@ -310,7 +310,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type).WithInvalidReferences(key.Text())
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -324,7 +324,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
 				}
 			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType).WithInvalidReferences(key.Text())
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}
 		}
 	}
@@ -378,7 +378,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithInvalidReferences(field.Name)
 				if found {
 					// we found a close match, in the error message send the suggestion
-					wrappedErr = wrappedErr.WithSuggestions("did you mean: " + correction)
+					wrappedErr = wrappedErr.WithSuggestions("did you mean: `" + correction + "`")
 				}
 				return "", wrappedErr
 			}
