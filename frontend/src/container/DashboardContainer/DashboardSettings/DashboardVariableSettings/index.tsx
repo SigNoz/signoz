@@ -254,7 +254,6 @@ function VariablesSettings({
 
 	const handleDeleteConfirm = (): void => {
 		if (!dashboardData || !variableToDelete.current) {
-			variableToDelete.current = null;
 			setDeleteVariableModal(false);
 			return;
 		}

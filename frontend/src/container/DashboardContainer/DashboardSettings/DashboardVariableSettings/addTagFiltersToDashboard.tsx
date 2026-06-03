@@ -265,11 +265,7 @@ const removeVariableReferencesFromQueryData = (
 			}
 		: queryData.filter;
 
-	const updatedExpression = queryData.expression
-		? removeVariableFromExpression(queryData.expression, variableName)
-		: queryData.expression;
-
-	return { ...queryData, filter: updatedFilter, expression: updatedExpression };
+	return { ...queryData, filter: updatedFilter };
 };
 
 const removeVariableReferencesFromWidget = (
