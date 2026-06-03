@@ -559,6 +559,7 @@ function ClientSideQBSearch(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
+							className="qb-tag-text"
 							$isInNin={isInNin}
 							$isEnabled={!!searchValue}
 							$disabled={isDisabled}
