@@ -19,7 +19,7 @@ type WaterfallConfig struct {
 }
 
 func NewConfigFactory() factory.ConfigFactory {
-	return factory.NewConfigFactory(factory.MustNewName("tracedetail"), newConfig)
+	return factory.NewConfigFactory(factory.MustNewName("traces"), newConfig)
 }
 
 func newConfig() factory.Config {
@@ -35,15 +35,15 @@ func newConfig() factory.Config {
 func (c Config) Validate() error {
 	if c.Waterfall.SpanPageSize <= 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"tracedetail.waterfall.span_limit_per_request must be positive, got %v", c.Waterfall.SpanPageSize)
+			"traces.waterfall.span_limit_per_request must be positive, got %v", c.Waterfall.SpanPageSize)
 	}
 	if c.Waterfall.MaxDepthToAutoExpand < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"tracedetail.waterfall.max_depth_for_selected_children cannot be negative, got %d", c.Waterfall.MaxDepthToAutoExpand)
+			"traces.waterfall.max_depth_for_selected_children cannot be negative, got %d", c.Waterfall.MaxDepthToAutoExpand)
 	}
 	if c.Waterfall.MaxLimitToSelectAllSpans == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"tracedetail.waterfall.max_limit_to_select_all_spans must be positive")
+			"traces.waterfall.max_limit_to_select_all_spans must be positive")
 	}
 	return nil
 }
