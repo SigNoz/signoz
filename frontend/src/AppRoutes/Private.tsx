@@ -102,7 +102,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <>{children}</>;
 	}
 
-	if (pathname.startsWith('/ai-assistant/') && !isAIAssistantEnabled) {
+	if (
+		(pathname === ROUTES.AI_ASSISTANT_BASE ||
+			pathname.startsWith('/ai-assistant/')) &&
+		!isAIAssistantEnabled
+	) {
 		return <Redirect to={ROUTES.HOME} />;
 	}
 

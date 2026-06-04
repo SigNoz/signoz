@@ -454,9 +454,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("remove at missing path rejected", func(t *testing.T) {
-		_, err := decode(t, `[{"op": "remove", "path": "/spec/panels/does-not-exist"}]`).Apply(base)
-		require.Error(t, err)
+	// Lenient apply (AllowMissingPathOnRemove): removing a path that doesn't
+	// exist is a no-op rather than an error, so removes are idempotent.
+	t.Run("remove at missing path is a no-op", func(t *testing.T) {
+		out, err := decode(t, `[{"op": "remove", "path": "/spec/panels/does-not-exist"}]`).Apply(base)
+		require.NoError(t, err)
+		assert.Equal(t, len(base.Spec.Panels), len(out.Spec.Panels), "existing panels untouched")
 	})
 
 	t.Run("remove schemaVersion rejected", func(t *testing.T) {

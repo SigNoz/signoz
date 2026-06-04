@@ -3,6 +3,7 @@ import {
 	extractQueryPairs,
 	getCurrentQueryPair,
 	getCurrentValueIndexAtCursor,
+	getQueryContextAtCursor,
 } from '../queryContextUtils';
 
 describe('extractQueryPairs', () => {
@@ -606,5 +607,44 @@ describe('getCurrentQueryPair', () => {
 		const result = getCurrentQueryPair(queryPairs, query, 5);
 
 		expect(result).toStrictEqual(queryPairs[0]);
+	});
+});
+
+describe('getQueryContextAtCursor - trailing dot in key/value', () => {
+	// A token ending with "." (e.g. "service.") is lexed as FREETEXT rather than
+	// KEY, which previously collapsed the context to "nothing" and made the
+	// suggestion dropdown render empty (appearing closed). These cases lock in
+	// that a partial key/value still resolves to the correct context.
+	it('keeps key context while typing a key that ends with a dot', () => {
+		['service.', 'k8s.', 'attribute.', 'k8s.pod.'].forEach((q) => {
+			const ctx = getQueryContextAtCursor(q, q.length);
+			expect(ctx.isInKey).toBe(true);
+			expect(ctx.isInValue).toBe(false);
+			expect(ctx.isInOperator).toBe(false);
+			expect(ctx.keyToken).toBe(q);
+		});
+	});
+
+	it('treats a new key after a conjunction as key context', () => {
+		const q = 'a = b AND k8s.';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInKey).toBe(true);
+		expect(ctx.isInValue).toBe(false);
+	});
+
+	it('keeps value context while typing a value that ends with a dot', () => {
+		const q = 'service.name = foo.';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInValue).toBe(true);
+		expect(ctx.isInKey).toBe(false);
+		expect(ctx.keyToken).toBe('service.name');
+		expect(ctx.operatorToken).toBe('=');
+	});
+
+	it('still resolves a complete dotted key to key context', () => {
+		const q = 'k8s.namespace';
+		const ctx = getQueryContextAtCursor(q, q.length);
+		expect(ctx.isInKey).toBe(true);
+		expect(ctx.keyToken).toBe('k8s.namespace');
 	});
 });

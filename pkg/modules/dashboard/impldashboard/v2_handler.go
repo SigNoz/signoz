@@ -2,7 +2,6 @@ package impldashboard
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -26,11 +25,7 @@ func (handler *handler) CreateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req dashboardtypes.PostableDashboardV2
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
@@ -98,11 +93,7 @@ func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
@@ -212,7 +203,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dashboardtypes.UpdateableDashboardV2{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -254,7 +245,7 @@ func (handler *handler) PatchV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dashboardtypes.PatchableDashboardV2{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
 	}

@@ -18,13 +18,13 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "ListDashboardsV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "List dashboards (v2)",
-		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.",
+		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.",
 		Request:             new(dashboardtypes.ListDashboardsV2Params),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.ListableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -41,9 +41,10 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		// TODO: add http.StatusConflict once the dashboard name unique index is added.
+		ErrorStatusCodes: []int{http.StatusBadRequest},
+		Deprecated:       false,
+		SecuritySchemes:  newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -145,7 +146,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
@@ -156,8 +157,8 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:          "PatchDashboardV2",
 		Tags:        []string{"dashboard"},
 		Summary:     "Patch dashboard (v2)",
-		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Locked dashboards are rejected.",
-		Request:     new(dashboardtypes.JSONPatchDocument),
+		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Apply is lenient: `remove` on a missing path is a no-op (idempotent) and `add` creates any missing parent objects, rather than failing as strict RFC 6902 would. The resulting dashboard is still validated. Locked dashboards are rejected.",
+		Request:     new(dashboardtypes.PatchableDashboardV2),
 		// Strictly per RFC 6902 the content type is `application/json-patch+json`,
 		// but our OpenAPI generator only reflects schemas for content types it
 		// understands (application/json, form-urlencoded, multipart) — anything
@@ -168,7 +169,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
@@ -185,7 +186,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
@@ -202,7 +203,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
@@ -219,7 +220,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
@@ -238,7 +239,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodPut).GetError(); err != nil {
@@ -255,7 +256,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodDelete).GetError(); err != nil {

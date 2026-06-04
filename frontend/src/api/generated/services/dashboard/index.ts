@@ -21,10 +21,11 @@ import type {
 	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
-	DashboardtypesJSONPatchDocumentDTO,
+	DashboardtypesPatchableDashboardV2DTO,
 	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
+	DashboardtypesUpdateableDashboardV2DTO,
 	DeleteDashboardV2PathParameters,
 	DeletePublicDashboardPathParameters,
 	GetDashboardV2200,
@@ -646,7 +647,7 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 };
 
 /**
- * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.
+ * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.
  * @summary List dashboards (v2)
  */
 export const listDashboardsV2 = (
@@ -1006,19 +1007,19 @@ export const invalidateGetDashboardV2 = async (
 };
 
 /**
- * This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Locked dashboards are rejected.
+ * This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Apply is lenient: `remove` on a missing path is a no-op (idempotent) and `add` creates any missing parent objects, rather than failing as strict RFC 6902 would. The resulting dashboard is still validated. Locked dashboards are rejected.
  * @summary Patch dashboard (v2)
  */
 export const patchDashboardV2 = (
 	{ id }: PatchDashboardV2PathParameters,
-	dashboardtypesJSONPatchDocumentDTONull?: BodyType<DashboardtypesJSONPatchDocumentDTO | null> | null,
+	dashboardtypesPatchableDashboardV2DTONull?: BodyType<DashboardtypesPatchableDashboardV2DTO | null> | null,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<PatchDashboardV2200>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesJSONPatchDocumentDTONull,
+		data: dashboardtypesPatchableDashboardV2DTONull,
 		signal,
 	});
 };
@@ -1032,7 +1033,7 @@ export const getPatchDashboardV2MutationOptions = <
 		TError,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
 		},
 		TContext
 	>;
@@ -1041,7 +1042,7 @@ export const getPatchDashboardV2MutationOptions = <
 	TError,
 	{
 		pathParams: PatchDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
 	},
 	TContext
 > => {
@@ -1058,7 +1059,7 @@ export const getPatchDashboardV2MutationOptions = <
 		Awaited<ReturnType<typeof patchDashboardV2>>,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -1073,7 +1074,7 @@ export type PatchDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchDashboardV2>>
 >;
 export type PatchDashboardV2MutationBody =
-	| BodyType<DashboardtypesJSONPatchDocumentDTO | null>
+	| BodyType<DashboardtypesPatchableDashboardV2DTO | null>
 	| undefined;
 export type PatchDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
@@ -1089,7 +1090,7 @@ export const usePatchDashboardV2 = <
 		TError,
 		{
 			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
 		},
 		TContext
 	>;
@@ -1098,7 +1099,7 @@ export const usePatchDashboardV2 = <
 	TError,
 	{
 		pathParams: PatchDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesJSONPatchDocumentDTO | null>;
+		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
 	},
 	TContext
 > => {
@@ -1110,14 +1111,14 @@ export const usePatchDashboardV2 = <
  */
 export const updateDashboardV2 = (
 	{ id }: UpdateDashboardV2PathParameters,
-	dashboardtypesPostableDashboardV2DTO?: BodyType<DashboardtypesPostableDashboardV2DTO>,
+	dashboardtypesUpdateableDashboardV2DTO?: BodyType<DashboardtypesUpdateableDashboardV2DTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<UpdateDashboardV2200>({
 		url: `/api/v2/dashboards/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesPostableDashboardV2DTO,
+		data: dashboardtypesUpdateableDashboardV2DTO,
 		signal,
 	});
 };
@@ -1131,7 +1132,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -1140,7 +1141,7 @@ export const getUpdateDashboardV2MutationOptions = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 	},
 	TContext
 > => {
@@ -1157,7 +1158,7 @@ export const getUpdateDashboardV2MutationOptions = <
 		Awaited<ReturnType<typeof updateDashboardV2>>,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -1172,7 +1173,7 @@ export type UpdateDashboardV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateDashboardV2>>
 >;
 export type UpdateDashboardV2MutationBody =
-	| BodyType<DashboardtypesPostableDashboardV2DTO>
+	| BodyType<DashboardtypesUpdateableDashboardV2DTO>
 	| undefined;
 export type UpdateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
@@ -1188,7 +1189,7 @@ export const useUpdateDashboardV2 = <
 		TError,
 		{
 			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+			data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 		},
 		TContext
 	>;
@@ -1197,7 +1198,7 @@ export const useUpdateDashboardV2 = <
 	TError,
 	{
 		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+		data?: BodyType<DashboardtypesUpdateableDashboardV2DTO>;
 	},
 	TContext
 > => {

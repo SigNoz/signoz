@@ -46,11 +46,6 @@ export const k8sVolumeDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sVolumes
 		},
 	];
 
-export const k8sVolumeInitialFilters = [
-	QUERY_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
-	QUERY_KEYS.K8S_NAMESPACE_NAME,
-];
-
 export const k8sVolumeInitialEventsFilter = (
 	item: K8sVolumesData,
 ): ReturnType<typeof createFilterItem>[] => [

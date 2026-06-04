@@ -2051,6 +2051,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
+export interface ErrorsResponseretryjsonDTO {
+	delay?: TimeDurationDTO;
+}
+
 export interface ErrorsJSONDTO {
 	/**
 	 * @type string
@@ -2061,9 +2065,22 @@ export interface ErrorsJSONDTO {
 	 */
 	errors?: ErrorsResponseerroradditionalDTO[];
 	/**
+	 * @type array
+	 */
+	invalidReferences?: string[];
+	/**
 	 * @type string
 	 */
 	message: string;
+	retry?: ErrorsResponseretryjsonDTO;
+	/**
+	 * @type array
+	 */
+	suggestions?: string[];
+	/**
+	 * @type string
+	 */
+	type?: string;
 	/**
 	 * @type string
 	 */
@@ -4636,7 +4653,7 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
-export enum DashboardtypesJSONPatchOperationDTOOp {
+export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
 	replace = 'replace',
@@ -4650,28 +4667,81 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
 	 */
 	from?: string;
-	/**
-	 * @enum add,remove,replace,move,copy,test
-	 * @type string
-	 */
-	op: DashboardtypesJSONPatchOperationDTOOp;
+	op: DashboardtypesPatchOpDTO;
 	/**
 	 * @type string
-	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0, /tags/-.
+	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-.
 	 */
 	path: string;
 	/**
-	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable; /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /data/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
+	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
 	 */
 	value?: unknown;
 }
 
-/**
- * @nullable
- */
-export type DashboardtypesJSONPatchDocumentDTO =
-	| DashboardtypesJSONPatchOperationDTO[]
-	| null;
+export enum DashboardtypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum DashboardtypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
+export interface DashboardtypesListedDashboardV2SpecDTO {
+	display?: CommonDisplayDTO;
+}
+
+export interface DashboardtypesListedDashboardV2DTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type boolean
+	 */
+	pinned: boolean;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesListedDashboardV2SpecDTO;
+	/**
+	 * @type array
+	 */
+	tags: TagtypesPostableTagDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
 
 export interface DashboardtypesListedDashboardV2SpecDTO {
 	display?: CommonDisplayDTO;
@@ -4749,6 +4819,13 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
+/**
+ * @nullable
+ */
+export type DashboardtypesPatchableDashboardV2DTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type boolean
@@ -4801,6 +4878,26 @@ export interface DashboardtypesUpdatablePublicDashboardDTO {
 	 * @type boolean
 	 */
 	timeRangeEnabled?: boolean;
+}
+
+export interface DashboardtypesUpdateableDashboardV2DTO {
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
 }
 
 export enum DashboardtypesVariablePluginKindDTO {
@@ -7840,12 +7937,34 @@ export type SpantypesSpanAggregationResultDTOValue =
 	SpantypesSpanAggregationResultDTOValueAnyOf | null;
 
 export interface SpantypesSpanAggregationResultDTO {
-	aggregation?: SpantypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	aggregation: SpantypesSpanAggregationTypeDTO;
+	field: TelemetrytypesTelemetryFieldKeyDTO;
 	/**
 	 * @type object,null
 	 */
-	value?: SpantypesSpanAggregationResultDTOValue;
+	value: SpantypesSpanAggregationResultDTOValue;
+}
+
+export interface SpantypesGettableTraceAggregationsDTO {
+	/**
+	 * @type array
+	 */
+	aggregations: SpantypesSpanAggregationResultDTO[];
+}
+
+export interface SpantypesOtelSpanRefDTO {
+	/**
+	 * @type string
+	 */
+	refType?: string;
+	/**
+	 * @type string
+	 */
+	spanId?: string;
+	/**
+	 * @type string
+	 */
+	traceId?: string;
 }
 
 export type SpantypesWaterfallSpanDTOAttributesAnyOf = {
@@ -7942,6 +8061,10 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @type string
 	 */
 	parent_span_id?: string;
+	/**
+	 * @type array
+	 */
+	references: SpantypesOtelSpanRefDTO[];
 	/**
 	 * @type object,null
 	 */
@@ -8087,8 +8210,15 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 }
 
 export interface SpantypesSpanAggregationDTO {
-	aggregation?: SpantypesSpanAggregationTypeDTO;
-	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	aggregation: SpantypesSpanAggregationTypeDTO;
+	field: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+export interface SpantypesPostableTraceAggregationsDTO {
+	/**
+	 * @type array
+	 */
+	aggregations: SpantypesSpanAggregationDTO[];
 }
 
 export interface SpantypesPostableWaterfallDTO {
@@ -8410,6 +8540,13 @@ export interface TypesPostableRoleDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface TypesPostableVerifyResetPasswordTokenDTO {
+	/**
+	 * @type string
+	 */
+	token: string;
 }
 
 export interface TypesResetPasswordTokenDTO {
@@ -9424,6 +9561,17 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type GetTraceAggregationsPathParameters = {
+	traceID: string;
+};
+export type GetTraceAggregations200 = {
+	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
@@ -9500,15 +9648,13 @@ export type ListDashboardsV2Params = {
 	 */
 	query?: string;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	sort?: string;
+	sort?: DashboardtypesListSortDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	order?: string;
+	order?: DashboardtypesListOrderDTO;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -10390,6 +10536,17 @@ export type GetWaterfallPathParameters = {
 	traceID: string;
 };
 export type GetWaterfall200 = {
+	data: SpantypesGettableWaterfallTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetWaterfallV4PathParameters = {
+	traceID: string;
+};
+export type GetWaterfallV4200 = {
 	data: SpantypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string

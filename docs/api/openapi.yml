@@ -2645,37 +2645,25 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
-    DashboardtypesJSONPatchDocument:
-      items:
-        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
-      nullable: true
-      type: array
     DashboardtypesJSONPatchOperation:
       properties:
         from:
           description: Source JSON Pointer for move/copy ops; ignored for other ops.
           type: string
         op:
-          enum:
-          - add
-          - remove
-          - replace
-          - move
-          - copy
-          - test
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
         path:
           description: JSON Pointer (RFC 6901) into the dashboard's postable shape
-            — e.g. /data/display/name, /data/panels/<id>, /data/panels/<id>/spec/queries/0,
+            — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
             /tags/-.
           type: string
         value:
           description: 'Value to add/replace/test against. The expected type depends
             on the path. Common shapes (see referenced schemas for the exact field
-            set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N
-            (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable;
-            /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
-            TagtypesPostableTag; /data/display/name and other leaf string fields take
+            set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable;
+            /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /spec/display/name and other leaf string fields take
             a string. Required for add/replace/test; ignored for remove/move/copy.'
       required:
       - op
@@ -2723,6 +2711,11 @@ components:
       - solid
       - dashed
       type: string
+    DashboardtypesListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
     DashboardtypesListPanelSpec:
       properties:
         selectFields:
@@ -2730,6 +2723,12 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
       type: object
+    DashboardtypesListSort:
+      enum:
+      - updated_at
+      - created_at
+      - name
+      type: string
     DashboardtypesListVariableSpec:
       properties:
         allowAllValue:
@@ -2957,6 +2956,20 @@ components:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
@@ -3251,6 +3264,27 @@ components:
         timeRangeEnabled:
           type: boolean
       type: object
+    DashboardtypesUpdateableDashboardV2:
+      properties:
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
@@ -3334,7 +3368,19 @@ components:
           items:
             $ref: '#/components/schemas/ErrorsResponseerroradditional'
           type: array
+        invalidReferences:
+          items:
+            type: string
+          type: array
         message:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ErrorsResponseretryjson'
+        suggestions:
+          items:
+            type: string
+          type: array
+        type:
           type: string
         url:
           type: string
@@ -3346,6 +3392,11 @@ components:
       properties:
         message:
           type: string
+      type: object
+    ErrorsResponseretryjson:
+      properties:
+        delay:
+          $ref: '#/components/schemas/TimeDuration'
       type: object
     FactoryResponse:
       properties:
@@ -6605,6 +6656,15 @@ components:
       required:
       - items
       type: object
+    SpantypesGettableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregationResult'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesGettableWaterfallTrace:
       properties:
         aggregations:
@@ -6643,6 +6703,15 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesOtelSpanRef:
+      properties:
+        refType:
+          type: string
+        spanId:
+          type: string
+        traceId:
+          type: string
+      type: object
     SpantypesPostableSpanMapper:
       properties:
         config:
@@ -6670,6 +6739,15 @@ components:
       - name
       - condition
       type: object
+    SpantypesPostableTraceAggregations:
+      properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanAggregation'
+          type: array
+      required:
+      - aggregations
+      type: object
     SpantypesPostableWaterfall:
       properties:
         aggregations:
@@ -6694,6 +6772,9 @@ components:
           $ref: '#/components/schemas/SpantypesSpanAggregationType'
         field:
           $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      required:
+      - field
+      - aggregation
       type: object
     SpantypesSpanAggregationResult:
       properties:
@@ -6707,6 +6788,10 @@ components:
             type: integer
           nullable: true
           type: object
+      required:
+      - field
+      - aggregation
+      - value
       type: object
     SpantypesSpanAggregationType:
       enum:
@@ -6890,6 +6975,10 @@ components:
           type: string
         parent_span_id:
           type: string
+        references:
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
         resource:
           additionalProperties:
             type: string
@@ -6915,6 +7004,8 @@ components:
           type: string
         trace_state:
           type: string
+      required:
+      - references
       type: object
     TagtypesPostableTag:
       properties:
@@ -7164,6 +7255,13 @@ components:
           type: string
       required:
       - name
+      type: object
+    TypesPostableVerifyResetPasswordToken:
+      properties:
+        token:
+          type: string
+      required:
+      - token
       type: object
     TypesResetPasswordToken:
       properties:
@@ -12338,6 +12436,75 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/traces/{traceID}/aggregations:
+    post:
+      deprecated: false
+      description: Computes span aggregations grouped by requested field.
+      operationId: GetTraceAggregations
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableTraceAggregations'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableTraceAggregations'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get aggregations for a trace
+      tags:
+      - tracedetail
   /api/v1/user:
     get:
       deprecated: false
@@ -12766,7 +12933,7 @@ paths:
     get:
       deprecated: false
       description: Returns a page of v2-shape dashboards for the calling user's org.
-        Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`),
+        Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`),
         order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned
         dashboards float to the top of each page.
       operationId: ListDashboardsV2
@@ -12778,11 +12945,11 @@ paths:
       - in: query
         name: sort
         schema:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListSort'
       - in: query
         name: order
         schema:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesListOrder'
       - in: query
         name: limit
         schema:
@@ -12806,6 +12973,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12857,6 +13030,12 @@ paths:
                 - data
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12902,6 +13081,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12914,6 +13099,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -12953,6 +13144,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12965,6 +13162,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -12981,11 +13184,13 @@ paths:
       - dashboard
     patch:
       deprecated: false
-      description: This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+      description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
         The patch is applied against the postable view of the dashboard (metadata,
         data, tags), so individual panels, queries, variables, layouts, or tags can
-        be updated without re-sending the rest of the dashboard. Locked dashboards
-        are rejected.
+        be updated without re-sending the rest of the dashboard. Apply is lenient:
+        `remove` on a missing path is a no-op (idempotent) and `add` creates any missing
+        parent objects, rather than failing as strict RFC 6902 would. The resulting
+        dashboard is still validated. Locked dashboards are rejected.'
       operationId: PatchDashboardV2
       parameters:
       - in: path
@@ -12997,7 +13202,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesJSONPatchDocument'
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
       responses:
         "200":
           content:
@@ -13013,6 +13218,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13025,6 +13236,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13054,7 +13271,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesPostableDashboardV2'
+              $ref: '#/components/schemas/DashboardtypesUpdateableDashboardV2'
       responses:
         "200":
           content:
@@ -13070,6 +13287,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13082,6 +13305,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13115,6 +13344,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13127,6 +13362,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13159,6 +13400,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13171,6 +13418,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -13204,6 +13457,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13249,6 +13508,12 @@ paths:
               schema:
                 type: string
           description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -13261,6 +13526,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
         "500":
           content:
             application/json:
@@ -15355,6 +15632,41 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/reset_password_tokens/verify:
+    post:
+      deprecated: false
+      description: This endpoint verifies whether a reset password token exists and
+        is not expired
+      operationId: VerifyResetPasswordToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableVerifyResetPasswordToken'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Verify a reset password token
+      tags:
+      - users
   /api/v2/roles/{id}/users:
     get:
       deprecated: false
@@ -20371,6 +20683,77 @@ paths:
       description: Returns the waterfall view of spans for a given trace ID with tree
         structure, metadata, and windowed pagination
       operationId: GetWaterfall
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableWaterfall'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableWaterfallTrace'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get waterfall view for a trace
+      tags:
+      - tracedetail
+  /api/v4/traces/{traceID}/waterfall:
+    post:
+      deprecated: false
+      description: Returns the waterfall view of spans including all spans if total
+        spans are under a limit, a max count otherwise. Aggregations are dropped compared
+        to v3
+      operationId: GetWaterfallV4
       parameters:
       - in: path
         name: traceID

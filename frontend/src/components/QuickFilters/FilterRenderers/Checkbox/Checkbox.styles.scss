@@ -4,6 +4,23 @@
 	padding: 12px;
 	gap: 12px;
 	border-bottom: 1px solid var(--l1-border);
+
+	.search {
+		input {
+			--input-background: var(--l2-background);
+			--input-hover-background: var(--l2-background);
+			--input-focus-background: var(--l2-background);
+			&::placeholder {
+				color: var(--l3-foreground);
+			}
+			--input-font-size: 14px;
+			--input-border-color: var(--l1-border);
+			--input-focus-border-color: var(--primary-background);
+			--input-focus-outline-width: 0;
+			--input-focus-outline-offset: 0;
+		}
+	}
+
 	.filter-header-checkbox {
 		display: flex;
 		align-items: center;
@@ -55,6 +72,7 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
+			min-height: 24px;
 
 			.checkbox-value-section {
 				display: flex;

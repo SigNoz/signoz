@@ -159,6 +159,7 @@ export default function ConversationView({
 				<ConversationSkeleton />
 				<div className={inputWrapperClass}>
 					<ChatInput
+						key={conversationId}
 						onSend={handleSend}
 						disabled
 						autoContexts={autoContexts}
@@ -172,6 +173,7 @@ export default function ConversationView({
 	return (
 		<div className={styles.conversation}>
 			<VirtualizedMessages
+				key={conversationId}
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
@@ -184,6 +186,7 @@ export default function ConversationView({
 			)}
 			<div className={inputWrapperClass}>
 				<ChatInput
+					key={conversationId}
 					onSend={handleSend}
 					onCancel={handleCancel}
 					disabled={inputDisabled}

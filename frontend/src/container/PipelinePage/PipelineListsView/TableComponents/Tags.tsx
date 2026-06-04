@@ -1,12 +1,12 @@
-import { Tag } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 
 function Tags({ tags }: TagsProps): JSX.Element {
 	return (
 		<span>
 			{tags?.map((tag) => (
-				<Tag color="magenta" key={tag}>
+				<Badge color="sakura" key={tag}>
 					{tag}
-				</Tag>
+				</Badge>
 			))}
 		</span>
 	);

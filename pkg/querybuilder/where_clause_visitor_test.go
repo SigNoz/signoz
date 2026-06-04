@@ -874,7 +874,7 @@ func TestVisitComparison_AND(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -883,7 +883,7 @@ func TestVisitComparison_AND(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -968,7 +968,7 @@ func TestVisitComparison_NOT(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -977,7 +977,7 @@ func TestVisitComparison_NOT(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1070,7 +1070,7 @@ func TestVisitComparison_OR(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1079,7 +1079,7 @@ func TestVisitComparison_OR(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1151,7 +1151,7 @@ func TestVisitComparison_Precedence(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1160,7 +1160,7 @@ func TestVisitComparison_Precedence(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1254,7 +1254,7 @@ func TestVisitComparison_Parens(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1263,7 +1263,7 @@ func TestVisitComparison_Parens(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1409,7 +1409,7 @@ func TestVisitComparison_FullText(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1418,7 +1418,7 @@ func TestVisitComparison_FullText(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1518,7 +1518,7 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1527,7 +1527,7 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1597,7 +1597,7 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1606,7 +1606,7 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1666,7 +1666,7 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1675,7 +1675,7 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
@@ -1758,7 +1758,7 @@ func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
@@ -1767,7 +1767,7 @@ func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				var expr string
-				if result != nil {
+				if !result.IsEmpty() {
 					expr, _ = result.WhereClause.Build()
 				}
 				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
