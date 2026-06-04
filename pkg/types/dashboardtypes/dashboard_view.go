@@ -34,8 +34,8 @@ func (d *DashboardViewData) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"version must be %q, got %q", DashboardViewSchemaVersion, d.Version)
 	}
-	if d.Sort != "" {
-		s := ListSort(strings.ToLower(string(d.Sort)))
+	if d.Sort.IsZero() {
+		s := d.Sort
 		switch s {
 		case ListSortUpdatedAt, ListSortCreatedAt, ListSortName:
 		default:
@@ -44,8 +44,8 @@ func (d *DashboardViewData) Validate() error {
 		}
 		d.Sort = s
 	}
-	if d.Order != "" {
-		o := ListOrder(strings.ToLower(string(d.Order)))
+	if d.Order.IsZero() {
+		o := d.Order
 		switch o {
 		case ListOrderAsc, ListOrderDesc:
 		default:
