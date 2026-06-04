@@ -114,8 +114,9 @@ type listedDashboardV2Spec struct {
 }
 
 type ListableDashboardV2 struct {
-	Dashboards []*listedDashboardV2 `json:"dashboards" required:"true" nullable:"false"`
-	Total      int64                `json:"total" required:"true"`
+	Dashboards []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
+	Total      int64                   `json:"total" required:"true"`
+	Tags       []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 }
 
 // DashboardListRow is the per-row shape Store.ListV2 returns. Bundles the
@@ -126,7 +127,7 @@ type DashboardListRow struct {
 	Pinned    bool
 }
 
-func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag) (*ListableDashboardV2, error) {
+func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) (*ListableDashboardV2, error) {
 	dashboards := make([]*listedDashboardV2, len(rows))
 	for i, r := range rows {
 		v2, err := r.Dashboard.ToDashboardV2(tagsByEntity[r.Dashboard.ID])
@@ -151,5 +152,6 @@ func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity 
 	return &ListableDashboardV2{
 		Dashboards: dashboards,
 		Total:      total,
+		Tags:       tagtypes.NewGettableTagsFromTags(allTags),
 	}, nil
 }

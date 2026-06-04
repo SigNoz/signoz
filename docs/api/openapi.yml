@@ -2792,12 +2792,17 @@ components:
           items:
             $ref: '#/components/schemas/DashboardtypesListedDashboardV2'
           type: array
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          type: array
         total:
           format: int64
           type: integer
       required:
       - dashboards
       - total
+      - tags
       type: object
     DashboardtypesListableDashboardView:
       properties:

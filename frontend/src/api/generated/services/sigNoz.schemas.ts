@@ -4788,6 +4788,10 @@ export interface DashboardtypesListableDashboardV2DTO {
 	 */
 	dashboards: DashboardtypesListedDashboardV2DTO[];
 	/**
+	 * @type array
+	 */
+	tags: TagtypesPostableTagDTO[];
+	/**
 	 * @type integer
 	 * @format int64
 	 */

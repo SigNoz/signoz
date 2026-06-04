@@ -58,7 +58,12 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(rows, total, tagsByDashboard)
+	allTags, err := module.tagModule.List(ctx, orgID, coretypes.KindDashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewListableDashboardV2(rows, total, tagsByDashboard, allTags)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
