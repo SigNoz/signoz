@@ -30,6 +30,7 @@ import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';
+import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
 import InfoBlocks from './InfoBlocks';
@@ -335,6 +336,12 @@ export default function WorkspaceBlocked(): JSX.Element {
 										</Typography.Title>
 										<Typography.Text className="workspace-locked__details">
 											{t('upgradeNow')}
+											<br />
+											{t('yourDataIsSafe')}{' '}
+											<span className="workspace-locked__details__highlight">
+												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
+											</span>{' '}
+											{t('actNow')}
 										</Typography.Text>
 									</Space>
 								</Col>
