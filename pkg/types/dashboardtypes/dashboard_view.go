@@ -83,7 +83,7 @@ func (p *PostableDashboardView) UnmarshalJSON(data []byte) error {
 	type alias PostableDashboardView
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardViewInvalidInput, "%s", err.Error())
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardViewInvalidInput, "invalid saved view request body").WithAdditional(err.Error())
 	}
 	*p = PostableDashboardView(tmp)
 	return p.Validate()
