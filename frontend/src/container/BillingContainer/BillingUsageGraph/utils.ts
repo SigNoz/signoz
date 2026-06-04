@@ -1,7 +1,7 @@
 import { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { isEmpty, isNull } from 'lodash-es';
 import { unparse } from 'papaparse';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -120,11 +120,40 @@ export function prepareCsvData(data: Partial<UsageResponsePayloadProps>): {
 	fileName: string;
 } {
 	const graphCompatibleData = convertDataToMetricRangePayload(data);
-	const chartData = getUPlotChartData(graphCompatibleData);
-	const quantityMapArr = quantityDataArr(graphCompatibleData, chartData[0]);
+	const chartData = prepareChartData(graphCompatibleData);
+	const quantityMapArr = quantityDataArr(
+		graphCompatibleData,
+		chartData[0] as number[],
+	);
 
 	return {
 		csvData: unparse(generateCsvData(quantityMapArr)),
 		fileName: csvFileName(quantityMapArr),
+	};
+}
+
+export function calculateStartEndTime(
+	data: Partial<UsageResponsePayloadProps>,
+): { startTime: number | undefined; endTime: number | undefined } {
+	const timestamps: number[] = [];
+	data?.details?.breakdown?.forEach((breakdown) => {
+		breakdown?.dayWiseBreakdown?.breakdown?.forEach((entry) => {
+			timestamps.push(entry.timestamp);
+		});
+	});
+
+	const billingTime: number[] = [
+		data?.billingPeriodStart,
+		data?.billingPeriodEnd,
+	].filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
+
+	const allTimes = [...timestamps, ...billingTime];
+	if (allTimes.length === 0) {
+		return { startTime: undefined, endTime: undefined };
+	}
+
+	return {
+		startTime: Math.min(...allTimes),
+		endTime: Math.max(...allTimes),
 	};
 }

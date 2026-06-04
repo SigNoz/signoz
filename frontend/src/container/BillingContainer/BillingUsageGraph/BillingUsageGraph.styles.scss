@@ -1,4 +1,14 @@
+.graph-container {
+	height: 100%;
+}
+
 .billing-graph-card {
+	.uplot-no-data {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.ant-card-body {
 		height: 40vh;
 		.uplot-graph-container {
@@ -6,7 +16,7 @@
 		}
 	}
 	.total-spent {
-		font-family: 'SF Mono' monospace;
+		font-family: 'SF Mono', monospace;
 		font-size: 16px;
 		font-style: normal;
 		font-weight: 600;
