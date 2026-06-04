@@ -89,6 +89,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.144.3",
+        default="832-merge-8d50ee7",
         help="schema migrator version",
     )
