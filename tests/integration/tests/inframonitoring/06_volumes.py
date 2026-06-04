@@ -26,15 +26,6 @@ REQUIRED_METRICS = {
 }
 
 
-def _post(signoz: types.SigNoz, token: str, body: dict) -> requests.Response:
-    return requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json=body,
-        timeout=5,
-    )
-
-
 def test_volumes_happy_path(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -51,14 +42,15 @@ def test_volumes_happy_path(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -128,14 +120,15 @@ def test_volumes_value_accuracy(
     exp_by_name = {r["persistentVolumeClaimName"]: r for r in expected["records"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -170,14 +163,15 @@ def test_volumes_missing_metrics(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -187,147 +181,32 @@ def test_volumes_missing_metrics(
     assert data["total"] == 0
 
 
-def test_volumes_filter_and(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """AND of two attribute clauses returns only the matching PVCs."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.namespace.name = 'ns-a' AND env = 'prod'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["persistentVolumeClaimName"] for r in data["records"]} == {"data-ns-a-prod", "logs-ns-a-prod"}
-    assert data["total"] == 2
-
-
-def test_volumes_filter_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """IN (...) returns exactly the listed PVCs."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-b-dev')"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["persistentVolumeClaimName"] for r in data["records"]} == {"data-ns-a-prod", "logs-ns-b-dev"}
-    assert data["total"] == 2
-
-
-def test_volumes_filter_not_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """NOT IN on the partition key returns the rest.
-    NOT IN on non-partition labels is unreliable in QB v5 (see clusters test);
-    use partition key here, combo path covers NOT IN with non-partition labels."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": ("k8s.persistentvolumeclaim.name NOT IN ('data-ns-a-prod', 'data-ns-a-dev', 'data-ns-b-prod', 'data-ns-b-dev')")},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["persistentVolumeClaimName"] for r in data["records"]} == {
-        "logs-ns-a-prod",
-        "logs-ns-a-dev",
-        "logs-ns-b-prod",
-        "logs-ns-b-dev",
-    }
-
-
-def test_volumes_filter_contains(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """CONTAINS performs substring match on the attribute value."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'data'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["persistentVolumeClaimName"] for r in data["records"]} == {
-        "data-ns-a-prod",
-        "data-ns-a-dev",
-        "data-ns-b-prod",
-        "data-ns-b-dev",
-    }
-
-
 @pytest.mark.parametrize(
     "expression,expected",
     [
+        pytest.param(
+            "k8s.namespace.name = 'ns-a' AND env = 'prod'",
+            {"data-ns-a-prod", "logs-ns-a-prod"},
+            id="and",
+        ),
+        pytest.param(
+            "k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-b-dev')",
+            {"data-ns-a-prod", "logs-ns-b-dev"},
+            id="in",
+        ),
+        # NOT IN on the partition key returns the rest. NOT IN on non-partition
+        # labels is unreliable in QB v5 (see clusters test); the and_not_in
+        # combo covers NOT IN alongside non-partition labels.
+        pytest.param(
+            "k8s.persistentvolumeclaim.name NOT IN ('data-ns-a-prod', 'data-ns-a-dev', 'data-ns-b-prod', 'data-ns-b-dev')",
+            {"logs-ns-a-prod", "logs-ns-a-dev", "logs-ns-b-prod", "logs-ns-b-dev"},
+            id="not_in",
+        ),
+        pytest.param(
+            "k8s.persistentvolumeclaim.name CONTAINS 'data'",
+            {"data-ns-a-prod", "data-ns-a-dev", "data-ns-b-prod", "data-ns-b-dev"},
+            id="contains",
+        ),
         pytest.param(
             "k8s.namespace.name = 'ns-a' AND k8s.persistentvolumeclaim.name IN ('data-ns-a-prod', 'logs-ns-a-prod')",
             {"data-ns-a-prod", "logs-ns-a-prod"},
@@ -350,7 +229,7 @@ def test_volumes_filter_contains(
         ),
     ],
 )
-def test_volumes_filter_combos(
+def test_volumes_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -368,15 +247,16 @@ def test_volumes_filter_combos(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -384,54 +264,28 @@ def test_volumes_filter_combos(
     assert data["total"] == len(expected)
 
 
-def test_volumes_filter_bad_attr_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Filter with a typo'd attribute key returns 400 invalid_input."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    body = response.json()
-    assert body["status"] == "error"
-    assert body["error"]["code"] == "invalid_input"
-    assert any("k8s.persistentvolumeclaim.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
-
-
 @pytest.mark.parametrize(
-    "expression",
+    "expression,err_substr",
     [
-        pytest.param("k8s.persistentvolumeclaim.name =", id="trailing_op"),
-        pytest.param("(k8s.persistentvolumeclaim.name = 'data-ns-a-prod'", id="unclosed_paren"),
+        pytest.param(
+            "k8s.persistentvolumeclaim.namee = 'data-ns-a-prod'",
+            "k8s.persistentvolumeclaim.namee",
+            id="bad_attr_name",
+        ),
+        pytest.param("k8s.persistentvolumeclaim.name =", None, id="trailing_op"),
+        pytest.param("(k8s.persistentvolumeclaim.name = 'data-ns-a-prod'", None, id="unclosed_paren"),
     ],
 )
-def test_volumes_filter_bad_grammar(
+def test_volumes_filter_invalid(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     expression: str,
+    err_substr,
 ) -> None:
-    """Malformed filter expressions return 400 invalid_input."""
+    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
+    400 invalid_input with structured errors; bad attribute keys are named in them."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -441,21 +295,24 @@ def test_volumes_filter_bad_grammar(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
     assert len(body["error"]["errors"]) > 0
+    if err_substr is not None:
+        assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
 def test_volumes_usage_formula(
@@ -475,15 +332,16 @@ def test_volumes_usage_formula(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": "k8s.persistentvolumeclaim.name = 'uf-pvc'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -513,14 +371,15 @@ def test_volumes_non_pvc_volume_filtered(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -546,10 +405,10 @@ def test_volumes_groupby_namespace(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
@@ -561,6 +420,7 @@ def test_volumes_groupby_namespace(
                 }
             ],
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -596,16 +456,17 @@ def test_volumes_pagination_sync(
     seen_totals: set[int] = set()
 
     for offset in (0, 3, 6):
-        response = _post(
-            signoz,
-            token,
-            {
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
                 "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
                 "end": int(now.timestamp() * 1000),
                 "limit": limit,
                 "offset": offset,
                 "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'page-'"},
             },
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
@@ -636,16 +497,17 @@ def test_volumes_offset_beyond_total(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 7
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 3,
             "offset": K + 5,
             "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'page-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -653,13 +515,21 @@ def test_volumes_offset_beyond_total(
     assert data["total"] == K
 
 
+# orderBy keys per volumes_constants.go (6 metric columns).
+@pytest.mark.parametrize(
+    "column",
+    ["available", "capacity", "usage", "inodes", "inodes_free", "inodes_used"],
+)
+@pytest.mark.parametrize("direction", ["asc", "desc"])
 def test_volumes_total_invariant_across_orderby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    column: str,
+    direction: str,
 ) -> None:
-    """Total stays K across all 6 orderBy metric columns x 2 directions = 12 calls."""
+    """Total stays K across all orderBy column x direction combinations."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -671,25 +541,23 @@ def test_volumes_total_invariant_across_orderby(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 5
 
-    # orderBy keys per volumes_constants.go (6 metric columns).
-    for column in ("available", "capacity", "usage", "inodes", "inodes_free", "inodes_used"):
-        for direction in ("asc", "desc"):
-            response = _post(
-                signoz,
-                token,
-                {
-                    "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-                    "end": int(now.timestamp() * 1000),
-                    "limit": 50,
-                    "orderBy": {"key": {"name": column}, "direction": direction},
-                    "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
-                },
-            )
-            ctx = f"orderBy={column} {direction}"
-            assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
-            data = response.json()["data"]
-            assert data["total"] == K, f"{ctx}: total={data['total']}"
-            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": column}, "direction": direction},
+            "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
+        },
+        timeout=5,
+    )
+    ctx = f"orderBy={column} {direction}"
+    assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
+    data = response.json()["data"]
+    assert data["total"] == K, f"{ctx}: total={data['total']}"
+    assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
 
 @pytest.mark.parametrize(
@@ -725,16 +593,17 @@ def test_volumes_orderby_correctness(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": column}, "direction": direction},
             "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -762,16 +631,17 @@ def test_volumes_orderby_by_pvc_name(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": "k8s.persistentvolumeclaim.name"}, "direction": direction},
             "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -840,43 +710,13 @@ def test_volumes_validation_errors(
     body.update(payload_override)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json=body,
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
     assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
-
-
-@pytest.mark.parametrize(
-    "auth_state,expected_status",
-    [
-        pytest.param("none", HTTPStatus.UNAUTHORIZED, id="no_token"),
-        pytest.param("admin", HTTPStatus.OK, id="admin_token"),
-    ],
-)
-def test_volumes_auth(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    auth_state: str,
-    expected_status: int,
-) -> None:
-    """Auth required: no Authorization header -> 401; admin Bearer -> 200."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    body = {
-        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-        "end": int(now.timestamp() * 1000),
-        "limit": 50,
-    }
-    headers: dict = {}
-    if auth_state == "admin":
-        token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-        headers["authorization"] = f"Bearer {token}"
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers=headers,
-        json=body,
-        timeout=5,
-    )
-    assert response.status_code == expected_status, response.text
