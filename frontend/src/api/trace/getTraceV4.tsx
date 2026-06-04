@@ -1,5 +1,4 @@
-import { ApiV4Instance as axios } from 'api';
-import { omit } from 'lodash-es';
+import { getWaterfallV4 } from 'api/generated/services/tracedetail';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	GetTraceV4PayloadProps,
@@ -23,21 +22,27 @@ const getTraceV4 = async (
 		// isSelectedSpanIDUnCollapsed server-side), so explicitly add the selected span
 		uncollapsedSpans.push(props.selectedSpanId);
 	}
-	const postData: GetTraceV4PayloadProps = {
-		...props,
-		uncollapsedSpans,
-		limit: 10000,
-	};
-	const response = await axios.post<GetTraceV4SuccessResponse>(
-		`/traces/${props.traceId}/waterfall`,
-		omit(postData, 'traceId'),
+	const response = await getWaterfallV4(
+		{ traceID: props.traceId },
+		{
+			selectedSpanId: props.selectedSpanId,
+			uncollapsedSpans,
+			limit: 10000,
+		},
 	);
 
-	// API wraps response in { status, data }
-	const rawPayload = (response.data as any).data || response.data;
+	// Generated client unwraps the axios response; .data is the waterfall payload.
+	// Wire spans carry time_unix; SpanV3's timestamp + 'service.name' are derived below.
+	type WireSpan = Omit<SpanV3, 'timestamp' | 'service.name'> & {
+		time_unix: number;
+	};
+	const rawPayload = response.data as unknown as Omit<
+		GetTraceV4SuccessResponse,
+		'spans'
+	> & { spans: WireSpan[] | null };
 
 	// Derive 'service.name' from resource for convenience — only derived field
-	const spans: SpanV3[] = (rawPayload.spans || []).map((span: any) => ({
+	const spans: SpanV3[] = (rawPayload.spans || []).map((span) => ({
 		...span,
 		'service.name': span.resource?.['service.name'] || '',
 		timestamp: span.time_unix,

@@ -1,20 +1,20 @@
 import { useQuery, UseQueryResult } from 'react-query';
+import {
+	SpantypesSpanAggregationDTO,
+	SpantypesSpanAggregationResultDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import getTraceAggregations from 'api/trace/getTraceAggregations';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { SuccessResponseV2 } from 'types/api';
-import {
-	TraceAggregationRequest,
-	TraceAggregationResponse,
-} from 'types/api/trace/getTraceAggregations';
 
 interface UseGetTraceAggregationsProps {
 	traceId: string;
-	aggregations: TraceAggregationRequest[];
+	aggregations: SpantypesSpanAggregationDTO[];
 	enabled: boolean;
 }
 
 type UseGetTraceAggregations = UseQueryResult<
-	SuccessResponseV2<TraceAggregationResponse[]>
+	SuccessResponseV2<SpantypesSpanAggregationResultDTO[]>
 >;
 
 /**

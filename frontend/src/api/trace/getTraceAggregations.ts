@@ -1,36 +1,30 @@
-import axios from 'api';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import {
-	TraceAggregationRequest,
-	TraceAggregationResponse,
-} from 'types/api/trace/getTraceAggregations';
+	SpantypesSpanAggregationDTO,
+	SpantypesSpanAggregationResultDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { getTraceAggregations as fetchTraceAggregations } from 'api/generated/services/tracedetail';
+import { SuccessResponseV2 } from 'types/api';
 
 interface GetTraceAggregationsProps {
 	traceId: string;
-	aggregations: TraceAggregationRequest[];
+	aggregations: SpantypesSpanAggregationDTO[];
 }
 
 const getTraceAggregations = async ({
 	traceId,
 	aggregations,
 }: GetTraceAggregationsProps): Promise<
-	SuccessResponseV2<TraceAggregationResponse[]>
+	SuccessResponseV2<SpantypesSpanAggregationResultDTO[]>
 > => {
-	try {
-		const response = await axios.post(`/traces/${traceId}/aggregations`, {
-			aggregations,
-		});
+	const response = await fetchTraceAggregations(
+		{ traceID: traceId },
+		{ aggregations },
+	);
 
-		return {
-			httpStatusCode: response.status,
-			data: response.data.data.aggregations,
-		};
-	} catch (error) {
-		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
-	}
+	return {
+		httpStatusCode: 200,
+		data: response.data.aggregations,
+	};
 };
 
 export default getTraceAggregations;

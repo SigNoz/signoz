@@ -14,7 +14,10 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import { TraceAggregationRequest } from 'types/api/trace/getTraceAggregations';
+import {
+	SpantypesSpanAggregationDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useTraceStore } from '../../stores/traceStore';
@@ -48,13 +51,15 @@ function AnalyticsPanel({
 
 	// Fetch exec-time % + span count for the current color-by field only, and
 	// only while the panel is open. Changing the field refetches via the key.
-	const aggregationsRequest = useMemo<TraceAggregationRequest[]>(
-		() => [
-			{ field: colorByField, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
-			{ field: colorByField, aggregation: AGGREGATIONS.SPAN_COUNT },
-		],
-		[colorByField],
-	);
+	const aggregationsRequest = useMemo<SpantypesSpanAggregationDTO[]>(() => {
+		// v5 TelemetryFieldKey and the generated DTO are runtime-identical; only
+		// the literal-union vs enum nominal types differ
+		const field = colorByField as unknown as TelemetrytypesTelemetryFieldKeyDTO;
+		return [
+			{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
+			{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
+		];
+	}, [colorByField]);
 
 	const { data, isLoading, isError } = useGetTraceAggregations({
 		traceId: traceId || '',
