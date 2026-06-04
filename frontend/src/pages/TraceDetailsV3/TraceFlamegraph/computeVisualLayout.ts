@@ -24,7 +24,8 @@ export interface VisualLayout {
 // which pushes later children even higher, which deposits more points. That
 // feedback loop inflates a layout needing ~50 rows to thousands and never
 // finishes on wide traces. Past the threshold we pack by overlap only.
-const WIDE_GROUP_THRESHOLD = 512;
+// Exported so the regression tests stay anchored to the real gate value.
+export const WIDE_GROUP_THRESHOLD = 512;
 
 /**
  * Segment tree over rows that answers "lowest row index >= `from` whose smallest

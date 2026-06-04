@@ -1,6 +1,9 @@
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
-import { computeVisualLayout } from '../computeVisualLayout';
+import {
+	computeVisualLayout,
+	WIDE_GROUP_THRESHOLD,
+} from '../computeVisualLayout';
 
 function makeSpan(
 	overrides: Partial<FlamegraphSpan> & {
@@ -565,5 +568,84 @@ describe('computeVisualLayout', () => {
 		expect(gcRow - parentRow).toBe(1); // subtree adjacency preserved
 		expect(Object.keys(layout.spanToVisualRow)).toHaveLength(1002);
 		noRowHasOverlap(layout);
+	});
+
+	// --- Regression guards for the wide-trace layout spiral ---
+	// The pre-fix algorithm's connector-avoidance checks formed a positive-
+	// feedback loop on wide SCATTERED groups (short spans spread across the
+	// parent window with modest concurrency): each pushed-down child stamped
+	// connector points on intermediate rows, pushing later children even
+	// higher. Sequential and fully-overlapping groups (tests above) do NOT
+	// trigger it — these two shapes do, and encode its failure signatures.
+
+	function makeScatteredStar(
+		childCount: number,
+		spacingMs: number,
+		durationMs: number,
+	): FlamegraphSpan[][] {
+		const root = makeSpan({
+			spanId: 'root',
+			timestamp: 0,
+			durationNano: (childCount * spacingMs + durationMs) * 1e6,
+		});
+		const kids: FlamegraphSpan[] = [];
+		for (let i = 0; i < childCount; i++) {
+			kids.push(
+				makeSpan({
+					spanId: `k${i}`,
+					parentSpanId: 'root',
+					timestamp: i * spacingMs,
+					durationNano: durationMs * 1e6,
+				}),
+			);
+		}
+		return [[root], kids];
+	}
+
+	it('should not spiral row count on a scattered group just above the threshold', () => {
+		// Children of 50ms each, starting every 10ms → max temporal concurrency
+		// is 6 (each span overlaps the next 5). The old algorithm spiraled this
+		// shape to ~1 row per child; overlap-only packing needs ~7 including the
+		// root. Sized just above WIDE_GROUP_THRESHOLD so a regression fails fast
+		// (sub-second) rather than burning CI time.
+		const count = WIDE_GROUP_THRESHOLD + 88;
+		const layout = computeVisualLayout(makeScatteredStar(count, 10, 50));
+
+		expect(Object.keys(layout.spanToVisualRow)).toHaveLength(count + 1);
+		// Generous slack over the optimal ~7 — but orders of magnitude below the
+		// one-row-per-child the spiral produced.
+		expect(layout.totalVisualRows).toBeLessThan(30);
+		noRowHasOverlap(layout);
+	});
+
+	it('should be faster through the fast path despite one extra span', () => {
+		// Identical scattered shape on both sides of the gate: THRESHOLD children
+		// run the original connector-avoidance path, THRESHOLD + 1 run the
+		// overlap-only fast path. With one MORE span to place, the fast path can
+		// only win because the algorithm is cheaper — a self-calibrating
+		// comparison (same machine, same process) with no absolute time budget.
+		// On this shape the avoidance path spirals (~tens of ms) while the fast
+		// path stays ~1ms, so the margin is well past timer noise. Also guards
+		// the gate itself: if everything routed to one path, one extra span can
+		// never be faster.
+		const avoidancePathInput = makeScatteredStar(WIDE_GROUP_THRESHOLD, 10, 50);
+		const fastPathInput = makeScatteredStar(WIDE_GROUP_THRESHOLD + 1, 10, 50);
+
+		// Warm-up runs so JIT compilation doesn't skew either side.
+		computeVisualLayout(avoidancePathInput);
+		computeVisualLayout(fastPathInput);
+
+		const timeOf = (input: FlamegraphSpan[][]): number => {
+			const start = performance.now();
+			computeVisualLayout(input);
+			return performance.now() - start;
+		};
+
+		// Best-of-3 per side to shave off GC pauses and scheduler noise.
+		const RUNS = [0, 1, 2];
+		const avoidanceMs = Math.min(...RUNS.map(() => timeOf(avoidancePathInput)));
+		const fastMs = Math.min(...RUNS.map(() => timeOf(fastPathInput)));
+
+		expect(fastMs).toBeLessThan(avoidanceMs);
 	});
 });
