@@ -1,54 +1,78 @@
-import { Alerts } from 'types/api/alerts/getTriggered';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Value } from './Filter';
+import type { FilterValue } from 'components/Alerts/types';
+import {
+	filterByLabels,
+	searchByLabels,
+	sortByColumn,
+} from 'components/Alerts/utils';
+import type { SortState } from 'components/TanStackTableView/types';
 
-export const FilterAlerts = (
-	allAlerts: Alerts[],
-	selectedFilter: Value[],
-): Alerts[] => {
-	// also we need to update the alerts
-	// [[key,value]]
+import { getElapsedMs } from 'utils/timeUtils';
 
-	if (selectedFilter?.length === 0 || selectedFilter === undefined) {
-		return allAlerts;
+import type { Alert } from './types';
+
+export function normalizeAlerts(rawAlerts: Alert[] | undefined): Alert[] {
+	if (!rawAlerts) {
+		return [];
+	}
+	return rawAlerts.map((alert) => ({
+		...alert,
+		fingerprint: alert.fingerprint ?? uuidv4(),
+	}));
+}
+
+export function getAlertSortValue(
+	alert: Alert,
+	columnName: string,
+): string | number {
+	switch (columnName) {
+		case 'status':
+			return alert.status?.state ?? '';
+		case 'alertName':
+			return alert.labels?.alertname ?? '';
+		case 'severity':
+			return alert.labels?.severity ?? '';
+		case 'firingSince':
+			return alert.startsAt ? getElapsedMs(alert.startsAt) : '';
+		case 'duration':
+			return getElapsedMs(alert.startsAt);
+		default:
+			return '';
+	}
+}
+
+export function sortAlerts(
+	alerts: Alert[],
+	orderBy: SortState | null,
+): Alert[] {
+	return sortByColumn(alerts, orderBy, getAlertSortValue, {
+		columnName: 'duration',
+		order: 'asc',
+	});
+}
+
+export { filterByLabels as filterAlerts, searchByLabels as searchAlerts };
+export type { FilterValue };
+
+export function getRuleId(alert: Alert): string | null {
+	// Primary: labels.ruleId
+	if (alert.labels?.ruleId) {
+		return alert.labels.ruleId;
 	}
 
-	const filter: string[] = [];
-
-	// filtering the value
-	selectedFilter.forEach((e) => {
-		const valueKey = e.value.split(':');
-		if (valueKey.length === 2) {
-			filter.push(e.value);
-		}
-	});
-
-	const tags = filter.map((e) => e.split(':'));
-	const objectMap = new Map();
-
-	const filteredKey = tags.reduce((acc, curr) => [...acc, curr[0]], []);
-	const filteredValue = tags.reduce((acc, curr) => [...acc, curr[1]], []);
-
-	filteredKey.forEach((key, index) =>
-		objectMap.set(key.trim(), filteredValue[index].trim()),
-	);
-
-	const filteredAlerts: Set<string> = new Set();
-
-	allAlerts.forEach((alert) => {
-		const { labels } = alert;
-		if (!labels) {
-			return;
-		}
-		Object.keys(labels).forEach((e) => {
-			const selectedKey = objectMap.get(e);
-
-			// alerts which does not have the key with value
-			if (selectedKey && labels[e] === selectedKey) {
-				filteredAlerts.add(alert.fingerprint);
+	// Fallback: parse from generatorURL
+	if (alert.generatorURL) {
+		try {
+			const url = new URL(alert.generatorURL);
+			const ruleId = url.searchParams.get('ruleId');
+			if (ruleId) {
+				return ruleId;
 			}
-		});
-	});
+		} catch {
+			// Invalid URL, ignore
+		}
+	}
 
-	return allAlerts.filter((e) => filteredAlerts.has(e.fingerprint));
-};
+	return null;
+}

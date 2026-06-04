@@ -40,5 +40,10 @@ export type OptionsMenuConfig = {
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
+		onReorder: (orderedIds: string[]) => void;
+	};
+	fieldsSelector?: {
+		value: TelemetryFieldKey[];
+		onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	};
 };

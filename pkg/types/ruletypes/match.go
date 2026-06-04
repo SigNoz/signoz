@@ -56,6 +56,24 @@ func (m MatchType) Normalize() MatchType {
 	}
 }
 
+// Literal returns the canonical literal (string) form of the match type.
+func (m MatchType) Literal() string {
+	switch m.Normalize() {
+	case AtleastOnce:
+		return AtleastOnceLiteral.StringValue()
+	case AllTheTimes:
+		return AllTheTimesLiteral.StringValue()
+	case OnAverage:
+		return OnAverageLiteral.StringValue()
+	case InTotal:
+		return InTotalLiteral.StringValue()
+	case Last:
+		return LastLiteral.StringValue()
+	default:
+		return m.StringValue()
+	}
+}
+
 func (m MatchType) Validate() error {
 	switch m {
 	case

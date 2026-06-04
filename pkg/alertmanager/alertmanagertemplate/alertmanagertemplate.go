@@ -15,13 +15,6 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// Templater expands user-authored title and body templates against a group
-// of alerts and returns channel-ready strings along with the aggregate data
-// a caller might reuse (e.g. to render an email layout around the body).
-type Templater interface {
-	Expand(ctx context.Context, req alertmanagertypes.ExpandRequest, alerts []*types.Alert) (*alertmanagertypes.ExpandResult, error)
-}
-
 type templater struct {
 	tmpl   *template.Template
 	logger *slog.Logger
@@ -29,7 +22,7 @@ type templater struct {
 
 // New returns a Templater bound to the given Prometheus alertmanager
 // template and logger.
-func New(tmpl *template.Template, logger *slog.Logger) Templater {
+func New(tmpl *template.Template, logger *slog.Logger) alertmanagertypes.Templater {
 	return &templater{tmpl: tmpl, logger: logger}
 }
 
@@ -137,6 +130,9 @@ func (at *templater) expandTitle(
 }
 
 // expandBody expands the body template for each individual alert. Returns nil if the template is empty.
+// Non-nil results are positionally aligned with ntd.Alerts: sb[i] corresponds to alerts[i], and
+// entries for alerts whose template expands to empty are kept as "" so callers can index per-alert
+// metadata (related links, firing/resolved color) by the same index.
 func (at *templater) expandBody(
 	bodyTemplate string,
 	ntd *alertmanagertypes.NotificationTemplateData,
@@ -144,7 +140,7 @@ func (at *templater) expandBody(
 	if bodyTemplate == "" {
 		return nil, nil, nil
 	}
-	var sb []string
+	sb := make([]string, len(ntd.Alerts))
 	missingVars := make(map[string]bool)
 	for i := range ntd.Alerts {
 		processRes, err := preProcessTemplateAndData(bodyTemplate, &ntd.Alerts[i])
@@ -155,13 +151,10 @@ func (at *templater) expandBody(
 		if err != nil {
 			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute custom body template: %s", err.Error())
 		}
-		// add unknown variables and templated text to the result
 		for k := range processRes.UnknownVars {
 			missingVars[k] = true
 		}
-		if strings.TrimSpace(part) != "" {
-			sb = append(sb, strings.TrimSpace(part))
-		}
+		sb[i] = strings.TrimSpace(part)
 	}
 	return sb, missingVars, nil
 }
@@ -189,17 +182,20 @@ func (at *templater) buildNotificationTemplateData(
 		externalURL = at.tmpl.ExternalURL.String()
 	}
 
-	commonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
+	// Raw (including private `_*`) kv first so buildRuleInfo can read the
+	// private rule annotations. The filtered copies are what ends up
+	// on the template-visible surfaces.
+	rawCommonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
 	commonLabels := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
 
 	// aggregate labels and annotations from all alerts
 	labels := aggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
 	annotations := aggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
 
-	// Strip private annotations from surfaces visible to templates or
-	// notifications; the structured fields on AlertInfo/RuleInfo already hold
-	// anything a template needs from them.
-	commonAnnotations = alertmanagertypes.FilterPublicAnnotations(commonAnnotations)
+	// Strip private annotations from template-visible surfaces; the structured
+	// fields on AlertInfo/RuleInfo already hold anything a template needs from
+	// them.
+	commonAnnotations := alertmanagertypes.FilterPublicAnnotations(rawCommonAnnotations)
 	annotations = alertmanagertypes.FilterPublicAnnotations(annotations)
 
 	// build the alert data slice
@@ -233,7 +229,7 @@ func (at *templater) buildNotificationTemplateData(
 			TotalFiring:   firing,
 			TotalResolved: resolved,
 		},
-		Rule:              buildRuleInfo(commonLabels, commonAnnotations),
+		Rule:              buildRuleInfo(commonLabels, rawCommonAnnotations),
 		GroupLabels:       gl,
 		CommonLabels:      commonLabels,
 		CommonAnnotations: commonAnnotations,

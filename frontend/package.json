@@ -24,7 +24,8 @@
     "commitlint": "commitlint --edit $1",
     "test": "jest",
     "test:changedsince": "jest --changedSince=main --coverage --silent",
-    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
+    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh",
+    "generate:config:web-settings": "json2ts ../docs/config/web-settings.json -o src/types/generated/webSettings.ts --style.useTabs --style.tabWidth=1 --style.singleQuote --bannerComment '/* AUTO GENERATED FILE - DO NOT EDIT - GENERATED FROM docs/config/web-settings.json */'"
   },
   "engines": {
     "node": ">=22.0.0",
@@ -49,7 +50,7 @@
     "@signozhq/design-tokens": "2.1.4",
     "@signozhq/icons": "0.4.0",
     "@signozhq/resizable": "0.0.2",
-    "@signozhq/ui": "0.0.19",
+    "@signozhq/ui": "0.0.23",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",
@@ -160,8 +161,8 @@
     "@testing-library/user-event": "14.4.3",
     "@types/color": "^3.0.3",
     "@types/crypto-js": "4.2.2",
-    "@types/event-source-polyfill": "^1.0.0",
     "@types/d3-hierarchy": "1.1.11",
+    "@types/event-source-polyfill": "^1.0.0",
     "@types/history": "4.7.11",
     "@types/jest": "30.0.0",
     "@types/lodash-es": "^4.17.4",
@@ -187,6 +188,7 @@
     "is-ci": "^3.0.1",
     "jest-environment-jsdom": "29.7.0",
     "jest-styled-components": "^7.2.0",
+    "json-schema-to-typescript": "^15.0.4",
     "lint-staged": "^17.0.4",
     "msw": "1.3.2",
     "orval": "8.9.1",

@@ -7,8 +7,8 @@ import {
 } from '@signozhq/ui/tabs';
 import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
-import { themeColors } from 'constants/theme';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
 import { useTraceStore } from '../../stores/traceStore';
@@ -22,6 +22,7 @@ import styles from './AnalyticsPanel.module.scss';
 interface AnalyticsPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
+	onTabChange: (tab: string) => void;
 }
 
 const PANEL_WIDTH = 350;
@@ -32,9 +33,11 @@ const PANEL_MARGIN_BOTTOM = 50;
 function AnalyticsPanel({
 	isOpen,
 	onClose,
+	onTabChange,
 }: AnalyticsPanelProps): JSX.Element | null {
 	const aggregations = useTraceStore((s) => s.aggregations);
 	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const isDarkMode = useIsDarkMode();
 
 	const execTimePct = useMemo(
 		() =>
@@ -57,13 +60,16 @@ function AnalyticsPanel({
 			return [];
 		}
 		return Object.entries(execTimePct)
-			.map(([group, percentage]) => ({
-				group,
-				percentage,
-				color: generateColor(group, themeColors.traceDetailColorsV3),
-			}))
+			.map(([group, percentage]) => {
+				const pair = generateColorPair(group);
+				return {
+					group,
+					percentage,
+					color: isDarkMode ? pair.color : pair.colorDark,
+				};
+			})
 			.sort((a, b) => b.percentage - a.percentage);
-	}, [execTimePct]);
+	}, [execTimePct, isDarkMode]);
 
 	const spanCountRows = useMemo(() => {
 		if (!spanCounts) {
@@ -71,14 +77,17 @@ function AnalyticsPanel({
 		}
 		const max = Math.max(...Object.values(spanCounts), 1);
 		return Object.entries(spanCounts)
-			.map(([group, count]) => ({
-				group,
-				count,
-				max,
-				color: generateColor(group, themeColors.traceDetailColorsV3),
-			}))
+			.map(([group, count]) => {
+				const pair = generateColorPair(group);
+				return {
+					group,
+					count,
+					max,
+					color: isDarkMode ? pair.color : pair.colorDark,
+				};
+			})
 			.sort((a, b) => b.count - a.count);
-	}, [spanCounts]);
+	}, [spanCounts, isDarkMode]);
 
 	if (!isOpen) {
 		return null;
@@ -111,7 +120,7 @@ function AnalyticsPanel({
 			/>
 
 			<div className={styles.body}>
-				<TabsRoot defaultValue="exec-time">
+				<TabsRoot defaultValue="exec-time" onValueChange={onTabChange}>
 					<TabsList variant="secondary">
 						<TabsTrigger value="exec-time" variant="secondary">
 							% exec time

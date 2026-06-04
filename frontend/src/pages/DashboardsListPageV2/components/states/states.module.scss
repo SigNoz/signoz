@@ -1,0 +1,34 @@
+// Shared building blocks for the dashboards-list view states.
+// Composed via CSS-modules `composes:` from each state's own SCSS.
+
+.cardWrapper {
+	display: flex;
+	flex-direction: column;
+	height: 320px;
+	margin-top: 16px;
+	justify-content: center;
+	align-items: flex-start;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+}
+
+.bodyText {
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.learnMoreLink {
+	composes: bodyText;
+	color: var(--bg-robin-400);
+	font-weight: var(--font-weight-medium);
+	padding: 0px;
+}
+
+.learnMoreArrow {
+	margin-left: -20px;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+}

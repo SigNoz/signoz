@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Slider } from 'antd';
+import { Slider } from '@signozhq/ui/slider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, LoaderCircle, Minus } from '@signozhq/icons';
@@ -204,23 +204,23 @@ function OptimiseSignozNeeds({
 						<label className="question-slider" htmlFor="organisationName">
 							Logs / Day
 						</label>
-						<div className="slider-container logs-slider-container">
+						<div className="slider-container">
 							<div>
 								<Slider
 									min={0}
 									max={100}
 									value={sliderValues.logsPerDay}
 									marks={marks}
-									onChange={(value: number): void =>
-										handleSliderChange('logsPerDay', value)
+									onChange={(value): void =>
+										handleSliderChange('logsPerDay', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`, // Show whole number
+										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
 									}}
 								/>
 							</div>
@@ -238,16 +238,16 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.hostsPerDay}
 									marks={hostMarks}
-									onChange={(value: number): void =>
-										handleSliderChange('hostsPerDay', value)
+									onChange={(value): void =>
+										handleSliderChange('hostsPerDay', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`, // Show whole number
+										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
 									}}
 								/>
 							</div>
@@ -265,16 +265,16 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.services}
 									marks={serviceMarks}
-									onChange={(value: number): void =>
-										handleSliderChange('services', value)
+									onChange={(value): void =>
+										handleSliderChange('services', value as number)
 									}
 									styles={{
-										track: {
-											background: '#4E74F8',
+										range: {
+											backgroundColor: '#4E74F8',
 										},
 									}}
 									tooltip={{
-										formatter: (): string => `${servicesValue.toLocaleString()}`, // Show whole number
+										formatter: (): string => `${servicesValue.toLocaleString()}`,
 									}}
 								/>
 							</div>

@@ -14,7 +14,8 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/ui/combobox';
-import { Skeleton, Switch, Tooltip } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -281,9 +282,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
-						size="small"
 						style={{ marginLeft: 'auto' }}
-						checked={showIP ?? true}
+						value={showIP ?? true}
 						onChange={(checked): void => {
 							logEvent('API Monitoring: Show IP addresses clicked', {
 								showIP: checked,

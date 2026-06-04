@@ -17,10 +17,11 @@ import { getTimeRange } from 'utils/getTimeRange';
 import BarChart from '../../charts/BarChart/BarChart';
 import ChartManager from '../../components/ChartManager/ChartManager';
 import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
-import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
+import { prepareBarPanelConfig } from './utils';
 
 import '../Panel.styles.scss';
 import TooltipFooter from '../components/TooltipFooter';
+import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -31,6 +32,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		isFullViewMode,
 		onToggleModelHandler,
 		groupByPerQuery,
+		enableDrillDown = false,
 	} = props;
 	const uPlotRef = useRef<uPlot | null>(null);
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 	} = usePanelContextMenu({
 		widget,
 		queryResponse,
+		enableDrillDown,
 	});
 
 	const config = useMemo(() => {
@@ -97,7 +100,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		if (!queryResponse?.data?.payload) {
 			return [];
 		}
-		return prepareBarPanelData(queryResponse?.data?.payload);
+		return prepareChartData(queryResponse?.data?.payload);
 	}, [queryResponse?.data?.payload]);
 
 	const layoutChildren = useMemo(() => {

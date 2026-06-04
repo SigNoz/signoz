@@ -211,11 +211,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					event: {
 						name: event.name,
 						timeOffsetMs: eventTimeMs - span.timestamp,
@@ -244,11 +247,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					previewRows: buildPreviewRows(span),
 				});
 				updateCursor(canvas, span);
