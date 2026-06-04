@@ -52,11 +52,7 @@ func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	userID, err := valuer.NewUUID(claims.IdentityID())
 	if err != nil {
@@ -265,11 +261,7 @@ func (handler *handler) pinUnpinV2(rw http.ResponseWriter, r *http.Request, pin 
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	userID, err := valuer.NewUUID(claims.IdentityID())
 	if err != nil {
@@ -311,11 +303,7 @@ func (handler *handler) DeleteV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
