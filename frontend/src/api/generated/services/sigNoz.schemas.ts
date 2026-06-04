@@ -4726,6 +4726,10 @@ export interface DashboardtypesListedDashboardV2DTO {
 	 */
 	id: string;
 	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
 	 * @type boolean
 	 */
 	locked: boolean;

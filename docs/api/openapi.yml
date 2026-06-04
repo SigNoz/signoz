@@ -2794,6 +2794,8 @@ components:
           type: string
         id:
           type: string
+        image:
+          type: string
         locked:
           type: boolean
         name:
