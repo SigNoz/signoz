@@ -320,7 +320,7 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 func (item *StorableSpan) UnmarshalledRefs() []OtelSpanRef {
 	refs := []OtelSpanRef{}
 	if err := json.Unmarshal([]byte(item.References), &refs); err != nil {
-		return []OtelSpanRef{}
+		return []OtelSpanRef{} // skip malformed values
 	}
 	return refs
 }

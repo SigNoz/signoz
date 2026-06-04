@@ -5,16 +5,16 @@ import (
 )
 
 type FlamegraphSpan struct {
-	SpanID       string            `json:"spanId"`
-	ParentSpanID string            `json:"parentSpanId"`
-	Timestamp    uint64            `json:"timestamp"`
-	DurationNano uint64            `json:"durationNano"`
-	HasError     bool              `json:"hasError"`
-	Name         string            `json:"name"`
-	Level        int64             `json:"level"`
+	SpanID       string            `json:"spanId" required:"true"`
+	ParentSpanID string            `json:"parentSpanId" required:"true"`
+	Timestamp    uint64            `json:"timestamp" required:"true"`
+	DurationNano uint64            `json:"durationNano" required:"true"`
+	HasError     bool              `json:"hasError" required:"true"`
+	Name         string            `json:"name" required:"true"`
+	Level        int64             `json:"level" required:"true"`
 	Events       []Event           `json:"event" required:"true" nullable:"false"`
-	Attributes   map[string]any    `json:"attributes,omitempty"`
-	Resource     map[string]string `json:"resource,omitempty"`
+	Attributes   map[string]any    `json:"attributes" required:"true" nullable:"false"`
+	Resource     map[string]string `json:"resource" required:"true" nullable:"false"`
 	Children     []*FlamegraphSpan `json:"-"` // internal tree use only
 }
 
@@ -56,6 +56,8 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		Name:         s.Name,
 		Level:        level,
 		Events:       s.UnmarshalledEvents(),
+		Attributes:   make(map[string]any),
+		Resource:     make(map[string]string),
 	}
 	if len(selectFields) == 0 {
 		return span
@@ -64,16 +66,10 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		switch field.FieldContext {
 		case telemetrytypes.FieldContextResource:
 			if v, ok := s.ResourcesString[field.Name]; ok && v != "" {
-				if span.Resource == nil {
-					span.Resource = make(map[string]string)
-				}
 				span.Resource[field.Name] = v
 			}
 		case telemetrytypes.FieldContextAttribute:
 			if v := s.AttributeValue(field.Name); v != nil {
-				if span.Attributes == nil {
-					span.Attributes = make(map[string]any)
-				}
 				span.Attributes[field.Name] = v
 			}
 		}
@@ -88,7 +84,6 @@ func NewMissingParentFlamegraphSpan(node *FlamegraphSpan) *FlamegraphSpan {
 		Timestamp:    node.Timestamp,
 		DurationNano: node.DurationNano,
 		Events:       []Event{},
-		References:   []OtelSpanRef{},
 		Children:     []*FlamegraphSpan{node},
 	}
 }
