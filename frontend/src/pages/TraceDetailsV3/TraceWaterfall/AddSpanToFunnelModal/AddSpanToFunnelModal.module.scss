@@ -119,6 +119,7 @@
 	gap: 12px;
 	margin-bottom: 14px;
 	align-items: center;
+	background: var(--l3-background);
 }
 
 .searchInput {
@@ -126,16 +127,13 @@
 	padding: 6px 8px;
 	background: var(--l3-background);
 
-	:global(.ant-input-prefix) {
-		height: 18px;
-		margin-inline-end: 6px;
+	height: 18px;
+	margin-inline-end: 6px;
 
-		svg {
-			opacity: 0.4;
-		}
+	svg {
+		opacity: 0.4;
 	}
 
-	&,
 	input {
 		font-size: 14px;
 		line-height: 18px;
