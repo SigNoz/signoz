@@ -62,7 +62,6 @@ type DashboardView struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	types.UserAuditable
 
 	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true"`
 	Data  DashboardViewData `bun:"data,type:jsonb,notnull" json:"data" required:"true"`
@@ -97,12 +96,11 @@ func (p *PostableDashboardView) Validate() error {
 	return p.Data.Validate()
 }
 
-func (p PostableDashboardView) NewDashboardView(orgID valuer.UUID, createdBy string) *DashboardView {
+func (p PostableDashboardView) NewDashboardView(orgID valuer.UUID) *DashboardView {
 	now := time.Now()
 	return &DashboardView{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
 		OrgID:         orgID,
 		Name:          p.Name,
 		Data:          p.Data,
@@ -115,10 +113,9 @@ func (p PostableDashboardView) NewDashboardView(orgID valuer.UUID, createdBy str
 
 type UpdateableDashboardView = PostableDashboardView
 
-func (v *DashboardView) Update(updateable UpdateableDashboardView, updatedBy string) {
+func (v *DashboardView) Update(updateable UpdateableDashboardView) {
 	v.Name = updateable.Name
 	v.Data = updateable.Data
-	v.UpdatedBy = updatedBy
 	v.UpdatedAt = time.Now()
 }
 

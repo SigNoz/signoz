@@ -11,7 +11,7 @@ func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, created
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
-	view := postable.NewDashboardView(orgID, createdBy)
+	view := postable.NewDashboardView(orgID)
 	if err := module.store.CreateDashboardView(ctx, view); err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valu
 	if err != nil {
 		return nil, err
 	}
-	view.Update(updateable, updatedBy)
+	view.Update(updateable)
 	if err := module.store.UpdateDashboardView(ctx, view); err != nil {
 		return nil, err
 	}
