@@ -8103,6 +8103,64 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified account
+        and cloud provider
+      operationId: ListAccountServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List account services metadata
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
     put:
       deprecated: false
