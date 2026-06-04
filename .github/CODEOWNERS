@@ -188,3 +188,7 @@ go.mod @therealpandey
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
 /frontend/src/container/AnomalyAlertEvaluationView/ @SigNoz/pulse-frontend
+
+## OpenAPI Schema - Generated
+/frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
+/docs/api/openapi.yml @therealpandey @vikrantgupta25 @srikanthccv
