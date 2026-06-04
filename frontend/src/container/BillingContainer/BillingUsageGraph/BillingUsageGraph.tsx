@@ -9,9 +9,9 @@ import {
 	LegendPosition,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import uPlot from 'uplot';
-import { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type uPlot from 'uplot';
+import type { UsageResponsePayloadProps } from 'api/billing/getUsage';
 
 import { BillingBarChartTooltip } from './BillingBarChartTooltip';
 import { prepareBillingBarConfig } from './prepareBillingBarConfig';

@@ -11,12 +11,19 @@ export interface DayBreakdownEntry {
 	size: number;
 }
 
+export interface TierEntry {
+	quantity: number;
+	unitPrice: number;
+	tierCost: number;
+}
+
 export interface BreakdownEntry {
 	type: string;
 	unit: string;
 	dayWiseBreakdown: {
 		breakdown: DayBreakdownEntry[];
 	};
+	tiers?: TierEntry[];
 }
 
 export interface UsageResponsePayloadProps {

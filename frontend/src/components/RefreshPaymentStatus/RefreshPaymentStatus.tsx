@@ -11,7 +11,7 @@ function RefreshPaymentStatus({
 	type,
 	className,
 }: {
-	btnShape?: 'default' | 'round' | 'circle';
+	btnShape?: 'default' | 'round';
 	type?: 'button' | 'text' | 'tooltip';
 	className?: string;
 }): JSX.Element {

@@ -15,7 +15,10 @@ import {
 	TableColumnsType as ColumnsType,
 } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import getUsage, {
+	BreakdownEntry,
+	UsageResponsePayloadProps,
+} from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import manageCreditCardApi from 'api/v1/portal/create';
@@ -28,7 +31,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponseV2 } from 'types/api';
+import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
@@ -114,7 +117,7 @@ const dummyColumns: ColumnsType<DataType> = [
 		render: renderSkeletonInput,
 	},
 	{
-		title: 'Cost (Billing period to date)',
+		title: 'Cost',
 		dataIndex: 'cost',
 		key: 'cost',
 		render: renderSkeletonInput,
@@ -129,7 +132,7 @@ export default function BillingContainer(): JSX.Element {
 	const [billAmount, setBillAmount] = useState(0);
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
-	const [data, setData] = useState<any[]>([]);
+	const [data, setData] = useState<DataType[]>([]);
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
@@ -149,7 +152,7 @@ export default function BillingContainer(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const processUsageData = useCallback(
-		(data: any): void => {
+		(data: SuccessResponse<UsageResponsePayloadProps> | ErrorResponse): void => {
 			if (isEmpty(data?.payload)) {
 				return;
 			}
@@ -157,27 +160,23 @@ export default function BillingContainer(): JSX.Element {
 				details: { breakdown = [], billTotal },
 				billingPeriodStart,
 				billingPeriodEnd,
-			} = data?.payload || {};
-			const formattedUsageData: any[] = [];
+			} = (data as SuccessResponse<UsageResponsePayloadProps>).payload;
+			const formattedUsageData: DataType[] = [];
 
 			if (breakdown && Array.isArray(breakdown)) {
 				for (let index = 0; index < breakdown.length; index += 1) {
-					const element = breakdown[index];
+					const element: BreakdownEntry = breakdown[index];
 
-					element?.tiers.forEach(
-						(
-							tier: { quantity: number; unitPrice: number; tierCost: number },
-							i: number,
-						) => {
-							formattedUsageData.push({
-								key: `${index}${i}`,
-								name: i === 0 ? element?.type : '',
-								dataIngested: `${tier.quantity} ${element?.unit}`,
-								pricePerUnit: tier.unitPrice,
-								cost: `$ ${tier.tierCost}`,
-							});
-						},
-					);
+					element?.tiers?.forEach((tier, i: number) => {
+						formattedUsageData.push({
+							key: `${index}${i}`,
+							name: i === 0 ? element?.type : '',
+							unit: element?.unit ?? '',
+							dataIngested: `${tier.quantity} ${element?.unit}`,
+							pricePerUnit: String(tier.unitPrice),
+							cost: `$ ${tier.tierCost}`,
+						});
+					});
 				}
 			}
 
