@@ -24,9 +24,9 @@ var (
 
 type DashboardViewData struct {
 	Version string    `json:"version" required:"true"`
-	Query   string    `json:"query,omitempty"`
-	Sort    ListSort  `json:"sort,omitempty"`
-	Order   ListOrder `json:"order,omitempty"`
+	Query   string    `json:"query"`
+	Sort    ListSort  `json:"sort"`
+	Order   ListOrder `json:"order"`
 }
 
 func (d *DashboardViewData) Validate() error {
@@ -34,7 +34,7 @@ func (d *DashboardViewData) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardViewInvalidInput,
 			"version must be %q, got %q", DashboardViewSchemaVersion, d.Version)
 	}
-	if d.Sort.IsZero() {
+	if !d.Sort.IsZero() {
 		s := d.Sort
 		switch s {
 		case ListSortUpdatedAt, ListSortCreatedAt, ListSortName:
@@ -44,7 +44,7 @@ func (d *DashboardViewData) Validate() error {
 		}
 		d.Sort = s
 	}
-	if d.Order.IsZero() {
+	if !d.Order.IsZero() {
 		o := d.Order
 		switch o {
 		case ListOrderAsc, ListOrderDesc:
