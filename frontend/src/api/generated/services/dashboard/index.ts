@@ -647,7 +647,7 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 };
 
 /**
- * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.
+ * Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).
  * @summary List dashboards (v2)
  */
 export const listDashboardsV2 = (

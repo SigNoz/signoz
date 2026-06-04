@@ -18,7 +18,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ID:                  "ListDashboardsV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "List dashboards (v2)",
-		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned dashboards float to the top of each page.",
+		Description:         "Returns a page of v2-shape dashboards for the calling user's org. Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`name`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`).",
 		Request:             new(dashboardtypes.ListDashboardsV2Params),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.ListableDashboardV2),
