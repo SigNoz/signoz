@@ -2457,33 +2457,6 @@ export interface CloudintegrationtypesAccountDTO {
 	updatedAt?: string;
 }
 
-export interface DashboardtypesStorableDashboardDataDTO {
-	[key: string]: unknown;
-}
-
-export interface CloudintegrationtypesDashboardDTO {
-	definition?: DashboardtypesStorableDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface CloudintegrationtypesAssetsDTO {
-	/**
-	 * @type array,null
-	 */
-	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
-}
-
 export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	/**
 	 * @type string
@@ -2866,6 +2839,54 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	providerAccountId?: string;
 }
 
+export interface CloudintegrationtypesStorableIntegrationDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	slug: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface CloudintegrationtypesServiceDashboardDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	integrationDashboard?: CloudintegrationtypesStorableIntegrationDashboardDTO;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesServiceAssetsDTO {
+	/**
+	 * @type array
+	 */
+	dashboards: CloudintegrationtypesServiceDashboardDTO[];
+}
+
 export interface CloudintegrationtypesSupportedSignalsDTO {
 	/**
 	 * @type boolean
@@ -2877,13 +2898,8 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 	metrics?: boolean;
 }
 
-export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
-	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
-}
-
 export interface CloudintegrationtypesServiceDTO {
-	assets: CloudintegrationtypesAssetsDTO;
+	assets: CloudintegrationtypesServiceAssetsDTO;
 	cloudIntegrationService: CloudintegrationtypesCloudIntegrationServiceDTO | null;
 	dataCollected: CloudintegrationtypesDataCollectedDTO;
 	/**
@@ -2899,7 +2915,6 @@ export interface CloudintegrationtypesServiceDTO {
 	 */
 	overview: string;
 	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
-	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
 	/**
 	 * @type string
 	 */
@@ -3703,6 +3718,10 @@ export interface DashboardtypesCustomVariableSpecDTO {
 	 * @type string
 	 */
 	customValue: string;
+}
+
+export interface DashboardtypesStorableDashboardDataDTO {
+	[key: string]: unknown;
 }
 
 export enum DashboardtypesSourceDTO {
