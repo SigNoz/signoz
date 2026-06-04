@@ -14,7 +14,7 @@ type Compiled struct {
 
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 	if len(query) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	queryVisitor := newVisitor(formatter)
@@ -29,7 +29,7 @@ func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
 			"invalid filter query: %s", strings.Join(queryVisitor.errors, "; "))
 	}
 	if frag == nil || frag.sql == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	return &Compiled{

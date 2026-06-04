@@ -105,6 +105,7 @@ type listedDashboardV2 struct {
 	SchemaVersion string                  `json:"schemaVersion" required:"true"`
 	Name          string                  `json:"name" required:"true"`
 	Pinned        bool                    `json:"pinned" required:"true"`
+	Image         string                  `json:"image,omitempty"`
 	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
 	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
 }
@@ -145,6 +146,7 @@ func NewListableDashboardV2(rows []*DashboardListRow, total int64, tagsByEntity 
 			SchemaVersion: v2.SchemaVersion,
 			Name:          v2.Name,
 			Pinned:        r.Pinned,
+			Image:         v2.Image,
 			Tags:          tagtypes.NewGettableTagsFromTags(v2.Tags),
 			Spec:          listedDashboardV2Spec{Display: v2.Spec.Display},
 		}
