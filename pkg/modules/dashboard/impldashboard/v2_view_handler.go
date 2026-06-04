@@ -24,11 +24,7 @@ func (handler *handler) CreateView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req dashboardtypes.PostableDashboardView
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
@@ -55,11 +51,7 @@ func (handler *handler) ListViews(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	out, err := handler.module.ListViews(ctx, orgID)
 	if err != nil {
@@ -80,11 +72,7 @@ func (handler *handler) UpdateView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
@@ -122,11 +110,7 @@ func (handler *handler) DeleteView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
