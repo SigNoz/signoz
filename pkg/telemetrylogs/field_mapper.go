@@ -341,6 +341,12 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		}
 	}
 
+	// NULL for scalers
+	fallbackExpr := "NULL"
+	if key.FieldDataType.IsArray() {
+		fallbackExpr = "[]"
+	}
+
 	if len(exprs) == 1 {
 		return exprs[0], nil
 	} else if len(exprs) > 1 {
@@ -352,7 +358,9 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 		for i, expr := range exprs {
 			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
 		}
-		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+		finalExprs = append(finalExprs, fallbackExpr)
+
+		return "multiIf(" + strings.Join(finalExprs, ", ") + ")", nil
 	}
 
 	// should not reach here

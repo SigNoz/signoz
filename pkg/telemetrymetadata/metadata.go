@@ -2412,7 +2412,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 			// then check for specific field name
 			selector.FieldName = key.Name
 			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
-				keysToUpdate[i].Evolutions = keyEvolutions
+				keysToUpdate[i].Evolutions = append(keysToUpdate[i].Evolutions, keyEvolutions...)
 			}
 		}
 	}
