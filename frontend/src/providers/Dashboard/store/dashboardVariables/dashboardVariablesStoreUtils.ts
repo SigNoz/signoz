@@ -17,11 +17,11 @@ import {
  * Build a sorted array of variables by their order property
  */
 export function buildSortedVariablesArray(
-	variables: IDashboardVariables,
+	variables?: IDashboardVariables,
 ): IDashboardVariable[] {
 	const sortedVariablesArray: IDashboardVariable[] = [];
 
-	Object.values(variables).forEach((value) => {
+	Object.values(variables ?? {}).forEach((value) => {
 		sortedVariablesArray.push({ ...value });
 	});
 

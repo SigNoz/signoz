@@ -1,0 +1,9 @@
+.dashboardHeader {
+	border-bottom: 1px solid var(--l1-border);
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: center;
+	padding: 0 8px;
+	box-sizing: border-box;
+}
