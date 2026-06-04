@@ -69,3 +69,29 @@ export type ChartProps =
 	| TimeSeriesChartProps
 	| BarChartProps
 	| HistogramChartProps;
+
+/**
+ * One resolved pie/donut slice: a display label, its (already parsed) positive
+ * numeric value, and the colour used for the arc + legend swatch.
+ */
+export interface PieSlice {
+	label: string;
+	value: number;
+	color: string;
+}
+
+/**
+ * Props for the Pie chart. Unlike the others above, Pie is NOT uPlot-based
+ * (it renders with @visx), so it deliberately does not extend BaseChartProps /
+ * UPlotBasedChartProps — it takes pre-resolved slices and self-measures its
+ * draw area rather than receiving a uPlot config + aligned data.
+ */
+export interface PieChartProps {
+	data: PieSlice[];
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	isDarkMode: boolean;
+	/** Fired when a slice (or its legend entry) is clicked. */
+	onSliceClick?: (slice: PieSlice) => void;
+	'data-testid'?: string;
+}
