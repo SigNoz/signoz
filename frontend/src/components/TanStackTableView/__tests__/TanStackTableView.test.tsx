@@ -24,6 +24,8 @@ jest.mock('../TanStackTable.module.scss', () => ({
 }));
 
 beforeAll(() => {
+	// jsdom doesn't include ResizeObserver — must direct-assign rather than
+	// spyOn (spyOn requires the property to already exist).
 	window.ResizeObserver = jest.fn().mockImplementation(() => ({
 		disconnect: jest.fn(),
 		observe: jest.fn(),
@@ -865,6 +867,112 @@ describe('TanStackTableView Integration', () => {
 
 			// When onEndReached is provided, pagination should not render
 			expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('hasSingleColumn — gates the Remove popover per-column', () => {
+		const hasSingleColumnFlagPresent = (): boolean =>
+			Boolean(document.querySelector('th[data-single-column="true"]'));
+
+		it('is true when only one non-pinned column exists', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(true);
+		});
+
+		it('is false when multiple non-pinned columns exist (all removable)', async () => {
+			renderTanStackTable({});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 3 default columns (id/name/value), none pinned, none non-removable
+			// → table is not single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('is false when removable + non-removable mix exists (the body/timestamp case)', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'name',
+							header: 'Timestamp',
+							accessorKey: 'name',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'value',
+							header: 'Body',
+							accessorKey: 'value',
+							enableRemove: false,
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'id',
+							header: 'User',
+							accessorKey: 'id',
+							enableRemove: true,
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(hasSingleColumnFlagPresent()).toBe(false);
+		});
+
+		it('does not count pinned columns toward the total', async () => {
+			renderTanStackTable({
+				props: {
+					data: [{ id: '1', name: 'Item 1', value: 100 }],
+					columns: [
+						{
+							id: 'stateIndicator',
+							header: '',
+							pin: 'left',
+							accessorKey: 'id',
+							cell: ({ value }): string => String(value),
+						},
+						{
+							id: 'name',
+							header: 'Name',
+							accessorKey: 'name',
+							cell: ({ value }): string => String(value),
+						},
+					],
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// 1 pinned + 1 non-pinned → only the non-pinned counts → single-column.
+			expect(hasSingleColumnFlagPresent()).toBe(true);
 		});
 	});
 });

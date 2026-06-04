@@ -56,7 +56,7 @@ function MetricDetails({
 	);
 
 	const metadata = useMemo(() => {
-		if (!metricMetadataResponse) {
+		if (!metricMetadataResponse?.data) {
 			return null;
 		}
 		const { type, description, unit, temporality, isMonotonic } =

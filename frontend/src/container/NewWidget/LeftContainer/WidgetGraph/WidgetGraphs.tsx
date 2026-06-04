@@ -28,9 +28,8 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { UpdateTimeInterval } from 'store/actions';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 function WidgetGraph({
@@ -202,10 +201,7 @@ function WidgetGraph({
 
 interface WidgetGraphProps {
 	selectedWidget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
+	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;

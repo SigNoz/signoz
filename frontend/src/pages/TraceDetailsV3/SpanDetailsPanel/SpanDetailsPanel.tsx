@@ -31,7 +31,12 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
+import {
+	TraceDetailEventKeys,
+	TraceDetailEvents,
+} from 'pages/TraceDetailsV3/events';
 import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
+import { useTraceDetailLogEvent } from 'pages/TraceDetailsV3/hooks/useTraceDetailLogEvent';
 import {
 	getSpanAttribute,
 	getSpanDisplayData,
@@ -86,6 +91,16 @@ function SpanDetailsContent({
 }): JSX.Element {
 	const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 	const spanAttributeActions = useSpanAttributeActions();
+	const logTraceEvent = useTraceDetailLogEvent('v3', selectedSpan.trace_id);
+	const handleTabChange = useCallback(
+		(tab: string): void => {
+			logTraceEvent(TraceDetailEvents.SpanPanelTabChanged, {
+				[TraceDetailEventKeys.Tab]: tab,
+				[TraceDetailEventKeys.SpanId]: selectedSpan.span_id,
+			});
+		},
+		[logTraceEvent, selectedSpan.span_id],
+	);
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
 
@@ -376,7 +391,7 @@ function SpanDetailsContent({
 
 			<div className={styles.tabsSection}>
 				{/* Step 9: ContentTabs */}
-				<TabsRoot defaultValue="overview">
+				<TabsRoot defaultValue="overview" onValueChange={handleTabChange}>
 					<TabsList variant="secondary">
 						<TabsTrigger value="overview" variant="secondary">
 							<Bookmark size={14} /> Overview
