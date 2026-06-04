@@ -105,7 +105,6 @@ function LogsExplorerList({
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		fontSize: options.fontSize,
-		appendTo: 'end',
 	});
 
 	const makeOnLogCopy = useCallback(
@@ -204,6 +203,7 @@ function LogsExplorerList({
 					ref={ref as React.Ref<TanStackTableHandle>}
 					columns={logsColumns}
 					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+					respectColumnOrder={false}
 					onColumnRemove={config?.addColumn?.onRemove}
 					onColumnOrderChange={handleColumnOrderChange}
 					plainTextCellLineClamp={options.maxLines}

@@ -24,9 +24,10 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		// TODO: add http.StatusConflict once the dashboard name unique index is added.
+		ErrorStatusCodes: []int{http.StatusBadRequest},
+		Deprecated:       false,
+		SecuritySchemes:  newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -41,10 +42,84 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UpdateV2), handler.OpenAPIDef{
+		ID:                  "UpdateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Update dashboard (v2)",
+		Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
+		Request:             new(dashboardtypes.UpdatableDashboardV2),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.PatchV2), handler.OpenAPIDef{
+		ID:          "PatchDashboardV2",
+		Tags:        []string{"dashboard"},
+		Summary:     "Patch dashboard (v2)",
+		Description: "This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard. The patch is applied against the postable view of the dashboard (metadata, data, tags), so individual panels, queries, variables, layouts, or tags can be updated without re-sending the rest of the dashboard. Apply is lenient: `remove` on a missing path is a no-op (idempotent) and `add` creates any missing parent objects, rather than failing as strict RFC 6902 would. The resulting dashboard is still validated. Locked dashboards are rejected.",
+		Request:     new(dashboardtypes.PatchableDashboardV2),
+		// Strictly per RFC 6902 the content type is `application/json-patch+json`,
+		// but our OpenAPI generator only reflects schemas for content types it
+		// understands (application/json, form-urlencoded, multipart) — anything
+		// else degrades to `type: string`. Declaring application/json here keeps
+		// the array-of-ops schema visible to spec consumers; the runtime decoder
+		// parses JSON regardless of the request's actual Content-Type header.
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPatch).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/{id}/lock", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.LockV2), handler.OpenAPIDef{
+		ID:                  "LockDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Lock dashboard (v2)",
+		Description:         "This endpoint locks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/{id}/lock", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UnlockV2), handler.OpenAPIDef{
+		ID:                  "UnlockDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Unlock dashboard (v2)",
+		Description:         "This endpoint unlocks a v2-shape dashboard. Only the dashboard's creator or an org admin may lock or unlock.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

@@ -2661,6 +2661,30 @@ components:
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
       type: object
+    DashboardtypesJSONPatchOperation:
+      properties:
+        from:
+          description: Source JSON Pointer for move/copy ops; ignored for other ops.
+          type: string
+        op:
+          $ref: '#/components/schemas/DashboardtypesPatchOp'
+        path:
+          description: JSON Pointer (RFC 6901) into the dashboard's postable shape
+            — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0,
+            /tags/-.
+          type: string
+        value:
+          description: 'Value to add/replace/test against. The expected type depends
+            on the path. Common shapes (see referenced schemas for the exact field
+            set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N
+            (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable;
+            /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a
+            TagtypesPostableTag; /spec/display/name and other leaf string fields take
+            a string. Required for add/replace/test; ignored for remove/move/copy.'
+      required:
+      - op
+      - path
+      type: object
     DashboardtypesLayout:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
@@ -2876,6 +2900,20 @@ components:
             $ref: '#/components/schemas/DashboardtypesQuery'
           type: array
       type: object
+    DashboardtypesPatchOp:
+      enum:
+      - add
+      - remove
+      - replace
+      - move
+      - copy
+      - test
+      type: string
+    DashboardtypesPatchableDashboardV2:
+      items:
+        $ref: '#/components/schemas/DashboardtypesJSONPatchOperation'
+      nullable: true
+      type: array
     DashboardtypesPieChartPanelSpec:
       properties:
         formatting:
@@ -3162,6 +3200,27 @@ components:
           type: boolean
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesUpdatableDashboardV2:
+      properties:
+        image:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesPostableTag'
+          nullable: true
+          type: array
+      required:
+      - schemaVersion
+      - name
+      - tags
+      - spec
       type: object
     DashboardtypesUpdatablePublicDashboard:
       properties:
@@ -12840,6 +12899,12 @@ paths:
                 - data
                 type: object
           description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12892,6 +12957,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -12904,6 +12975,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -12916,6 +12993,262 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get dashboard (v2)
+      tags:
+      - dashboard
+    patch:
+      deprecated: false
+      description: 'This endpoint applies an RFC 6902 JSON Patch to a v2-shape dashboard.
+        The patch is applied against the postable view of the dashboard (metadata,
+        data, tags), so individual panels, queries, variables, layouts, or tags can
+        be updated without re-sending the rest of the dashboard. Apply is lenient:
+        `remove` on a missing path is a no-op (idempotent) and `add` creates any missing
+        parent objects, rather than failing as strict RFC 6902 would. The resulting
+        dashboard is still validated. Locked dashboards are rejected.'
+      operationId: PatchDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesPatchableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint updates a v2-shape dashboard's metadata, data, and
+        tag set. Locked dashboards are rejected.
+      operationId: UpdateDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/lock:
+    delete:
+      deprecated: false
+      description: This endpoint unlocks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: UnlockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Unlock dashboard (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: This endpoint locks a v2-shape dashboard. Only the dashboard's
+        creator or an org admin may lock or unlock.
+      operationId: LockDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Lock dashboard (v2)
       tags:
       - dashboard
   /api/v2/factor_password/forgot:

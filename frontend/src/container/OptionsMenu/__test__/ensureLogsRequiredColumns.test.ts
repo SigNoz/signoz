@@ -67,13 +67,23 @@ describe('ensureLogsRequiredColumns', () => {
 		]);
 	});
 
-	it('does not duplicate if a required column appears twice in the input', () => {
-		// Tolerant of malformed input — invariant only adds *missing* required
-		// columns; it does not deduplicate existing entries (that's a separate
-		// concern, not its job).
+	it('collapses composite-key duplicates in the input', () => {
+		// Two identical `body` entries → deduped to one, then timestamp prepended.
 		const input = [BODY, BODY, ATTR_A];
 		const result = ensureLogsRequiredColumns(input);
-		expect(result.filter((c) => c.name === 'timestamp')).toHaveLength(1);
-		expect(result[0]).toStrictEqual(TIMESTAMP);
+		expect(result).toStrictEqual([TIMESTAMP, BODY, ATTR_A]);
+		expect(result.filter((c) => c.name === 'body')).toHaveLength(1);
+	});
+
+	it('keeps same-name fields with different contexts as distinct columns', () => {
+		// Different composite keys → both legitimate, neither deduped.
+		const ATTR_BODY: TelemetryFieldKey = {
+			name: 'body',
+			signal: 'logs',
+			fieldContext: 'attribute',
+			fieldDataType: 'string',
+		};
+		const input = [TIMESTAMP, BODY, ATTR_BODY];
+		expect(ensureLogsRequiredColumns(input)).toStrictEqual(input);
 	});
 });

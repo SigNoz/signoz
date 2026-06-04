@@ -26,14 +26,18 @@ export function getAlertRuleColumns(
 			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => {
+			cell: ({ row, value }): JSX.Element => {
 				const state = String(value ?? '').toLowerCase();
 				const config = STATE_CONFIG[state] ?? {
 					color: 'secondary' as BadgeColor,
 					label: 'Unknown',
 				};
 				return (
-					<Badge color={config.color} variant="outline">
+					<Badge
+						color={config.color}
+						variant="outline"
+						testId={`alert-row-${row.id ?? ''}-state`}
+					>
 						{config.label}
 					</Badge>
 				);
@@ -47,8 +51,11 @@ export function getAlertRuleColumns(
 			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text title={value}>
+			cell: ({ row, value }): JSX.Element => (
+				<TanStackTable.Text
+					title={value}
+					data-testid={`alert-row-${row.id ?? ''}-name`}
+				>
 					{String(value ?? '-')}
 				</TanStackTable.Text>
 			),
@@ -60,15 +67,20 @@ export function getAlertRuleColumns(
 			width: { fixed: '120px' },
 			enableSort: true,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => {
+			cell: ({ row, value }): JSX.Element => {
 				const severity = String(value ?? '').toLowerCase();
 				if (!severity) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return (
+						<TanStackTable.Text data-testid={`alert-row-${row.id ?? ''}-severity`}>
+							-
+						</TanStackTable.Text>
+					);
 				}
 				return (
 					<Badge
 						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
 						variant="outline"
+						testId={`alert-row-${row.id ?? ''}-severity`}
 					>
 						{severity}
 					</Badge>

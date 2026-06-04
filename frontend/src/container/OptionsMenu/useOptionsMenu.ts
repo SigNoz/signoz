@@ -36,7 +36,7 @@ import {
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import { buildCompositeKey, getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
@@ -281,7 +281,7 @@ const useOptionsMenu = ({
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(f) => buildCompositeKey(f.name, f.fieldContext) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
@@ -363,9 +363,11 @@ const useOptionsMenu = ({
 	const reorderSelectColumns = useCallback(
 		(orderedIds: string[]): void => {
 			const current = preferences?.columns ?? [];
-			const byName = new Map(current.map((f) => [f.name, f]));
+			const byCompositeKey = new Map(
+				current.map((f) => [buildCompositeKey(f.name, f.fieldContext), f]),
+			);
 			const reordered = orderedIds
-				.map((id) => byName.get(id))
+				.map((id) => byCompositeKey.get(id))
 				.filter((f): f is TelemetryFieldKey => f !== undefined);
 			updateColumns(reordered);
 		},
@@ -396,6 +398,10 @@ const useOptionsMenu = ({
 				onSearch: handleSearchAttribute,
 				onReorder: reorderSelectColumns,
 			},
+			fieldsSelector: {
+				value: preferences?.columns ?? [],
+				onFieldsChange: updateColumns,
+			},
 			format: {
 				value: preferences?.formatting?.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
@@ -417,6 +423,7 @@ const useOptionsMenu = ({
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,
 			reorderSelectColumns,
+			updateColumns,
 			handleFormatChange,
 			handleMaxLinesChange,
 			handleFontSizeChange,
