@@ -67,7 +67,7 @@ function AnalyticsPanel({
 		enabled: isOpen,
 	});
 
-	const aggregations = data?.data;
+	const aggregations = data?.data.aggregations;
 
 	const execTimePct = useMemo(
 		() =>

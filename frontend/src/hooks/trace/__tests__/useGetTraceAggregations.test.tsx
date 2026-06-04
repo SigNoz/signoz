@@ -1,13 +1,15 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import getTraceAggregations from 'api/trace/getTraceAggregations';
+import { getTraceAggregations } from 'api/generated/services/tracedetail';
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import useGetTraceAggregations from '../useGetTraceAggregations';
 
-jest.mock('api/trace/getTraceAggregations', () => ({
+jest.mock('api/generated/services/tracedetail', () => ({
 	__esModule: true,
-	default: jest.fn().mockResolvedValue({ httpStatusCode: 200, data: [] }),
+	getTraceAggregations: jest
+		.fn()
+		.mockResolvedValue({ status: 'success', data: { aggregations: [] } }),
 }));
 
 const mockApi = getTraceAggregations as jest.Mock;
@@ -33,7 +35,7 @@ describe('useGetTraceAggregations', () => {
 			{ wrapper },
 		);
 		await waitFor(() => expect(mockApi).toHaveBeenCalledTimes(1));
-		expect(mockApi).toHaveBeenCalledWith({ traceId: 't1', aggregations });
+		expect(mockApi).toHaveBeenCalledWith({ traceID: 't1' }, { aggregations });
 	});
 
 	it('does not fetch when disabled', () => {

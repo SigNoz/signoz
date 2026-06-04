@@ -40,19 +40,21 @@ const renderPanel = (isOpen = true): ReturnType<typeof render> =>
 	render(<AnalyticsPanel isOpen={isOpen} onClose={noop} onTabChange={noop} />);
 
 const aggregationsResponse = {
-	httpStatusCode: 200,
-	data: [
-		{
-			field: { name: 'service.name' },
-			aggregation: 'execution_time_percentage',
-			value: { api: 80, db: 20 },
-		},
-		{
-			field: { name: 'service.name' },
-			aggregation: 'span_count',
-			value: { api: 5, db: 2 },
-		},
-	],
+	status: 'success',
+	data: {
+		aggregations: [
+			{
+				field: { name: 'service.name' },
+				aggregation: 'execution_time_percentage',
+				value: { api: 80, db: 20 },
+			},
+			{
+				field: { name: 'service.name' },
+				aggregation: 'span_count',
+				value: { api: 5, db: 2 },
+			},
+		],
+	},
 };
 
 describe('AnalyticsPanel', () => {
@@ -132,7 +134,7 @@ describe('AnalyticsPanel', () => {
 
 	it('shows an empty state when the field has no data', () => {
 		mockHook.mockReturnValue({
-			data: { httpStatusCode: 200, data: [] },
+			data: { status: 'success', data: { aggregations: [] } },
 			isLoading: false,
 			isError: false,
 		});

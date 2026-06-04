@@ -1,11 +1,10 @@
 import { useQuery, UseQueryResult } from 'react-query';
 import {
+	GetTraceAggregations200,
 	SpantypesSpanAggregationDTO,
-	SpantypesSpanAggregationResultDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import getTraceAggregations from 'api/trace/getTraceAggregations';
+import { getTraceAggregations } from 'api/generated/services/tracedetail';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { SuccessResponseV2 } from 'types/api';
 
 interface UseGetTraceAggregationsProps {
 	traceId: string;
@@ -13,9 +12,7 @@ interface UseGetTraceAggregationsProps {
 	enabled: boolean;
 }
 
-type UseGetTraceAggregations = UseQueryResult<
-	SuccessResponseV2<SpantypesSpanAggregationResultDTO[]>
->;
+type UseGetTraceAggregations = UseQueryResult<GetTraceAggregations200>;
 
 /**
  * Fetches trace aggregations on demand — gate via `enabled` so the request
@@ -28,7 +25,7 @@ const useGetTraceAggregations = ({
 	enabled,
 }: UseGetTraceAggregationsProps): UseGetTraceAggregations =>
 	useQuery({
-		queryFn: () => getTraceAggregations({ traceId, aggregations }),
+		queryFn: () => getTraceAggregations({ traceID: traceId }, { aggregations }),
 		queryKey: [REACT_QUERY_KEY.GET_TRACE_AGGREGATIONS, traceId, aggregations],
 		enabled: enabled && !!traceId && aggregations.length > 0,
 		refetchOnWindowFocus: false,
