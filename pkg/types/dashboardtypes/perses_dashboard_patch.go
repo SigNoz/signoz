@@ -56,18 +56,18 @@ func (PatchOp) Enum() []any {
 func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
 	patch, err := jsonpatch.DecodePatch(data)
 	if err != nil {
-		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
+		return errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	if err := json.Unmarshal(data, &p.Ops); err != nil {
-		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
+		return errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	p.patch = patch
 	return nil
 }
 
-func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboardV2, error) {
-	existingAsUpdateable := existing.toUpdateableDashboardV2()
-	raw, err := json.Marshal(existingAsUpdateable)
+func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdatableDashboardV2, error) {
+	existingAsUpdatable := existing.toUpdatableDashboardV2()
+	raw, err := json.Marshal(existingAsUpdatable)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "marshal existing dashboard for patch")
 	}
@@ -75,7 +75,7 @@ func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboard
 	if err != nil {
 		return nil, errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "JSON Patch could not be applied to the target dashboard")
 	}
-	out := &UpdateableDashboardV2{}
+	out := &UpdatableDashboardV2{}
 	if err := json.Unmarshal(patched, out); err != nil {
 		return nil, err
 	}

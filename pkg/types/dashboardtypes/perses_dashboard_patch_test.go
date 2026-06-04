@@ -121,7 +121,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	// jsonOf marshals the patched dashboard back to JSON so subtests can
 	// assert on field values without reaching into the typed plugin specs.
-	jsonOf := func(t *testing.T, out *UpdateableDashboardV2) string {
+	jsonOf := func(t *testing.T, out *UpdatableDashboardV2) string {
 		t.Helper()
 		raw, err := json.Marshal(out)
 		require.NoError(t, err)

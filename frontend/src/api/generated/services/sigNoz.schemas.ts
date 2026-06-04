@@ -4814,18 +4814,7 @@ export enum DashboardtypesQueryPluginKindDTO {
 	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
 	'signoz/TraceOperator' = 'signoz/TraceOperator',
 }
-export interface DashboardtypesUpdatablePublicDashboardDTO {
-	/**
-	 * @type string
-	 */
-	defaultTimeRange?: string;
-	/**
-	 * @type boolean
-	 */
-	timeRangeEnabled?: boolean;
-}
-
-export interface DashboardtypesUpdateableDashboardV2DTO {
+export interface DashboardtypesUpdatableDashboardV2DTO {
 	/**
 	 * @type string
 	 */
@@ -4843,6 +4832,17 @@ export interface DashboardtypesUpdateableDashboardV2DTO {
 	 * @type array,null
 	 */
 	tags: TagtypesPostableTagDTO[] | null;
+}
+
+export interface DashboardtypesUpdatablePublicDashboardDTO {
+	/**
+	 * @type string
+	 */
+	defaultTimeRange?: string;
+	/**
+	 * @type boolean
+	 */
+	timeRangeEnabled?: boolean;
 }
 
 export enum DashboardtypesVariablePluginKindDTO {

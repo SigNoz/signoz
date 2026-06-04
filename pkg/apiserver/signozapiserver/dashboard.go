@@ -71,7 +71,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Tags:                []string{"dashboard"},
 		Summary:             "Update dashboard (v2)",
 		Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
-		Request:             new(dashboardtypes.UpdateableDashboardV2),
+		Request:             new(dashboardtypes.UpdatableDashboardV2),
 		RequestContentType:  "application/json",
 		Response:            new(dashboardtypes.GettableDashboardV2),
 		ResponseContentType: "application/json",
