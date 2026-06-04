@@ -5,5 +5,5 @@
 .itemList {
 	overflow-y: auto;
 	max-height: 300px;
-	padding: 12px;
+	padding: var(--padding-3);
 }
