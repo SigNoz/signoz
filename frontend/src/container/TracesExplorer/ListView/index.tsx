@@ -207,8 +207,9 @@ function ListView({
 			const reordered = [...columns];
 			const [moved] = reordered.splice(fromIndex, 1);
 			reordered.splice(toIndex, 0, moved);
+			// `key` is the composite (fieldContext.name) — disambiguates same-name fields.
 			const orderedIds = reordered
-				.map((c) => String(('dataIndex' in c && c.dataIndex) || c.key || ''))
+				.map((c) => String(c.key || ('dataIndex' in c && c.dataIndex) || ''))
 				.filter(Boolean);
 			config?.addColumn?.onReorder(orderedIds);
 		},
