@@ -149,8 +149,6 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			errors.CodeInvalidInput,
 			"unknown query type %q",
 			shadow.Type,
-		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		).WithSuggestions(enumReferencesSuggestion(QueryType{}.Enum()))
 	}
 
@@ -240,8 +238,6 @@ func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q in composite query",
 				field,
-			).WithAdditional(
-				"Valid fields are: " + strings.Join(fieldNames, ", "),
 			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
 			return unknownFieldErr
 		}
@@ -567,8 +563,6 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 				errors.CodeInvalidInput,
 				"unknown field %q",
 				field,
-			).WithAdditional(
-				"Valid fields are: " + strings.Join(fieldNames, ", "),
 			).WithSuggestions(errors.Suggestions(field, fieldNames)...)
 			return unknownFieldErr
 		}

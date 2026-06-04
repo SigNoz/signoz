@@ -294,7 +294,6 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			validKeys = append(validKeys, k)
 		}
 		sort.Strings(validKeys)
-		additional := []string{"Valid references are: [" + strings.Join(validKeys, ", ") + "]"}
 		// Each suggestion is a self-describing string prefixed with either
 		// "did you mean: " (the full corrected expression) or "valid references: "
 		// (the set of valid references).
@@ -307,9 +306,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			// a simple string substitution produce a corrupt expression.
 			isFuncCall := strings.Contains(original, inv+"(")
 			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				corrected := strings.ReplaceAll(original, inv, match)
-				additional = append(additional, "Suggestion: `"+corrected+"`")
-				suggestions = append(suggestions, errors.DidYouMean(corrected))
+				suggestions = append(suggestions, errors.DidYouMean(strings.ReplaceAll(original, inv, match)))
 			}
 		}
 		suggestions = append(suggestions, errors.ValidReferences(validKeys...))
@@ -317,7 +314,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithAdditional(additional...).WithSuggestions(suggestions...)
+		).WithSuggestions(suggestions...)
 		return "", havingErr
 	}
 
