@@ -27,15 +27,6 @@ REQUIRED_METRICS = {
 }
 
 
-def _post(signoz: types.SigNoz, token: str, body: dict) -> requests.Response:
-    return requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json=body,
-        timeout=5,
-    )
-
-
 def test_clusters_happy_path(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -52,14 +43,15 @@ def test_clusters_happy_path(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -131,14 +123,15 @@ def test_clusters_value_accuracy(
     exp_by_name = {r["clusterName"]: r for r in expected["records"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -173,14 +166,15 @@ def test_clusters_missing_metrics(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -190,147 +184,32 @@ def test_clusters_missing_metrics(
     assert data["total"] == 0
 
 
-def test_clusters_filter_and(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """AND of two attribute clauses returns only the matching clusters."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "cloud.provider = 'gcp' AND env = 'prod'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["clusterName"] for r in data["records"]} == {"web-gcp-prod", "api-gcp-prod"}
-    assert data["total"] == 2
-
-
-def test_clusters_filter_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """IN (...) returns exactly the listed clusters."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.cluster.name IN ('web-gcp-prod', 'api-aws-dev')"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["clusterName"] for r in data["records"]} == {"web-gcp-prod", "api-aws-dev"}
-    assert data["total"] == 2
-
-
-def test_clusters_filter_not_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """NOT IN on the partition key returns the rest.
-    NOT IN on a non-partition label (e.g. cloud.provider) is unreliable — likely
-    a QB v5 label-extraction gap; covered indirectly via the and_not_in combo."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": ("k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev', 'api-gcp-prod', 'api-gcp-dev')")},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["clusterName"] for r in data["records"]} == {
-        "web-aws-prod",
-        "web-aws-dev",
-        "api-aws-prod",
-        "api-aws-dev",
-    }
-
-
-def test_clusters_filter_contains(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """CONTAINS performs substring match on the attribute value."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.cluster.name CONTAINS 'web'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {r["clusterName"] for r in data["records"]} == {
-        "web-gcp-prod",
-        "web-gcp-dev",
-        "web-aws-prod",
-        "web-aws-dev",
-    }
-
-
 @pytest.mark.parametrize(
     "expression,expected",
     [
+        pytest.param(
+            "cloud.provider = 'gcp' AND env = 'prod'",
+            {"web-gcp-prod", "api-gcp-prod"},
+            id="and",
+        ),
+        pytest.param(
+            "k8s.cluster.name IN ('web-gcp-prod', 'api-aws-dev')",
+            {"web-gcp-prod", "api-aws-dev"},
+            id="in",
+        ),
+        # NOT IN on the partition key returns the rest. NOT IN on a
+        # non-partition label (e.g. cloud.provider) is unreliable — likely a
+        # QB v5 label-extraction gap; covered indirectly via the and_not_in combo.
+        pytest.param(
+            "k8s.cluster.name NOT IN ('web-gcp-prod', 'web-gcp-dev', 'api-gcp-prod', 'api-gcp-dev')",
+            {"web-aws-prod", "web-aws-dev", "api-aws-prod", "api-aws-dev"},
+            id="not_in",
+        ),
+        pytest.param(
+            "k8s.cluster.name CONTAINS 'web'",
+            {"web-gcp-prod", "web-gcp-dev", "web-aws-prod", "web-aws-dev"},
+            id="contains",
+        ),
         pytest.param(
             "cloud.provider = 'gcp' AND k8s.cluster.name IN ('web-gcp-prod', 'api-gcp-prod')",
             {"web-gcp-prod", "api-gcp-prod"},
@@ -353,7 +232,7 @@ def test_clusters_filter_contains(
         ),
     ],
 )
-def test_clusters_filter_combos(
+def test_clusters_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -371,15 +250,16 @@ def test_clusters_filter_combos(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -387,54 +267,24 @@ def test_clusters_filter_combos(
     assert data["total"] == len(expected)
 
 
-def test_clusters_filter_bad_attr_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Filter with a typo'd attribute key returns 400 invalid_input."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.cluster.namee = 'web-gcp-prod'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    body = response.json()
-    assert body["status"] == "error"
-    assert body["error"]["code"] == "invalid_input"
-    assert any("k8s.cluster.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
-
-
 @pytest.mark.parametrize(
-    "expression",
+    "expression,err_substr",
     [
-        pytest.param("k8s.cluster.name =", id="trailing_op"),
-        pytest.param("(k8s.cluster.name = 'web-gcp-prod'", id="unclosed_paren"),
+        pytest.param("k8s.cluster.namee = 'web-gcp-prod'", "k8s.cluster.namee", id="bad_attr_name"),
+        pytest.param("k8s.cluster.name =", None, id="trailing_op"),
+        pytest.param("(k8s.cluster.name = 'web-gcp-prod'", None, id="unclosed_paren"),
     ],
 )
-def test_clusters_filter_bad_grammar(
+def test_clusters_filter_invalid(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     expression: str,
+    err_substr,
 ) -> None:
-    """Malformed filter expressions return 400 invalid_input."""
+    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
+    400 invalid_input with structured errors; bad attribute keys are named in them."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -444,21 +294,24 @@ def test_clusters_filter_bad_grammar(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
     assert len(body["error"]["errors"]) > 0
+    if err_substr is not None:
+        assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
 def test_clusters_node_readiness_aggregation(
@@ -477,15 +330,16 @@ def test_clusters_node_readiness_aggregation(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": "k8s.cluster.name = 'rn-cluster'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -511,15 +365,16 @@ def test_clusters_pod_phase_aggregation(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": "k8s.cluster.name = 'pp-cluster'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -552,10 +407,10 @@ def test_clusters_groupby_cloud_provider(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
@@ -567,6 +422,7 @@ def test_clusters_groupby_cloud_provider(
                 }
             ],
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -608,16 +464,17 @@ def test_clusters_pagination_sync(
     seen_totals: set[int] = set()
 
     for offset in (0, 3, 6):
-        response = _post(
-            signoz,
-            token,
-            {
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
                 "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
                 "end": int(now.timestamp() * 1000),
                 "limit": limit,
                 "offset": offset,
                 "filter": {"expression": "k8s.cluster.name CONTAINS 'page-'"},
             },
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
@@ -648,16 +505,17 @@ def test_clusters_offset_beyond_total(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 7
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 3,
             "offset": K + 5,
             "filter": {"expression": "k8s.cluster.name CONTAINS 'page-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -665,13 +523,21 @@ def test_clusters_offset_beyond_total(
     assert data["total"] == K
 
 
+# orderBy keys per clusters_constants.go (cpu, cpu_allocatable, memory, memory_allocatable).
+@pytest.mark.parametrize(
+    "column",
+    ["cpu", "cpu_allocatable", "memory", "memory_allocatable"],
+)
+@pytest.mark.parametrize("direction", ["asc", "desc"])
 def test_clusters_total_invariant_across_orderby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    column: str,
+    direction: str,
 ) -> None:
-    """Total stays K across all 4 orderBy metric columns x 2 directions = 8 calls."""
+    """Total stays K across all orderBy column x direction combinations."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -683,25 +549,23 @@ def test_clusters_total_invariant_across_orderby(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 5
 
-    # orderBy keys per clusters_constants.go (cpu, cpu_allocatable, memory, memory_allocatable).
-    for column in ("cpu", "cpu_allocatable", "memory", "memory_allocatable"):
-        for direction in ("asc", "desc"):
-            response = _post(
-                signoz,
-                token,
-                {
-                    "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-                    "end": int(now.timestamp() * 1000),
-                    "limit": 50,
-                    "orderBy": {"key": {"name": column}, "direction": direction},
-                    "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
-                },
-            )
-            ctx = f"orderBy={column} {direction}"
-            assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
-            data = response.json()["data"]
-            assert data["total"] == K, f"{ctx}: total={data['total']}"
-            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {"key": {"name": column}, "direction": direction},
+            "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
+        },
+        timeout=5,
+    )
+    ctx = f"orderBy={column} {direction}"
+    assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
+    data = response.json()["data"]
+    assert data["total"] == K, f"{ctx}: total={data['total']}"
+    assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
 
 @pytest.mark.parametrize(
@@ -733,16 +597,17 @@ def test_clusters_orderby_correctness(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": column}, "direction": direction},
             "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -770,16 +635,17 @@ def test_clusters_orderby_by_cluster_name(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": "k8s.cluster.name"}, "direction": direction},
             "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -848,43 +714,13 @@ def test_clusters_validation_errors(
     body.update(payload_override)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json=body,
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
     assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
-
-
-@pytest.mark.parametrize(
-    "auth_state,expected_status",
-    [
-        pytest.param("none", HTTPStatus.UNAUTHORIZED, id="no_token"),
-        pytest.param("admin", HTTPStatus.OK, id="admin_token"),
-    ],
-)
-def test_clusters_auth(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    auth_state: str,
-    expected_status: int,
-) -> None:
-    """Auth required: no Authorization header -> 401; admin Bearer -> 200."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    body = {
-        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-        "end": int(now.timestamp() * 1000),
-        "limit": 50,
-    }
-    headers: dict = {}
-    if auth_state == "admin":
-        token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-        headers["authorization"] = f"Bearer {token}"
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers=headers,
-        json=body,
-        timeout=5,
-    )
-    assert response.status_code == expected_status, response.text
