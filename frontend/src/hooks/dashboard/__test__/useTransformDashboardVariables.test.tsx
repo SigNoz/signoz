@@ -71,7 +71,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			const orders = Object.values(result.data.variables).map((v) => v.order);
+			const orders = Object.values(result.data.variables!).map((v) => v.order);
 			expect(orders).toContain(0);
 			expect(orders).toContain(1);
 		});
@@ -84,7 +84,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.order).toBe(5);
+			expect(result.data.variables!.v1.order).toBe(5);
 		});
 
 		it('assigns unique orders across multiple variables that all lack an order', () => {
@@ -97,7 +97,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			const orders = Object.values(result.data.variables).map((v) => v.order);
+			const orders = Object.values(result.data.variables!).map((v) => v.order);
 			// All three newly assigned orders must be distinct
 			expect(new Set(orders).size).toBe(3);
 		});
@@ -112,7 +112,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.id).toMatch(
+			expect(result.data.variables!.v1.id).toMatch(
 				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
 			);
 		});
@@ -125,7 +125,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.id).toBe('keep-me');
+			expect(result.data.variables!.v1.id).toBe('keep-me');
 		});
 	});
 
@@ -145,7 +145,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.defaultValue).toBe('hello');
+			expect(result.data.variables!.v1.defaultValue).toBe('hello');
 		});
 
 		it('does not overwrite an existing defaultValue', () => {
@@ -163,7 +163,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.defaultValue).toBe('keep');
+			expect(result.data.variables!.v1.defaultValue).toBe('keep');
 		});
 	});
 
@@ -178,7 +178,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toBe('staging');
+			expect(result.data.variables!.v1.selectedValue).toBe('staging');
 		});
 
 		it('applies localStorage allSelected over DB value', () => {
@@ -196,7 +196,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.allSelected).toBe(true);
+			expect(result.data.variables!.v1.allSelected).toBe(true);
 		});
 	});
 
@@ -217,7 +217,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.allSelected).toBe(true);
+			expect(result.data.variables!.v1.allSelected).toBe(true);
 		});
 
 		it('sets selectedValue from URL and clears allSelected when showALLOption is true', () => {
@@ -237,8 +237,8 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toBe('dev');
-			expect(result.data.variables.v1.allSelected).toBe(false);
+			expect(result.data.variables!.v1.selectedValue).toBe('dev');
+			expect(result.data.variables!.v1.allSelected).toBe(false);
 		});
 
 		it('does not set allSelected=false when showALLOption is false', () => {
@@ -258,8 +258,8 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toBe('dev');
-			expect(result.data.variables.v1.allSelected).toBe(true);
+			expect(result.data.variables!.v1.selectedValue).toBe('dev');
+			expect(result.data.variables!.v1.allSelected).toBe(true);
 		});
 
 		it('normalizes array URL value to single value for single-select variable', () => {
@@ -277,7 +277,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toBe('prod');
+			expect(result.data.variables!.v1.selectedValue).toBe('prod');
 		});
 
 		it('wraps single URL value in array for multi-select variable', () => {
@@ -292,7 +292,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toStrictEqual(['prod']);
+			expect(result.data.variables!.v1.selectedValue).toStrictEqual(['prod']);
 		});
 
 		it('looks up URL variable by variable id when name is absent', () => {
@@ -306,7 +306,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toBe('fallback');
+			expect(result.data.variables!.v1.selectedValue).toBe('fallback');
 		});
 	});
 
@@ -327,11 +327,11 @@ describe('useTransformDashboardVariables', () => {
 			const dashboard = makeDashboard({
 				v1: makeVariable({ id: 'id1', name: 'env', selectedValue: 'prod' }),
 			});
-			const originalValue = dashboard.data.variables.v1.selectedValue;
+			const originalValue = dashboard.data.variables!.v1.selectedValue;
 
 			transformDashboardVariables(dashboard);
 
-			expect(dashboard.data.variables.v1.selectedValue).toBe(originalValue);
+			expect(dashboard.data.variables!.v1.selectedValue).toBe(originalValue);
 		});
 	});
 });
