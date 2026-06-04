@@ -56,10 +56,10 @@ func (PatchOp) Enum() []any {
 func (p *PatchableDashboardV2) UnmarshalJSON(data []byte) error {
 	patch, err := jsonpatch.DecodePatch(data)
 	if err != nil {
-		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
+		return errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	if err := json.Unmarshal(data, &p.Ops); err != nil {
-		return errors.Wrap(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
+		return errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidPatch, "request body is not a valid RFC 6902 JSON Patch document").WithAdditional(err.Error())
 	}
 	p.patch = patch
 	return nil
