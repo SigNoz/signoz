@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import {
@@ -23,8 +23,6 @@ jest.mock('providers/cmdKProvider', () => ({
 		closeCmdK: jest.fn(),
 	}),
 }));
-
-jest.mock('api/common/logEvent', () => jest.fn());
 
 // Mock the AppContext
 const mockUpdateUserPreferenceInContext = jest.fn();
@@ -139,7 +137,7 @@ describe('Sidebar Toggle Shortcut', () => {
 		it('should log the toggle event with correct parameters', async () => {
 			const user = userEvent.setup();
 			const mockHandleShortcut = jest.fn(() => {
-				logEvent('Global Shortcut: Sidebar Toggle', {
+				logEventMock('Global Shortcut: Sidebar Toggle', {
 					previousState: false,
 					newState: true,
 				});
@@ -155,10 +153,13 @@ describe('Sidebar Toggle Shortcut', () => {
 
 			await user.keyboard(SHIFT_B_KEYBOARD_SHORTCUT);
 
-			expect(logEvent).toHaveBeenCalledWith('Global Shortcut: Sidebar Toggle', {
-				previousState: false,
-				newState: true,
-			});
+			expect(logEventMock).toHaveBeenCalledWith(
+				'Global Shortcut: Sidebar Toggle',
+				{
+					previousState: false,
+					newState: true,
+				},
+			);
 		});
 
 		it('should update user preference in context', async () => {

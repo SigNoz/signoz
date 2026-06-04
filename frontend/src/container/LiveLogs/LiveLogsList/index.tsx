@@ -82,7 +82,6 @@ function LiveLogsList({
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		fontSize: options.fontSize,
-		appendTo: 'end',
 	});
 
 	const makeOnLogCopy = useCallback(
@@ -198,6 +197,7 @@ function LiveLogsList({
 							ref={ref as React.Ref<TanStackTableHandle>}
 							columns={logsColumns}
 							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+							respectColumnOrder={false}
 							onColumnRemove={config?.addColumn?.onRemove}
 							plainTextCellLineClamp={options.maxLines}
 							cellTypographySize={options.fontSize}

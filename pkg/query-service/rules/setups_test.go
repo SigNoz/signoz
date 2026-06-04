@@ -89,6 +89,9 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
 		fl,
+		nil,
+		false,
+		100000,
 	)
 
 	return querier.New(
@@ -134,6 +137,8 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		traceAggExprRewriter,
 		telemetryStore,
 		fl,
+		false,
+		100000,
 	)
 
 	return querier.New(

@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { UseQueryResult } from 'react-query';
-import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import { usePanelContextMenu } from '../usePanelContextMenu';
 
@@ -47,10 +46,7 @@ const mockWidget = { id: 'w-1', query: {} } as unknown as Widgets;
 const mockQueryResponse = {
 	data: undefined,
 	isLoading: false,
-} as unknown as UseQueryResult<
-	SuccessResponse<MetricRangePayloadProps, unknown>,
-	Error
->;
+} as unknown as UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 describe('usePanelContextMenu', () => {
 	beforeEach(() => {
