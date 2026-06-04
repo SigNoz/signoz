@@ -2,7 +2,7 @@ package spantypes
 
 import "encoding/json"
 
-// The Event struct has the data exactly store in the db, while this is more of what we want to send to user
+// The Event struct has the data exactly store in the db, while EventV2 is more of what we want to send to client.
 type EventV2 struct {
 	Name         string         `json:"name"`
 	TimeUnixNano uint64         `json:"timeUnixNano"`
