@@ -4596,10 +4596,6 @@ export interface DashboardtypesDashboardViewDTO {
 	 * @format date-time
 	 */
 	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
 	data: DashboardtypesDashboardViewDataDTO;
 	/**
 	 * @type string
@@ -4618,10 +4614,6 @@ export interface DashboardtypesDashboardViewDTO {
 	 * @format date-time
 	 */
 	updatedAt?: string;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
 }
 
 export enum DashboardtypesDatasourcePluginKindDTO {

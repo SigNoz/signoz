@@ -2529,8 +2529,6 @@ components:
         createdAt:
           format: date-time
           type: string
-        createdBy:
-          type: string
         data:
           $ref: '#/components/schemas/DashboardtypesDashboardViewData'
         id:
@@ -2541,8 +2539,6 @@ components:
           type: string
         updatedAt:
           format: date-time
-          type: string
-        updatedBy:
           type: string
       required:
       - id
