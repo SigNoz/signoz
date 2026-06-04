@@ -11,6 +11,7 @@ import noUnsupportedAssetPattern from './rules/no-unsupported-asset-pattern.mjs'
 import noRawAbsolutePath from './rules/no-raw-absolute-path.mjs';
 import noAntdComponents from './rules/no-antd-components.mjs';
 import noSignozhqUiBarrel from './rules/no-signozhq-ui-barrel.mjs';
+import noCssModuleBracketAccess from './rules/no-css-module-bracket-access.mjs';
 
 export default {
 	meta: {
@@ -23,5 +24,6 @@ export default {
 		'no-raw-absolute-path': noRawAbsolutePath,
 		'no-antd-components': noAntdComponents,
 		'no-signozhq-ui-barrel': noSignozhqUiBarrel,
+		'no-css-module-bracket-access': noCssModuleBracketAccess,
 	},
 };
