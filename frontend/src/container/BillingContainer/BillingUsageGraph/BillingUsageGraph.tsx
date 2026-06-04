@@ -21,7 +21,7 @@ import {
 	fillMissingValuesForQuantities,
 } from './utils';
 
-import './BillingUsageGraph.styles.scss';
+import styles from './BillingUsageGraph.module.scss';
 
 interface BillingUsageGraphProps {
 	data: Partial<UsageResponsePayloadProps>;
@@ -117,18 +117,18 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	);
 
 	return (
-		<Card bordered={false} className="billing-graph-card">
+		<Card bordered={false} className={styles.billingGraphCard}>
 			<Flex justify="space-between">
 				<Flex vertical gap={6}>
-					<Typography.Text className="total-spent-title">
+					<Typography.Text className={styles.totalSpentTitle}>
 						TOTAL SPENT
 					</Typography.Text>
-					<Typography.Text className="total-spent">
+					<Typography.Text className={styles.totalSpent}>
 						${numberFormatter.format(billAmount)}
 					</Typography.Text>
 				</Flex>
 			</Flex>
-			<div ref={graphRef} className="graph-container">
+			<div ref={graphRef} className={styles.graphContainer}>
 				{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 					<BarChart
 						config={config}

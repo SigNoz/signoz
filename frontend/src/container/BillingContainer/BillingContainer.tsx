@@ -40,7 +40,7 @@ import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
-import './BillingContainer.styles.scss';
+import styles from './BillingContainer.module.scss';
 import { LicenseState } from 'types/api/licensesV3/getActive';
 
 interface DataType {
@@ -399,12 +399,12 @@ export default function BillingContainer(): JSX.Element {
 		trialInfo?.gracePeriodEnd;
 
 	return (
-		<div className="billing-container">
-			<Flex vertical gap={4} className="page-header">
-				<Typography.Text className="page-header__title">
+		<div className={styles.billingContainer}>
+			<Flex vertical gap={4} className={styles.pageHeader}>
+				<Typography.Text className={styles.pageHeaderTitle}>
 					{t('billing')}
 				</Typography.Text>
-				<Typography.Text className="page-header__subtitle">
+				<Typography.Text className={styles.pageHeaderSubtitle}>
 					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
@@ -412,17 +412,17 @@ export default function BillingContainer(): JSX.Element {
 			<Card
 				bordered={false}
 				style={{ minHeight: 150, marginBottom: 16 }}
-				className="page-info"
+				className={styles.pageInfo}
 			>
 				<Flex justify="space-between" align="center">
 					<Flex vertical gap={8}>
-						<p className="page-info-title">
+						<p className={styles.pageInfoTitle}>
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
 							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
 						</p>
 
 						{!isLoading && !isFetchingBillingData && !showGracePeriodMessage ? (
-							<p className="page-info-subtitle">
+							<p className={styles.pageInfoSubtitle}>
 								{daysRemaining} {daysRemainingStr}
 							</p>
 						) : null}
@@ -436,7 +436,7 @@ export default function BillingContainer(): JSX.Element {
 						disabled={isLoading}
 						onClick={handleBilling}
 						prefix={<Landmark size={14} />}
-						className="billing-manage-btn"
+						className={styles.billingManageBtn}
 					>
 						{trialInfo?.trialConvertedToSubscription
 							? t('manage_billing')
@@ -493,16 +493,16 @@ export default function BillingContainer(): JSX.Element {
 					))}
 			</Card>
 
-			<div className="billing-graph-section">
+			<div className={styles.billingGraphSection}>
 				{!isLoading && !isFetchingBillingData ? (
 					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
 				) : (
-					<Card className="empty-graph-card" bordered={false}>
+					<Card className={styles.emptyGraphCard} bordered={false}>
 						<Spinner size="large" tip="Loading..." height="35vh" />
 					</Card>
 				)}
 				{!isLoading && !isFetchingBillingData && (
-					<div className="billing-graph-footer">
+					<div className={styles.billingGraphFooter}>
 						<Button
 							variant="outlined"
 							color="secondary"
@@ -510,21 +510,21 @@ export default function BillingContainer(): JSX.Element {
 							onClick={handleCsvDownload}
 							prefix={<MonitorDown size={14} />}
 							testId="download-csv-button"
-							className="billing-footer-btn"
+							className={styles.billingFooterBtn}
 						>
 							Download CSV
 						</Button>
-						<RefreshPaymentStatus type="button" className="billing-footer-btn" />
+						<RefreshPaymentStatus type="button" className={styles.billingFooterBtn} />
 					</div>
 				)}
 			</div>
 			{!isLoading && !isFetchingBillingData && (
-				<Callout type="info" size="small" className="billing-update-note">
+				<Callout type="info" size="small" className={styles.billingUpdateNote}>
 					Billing metrics are updated once every 24 hours.
 				</Callout>
 			)}
 
-			<div className="billing-details">
+			<div className={styles.billingDetails}>
 				{!isLoading && !isFetchingBillingData && (
 					<Table
 						columns={columns}
@@ -542,7 +542,7 @@ export default function BillingContainer(): JSX.Element {
 										<th
 											{...props}
 											style={safeStyle}
-											className={`${props.className ?? ''} billing-details__header-cell`}
+											className={`${props.className ?? ''} ${styles.billingDetailsHeaderCell}`}
 										/>
 									);
 								},
@@ -559,7 +559,7 @@ export default function BillingContainer(): JSX.Element {
 			)}
 
 			{!trialInfo?.trialConvertedToSubscription && (
-				<div className="upgrade-plan-benefits">
+				<div className={styles.upgradePlanBenefits}>
 					<Row
 						justify="space-between"
 						align="middle"
@@ -568,16 +568,16 @@ export default function BillingContainer(): JSX.Element {
 						}}
 						gutter={[16, 16]}
 					>
-						<Col span={20} className="plan-benefits">
-							<Typography.Text className="plan-benefit">
+						<Col span={20} className={styles.planBenefits}>
+							<Typography.Text className={styles.planBenefit}>
 								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
 							</Typography.Text>
-							<Typography.Text className="plan-benefit">
+							<Typography.Text className={styles.planBenefit}>
 								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
-							<Typography.Text className="plan-benefit">
+							<Typography.Text className={styles.planBenefit}>
 								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;

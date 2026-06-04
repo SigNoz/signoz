@@ -1,21 +1,25 @@
-.graph-container {
+.graphContainer {
 	height: 100%;
 }
 
-.billing-graph-card {
-	.uplot-no-data {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+.billingGraphCard {
+	:global {
+		.uplot-no-data {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
 
-	.ant-card-body {
-		height: 40vh;
-		.uplot-graph-container {
-			padding: 8px;
+		.ant-card-body {
+			height: 40vh;
+
+			.uplot-graph-container {
+				padding: 8px;
+			}
 		}
 	}
-	.total-spent {
+
+	.totalSpent {
 		font-family: 'SF Mono', monospace;
 		font-size: 16px;
 		font-style: normal;
@@ -23,7 +27,7 @@
 		line-height: 24px;
 	}
 
-	.total-spent-title {
+	.totalSpentTitle {
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 22px;

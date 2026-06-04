@@ -29,23 +29,25 @@ export const convertDataToMetricRangePayload = (
 		return emptyStateData;
 	}
 
-	const payload = breakdown.map((info: any) => {
-		const metric = info.type;
-		const sortedBreakdownData = (info?.dayWiseBreakdown?.breakdown || []).sort(
-			(a: any, b: any) => a.timestamp - b.timestamp,
-		);
-		const values = (sortedBreakdownData || []).map((categoryInfo: any) => [
-			categoryInfo.timestamp,
-			categoryInfo.total,
-		]);
-		const queryName = info.type;
-		const legend = info.type;
-		const { unit } = info;
-		const quantity = sortedBreakdownData.map(
-			(categoryInfo: any) => categoryInfo.quantity,
-		);
-		return { metric, values, queryName, legend, quantity, unit };
-	});
+	const payload = breakdown
+		.map((info: any) => {
+			const metric = info.type;
+			const sortedBreakdownData = (info?.dayWiseBreakdown?.breakdown || []).sort(
+				(a: any, b: any) => a.timestamp - b.timestamp,
+			);
+			const values = (sortedBreakdownData || []).map((categoryInfo: any) => [
+				categoryInfo.timestamp,
+				categoryInfo.total,
+			]);
+			const queryName = info.type;
+			const legend = info.type;
+			const { unit } = info;
+			const quantity = sortedBreakdownData.map(
+				(categoryInfo: any) => categoryInfo.quantity,
+			);
+			return { metric, values, queryName, legend, quantity, unit };
+		})
+		.filter((series: any) => series.values.length > 0);
 
 	const sortedData = payload.sort((a: any, b: any) => {
 		const sumA = a.values.reduce((acc: any, val: any) => acc + val[1], 0);

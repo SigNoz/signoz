@@ -1,13 +1,13 @@
-.billing-container {
+.billingContainer {
 	margin-bottom: var(--spacing-20);
 	padding-top: 36px;
 	width: 90%;
 	margin: 0 auto;
 
-	.page-header {
+	.pageHeader {
 		margin-bottom: var(--spacing-8);
 
-		&__title {
+		.pageHeaderTitle {
 			font-weight: var(--label-medium-500-font-weight);
 			font-size: var(--label-medium-500-font-size);
 			line-height: 32px;
@@ -15,7 +15,7 @@
 			color: var(--l1-foreground);
 		}
 
-		&__subtitle {
+		.pageHeaderSubtitle {
 			font-size: var(--font-size-sm);
 			line-height: var(--line-height-20);
 			letter-spacing: -0.07px;
@@ -23,7 +23,7 @@
 		}
 	}
 
-	.page-info-title {
+	.pageInfoTitle {
 		margin: 0;
 		font-size: var(--font-size-sm);
 		font-weight: var(--font-weight-medium);
@@ -32,7 +32,7 @@
 		color: var(--l1-foreground);
 	}
 
-	.page-info-subtitle {
+	.pageInfoSubtitle {
 		margin: 0;
 		font-size: var(--font-size-sm);
 		font-weight: var(--font-weight-normal);
@@ -41,11 +41,12 @@
 		color: var(--l2-foreground);
 	}
 
-	.page-info {
-		.ant-card {
+	.pageInfo {
+		:global(.ant-card) {
 			padding: var(--padding-3);
 		}
-		.billing-manage-btn {
+
+		.billingManageBtn {
 			background: var(--l3-background);
 
 			&:hover {
@@ -54,31 +55,61 @@
 		}
 	}
 
-	.billing-summary {
+	.billingSummary {
 		margin: var(--spacing-12) var(--spacing-4);
 	}
 
-	.billing-details {
+	.billingDetails {
 		margin: var(--spacing-12) 0;
 		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		overflow: hidden;
 
-		.ant-table {
-			background: var(--l2-background);
+		:global {
+			.ant-table {
+				background: var(--l2-background);
+			}
+
+			.ant-table-thead > tr > th {
+				height: 52px;
+				padding: 0 var(--padding-4);
+				color: var(--l3-foreground);
+				font-size: var(--font-size-xs);
+				font-weight: var(--font-weight-medium);
+				letter-spacing: 0.48px;
+				text-transform: uppercase;
+			}
+
+			.ant-table-tbody > tr > td {
+				height: 52px;
+				padding: 0 var(--padding-4);
+				background: var(--l2-background);
+				border-bottom: 1px solid var(--l1-border);
+				color: var(--l2-foreground);
+				font-size: var(--font-size-sm);
+
+				&:first-child {
+					color: var(--l1-foreground);
+				}
+
+				&:not(:first-child) {
+					font-feature-settings:
+						'zero' 1,
+						'lnum' 1,
+						'tnum' 1;
+				}
+			}
+
+			.ant-table-tbody > tr:last-child > td {
+				border-bottom: none;
+			}
+
+			.ant-table-tbody > tr:hover > td {
+				background: var(--l2-background) !important;
+			}
 		}
 
-		.ant-table-thead > tr > th {
-			height: 52px;
-			padding: 0 var(--padding-4);
-			color: var(--l3-foreground);
-			font-size: var(--font-size-xs);
-			font-weight: var(--font-weight-medium);
-			letter-spacing: 0.48px;
-			text-transform: uppercase;
-		}
-
-		&__header-cell {
+		.billingDetailsHeaderCell {
 			position: relative;
 			background: var(--l2-background) !important;
 			border: none !important;
@@ -95,43 +126,16 @@
 				z-index: 1;
 			}
 		}
-
-		.ant-table-tbody > tr > td {
-			height: 52px;
-			padding: 0 var(--padding-4);
-			background: var(--l2-background);
-			border-bottom: 1px solid var(--l1-border);
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
-
-			&:first-child {
-				color: var(--l1-foreground);
-			}
-
-			&:not(:first-child) {
-				font-feature-settings:
-					'zero' 1,
-					'lnum' 1,
-					'tnum' 1;
-			}
-		}
-
-		.ant-table-tbody > tr:last-child > td {
-			border-bottom: none;
-		}
-
-		.ant-table-tbody > tr:hover > td {
-			background: var(--l2-background) !important;
-		}
 	}
 
-	.upgrade-plan-benefits {
+	.upgradePlanBenefits {
 		margin: 0 var(--spacing-4);
 		border: 1px solid var(--l1-border);
 		border-radius: 5px;
 		padding: 0 var(--padding-12);
-		.plan-benefits {
-			.plan-benefit {
+
+		.planBenefits {
+			.planBenefit {
 				display: flex;
 				align-items: center;
 				gap: var(--spacing-8);
@@ -140,20 +144,20 @@
 		}
 	}
 
-	.billing-graph-section {
+	.billingGraphSection {
 		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		overflow: hidden;
 		margin-bottom: var(--spacing-4);
 
-		.billing-graph-footer {
+		.billingGraphFooter {
 			display: flex;
 			gap: var(--spacing-4);
 			padding: var(--padding-3) var(--padding-4);
 			border-top: 1px solid var(--l1-border);
 			background: var(--l2-background);
 
-			.billing-footer-btn {
+			.billingFooterBtn {
 				background: var(--l3-background);
 
 				&:hover {
@@ -163,8 +167,8 @@
 		}
 	}
 
-	.empty-graph-card {
-		.ant-card-body {
+	.emptyGraphCard {
+		:global(.ant-card-body) {
 			height: 40vh;
 			display: flex;
 			justify-content: center;
@@ -172,7 +176,7 @@
 		}
 	}
 
-	.billing-update-note {
+	.billingUpdateNote {
 		margin-top: var(--spacing-8);
 		font-family: var(--font-family-inter);
 		font-size: var(--font-size-sm);
@@ -181,13 +185,15 @@
 		line-height: 22px;
 		letter-spacing: -0.07px;
 	}
-}
 
-.ant-skeleton.ant-skeleton-element.ant-skeleton-active {
-	width: 100%;
-	min-width: 100%;
-}
+	:global {
+		.ant-skeleton.ant-skeleton-element.ant-skeleton-active {
+			width: 100%;
+			min-width: 100%;
+		}
 
-.ant-skeleton.ant-skeleton-element .ant-skeleton-input {
-	min-width: 100% !important;
+		.ant-skeleton.ant-skeleton-element .ant-skeleton-input {
+			min-width: 100% !important;
+		}
+	}
 }

@@ -1,4 +1,7 @@
-import { calculateStartEndTime } from '../utils';
+import {
+	calculateStartEndTime,
+	convertDataToMetricRangePayload,
+} from '../utils';
 
 const makeData = (
 	timestamps: number[],
@@ -27,6 +30,68 @@ const makeData = (
 			},
 		],
 	},
+});
+
+describe('convertDataToMetricRangePayload', () => {
+	it('returns empty result when all dayWiseBreakdown.breakdown are null', () => {
+		const data = {
+			billingPeriodStart: 1778763678,
+			billingPeriodEnd: 1781442078,
+			details: {
+				total: 0,
+				baseFee: 49,
+				billTotal: 49,
+				breakdown: [
+					{
+						type: 'Metrics',
+						unit: 'Million',
+						tiers: [],
+						dayWiseBreakdown: { type: '', breakdown: null },
+					},
+					{
+						type: 'Traces',
+						unit: 'GB',
+						tiers: [],
+						dayWiseBreakdown: { type: '', breakdown: null },
+					},
+					{
+						type: 'Logs',
+						unit: 'GB',
+						tiers: [],
+						dayWiseBreakdown: { type: '', breakdown: null },
+					},
+				],
+			},
+		};
+		const result = convertDataToMetricRangePayload(data);
+		expect(result.data.result).toHaveLength(0);
+	});
+
+	it('includes only series that have day-wise data', () => {
+		const data = {
+			details: {
+				breakdown: [
+					{
+						type: 'Metrics',
+						unit: 'Million',
+						dayWiseBreakdown: { breakdown: null },
+					},
+					{
+						type: 'Logs',
+						unit: 'GB',
+						dayWiseBreakdown: {
+							breakdown: [
+								{ timestamp: 1000, total: 5, quantity: 10, count: 0, size: 0 },
+							],
+						},
+					},
+				],
+			},
+		};
+		const result = convertDataToMetricRangePayload(data);
+		expect(result.data.result).toHaveLength(1);
+		expect(result.data.result[0].legend).toBe('Logs');
+	});
 });
 
 describe('calculateStartEndTime', () => {
