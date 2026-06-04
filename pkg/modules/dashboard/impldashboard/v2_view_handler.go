@@ -36,7 +36,7 @@ func (handler *handler) CreateView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	view, err := handler.module.CreateView(ctx, orgID, claims.Email, req)
+	view, err := handler.module.CreateView(ctx, orgID, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -103,7 +103,7 @@ func (handler *handler) UpdateView(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	view, err := handler.module.UpdateView(ctx, orgID, viewID, claims.Email, req)
+	view, err := handler.module.UpdateView(ctx, orgID, viewID, req)
 	if err != nil {
 		render.Error(rw, err)
 		return

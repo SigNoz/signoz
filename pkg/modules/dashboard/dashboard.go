@@ -75,11 +75,11 @@ type Module interface {
 
 	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
-	CreateView(ctx context.Context, orgID valuer.UUID, createdBy string, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
+	CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error)
 
 	ListViews(ctx context.Context, orgID valuer.UUID) (*dashboardtypes.ListableDashboardView, error)
 
-	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error)
+	UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error)
 
 	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

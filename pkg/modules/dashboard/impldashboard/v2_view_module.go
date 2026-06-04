@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, createdBy string, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
+func (module *module) CreateView(ctx context.Context, orgID valuer.UUID, postable dashboardtypes.PostableDashboardView) (*dashboardtypes.DashboardView, error) {
 	if err := postable.Validate(); err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func (module *module) ListViews(ctx context.Context, orgID valuer.UUID) (*dashbo
 	return &dashboardtypes.ListableDashboardView{Views: views}, nil
 }
 
-func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error) {
+func (module *module) UpdateView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updateable dashboardtypes.UpdateableDashboardView) (*dashboardtypes.DashboardView, error) {
 	if err := updateable.Validate(); err != nil {
 		return nil, err
 	}
