@@ -3,6 +3,7 @@ import { PrecisionOption } from 'components/Graph/types';
 import {
 	IRenderTooltipFooterArgs,
 	LegendConfig,
+	LegendPosition,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
@@ -91,6 +92,13 @@ export interface PieChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	isDarkMode: boolean;
+	/** Legend placement. Drives the chart-vs-legend layout. Default BOTTOM. */
+	position?: LegendPosition;
+	/**
+	 * Widget id used to persist per-slice hide/unhide state to localStorage
+	 * (shared GRAPH_VISIBILITY_STATES, keyed by label). Omit to disable persistence.
+	 */
+	id?: string;
 	/** Fired when a slice (or its legend entry) is clicked. */
 	onSliceClick?: (slice: PieSlice) => void;
 	'data-testid'?: string;

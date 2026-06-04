@@ -1,19 +1,21 @@
-import { useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
 import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
+import Legend from 'lib/uPlotV2/components/Legend/Legend';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 
 import { PieChartProps, PieSlice } from '../types';
+import { calculateChartDimensions } from '../utils';
 
+import PieArc from './PieArc';
+import PieCenterLabel from './PieCenterLabel';
 import styles from './Pie.module.scss';
-import { getArcGeometry, getFillColor, getScaledFontSize } from './utils';
-
-// Slices below this share of the total don't get a leader label (too cramped).
-const MIN_LABEL_SHARE = 0.03;
-const MAX_LABEL_LENGTH = 15;
+import { usePieInteractions } from './usePieInteractions';
+import { getFillColor } from './utils';
 
 interface PieTooltipData {
 	label: string;
@@ -22,21 +24,32 @@ interface PieTooltipData {
 }
 
 /**
- * Donut chart rendered with @visx. Self-measures its draw area, lays out the
- * arcs, leader labels and a centre total, and renders an interactive legend
- * below. Hovering a slice shows a visx tooltip following the cursor. Pure
- * presentation — slices are pre-resolved by the caller, and a click surfaces
- * the slice via `onSliceClick`.
+ * Donut chart rendered with @visx. Splits its area into chart + legend with the
+ * same `calculateChartDimensions` logic as the uPlot charts (right column /
+ * up-to-two bottom rows), renders the shared chart Legend, and delegates the
+ * arcs, centre total and interaction state to PieArc / PieCenterLabel /
+ * usePieInteractions. Pure presentation — slices are pre-resolved by the caller.
  */
 export default function Pie({
 	data,
 	yAxisUnit,
 	decimalPrecision,
 	isDarkMode,
+	position = LegendPosition.BOTTOM,
+	id,
 	onSliceClick,
 	'data-testid': testId,
 }: PieChartProps): JSX.Element {
-	const [active, setActive] = useState<PieSlice | null>(null);
+	const {
+		active,
+		setActive,
+		visibleData,
+		legendItems,
+		focusedSeriesIndex,
+		onLegendClick,
+		onLegendMouseMove,
+		onLegendMouseLeave,
+	} = usePieInteractions(data, id);
 
 	const {
 		tooltipOpen,
@@ -52,51 +65,96 @@ export default function Pie({
 		detectBounds: true,
 	});
 
-	const chartRef = useRef<HTMLDivElement>(null);
-	const { width, height } = useResizeObserver(chartRef);
+	const wrapperRef = useRef<HTMLDivElement>(null);
+	const { width: containerWidth, height: containerHeight } =
+		useResizeObserver(wrapperRef);
 
-	const size = Math.min(width, height);
+	// Reuse the uPlot chart/legend split so the donut + legend get the same area
+	// allocation (right column, or up-to-two bottom rows) as every other panel.
+	const dimensions = useMemo(
+		() =>
+			calculateChartDimensions({
+				containerWidth,
+				containerHeight,
+				legendConfig: { position },
+				seriesLabels: data.map((slice) => slice.label),
+			}),
+		[containerWidth, containerHeight, position, data],
+	);
+
+	const size = Math.min(dimensions.width, dimensions.height);
 	const radius = size * 0.35;
 	const innerRadius = radius * 0.6;
-
-	const totalValue = data.reduce((sum, slice) => sum + slice.value, 0);
-
-	const formattedTotal = getYAxisFormattedValue(
-		totalValue.toString(),
-		yAxisUnit || 'none',
-		decimalPrecision,
-	);
-	// Split the formatted total into its numeric part and unit so each can be
-	// sized independently in the donut hole.
-	const matches = formattedTotal.match(/([\d.]+[KMB]?)(.*)$/);
-	const numericTotal = matches?.[1] || formattedTotal;
-	const unitTotal = matches?.[2]?.trim() || '';
-	const numericFontSize = getScaledFontSize({
-		text: numericTotal,
-		baseSize: radius * 0.3,
-		innerRadius,
-	});
-	const unitFontSize = numericFontSize * 0.5;
-
+	const totalValue = visibleData.reduce((sum, slice) => sum + slice.value, 0);
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
 	const activeColor = active?.color ?? null;
 
+	const handleSliceEnter = useCallback(
+		(slice: PieSlice, centroidX: number, centroidY: number): void => {
+			showTooltip({
+				tooltipData: {
+					label: slice.label,
+					value: getYAxisFormattedValue(
+						slice.value.toString(),
+						yAxisUnit || 'none',
+						decimalPrecision,
+					),
+					color: slice.color,
+				},
+				tooltipTop: centroidY + dimensions.height / 2,
+				tooltipLeft: centroidX + dimensions.width / 2,
+			});
+			setActive(slice);
+		},
+		[
+			showTooltip,
+			setActive,
+			yAxisUnit,
+			decimalPrecision,
+			dimensions.height,
+			dimensions.width,
+		],
+	);
+
+	const handleSliceLeave = useCallback((): void => {
+		hideTooltip();
+		setActive(null);
+	}, [hideTooltip, setActive]);
+
 	if (!data.length) {
 		return (
-			<div className={styles.pieChartWrapper} data-testid={testId}>
+			<div
+				ref={wrapperRef}
+				className={styles.pieChartWrapper}
+				data-testid={testId}
+			>
 				<div className={styles.pieChartNoData}>No data</div>
 			</div>
 		);
 	}
 
+	const isRightLegend = position === LegendPosition.RIGHT;
+
 	return (
-		<div className={styles.pieChartWrapper} data-testid={testId}>
-			<div className={styles.pieChartContainer} ref={chartRef}>
+		<div
+			ref={wrapperRef}
+			className={styles.pieChartWrapper}
+			style={{ flexDirection: isRightLegend ? 'row' : 'column' }}
+			data-testid={testId}
+		>
+			<div
+				className={styles.pieChartContainer}
+				style={{ width: dimensions.width, height: dimensions.height }}
+			>
 				{size > 0 && (
-					<svg width={width} height={height} ref={containerRef}>
-						<Group top={height / 2} left={width / 2}>
+					<svg
+						width={dimensions.width}
+						height={dimensions.height}
+						ref={containerRef}
+					>
+						<Group top={dimensions.height / 2} left={dimensions.width / 2}>
 							<VisxPie
-								data={data}
+								data={visibleData}
 								pieValue={(slice: PieSlice): number => slice.value}
 								outerRadius={radius}
 								innerRadius={innerRadius}
@@ -106,102 +164,37 @@ export default function Pie({
 								height={size}
 							>
 								{(pie): JSX.Element[] =>
-									pie.arcs.map((arc) => {
-										const { label, value, color } = arc.data;
-										const [centroidX, centroidY] = pie.path.centroid(arc);
-										const { labelX, labelY, lineEndX, lineEndY, textAnchor } =
-											getArcGeometry(arc.startAngle, arc.endAngle, radius);
-
-										const displayValue = getYAxisFormattedValue(
-											value.toString(),
-											yAxisUnit || 'none',
-											decimalPrecision,
-										);
-										const shortenedLabel =
-											label.length > MAX_LABEL_LENGTH
-												? `${label.substring(0, 12)}...`
-												: label;
-										const shouldShowLabel = value / totalValue > MIN_LABEL_SHARE;
-
-										return (
-											<g
-												key={`arc-${label}-${value}-${arc.startAngle.toFixed(6)}`}
-												onMouseEnter={(): void => {
-													showTooltip({
-														tooltipData: { label, value: displayValue, color },
-														tooltipTop: centroidY + height / 2,
-														tooltipLeft: centroidX + width / 2,
-													});
-													setActive(arc.data);
-												}}
-												onMouseLeave={(): void => {
-													hideTooltip();
-													setActive(null);
-												}}
-												onClick={(): void => onSliceClick?.(arc.data)}
-											>
-												<path
-													d={pie.path(arc) || ''}
-													fill={getFillColor(color, activeColor)}
-												/>
-												{shouldShowLabel && (
-													<>
-														<line
-															x1={centroidX}
-															y1={centroidY}
-															x2={lineEndX}
-															y2={lineEndY}
-															stroke={labelColor}
-															strokeWidth={1}
-														/>
-														<line
-															x1={lineEndX}
-															y1={lineEndY}
-															x2={labelX}
-															y2={labelY}
-															stroke={labelColor}
-															strokeWidth={1}
-														/>
-														<text
-															x={labelX}
-															y={labelY - 8}
-															dy=".33em"
-															fill={labelColor}
-															fontSize={10}
-															textAnchor={textAnchor}
-															pointerEvents="none"
-														>
-															{shortenedLabel}
-														</text>
-														<text
-															x={labelX}
-															y={labelY + 8}
-															dy=".33em"
-															fill={labelColor}
-															fontSize={10}
-															fontWeight="bold"
-															textAnchor={textAnchor}
-															pointerEvents="none"
-														>
-															{displayValue}
-														</text>
-													</>
-												)}
-											</g>
-										);
-									})
+									pie.arcs.map((arc) => (
+										<PieArc
+											key={`arc-${arc.data.label}-${arc.data.value}-${arc.startAngle.toFixed(
+												6,
+											)}`}
+											slice={arc.data}
+											arcPath={pie.path(arc) || ''}
+											centroid={pie.path.centroid(arc)}
+											startAngle={arc.startAngle}
+											endAngle={arc.endAngle}
+											radius={radius}
+											totalValue={totalValue}
+											yAxisUnit={yAxisUnit}
+											decimalPrecision={decimalPrecision}
+											labelColor={labelColor}
+											fill={getFillColor(arc.data.color, activeColor)}
+											onEnter={handleSliceEnter}
+											onLeave={handleSliceLeave}
+											onClick={onSliceClick}
+										/>
+									))
 								}
 							</VisxPie>
-							<text textAnchor="middle" dominantBaseline="central" fill={labelColor}>
-								<tspan fontSize={numericFontSize} fontWeight="bold">
-									{numericTotal}
-								</tspan>
-								{unitTotal && (
-									<tspan fontSize={unitFontSize} opacity={0.9} dx={2}>
-										{unitTotal}
-									</tspan>
-								)}
-							</text>
+							<PieCenterLabel
+								total={totalValue}
+								yAxisUnit={yAxisUnit}
+								decimalPrecision={decimalPrecision}
+								radius={radius}
+								innerRadius={innerRadius}
+								color={labelColor}
+							/>
 						</Group>
 					</svg>
 				)}
@@ -226,21 +219,22 @@ export default function Pie({
 					</TooltipInPortal>
 				)}
 			</div>
-			<div className={styles.pieChartLegend}>
-				{data.map((slice) => (
-					<div
-						key={slice.label}
-						className={styles.pieChartLegendItem}
-						onMouseEnter={(): void => setActive(slice)}
-						onMouseLeave={(): void => setActive(null)}
-					>
-						<div
-							className={styles.pieChartLegendLabel}
-							style={{ backgroundColor: getFillColor(slice.color, activeColor) }}
-						/>
-						{slice.label}
-					</div>
-				))}
+			<div
+				className={styles.pieLegend}
+				style={{
+					width: dimensions.legendWidth,
+					height: dimensions.legendHeight,
+				}}
+			>
+				<Legend
+					items={legendItems}
+					position={position}
+					averageLegendWidth={dimensions.averageLegendWidth}
+					focusedSeriesIndex={focusedSeriesIndex}
+					onClick={onLegendClick}
+					onMouseMove={onLegendMouseMove}
+					onMouseLeave={onLegendMouseLeave}
+				/>
 			</div>
 		</div>
 	);

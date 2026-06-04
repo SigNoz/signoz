@@ -6,11 +6,15 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import PanelStyles from '../styles/panel.module.scss';
 import { PanelRendererProps } from '../types';
-import { resolveDecimalPrecision } from '../utils/chartAppearanceMappings';
+import {
+	resolveDecimalPrecision,
+	resolveLegendPosition,
+} from '../utils/chartAppearanceMappings';
 
 import { preparePieData } from './data';
 
 function PiePanelRenderer({
+	panelId,
 	panel,
 	data,
 	onClick,
@@ -41,6 +45,11 @@ function PiePanelRenderer({
 		[spec.formatting?.decimalPrecision],
 	);
 
+	const legendPosition = useMemo(
+		() => resolveLegendPosition(spec.legend?.position),
+		[spec.legend?.position],
+	);
+
 	const handleSliceClick = useCallback(
 		(slice: PieSlice) => {
 			onClick?.({ label: slice.label, value: slice.value });
@@ -55,6 +64,8 @@ function PiePanelRenderer({
 				yAxisUnit={spec.formatting?.unit}
 				decimalPrecision={decimalPrecision}
 				isDarkMode={isDarkMode}
+				position={legendPosition}
+				id={panelId}
 				onSliceClick={handleSliceClick}
 				data-testid="pie-chart"
 			/>
