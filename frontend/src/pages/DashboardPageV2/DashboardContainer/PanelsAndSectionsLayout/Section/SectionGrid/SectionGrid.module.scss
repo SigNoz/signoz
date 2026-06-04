@@ -1,0 +1,12 @@
+.grid {
+	// Override react-grid-layout's default red drag/resize placeholder with the
+	// SigNoz brand blue.
+	:global(.react-grid-item.react-grid-placeholder) {
+		background: var(--bg-robin-500);
+		opacity: 0.2;
+		border-radius: 4px;
+		transition-duration: 100ms;
+		z-index: 2;
+		user-select: none;
+	}
+}

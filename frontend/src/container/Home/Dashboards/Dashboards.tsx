@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Skeleton, Tag } from 'antd';
+import { Button, Skeleton } from 'antd';
+import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -148,9 +149,9 @@ export default function Dashboards({
 
 							<div className="alert-rule-item-description home-data-item-tag">
 								{dashboard.data.tags?.map((tag) => (
-									<Tag color={tag} key={tag}>
+									<Badge color="sienna" variant="outline" key={tag}>
 										{tag}
-									</Tag>
+									</Badge>
 								))}
 							</div>
 						</div>

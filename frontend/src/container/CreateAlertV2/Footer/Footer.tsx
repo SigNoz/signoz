@@ -20,6 +20,11 @@ import {
 } from './utils';
 
 import './styles.scss';
+import {
+	invalidateGetRuleByID,
+	invalidateListRules,
+} from 'api/generated/services/rules';
+import { useQueryClient } from 'react-query';
 
 function Footer(): JSX.Element {
 	const {
@@ -115,6 +120,7 @@ function Footer(): JSX.Element {
 		testAlertRule,
 	]);
 
+	const queryClient = useQueryClient();
 	const handleSaveAlert = useCallback((): void => {
 		const payload = buildCreateThresholdAlertRulePayload({
 			alertType,
@@ -133,6 +139,9 @@ function Footer(): JSX.Element {
 				},
 				{
 					onSuccess: () => {
+						void invalidateGetRuleByID(queryClient, { id: ruleId });
+						void invalidateListRules(queryClient);
+
 						toast.success('Alert rule updated successfully');
 						safeNavigate('/alerts');
 					},
@@ -187,7 +196,11 @@ function Footer(): JSX.Element {
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [
@@ -215,7 +228,11 @@ function Footer(): JSX.Element {
 			</Button>
 		);
 		if (alertValidationMessage) {
-			button = <Tooltip title={alertValidationMessage}>{button}</Tooltip>;
+			button = (
+				<Tooltip title={alertValidationMessage}>
+					<span>{button}</span>
+				</Tooltip>
+			);
 		}
 		return button;
 	}, [

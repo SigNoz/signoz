@@ -28,7 +28,7 @@ const mockKey: ServiceaccounttypesGettableFactorAPIKeyDTO = {
 	id: 'key-1',
 	name: 'Original Key Name',
 	expiresAt: 0,
-	lastObservedAt: null as unknown as Date,
+	lastObservedAt: null as unknown as string,
 	serviceAccountId: 'sa-1',
 };
 

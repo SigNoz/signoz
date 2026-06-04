@@ -144,14 +144,14 @@ export function useFlamegraphHover(
 	const buildPreviewRows = useCallback(
 		(span: FlamegraphSpan): SpanPreviewRowData[] =>
 			previewFields
-				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.name))
 				.map((field) => {
 					const value = getSpanAttribute(
 						{ resource: span.resource, attributes: span.attributes },
-						field.key,
+						field.name,
 					);
 					return value !== undefined && value !== ''
-						? { key: field.key, value: String(value) }
+						? { key: field.name, value: String(value) }
 						: null;
 				})
 				.filter((r): r is SpanPreviewRowData => r !== null),
@@ -211,11 +211,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					event: {
 						name: event.name,
 						timeOffsetMs: eventTimeMs - span.timestamp,
@@ -244,11 +247,14 @@ export function useFlamegraphHover(
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({
-						span,
-						isDarkMode,
-						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
-					}),
+					spanColor: ((): string => {
+						const pair = getSpanColor({
+							span,
+							isDarkMode,
+							groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+						});
+						return isDarkMode ? pair.color : pair.colorDark;
+					})(),
 					previewRows: buildPreviewRows(span),
 				});
 				updateCursor(canvas, span);

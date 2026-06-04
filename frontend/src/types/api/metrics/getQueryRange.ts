@@ -8,7 +8,7 @@ import {
 	IClickHouseQuery,
 	IPromQLQuery,
 } from '../queryBuilder/queryBuilderData';
-import { ExecStats } from '../v5/queryRange';
+import { ExecStats, QueryRangeRequestV5 } from '../v5/queryRange';
 import { QueryData, QueryDataV3 } from '../widgets/getQuery';
 
 export type QueryRangePayload = {
@@ -39,11 +39,16 @@ export interface MetricRangePayloadProps {
 	meta?: ExecStats;
 }
 
-/** Query range success response including optional warning and meta */
-export type MetricQueryRangeSuccessResponse = SuccessResponse<
+/** Query range success response. `params` is the request that produced the
+ *  payload; `warning` and `meta` are lifted from the payload to the top level
+ *  by `getQueryResults.ts` for consumer convenience. */
+export interface MetricQueryRangeSuccessResponse extends SuccessResponse<
 	MetricRangePayloadProps,
-	unknown
-> & { warning?: Warning; meta?: ExecStats };
+	QueryRangeRequestV5
+> {
+	warning?: Warning;
+	meta?: ExecStats;
+}
 
 export interface MetricRangePayloadV3 {
 	data: {

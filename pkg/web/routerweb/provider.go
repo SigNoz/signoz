@@ -2,6 +2,8 @@ package routerweb
 
 import (
 	"context"
+	"encoding/json"
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -42,8 +44,17 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", config.Index)
 	}
 
+	webSettings := web.NewSettings(config)
+	settingsJSON, err := json.Marshal(webSettings)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "cannot marshal web settings to JSON")
+	}
+
 	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/web/routerweb").Logger()
-	indexContents := web.NewIndex(ctx, logger, config.Index, raw, web.TemplateData{BaseHref: globalConfig.ExternalPathTrailing()})
+	indexContents := web.NewIndex(ctx, logger, config.Index, raw, web.TemplateData{
+		BaseHref: globalConfig.ExternalPathTrailing(),
+		Settings: template.JS(settingsJSON),
+	})
 
 	return &provider{
 		config:        config,
