@@ -16,15 +16,6 @@ from fixtures.querier import compare_values
 ENDPOINT = "/api/v2/infra_monitoring/hosts"
 
 
-def _post(signoz: types.SigNoz, token: str, body: dict) -> requests.Response:
-    return requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json=body,
-        timeout=5,
-    )
-
-
 def test_hosts_happy_path(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -40,14 +31,15 @@ def test_hosts_happy_path(
     insert_metrics(metrics)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -97,14 +89,15 @@ def test_hosts_value_accuracy(
     exp_by_host = {r["hostName"]: r for r in expected["records"]}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -132,14 +125,15 @@ def test_hosts_missing_metrics(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -156,152 +150,29 @@ def test_hosts_missing_metrics(
     assert data["total"] == 0
 
 
-def test_hosts_filter_and(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """AND of two attribute clauses returns the single matching host."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {
-                "expression": "host.name = 'prod-linux-1' AND os.type = 'linux'",
-            },
-        },
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["total"] == 1
-    assert {r["hostName"] for r in data["records"]} == {"prod-linux-1"}
-
-
-def test_hosts_filter_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """IN (...) operator returns exactly the listed hosts."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {
-                "expression": "host.name IN ('prod-linux-1', 'prod-windows-1')",
-            },
-        },
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["total"] == 2
-    assert {r["hostName"] for r in data["records"]} == {
-        "prod-linux-1",
-        "prod-windows-1",
-    }
-
-
-def test_hosts_filter_not_in(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """NOT IN (...) returns the complement of the listed hosts."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {
-                "expression": "host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
-            },
-        },
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["total"] == 2
-    assert {r["hostName"] for r in data["records"]} == {
-        "dev-linux-1",
-        "dev-windows-1",
-    }
-
-
-def test_hosts_filter_contains(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """CONTAINS 'substr' returns hosts whose attribute contains the substring."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "host.name CONTAINS 'prod-'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["total"] == 2
-    assert {r["hostName"] for r in data["records"]} == {
-        "prod-linux-1",
-        "prod-windows-1",
-    }
-
-
 @pytest.mark.parametrize(
     "expression,expected_hosts",
     [
+        pytest.param(
+            "host.name = 'prod-linux-1' AND os.type = 'linux'",
+            {"prod-linux-1"},
+            id="and",
+        ),
+        pytest.param(
+            "host.name IN ('prod-linux-1', 'prod-windows-1')",
+            {"prod-linux-1", "prod-windows-1"},
+            id="in",
+        ),
+        pytest.param(
+            "host.name NOT IN ('prod-linux-1', 'prod-windows-1')",
+            {"dev-linux-1", "dev-windows-1"},
+            id="not_in",
+        ),
+        pytest.param(
+            "host.name CONTAINS 'prod-'",
+            {"prod-linux-1", "prod-windows-1"},
+            id="contains",
+        ),
         pytest.param(
             "os.type = 'linux' AND host.name IN ('prod-linux-1', 'prod-windows-1')",
             {"prod-linux-1"},
@@ -324,7 +195,7 @@ def test_hosts_filter_contains(
         ),
     ],
 )
-def test_hosts_filter_combos(
+def test_hosts_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
@@ -332,7 +203,8 @@ def test_hosts_filter_combos(
     expression: str,
     expected_hosts: set,
 ) -> None:
-    """AND-combined pairs of filter operators return the correct intersection."""
+    """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
+    return exactly the matching hosts."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -342,15 +214,16 @@ def test_hosts_filter_combos(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -358,58 +231,28 @@ def test_hosts_filter_combos(
     assert data["total"] == len(expected_hosts)
 
 
-def test_hosts_filter_bad_attr_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Filter with a typo'd attribute key — discovery: silent empty vs error."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "host.namee = 'prod-linux-1'"},
-        },
-    )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    body = response.json()
-    assert body["status"] == "error"
-    assert body["error"]["code"] == "invalid_input"
-    assert any("host.namee" in e["message"] for e in body["error"]["errors"]), f"bad attr name not surfaced: {body['error']['errors']!r}"
-
-
 @pytest.mark.parametrize(
-    "expression",
+    "expression,err_substr",
     [
-        pytest.param("host.name =", id="trailing_op"),
-        pytest.param("(host.name = 'prod-linux-1'", id="unclosed_paren"),
+        pytest.param("host.namee = 'prod-linux-1'", "host.namee", id="bad_attr_name"),
+        pytest.param("host.name =", None, id="trailing_op"),
+        pytest.param("(host.name = 'prod-linux-1'", None, id="unclosed_paren"),
         # Cases dropped — parser is permissive and accepts these silently:
         #   `host.name == 'x'` → treated as `=` (matches as if single `=`)
         #   `host.name 'x'`    → returns 200 with empty records
         # Tracked as a QB v5 parser gap; not enforced by this test.
     ],
 )
-def test_hosts_filter_bad_grammar(
+def test_hosts_filter_invalid(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     expression: str,
+    err_substr,
 ) -> None:
-    """Malformed filter expressions return 400 invalid_input with structured errors."""
+    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
+    400 invalid_input with structured errors; bad attribute keys are named in them."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -419,21 +262,24 @@ def test_hosts_filter_bad_grammar(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "filter": {"expression": expression},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, f"expected 400, got {response.status_code}: {response.text}"
     body = response.json()
     assert body["status"] == "error"
     assert body["error"]["code"] == "invalid_input"
     assert len(body["error"]["errors"]) > 0
+    if err_substr is not None:
+        assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
 @pytest.mark.parametrize(
@@ -472,7 +318,12 @@ def test_hosts_filter_by_status(
     if status is not None:
         body["filter"] = {"filterByStatus": status}
 
-    response = _post(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json=body,
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
 
@@ -509,10 +360,10 @@ def test_hosts_groupby_hostname(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
@@ -524,6 +375,7 @@ def test_hosts_groupby_hostname(
                 },
             ],
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -554,10 +406,10 @@ def test_hosts_groupby_os_type(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=30)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
@@ -569,6 +421,7 @@ def test_hosts_groupby_os_type(
                 },
             ],
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -636,15 +489,16 @@ def test_hosts_pagination_sync(
     seen_totals: set[int] = set()
 
     for offset in (0, 3, 6):
-        response = _post(
-            signoz,
-            token,
-            {
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
                 "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
                 "end": int(now.timestamp() * 1000),
                 "limit": limit,
                 "offset": offset,
             },
+            timeout=5,
         )
         assert response.status_code == HTTPStatus.OK
         data = response.json()["data"]
@@ -675,15 +529,16 @@ def test_hosts_offset_beyond_total(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 7
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 3,
             "offset": K + 5,
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -691,11 +546,17 @@ def test_hosts_offset_beyond_total(
     assert data["total"] == K
 
 
+# orderBy keys use snake_case (inframonitoringtypes/hosts_constants.go:26-30).
+# Note: response uses camelCase (diskUsage) but request uses disk_usage.
+@pytest.mark.parametrize("column", ["cpu", "memory", "wait", "load15", "disk_usage"])
+@pytest.mark.parametrize("direction", ["asc", "desc"])
 def test_hosts_total_invariant_across_orderby(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    column: str,
+    direction: str,
 ) -> None:
     """Total stays K across all orderBy column x direction combinations.
     Hosts have staggered timestamps (simulating real-world emit drift)."""
@@ -710,28 +571,25 @@ def test_hosts_total_invariant_across_orderby(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     K = 5
 
-    # orderBy keys use snake_case (inframonitoringtypes/hosts_constants.go:26-30).
-    # Note: response uses camelCase (diskUsage) but request uses disk_usage.
-    for column in ("cpu", "memory", "wait", "load15", "disk_usage"):
-        for direction in ("asc", "desc"):
-            response = _post(
-                signoz,
-                token,
-                {
-                    "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-                    "end": int(now.timestamp() * 1000),
-                    "limit": 50,
-                    "orderBy": {
-                        "key": {"name": column},
-                        "direction": direction,
-                    },
-                },
-            )
-            ctx = f"orderBy={column} {direction}"
-            assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
-            data = response.json()["data"]
-            assert data["total"] == K, f"{ctx}: total={data['total']}"
-            assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "orderBy": {
+                "key": {"name": column},
+                "direction": direction,
+            },
+        },
+        timeout=5,
+    )
+    ctx = f"orderBy={column} {direction}"
+    assert response.status_code == HTTPStatus.OK, f"{ctx}: {response.text}"
+    data = response.json()["data"]
+    assert data["total"] == K, f"{ctx}: total={data['total']}"
+    assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
 
 @pytest.mark.parametrize("direction", ["asc", "desc"])
@@ -752,15 +610,16 @@ def test_hosts_orderby_correctness(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": "cpu"}, "direction": direction},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
@@ -788,16 +647,17 @@ def test_hosts_orderby_by_host_name(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(
-        signoz,
-        token,
-        {
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": "host.name"}, "direction": direction},
             "filter": {"expression": "host.name CONTAINS 'order-'"},
         },
+        timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
@@ -871,43 +731,13 @@ def test_hosts_validation_errors(
     body.update(payload_override)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = _post(signoz, token, body)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json=body,
+        timeout=5,
+    )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert error["code"] == "invalid_input"
     assert err_substr.lower() in error["message"].lower(), f"expected substring {err_substr!r} not found in: {error['message']!r}"
-
-
-@pytest.mark.parametrize(
-    "auth_state,expected_status",
-    [
-        pytest.param("none", HTTPStatus.UNAUTHORIZED, id="no_token"),
-        pytest.param("admin", HTTPStatus.OK, id="admin_token"),
-    ],
-)
-def test_hosts_auth(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    auth_state: str,
-    expected_status: int,
-) -> None:
-    """Auth required: no Authorization header -> 401; admin Bearer -> 200."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    body = {
-        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-        "end": int(now.timestamp() * 1000),
-        "limit": 50,
-    }
-    headers: dict = {}
-    if auth_state == "admin":
-        token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-        headers["authorization"] = f"Bearer {token}"
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers=headers,
-        json=body,
-        timeout=5,
-    )
-    assert response.status_code == expected_status, response.text
