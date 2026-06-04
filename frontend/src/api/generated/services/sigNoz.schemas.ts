@@ -7675,27 +7675,13 @@ export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
-export type SpantypesFlamegraphSpanDTOAttributesAnyOf = {
-	[key: string]: unknown;
-};
+export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
 
-/**
- * @nullable
- */
-export type SpantypesFlamegraphSpanDTOAttributes =
-	SpantypesFlamegraphSpanDTOAttributesAnyOf | null;
-
-export type SpantypesFlamegraphSpanDTOResourceAnyOf = { [key: string]: string };
-
-/**
- * @nullable
- */
-export type SpantypesFlamegraphSpanDTOResource =
-	SpantypesFlamegraphSpanDTOResourceAnyOf | null;
+export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
 
 export interface SpantypesFlamegraphSpanDTO {
 	/**
-	 * @type object,null
+	 * @type object
 	 */
 	attributes: SpantypesFlamegraphSpanDTOAttributes;
 	/**
@@ -7725,7 +7711,7 @@ export interface SpantypesFlamegraphSpanDTO {
 	 */
 	parentSpanId: string;
 	/**
-	 * @type object,null
+	 * @type object
 	 */
 	resource: SpantypesFlamegraphSpanDTOResource;
 	/**
