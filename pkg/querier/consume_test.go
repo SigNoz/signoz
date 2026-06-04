@@ -41,15 +41,16 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 		}
 	}
 
-	events, ok := data["events"].([]spantypes.Event)
+	events, ok := data["events"].([]spantypes.EventV2)
 	if !ok {
-		t.Fatalf("expected events to be []spantypes.Event, got %T", data["events"])
+		t.Fatalf("expected events to be []spantypes.EventV2, got %T", data["events"])
 	}
-	wantEvents := []spantypes.Event{
+	wantEvents := []spantypes.EventV2{
 		{
 			Name:         "request_received",
 			TimeUnixNano: 1778489782759245000,
 			Attributes:   map[string]any{"http.method": "GET", "http.route": "/api/chat"},
+			IsError:      false,
 		},
 		{
 			Name:         "cache_lookup",
@@ -82,8 +83,8 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 
 	mergeSpanAttributeColumns(data)
 
-	if events, ok := data["events"].([]spantypes.Event); !ok || len(events) != 0 {
-		t.Fatalf("expected empty []spantypes.Event, got %#v", data["events"])
+	if events, ok := data["events"].([]spantypes.EventV2); !ok || len(events) != 0 {
+		t.Fatalf("expected empty []spantypes.EventV2, got %#v", data["events"])
 	}
 	if links, ok := data["links"].([]spantypes.Link); !ok || len(links) != 0 {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])

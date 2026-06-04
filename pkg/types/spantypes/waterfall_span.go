@@ -46,6 +46,7 @@ func (p *PostableWaterfall) Validate() error {
 	return nil
 }
 
+// todo: depricate this and use EventV2 everywhere instead
 // Event represents a span event.
 type Event struct {
 	Name         string         `json:"name,omitempty"`

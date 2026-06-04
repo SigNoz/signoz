@@ -2,10 +2,12 @@ package spantypes
 
 import "encoding/json"
 
-type Event struct {
+// The Event struct has the data exactly store in the db, while this is more of what we want to send to user
+type EventV2 struct {
 	Name         string         `json:"name"`
 	TimeUnixNano uint64         `json:"timeUnixNano"`
 	Attributes   map[string]any `json:"attributes,omitempty"`
+	IsError      bool           `json:"isError,omitempty"`
 }
 
 // Link is the response shape for a span link.
@@ -16,31 +18,24 @@ type Link struct {
 	SpanID  string `json:"spanId,omitempty"`
 }
 
-// dbEvent matches the JSON object stored in the ClickHouse `events`
-// Array(String) column.
-type dbEvent struct {
-	Name         string         `json:"name"`
-	TimeUnixNano uint64         `json:"timeUnixNano"`
-	AttributeMap map[string]any `json:"attributeMap"`
-}
-
 // ParseEvents column (Array(String) of JSON-encoded events) into a slice of Event values.
 // Malformed entries are skipped.
-func ParseEvents(raw any) []Event {
+func ParseEvents(raw any) []EventV2 {
 	strs, ok := raw.([]string)
 	if !ok {
-		return []Event{}
+		return []EventV2{}
 	}
-	events := make([]Event, 0, len(strs))
+	events := make([]EventV2, 0, len(strs))
 	for _, s := range strs {
-		var e dbEvent
+		var e Event
 		if err := json.Unmarshal([]byte(s), &e); err != nil {
 			continue
 		}
-		events = append(events, Event{
+		events = append(events, EventV2{
 			Name:         e.Name,
 			TimeUnixNano: e.TimeUnixNano,
 			Attributes:   e.AttributeMap,
+			IsError:      false,
 		})
 	}
 	return events

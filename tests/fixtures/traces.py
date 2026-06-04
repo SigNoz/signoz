@@ -16,6 +16,42 @@ from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
 from fixtures.time import parse_duration, parse_timestamp
 
+# All keys returned by the trace list endpoint when selectFields is empty:
+# every intrinsic and calculated column, plus the merged `attributes` and
+# `resource` maps that wrap the contextual columns in the response layer.
+ALL_SELECT_FIELDS = [
+    # all intrinsic columns
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "trace_state",
+    "parent_span_id",
+    "flags",
+    "name",
+    "kind",
+    "kind_string",
+    "duration_nano",
+    "status_code",
+    "status_message",
+    "status_code_string",
+    "events",
+    "links",
+    # all calculated columns
+    "response_status_code",
+    "external_http_url",
+    "http_url",
+    "external_http_method",
+    "http_method",
+    "http_host",
+    "db_name",
+    "db_operation",
+    "has_error",
+    "is_remote",
+    # all contextual columns (merged in response layer)
+    "attributes",
+    "resource",
+]
+
 
 class TracesKind(Enum):
     SPAN_KIND_UNSPECIFIED = 0
