@@ -1,12 +1,11 @@
+import { Callout } from '@signozhq/ui/callout';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { CircleCheck, CloudDownload } from '@signozhq/icons';
-import { Color } from '@signozhq/design-tokens';
+import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
 import {
-	Alert,
-	Button,
 	Card,
 	Col,
 	Flex,
@@ -251,16 +250,19 @@ export default function BillingContainer(): JSX.Element {
 			title: 'Data Ingested',
 			dataIndex: 'dataIngested',
 			key: 'dataIngested',
+			align: 'right',
 		},
 		{
 			title: 'Price per Unit',
 			dataIndex: 'pricePerUnit',
 			key: 'pricePerUnit',
+			align: 'right',
 		},
 		{
-			title: 'Cost (Billing period to date)',
+			title: 'Cost',
 			dataIndex: 'cost',
 			key: 'cost',
+			align: 'right',
 		},
 	];
 
@@ -345,23 +347,6 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCard,
 	]);
 
-	const BillingUsageGraphCallback = useCallback(
-		() =>
-			!isLoading && !isFetchingBillingData ? (
-				<>
-					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
-					<div className="billing-update-note">
-						Note: Billing metrics are updated once every 24 hours.
-					</div>
-				</>
-			) : (
-				<Card className="empty-graph-card" bordered={false}>
-					<Spinner size="large" tip="Loading..." height="35vh" />
-				</Card>
-			),
-		[apiResponse, billAmount, isLoading, isFetchingBillingData],
-	);
-
 	const subscriptionPastDueMessage = (): JSX.Element => (
 		<Typography>
 			{`We were not able to process payments for your account. Please update your card details `}
@@ -416,11 +401,11 @@ export default function BillingContainer(): JSX.Element {
 
 	return (
 		<div className="billing-container">
-			<Flex vertical style={{ marginBottom: 16 }}>
-				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
+			<Flex vertical gap={4} className="page-header">
+				<Typography.Text className="page-header__title">
 					{t('billing')}
 				</Typography.Text>
-				<Typography.Text color="muted">
+				<Typography.Text className="page-header__subtitle">
 					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
@@ -431,47 +416,33 @@ export default function BillingContainer(): JSX.Element {
 				className="page-info"
 			>
 				<Flex justify="space-between" align="center">
-					<Flex vertical>
-						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
+					<Flex vertical gap={8}>
+						<p className="page-info-title">
 							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
 							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
-						</Typography.Title>
+						</p>
 
 						{!isLoading && !isFetchingBillingData && !showGracePeriodMessage ? (
-							<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
+							<p className="page-info-subtitle">
 								{daysRemaining} {daysRemainingStr}
-							</Typography.Text>
+							</p>
 						) : null}
 					</Flex>
-					<Flex gap={8}>
-						<Button
-							type="default"
-							size="middle"
-							loading={isLoadingBilling || isLoadingManageBilling}
-							disabled={isLoading || isFetchingBillingData}
-							onClick={handleCsvDownload}
-							className="periscope-btn"
-						>
-							<Flex align="center" justify="center" gap={4}>
-								<CloudDownload size="md" />
-								Download CSV
-							</Flex>
-						</Button>
-						<Button
-							data-testid="header-billing-button"
-							type="primary"
-							size="middle"
-							loading={isLoadingBilling || isLoadingManageBilling}
-							disabled={isLoading}
-							onClick={handleBilling}
-						>
-							{trialInfo?.trialConvertedToSubscription
-								? t('manage_billing')
-								: t('upgrade_plan')}
-						</Button>
-
-						<RefreshPaymentStatus type="tooltip" />
-					</Flex>
+					<Button
+						testId="header-billing-button"
+						variant="solid"
+						color="secondary"
+						size="md"
+						loading={isLoadingBilling || isLoadingManageBilling}
+						disabled={isLoading}
+						onClick={handleBilling}
+						prefix={<Landmark size={14} />}
+						className="billing-manage-btn"
+					>
+						{trialInfo?.trialConvertedToSubscription
+							? t('manage_billing')
+							: t('upgrade_plan')}
+					</Button>
 				</Flex>
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
@@ -485,8 +456,8 @@ export default function BillingContainer(): JSX.Element {
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
-							<Alert
-								message={headerText}
+							<Callout
+								title={headerText}
 								type="info"
 								showIcon
 								style={{ marginTop: 12 }}
@@ -503,8 +474,8 @@ export default function BillingContainer(): JSX.Element {
 				billingData &&
 				trialInfo?.gracePeriodEnd &&
 				showGracePeriodMessage ? (
-					<Alert
-						message={`Your data is safe with us until ${getFormattedDate(
+					<Callout
+						title={`Your data is safe with us until ${getFormattedDate(
 							trialInfo?.gracePeriodEnd || Date.now(),
 						)}. Please upgrade plan now to retain your data.`}
 						type="info"
@@ -515,18 +486,44 @@ export default function BillingContainer(): JSX.Element {
 
 				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
-						<Alert
-							message={subscriptionPastDueMessage()}
-							type="error"
-							showIcon
-							style={{ marginTop: 12 }}
-						/>
+						<Callout type="error" showIcon style={{ marginTop: 12 }}>
+							{subscriptionPastDueMessage()}
+						</Callout>
 					) : (
 						<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 					))}
 			</Card>
 
-			<BillingUsageGraphCallback />
+			<div className="billing-graph-section">
+				{!isLoading && !isFetchingBillingData ? (
+					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+				) : (
+					<Card className="empty-graph-card" bordered={false}>
+						<Spinner size="large" tip="Loading..." height="35vh" />
+					</Card>
+				)}
+				{!isLoading && !isFetchingBillingData && (
+					<div className="billing-graph-footer">
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="md"
+							onClick={handleCsvDownload}
+							prefix={<MonitorDown size={14} />}
+							testId="download-csv-button"
+							className="billing-footer-btn"
+						>
+							Download CSV
+						</Button>
+						<RefreshPaymentStatus type="button" className="billing-footer-btn" />
+					</div>
+				)}
+			</div>
+			{!isLoading && !isFetchingBillingData && (
+				<Callout type="info" size="small" className="billing-update-note">
+					Billing metrics are updated once every 24 hours.
+				</Callout>
+			)}
 
 			<div className="billing-details">
 				{!isLoading && !isFetchingBillingData && (
@@ -535,6 +532,23 @@ export default function BillingContainer(): JSX.Element {
 						dataSource={data}
 						pagination={false}
 						bordered={false}
+						components={{
+							header: {
+								cell: ({
+									style,
+									...props
+								}: React.ThHTMLAttributes<HTMLTableCellElement>): JSX.Element => {
+									const { background: _, boxShadow: __, ...safeStyle } = style ?? {};
+									return (
+										<th
+											{...props}
+											style={safeStyle}
+											className={`${props.className ?? ''} billing-details__header-cell`}
+										/>
+									);
+								},
+							},
+						}}
 					/>
 				)}
 
@@ -583,9 +597,10 @@ export default function BillingContainer(): JSX.Element {
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<Button
-								data-testid="upgrade-plan-button"
-								type="primary"
-								size="middle"
+								testId="upgrade-plan-button"
+								variant="solid"
+								color="primary"
+								size="md"
 								loading={isLoadingBilling || isLoadingManageBilling}
 								onClick={handleBilling}
 							>

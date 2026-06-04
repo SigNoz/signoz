@@ -4,27 +4,124 @@
 	width: 90%;
 	margin: 0 auto;
 
+	.page-header {
+		margin-bottom: 16px;
+
+		&__title {
+			font-weight: 500;
+			font-size: 16px;
+			line-height: 32px;
+			letter-spacing: -0.08px;
+			color: var(--l1-foreground);
+		}
+
+		&__subtitle {
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+			color: var(--l2-foreground);
+		}
+	}
+
+	.page-info-title {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		color: var(--l1-foreground);
+	}
+
+	.page-info-subtitle {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 400;
+		line-height: 18px;
+		letter-spacing: -0.07px;
+		color: var(--l2-foreground);
+	}
+
+	.page-info {
+		.ant-card {
+			padding: 12px;
+		}
+		.billing-manage-btn {
+			background: var(--l3-background);
+
+			&:hover {
+				background: var(--l3-background-hover);
+			}
+		}
+	}
+
 	.billing-summary {
 		margin: 24px 8px;
 	}
 
 	.billing-details {
-		margin: 24px 0px;
+		margin: 24px 0;
+		border: 1px solid var(--l1-border);
+		border-radius: 2px;
+		overflow: hidden;
 
-		.ant-table-title {
-			color: var(--l2-foreground);
-			background-color: var(--l3-background);
+		.ant-table {
+			background: var(--l2-background);
 		}
 
-		.ant-table-cell {
-			background-color: var(--l1-background);
-			border-color: var(--l1-border);
+		.ant-table-thead > tr > th {
+			height: 52px;
+			padding: 0 16px;
+			color: var(--l3-foreground);
+			font-size: 12px;
+			font-weight: 500;
+			letter-spacing: 0.48px;
+			text-transform: uppercase;
 		}
 
-		.ant-table-tbody {
-			td {
-				border-color: var(--l1-border);
+		&__header-cell {
+			position: relative;
+			background: var(--l2-background) !important;
+			border: none !important;
+			border-bottom: 1px solid var(--l1-border) !important;
+			box-shadow: none !important;
+
+			&::after {
+				content: '';
+				position: absolute;
+				inset-block: 0;
+				inset-inline-end: 0;
+				width: 2px;
+				background: var(--l2-background);
+				z-index: 1;
 			}
+		}
+
+		.ant-table-tbody > tr > td {
+			height: 52px;
+			padding: 0 16px;
+			background: var(--l2-background);
+			border-bottom: 1px solid var(--l1-border);
+			color: var(--l2-foreground);
+			font-size: 14px;
+
+			&:first-child {
+				color: var(--l1-foreground);
+			}
+
+			&:not(:first-child) {
+				font-feature-settings:
+					'zero' 1,
+					'lnum' 1,
+					'tnum' 1;
+			}
+		}
+
+		.ant-table-tbody > tr:last-child > td {
+			border-bottom: none;
+		}
+
+		.ant-table-tbody > tr:hover > td {
+			background: var(--l2-background) !important;
 		}
 	}
 
@@ -43,6 +140,29 @@
 		}
 	}
 
+	.billing-graph-section {
+		border: 1px solid var(--l1-border);
+		border-radius: 4px;
+		overflow: hidden;
+		margin-bottom: 8px;
+
+		.billing-graph-footer {
+			display: flex;
+			gap: 8px;
+			padding: 12px 16px;
+			border-top: 1px solid var(--l1-border);
+			background: var(--l2-background);
+
+			.billing-footer-btn {
+				background: var(--l3-background);
+
+				&:hover {
+					background: var(--l3-background-hover);
+				}
+			}
+		}
+	}
+
 	.empty-graph-card {
 		.ant-card-body {
 			height: 40vh;
@@ -53,10 +173,13 @@
 	}
 
 	.billing-update-note {
-		text-align: left;
-		font-size: 13px;
-		color: var(--l2-foreground);
 		margin-top: 16px;
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 22px;
+		letter-spacing: -0.07px;
 	}
 }
 
