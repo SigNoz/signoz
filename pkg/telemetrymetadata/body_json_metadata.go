@@ -443,7 +443,7 @@ func (t *telemetryMetaStore) PromotePaths(ctx context.Context, paths ...string) 
 		if trimmed == "" {
 			continue
 		}
-		if err := batch.Append(telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, 0, releaseTime); err != nil {
+		if err := batch.Append(telemetrytypes.SignalLogs, telemetrylogs.LogsV2BodyPromotedColumn, "JSON()", telemetrytypes.FieldContextBody, trimmed, 2, releaseTime); err != nil {
 			_ = batch.Abort()
 			return errors.WrapInternalf(err, CodeFailedToAppendPath, "failed to append path")
 		}
