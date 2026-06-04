@@ -7675,20 +7675,34 @@ export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
-export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
+export type SpantypesFlamegraphSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
 
-export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
+/**
+ * @nullable
+ */
+export type SpantypesFlamegraphSpanDTOAttributes =
+	SpantypesFlamegraphSpanDTOAttributesAnyOf | null;
+
+export type SpantypesFlamegraphSpanDTOResourceAnyOf = { [key: string]: string };
+
+/**
+ * @nullable
+ */
+export type SpantypesFlamegraphSpanDTOResource =
+	SpantypesFlamegraphSpanDTOResourceAnyOf | null;
 
 export interface SpantypesFlamegraphSpanDTO {
 	/**
-	 * @type object
+	 * @type object,null
 	 */
-	attributes?: SpantypesFlamegraphSpanDTOAttributes;
+	attributes: SpantypesFlamegraphSpanDTOAttributes;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	durationNano?: number;
+	durationNano: number;
 	/**
 	 * @type array
 	 */
@@ -7696,33 +7710,33 @@ export interface SpantypesFlamegraphSpanDTO {
 	/**
 	 * @type boolean
 	 */
-	hasError?: boolean;
+	hasError: boolean;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	level?: number;
+	level: number;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	parentSpanId?: string;
+	parentSpanId: string;
 	/**
-	 * @type object
+	 * @type object,null
 	 */
-	resource?: SpantypesFlamegraphSpanDTOResource;
+	resource: SpantypesFlamegraphSpanDTOResource;
 	/**
 	 * @type string
 	 */
-	spanId?: string;
+	spanId: string;
 	/**
 	 * @type integer
 	 * @minimum 0
 	 */
-	timestamp?: number;
+	timestamp: number;
 }
 
 export interface SpantypesGettableFlamegraphTraceDTO {

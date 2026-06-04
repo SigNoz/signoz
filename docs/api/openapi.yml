@@ -6520,6 +6520,7 @@ components:
       properties:
         attributes:
           additionalProperties: {}
+          nullable: true
           type: object
         durationNano:
           minimum: 0
@@ -6540,6 +6541,7 @@ components:
         resource:
           additionalProperties:
             type: string
+          nullable: true
           type: object
         spanId:
           type: string
@@ -6547,7 +6549,16 @@ components:
           minimum: 0
           type: integer
       required:
+      - spanId
+      - parentSpanId
+      - timestamp
+      - durationNano
+      - hasError
+      - name
+      - level
       - event
+      - attributes
+      - resource
       type: object
     SpantypesGettableFlamegraphTrace:
       properties:
