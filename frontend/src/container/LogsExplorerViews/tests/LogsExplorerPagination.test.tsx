@@ -108,13 +108,21 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock(
-	'container/TopNav/DateTimeSelectionV2/index.tsx',
-	() =>
-		function MockDateTimeSelection(): JSX.Element {
-			return <div>MockDateTimeSelection</div>;
-		},
-);
+jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => {
+	const { useQueryBuilder } = jest.requireActual(
+		'hooks/queryBuilder/useQueryBuilder',
+	);
+	const { useSyncTimeOnStagedQueryChange } = jest.requireActual(
+		'hooks/queryBuilder/useSyncTimeOnStagedQueryChange',
+	);
+
+	return function MockDateTimeSelection(): JSX.Element {
+		const { stagedQuery } = useQueryBuilder();
+		useSyncTimeOnStagedQueryChange(stagedQuery?.id);
+		return <div>MockDateTimeSelection</div>;
+	};
+});
+
 jest.mock(
 	'container/LogsExplorerChart',
 	() =>

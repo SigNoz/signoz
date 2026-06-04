@@ -3,16 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(() => Promise.resolve()),
-}));
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -35,7 +30,6 @@ jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
-const mockLogEvent = logEvent as jest.MockedFunction<typeof logEvent>;
 const mockUseLocation = useLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 const mockHandleContactSupport = handleContactSupport as jest.Mock;
@@ -50,6 +44,7 @@ const mockLocation = {
 describe('FeedbackModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		logEventMock.mockReturnValue(Promise.resolve() as never);
 		mockUseLocation.mockReturnValue(mockLocation);
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: false,
@@ -116,7 +111,7 @@ describe('FeedbackModal', () => {
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+		expect(logEventMock).toHaveBeenCalledWith('Feedback: Submitted', {
 			data: testFeedback,
 			type: 'feedback',
 			page: mockLocation.pathname,
@@ -149,7 +144,7 @@ describe('FeedbackModal', () => {
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+		expect(logEventMock).toHaveBeenCalledWith('Feedback: Submitted', {
 			data: testFeedback,
 			type: 'reportBug',
 			page: mockLocation.pathname,
@@ -182,7 +177,7 @@ describe('FeedbackModal', () => {
 		await user.type(textarea, testFeedback);
 		await user.click(submitButton);
 
-		expect(mockLogEvent).toHaveBeenCalledWith('Feedback: Submitted', {
+		expect(logEventMock).toHaveBeenCalledWith('Feedback: Submitted', {
 			data: testFeedback,
 			type: 'featureRequest',
 			page: mockLocation.pathname,

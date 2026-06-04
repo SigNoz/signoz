@@ -95,7 +95,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
-	variables: Record<string, IDashboardVariable>;
+	variables?: Record<string, IDashboardVariable>;
 	version?: string;
 	image?: string;
 }
