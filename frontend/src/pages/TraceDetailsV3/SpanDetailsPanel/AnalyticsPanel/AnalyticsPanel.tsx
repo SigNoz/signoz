@@ -6,10 +6,7 @@ import {
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
-import { Typography } from '@signozhq/ui/typography';
-import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
-import Spinner from 'components/Spinner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
@@ -25,6 +22,7 @@ import {
 	AGGREGATIONS,
 	getAggregationMap as findAggregationMap,
 } from '../../utils/aggregations';
+import AnalyticsTabContent, { AnalyticsRow } from './AnalyticsTabContent';
 
 import styles from './AnalyticsPanel.module.scss';
 
@@ -85,70 +83,44 @@ function AnalyticsPanel({
 		[aggregations, colorByFieldName],
 	);
 
-	const execTimeRows = useMemo(() => {
+	const execTimeRows = useMemo<AnalyticsRow[]>(() => {
 		if (!execTimePct) {
 			return [];
 		}
 		return Object.entries(execTimePct)
+			.sort(([, a], [, b]) => b - a)
 			.map(([group, percentage]) => {
 				const pair = generateColorPair(group);
 				return {
 					group,
-					percentage,
 					color: isDarkMode ? pair.color : pair.colorDark,
+					widthPct: Math.min(percentage, 100),
+					label: `${percentage.toFixed(2)}%`,
 				};
-			})
-			.sort((a, b) => b.percentage - a.percentage);
+			});
 	}, [execTimePct, isDarkMode]);
 
-	const spanCountRows = useMemo(() => {
+	const spanCountRows = useMemo<AnalyticsRow[]>(() => {
 		if (!spanCounts) {
 			return [];
 		}
 		const max = Math.max(...Object.values(spanCounts), 1);
 		return Object.entries(spanCounts)
+			.sort(([, a], [, b]) => b - a)
 			.map(([group, count]) => {
 				const pair = generateColorPair(group);
 				return {
 					group,
-					count,
-					max,
 					color: isDarkMode ? pair.color : pair.colorDark,
+					widthPct: (count / max) * 100,
+					label: String(count),
 				};
-			})
-			.sort((a, b) => b.count - a.count);
+			});
 	}, [spanCounts, isDarkMode]);
 
 	if (!isOpen) {
 		return null;
 	}
-
-	// Loading / error / empty render inside the tab content so the tabs stay
-	// visible. Returns null when there are rows to show.
-	const renderState = (rowCount: number): JSX.Element | null => {
-		if (isLoading) {
-			return (
-				<div className={styles.state}>
-					<Spinner height="auto" />
-				</div>
-			);
-		}
-		if (isError) {
-			return (
-				<div className={styles.state}>
-					<Typography.Text>Couldn&apos;t load analytics</Typography.Text>
-				</div>
-			);
-		}
-		if (rowCount === 0) {
-			return (
-				<div className={styles.state}>
-					<Typography.Text>No data for {colorByFieldName}</Typography.Text>
-				</div>
-			);
-		}
-		return null;
-	};
 
 	return (
 		<FloatingPanel
@@ -189,69 +161,23 @@ function AnalyticsPanel({
 
 					<div className={styles.tabsScroll}>
 						<TabsContent value="exec-time">
-							{renderState(execTimeRows.length) ?? (
-								<div className={styles.list}>
-									{execTimeRows.map((row) => (
-										<>
-											<div
-												key={`${row.group}-dot`}
-												className={styles.dot}
-												style={{ backgroundColor: row.color }}
-											/>
-											<span key={`${row.group}-name`} className={styles.serviceName}>
-												{row.group}
-											</span>
-											<div key={`${row.group}-bar`} className={styles.barCell}>
-												<div className={styles.bar}>
-													<div
-														className={styles.barFill}
-														style={{
-															width: `${Math.min(row.percentage, 100)}%`,
-															backgroundColor: row.color,
-														}}
-													/>
-												</div>
-												<span className={cx(styles.value, styles.valueWide)}>
-													{row.percentage.toFixed(2)}%
-												</span>
-											</div>
-										</>
-									))}
-								</div>
-							)}
+							<AnalyticsTabContent
+								isLoading={isLoading}
+								isError={isError}
+								fieldName={colorByFieldName}
+								rows={execTimeRows}
+								valueVariant="wide"
+							/>
 						</TabsContent>
 
 						<TabsContent value="spans">
-							{renderState(spanCountRows.length) ?? (
-								<div className={styles.list}>
-									{spanCountRows.map((row) => (
-										<>
-											<div
-												key={`${row.group}-dot`}
-												className={styles.dot}
-												style={{ backgroundColor: row.color }}
-											/>
-											<span key={`${row.group}-name`} className={styles.serviceName}>
-												{row.group}
-											</span>
-											<div key={`${row.group}-bar`} className={styles.barCell}>
-												<div className={styles.bar}>
-													<div
-														className={styles.barFill}
-														style={{
-															width: `${(row.count / row.max) * 100}%`,
-															backgroundColor: row.color,
-														}}
-													/>
-												</div>
-												<span className={cx(styles.value, styles.valueNarrow)}>
-													{row.count}
-												</span>
-											</div>
-										</>
-									))}
-								</div>
-							)}
+							<AnalyticsTabContent
+								isLoading={isLoading}
+								isError={isError}
+								fieldName={colorByFieldName}
+								rows={spanCountRows}
+								valueVariant="narrow"
+							/>
 						</TabsContent>
 					</div>
 				</TabsRoot>
