@@ -133,11 +133,7 @@ func (handler *handler) lockUnlockV2(rw http.ResponseWriter, r *http.Request, lo
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
@@ -157,7 +153,7 @@ func (handler *handler) lockUnlockV2(rw http.ResponseWriter, r *http.Request, lo
 	err = handler.authz.CheckWithTupleCreation(
 		ctx,
 		claims,
-		valuer.MustNewUUID(claims.OrgID),
+		orgID,
 		authtypes.Relation{Verb: coretypes.VerbAssignee},
 		coretypes.NewResourceRole(),
 		selectors,
@@ -185,11 +181,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
@@ -202,7 +194,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypes.UpdateableDashboardV2{}
+	req := dashboardtypes.UpdatableDashboardV2{}
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return
@@ -227,11 +219,7 @@ func (handler *handler) PatchV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
