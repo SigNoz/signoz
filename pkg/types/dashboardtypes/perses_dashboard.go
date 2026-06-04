@@ -72,16 +72,16 @@ func (d *DashboardV2) CanUpdate() error {
 	return nil
 }
 
-func (d *DashboardV2) Update(updateable UpdateableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
 	if err := d.CanUpdate(); err != nil {
 		return err
 	}
-	if updateable.Name != d.Name {
-		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updateable.Name)
+	if updatable.Name != d.Name {
+		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updatable.Name)
 	}
-	d.DashboardV2MetadataBase = updateable.DashboardV2MetadataBase
+	d.DashboardV2MetadataBase = updatable.DashboardV2MetadataBase
 	d.Tags = resolvedTags
-	d.Spec = updateable.Spec
+	d.Spec = updatable.Spec
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
 	return nil
@@ -312,25 +312,25 @@ func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardDat
 type StorableDashboardV2Metadata = DashboardV2MetadataBase
 
 // ════════════════════════════════════════════════════════════════════════
-// Updateable
+// Updatable
 // ════════════════════════════════════════════════════════════════════════
 
-type UpdateableDashboardV2 struct {
+type UpdatableDashboardV2 struct {
 	DashboardV2MetadataBase
 	Name string                 `json:"name" required:"true"`
 	Tags []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec DashboardSpec          `json:"spec" required:"true"`
 }
 
-func (u *UpdateableDashboardV2) UnmarshalJSON(data []byte) error {
+func (u *UpdatableDashboardV2) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
-	type alias UpdateableDashboardV2
+	type alias UpdatableDashboardV2
 	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
-	*u = UpdateableDashboardV2(tmp)
+	*u = UpdatableDashboardV2(tmp)
 	if u.Spec.Display == nil {
 		u.Spec.Display = &common.Display{}
 	}
@@ -340,7 +340,7 @@ func (u *UpdateableDashboardV2) UnmarshalJSON(data []byte) error {
 	return u.Validate()
 }
 
-func (u *UpdateableDashboardV2) Validate() error {
+func (u *UpdatableDashboardV2) Validate() error {
 	if u.SchemaVersion != SchemaVersion {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, u.SchemaVersion)
 	}
@@ -353,8 +353,8 @@ func (u *UpdateableDashboardV2) Validate() error {
 	return u.Spec.Validate()
 }
 
-func (d DashboardV2) toUpdateableDashboardV2() UpdateableDashboardV2 {
-	return UpdateableDashboardV2{
+func (d DashboardV2) toUpdatableDashboardV2() UpdatableDashboardV2 {
+	return UpdatableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
 		Name:                    d.Name,
 		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),

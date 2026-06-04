@@ -56,8 +56,8 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return storable.ToDashboardV2(tags)
 }
 
-func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updateable dashboardtypes.UpdateableDashboardV2) (*dashboardtypes.DashboardV2, error) {
-	if err := updateable.Validate(); err != nil {
+func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if err := updatable.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -71,12 +71,12 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updatable.Tags)
 		if err != nil {
 			return err
 		}
 
-		err = existing.Update(updateable, updatedBy, resolvedTags)
+		err = existing.Update(updatable, updatedBy, resolvedTags)
 		if err != nil {
 			return err
 		}

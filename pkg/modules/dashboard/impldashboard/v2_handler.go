@@ -153,7 +153,7 @@ func (handler *handler) UpdateV2(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := dashboardtypes.UpdateableDashboardV2{}
+	req := dashboardtypes.UpdatableDashboardV2{}
 	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
 		render.Error(rw, err)
 		return

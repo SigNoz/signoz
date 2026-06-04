@@ -3185,14 +3185,7 @@ components:
         timePreference:
           $ref: '#/components/schemas/DashboardtypesTimePreference'
       type: object
-    DashboardtypesUpdatablePublicDashboard:
-      properties:
-        defaultTimeRange:
-          type: string
-        timeRangeEnabled:
-          type: boolean
-      type: object
-    DashboardtypesUpdateableDashboardV2:
+    DashboardtypesUpdatableDashboardV2:
       properties:
         image:
           type: string
@@ -3212,6 +3205,13 @@ components:
       - name
       - tags
       - spec
+      type: object
+    DashboardtypesUpdatablePublicDashboard:
+      properties:
+        defaultTimeRange:
+          type: string
+        timeRangeEnabled:
+          type: boolean
       type: object
     DashboardtypesVariable:
       oneOf:
@@ -13068,7 +13068,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardtypesUpdateableDashboardV2'
+              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
       responses:
         "200":
           content:
