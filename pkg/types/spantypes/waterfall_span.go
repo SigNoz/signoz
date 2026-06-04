@@ -47,7 +47,7 @@ func (p *PostableWaterfall) Validate() error {
 }
 
 // Event represents a span event.
-// todo():depricate this and use EventV2 everywhere instead while sending to client
+// todo():depricate this and use EventV2 everywhere instead while sending to client.
 type Event struct {
 	Name         string         `json:"name,omitempty"`
 	TimeUnixNano uint64         `json:"timeUnixNano,omitempty"`
