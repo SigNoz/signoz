@@ -4,7 +4,7 @@ Transparency check for the skip_resource_fingerprint optimization (traces and lo
 The optimization changes how a query's resource conditions are resolved depending on
 how selective they are, but must change only ClickHouse performance, never the rows.
 Each test runs the same query against the primary instance (optimization on,
-threshold=2) and `signoz_fingerprint` (optimization off) and asserts the responses
+threshold=3) and `signoz_fingerprint` (optimization off) and asserts the responses
 are identical, covering all three resolver outcomes:
 
   - CTE: a filter matching fewer fingerprints than the threshold resolves through the
@@ -13,6 +13,9 @@ are identical, covering all three resolver outcomes:
     onto the main spans/logs table instead.
   - No-op: a filter with no resource conditions to pre-resolve (no resource field, or
     resource fields only under an OR) filters inline on the main table.
+
+A fingerprint is the hash of the entire resource set, so two rows sharing the filtered
+attribute but differing in any other resource attribute are distinct fingerprints.
 """
 
 from collections.abc import Callable
@@ -39,10 +42,10 @@ def test_skip_resource_fingerprint_traces_fallback_matches_fingerprint(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """A >= 2-fingerprint filter drives the fallback path; rows must match the fingerprint baseline."""
+    """A filter matching >= threshold fingerprints drives the fallback path; rows must match the fingerprint baseline."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    # 3 distinct services share one env (3 fingerprints > threshold 2 -> fallback);
+    # 3 distinct services share one env (3 fingerprints >= threshold 3 -> fallback);
     # the 4th has a different env and must be excluded.
     env = {"deployment.environment": "skip-fallback"}
     insert_traces(
@@ -79,17 +82,19 @@ def test_skip_resource_fingerprint_traces_cte_matches_fingerprint(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """A < 2-fingerprint filter resolves through the fingerprint CTE; rows must match the baseline."""
+    """A filter matching < threshold fingerprints resolves through the fingerprint CTE; rows must match the baseline."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    # One service shares the env (1 fingerprint < threshold 2 -> CTE); two spans on it
-    # exercise dedup. A second service in a different env must be excluded.
+    # 2 distinct services share one env -> 2 fingerprints, below threshold 3 -> CTE.
+    # svc-a carries two spans to also exercise CTE dedup. A service in a different env
+    # is a third fingerprint but excluded by the filter.
     env = {"deployment.environment": "skip-cte"}
     insert_traces(
         [
             Traces(timestamp=now - timedelta(seconds=10), resources={"service.name": "skip-cte-svc-a", **env}),
             Traces(timestamp=now - timedelta(seconds=9), resources={"service.name": "skip-cte-svc-a", **env}),
-            Traces(timestamp=now - timedelta(seconds=8), resources={"service.name": "skip-cte-other", "deployment.environment": "skip-cte-other-env"}),
+            Traces(timestamp=now - timedelta(seconds=8), resources={"service.name": "skip-cte-svc-b", **env}),
+            Traces(timestamp=now - timedelta(seconds=7), resources={"service.name": "skip-cte-other", "deployment.environment": "skip-cte-other-env"}),
         ]
     )
 
@@ -107,7 +112,7 @@ def test_skip_resource_fingerprint_traces_cte_matches_fingerprint(
     optimized = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
     fingerprint = make_query_request(signoz_fingerprint, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
 
-    assert len(get_rows(optimized)) == 2
+    assert len(get_rows(optimized)) == 3
     assert_identical_query_response(optimized, fingerprint)
 
 
@@ -195,10 +200,10 @@ def test_skip_resource_fingerprint_logs_fallback_matches_fingerprint(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """A >= 2-fingerprint filter drives the fallback path; rows must match the fingerprint baseline."""
+    """A filter matching >= threshold fingerprints drives the fallback path; rows must match the fingerprint baseline."""
     now = datetime.now(tz=UTC)
 
-    # 3 distinct services share one env (3 fingerprints > threshold 2 -> fallback);
+    # 3 distinct services share one env (3 fingerprints >= threshold 3 -> fallback);
     # the 4th has a different env and must be excluded.
     env = {"deployment.environment": "skip-logs-fallback"}
     insert_logs(
@@ -235,17 +240,19 @@ def test_skip_resource_fingerprint_logs_cte_matches_fingerprint(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """A < 2-fingerprint filter resolves through the fingerprint CTE; rows must match the baseline."""
+    """A filter matching < threshold fingerprints resolves through the fingerprint CTE; rows must match the baseline."""
     now = datetime.now(tz=UTC)
 
-    # One service shares the env (1 fingerprint < threshold 2 -> CTE); two logs on it
-    # exercise dedup. A second service in a different env must be excluded.
+    # 2 distinct services share one env -> 2 fingerprints, below threshold 3 -> CTE.
+    # svc-a carries two logs to also exercise CTE dedup. A service in a different env
+    # is a third fingerprint but excluded by the filter.
     env = {"deployment.environment": "skip-logs-cte"}
     insert_logs(
         [
             Logs(timestamp=now - timedelta(seconds=10), resources={"service.name": "skip-logs-cte-svc-a", **env}, body="a"),
             Logs(timestamp=now - timedelta(seconds=9), resources={"service.name": "skip-logs-cte-svc-a", **env}, body="b"),
-            Logs(timestamp=now - timedelta(seconds=8), resources={"service.name": "skip-logs-cte-other", "deployment.environment": "skip-logs-cte-other-env"}, body="noise"),
+            Logs(timestamp=now - timedelta(seconds=8), resources={"service.name": "skip-logs-cte-svc-b", **env}, body="c"),
+            Logs(timestamp=now - timedelta(seconds=7), resources={"service.name": "skip-logs-cte-other", "deployment.environment": "skip-logs-cte-other-env"}, body="noise"),
         ]
     )
 
@@ -263,7 +270,7 @@ def test_skip_resource_fingerprint_logs_cte_matches_fingerprint(
     optimized = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
     fingerprint = make_query_request(signoz_fingerprint, token, start_ms=start_ms, end_ms=end_ms, request_type="raw", queries=[query])
 
-    assert len(get_rows(optimized)) == 2
+    assert len(get_rows(optimized)) == 3
     assert_identical_query_response(optimized, fingerprint)
 
 
