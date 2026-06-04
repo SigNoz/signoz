@@ -53,12 +53,7 @@ func (handler *handler) ListV2(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-
-	userID, err := valuer.NewUUID(claims.IdentityID())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	userID := valuer.MustNewUUID(claims.IdentityID())
 
 	params := new(dashboardtypes.ListDashboardsV2Params)
 	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
@@ -262,12 +257,7 @@ func (handler *handler) pinUnpinV2(rw http.ResponseWriter, r *http.Request, pin 
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-
-	userID, err := valuer.NewUUID(claims.IdentityID())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	userID := valuer.MustNewUUID(claims.IdentityID())
 
 	id := mux.Vars(r)["id"]
 	if id == "" {
