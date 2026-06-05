@@ -27,79 +27,14 @@ REQUIRED_METRICS = {
 }
 
 
-def test_clusters_happy_path(
+def test_clusters_accuracy(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """2 clusters x 2 nodes x 2 pods/node; assert shape + node/pod count buckets."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_happy_path.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-
-    assert data["total"] == 2
-    assert len(data["records"]) == 2
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
-    assert data["endTimeBeforeRetention"] is False
-
-    assert {r["clusterName"] for r in data["records"]} == {"happy-cluster-1", "happy-cluster-2"}
-
-    for record in data["records"]:
-        for field in (
-            "clusterName",
-            "clusterCPU",
-            "clusterCPUAllocatable",
-            "clusterMemory",
-            "clusterMemoryAllocatable",
-            "nodeCountsByReadiness",
-            "podCountsByPhase",
-            "meta",
-        ):
-            assert field in record, f"missing {field} in {record!r}"
-
-        for bucket in ("ready", "notReady"):
-            assert bucket in record["nodeCountsByReadiness"]
-            assert isinstance(record["nodeCountsByReadiness"][bucket], int)
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
-
-        # 2 ready nodes per cluster, no notReady.
-        assert record["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
-        # 2 nodes x 2 running pods = 4 per cluster.
-        assert record["podCountsByPhase"]["running"] == 4
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert record["podCountsByPhase"][other] == 0
-
-        assert record["meta"].get("k8s.cluster.name") == record["clusterName"]
-
-
-def test_clusters_value_accuracy(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Exact per-cluster metric sums + node readiness + pod phase counts.
+    """Assert response shape/contract + exact per-cluster metric sums + node
+    readiness + pod phase counts.
 
     SpaceAggregationSum across nodes per cluster (clusters_constants.go:62,82,100,119).
     acc-cluster-1: 2 nodes @ cpu=0.5, alloc_cpu=4, mem=1e9, alloc_mem=8e9
@@ -135,9 +70,37 @@ def test_clusters_value_accuracy(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+
+    # Shape/contract.
+    assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
+    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    assert data["endTimeBeforeRetention"] is False
+    assert {r["clusterName"] for r in data["records"]} == set(exp_by_name.keys())
 
     for record in data["records"]:
+        for field in (
+            "clusterName",
+            "clusterCPU",
+            "clusterCPUAllocatable",
+            "clusterMemory",
+            "clusterMemoryAllocatable",
+            "nodeCountsByReadiness",
+            "podCountsByPhase",
+            "meta",
+        ):
+            assert field in record, f"missing {field} in {record!r}"
+
+        for bucket in ("ready", "notReady"):
+            assert bucket in record["nodeCountsByReadiness"]
+            assert isinstance(record["nodeCountsByReadiness"][bucket], int)
+        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
+            assert bucket in record["podCountsByPhase"]
+            assert isinstance(record["podCountsByPhase"][bucket], int)
+
+        assert record["meta"].get("k8s.cluster.name") == record["clusterName"]
+
+        # Exact values.
         exp = exp_by_name[record["clusterName"]]
         for field in (
             "clusterCPU",
@@ -443,13 +406,15 @@ def test_clusters_groupby_cloud_provider(
     assert providers_seen == {"gcp", "aws"}
 
 
-def test_clusters_pagination_sync(
+def test_clusters_pagination(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """Pagination invariants across 3 offset windows."""
+    """Pagination: per-page len matches min(limit, total-offset), total invariant,
+    pages cover the full set with no overlap. The final offset is beyond total:
+    it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -463,7 +428,7 @@ def test_clusters_pagination_sync(
     seen_names: list[str] = []
     seen_totals: set[int] = set()
 
-    for offset in (0, 3, 6):
+    for offset in (0, 3, 6, K + 5):
         response = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
             headers={"authorization": f"Bearer {token}"},
@@ -479,7 +444,7 @@ def test_clusters_pagination_sync(
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
         seen_totals.add(data["total"])
-        expected_len = min(limit, K - offset)
+        expected_len = max(0, min(limit, K - offset))
         assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
         seen_names.extend(r["clusterName"] for r in data["records"])
 
@@ -488,56 +453,31 @@ def test_clusters_pagination_sync(
     assert set(seen_names) == {f"page-c{i}" for i in range(1, K + 1)}
 
 
-def test_clusters_offset_beyond_total(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Offset beyond total returns empty records; total still reflects dataset size."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    K = 7
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 3,
-            "offset": K + 5,
-            "filter": {"expression": "k8s.cluster.name CONTAINS 'page-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["records"] == []
-    assert data["total"] == K
-
-
-# orderBy keys per clusters_constants.go (cpu, cpu_allocatable, memory, memory_allocatable).
+# orderBy keys per clusters_constants.go (cpu, cpu_allocatable, memory,
+# memory_allocatable). k8s.cluster.name sorts via the metadata-name branch
+# (PaginateMetadataByName) and is only allowed when groupBy is empty.
 @pytest.mark.parametrize(
-    "column",
-    ["cpu", "cpu_allocatable", "memory", "memory_allocatable"],
+    "column,record_field",
+    [
+        pytest.param("cpu", "clusterCPU", id="cpu"),
+        pytest.param("cpu_allocatable", "clusterCPUAllocatable", id="cpu_allocatable"),
+        pytest.param("memory", "clusterMemory", id="memory"),
+        pytest.param("memory_allocatable", "clusterMemoryAllocatable", id="memory_allocatable"),
+        pytest.param("k8s.cluster.name", "clusterName", id="cluster_name"),
+    ],
 )
 @pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_clusters_total_invariant_across_orderby(
+def test_clusters_orderby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     column: str,
+    record_field: str,
     direction: str,
 ) -> None:
-    """Total stays K across all orderBy column x direction combinations."""
+    """Every orderBy column x direction: total/len stay K (invariant under
+    sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -557,6 +497,7 @@ def test_clusters_total_invariant_across_orderby(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": column}, "direction": direction},
+            # Guards against clusters seeded by other tests in the shared backend.
             "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
         },
         timeout=5,
@@ -567,91 +508,9 @@ def test_clusters_total_invariant_across_orderby(
     assert data["total"] == K, f"{ctx}: total={data['total']}"
     assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
-
-@pytest.mark.parametrize(
-    "column,record_field",
-    [
-        pytest.param("cpu", "clusterCPU", id="cpu"),
-        pytest.param("cpu_allocatable", "clusterCPUAllocatable", id="cpu_allocatable"),
-        pytest.param("memory", "clusterMemory", id="memory"),
-        pytest.param("memory_allocatable", "clusterMemoryAllocatable", id="memory_allocatable"),
-    ],
-)
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_clusters_orderby_correctness(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    column: str,
-    record_field: str,
-    direction: str,
-) -> None:
-    """Records sorted by the chosen metric column in the requested direction."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": column}, "direction": direction},
-            "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
     values = [r[record_field] for r in data["records"]]
     expected = sorted(values, reverse=(direction == "desc"))
-    assert values == expected, f"{column} {direction} not sorted; got {values}"
-
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_clusters_orderby_by_cluster_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """orderBy=k8s.cluster.name with empty groupBy returns clusters sorted
-    alphabetically via the metadata-name branch (PaginateMetadataByName)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/clusters_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "k8s.cluster.name"}, "direction": direction},
-            "filter": {"expression": "k8s.cluster.name CONTAINS 'order-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    names = [r["clusterName"] for r in data["records"]]
-    expected = sorted(names, reverse=(direction == "desc"))
-    assert names == expected, f"cluster.name {direction} not sorted; got {names}"
+    assert values == expected, f"{ctx} not sorted; got {values}"
 
 
 @pytest.mark.parametrize(
