@@ -1,8 +1,11 @@
-import { useRef, useState } from 'react';
-import { Modal } from 'antd';
+import { useCallback, useRef, useState } from 'react';
+import { Plus } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 
+import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { DashboardSection } from '../../../utils';
 import type { AddPanelArgs } from '../../Panel/hooks/useAddPanelToSection';
 import type { DeletePanelArgs } from '../../Panel/hooks/useDeletePanel';
@@ -40,6 +43,10 @@ function Section({
 	dragHandle,
 }: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):
 	// true once the section scrolls into (or near) the viewport.
@@ -54,30 +61,30 @@ function Section({
 		layoutIndex: section.layoutIndex,
 	});
 
-	const handleRenameSubmit = async (title: string): Promise<void> => {
-		const ok = await rename(title);
-		if (ok) {
-			setIsRenaming(false);
-		}
-	};
+	const handleRenameSubmit = useCallback(
+		async (title: string): Promise<void> => {
+			const ok = await rename(title);
+			if (ok) {
+				setIsRenaming(false);
+			}
+		},
+		[rename],
+	);
 
 	const [isAddingPanel, setIsAddingPanel] = useState(false);
-	const handleSelectPanelType = (pluginKind: string): void => {
-		onAddPanel?.({ layoutIndex: section.layoutIndex, pluginKind });
-		setIsAddingPanel(false);
-	};
+	const handleSelectPanelType = useCallback(
+		(pluginKind: string): void => {
+			onAddPanel?.({ layoutIndex: section.layoutIndex, pluginKind });
+			setIsAddingPanel(false);
+		},
+		[onAddPanel, section.layoutIndex],
+	);
 
 	const { deleteSection } = useDeleteSection({ section });
-	const confirmDeleteSection = (): void => {
-		Modal.confirm({
-			title: `Delete section "${section.title ?? ''}"?`,
-			content: 'Panels in this section will be removed.',
-			okText: 'Delete',
-			okButtonProps: { danger: true },
-			centered: true,
-			onOk: () => deleteSection(),
-		});
-	};
+	const handleDeleteSection = useCallback((): void => {
+		void deleteSection();
+		setIsDeleteOpen(false);
+	}, [deleteSection]);
 
 	const grid = (
 		<SectionGrid
@@ -118,13 +125,35 @@ function Section({
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				onRename={isEditable ? (): void => setIsRenaming(true) : undefined}
-				onAddPanel={
-					isEditable && onAddPanel ? (): void => setIsAddingPanel(true) : undefined
+				actions={
+					isEditable
+						? {
+								onRename: (): void => setIsRenaming(true),
+								onAddPanel: (): void => setIsAddingPanel(true),
+								onDeleteSection: (): void => setIsDeleteOpen(true),
+							}
+						: undefined
 				}
-				onDeleteSection={isEditable ? confirmDeleteSection : undefined}
 			/>
-			{open ? grid : null}
+			{open &&
+				(section.items.length > 0 ? (
+					grid
+				) : (
+					<div className={styles.emptySection}>
+						{isEditable && (
+							<Button
+								type="button"
+								variant="dashed"
+								color="secondary"
+								prefix={<Plus size="md" />}
+								onClick={(): void => setIsPanelTypeSelectionModalOpen(true)}
+								testId={`section-add-panel-${section.id}`}
+							>
+								New Panel
+							</Button>
+						)}
+					</div>
+				))}
 			<RenameSectionModal
 				open={isRenaming}
 				initialValue={section.title}
@@ -136,6 +165,13 @@ function Section({
 				open={isAddingPanel}
 				onClose={(): void => setIsAddingPanel(false)}
 				onSelect={handleSelectPanelType}
+			/>
+			<ConfirmDeleteDialog
+				open={isDeleteOpen}
+				title={`Delete section "${section.title ?? ''}"?`}
+				description="Panels in this section will be removed."
+				onConfirm={handleDeleteSection}
+				onClose={(): void => setIsDeleteOpen(false)}
 			/>
 		</div>
 	);

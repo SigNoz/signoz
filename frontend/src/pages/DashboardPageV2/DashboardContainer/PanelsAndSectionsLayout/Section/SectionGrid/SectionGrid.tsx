@@ -66,10 +66,16 @@ function SectionGrid({
 						panel={item.panel}
 						panelId={item.id}
 						isVisible={isVisible}
-						currentLayoutIndex={layoutIndex}
-						sections={isEditable ? sections : undefined}
-						onMovePanel={isEditable ? onMovePanel : undefined}
-						onDeletePanel={isEditable ? onDeletePanel : undefined}
+						panelActions={
+							isEditable && onMovePanel && onDeletePanel
+								? {
+										currentLayoutIndex: layoutIndex,
+										sections: sections ?? [],
+										onMovePanel,
+										onDeletePanel,
+									}
+								: undefined
+						}
 					/>
 				</div>
 			))}

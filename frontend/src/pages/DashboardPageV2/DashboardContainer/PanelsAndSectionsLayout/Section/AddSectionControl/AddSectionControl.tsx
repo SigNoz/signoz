@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../../utils';
@@ -30,30 +31,31 @@ function AddSectionControl({
 	const needsMigration =
 		!isSectioned && sections.some((s) => s.items.length > 0);
 
-	const handleClick = (): void => {
+	const handleClick = useCallback((): void => {
 		if (needsMigration) {
 			setIsMigrationOpen(true);
 			return;
 		}
 		void addSection(DEFAULT_SECTION_TITLE);
-	};
+	}, [needsMigration, addSection]);
 
-	const handleConfirmMigration = async (): Promise<void> => {
+	const handleConfirmMigration = useCallback(async (): Promise<void> => {
 		await migrate(DEFAULT_SECTION_TITLE);
 		setIsMigrationOpen(false);
-	};
+	}, [migrate]);
 
 	return (
 		<>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
 				className={styles.addButton}
 				onClick={handleClick}
 				data-testid="add-section"
 			>
 				<Plus size={14} />
 				Add section
-			</button>
+			</Button>
 			<FirstSectionMigrationModal
 				open={isMigrationOpen}
 				isSaving={isSaving}

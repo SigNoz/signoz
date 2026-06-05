@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { EllipsisVertical, FolderInput, Trash2 } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
@@ -75,8 +76,11 @@ function PanelActionsMenu({
 
 	return (
 		<DropdownMenuSimple menu={{ items }}>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				color="secondary"
+				size="icon"
 				className={styles.trigger}
 				aria-label="Panel actions"
 				data-testid={`panel-actions-${panelId}`}
@@ -87,7 +91,7 @@ function PanelActionsMenu({
 				onClick={(e): void => e.stopPropagation()}
 			>
 				<EllipsisVertical size={14} />
-			</button>
+			</Button>
 		</DropdownMenuSimple>
 	);
 }

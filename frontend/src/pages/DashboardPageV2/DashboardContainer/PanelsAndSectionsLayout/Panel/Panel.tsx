@@ -12,6 +12,14 @@ import type { MovePanelArgs } from './hooks/useMovePanelToSection';
 import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
 import styles from './Panel.module.scss';
 
+/** Panel action context — present together only in editable sectioned mode. */
+export interface PanelActionsConfig {
+	currentLayoutIndex: number;
+	sections: DashboardSection[];
+	onMovePanel: (args: MovePanelArgs) => void;
+	onDeletePanel: (args: DeletePanelArgs) => void;
+}
+
 interface PanelProps {
 	panel: DashboardtypesPanelDTO | undefined;
 	panelId: string;
@@ -21,21 +29,15 @@ interface PanelProps {
 	 * data. Currently unused on purpose.
 	 */
 	isVisible?: boolean;
-	/** Section actions — present only in editable sectioned mode. */
-	currentLayoutIndex?: number;
-	sections?: DashboardSection[];
-	onMovePanel?: (args: MovePanelArgs) => void;
-	onDeletePanel?: (args: DeletePanelArgs) => void;
+	/** Move/delete actions — present only in editable sectioned mode. */
+	panelActions?: PanelActionsConfig;
 }
 
 function Panel({
 	panel,
 	panelId,
 	isVisible,
-	currentLayoutIndex,
-	sections,
-	onMovePanel,
-	onDeletePanel,
+	panelActions,
 }: PanelProps): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
@@ -65,13 +67,13 @@ function Panel({
 					</Typography.Text>
 					<Badge className={styles.badge}>{kind}</Badge>
 				</div>
-				{currentLayoutIndex !== undefined && (onMovePanel || onDeletePanel) ? (
+				{panelActions ? (
 					<PanelActionsMenu
 						panelId={panelId}
-						currentLayoutIndex={currentLayoutIndex}
-						sections={sections ?? []}
-						onMovePanel={onMovePanel}
-						onDeletePanel={onDeletePanel}
+						currentLayoutIndex={panelActions.currentLayoutIndex}
+						sections={panelActions.sections}
+						onMovePanel={panelActions.onMovePanel}
+						onDeletePanel={panelActions.onDeletePanel}
 					/>
 				) : (
 					<EllipsisVertical size={14} />
