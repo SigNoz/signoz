@@ -296,12 +296,12 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
-		// Builder queries alias aggregation columns as __result_N (always numeric) and toString-wrap group-by keys (always string);
+		// Builder queries aliases aggregation columns as __result_N (always numeric) and wraps group-by keys with toString (always string);
 		// Raw ClickHouse queries may use any aliases.
-		// Handling Builder queries, __result_N -> aggregation, non __result_N -> group-by.
-		// Handling Raw ClickHouse queries, any numeric column -> aggregations, any non-numeric column -> group-by.
-		// NOTE: For clickhouse queries, its wrong to assume that group-by keys are always non-numeric, user might be grouping by on integer status_code.
-		// However, we fine with this for now. If need arises, this should be solved on the frontend side by asking for user a mapping of column names to column types.
+		// Handling Builder queries, If name like __result_N -> aggregation, otherwise group-by column
+		// Handling Raw ClickHouse queries, If type is numeric -> aggregation, otherwise group-by column
+		// NOTE: For clickhouse queries, its wrong to assume that numeric columns are always aggregations, user might be grouping by on integer status_code.
+		// However, we are fine with this for now. If need arises, simplest way would be to solve this on the frontend side by asking user a mapping of column names to column types.
 		if aggRe.MatchString(name) || isNumericKind(colTypes[i].ScanType()) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
