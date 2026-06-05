@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { Tooltip, Spin } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
-import { EllipsisVertical, Loader } from '@signozhq/icons';
+import { PenLine, Loader } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
@@ -77,6 +77,21 @@ function PanelV2({ panel, panelId }: Props): JSX.Element {
 		[dispatch, pathname, safeNavigate, urlQuery],
 	);
 
+	/**
+	 * Opens the V2 panel editor overlay by setting the `editPanelId` query param
+	 * on the current dashboard URL (the dashboard stays mounted underneath).
+	 * Stops propagation so the click on the drag-handle row doesn't start a grid
+	 * drag.
+	 */
+	const onEdit = useCallback(
+		(e: React.MouseEvent): void => {
+			e.stopPropagation();
+			urlQuery.set(QueryParams.editPanelId, panelId);
+			safeNavigate(`${pathname}?${urlQuery.toString()}`);
+		},
+		[urlQuery, safeNavigate, pathname, panelId],
+	);
+
 	const headerTitle = useMemo(() => {
 		if (!description) {
 			return name;
@@ -132,7 +147,24 @@ function PanelV2({ panel, panelId }: Props): JSX.Element {
 					</Typography.Text>
 					<Badge style={{ marginInlineEnd: 0 }}>{kind}</Badge>
 				</div>
-				<EllipsisVertical size={14} />
+				<button
+					type="button"
+					data-testid="panel-v2-edit"
+					aria-label="Edit panel"
+					onClick={onEdit}
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						padding: 4,
+						background: 'none',
+						border: 'none',
+						cursor: 'pointer',
+						color: 'inherit',
+					}}
+				>
+					<PenLine size={14} />
+				</button>
 			</div>
 
 			<div
