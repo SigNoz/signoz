@@ -207,7 +207,20 @@ def test_volumes_filter(
     expression: str,
     expected: set,
 ) -> None:
-    """AND-combined pairs of filter operators return the correct intersection."""
+    """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
+    return exactly the matching PVCs, with undistorted per-PVC metric values."""
+    # Every PVC in volumes_filter_dataset.jsonl carries the same sample
+    # pattern as acc-pvc-1 in volumes_value_accuracy.jsonl, so all filtered
+    # records must resolve to these exact values (mirrors
+    # volumes_value_accuracy_expected.json acc-pvc-1).
+    expected_values = {
+        "volumeAvailable": 30000000000.0,
+        "volumeCapacity": 100000000000.0,
+        "volumeUsage": 70000000000.0,
+        "volumeInodes": 1000000.0,
+        "volumeInodesFree": 800000.0,
+        "volumeInodesUsed": 200000.0,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -232,6 +245,11 @@ def test_volumes_filter(
     data = response.json()["data"]
     assert {r["persistentVolumeClaimName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-PVC aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['persistentVolumeClaimName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(
