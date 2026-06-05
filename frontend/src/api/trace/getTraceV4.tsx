@@ -1,15 +1,14 @@
-import { ApiV3Instance as axios } from 'api';
-import { omit } from 'lodash-es';
+import { getWaterfallV4 } from 'api/generated/services/tracedetail';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	GetTraceV3PayloadProps,
-	GetTraceV3SuccessResponse,
+	GetTraceV4PayloadProps,
+	GetTraceV4SuccessResponse,
 	SpanV3,
 } from 'types/api/trace/getTraceV3';
 
-const getTraceV3 = async (
-	props: GetTraceV3PayloadProps,
-): Promise<SuccessResponse<GetTraceV3SuccessResponse> | ErrorResponse> => {
+const getTraceV4 = async (
+	props: GetTraceV4PayloadProps,
+): Promise<SuccessResponse<GetTraceV4SuccessResponse> | ErrorResponse> => {
 	let uncollapsedSpans = [...props.uncollapsedSpans];
 	if (!props.isSelectedSpanIDUnCollapsed) {
 		uncollapsedSpans = uncollapsedSpans.filter(
@@ -19,31 +18,37 @@ const getTraceV3 = async (
 		props.selectedSpanId &&
 		!uncollapsedSpans.includes(props.selectedSpanId)
 	) {
-		// V3 backend only uses uncollapsedSpans list (unlike V2 which also interprets
+		// Backend only uses the uncollapsedSpans list (unlike V2 which also interprets
 		// isSelectedSpanIDUnCollapsed server-side), so explicitly add the selected span
 		uncollapsedSpans.push(props.selectedSpanId);
 	}
-	const postData: GetTraceV3PayloadProps = {
-		...props,
-		uncollapsedSpans,
-		limit: 10000,
-	};
-	const response = await axios.post<GetTraceV3SuccessResponse>(
-		`/traces/${props.traceId}/waterfall`,
-		omit(postData, 'traceId'),
+	const response = await getWaterfallV4(
+		{ traceID: props.traceId },
+		{
+			selectedSpanId: props.selectedSpanId,
+			uncollapsedSpans,
+			limit: 10000,
+		},
 	);
 
-	// V3 API wraps response in { status, data }
-	const rawPayload = (response.data as any).data || response.data;
+	// Generated client unwraps the axios response; .data is the waterfall payload.
+	// Wire spans carry time_unix; SpanV3's timestamp + 'service.name' are derived below.
+	type WireSpan = Omit<SpanV3, 'timestamp' | 'service.name'> & {
+		time_unix: number;
+	};
+	const rawPayload = response.data as unknown as Omit<
+		GetTraceV4SuccessResponse,
+		'spans'
+	> & { spans: WireSpan[] | null };
 
 	// Derive 'service.name' from resource for convenience — only derived field
-	const spans: SpanV3[] = (rawPayload.spans || []).map((span: any) => ({
+	const spans: SpanV3[] = (rawPayload.spans || []).map((span) => ({
 		...span,
 		'service.name': span.resource?.['service.name'] || '',
 		timestamp: span.time_unix,
 	}));
 
-	// V3 API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),
+	// API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),
 	// not absolute unix millis like V2. The span timestamps are absolute unix millis.
 	// Convert by using the first span's timestamp as the base if there's a mismatch.
 	let { startTimestampMillis, endTimestampMillis } = rawPayload;
@@ -70,4 +75,4 @@ const getTraceV3 = async (
 	};
 };
 
-export default getTraceV3;
+export default getTraceV4;
