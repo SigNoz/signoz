@@ -183,6 +183,34 @@ def test_get_service_details_with_account(
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any service config is set"
 
 
+def test_get_account_service(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Get service for a specific account — all disabled by default."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+
+    data = response.json()["data"]
+    assert data["id"] == SERVICE_ID, f"id should be '{SERVICE_ID}'"
+    assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null before any config is set"
+
+
 def test_get_service_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
