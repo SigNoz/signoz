@@ -870,14 +870,6 @@ components:
       - timestampMillis
       - data
       type: object
-    CloudintegrationtypesAssets:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
-          nullable: true
-          type: array
-      type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
         deploymentRegion:
@@ -1024,17 +1016,6 @@ components:
       - sigNozApiKey
       - ingestionUrl
       - ingestionKey
-      type: object
-    CloudintegrationtypesDashboard:
-      properties:
-        definition:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        description:
-          type: string
-        id:
-          type: string
-        title:
-          type: string
       type: object
     CloudintegrationtypesDataCollected:
       properties:
@@ -1209,7 +1190,7 @@ components:
     CloudintegrationtypesService:
       properties:
         assets:
-          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+          $ref: '#/components/schemas/CloudintegrationtypesServiceAssets'
         cloudIntegrationService:
           $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
@@ -1222,8 +1203,6 @@ components:
           type: string
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
-        telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -1234,8 +1213,16 @@ components:
       - assets
       - supportedSignals
       - dataCollected
-      - telemetryCollectionStrategy
       - cloudIntegrationService
+      type: object
+    CloudintegrationtypesServiceAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
+          type: array
+      required:
+      - dashboards
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -1243,6 +1230,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+      type: object
+    CloudintegrationtypesServiceDashboard:
+      properties:
+        description:
+          type: string
+        integrationDashboard:
+          $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
+        title:
+          type: string
+      required:
+      - title
+      - description
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1278,19 +1277,36 @@ components:
       - icon
       - enabled
       type: object
+    CloudintegrationtypesStorableIntegrationDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        dashboardId:
+          type: string
+        id:
+          type: string
+        provider:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - dashboardId
+      - provider
+      - slug
+      - createdAt
+      - updatedAt
+      type: object
     CloudintegrationtypesSupportedSignals:
       properties:
         logs:
           type: boolean
         metrics:
           type: boolean
-      type: object
-    CloudintegrationtypesTelemetryCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-        azure:
-          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -8097,6 +8113,64 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update account
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified account
+        and cloud provider
+      operationId: ListAccountServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List account services metadata
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:

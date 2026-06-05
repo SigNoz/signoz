@@ -151,6 +151,26 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.ListAccountServicesMetadata),
+		handler.OpenAPIDef{
+			ID:                  "ListAccountServicesMetadata",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "List account services metadata",
+			Description:         "This endpoint lists the services metadata for the specified account and cloud provider",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(citypes.GettableServicesMetadata),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
 		provider.authzMiddleware.AdminAccess(provider.cloudIntegrationHandler.GetService),
 		handler.OpenAPIDef{
