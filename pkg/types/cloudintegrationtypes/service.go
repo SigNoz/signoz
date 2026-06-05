@@ -50,8 +50,16 @@ type ListServicesMetadataParams struct {
 // Service represents a cloud integration service with its definition,
 // cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled).
 type Service struct {
-	ServiceDefinition
+	ServiceDefinitionMetadata
+	Overview                string                   `json:"overview" required:"true"` // markdown
+	ServiceAssets           ServiceAssets            `json:"assets" required:"true"`
+	SupportedSignals        SupportedSignals         `json:"supportedSignals" required:"true"`
+	DataCollected           DataCollected            `json:"dataCollected" required:"true"`
 	CloudIntegrationService *CloudIntegrationService `json:"cloudIntegrationService" required:"true" nullable:"true"`
+}
+
+type ServiceAssets struct {
+	Dashboards []*ServiceDashboard `json:"dashboards" required:"true" nullable:"false"`
 }
 
 type GetServiceParams struct {
@@ -121,6 +129,12 @@ type Dashboard struct {
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
+type ServiceDashboard struct {
+	Title                string                `json:"title" required:"true"`
+	Description          string                `json:"description" required:"true"`
+	IntegrationDashboard *IntegrationDashboard `json:"integrationDashboard,omitempty" required:"false"`
+}
+
 func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, provider CloudProviderType, config *ServiceConfig) (*CloudIntegrationService, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
@@ -164,11 +178,41 @@ func NewServiceMetadata(definition ServiceDefinition, enabled bool) *ServiceMeta
 	}
 }
 
-func NewService(def ServiceDefinition, storableService *CloudIntegrationService) *Service {
-	return &Service{
-		ServiceDefinition:       def,
-		CloudIntegrationService: storableService,
+func NewService(provider CloudProviderType, def *ServiceDefinition, integrationService *CloudIntegrationService, integrationDashboards []*StorableIntegrationDashboard) *Service {
+	service := &Service{
+		ServiceDefinitionMetadata: def.ServiceDefinitionMetadata,
+		Overview:                  def.Overview,
+		SupportedSignals:          def.SupportedSignals,
+		DataCollected:             def.DataCollected,
+		CloudIntegrationService:   integrationService,
+		ServiceAssets:             ServiceAssets{Dashboards: make([]*ServiceDashboard, 0, len(def.Assets.Dashboards))},
 	}
+
+	integrationDashboardsMap := make(map[string]*IntegrationDashboard)
+	for _, d := range integrationDashboards {
+		integrationDashboardsMap[d.Slug] = d
+	}
+
+	for _, d := range def.Assets.Dashboards {
+		dashboard := &ServiceDashboard{
+			Title:       d.Title,
+			Description: d.Description,
+		}
+
+		if integrationService != nil {
+			slug := CloudIntegrationDashboardSlug(provider, integrationService.Type, d.ID)
+
+			if integrationDashboard, exists := integrationDashboardsMap[slug]; exists {
+				if integrationDashboard != nil {
+					dashboard.IntegrationDashboard = integrationDashboard
+				}
+			}
+		}
+
+		service.ServiceAssets.Dashboards = append(service.ServiceAssets.Dashboards, dashboard)
+	}
+
+	return service
 }
 
 func NewGettableServicesMetadata(services []*ServiceMetadata) *GettableServicesMetadata {

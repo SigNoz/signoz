@@ -217,7 +217,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	preseededResults := make(map[string]any)
-	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
+	for _, name := range missingMetricQueries {
 		switch req.RequestType {
 		case qbtypes.RequestTypeTimeSeries:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
@@ -375,11 +375,24 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		return missingMetricQueries, "", nil
 	}
 
+	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
+	externalMissingMetrics := make([]string, 0, len(missingMetrics))
+	for _, m := range missingMetrics {
+		if !isInternalMetric(m) {
+			externalMissingMetrics = append(externalMissingMetrics, m)
+		}
+	}
+	if len(externalMissingMetrics) == 0 {
+		// this means all missing metrics are internal, and since internal metrics
+		// aren't user-controlled, skip errors/warnings for them since users can't act on them
+		return missingMetricQueries, "", nil
+	}
+
 	// Classify each missing metric: never-seen → NotFound error; seen-but-no-
 	// data-in-window → dormant warning.
-	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
+	lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, externalMissingMetrics...)
 	nonExistentMetrics := []string{}
-	for _, name := range missingMetrics {
+	for _, name := range externalMissingMetrics {
 		if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
 			continue
 		}
@@ -400,11 +413,11 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, queries []qbtypes.Q
 		}
 		return name
 	}
-	if len(missingMetrics) == 1 {
+	if len(externalMissingMetrics) == 1 {
 		dormantWarning = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
 	} else {
-		parts := make([]string, len(missingMetrics))
-		for i, m := range missingMetrics {
+		parts := make([]string, len(externalMissingMetrics))
+		for i, m := range externalMissingMetrics {
 			parts[i] = lastSeenStr(m)
 		}
 		dormantWarning = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
