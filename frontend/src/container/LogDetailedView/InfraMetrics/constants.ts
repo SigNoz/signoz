@@ -2557,6 +2557,88 @@ export const getHostQueryPayload = (
 			start,
 			end,
 		},
+		{
+			selectedTime: 'GLOBAL_TIME',
+			graphType: PANEL_TYPES.TIME_SERIES,
+			query: {
+				builder: {
+					queryData: [
+						{
+							aggregateAttribute: {
+								dataType: DataTypes.Float64,
+								id: 'system_disk_operation_time--float64--Sum--true',
+
+								key: diskOpTimeKey,
+								type: 'Sum',
+							},
+							aggregateOperator: 'rate',
+							dataSource: DataSource.METRICS,
+							disabled: false,
+							expression: 'A',
+							filters: {
+								items: [
+									{
+										id: 'diskoptime_f1',
+										key: {
+											dataType: DataTypes.String,
+											id: 'host_name--string--tag--false',
+
+											key: hostNameKey,
+											type: 'tag',
+										},
+										op: '=',
+										value: hostName,
+									},
+								],
+								op: 'AND',
+							},
+							functions: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'device--string--tag--false',
+
+									key: 'device',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+
+									key: 'direction',
+									type: 'tag',
+								},
+							],
+							having: [
+								{
+									columnName: `SUM(${diskOpTimeKey})`,
+									op: '>',
+									value: 0,
+								},
+							],
+							legend: '{{device}}::{{direction}}',
+							limit: null,
+							orderBy: [],
+							queryName: 'A',
+							reduceTo: ReduceOperators.AVG,
+							spaceAggregation: 'sum',
+							stepInterval: 60,
+							timeAggregation: 'rate',
+						},
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				clickhouse_sql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				id: 'a8b3d2e1-4f5c-4a6b-9c8d-7e2f1a0b3c4f',
+				promql: [{ disabled: false, legend: '', name: 'A', query: '' }],
+				queryType: EQueryType.QUERY_BUILDER,
+			},
+			variables: {},
+			formatForWeb: false,
+			start,
+			end,
+		},
 	];
 };
 
