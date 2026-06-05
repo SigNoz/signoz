@@ -187,7 +187,16 @@ def test_namespaces_filter(
     expected: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching namespaces."""
+    return exactly the matching namespaces, with undistorted per-namespace
+    metric values."""
+    # Every namespace in namespaces_filter_dataset.jsonl carries the same
+    # sample pattern as acc-ns-1 in namespaces_value_accuracy.jsonl (2 pods),
+    # so all filtered records must resolve to these exact values (mirrors
+    # namespaces_value_accuracy_expected.json acc-ns-1).
+    expected_values = {
+        "namespaceCPU": 1.0,
+        "namespaceMemory": 200000000.0,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -212,6 +221,11 @@ def test_namespaces_filter(
     data = response.json()["data"]
     assert {r["namespaceName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-namespace aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(

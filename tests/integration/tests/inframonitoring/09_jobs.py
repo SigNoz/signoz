@@ -219,7 +219,19 @@ def test_jobs_filter(
     expected: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching jobs."""
+    return exactly the matching jobs, with undistorted per-job metric values."""
+    # Every job in jobs_filter_dataset.jsonl carries the same sample pattern
+    # as acc-job-1 in jobs_value_accuracy.jsonl (2 pods), so all filtered
+    # records must resolve to these exact values (mirrors
+    # jobs_value_accuracy_expected.json acc-job-1).
+    expected_values = {
+        "jobCPU": 1.0,
+        "jobCPURequest": 0.5,
+        "jobCPULimit": 0.4,
+        "jobMemory": 300000000.0,
+        "jobMemoryRequest": 0.5,
+        "jobMemoryLimit": 0.4,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -244,6 +256,11 @@ def test_jobs_filter(
     data = response.json()["data"]
     assert {r["jobName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-job aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['jobName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(

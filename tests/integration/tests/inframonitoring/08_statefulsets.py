@@ -214,7 +214,20 @@ def test_statefulsets_filter(
     expected: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching statefulsets."""
+    return exactly the matching statefulsets, with undistorted per-SS metric
+    values."""
+    # Every statefulset in statefulsets_filter_dataset.jsonl carries the same
+    # sample pattern as acc-ss-1 in statefulsets_value_accuracy.jsonl (2 pods),
+    # so all filtered records must resolve to these exact values (mirrors
+    # statefulsets_value_accuracy_expected.json acc-ss-1).
+    expected_values = {
+        "statefulSetCPU": 1.0,
+        "statefulSetCPURequest": 0.5,
+        "statefulSetCPULimit": 0.4,
+        "statefulSetMemory": 300000000.0,
+        "statefulSetMemoryRequest": 0.5,
+        "statefulSetMemoryLimit": 0.4,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -239,6 +252,11 @@ def test_statefulsets_filter(
     data = response.json()["data"]
     assert {r["statefulSetName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-statefulset aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['statefulSetName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(

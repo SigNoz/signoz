@@ -254,7 +254,19 @@ def test_pods_filter(
     expected_pods: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching pods."""
+    return exactly the matching pods, with undistorted per-pod metric values."""
+    # Every pod in pods_filter_dataset.jsonl carries the same sample pattern
+    # as acc-p1 in pods_value_accuracy.jsonl, so all filtered records must
+    # resolve to these exact values (mirrors pods_value_accuracy_expected.json
+    # acc-p1).
+    expected_values = {
+        "podCPU": 0.5,
+        "podCPURequest": 0.25,
+        "podCPULimit": 0.5,
+        "podMemory": 524288000.0,
+        "podMemoryRequest": 0.5,
+        "podMemoryLimit": 0.25,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         _load_pods_metrics(
@@ -279,6 +291,11 @@ def test_pods_filter(
     data = response.json()["data"]
     assert {r["meta"]["k8s.pod.name"] for r in data["records"]} == expected_pods
     assert data["total"] == len(expected_pods)
+
+    # Filtering must not distort per-pod aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-9), f"{record['meta']['k8s.pod.name']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(

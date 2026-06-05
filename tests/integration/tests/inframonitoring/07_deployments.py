@@ -214,7 +214,20 @@ def test_deployments_filter(
     expected: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching deployments."""
+    return exactly the matching deployments, with undistorted per-deployment
+    metric values."""
+    # Every deployment in deployments_filter_dataset.jsonl carries the same
+    # sample pattern as acc-dep-1 in deployments_value_accuracy.jsonl (2 pods),
+    # so all filtered records must resolve to these exact values (mirrors
+    # deployments_value_accuracy_expected.json acc-dep-1).
+    expected_values = {
+        "deploymentCPU": 1.0,
+        "deploymentCPURequest": 0.5,
+        "deploymentCPULimit": 0.4,
+        "deploymentMemory": 300000000.0,
+        "deploymentMemoryRequest": 0.5,
+        "deploymentMemoryLimit": 0.4,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -239,6 +252,11 @@ def test_deployments_filter(
     data = response.json()["data"]
     assert {r["deploymentName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-deployment aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['deploymentName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(
