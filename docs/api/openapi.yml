@@ -2396,6 +2396,26 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    DashboardPanelDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2526,7 +2546,7 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         panels:
           additionalProperties:
@@ -2687,8 +2707,8 @@ components:
       type: object
     DashboardtypesLayout:
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
-    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
           enum:
@@ -2771,7 +2791,7 @@ components:
     DashboardtypesPanel:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
       type: object
@@ -2782,6 +2802,10 @@ components:
         unit:
           type: string
       type: object
+    DashboardtypesPanelKind:
+      enum:
+      - Panel
+      type: string
     DashboardtypesPanelPlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -2888,10 +2912,10 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/V1PanelDisplay'
+          $ref: '#/components/schemas/DashboardPanelDisplay'
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -2964,7 +2988,7 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
@@ -3232,8 +3256,8 @@ components:
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
-    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
       properties:
         kind:
           enum:
@@ -7250,26 +7274,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    V1Link:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
-    V1PanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
       type: object
     VariableDefaultValue:
       type: object
