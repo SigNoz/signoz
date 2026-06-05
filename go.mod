@@ -5,8 +5,9 @@ go 1.25.7
 require (
 	dario.cat/mergo v1.0.2
 	github.com/AfterShip/clickhouse-sql-parser v0.4.16
-	github.com/ClickHouse/clickhouse-go/v2 v2.43.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.44.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/SigNoz/clickhouse-go-mock v0.14.0
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.144.3
 	github.com/antlr4-go/antlr/v4 v4.13.1
@@ -17,6 +18,7 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.3.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emersion/go-smtp v0.24.0
+	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-co-op/gocron v1.30.1
 	github.com/go-openapi/runtime v0.29.2
@@ -58,7 +60,6 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cobra v1.10.2
-	github.com/srikanthccv/ClickHouse-go-mock v0.13.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/rest v0.2.75

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from '@signozhq/icons';
-import { Button, Form, FormInstance, Input, Select, Space } from 'antd';
+import { Input } from '@signozhq/ui/input';
+import { Button, Form, FormInstance, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 

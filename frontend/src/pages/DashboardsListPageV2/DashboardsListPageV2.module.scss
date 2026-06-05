@@ -1,0 +1,35 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 8px;
+	gap: 8px;
+	height: 48px;
+}
+
+.headerLeft {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.icon {
+	color: var(--l2-foreground);
+}
+
+.text {
+	color: var(--muted-foreground);
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	font-weight: var(--font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.07px;
+}
