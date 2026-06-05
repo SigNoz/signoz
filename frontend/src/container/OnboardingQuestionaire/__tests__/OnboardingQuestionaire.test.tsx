@@ -4,11 +4,6 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import OnboardingQuestionaire from '../index';
 
 // Mock dependencies
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
-
 jest.mock('lib/history', () => ({
 	__esModule: true,
 	default: {
