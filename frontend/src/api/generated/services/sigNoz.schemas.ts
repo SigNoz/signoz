@@ -2457,33 +2457,6 @@ export interface CloudintegrationtypesAccountDTO {
 	updatedAt?: string;
 }
 
-export interface DashboardtypesStorableDashboardDataDTO {
-	[key: string]: unknown;
-}
-
-export interface CloudintegrationtypesDashboardDTO {
-	definition?: DashboardtypesStorableDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface CloudintegrationtypesAssetsDTO {
-	/**
-	 * @type array,null
-	 */
-	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
-}
-
 export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	/**
 	 * @type string
@@ -2866,6 +2839,54 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	providerAccountId?: string;
 }
 
+export interface CloudintegrationtypesStorableIntegrationDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	slug: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface CloudintegrationtypesServiceDashboardDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	integrationDashboard?: CloudintegrationtypesStorableIntegrationDashboardDTO;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesServiceAssetsDTO {
+	/**
+	 * @type array
+	 */
+	dashboards: CloudintegrationtypesServiceDashboardDTO[];
+}
+
 export interface CloudintegrationtypesSupportedSignalsDTO {
 	/**
 	 * @type boolean
@@ -2877,13 +2898,8 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 	metrics?: boolean;
 }
 
-export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
-	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
-}
-
 export interface CloudintegrationtypesServiceDTO {
-	assets: CloudintegrationtypesAssetsDTO;
+	assets: CloudintegrationtypesServiceAssetsDTO;
 	cloudIntegrationService: CloudintegrationtypesCloudIntegrationServiceDTO | null;
 	dataCollected: CloudintegrationtypesDataCollectedDTO;
 	/**
@@ -2899,7 +2915,6 @@ export interface CloudintegrationtypesServiceDTO {
 	 */
 	overview: string;
 	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
-	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
 	/**
 	 * @type string
 	 */
@@ -3703,6 +3718,10 @@ export interface DashboardtypesCustomVariableSpecDTO {
 	 * @type string
 	 */
 	customValue: string;
+}
+
+export interface DashboardtypesStorableDashboardDataDTO {
+	[key: string]: unknown;
 }
 
 export enum DashboardtypesSourceDTO {
@@ -4653,6 +4672,32 @@ export interface DashboardtypesGettablePublicDashboardDataDTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export enum DashboardtypesPatchOpDTO {
+	add = 'add',
+	remove = 'remove',
+	replace = 'replace',
+	move = 'move',
+	copy = 'copy',
+	test = 'test',
+}
+export interface DashboardtypesJSONPatchOperationDTO {
+	/**
+	 * @type string
+	 * @description Source JSON Pointer for move/copy ops; ignored for other ops.
+	 */
+	from?: string;
+	op: DashboardtypesPatchOpDTO;
+	/**
+	 * @type string
+	 * @description JSON Pointer (RFC 6901) into the dashboard's postable shape — e.g. /spec/display/name, /spec/panels/<id>, /spec/panels/<id>/spec/queries/0, /tags/-.
+	 */
+	path: string;
+	/**
+	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /spec/panels/<id> takes a DashboardtypesPanel; /spec/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /spec/variables/N takes a DashboardtypesVariable; /spec/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /spec/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
+	 */
+	value?: unknown;
+}
+
 export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 	'signoz/BarChartPanel' = 'signoz/BarChartPanel',
@@ -4662,6 +4707,13 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
 }
+/**
+ * @nullable
+ */
+export type DashboardtypesPatchableDashboardV2DTO =
+	| DashboardtypesJSONPatchOperationDTO[]
+	| null;
+
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**
 	 * @type boolean
@@ -4705,6 +4757,26 @@ export enum DashboardtypesQueryPluginKindDTO {
 	'signoz/ClickHouseSQL' = 'signoz/ClickHouseSQL',
 	'signoz/TraceOperator' = 'signoz/TraceOperator',
 }
+export interface DashboardtypesUpdatableDashboardV2DTO {
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesPostableTagDTO[] | null;
+}
+
 export interface DashboardtypesUpdatablePublicDashboardDTO {
 	/**
 	 * @type string
@@ -8623,6 +8695,18 @@ export type UpdateAccountPathParameters = {
 	cloudProvider: string;
 	id: string;
 };
+export type ListAccountServicesMetadataPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type ListAccountServicesMetadata200 = {
+	data: CloudintegrationtypesGettableServicesMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateServicePathParameters = {
 	cloudProvider: string;
 	id: string;
@@ -9476,6 +9560,34 @@ export type GetDashboardV2200 = {
 	status: string;
 };
 
+export type PatchDashboardV2PathParameters = {
+	id: string;
+};
+export type PatchDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateDashboardV2PathParameters = {
+	id: string;
+};
+export type UpdateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UnlockDashboardV2PathParameters = {
+	id: string;
+};
+export type LockDashboardV2PathParameters = {
+	id: string;
+};
 export type GetFeatures200 = {
 	/**
 	 * @type array

@@ -94,7 +94,7 @@ export function useVisualLayoutWorker(spans: FlamegraphSpan[][]): {
 			cleanup();
 		};
 
-		// Timeout: if worker doesn't respond in 30s, terminate and error
+		// Timeout: if worker doesn't respond in 15s, terminate and error
 		const WORKER_TIMEOUT_MS = 15000;
 		const timeoutId = setTimeout(() => {
 			if (requestIdRef.current === currentId && isComputingRef.current) {
