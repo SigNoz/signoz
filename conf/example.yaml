@@ -432,7 +432,7 @@ cloudintegration:
     version: v0.0.8
 
 ##################### Trace Detail #####################
-tracedetail:
+traces:
   waterfall:
     # Number of spans returned per request when the trace is too large to show all at once.
     span_page_size: 500

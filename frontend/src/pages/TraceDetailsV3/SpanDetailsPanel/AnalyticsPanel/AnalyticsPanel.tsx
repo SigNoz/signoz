@@ -1,21 +1,28 @@
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import {
 	TabsContent,
 	TabsList,
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
-import cx from 'classnames';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
+import {
+	SpantypesSpanAggregationDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useTraceStore } from '../../stores/traceStore';
 import {
 	AGGREGATIONS,
 	getAggregationMap as findAggregationMap,
 } from '../../utils/aggregations';
+import AnalyticsTabContent, { AnalyticsRow } from './AnalyticsTabContent';
 
 import styles from './AnalyticsPanel.module.scss';
 
@@ -35,9 +42,30 @@ function AnalyticsPanel({
 	onClose,
 	onTabChange,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const aggregations = useTraceStore((s) => s.aggregations);
-	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const colorByFieldName = colorByField.name;
 	const isDarkMode = useIsDarkMode();
+
+	// Fetch exec-time % + span count for the current color-by field only, and
+	// only while the panel is open. Changing the field refetches via the key.
+	const aggregationsRequest = useMemo<SpantypesSpanAggregationDTO[]>(() => {
+		// v5 TelemetryFieldKey and the generated DTO are runtime-identical; only
+		// the literal-union vs enum nominal types differ
+		const field = colorByField as unknown as TelemetrytypesTelemetryFieldKeyDTO;
+		return [
+			{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
+			{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
+		];
+	}, [colorByField]);
+
+	const { data, isLoading, isError } = useGetTraceAggregations({
+		traceId: traceId || '',
+		aggregations: aggregationsRequest,
+		enabled: isOpen,
+	});
+
+	const aggregations = data?.data.aggregations;
 
 	const execTimePct = useMemo(
 		() =>
@@ -55,38 +83,39 @@ function AnalyticsPanel({
 		[aggregations, colorByFieldName],
 	);
 
-	const execTimeRows = useMemo(() => {
+	const execTimeRows = useMemo<AnalyticsRow[]>(() => {
 		if (!execTimePct) {
 			return [];
 		}
 		return Object.entries(execTimePct)
+			.sort(([, a], [, b]) => b - a)
 			.map(([group, percentage]) => {
 				const pair = generateColorPair(group);
 				return {
 					group,
-					percentage,
 					color: isDarkMode ? pair.color : pair.colorDark,
+					widthPct: Math.min(percentage, 100),
+					label: `${percentage.toFixed(2)}%`,
 				};
-			})
-			.sort((a, b) => b.percentage - a.percentage);
+			});
 	}, [execTimePct, isDarkMode]);
 
-	const spanCountRows = useMemo(() => {
+	const spanCountRows = useMemo<AnalyticsRow[]>(() => {
 		if (!spanCounts) {
 			return [];
 		}
 		const max = Math.max(...Object.values(spanCounts), 1);
 		return Object.entries(spanCounts)
+			.sort(([, a], [, b]) => b - a)
 			.map(([group, count]) => {
 				const pair = generateColorPair(group);
 				return {
 					group,
-					count,
-					max,
 					color: isDarkMode ? pair.color : pair.colorDark,
+					widthPct: (count / max) * 100,
+					label: String(count),
 				};
-			})
-			.sort((a, b) => b.count - a.count);
+			});
 	}, [spanCounts, isDarkMode]);
 
 	if (!isOpen) {
@@ -132,65 +161,23 @@ function AnalyticsPanel({
 
 					<div className={styles.tabsScroll}>
 						<TabsContent value="exec-time">
-							<div className={styles.list}>
-								{execTimeRows.map((row) => (
-									<>
-										<div
-											key={`${row.group}-dot`}
-											className={styles.dot}
-											style={{ backgroundColor: row.color }}
-										/>
-										<span key={`${row.group}-name`} className={styles.serviceName}>
-											{row.group}
-										</span>
-										<div key={`${row.group}-bar`} className={styles.barCell}>
-											<div className={styles.bar}>
-												<div
-													className={styles.barFill}
-													style={{
-														width: `${Math.min(row.percentage, 100)}%`,
-														backgroundColor: row.color,
-													}}
-												/>
-											</div>
-											<span className={cx(styles.value, styles.valueWide)}>
-												{row.percentage.toFixed(2)}%
-											</span>
-										</div>
-									</>
-								))}
-							</div>
+							<AnalyticsTabContent
+								isLoading={isLoading}
+								isError={isError}
+								fieldName={colorByFieldName}
+								rows={execTimeRows}
+								valueVariant="wide"
+							/>
 						</TabsContent>
 
 						<TabsContent value="spans">
-							<div className={styles.list}>
-								{spanCountRows.map((row) => (
-									<>
-										<div
-											key={`${row.group}-dot`}
-											className={styles.dot}
-											style={{ backgroundColor: row.color }}
-										/>
-										<span key={`${row.group}-name`} className={styles.serviceName}>
-											{row.group}
-										</span>
-										<div key={`${row.group}-bar`} className={styles.barCell}>
-											<div className={styles.bar}>
-												<div
-													className={styles.barFill}
-													style={{
-														width: `${(row.count / row.max) * 100}%`,
-														backgroundColor: row.color,
-													}}
-												/>
-											</div>
-											<span className={cx(styles.value, styles.valueNarrow)}>
-												{row.count}
-											</span>
-										</div>
-									</>
-								))}
-							</div>
+							<AnalyticsTabContent
+								isLoading={isLoading}
+								isError={isError}
+								fieldName={colorByFieldName}
+								rows={spanCountRows}
+								valueVariant="narrow"
+							/>
 						</TabsContent>
 					</div>
 				</TabsRoot>
