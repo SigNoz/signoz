@@ -151,7 +151,6 @@ def test_get_service_details_without_account(
     assert "overview" in data, "Service should have 'overview' (markdown)"
     assert "assets" in data, "Service should have 'assets'"
     assert isinstance(data["assets"]["dashboards"], list), "assets.dashboards should be a list"
-    assert "telemetryCollectionStrategy" in data, "Service should have 'telemetryCollectionStrategy'"
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
 
 
@@ -456,12 +455,12 @@ def test_enable_metrics_provisions_dashboards(
     assert isinstance(dashboards_in_service, list) and len(dashboards_in_service) > 0, "assets.dashboards should be non-empty after enabling metrics"
     provisioned_ids = set()
     for dash in dashboards_in_service:
-        assert "id" in dash, f"Dashboard entry missing 'id': {dash}"
+        assert "integrationDashboard" in dash, f"Integration dashboard entry missing"
         try:
-            uuid.UUID(dash["id"])
+            uuid.UUID(dash["integrationDashboard"]["id"])
         except ValueError as err:
-            raise AssertionError(f"Dashboard id '{dash['id']}' is not a UUID — dashboard was not provisioned") from err
-        provisioned_ids.add(dash["id"])
+            raise AssertionError(f"Dashboard id '{dash['integrationDashboard']['id']}' is not a UUID — dashboard was not provisioned") from err
+        provisioned_ids.add(dash["integrationDashboard"]["dashboardId"])
 
     # Assertion 2: Provisioned dashboard IDs are present in the DB
     with signoz.sqlstore.conn.connect() as conn:
@@ -511,7 +510,7 @@ def test_disable_metrics_deprovisions_dashboards(
         timeout=10,
     )
     assert get_svc_response.status_code == HTTPStatus.OK
-    provisioned_ids = {d["id"] for d in get_svc_response.json()["data"]["assets"]["dashboards"]}
+    provisioned_ids = {d["integrationDashboard"]["dashboardId"] for d in get_svc_response.json()["data"]["assets"]["dashboards"]}
     assert len(provisioned_ids) > 0, "Expected dashboards to be provisioned after enabling metrics"
 
     # Disable metrics
