@@ -1619,6 +1619,9 @@ export const getHostQueryPayload = (
 	const diskOpTimeKey = dotMetricsEnabled
 		? 'system.disk.operation_time'
 		: 'system_disk_operation_time';
+	const diskOpsKey = dotMetricsEnabled
+		? 'system.disk.operations'
+		: 'system_disk_operations';
 	const diskPendingKey = dotMetricsEnabled
 		? 'system.disk.pending_operations'
 		: 'system_disk_pending_operations';
@@ -2424,9 +2427,9 @@ export const getHostQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: 'system_disk_operation_time--float64--Sum--true',
+								id: 'system_disk_operations--float64--Sum--true',
 
-								key: diskOpTimeKey,
+								key: diskOpsKey,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -2436,7 +2439,7 @@ export const getHostQueryPayload = (
 							filters: {
 								items: [
 									{
-										id: 'diskop_f1',
+										id: 'diskops_f1',
 										key: {
 											dataType: DataTypes.String,
 											id: 'host_name--string--tag--false',
@@ -2469,7 +2472,7 @@ export const getHostQueryPayload = (
 							],
 							having: [
 								{
-									columnName: `SUM(${diskOpTimeKey})`,
+									columnName: `SUM(${diskOpsKey})`,
 									op: '>',
 									value: 0,
 								},
@@ -2728,5 +2731,5 @@ export const hostWidgetInfo = [
 	{ title: 'System disk io (bytes transferred)', yAxisUnit: 'bytes' },
 	{ title: 'System disk operations/s', yAxisUnit: 'short' },
 	{ title: 'Queue size', yAxisUnit: 'short' },
-	{ title: 'Disk operations time', yAxisUnit: 's' },
+	{ title: 'System disk operation time/s', yAxisUnit: 's' },
 ];
