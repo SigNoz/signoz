@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Pagination, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import { Pagination } from '@signozhq/ui/pagination';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -153,15 +154,6 @@ function RolesListingTable({
 		return result;
 	}, [displayList, currentPage]);
 
-	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
-		<>
-			<span className="numbers">
-				{range[0]} &#8212; {range[1]}
-			</span>
-			<span className="total"> of {total}</span>
-		</>
-	);
-
 	if (!hasListPermission && listPerms !== null) {
 		return <PermissionDeniedFullPage permissionName="role:list" />;
 	}
@@ -280,16 +272,23 @@ function RolesListingTable({
 				</div>
 			</div>
 
-			<Pagination
-				current={currentPage}
-				pageSize={PAGE_SIZE}
-				total={totalRoleCount}
-				showTotal={showPaginationItem}
-				showSizeChanger={false}
-				hideOnSinglePage
-				onChange={(page): void => setCurrentPage(page)}
-				className="roles-table-pagination"
-			/>
+			<div className="roles-table-pagination">
+				{totalRoleCount > 0 && (
+					<>
+						<span className="numbers">
+							{(currentPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
+							{Math.min(currentPage * PAGE_SIZE, totalRoleCount)}
+						</span>
+						<span className="total"> of {totalRoleCount}</span>
+					</>
+				)}
+				<Pagination
+					current={currentPage}
+					pageSize={PAGE_SIZE}
+					total={totalRoleCount}
+					onPageChange={(page): void => setCurrentPage(page)}
+				/>
+			</div>
 		</div>
 	);
 }

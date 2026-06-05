@@ -5,7 +5,8 @@ import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { Pagination, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import { Pagination } from '@signozhq/ui/pagination';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountsQueryKey,
@@ -529,25 +530,25 @@ function ServiceAccountDrawer({
 	const footer = (
 		<div className="sa-drawer__footer">
 			{activeTab === ServiceAccountDrawerTab.Keys ? (
-				<Pagination
-					current={keysPage}
-					pageSize={PAGE_SIZE}
-					total={keys.length}
-					showTotal={(total: number, range: number[]): JSX.Element => (
+				<div className="sa-drawer__keys-pagination">
+					{keys.length > 0 && (
 						<>
 							<span className="sa-drawer__pagination-range">
-								{range[0]} &#8212; {range[1]}
+								{(keysPage - 1) * PAGE_SIZE + 1} &#8212;{' '}
+								{Math.min(keysPage * PAGE_SIZE, keys.length)}
 							</span>
-							<span className="sa-drawer__pagination-total"> of {total}</span>
+							<span className="sa-drawer__pagination-total"> of {keys.length}</span>
 						</>
 					)}
-					showSizeChanger={false}
-					hideOnSinglePage
-					onChange={(page): void => {
-						void setKeysPage(page);
-					}}
-					className="sa-drawer__keys-pagination"
-				/>
+					<Pagination
+						current={keysPage}
+						pageSize={PAGE_SIZE}
+						total={keys.length}
+						onPageChange={(page): void => {
+							void setKeysPage(page);
+						}}
+					/>
+				</div>
 			) : (
 				<>
 					{!isDeleted && (
