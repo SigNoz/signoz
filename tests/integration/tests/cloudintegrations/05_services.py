@@ -86,6 +86,49 @@ def test_list_services_with_account(
         assert svc["enabled"] is False, f"Service {svc['id']} should be disabled before any config is set"
 
 
+EC2_SERVICE_ID = "ec2"
+
+
+def test_list_account_services(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """ListAccountServicesMetadata reflects enabled state after enabling a service."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    put_response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{EC2_SERVICE_ID}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        timeout=10,
+    )
+    assert put_response.status_code == HTTPStatus.NO_CONTENT, f"Enable ec2 failed: {put_response.status_code}: {put_response.text}"
+
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK, f"Expected 200, got {list_response.status_code}"
+
+    data = list_response.json()["data"]
+    assert "services" in data, "Response should contain 'services' field"
+    assert isinstance(data["services"], list), "services should be a list"
+    assert len(data["services"]) > 0, "services list should be non-empty"
+
+    ec2_service = next((s for s in data["services"] if s["id"] == EC2_SERVICE_ID), None)
+    assert ec2_service is not None, f"EC2 service '{EC2_SERVICE_ID}' not found in services list"
+    assert ec2_service["enabled"] is True, f"EC2 service should be enabled, got: {ec2_service['enabled']}"
+
+
 def test_get_service_details_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

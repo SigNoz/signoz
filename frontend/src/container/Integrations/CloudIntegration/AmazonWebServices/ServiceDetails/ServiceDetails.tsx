@@ -8,9 +8,9 @@ import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
-	getListServicesMetadataQueryKey,
+	getListAccountServicesMetadataQueryKey,
 	invalidateGetAccountService,
-	invalidateListServicesMetadata,
+	invalidateListAccountServicesMetadata,
 	useGetAccountService,
 	useGetService,
 	useUpdateService,
@@ -18,7 +18,7 @@ import {
 import {
 	CloudintegrationtypesServiceConfigDTO,
 	CloudintegrationtypesServiceDTO,
-	ListServicesMetadata200,
+	ListAccountServicesMetadata200,
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -261,16 +261,12 @@ function ServiceDetails({
 							// instead of waiting for the refetch to complete.
 							reset(nextFormValues);
 
-							const servicesListQueryKey = getListServicesMetadataQueryKey(
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							const servicesListQueryKey = getListAccountServicesMetadataQueryKey({
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
-							queryClient.setQueryData<ListServicesMetadata200 | undefined>(
+							queryClient.setQueryData<ListAccountServicesMetadata200 | undefined>(
 								servicesListQueryKey,
 								(prev) => {
 									if (!prev?.data?.services?.length) {
@@ -299,15 +295,10 @@ function ServiceDetails({
 								serviceId,
 							});
 
-							invalidateListServicesMetadata(
-								queryClient,
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							invalidateListAccountServicesMetadata(queryClient, {
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
 							logEvent(`${type} Integration: Service settings saved`, {
 								cloudAccountId,

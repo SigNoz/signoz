@@ -75,6 +75,7 @@ type Handler interface {
 	UpdateAccount(http.ResponseWriter, *http.Request)
 	DisconnectAccount(http.ResponseWriter, *http.Request)
 	ListServicesMetadata(http.ResponseWriter, *http.Request)
+	ListAccountServicesMetadata(http.ResponseWriter, *http.Request)
 	GetService(http.ResponseWriter, *http.Request)
 	GetAccountService(http.ResponseWriter, *http.Request)
 	UpdateService(http.ResponseWriter, *http.Request)
