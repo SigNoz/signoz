@@ -195,7 +195,17 @@ def test_nodes_filter(
     expected_nodes: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching nodes."""
+    return exactly the matching nodes, with undistorted per-node metric values."""
+    # Every node in nodes_filter_dataset.jsonl carries the same sample pattern
+    # as acc-n1 in nodes_value_accuracy.jsonl, so all filtered records must
+    # resolve to these exact values (mirrors nodes_value_accuracy_expected.json
+    # acc-n1).
+    expected_values = {
+        "nodeCPU": 1.0,
+        "nodeCPUAllocatable": 4.0,
+        "nodeMemory": 2000000000.0,
+        "nodeMemoryAllocatable": 8000000000.0,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -220,6 +230,11 @@ def test_nodes_filter(
     data = response.json()["data"]
     assert {r["nodeName"] for r in data["records"]} == expected_nodes
     assert data["total"] == len(expected_nodes)
+
+    # Filtering must not distort per-node aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['nodeName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(
