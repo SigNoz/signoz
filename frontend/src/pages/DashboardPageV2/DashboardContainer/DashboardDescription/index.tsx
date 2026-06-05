@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { Card } from 'antd';
 import { toast } from '@signozhq/ui/sonner';
@@ -15,6 +15,7 @@ import type {
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -22,7 +23,7 @@ import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
 import DashboardActions from './DashboardActions/DashboardActions';
 import DashboardMeta from './DashboardMeta/DashboardMeta';
 import DashboardTitle from './DashboardTitle/DashboardTitle';
-import RenameDashboardModal from './RenameDashboardModal/RenameDashboardModal';
+import { useEditableTitle } from './DashboardTitle/useEditableTitle';
 
 import styles from './DashboardDescription.module.scss';
 
@@ -52,6 +53,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
 	const { showErrorModal } = useErrorModal();
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
 
 	const isAuthor =
 		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
@@ -59,16 +63,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	// V2 public dashboard wiring lives separately; treat as not-public for chrome.
 	const isPublicDashboard = false;
 
-	const [isRenameDashboardOpen, setIsRenameDashboardOpen] =
-		useState<boolean>(false);
-	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
-	const [isRenameLoading, setIsRenameLoading] = useState<boolean>(false);
-
-	useEffect(() => {
-		setUpdatedTitle(title);
-	}, [title]);
-
-	const handleLockDashboardToggle = async (): Promise<void> => {
+	const handleLockDashboardToggle = useCallback(async (): Promise<void> => {
 		if (!id) {
 			return;
 		}
@@ -84,41 +79,43 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		} catch (error) {
 			showErrorModal(error as APIError);
 		}
-	};
+	}, [id, isDashboardLocked, refetch, showErrorModal]);
 
-	const onNameChangeHandler = async (): Promise<void> => {
-		const trimmed = updatedTitle.trim();
-		if (!id || !trimmed || trimmed === title) {
-			setIsRenameDashboardOpen(false);
-			return;
-		}
-		try {
-			setIsRenameLoading(true);
-			const patch: DashboardtypesJSONPatchOperationDTO[] = [
-				{
-					op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
-					path: '/spec/display/name',
-					value: trimmed,
-				},
-			];
-			await patchDashboardV2({ id }, patch);
-			toast.success('Dashboard renamed successfully');
-			setIsRenameDashboardOpen(false);
-			refetch();
-		} catch (error) {
-			showErrorModal(error as APIError);
-			setIsRenameDashboardOpen(true);
-		} finally {
-			setIsRenameLoading(false);
-		}
-	};
+	const onNameSave = useCallback(
+		async (next: string): Promise<void> => {
+			if (!id) {
+				return;
+			}
+			try {
+				const patch: DashboardtypesJSONPatchOperationDTO[] = [
+					{
+						op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
+						path: '/spec/display/name',
+						value: next,
+					},
+				];
+				await patchDashboardV2({ id }, patch);
+				toast.success('Dashboard renamed successfully');
+				refetch();
+			} catch (error) {
+				showErrorModal(error as APIError);
+			}
+		},
+		[id, refetch, showErrorModal],
+	);
 
-	const onEmptyWidgetHandler = (): void => {
+	const { isEditing, draft, setDraft, startEdit, cancel, commit } =
+		useEditableTitle({
+			value: title,
+			onSave: onNameSave,
+		});
+
+	const onEmptyWidgetHandler = useCallback((): void => {
 		void logEvent('Dashboard Detail V2: Add new panel clicked', {
 			dashboardId: id,
 		});
-		toast.info('V2 panel editor coming next');
-	};
+		setIsPanelTypeSelectionModalOpen(true);
+	}, [id, setIsPanelTypeSelectionModalOpen]);
 
 	return (
 		<Card className={styles.dashboardDescriptionContainer}>
@@ -129,6 +126,13 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					image={image}
 					isPublicDashboard={isPublicDashboard}
 					isDashboardLocked={isDashboardLocked}
+					isEditable={editDashboard}
+					isEditing={isEditing}
+					draft={draft}
+					onDraftChange={setDraft}
+					onStartEdit={startEdit}
+					onCommit={commit}
+					onCancel={cancel}
 				/>
 				<DashboardActions
 					dashboard={dashboard}
@@ -139,19 +143,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					addPanelPermission={addPanelPermission}
 					onAddPanel={onEmptyWidgetHandler}
 					onLockToggle={handleLockDashboardToggle}
-					onOpenRename={(): void => setIsRenameDashboardOpen(true)}
+					onOpenRename={startEdit}
 				/>
 			</section>
 			<DashboardMeta tags={tags} description={description} />
-
-			<RenameDashboardModal
-				open={isRenameDashboardOpen}
-				value={updatedTitle}
-				isLoading={isRenameLoading}
-				onChange={setUpdatedTitle}
-				onRename={onNameChangeHandler}
-				onClose={(): void => setIsRenameDashboardOpen(false)}
-			/>
 		</Card>
 	);
 }
