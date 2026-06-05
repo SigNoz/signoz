@@ -461,14 +461,15 @@ def test_hosts_groupby(  # pylint: disable=too-many-arguments,too-many-positiona
                 assert compare_values(rec[field], expected_values[group][field], 1e-9), f"{group}.{field}: got {rec[field]}, expected {expected_values[group][field]}"
 
 
-def test_hosts_pagination_sync(
+def test_hosts_pagination(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
     """Pagination: per-page len matches min(limit, total-offset), total invariant,
-    pages cover the full set with no overlap.
+    pages cover the full set with no overlap. The final offset is beyond total:
+    it returns empty records while total still reflects dataset size.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
@@ -483,7 +484,7 @@ def test_hosts_pagination_sync(
     seen_hosts: list[str] = []
     seen_totals: set[int] = set()
 
-    for offset in (0, 3, 6):
+    for offset in (0, 3, 6, K + 5):
         response = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
             headers={"authorization": f"Bearer {token}"},
@@ -498,47 +499,13 @@ def test_hosts_pagination_sync(
         assert response.status_code == HTTPStatus.OK
         data = response.json()["data"]
         seen_totals.add(data["total"])
-        expected_len = min(limit, K - offset)
+        expected_len = max(0, min(limit, K - offset))
         assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len} records, got {len(data['records'])}"
         seen_hosts.extend(r["hostName"] for r in data["records"])
 
     assert seen_totals == {K}
     assert len(seen_hosts) == K
     assert set(seen_hosts) == {f"page-h{i}" for i in range(1, K + 1)}
-
-
-def test_hosts_offset_beyond_total(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Offset beyond total returns empty records; total still reflects dataset size."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    K = 7
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 3,
-            "offset": K + 5,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["records"] == []
-    assert data["total"] == K
 
 
 # orderBy keys use snake_case (inframonitoringtypes/hosts_constants.go:26-30).
