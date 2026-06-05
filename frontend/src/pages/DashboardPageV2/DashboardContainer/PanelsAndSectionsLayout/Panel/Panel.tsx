@@ -12,7 +12,7 @@ import type { MovePanelArgs } from './hooks/useMovePanelToSection';
 import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
 import styles from './Panel.module.scss';
 
-interface Props {
+interface PanelProps {
 	panel: DashboardtypesPanelDTO | undefined;
 	panelId: string;
 	/**
@@ -36,7 +36,7 @@ function Panel({
 	sections,
 	onMovePanel,
 	onDeletePanel,
-}: Props): JSX.Element {
+}: PanelProps): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
 	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';

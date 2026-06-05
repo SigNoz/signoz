@@ -19,7 +19,7 @@ import SectionHeader, {
 } from '../SectionHeader/SectionHeader';
 import styles from './Section.module.scss';
 
-interface Props {
+interface SectionProps {
 	section: DashboardSection;
 	/** Adds a panel to this section; present only in editable sectioned mode. */
 	onAddPanel?: (args: AddPanelArgs) => void;
@@ -38,7 +38,7 @@ function Section({
 	onMovePanel,
 	onDeletePanel,
 	dragHandle,
-}: Props): JSX.Element {
+}: SectionProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const containerRef = useRef<HTMLDivElement>(null);
 	// Placeholder signal for lazy panel query-loading (consumed in a later PR):

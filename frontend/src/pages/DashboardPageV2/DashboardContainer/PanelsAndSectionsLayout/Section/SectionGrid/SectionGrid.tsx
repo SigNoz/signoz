@@ -11,7 +11,7 @@ import styles from './SectionGrid.module.scss';
 
 const ResponsiveGridLayout = WidthProvider(GridLayout);
 
-interface Props {
+interface SectionGridProps {
 	items: DashboardSection['items'];
 	layoutIndex: number;
 	/** Forwarded to panels — true when the parent section is in the viewport. */
@@ -29,7 +29,7 @@ function SectionGrid({
 	sections,
 	onMovePanel,
 	onDeletePanel,
-}: Props): JSX.Element {
+}: SectionGridProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 	const rglLayout = useMemo<Layout[]>(
 		() =>

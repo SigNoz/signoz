@@ -8,7 +8,7 @@ import type { DeletePanelArgs } from '../hooks/useDeletePanel';
 import type { MovePanelArgs } from '../hooks/useMovePanelToSection';
 import styles from './PanelActionsMenu.module.scss';
 
-interface Props {
+interface PanelActionsMenuProps {
 	panelId: string;
 	currentLayoutIndex: number;
 	sections: DashboardSection[];
@@ -22,7 +22,7 @@ function PanelActionsMenu({
 	sections,
 	onMovePanel,
 	onDeletePanel,
-}: Props): JSX.Element {
+}: PanelActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
 		const result: MenuItem[] = [];
 

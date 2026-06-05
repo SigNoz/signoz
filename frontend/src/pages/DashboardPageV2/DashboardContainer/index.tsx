@@ -10,12 +10,12 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useDashboardStore } from './store/useDashboardStore';
 import styles from './DashboardContainer.module.scss';
 
-interface Props {
+interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
 }
 
-function DashboardContainer({ dashboard, refetch }: Props): JSX.Element {
+function DashboardContainer({ dashboard, refetch }: DashboardContainerProps): JSX.Element {
 	const fullScreenHandle = useFullScreenHandle();
 
 	const { user } = useAppContext();

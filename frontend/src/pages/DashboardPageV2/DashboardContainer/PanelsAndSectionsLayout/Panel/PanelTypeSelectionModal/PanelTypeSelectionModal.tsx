@@ -42,7 +42,7 @@ const PANEL_TYPES: PanelType[] = [
 	{ pluginKind: 'signoz/ListPanel', label: 'List', icon: <List size={16} /> },
 ];
 
-interface Props {
+interface PanelTypeSelectionModalProps {
 	open: boolean;
 	onClose: () => void;
 	onSelect: (pluginKind: string) => void;
@@ -52,7 +52,7 @@ function PanelTypeSelectionModal({
 	open,
 	onClose,
 	onSelect,
-}: Props): JSX.Element {
+}: PanelTypeSelectionModalProps): JSX.Element {
 	return (
 		<Modal
 			open={open}

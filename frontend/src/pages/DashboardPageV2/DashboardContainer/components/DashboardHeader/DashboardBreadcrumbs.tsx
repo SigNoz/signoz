@@ -8,12 +8,12 @@ import { LayoutGrid } from '@signozhq/icons';
 
 import styles from './DashboardBreadcrumbs.module.scss';
 
-interface Props {
+interface DashboardBreadcrumbsProps {
 	title: string;
 	image: string;
 }
 
-function DashboardBreadcrumbs({ title, image }: Props): JSX.Element {
+function DashboardBreadcrumbs({ title, image }: DashboardBreadcrumbsProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 
 	const goToListPage = useCallback(() => {

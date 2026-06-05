@@ -13,7 +13,7 @@ export interface SectionDragHandle {
 	setActivatorNodeRef: (element: HTMLElement | null) => void;
 }
 
-interface Props {
+interface SectionHeaderProps {
 	sectionId: string;
 	title: string;
 	open: boolean;
@@ -36,7 +36,7 @@ function SectionHeader({
 	onRename,
 	onAddPanel,
 	onDeleteSection,
-}: Props): JSX.Element {
+}: SectionHeaderProps): JSX.Element {
 	const hasActions = !!(onAddPanel || onRename || onDeleteSection);
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>

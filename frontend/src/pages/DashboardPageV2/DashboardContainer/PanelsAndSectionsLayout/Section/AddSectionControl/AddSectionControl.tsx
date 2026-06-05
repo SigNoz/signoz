@@ -10,7 +10,7 @@ import styles from './AddSectionControl.module.scss';
 
 const DEFAULT_SECTION_TITLE = 'New section';
 
-interface Props {
+interface AddSectionControlProps {
 	sections: DashboardSection[];
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
 	isSectioned: boolean;
@@ -20,7 +20,7 @@ function AddSectionControl({
 	sections,
 	layouts,
 	isSectioned,
-}: Props): JSX.Element {
+}: AddSectionControlProps): JSX.Element {
 	const [isMigrationOpen, setIsMigrationOpen] = useState(false);
 	const { addSection } = useAddSection({ layouts });
 	const { migrate, isSaving } = useFirstSectionMigration({ sections });

@@ -23,7 +23,7 @@ import { USER_ROLES } from 'types/roles';
 
 import styles from '../DashboardDescription.module.scss';
 
-interface Props {
+interface DashboardActionsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	handle: FullScreenHandle;
 	isDashboardLocked: boolean;
@@ -45,7 +45,7 @@ function DashboardActions({
 	onAddPanel,
 	onLockToggle,
 	onOpenRename,
-}: Props): JSX.Element {
+}: DashboardActionsProps): JSX.Element {
 	const { user } = useAppContext();
 	const { t } = useTranslation(['dashboard', 'common']);
 

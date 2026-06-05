@@ -17,12 +17,12 @@ import styles from './PanelsAndSectionsLayout.module.scss';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-interface Props {
+interface PanelsAndSectionsLayoutProps {
 	layouts: DashboardtypesLayoutDTO[];
 	panels: Record<string, DashboardtypesPanelDTO | undefined>;
 }
 
-function PanelsAndSectionsLayout({ layouts, panels }: Props): JSX.Element {
+function PanelsAndSectionsLayout({ layouts, panels }: PanelsAndSectionsLayoutProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
 
 	const sections = useMemo(

@@ -5,12 +5,12 @@ import DashboardBreadcrumbs from './DashboardBreadcrumbs';
 
 import styles from './DashboardHeader.module.scss';
 
-interface Props {
+interface DashboardHeaderProps {
 	title: string;
 	image: string;
 }
 
-function DashboardHeader({ title, image }: Props): JSX.Element {
+function DashboardHeader({ title, image }: DashboardHeaderProps): JSX.Element {
 	return (
 		<div className={styles.dashboardHeader}>
 			<DashboardBreadcrumbs title={title} image={image} />

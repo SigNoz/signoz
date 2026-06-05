@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 
 import styles from '../DashboardDescription.module.scss';
 
-interface Props {
+interface DashboardTitleProps {
 	title: string;
 	image: string;
 	isPublicDashboard: boolean;
@@ -16,7 +16,7 @@ function DashboardTitle({
 	image,
 	isPublicDashboard,
 	isDashboardLocked,
-}: Props): JSX.Element {
+}: DashboardTitleProps): JSX.Element {
 	return (
 		<div className={styles.leftSection}>
 			<img src={image} alt="dashboard-img" className={styles.dashboardImg} />

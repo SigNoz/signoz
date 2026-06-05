@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-interface Props {
+interface FirstSectionMigrationModalProps {
 	open: boolean;
 	isSaving: boolean;
 	onClose: () => void;
@@ -18,7 +18,7 @@ function FirstSectionMigrationModal({
 	isSaving,
 	onClose,
 	onConfirm,
-}: Props): JSX.Element {
+}: FirstSectionMigrationModalProps): JSX.Element {
 	return (
 		<Modal
 			open={open}

@@ -5,7 +5,7 @@ import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
 import styles from './SectionActionsMenu.module.scss';
 
-interface Props {
+interface SectionActionsMenuProps {
 	sectionId: string;
 	onAddPanel?: () => void;
 	onRename?: () => void;
@@ -17,7 +17,7 @@ function SectionActionsMenu({
 	onAddPanel,
 	onRename,
 	onDeleteSection,
-}: Props): JSX.Element {
+}: SectionActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
 		const result: MenuItem[] = [];
 		if (onAddPanel) {

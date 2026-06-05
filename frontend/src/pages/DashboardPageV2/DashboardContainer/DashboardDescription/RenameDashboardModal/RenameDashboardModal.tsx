@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 
 import styles from '../DashboardDescription.module.scss';
 
-interface Props {
+interface RenameDashboardModalProps {
 	open: boolean;
 	value: string;
 	isLoading: boolean;
@@ -21,7 +21,7 @@ function RenameDashboardModal({
 	onChange,
 	onRename,
 	onClose,
-}: Props): JSX.Element {
+}: RenameDashboardModalProps): JSX.Element {
 	return (
 		<Modal
 			open={open}
