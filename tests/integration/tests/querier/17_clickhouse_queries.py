@@ -9,6 +9,7 @@ from http import HTTPStatus
 from fixtures import querier, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
+
 def test_clickhouse_scalar_numeric_result_alias_classified_as_aggregation(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
