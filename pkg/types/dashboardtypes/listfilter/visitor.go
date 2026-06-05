@@ -36,7 +36,7 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// Emitted WHERE fragment uses aliases `dashboard` and `pd` (public_dashboard).
+// Emitted WHERE fragment uses the `dashboard` alias.
 func (v *visitor) compile(query string) (*fragment, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
@@ -148,8 +148,6 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 			return v.emitStringComparison(ctx, op, "dashboard.created_by")
 		case dashboardtypes.DSLKeyLocked:
 			return v.emitBoolComparison(ctx, op, "dashboard.locked")
-		case dashboardtypes.DSLKeyPublic:
-			return v.emitPublicComparison(ctx, op)
 		}
 	}
 
@@ -301,24 +299,6 @@ func (v *visitor) emitBoolComparison(ctx *grammar.ComparisonContext, op qbtypesv
 		return nil
 	}
 	return newFragment(colExpr+" "+opName(op)+" ?", b)
-}
-
-// emitPublicComparison renders `public = true|false` against the LEFT-joined
-// public_dashboard alias `pd`. The spec says public is a virtual column whose
-// truthiness is the existence of a row in public_dashboard.
-func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator) *fragment {
-	b, ok := v.singleBool(ctx)
-	if !ok {
-		return nil
-	}
-	want := b
-	if op == qbtypesv5.FilterOperatorNotEqual {
-		want = !b
-	}
-	if want {
-		return newFragment("pd.id IS NOT NULL")
-	}
-	return newFragment("pd.id IS NULL")
 }
 
 // TODO: drop the extra quotes once coretypes.Kind stops being double-encoded

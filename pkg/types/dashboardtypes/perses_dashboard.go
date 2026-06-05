@@ -31,7 +31,6 @@ const (
 	DSLKeyUpdatedAt   DSLKey = "updated_at"
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
-	DSLKeyPublic      DSLKey = "public"
 	DSLKeySource      DSLKey = "source"
 )
 
@@ -45,7 +44,6 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyUpdatedAt:   {},
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
-	DSLKeyPublic:      {},
 	DSLKeySource:      {},
 }
 

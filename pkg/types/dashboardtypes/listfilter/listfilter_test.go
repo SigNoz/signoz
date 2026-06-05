@@ -123,14 +123,6 @@ func TestCompile_CreatedByLocked(t *testing.T) {
 	})
 }
 
-func TestCompile_Public(t *testing.T) {
-	runCompileCases(t, []compileCase{
-		{subtestName: "public = true", dslQueryToCompile: `public = true`, expectedSQL: `pd.id IS NOT NULL`},
-		{subtestName: "public = false", dslQueryToCompile: `public = false`, expectedSQL: `pd.id IS NULL`},
-		{subtestName: "public != true", dslQueryToCompile: `public != true`, expectedSQL: `pd.id IS NULL`},
-	})
-}
-
 func TestCompile_Timestamps(t *testing.T) {
 	ist := time.FixedZone("+05:30", 5*60*60+30*60)
 	runCompileCases(t, []compileCase{
@@ -298,21 +290,21 @@ func TestCompile_BooleanComposition(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
 			subtestName:       "AND chain — flat arg list",
-			dslQueryToCompile: `locked = true AND public = true`,
-			expectedSQL:       `dashboard.locked = ? AND pd.id IS NOT NULL`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `locked = true AND created_by = 'a@b.com'`,
+			expectedSQL:       `dashboard.locked = ? AND dashboard.created_by = ?`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "OR chain",
-			dslQueryToCompile: `locked = true OR public = true`,
-			expectedSQL:       `dashboard.locked = ? OR pd.id IS NOT NULL`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `locked = true OR created_by = 'a@b.com'`,
+			expectedSQL:       `dashboard.locked = ? OR dashboard.created_by = ?`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "parens preserve precedence",
-			dslQueryToCompile: `(locked = true OR public = true) AND created_by = 'a@b.com'`,
-			expectedSQL:       `(dashboard.locked = ? OR pd.id IS NOT NULL) AND dashboard.created_by = ?`,
-			expectedArgs:      []any{true, "a@b.com"},
+			dslQueryToCompile: `(locked = true OR locked = false) AND created_by = 'a@b.com'`,
+			expectedSQL:       `(dashboard.locked = ? OR dashboard.locked = ?) AND dashboard.created_by = ?`,
+			expectedArgs:      []any{true, false, "a@b.com"},
 		},
 	})
 }
@@ -342,9 +334,9 @@ func TestCompile_NOT(t *testing.T) {
 		},
 		{
 			subtestName:       "NOT around a parenthesized OR",
-			dslQueryToCompile: `NOT (locked = true OR public = true)`,
-			expectedSQL:       `NOT ((dashboard.locked = ? OR pd.id IS NOT NULL))`,
-			expectedArgs:      []any{true},
+			dslQueryToCompile: `NOT (locked = true OR created_by = 'a@b.com')`,
+			expectedSQL:       `NOT ((dashboard.locked = ? OR dashboard.created_by = ?))`,
+			expectedArgs:      []any{true, "a@b.com"},
 		},
 		{
 			subtestName:       "double NOT via parens",

@@ -17,7 +17,6 @@ var reservedOps = map[dashboardtypes.DSLKey]map[qbtypesv5.FilterOperator]struct{
 	dashboardtypes.DSLKeyUpdatedAt:   numericRangeOps(),
 	dashboardtypes.DSLKeyCreatedBy:   stringSearchOps(),
 	dashboardtypes.DSLKeyLocked:      opsSet(qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual),
-	dashboardtypes.DSLKeyPublic:      opsSet(qbtypesv5.FilterOperatorEqual, qbtypesv5.FilterOperatorNotEqual),
 }
 
 // tagKeyOps applies to every non-reserved DSL key — the operator targets the
