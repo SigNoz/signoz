@@ -62,7 +62,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	numericColsCount := 0
 	for i, ct := range colTypes {
 		slots[i] = reflect.New(ct.ScanType()).Interface()
-		if numericKind(ct.ScanType().Kind()) {
+		if isNumericKind(ct.ScanType()) {
 			numericColsCount++
 		}
 	}
@@ -270,8 +270,14 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-func numericKind(k reflect.Kind) bool {
-	switch k {
+func isNumericKind(t reflect.Type) bool {
+	if t == nil {
+		return false
+	}
+	for t.Kind() == reflect.Ptr || t.Kind() == reflect.UnsafePointer {
+		t = t.Elem()
+	}
+	switch t.Kind() {
 	case reflect.Float32, reflect.Float64,
 		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -290,7 +296,13 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 	var aggIndex int64
 	for i, name := range colNames {
 		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
+		// Builder queries alias aggregation columns as __result_N (always numeric) and toString-wrap group-by keys (always string);
+		// Raw ClickHouse queries may use any aliases.
+		// Handling Builder queries, __result_N -> aggregation, non __result_N -> group-by.
+		// Handling Raw ClickHouse queries, any numeric column -> aggregations, any non-numeric column -> group-by.
+		// NOTE: For clickhouse queries, its wrong to assume that group-by keys are always non-numeric, user might be grouping by on integer status_code.
+		// However, we fine with this for now. If need arises, this should be solved on the frontend side by asking for user a mapping of column names to column types.
+		if aggRe.MatchString(name) || isNumericKind(colTypes[i].ScanType()) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
