@@ -18,6 +18,8 @@ interface BillingBarChartTooltipProps extends TooltipRenderArgs {
 	billingApiResponse: MetricRangePayloadProps;
 }
 
+const CURRENCY_SYMBOL = '$';
+
 export function BillingBarChartTooltip({
 	billingApiResponse,
 	uPlotInstance,
@@ -60,7 +62,7 @@ export function BillingBarChartTooltip({
 
 			return {
 				...item,
-				tooltipValue: `$${getToolTipValue(item.value, '')}${quantityStr}`,
+				tooltipValue: `${CURRENCY_SYMBOL}${getToolTipValue(item.value, '')}${quantityStr}`,
 			};
 		});
 	}, [uPlotInstance, seriesIndex, dataIndexes, billingApiResponse]);

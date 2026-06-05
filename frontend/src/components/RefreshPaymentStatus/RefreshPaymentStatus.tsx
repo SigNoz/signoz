@@ -7,11 +7,9 @@ import { RefreshCcw } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 function RefreshPaymentStatus({
-	btnShape,
 	type,
 	className,
 }: {
-	btnShape?: 'default' | 'round';
 	type?: 'button' | 'text' | 'tooltip';
 	className?: string;
 }): JSX.Element {
@@ -35,10 +33,9 @@ function RefreshPaymentStatus({
 
 	const button = (
 		<Button
-			variant={type === 'text' ? 'ghost' : 'outlined'}
-			color="secondary"
+			variant="link"
+			color={type === 'text' ? 'none' : 'secondary'}
 			size="md"
-			style={btnShape === 'round' ? { borderRadius: '9999px' } : undefined}
 			className={className}
 			onClick={handleRefreshPaymentStatus}
 			prefix={<RefreshCcw size={14} />}
@@ -59,7 +56,6 @@ function RefreshPaymentStatus({
 	);
 }
 RefreshPaymentStatus.defaultProps = {
-	btnShape: 'default',
 	type: 'button',
 	className: undefined,
 };
