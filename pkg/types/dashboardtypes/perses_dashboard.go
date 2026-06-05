@@ -112,6 +112,16 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	return nil
 }
 
+func (d *DashboardV2) CanDelete() error {
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be deleted")
+	}
+	return nil
+}
+
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
 	Image         string `json:"image,omitempty"`
