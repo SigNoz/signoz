@@ -24,72 +24,14 @@ REQUIRED_METRICS = {
 }
 
 
-def test_namespaces_happy_path(
+def test_namespaces_accuracy(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """Seed 2 namespaces x 3 metrics + 2 pods/ns; assert response shape + counts."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/namespaces_happy_path.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-
-    assert data["total"] == 2
-    assert len(data["records"]) == 2
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
-    assert data["endTimeBeforeRetention"] is False
-
-    assert {r["namespaceName"] for r in data["records"]} == {"happy-ns-1", "happy-ns-2"}
-
-    for record in data["records"]:
-        for field in (
-            "namespaceName",
-            "namespaceCPU",
-            "namespaceMemory",
-            "podCountsByPhase",
-            "meta",
-        ):
-            assert field in record, f"missing {field} in {record!r}"
-
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
-
-        # Each happy-path namespace has 2 running pods.
-        assert record["podCountsByPhase"]["running"] == 2
-        for other in ("pending", "succeeded", "failed", "unknown"):
-            assert record["podCountsByPhase"][other] == 0
-
-        assert record["meta"].get("k8s.namespace.name") == record["namespaceName"]
-        assert "k8s.cluster.name" in record["meta"]
-
-
-def test_namespaces_value_accuracy(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Exact per-namespace metric values + podCountsByPhase.
+    """Seed 2 namespaces x 3 metrics; assert response shape/contract + exact
+    per-namespace metric values and podCountsByPhase.
 
     Tests v1-parity expectation: SpaceAggregationSum across pods within a
     namespace (pods_query.go A=cpu, D=memory both use Sum, namespaces.go:225
@@ -125,9 +67,32 @@ def test_namespaces_value_accuracy(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+
+    # Shape/contract.
+    assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
+    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    assert data["endTimeBeforeRetention"] is False
+    assert {r["namespaceName"] for r in data["records"]} == set(exp_by_name.keys())
 
     for record in data["records"]:
+        for field in (
+            "namespaceName",
+            "namespaceCPU",
+            "namespaceMemory",
+            "podCountsByPhase",
+            "meta",
+        ):
+            assert field in record, f"missing {field} in {record!r}"
+
+        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
+            assert bucket in record["podCountsByPhase"]
+            assert isinstance(record["podCountsByPhase"][bucket], int)
+
+        assert record["meta"].get("k8s.namespace.name") == record["namespaceName"]
+        assert "k8s.cluster.name" in record["meta"]
+
+        # Exact values.
         exp = exp_by_name[record["namespaceName"]]
         for field in ("namespaceCPU", "namespaceMemory"):
             assert compare_values(record[field], exp[field], 1e-6), f"{record['namespaceName']}.{field}: got {record[field]}, expected {exp[field]}"
@@ -389,13 +354,15 @@ def test_namespaces_groupby_cluster(
     assert clusters_seen == {"gb-cluster-a", "gb-cluster-b"}
 
 
-def test_namespaces_pagination_sync(
+def test_namespaces_pagination(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """Pagination invariants across 3 offset windows."""
+    """Pagination: per-page len matches min(limit, total-offset), total invariant,
+    pages cover the full set with no overlap. The final offset is beyond total:
+    it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -409,7 +376,7 @@ def test_namespaces_pagination_sync(
     seen_names: list[str] = []
     seen_totals: set[int] = set()
 
-    for offset in (0, 3, 6):
+    for offset in (0, 3, 6, K + 5):
         response = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
             headers={"authorization": f"Bearer {token}"},
@@ -424,7 +391,7 @@ def test_namespaces_pagination_sync(
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
         seen_totals.add(data["total"])
-        expected_len = min(limit, K - offset)
+        expected_len = max(0, min(limit, K - offset))
         assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
         seen_names.extend(r["namespaceName"] for r in data["records"])
 
@@ -433,52 +400,29 @@ def test_namespaces_pagination_sync(
     assert set(seen_names) == {f"page-ns-{i}" for i in range(1, K + 1)}
 
 
-def test_namespaces_offset_beyond_total(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Offset beyond total returns empty records; total still reflects dataset size."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/namespaces_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    K = 7
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 3,
-            "offset": K + 5,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["records"] == []
-    assert data["total"] == K
-
-
 # orderBy keys per namespaces_constants.go (cpu, memory only).
-@pytest.mark.parametrize("column", ["cpu", "memory"])
+# k8s.namespace.name sorts via the metadata-name branch (PaginateMetadataByName)
+# and is only allowed when groupBy is empty.
+@pytest.mark.parametrize(
+    "column,record_field",
+    [
+        pytest.param("cpu", "namespaceCPU", id="cpu"),
+        pytest.param("memory", "namespaceMemory", id="memory"),
+        pytest.param("k8s.namespace.name", "namespaceName", id="namespace_name"),
+    ],
+)
 @pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_namespaces_total_invariant_across_orderby(
+def test_namespaces_orderby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     column: str,
+    record_field: str,
     direction: str,
 ) -> None:
-    """Total stays K across all orderBy column x direction combinations."""
+    """Every orderBy column x direction: total/len stay K (invariant under
+    sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -498,6 +442,8 @@ def test_namespaces_total_invariant_across_orderby(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": column}, "direction": direction},
+            # Guards against namespaces seeded by other tests in the shared backend.
+            "filter": {"expression": "k8s.namespace.name CONTAINS 'order-'"},
         },
         timeout=5,
     )
@@ -507,78 +453,9 @@ def test_namespaces_total_invariant_across_orderby(
     assert data["total"] == K, f"{ctx}: total={data['total']}"
     assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_namespaces_orderby_correctness(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """Records sorted by namespaceCPU in the requested direction."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/namespaces_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "cpu"}, "direction": direction},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    cpu_values = [r["namespaceCPU"] for r in data["records"]]
-    expected = sorted(cpu_values, reverse=(direction == "desc"))
-    assert cpu_values == expected, f"cpu {direction} not sorted; got {cpu_values}"
-
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_namespaces_orderby_by_namespace_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """orderBy=k8s.namespace.name with empty groupBy returns namespaces sorted
-    alphabetically via the metadata-name branch (PaginateMetadataByName)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/namespaces_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "k8s.namespace.name"}, "direction": direction},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    names = [r["namespaceName"] for r in data["records"]]
-    expected = sorted(names, reverse=(direction == "desc"))
-    assert names == expected, f"namespace.name {direction} not sorted; got {names}"
+    values = [r[record_field] for r in data["records"]]
+    expected = sorted(values, reverse=(direction == "desc"))
+    assert values == expected, f"{ctx} not sorted; got {values}"
 
 
 @pytest.mark.parametrize(
