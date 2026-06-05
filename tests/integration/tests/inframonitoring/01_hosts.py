@@ -15,6 +15,17 @@ from fixtures.querier import compare_values
 
 ENDPOINT = "/api/v2/infra_monitoring/hosts"
 
+# Every host in hosts_filter_dataset.jsonl carries the same sample pattern as
+# acc-h1 in hosts_value_accuracy.jsonl, so all filtered records must resolve
+# to these exact values (mirrors hosts_value_accuracy_expected.json acc-h1).
+FILTER_DATASET_EXPECTED = {
+    "cpu": 0.4444444444444445,
+    "memory": 0.205,
+    "wait": 0.027777777777777776,
+    "load15": 1.525,
+    "diskUsage": 0.48095238095238096,
+}
+
 
 def test_hosts_accuracy(
     signoz: types.SigNoz,
@@ -174,7 +185,7 @@ def test_hosts_filter(
     expected_hosts: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching hosts."""
+    return exactly the matching hosts, with undistorted per-host metric values."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -199,6 +210,11 @@ def test_hosts_filter(
     data = response.json()["data"]
     assert {r["hostName"] for r in data["records"]} == expected_hosts
     assert data["total"] == len(expected_hosts)
+
+    # Filtering must not distort per-host aggregation values.
+    for record in data["records"]:
+        for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
+            assert compare_values(record[field], FILTER_DATASET_EXPECTED[field], 1e-9), f"{record['hostName']}.{field}: got {record[field]}, expected {FILTER_DATASET_EXPECTED[field]}"
 
 
 @pytest.mark.parametrize(
