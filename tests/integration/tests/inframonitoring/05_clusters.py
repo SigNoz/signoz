@@ -203,7 +203,19 @@ def test_clusters_filter(
     expression: str,
     expected: set,
 ) -> None:
-    """AND-combined pairs of filter operators return the correct intersection."""
+    """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
+    return exactly the matching clusters, with undistorted per-cluster metric
+    values."""
+    # Every cluster in clusters_filter_dataset.jsonl carries the same sample
+    # pattern as acc-cluster-1 in clusters_value_accuracy.jsonl (2 nodes), so
+    # all filtered records must resolve to these exact values (mirrors
+    # clusters_value_accuracy_expected.json acc-cluster-1).
+    expected_values = {
+        "clusterCPU": 1.0,
+        "clusterCPUAllocatable": 8.0,
+        "clusterMemory": 2000000000.0,
+        "clusterMemoryAllocatable": 16000000000.0,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -228,6 +240,11 @@ def test_clusters_filter(
     data = response.json()["data"]
     assert {r["clusterName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-cluster aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['clusterName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(
