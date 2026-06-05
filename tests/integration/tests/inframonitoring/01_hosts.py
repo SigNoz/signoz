@@ -543,18 +543,32 @@ def test_hosts_offset_beyond_total(
 
 # orderBy keys use snake_case (inframonitoringtypes/hosts_constants.go:26-30).
 # Note: response uses camelCase (diskUsage) but request uses disk_usage.
-@pytest.mark.parametrize("column", ["cpu", "memory", "wait", "load15", "disk_usage"])
+# host.name sorts via the metadata-name branch (hosts.go:218-219,
+# PaginateMetadataByName) and is only allowed when groupBy is empty.
+@pytest.mark.parametrize(
+    "column,record_field",
+    [
+        pytest.param("cpu", "cpu", id="cpu"),
+        pytest.param("memory", "memory", id="memory"),
+        pytest.param("wait", "wait", id="wait"),
+        pytest.param("load15", "load15", id="load15"),
+        pytest.param("disk_usage", "diskUsage", id="disk_usage"),
+        pytest.param("host.name", "hostName", id="host_name"),
+    ],
+)
 @pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_hosts_total_invariant_across_orderby(
+def test_hosts_orderby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     column: str,
+    record_field: str,
     direction: str,
 ) -> None:
-    """Total stays K across all orderBy column x direction combinations.
-    Hosts have staggered timestamps (simulating real-world emit drift)."""
+    """Every orderBy column x direction: total/len stay K (invariant under
+    sort) and records come back sorted by the requested column. Hosts have
+    staggered timestamps (simulating real-world emit drift)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -573,10 +587,9 @@ def test_hosts_total_invariant_across_orderby(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "orderBy": {
-                "key": {"name": column},
-                "direction": direction,
-            },
+            "orderBy": {"key": {"name": column}, "direction": direction},
+            # Guards against hosts seeded by other tests in the shared backend.
+            "filter": {"expression": "host.name CONTAINS 'order-'"},
         },
         timeout=5,
     )
@@ -586,79 +599,9 @@ def test_hosts_total_invariant_across_orderby(
     assert data["total"] == K, f"{ctx}: total={data['total']}"
     assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_hosts_orderby_correctness(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """Records sorted by cpu in the requested direction."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "cpu"}, "direction": direction},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    cpu_values = [r["cpu"] for r in data["records"]]
-    expected = sorted(cpu_values, reverse=(direction == "desc"))
-    assert cpu_values == expected, f"cpu {direction} not sorted; got {cpu_values}"
-
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_hosts_orderby_by_host_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """orderBy=host.name with empty groupBy returns hosts sorted alphabetically
-    via the metadata-name branch (hosts.go:218-219, PaginateMetadataByName)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "host.name"}, "direction": direction},
-            "filter": {"expression": "host.name CONTAINS 'order-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    names = [r["hostName"] for r in data["records"]]
-    expected = sorted(names, reverse=(direction == "desc"))
-    assert names == expected, f"host.name {direction} not sorted; got {names}"
+    values = [r[record_field] for r in data["records"]]
+    expected = sorted(values, reverse=(direction == "desc"))
+    assert values == expected, f"{ctx} not sorted; got {values}"
 
 
 @pytest.mark.parametrize(
