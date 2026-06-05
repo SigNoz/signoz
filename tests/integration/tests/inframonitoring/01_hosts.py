@@ -16,63 +16,14 @@ from fixtures.querier import compare_values
 ENDPOINT = "/api/v2/infra_monitoring/hosts"
 
 
-def test_hosts_happy_path(
+def test_hosts_accuracy(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """Seed 2 hosts x 4 metrics; assert response shape + counts."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    metrics = Metrics.load_from_file(
-        get_testdata_file_path("inframonitoring/hosts_happy_path.jsonl"),
-        base_time=now - timedelta(minutes=4),
-    )
-    insert_metrics(metrics)
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-
-    assert data["total"] == 2
-    assert len(data["records"]) == 2
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
-    assert data["endTimeBeforeRetention"] is False
-
-    assert {r["hostName"] for r in data["records"]} == {"happy-h1", "happy-h2"}
-
-    for record in data["records"]:
-        for field in (
-            "hostName",
-            "status",
-            "cpu",
-            "memory",
-            "wait",
-            "load15",
-            "diskUsage",
-            "meta",
-        ):
-            assert field in record, f"missing {field} in {record!r}"
-
-
-def test_hosts_value_accuracy(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Assert exact metric values per record against precomputed expected output."""
+    """Seed 2 hosts x 4 metrics; assert response shape/contract + exact metric
+    values per record against precomputed expected output."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -101,9 +52,28 @@ def test_hosts_value_accuracy(
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
+
+    # Shape/contract.
+    assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
+    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    assert data["endTimeBeforeRetention"] is False
+    assert {r["hostName"] for r in data["records"]} == set(exp_by_host.keys())
 
     for record in data["records"]:
+        for field in (
+            "hostName",
+            "status",
+            "cpu",
+            "memory",
+            "wait",
+            "load15",
+            "diskUsage",
+            "meta",
+        ):
+            assert field in record, f"missing {field} in {record!r}"
+
+        # Exact metric values.
         exp = exp_by_host[record["hostName"]]
         for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
             assert compare_values(record[field], exp[field], 1e-9), f"{record['hostName']}.{field}: got {record[field]}, expected {exp[field]}"
