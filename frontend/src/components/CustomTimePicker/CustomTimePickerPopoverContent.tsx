@@ -359,8 +359,7 @@ function CustomTimePickerPopoverContent({
 						<Clock
 							color={Color.BG_ROBIN_400}
 							className="timezone-container__clock-icon"
-							height={12}
-							width={12}
+							size={14}
 						/>
 
 						<span className="timezone__name">{timezone.name}</span>

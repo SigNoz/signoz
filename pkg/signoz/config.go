@@ -143,7 +143,7 @@ type Config struct {
 	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
 
 	// TraceDetail config
-	TraceDetail tracedetail.Config `mapstructure:"tracedetail"`
+	TraceDetail tracedetail.Config `mapstructure:"traces"`
 
 	// Authz config
 	Authz authz.Config `mapstructure:"authz"`

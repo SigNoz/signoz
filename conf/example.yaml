@@ -64,16 +64,16 @@ web:
   settings:
     posthog:
       # Whether to enable PostHog in web.
-      enabled: true
+      enabled: false
     appcues:
       # Whether to enable Appcues in web.
-      enabled: true
+      enabled: false
     sentry:
       # Whether to enable Sentry in web.
-      enabled: true
+      enabled: false
     pylon:
       # Whether to enable Pylon in web.
-      enabled: true
+      enabled: false
 
 ##################### Cache #####################
 cache:
@@ -432,7 +432,7 @@ cloudintegration:
     version: v0.0.8
 
 ##################### Trace Detail #####################
-tracedetail:
+traces:
   waterfall:
     # Number of spans returned per request when the trace is too large to show all at once.
     span_page_size: 500

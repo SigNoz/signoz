@@ -72,6 +72,7 @@ function TanStackTableInner<TData>(
 		data,
 		columns,
 		columnStorageKey,
+		respectColumnOrder = true,
 		columnSizing: columnSizingProp,
 		onColumnSizingChange,
 		onColumnOrderChange,
@@ -175,6 +176,7 @@ function TanStackTableInner<TData>(
 		storageKey: columnStorageKey,
 		columns,
 		isGrouped,
+		respectColumnOrder,
 	});
 
 	// Use store values when columnStorageKey is provided, otherwise fall back to props/defaults
@@ -206,6 +208,7 @@ function TanStackTableInner<TData>(
 		handleRemoveColumn,
 	} = useColumnHandlers({
 		columnStorageKey,
+		respectColumnOrder,
 		effectiveSizing,
 		storeSetSizing,
 		storeSetOrder,
@@ -322,9 +325,7 @@ function TanStackTableInner<TData>(
 	});
 
 	const hasSingleColumn = useMemo(
-		() =>
-			effectiveColumns.filter((c) => !c.pin && c.enableRemove !== false).length <=
-			1,
+		() => effectiveColumns.filter((c) => !c.pin).length <= 1,
 		[effectiveColumns],
 	);
 

@@ -19,6 +19,7 @@ import {
 	useIsGlobalTimeQueryRefreshing,
 } from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -186,6 +187,8 @@ function DateTimeSelection({
 		useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
+
+	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
