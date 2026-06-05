@@ -22,11 +22,12 @@ export function useTransformDashboardVariables(dashboardId: string): Pick<
 		localStorageVariables: any,
 	): Dashboard => {
 		const updatedData = data;
-		if (data && localStorageVariables) {
-			const updatedVariables = data.data.variables;
+		const variables = data?.data?.variables;
+		if (data && localStorageVariables && variables) {
+			const updatedVariables = variables;
 			const variablesFromUrl = getUrlVariables();
-			Object.keys(data.data.variables).forEach((variable) => {
-				const variableData = data.data.variables[variable];
+			Object.keys(variables).forEach((variable) => {
+				const variableData = variables[variable];
 
 				// values from url
 				const urlVariable = variableData?.name
@@ -34,7 +35,7 @@ export function useTransformDashboardVariables(dashboardId: string): Pick<
 					: variablesFromUrl[variableData.id];
 
 				let updatedVariable = {
-					...data.data.variables[variable],
+					...variables[variable],
 					...localStorageVariables[variableData.name as any],
 				};
 

@@ -721,6 +721,53 @@ export const removeKeysFromExpression = (
 	return result?.text ?? '';
 };
 
+const escapeRegExp = (value: string): string =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const createVariablePlaceholderRegExp = (
+	variableName: string,
+): RegExp => {
+	const escapedName = escapeRegExp(variableName);
+	// (?![\w.]) prevents $env from matching inside $environment or $env.attr
+	return new RegExp(
+		`(\\$${escapedName}(?![\\w.])|\\{\\{\\s*\\.?${escapedName}\\s*\\}\\}|\\[\\[\\s*${escapedName}\\s*\\]\\])`,
+		'g',
+	);
+};
+
+const matchesVariablePlaceholder = (
+	text: string,
+	variableName: string,
+): boolean => createVariablePlaceholderRegExp(variableName).test(text);
+
+export const removeVariableFromExpression = (
+	expression: string | undefined,
+	variableName: string,
+): string => {
+	if (!expression) {
+		return '';
+	}
+
+	const queryPairs = extractQueryPairs(expression);
+
+	const keysToRemove = queryPairs
+		.filter((pair) => {
+			const singleValue = pair.value?.toString() ?? '';
+			const listValues = (pair.valueList ?? []).join(' ');
+			return (
+				matchesVariablePlaceholder(singleValue, variableName) ||
+				matchesVariablePlaceholder(listValues, variableName)
+			);
+		})
+		.map((pair) => pair.key);
+
+	if (keysToRemove.length === 0) {
+		return expression;
+	}
+
+	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
+};
+
 /**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
