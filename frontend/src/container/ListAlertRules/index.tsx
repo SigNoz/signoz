@@ -136,6 +136,7 @@ function ListAlertRules(): JSX.Element {
 								prefix={<Plus size={14} />}
 								onClick={handleNewAlert}
 								color="primary"
+								testId="list-alerts-new-alert-button"
 							>
 								New Alert
 							</Button>
@@ -157,6 +158,7 @@ function ListAlertRules(): JSX.Element {
 						value={searchText}
 						onChange={handleSearchChange}
 						suffix={<Search size={14} className={styles.searchIcon} />}
+						testId="list-alerts-search-input"
 					/>
 				</div>
 			)}
