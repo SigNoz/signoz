@@ -214,7 +214,20 @@ def test_daemonsets_filter(
     expected: set,
 ) -> None:
     """Filter operators (=, IN, NOT IN, CONTAINS) and their AND-combinations
-    return exactly the matching daemonsets."""
+    return exactly the matching daemonsets, with undistorted per-DS metric
+    values."""
+    # Every daemonset in daemonsets_filter_dataset.jsonl carries the same
+    # sample pattern as acc-ds-1 in daemonsets_value_accuracy.jsonl (2 pods),
+    # so all filtered records must resolve to these exact values (mirrors
+    # daemonsets_value_accuracy_expected.json acc-ds-1).
+    expected_values = {
+        "daemonSetCPU": 1.0,
+        "daemonSetCPURequest": 0.5,
+        "daemonSetCPULimit": 0.4,
+        "daemonSetMemory": 300000000.0,
+        "daemonSetMemoryRequest": 0.5,
+        "daemonSetMemoryLimit": 0.4,
+    }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -239,6 +252,11 @@ def test_daemonsets_filter(
     data = response.json()["data"]
     assert {r["daemonSetName"] for r in data["records"]} == expected
     assert data["total"] == len(expected)
+
+    # Filtering must not distort per-daemonset aggregation values.
+    for record in data["records"]:
+        for field in expected_values:
+            assert compare_values(record[field], expected_values[field], 1e-6), f"{record['daemonSetName']}.{field}: got {record[field]}, expected {expected_values[field]}"
 
 
 @pytest.mark.parametrize(
