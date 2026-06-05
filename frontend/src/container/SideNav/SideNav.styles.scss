@@ -32,8 +32,9 @@
 
 	.brand-company-meta {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 6px;
+		gap: 4px;
 		flex-shrink: 0;
 		width: 100%;
 		justify-content: center;
@@ -48,7 +49,8 @@
 		overflow: hidden;
 
 		gap: 32px;
-		height: 32px;
+		height: auto;
+		min-height: 32px;
 		width: 100%;
 
 		.brand-logo {
@@ -81,11 +83,12 @@
 		}
 
 		.brand-title-section {
-			display: none;
+			display: flex;
 			flex-shrink: 0;
 			align-items: center;
 			gap: 0;
 			position: relative;
+			max-width: 100%;
 
 			.license-type {
 				display: flex;
@@ -119,6 +122,10 @@
 
 				border-radius: 0px 4px 4px 0px;
 				background: var(--l3-background);
+
+				&.version-container-standalone {
+					border-radius: 4px;
+				}
 			}
 
 			.version {
@@ -697,16 +704,13 @@
 		}
 
 		.brand {
+			height: 32px;
 			justify-content: flex-start;
 
 			.brand-company-meta {
+				flex-direction: row;
 				justify-content: flex-start;
 				width: 100%;
-			}
-
-			.brand-title-section {
-				display: flex;
-				align-items: center;
 			}
 		}
 
@@ -878,16 +882,13 @@
 		}
 
 		.brand {
+			height: 32px;
 			justify-content: flex-start;
 
 			.brand-company-meta {
+				flex-direction: row;
 				justify-content: flex-start;
 				width: 100%;
-			}
-
-			.brand-title-section {
-				display: flex;
-				align-items: center;
 			}
 		}
 
