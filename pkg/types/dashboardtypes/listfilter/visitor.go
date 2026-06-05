@@ -247,31 +247,33 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 			return ""
 		}
 		return builder.NotEqual(columnExpression, val)
-	case qbtypesv5.FilterOperatorLike:
+	case qbtypesv5.FilterOperatorLike, qbtypesv5.FilterOperatorNotLike:
 		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
 			return ""
 		}
-		return builder.Like(columnExpression, val)
-	case qbtypesv5.FilterOperatorNotLike:
-		val, ok := v.extractSingleStringValue(ctx, keyForError)
-		if !ok {
-			return ""
+		like := "LIKE"
+		if operation == qbtypesv5.FilterOperatorNotLike {
+			like = "NOT LIKE"
 		}
-		return builder.NotLike(columnExpression, val)
+		// The user's % and _ stay as wildcards; ESCAPE pins backslash as the escape
+		// char so a literal `\` in the pattern is read the same on both dialects —
+		// Postgres defaults to `\`, SQLite has no default escape.
+		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var(val))
 	case qbtypesv5.FilterOperatorILike, qbtypesv5.FilterOperatorNotILike:
 		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
 			return ""
 		}
 		// SQLite has no ILIKE keyword and Postgres LIKE is case-sensitive — emit
-		// LOWER(col) LIKE LOWER(?) so behavior is identical on both dialects.
+		// LOWER(col) LIKE LOWER(?) so behavior is identical on both dialects. ESCAPE
+		// pins backslash as the escape char (Postgres default; SQLite has none).
 		lowerColumn := string(v.formatter.LowerExpression(columnExpression))
 		like := "LIKE"
 		if operation == qbtypesv5.FilterOperatorNotILike {
 			like = "NOT LIKE"
 		}
-		return fmt.Sprintf("%s %s LOWER(%s)", lowerColumn, like, builder.Var(val))
+		return fmt.Sprintf("%s %s LOWER(%s) ESCAPE '\\'", lowerColumn, like, builder.Var(val))
 	case qbtypesv5.FilterOperatorContains, qbtypesv5.FilterOperatorNotContains:
 		val, ok := v.extractSingleStringValue(ctx, keyForError)
 		if !ok {
@@ -281,7 +283,11 @@ func (v *visitor) buildStringOperation(builder *sqlbuilder.SelectBuilder, ctx *g
 		if operation == qbtypesv5.FilterOperatorNotContains {
 			like = "NOT LIKE"
 		}
-		return fmt.Sprintf("%s %s %s", columnExpression, like, builder.Var("%"+escapeLike(val)+"%"))
+		// Escape the user's % and _ so they match literally, then wrap in wildcards.
+		// ESCAPE declares the backslash we just injected as the escape char — needed
+		// on SQLite (no default) and a harmless restatement of the Postgres default.
+		escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(val)
+		return fmt.Sprintf("%s %s %s ESCAPE '\\'", columnExpression, like, builder.Var("%"+escaped+"%"))
 	case qbtypesv5.FilterOperatorRegexp, qbtypesv5.FilterOperatorNotRegexp:
 		v.addError("REGEXP filtering on %q is not yet supported", keyForError)
 		return ""
@@ -560,13 +566,6 @@ func operationName(operation qbtypesv5.FilterOperator) string {
 		return "NOT EXISTS"
 	}
 	return "?"
-}
-
-// escapeLike escapes the LIKE meta-characters % and _ in user input so that a
-// CONTAINS query of `50%` doesn't match every value containing `50`.
-func escapeLike(s string) string {
-	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
-	return r.Replace(s)
 }
 
 func trimQuotes(s string) string {

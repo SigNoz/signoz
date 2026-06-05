@@ -93,19 +93,19 @@ func TestCompile_Name(t *testing.T) {
 		{
 			subtestName:       "name CONTAINS",
 			dslQueryToCompile: `name CONTAINS 'overview'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{"%overview%"},
 		},
 		{
 			subtestName:       "name ILIKE — emitted as LOWER(col) LIKE LOWER(?) for dialect parity",
 			dslQueryToCompile: `name ILIKE 'Prod%'`,
-			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?)`,
+			expectedSQL:       `lower(json_extract("dashboard"."data", '$.spec.display.name')) LIKE LOWER(?) ESCAPE '\'`,
 			expectedArgs:      []any{"Prod%"},
 		},
 		{
 			subtestName:       "CONTAINS escapes % in user input",
 			dslQueryToCompile: `name CONTAINS '50%'`,
-			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ?`,
+			expectedSQL:       `json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{`%50\%%`},
 		},
 	})
@@ -116,7 +116,7 @@ func TestCompile_CreatedByLocked(t *testing.T) {
 		{
 			subtestName:       "created_by LIKE",
 			dslQueryToCompile: `created_by LIKE '%@signoz.io'`,
-			expectedSQL:       `dashboard.created_by LIKE ?`,
+			expectedSQL:       `dashboard.created_by LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{"%@signoz.io"},
 		},
 		{
@@ -234,7 +234,7 @@ func TestCompile_Tag(t *testing.T) {
 					JOIN tag t ON t.id = tr.tag_id
 					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)`,
 			expectedArgs: []any{kindArg, "team", "pulse%"},
 		},
@@ -247,7 +247,7 @@ func TestCompile_Tag(t *testing.T) {
 					JOIN tag t ON t.id = tr.tag_id
 					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)`,
 			expectedArgs: []any{kindArg, "team", "staging%"},
 		},
@@ -389,13 +389,13 @@ func TestCompile_ComplexExamples(t *testing.T) {
 			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
 			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
-				json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+				json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				AND EXISTS (
 					SELECT 1 FROM tag_relation tr
 					JOIN tag t ON t.id = tr.tag_id
 					WHERE tr.kind = ? AND tr.resource_id = dashboard.id
 					AND LOWER(t.key) = LOWER(?)
-					AND t.value LIKE ?
+					AND t.value LIKE ? ESCAPE '\'
 				)
 				AND dashboard.created_by = ?
 				AND EXISTS (
@@ -438,7 +438,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value IN (?, ?, ?)
 					)
-					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				)
 				AND (
 					EXISTS (
@@ -448,7 +448,7 @@ func TestCompile_ComplexExamples(t *testing.T) {
 						AND LOWER(t.key) = LOWER(?)
 						AND t.value = ?
 					)
-					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ?
+					OR json_extract("dashboard"."data", '$.spec.display.name') LIKE ? ESCAPE '\'
 				)`,
 			expectedArgs: []any{kindArg, "database", "sql", "redis", "mongo", "%database%", kindArg, "team", "pulse", "%pulse%"},
 		},
