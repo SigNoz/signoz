@@ -4590,7 +4590,7 @@ export interface DashboardtypesDashboardSpecDTO {
 export enum DashboardtypesDatasourcePluginKindDTO {
 	'signoz/Datasource' = 'signoz/Datasource',
 }
-export interface TagtypesPostableTagDTO {
+export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
 	 */
@@ -4640,7 +4640,7 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	/**
 	 * @type array,null
 	 */
-	tags: TagtypesPostableTagDTO[] | null;
+	tags: TagtypesGettableTagDTO[] | null;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4754,7 +4754,7 @@ export interface DashboardtypesListedDashboardV2DTO {
 	/**
 	 * @type array
 	 */
-	tags: TagtypesPostableTagDTO[];
+	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type string
 	 * @format date-time
@@ -4774,7 +4774,7 @@ export interface DashboardtypesListableDashboardV2DTO {
 	/**
 	 * @type array
 	 */
-	tags: TagtypesPostableTagDTO[];
+	tags: TagtypesGettableTagDTO[];
 	/**
 	 * @type integer
 	 * @format int64
@@ -4797,6 +4797,17 @@ export enum DashboardtypesPanelPluginKindDTO {
 export type DashboardtypesPatchableDashboardV2DTO =
 	| DashboardtypesJSONPatchOperationDTO[]
 	| null;
+
+export interface TagtypesPostableTagDTO {
+	/**
+	 * @type string
+	 */
+	key: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
 
 export interface DashboardtypesPostableDashboardV2DTO {
 	/**

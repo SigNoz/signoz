@@ -2609,7 +2609,7 @@ components:
           $ref: '#/components/schemas/DashboardtypesDashboardSpec'
         tags:
           items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
+            $ref: '#/components/schemas/TagtypesGettableTag'
           nullable: true
           type: array
         updatedAt:
@@ -2775,7 +2775,7 @@ components:
           type: array
         tags:
           items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
+            $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
         total:
           format: int64
@@ -2812,7 +2812,7 @@ components:
           $ref: '#/components/schemas/DashboardtypesListedDashboardV2Spec'
         tags:
           items:
-            $ref: '#/components/schemas/TagtypesPostableTag'
+            $ref: '#/components/schemas/TagtypesGettableTag'
           type: array
         updatedAt:
           format: date-time
@@ -7029,6 +7029,16 @@ components:
           type: string
       required:
       - references
+      type: object
+    TagtypesGettableTag:
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+      - value
       type: object
     TagtypesPostableTag:
       properties:
