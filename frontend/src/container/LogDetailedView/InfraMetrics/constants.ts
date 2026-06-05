@@ -2375,9 +2375,24 @@ export const getHostQueryPayload = (
 								op: 'AND',
 							},
 							functions: [],
-							groupBy: [],
+							groupBy: [
+								{
+									dataType: DataTypes.String,
+									id: 'direction--string--tag--false',
+
+									key: 'direction',
+									type: 'tag',
+								},
+								{
+									dataType: DataTypes.String,
+									id: 'device--string--tag--false',
+
+									key: 'device',
+									type: 'tag',
+								},
+							],
 							having: [],
-							legend: 'system disk io',
+							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
