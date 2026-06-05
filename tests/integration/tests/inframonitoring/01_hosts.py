@@ -344,18 +344,78 @@ def test_hosts_filter_by_status(
             assert r["inactiveHostCount"] == 1
 
 
-def test_hosts_groupby_hostname(
+@pytest.mark.parametrize(
+    "dataset,seed_age_min,window_min,group_key,expected_counts,expected_values",
+    [
+        # groupBy=[host.name]: one record per distinct host. Per-host status is
+        # not pinned by the dataset, so expected counts are None (assert
+        # active+inactive == 1 instead).
+        pytest.param(
+            "hosts_filter_dataset.jsonl",
+            4,
+            5,
+            "host.name",
+            {
+                "prod-linux-1": None,
+                "prod-windows-1": None,
+                "dev-linux-1": None,
+                "dev-windows-1": None,
+            },
+            None,
+            id="host_name",
+        ),
+        # groupBy=[os.type]: aggregates active/inactive counts and metric values
+        # per os.type. Seed had linux: 2 active + 1 inactive, windows: 1 active
+        # + 2 inactive. Aggregated metric values differ between groups because
+        # active hosts (last sample step-floored out) and inactive hosts (all 3
+        # samples averaged) contribute slightly different per-host
+        # contributions to the space-aggregated formula.
+        pytest.param(
+            "hosts_groupby_os_type.jsonl",
+            24,
+            30,
+            "os.type",
+            {"linux": (2, 1), "windows": (1, 2)},
+            {
+                "linux": {
+                    "cpu": 0.3333333333333333,
+                    "memory": 0.25892857142857145,
+                    "wait": 0,
+                    "load15": 2.15,
+                    "diskUsage": 0.5071428571428571,
+                },
+                "windows": {
+                    "cpu": 0.33333333333333337,
+                    "memory": 0.2609375,
+                    "wait": 0,
+                    "load15": 2.47,
+                    "diskUsage": 0.50875,
+                },
+            },
+            id="os_type",
+        ),
+    ],
+)
+def test_hosts_groupby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
+    dataset: str,
+    seed_age_min: int,
+    window_min: int,
+    group_key: str,
+    expected_counts: dict,
+    expected_values: dict,
 ) -> None:
-    """Explicit groupBy=[host.name] returns one record per distinct host."""
+    """groupBy returns one record per distinct group with aggregated
+    active/inactive counts and metric values. hostName is populated only when
+    grouping by host.name (hosts.go:144-160 list-vs-grouped branches)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_filter_dataset.jsonl"),
-            base_time=now - timedelta(minutes=4),
+            get_testdata_file_path(f"inframonitoring/{dataset}"),
+            base_time=now - timedelta(minutes=seed_age_min),
         )
     )
 
@@ -364,12 +424,12 @@ def test_hosts_groupby_hostname(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
         json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "start": int((now - timedelta(minutes=window_min)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "groupBy": [
                 {
-                    "name": "host.name",
+                    "name": group_key,
                     "fieldDataType": "string",
                     "fieldContext": "resource",
                 },
@@ -379,91 +439,26 @@ def test_hosts_groupby_hostname(
     )
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
-    assert data["total"] == 4
-    assert {r["hostName"] for r in data["records"]} == {
-        "prod-linux-1",
-        "prod-windows-1",
-        "dev-linux-1",
-        "dev-windows-1",
-    }
-    for r in data["records"]:
-        assert r["activeHostCount"] + r["inactiveHostCount"] == 1
+    assert data["total"] == len(expected_counts)
 
+    group_of = lambda r: r["hostName"] if group_key == "host.name" else r["meta"][group_key]  # noqa: E731  # pylint: disable=unnecessary-lambda-assignment
+    by_group = {group_of(r): r for r in data["records"]}
+    assert set(by_group.keys()) == set(expected_counts.keys())
 
-def test_hosts_groupby_os_type(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """groupBy=[os.type] aggregates active/inactive counts and metric values per os.type."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/hosts_groupby_os_type.jsonl"),
-            base_time=now - timedelta(minutes=24),
-        )
-    )
+    for group, rec in by_group.items():
+        counts = expected_counts[group]
+        if counts is not None:
+            assert (rec["activeHostCount"], rec["inactiveHostCount"]) == counts, f"{group}: got ({rec['activeHostCount']}, {rec['inactiveHostCount']}), expected {counts}"
+        else:
+            assert rec["activeHostCount"] + rec["inactiveHostCount"] == 1
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=30)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": "os.type",
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                },
-            ],
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert data["total"] == 2
+        # hostName is populated per host when grouping by host.name, and empty
+        # when host.name is NOT in groupBy.
+        assert rec["hostName"] == (group if group_key == "host.name" else "")
 
-    by_os = {r["meta"]["os.type"]: r for r in data["records"]}
-    assert set(by_os.keys()) == {"linux", "windows"}
-
-    # Per-group active/inactive counts. Seed had linux: 2 active + 1 inactive,
-    # windows: 1 active + 2 inactive.
-    assert by_os["linux"]["activeHostCount"] == 2
-    assert by_os["linux"]["inactiveHostCount"] == 1
-    assert by_os["windows"]["activeHostCount"] == 1
-    assert by_os["windows"]["inactiveHostCount"] == 2
-
-    # When host.name is NOT in groupBy: per-record hostName is empty.
-    for r in data["records"]:
-        assert r["hostName"] == ""
-
-    # Aggregated metric values per os.type group. Values differ between groups
-    # because active hosts (last sample step-floored out) and inactive hosts
-    # (all 3 samples averaged) contribute slightly different per-host
-    # contributions to the space-aggregated formula.
-    expected = {
-        "linux": {
-            "cpu": 0.3333333333333333,
-            "memory": 0.25892857142857145,
-            "wait": 0,
-            "load15": 2.15,
-            "diskUsage": 0.5071428571428571,
-        },
-        "windows": {
-            "cpu": 0.33333333333333337,
-            "memory": 0.2609375,
-            "wait": 0,
-            "load15": 2.47,
-            "diskUsage": 0.50875,
-        },
-    }
-    for os_type, rec in by_os.items():
-        for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
-            assert compare_values(rec[field], expected[os_type][field], 1e-9), f"{os_type}.{field}: got {rec[field]}, expected {expected[os_type][field]}"
+        if expected_values is not None:
+            for field in ("cpu", "memory", "wait", "load15", "diskUsage"):
+                assert compare_values(rec[field], expected_values[group][field], 1e-9), f"{group}.{field}: got {rec[field]}, expected {expected_values[group][field]}"
 
 
 def test_hosts_pagination_sync(
