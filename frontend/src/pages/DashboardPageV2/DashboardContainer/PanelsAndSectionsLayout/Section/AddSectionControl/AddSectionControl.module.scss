@@ -1,0 +1,17 @@
+.addButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+	padding: 8px 12px;
+	background: transparent;
+	border: 1px dashed var(--bg-slate-400, #1d212d);
+	border-radius: 4px;
+	color: var(--bg-vanilla-400, #8993ae);
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--bg-robin-500);
+		color: var(--bg-vanilla-100, #fff);
+	}
+}
