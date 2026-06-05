@@ -231,12 +231,14 @@ function Threshold({
 							type="text"
 							icon={<Pencil size={14} />}
 							className="edit-btn"
+							data-testid="threshold-edit-btn"
 							onClick={editHandler}
 						/>
 						<Button
 							type="text"
 							icon={<Trash2 size={14} />}
 							className="delete-btn"
+							data-testid="threshold-delete-btn"
 							onClick={deleteHandler}
 						/>
 					</div>
