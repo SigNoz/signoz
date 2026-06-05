@@ -188,7 +188,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 				},
 				"layouts": []
 			}`,
-			wantContain: "unknown query kind",
+			wantContain: "unknown request type",
 		},
 		{
 			name: "empty query envelope kind",
@@ -209,7 +209,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 				},
 				"layouts": []
 			}`,
-			wantContain: "unknown query kind",
+			wantContain: "unknown request type",
 		},
 		{
 			name: "unknown variable plugin",

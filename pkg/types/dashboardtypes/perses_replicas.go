@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/common"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -66,27 +65,8 @@ type PanelSpec struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind QueryKind `json:"kind"`
-	Spec QuerySpec `json:"spec"`
-}
-
-type QueryKind qb.RequestType
-
-func (QueryKind) Enum() []any { return (qb.RequestType{}).Enum() }
-
-func (k *QueryKind) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid query kind")
-	}
-	rt := qb.RequestType{String: valuer.NewString(s)}
-	for _, allowed := range (qb.RequestType{}).Enum() {
-		if allowed == rt {
-			*k = QueryKind(rt)
-			return nil
-		}
-	}
-	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "unknown query kind %q; allowed values: %s", s, "`scalar`, `time_series`, `raw`, `raw_stream`, `trace`")
+	Kind qb.RequestType `json:"kind"`
+	Spec QuerySpec      `json:"spec"`
 }
 
 type QuerySpec struct {
