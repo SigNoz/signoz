@@ -1,3 +1,6 @@
+// Applied to both the menu content and the submenu content (each renders in
+// its own portal with a default z-index of 50) so both stack above
+// FloatingPanel (z-index 999).
 .traceOptionsDropdown {
 	z-index: 1100;
 }

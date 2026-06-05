@@ -1,5 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
+import { logEventMock } from '__tests__/logEventMock';
 import {
 	act,
 	fireEvent,
@@ -12,7 +13,6 @@ import APIError from 'types/api/error';
 import { toast } from '@signozhq/ui/sonner';
 
 const toggleThemeFunction = jest.fn();
-const logEventFunction = jest.fn();
 const copyToClipboardFn = jest.fn();
 const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
@@ -60,11 +60,6 @@ jest.mock('hooks/useDarkMode', () => ({
 		autoSwitch: false,
 		setAutoSwitch: jest.fn(),
 	})),
-}));
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn((eventName, data) => logEventFunction(eventName, data)),
 }));
 
 const errorNotification = jest.fn();
@@ -135,7 +130,7 @@ describe('MySettings Flows', () => {
 
 			await waitFor(() => {
 				expect(toggleThemeFunction).toHaveBeenCalled();
-				expect(logEventFunction).toHaveBeenCalledWith(
+				expect(logEventMock).toHaveBeenCalledWith(
 					'Account Settings: Theme Changed',
 					{
 						theme: 'light',

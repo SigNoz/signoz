@@ -1,7 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
@@ -67,20 +66,6 @@ function GridCardGraph({
 	const [errorMessage, setErrorMessage] = useState<string>();
 	const [isInternalServerError, setIsInternalServerError] =
 		useState<boolean>(false);
-	const queryRangeCalledRef = useRef(false);
-
-	useEffect(() => {
-		const timeoutId = setTimeout(() => {
-			if (!queryRangeCalledRef.current) {
-				Sentry.captureEvent({
-					message: `Dashboard query range not called within expected timeframe for widget ${widget?.id}`,
-					level: 'warning',
-				});
-			}
-		}, 120000);
-		return (): void => clearTimeout(timeoutId);
-	}, [widget?.id]);
-
 	const {
 		minTime,
 		maxTime,
@@ -271,14 +256,12 @@ function GridCardGraph({
 						});
 					}
 				}
-				queryRangeCalledRef.current = true;
 			},
 			onSettled: (data) => {
 				dataAvailable?.(
 					isDataAvailableByPanelType(data?.payload?.data, widget?.panelTypes),
 				);
 				getGraphData?.(data?.payload?.data);
-				queryRangeCalledRef.current = true;
 			},
 		},
 	);

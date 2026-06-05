@@ -221,6 +221,18 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
 
+func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updatable)
+}
+
+func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.PatchV2(ctx, orgID, id, updatedBy, patch)
+}
+
+func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
+	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
+}
+
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.Dashboard, error) {
 	return module.pkgDashboardModule.Get(ctx, orgID, id)
 }
