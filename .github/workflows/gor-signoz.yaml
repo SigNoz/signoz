@@ -35,6 +35,8 @@ jobs:
           echo 'VITE_APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
           echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
           echo 'VITE_DOCS_BASE_URL="https://signoz.io"' >> .env
+          echo 'VITE_ENVIRONMENT="production"' >> .env
+          echo 'VITE_VERSION="${{ github.ref_name }}"' >> .env
       - name: node-setup
         uses: actions/setup-node@v5
         with:

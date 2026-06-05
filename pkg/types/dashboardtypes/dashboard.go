@@ -21,6 +21,7 @@ var (
 	ErrCodeDashboardInvalidWidgetQuery = errors.MustNewCode("dashboard_invalid_widget_query")
 	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
 	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
+	ErrCodeDashboardInvalidPatch       = errors.MustNewCode("dashboard_invalid_patch")
 )
 
 type StorableDashboard struct {

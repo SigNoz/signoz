@@ -232,7 +232,7 @@ function DashboardsList(): JSX.Element {
 		isLocked: !!e.locked || false,
 		lastUpdatedBy: e.updatedBy,
 		image: e.data.image || Base64Icons[0],
-		variables: e.data.variables,
+		variables: e.data.variables ?? {},
 		widgets: e.data.widgets,
 		layout: e.data.layout,
 		panelMap: e.data.panelMap,

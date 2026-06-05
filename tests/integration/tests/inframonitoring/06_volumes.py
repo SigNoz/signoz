@@ -26,79 +26,14 @@ REQUIRED_METRICS = {
 }
 
 
-def test_volumes_happy_path(
+def test_volumes_accuracy(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """2 PVCs in 1 namespace; assert shape, 7 record fields, formula spot check, meta."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_happy_path.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-
-    assert data["total"] == 2
-    assert len(data["records"]) == 2
-    assert data["requiredMetricsCheck"]["missingMetrics"] == []
-    assert data["endTimeBeforeRetention"] is False
-
-    assert {r["persistentVolumeClaimName"] for r in data["records"]} == {"happy-pvc-1", "happy-pvc-2"}
-
-    for record in data["records"]:
-        for field in (
-            "persistentVolumeClaimName",
-            "volumeAvailable",
-            "volumeCapacity",
-            "volumeUsage",
-            "volumeInodes",
-            "volumeInodesFree",
-            "volumeInodesUsed",
-            "meta",
-        ):
-            assert field in record, f"missing {field} in {record!r}"
-
-        # Spot check formula: usage == capacity - available.
-        assert compare_values(record["volumeUsage"], record["volumeCapacity"] - record["volumeAvailable"], 1e-6), f"usage formula failed: {record!r}"
-
-        # Meta carries the 7 hardcoded attrs (volumes_constants.go:31-39).
-        meta = record["meta"]
-        assert meta.get("k8s.persistentvolumeclaim.name") == record["persistentVolumeClaimName"]
-        for key in (
-            "k8s.pod.uid",
-            "k8s.pod.name",
-            "k8s.namespace.name",
-            "k8s.node.name",
-            "k8s.cluster.name",
-            "k8s.statefulset.name",
-        ):
-            assert key in meta, f"missing meta key {key!r} in {meta!r}"
-
-
-def test_volumes_value_accuracy(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Exact per-PVC metric values + formula verification.
+    """Assert response shape/contract (7 record fields, meta attrs, usage
+    formula) + exact per-PVC metric values against precomputed expected output.
 
     TimeAggregationAvg + SpaceAggregationSum across pod-mounts.
     With 1 pod per PVC, expected values == seeded values.
@@ -132,9 +67,44 @@ def test_volumes_value_accuracy(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
+
+    # Shape/contract.
+    assert data["total"] == len(expected["records"])
     assert len(data["records"]) == len(expected["records"])
+    assert data["requiredMetricsCheck"]["missingMetrics"] == []
+    assert data["endTimeBeforeRetention"] is False
+    assert {r["persistentVolumeClaimName"] for r in data["records"]} == set(exp_by_name.keys())
 
     for record in data["records"]:
+        for field in (
+            "persistentVolumeClaimName",
+            "volumeAvailable",
+            "volumeCapacity",
+            "volumeUsage",
+            "volumeInodes",
+            "volumeInodesFree",
+            "volumeInodesUsed",
+            "meta",
+        ):
+            assert field in record, f"missing {field} in {record!r}"
+
+        # Spot check formula: usage == capacity - available.
+        assert compare_values(record["volumeUsage"], record["volumeCapacity"] - record["volumeAvailable"], 1e-6), f"usage formula failed: {record!r}"
+
+        # Meta carries the 7 hardcoded attrs (volumes_constants.go:31-39).
+        meta = record["meta"]
+        assert meta.get("k8s.persistentvolumeclaim.name") == record["persistentVolumeClaimName"]
+        for key in (
+            "k8s.pod.uid",
+            "k8s.pod.name",
+            "k8s.namespace.name",
+            "k8s.node.name",
+            "k8s.cluster.name",
+            "k8s.statefulset.name",
+        ):
+            assert key in meta, f"missing meta key {key!r} in {meta!r}"
+
+        # Exact values.
         exp = exp_by_name[record["persistentVolumeClaimName"]]
         for field in (
             "volumeAvailable",
@@ -435,13 +405,15 @@ def test_volumes_groupby_namespace(
     assert namespaces_seen == {"gb-ns-a", "gb-ns-b"}
 
 
-def test_volumes_pagination_sync(
+def test_volumes_pagination(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
 ) -> None:
-    """Pagination invariants across 3 offset windows."""
+    """Pagination: per-page len matches min(limit, total-offset), total invariant,
+    pages cover the full set with no overlap. The final offset is beyond total:
+    it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -455,7 +427,7 @@ def test_volumes_pagination_sync(
     seen_names: list[str] = []
     seen_totals: set[int] = set()
 
-    for offset in (0, 3, 6):
+    for offset in (0, 3, 6, K + 5):
         response = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
             headers={"authorization": f"Bearer {token}"},
@@ -471,7 +443,7 @@ def test_volumes_pagination_sync(
         assert response.status_code == HTTPStatus.OK, response.text
         data = response.json()["data"]
         seen_totals.add(data["total"])
-        expected_len = min(limit, K - offset)
+        expected_len = max(0, min(limit, K - offset))
         assert len(data["records"]) == expected_len, f"offset={offset}: expected {expected_len}, got {len(data['records'])}"
         seen_names.extend(r["persistentVolumeClaimName"] for r in data["records"])
 
@@ -480,56 +452,35 @@ def test_volumes_pagination_sync(
     assert set(seen_names) == {f"page-pvc-{i}" for i in range(1, K + 1)}
 
 
-def test_volumes_offset_beyond_total(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Offset beyond total returns empty records; total still reflects dataset size."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_pagination.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    K = 7
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 3,
-            "offset": K + 5,
-            "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'page-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["records"] == []
-    assert data["total"] == K
-
-
 # orderBy keys per volumes_constants.go (6 metric columns).
+# k8s.persistentvolumeclaim.name sorts via the metadata-name branch
+# (PaginateMetadataByName) and is only allowed when groupBy is empty.
 @pytest.mark.parametrize(
-    "column",
-    ["available", "capacity", "usage", "inodes", "inodes_free", "inodes_used"],
+    "column,record_field",
+    [
+        pytest.param("available", "volumeAvailable", id="available"),
+        pytest.param("capacity", "volumeCapacity", id="capacity"),
+        # The 'usage' orderBy exercises the F1 ranking-dependency path
+        # (volumes_constants.go:41-52: usage needs A, B, F1).
+        pytest.param("usage", "volumeUsage", id="usage"),
+        pytest.param("inodes", "volumeInodes", id="inodes"),
+        pytest.param("inodes_free", "volumeInodesFree", id="inodes_free"),
+        pytest.param("inodes_used", "volumeInodesUsed", id="inodes_used"),
+        pytest.param("k8s.persistentvolumeclaim.name", "persistentVolumeClaimName", id="pvc_name"),
+    ],
 )
 @pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_volumes_total_invariant_across_orderby(
+def test_volumes_orderby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     column: str,
+    record_field: str,
     direction: str,
 ) -> None:
-    """Total stays K across all orderBy column x direction combinations."""
+    """Every orderBy column x direction: total/len stay K (invariant under
+    sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -549,6 +500,7 @@ def test_volumes_total_invariant_across_orderby(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "orderBy": {"key": {"name": column}, "direction": direction},
+            # Guards against PVCs seeded by other tests in the shared backend.
             "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
         },
         timeout=5,
@@ -559,95 +511,9 @@ def test_volumes_total_invariant_across_orderby(
     assert data["total"] == K, f"{ctx}: total={data['total']}"
     assert len(data["records"]) == K, f"{ctx}: len(records)={len(data['records'])}"
 
-
-@pytest.mark.parametrize(
-    "column,record_field",
-    [
-        pytest.param("available", "volumeAvailable", id="available"),
-        pytest.param("capacity", "volumeCapacity", id="capacity"),
-        pytest.param("usage", "volumeUsage", id="usage"),
-        pytest.param("inodes", "volumeInodes", id="inodes"),
-        pytest.param("inodes_free", "volumeInodesFree", id="inodes_free"),
-        pytest.param("inodes_used", "volumeInodesUsed", id="inodes_used"),
-    ],
-)
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_volumes_orderby_correctness(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    column: str,
-    record_field: str,
-    direction: str,
-) -> None:
-    """Records sorted by the chosen metric column in the requested direction.
-    The 'usage' orderBy exercises the F1 ranking-dependency path
-    (volumes_constants.go:41-52: usage needs A, B, F1)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": column}, "direction": direction},
-            "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
     values = [r[record_field] for r in data["records"]]
     expected = sorted(values, reverse=(direction == "desc"))
-    assert values == expected, f"{column} {direction} not sorted; got {values}"
-
-
-@pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_volumes_orderby_by_pvc_name(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    direction: str,
-) -> None:
-    """orderBy=k8s.persistentvolumeclaim.name with empty groupBy returns PVCs
-    sorted alphabetically via the metadata-name branch (PaginateMetadataByName)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/volumes_orderby.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "orderBy": {"key": {"name": "k8s.persistentvolumeclaim.name"}, "direction": direction},
-            "filter": {"expression": "k8s.persistentvolumeclaim.name CONTAINS 'order-'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    names = [r["persistentVolumeClaimName"] for r in data["records"]]
-    expected = sorted(names, reverse=(direction == "desc"))
-    assert names == expected, f"pvc.name {direction} not sorted; got {names}"
+    assert values == expected, f"{ctx} not sorted; got {values}"
 
 
 @pytest.mark.parametrize(
