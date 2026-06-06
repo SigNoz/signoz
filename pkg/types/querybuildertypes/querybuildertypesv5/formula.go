@@ -3,9 +3,11 @@ package querybuildertypesv5
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"slices"
@@ -129,15 +131,35 @@ type aggregationRef struct {
 	Alias     *string // Alias-based reference (e.g., A.my_alias)
 }
 
-// seriesLookup provides lookup for series data.
+// seriesEntry holds one series' values and its canonical label signature so that
+// matching can be a map lookup instead of rebuilding maps for every comparison.
+type seriesEntry struct {
+	labels []*Label
+	keys   []string          // sorted label key names
+	sig    string            // canonical value signature over keys
+	data   map[int64]float64 // timestamp -> value
+}
+
+// variableLookup indexes a single variable's (one aggregation's) series.
+type variableLookup struct {
+	// keys is the sorted set of label key names shared by this variable's series
+	// (taken from the first series). Only meaningful when regular is true.
+	keys []string
+	// regular is true when every series shares the same set of label keys, which
+	// is the normal case for a group-by. It lets matching be an O(1) signature
+	// lookup instead of an O(n) subset scan.
+	regular bool
+	// entries holds the series in bucket order; used for the irregular fallback.
+	entries []*seriesEntry
+	// bySig maps a value signature to the first series (in bucket order) carrying
+	// it. It both drives regular-case matching and enumerates the variable's
+	// distinct label sets for findUniqueLabelSets.
+	bySig map[string]*seriesEntry
+}
+
+// seriesLookup provides lookup for series data, grouped by variable.
 type seriesLookup struct {
-	// seriesKey -> timestamp -> value
-	data map[string]map[int64]float64
-	// seriesKey -> original series for metadata preservation
-	seriesMetadata map[string]*TimeSeries
-	// maps a variable to its series keys, letting evaluation iterate a single
-	// variable's series directly.
-	variableToSeriesKeys map[string][]string
+	byVariable map[string]*variableLookup
 }
 
 // FormulaEvaluator handles formula evaluation b/w time series from different aggregations
@@ -193,6 +215,12 @@ type FormulaEvaluator struct {
 
 	timestampPool sync.Pool
 	valuesPool    sync.Pool
+	// tsSetPool holds map[int64]struct{} scratch maps used to build the union of
+	// timestamps for a label set.
+	tsSetPool sync.Pool
+	// matchedPool holds []map[int64]float64 scratch slices indexed by variable
+	// position, holding each variable's matched series data for a label set.
+	matchedPool sync.Pool
 }
 
 // NewFormulaEvaluator creates a formula evaluator.
@@ -246,6 +274,14 @@ func NewFormulaEvaluator(expressionStr string, canDefaultZero map[string]bool) (
 	evaluator.valuesPool.New = func() any {
 		return make(map[string]any, len(evaluator.variables))
 	}
+	evaluator.tsSetPool.New = func() any {
+		return make(map[int64]struct{}, 512)
+	}
+	nVars := len(evaluator.variables)
+	evaluator.matchedPool.New = func() any {
+		s := make([]map[int64]float64, 0, nVars)
+		return &s
+	}
 
 	return evaluator, nil
 }
@@ -294,57 +330,62 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	// Find all unique label combinations across referenced series
 	uniqueLabelSets := fe.findUniqueLabelSets(lookup)
 
-	// Process each unique label set
-	var resultSeries []*TimeSeries
-	var wg sync.WaitGroup
-	resultChan := make(chan *TimeSeries, len(uniqueLabelSets))
-	maxSeries := make(chan struct{}, 4)
-
-	// For each candidate label set, evaluate the formula expression
-	// and store the result in the resultChan
-	for _, labelSet := range uniqueLabelSets {
-		wg.Add(1)
-		go func(labels []*Label) {
-			defer wg.Done()
-			maxSeries <- struct{}{}
-			defer func() { <-maxSeries }()
-
-			// main workhorse of the formula evaluation
-			series := fe.evaluateForLabelSet(labels, lookup)
-			if series != nil && len(series.Values) > 0 {
-				resultChan <- series
-			}
-		}(labelSet)
+	n := len(uniqueLabelSets)
+	if n == 0 {
+		return nil, nil
 	}
 
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	// Each label set is evaluated independently into its own slot, so we can write
+	// results without any synchronization and compact afterwards. This avoids the
+	// per-label-set goroutine + semaphore + channel churn that previously
+	// dominated the profile (runtime.pthread_cond_signal).
+	results := make([]*TimeSeries, n)
 
-	for series := range resultChan {
-		resultSeries = append(resultSeries, series)
+	// For small inputs the goroutine machinery costs more than it saves.
+	const parallelThreshold = 8
+	if n < parallelThreshold {
+		for i, labelSet := range uniqueLabelSets {
+			results[i] = fe.evaluateForLabelSet(labelSet, lookup)
+		}
+	} else {
+		workers := min(runtime.GOMAXPROCS(0), n)
+		// A shared cursor hands out label-set indices to a fixed pool of workers,
+		// balancing load (series sizes vary) with a single atomic add per item.
+		var next atomic.Int64
+		var wg sync.WaitGroup
+		wg.Add(workers)
+		for range workers {
+			go func() {
+				defer wg.Done()
+				for {
+					i := int(next.Add(1)) - 1
+					if i >= n {
+						return
+					}
+					results[i] = fe.evaluateForLabelSet(uniqueLabelSets[i], lookup)
+				}
+			}()
+		}
+		wg.Wait()
+	}
+
+	// Compact non-empty results in place (results[j] is read before it is
+	// overwritten, since j <= i throughout).
+	resultSeries := results[:0]
+	for _, series := range results {
+		if series != nil && len(series.Values) > 0 {
+			resultSeries = append(resultSeries, series)
+		}
 	}
 
 	return resultSeries, nil
 }
 
-// buildSeriesLookup creates lookup structure for all referenced aggregations.
+// buildSeriesLookup creates the per-variable matching index for all referenced
+// aggregations.
 func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSeriesData) *seriesLookup {
 	lookup := &seriesLookup{
-		// data is a map of series key to timestamp to value
-		// series key is a unique identifier for a series
-		// timestamp is the timestamp of the value
-		// value is the value of the series at the timestamp
-		data: make(map[string]map[int64]float64),
-		// seriesMetadata is a map of series key to series metadata
-		// series metadata is the metadata of the series
-		// this is used to preserve the original label structure and metadata
-		// when the series is returned to the caller
-		// It's also used for finding matching series for a variable
-		seriesMetadata: make(map[string]*TimeSeries),
-
-		variableToSeriesKeys: make(map[string][]string),
+		byVariable: make(map[string]*variableLookup, len(fe.aggRefs)),
 	}
 
 	for variable, aggRef := range fe.aggRefs {
@@ -365,13 +406,10 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			continue
 		}
 
-		// Find the specific aggregation bucket
-		// Now, that we have the data for the query, we look for the specific aggregation bucket
-		// referenced in the formula expression.
-		// For example, if the formula expression is `B.2`, the above `data` would be the
-		// time series data for the query B.
-		// The following code will find the aggregation at the index 2
-		// so we can build the series key -> timestamp -> value map for the expr evaluation
+		// Find the specific aggregation bucket referenced in the formula
+		// expression. For example, if the expression is `B.2`, the above `data`
+		// is the time series data for query B and we pick the aggregation at
+		// index 2.
 		var targetBucket *AggregationBucket
 		for _, bucket := range data.Aggregations {
 			if aggRef.Index != nil && bucket.Index == *aggRef.Index {
@@ -388,64 +426,126 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			continue
 		}
 
-		// Process all series in the target bucket
-		for seriesIdx, series := range targetBucket.Series {
-			seriesKey := fe.buildSeriesKey(variable, seriesIdx, series.Labels)
+		vl := &variableLookup{
+			regular: true,
+			entries: make([]*seriesEntry, 0, len(targetBucket.Series)),
+			bySig:   make(map[string]*seriesEntry, len(targetBucket.Series)),
+		}
 
-			// Initialize timestamp map
-			if _, exists := lookup.data[seriesKey]; !exists {
-				lookup.data[seriesKey] = make(map[int64]float64, len(series.Values))
-				lookup.seriesMetadata[seriesKey] = series
-				lookup.variableToSeriesKeys[variable] = append(lookup.variableToSeriesKeys[variable], seriesKey)
+		// Process all series in the target bucket.
+		for seriesIdx, series := range targetBucket.Series {
+			keys, sig := labelKeysAndSig(series.Labels)
+
+			if seriesIdx == 0 {
+				vl.keys = keys
+			} else if vl.regular && !slices.Equal(keys, vl.keys) {
+				// A series with a different key set means we can no longer rely on
+				// the signature index for subset matching and must fall back to a
+				// scan for this variable.
+				vl.regular = false
 			}
 
-			// Store all timestamp-value pairs
-			for _, value := range series.Values {
-				lookup.data[seriesKey][value.Timestamp] = value.Value
+			entry, seen := vl.bySig[sig]
+			if !seen {
+				entry = &seriesEntry{
+					labels: series.Labels,
+					keys:   keys,
+					sig:    sig,
+					data:   make(map[int64]float64, len(series.Values)),
+				}
+				vl.bySig[sig] = entry
+				vl.entries = append(vl.entries, entry)
+			}
+
+			// Store all timestamp-value pairs. The first series carrying a given
+			// signature wins, matching the original "first match" behaviour; a
+			// later duplicate's points are ignored.
+			if !seen {
+				for _, value := range series.Values {
+					entry.data[value.Timestamp] = value.Value
+				}
 			}
 		}
+
+		lookup.byVariable[variable] = vl
 	}
 
 	return lookup
 }
 
-// buildSeriesKey creates a unique key for a series within a specific aggregation.
-func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, labels []*Label) string {
-	// Create a deterministic key that includes variable and label information
-	// Why is variable name needed?
-	// Because we need to maintain if a certain series belongs to a query.
-	// The variable name here is the name of the query.
-	// Why is series index needed?
-	// Since we support multiple aggregations in the same query, we need to
-	// make use the series index to differentiate between series from different aggregations.
-
-	// Perhaps, we can reduce the allocations here and use the hash of the variable and series index
-	// to create a unique key.
-	// However, the number of labels and series from query result should be small,
-	// and not be a bottleneck.
-	// So, we can keep it simple for now.
-	var keyParts []string
-	keyParts = append(keyParts, variable)
-	keyParts = append(keyParts, strconv.Itoa(seriesIndex))
-
-	// Sort labels by key name for consistent ordering
-	sortedLabels := make([]*Label, len(labels))
-	copy(sortedLabels, labels)
-	slices.SortFunc(sortedLabels, func(i, j *Label) int {
-		if i.Key.Name < j.Key.Name {
-			return -1
-		}
-		if i.Key.Name > j.Key.Name {
-			return 1
-		}
-		return 0
+// labelKeysAndSig returns the sorted label key names and a canonical value
+// signature for a label set. The signature is built so that two label sets with
+// the same keys and values produce identical strings, and so that projecting a
+// superset onto these keys (see projectSig) yields the same string.
+func labelKeysAndSig(labels []*Label) ([]string, string) {
+	n := len(labels)
+	if n == 0 {
+		return nil, ""
+	}
+	sorted := make([]*Label, n)
+	copy(sorted, labels)
+	slices.SortFunc(sorted, func(i, j *Label) int {
+		return strings.Compare(i.Key.Name, j.Key.Name)
 	})
 
-	for _, label := range sortedLabels {
-		keyParts = append(keyParts, fmt.Sprintf("%s=%v", label.Key.Name, label.Value))
+	keys := make([]string, n)
+	var sb strings.Builder
+	sb.Grow(n * 16)
+	for i, label := range sorted {
+		keys[i] = label.Key.Name
+		appendKVSig(&sb, label.Key.Name, label.Value)
 	}
+	return keys, sb.String()
+}
 
-	return strings.Join(keyParts, "|")
+// projectSig builds the signature of labels projected onto keys (which must be
+// sorted). It returns false if labels is missing any of the keys, meaning labels
+// cannot match a target that requires those keys.
+func projectSig(labels []*Label, keys []string) (string, bool) {
+	if len(keys) == 0 {
+		return "", true
+	}
+	var sb strings.Builder
+	sb.Grow(len(keys) * 16)
+	for _, key := range keys {
+		value, ok := findLabelValue(labels, key)
+		if !ok {
+			return "", false
+		}
+		appendKVSig(&sb, key, value)
+	}
+	return sb.String(), true
+}
+
+// appendKVSig appends a single key/value pair to a signature builder using NUL
+// separators, which do not occur in practical label names or values.
+func appendKVSig(sb *strings.Builder, key string, value any) {
+	sb.WriteString(key)
+	sb.WriteByte(0)
+	writeLabelValue(sb, value)
+	sb.WriteByte(0)
+}
+
+// writeLabelValue writes the canonical string form of a label value. Strings are
+// written directly (the common case for telemetry labels); other types fall back
+// to fmt, matching how series are keyed elsewhere (see GetUniqueSeriesKey).
+func writeLabelValue(sb *strings.Builder, value any) {
+	if s, ok := value.(string); ok {
+		sb.WriteString(s)
+		return
+	}
+	fmt.Fprintf(sb, "%v", value)
+}
+
+// findLabelValue returns the value for key in labels, scanning linearly since
+// label sets are small.
+func findLabelValue(labels []*Label, key string) (any, bool) {
+	for _, label := range labels {
+		if label.Key.Name == key {
+			return label.Value, true
+		}
+	}
+	return nil, false
 }
 
 // perhaps this could be named better. The job of this function is to find all unique and supersets
@@ -459,42 +559,102 @@ func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, lab
 // and `{"service": "frontend"}` would be the series with `{"service": "frontend", "operation": "GET /api"}`
 // So, we create a set of labels sets that can be termed as candidates for the final result.
 func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) [][]*Label {
-	var allLabelSets [][]*Label
-
-	// Collect all label sets from series metadata
-	for _, series := range lookup.seriesMetadata {
-		allLabelSets = append(allLabelSets, series.Labels)
-	}
-
-	// sort the label sets by the number of labels in descending order
-	slices.SortFunc(allLabelSets, func(i, j []*Label) int {
-		if len(i) > len(j) {
-			return -1
-		}
-		if len(i) < len(j) {
-			return 1
-		}
-		return 0
-	})
-
-	// Find unique label sets using proper label comparison
-	var uniqueSets [][]*Label
-	var uniqueMaps []map[string]any
-	for _, labelSet := range allLabelSets {
-		isUnique := true
-		for _, uniqueMap := range uniqueMaps {
-			if isSubset(uniqueMap, labelSet) {
-				isUnique = false
-				break
+	// Collect the distinct label sets across all variables, keyed by their full
+	// canonical signature. bySig already deduplicates within a variable, so this
+	// merges duplicates across variables (e.g. A and B grouped identically).
+	distinct := make(map[string]*seriesEntry)
+	for _, vl := range lookup.byVariable {
+		for sig, entry := range vl.bySig {
+			if _, ok := distinct[sig]; !ok {
+				distinct[sig] = entry
 			}
 		}
-		if isUnique {
-			uniqueSets = append(uniqueSets, labelSet)
-			uniqueMaps = append(uniqueMaps, labelsToMap(labelSet))
+	}
+
+	if len(distinct) == 0 {
+		return nil
+	}
+
+	// Group the distinct sets by their key set. A label set can only be a subset
+	// of another when its keys are a subset of the other's keys, so subset
+	// relationships only ever cross groups. Within a group all sets share the same
+	// keys and distinct values, so none is a subset of another.
+	groups := make(map[string]*keyGroup)
+	for _, entry := range distinct {
+		ksig := strings.Join(entry.keys, "\x00")
+		g := groups[ksig]
+		if g == nil {
+			g = &keyGroup{keys: entry.keys}
+			groups[ksig] = g
+		}
+		g.entries = append(g.entries, entry)
+	}
+
+	// In the overwhelmingly common case every series shares one key set, so there
+	// is exactly one group and nothing can be a subset of anything else.
+	if len(groups) == 1 {
+		result := make([][]*Label, 0, len(distinct))
+		for _, entry := range distinct {
+			result = append(result, entry.labels)
+		}
+		return result
+	}
+
+	// Otherwise, mark as "covered" every signature that is dominated by a set from
+	// a group with a strictly larger key set: project the larger set's labels onto
+	// the smaller key set and that projection covers any equal set there. A set is
+	// kept iff it is not covered (i.e. it is maximal).
+	groupList := make([]*keyGroup, 0, len(groups))
+	for _, g := range groups {
+		groupList = append(groupList, g)
+	}
+
+	covered := make(map[string]bool)
+	for _, gy := range groupList { // provider of supersets
+		for _, gx := range groupList { // smaller key set being dominated
+			if gx == gy || !keysSubset(gx.keys, gy.keys) {
+				continue
+			}
+			for _, y := range gy.entries {
+				if sig, ok := projectSig(y.labels, gx.keys); ok {
+					covered[sig] = true
+				}
+			}
 		}
 	}
 
-	return uniqueSets
+	result := make([][]*Label, 0, len(distinct))
+	for sig, entry := range distinct {
+		if !covered[sig] {
+			result = append(result, entry.labels)
+		}
+	}
+	return result
+}
+
+// keyGroup holds the distinct label sets that share a key set.
+type keyGroup struct {
+	keys    []string
+	entries []*seriesEntry
+}
+
+// keysSubset reports whether the sorted key set a is a subset of the sorted key
+// set b.
+func keysSubset(a, b []string) bool {
+	if len(a) > len(b) {
+		return false
+	}
+	i := 0
+	for _, x := range a {
+		for i < len(b) && b[i] < x {
+			i++
+		}
+		if i >= len(b) || b[i] != x {
+			return false
+		}
+		i++
+	}
+	return true
 }
 
 func labelsToMap(labels []*Label) map[string]any {
@@ -518,69 +678,113 @@ func isSubset(supersetMap map[string]any, subset []*Label) bool {
 
 // evaluateForLabelSet performs formula evaluation for a specific label set.
 func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *seriesLookup) *TimeSeries {
-	// Find matching series for each variable
-	variableData := make(map[string]map[int64]float64)
-	// not every series would have a value for every timestamp
-	// so we need to collect all timestamps from the series that have a value
-	// for the variable
-	var allTimestamps = make(map[int64]struct{})
+	nVars := len(fe.variables)
 
-	// targetLabels is fixed for this call, so build its lookup once and reuse it
-	// across every series comparison below.
-	targetMap := labelsToMap(targetLabels)
+	// matched[i] holds the timestamp->value data for fe.variables[i], or nil if
+	// no series matched. Indexed by position to avoid a per-call map.
+	mptr := fe.matchedPool.Get().(*[]map[int64]float64)
+	matched := *mptr
+	if cap(matched) < nVars {
+		matched = make([]map[int64]float64, nVars)
+	} else {
+		matched = matched[:nVars]
+		for i := range matched {
+			matched[i] = nil
+		}
+	}
+	defer func() {
+		*mptr = matched[:0]
+		fe.matchedPool.Put(mptr)
+	}()
 
-	for variable := range fe.aggRefs {
-		// only this variable's series.
-		for _, seriesKey := range lookup.variableToSeriesKeys[variable] {
-			if isSubset(targetMap, lookup.seriesMetadata[seriesKey].Labels) {
-				if timestampData, exists := lookup.data[seriesKey]; exists {
-					variableData[variable] = timestampData
-					// Collect all timestamps
-					for ts := range timestampData {
-						allTimestamps[ts] = struct{}{}
-					}
-					break // Found matching series for this variable
+	// not every series has a value for every timestamp, so collect the union of
+	// timestamps across the matched series.
+	allTimestamps := fe.tsSetPool.Get().(map[int64]struct{})
+	clear(allTimestamps)
+	defer fe.tsSetPool.Put(allTimestamps)
+
+	// targetMap is only needed for the irregular fallback; built lazily.
+	var targetMap map[string]any
+
+	for i, variable := range fe.variables {
+		vl := lookup.byVariable[variable]
+		if vl == nil {
+			continue
+		}
+
+		var data map[int64]float64
+		if vl.regular {
+			// Fast path: the matching series (labels ⊆ target) is exactly the one
+			// whose signature equals the target projected onto this variable's keys.
+			if sig, ok := projectSig(targetLabels, vl.keys); ok {
+				if e := vl.bySig[sig]; e != nil {
+					data = e.data
 				}
+			}
+		} else {
+			// Fallback: series have mixed key sets, so scan for the first subset.
+			if targetMap == nil {
+				targetMap = labelsToMap(targetLabels)
+			}
+			for _, e := range vl.entries {
+				if isSubset(targetMap, e.labels) {
+					data = e.data
+					break
+				}
+			}
+		}
+
+		if data != nil {
+			matched[i] = data
+			for ts := range data {
+				allTimestamps[ts] = struct{}{}
 			}
 		}
 	}
 
-	// Convert timestamps to sorted slice
+	// Convert timestamps to a sorted slice.
 	tsPtr := fe.timestampPool.Get().(*[]int64)
 	timestamps := (*tsPtr)[:0]
+	for ts := range allTimestamps {
+		timestamps = append(timestamps, ts)
+	}
+	slices.Sort(timestamps)
 	defer func() {
 		*tsPtr = timestamps[:0]
 		fe.timestampPool.Put(tsPtr)
 	}()
 
-	for ts := range allTimestamps {
-		timestamps = append(timestamps, ts)
+	if len(timestamps) == 0 {
+		return nil
 	}
-	slices.Sort(timestamps)
 
-	// Evaluate formula at each timestamp
-	var resultValues []*TimeSeriesValue
 	values := fe.valuesPool.Get().(map[string]any)
 	defer fe.valuesPool.Put(values)
 
-	for _, timestamp := range timestamps {
-		// Clear previous values
-		for k := range values {
-			delete(values, k)
-		}
+	// Allocate the values backing array once (cap = number of timestamps); the
+	// returned pointers reference into it, so no per-point allocation is needed.
+	backing := make([]TimeSeriesValue, 0, len(timestamps))
 
-		// Collect values for this timestamp
+	for _, timestamp := range timestamps {
+		clear(values)
+
+		// Collect values for this timestamp. fe.variables may contain a variable
+		// more than once (e.g. "A * B - A"); values is keyed by name, but each
+		// data-present occurrence still increments validCount, matching the target
+		// count of len(fe.variables) below.
 		validCount := 0
-		for _, variable := range fe.variables {
-			if varData, exists := variableData[variable]; exists {
-				if value, exists := varData[timestamp]; exists {
+		for i, variable := range fe.variables {
+			if data := matched[i]; data != nil {
+				if value, exists := data[timestamp]; exists {
 					values[variable] = value
 					validCount++
 				}
 			}
 		}
 
-		// Apply default zeros where allowed
+		// Apply default zeros where allowed. A defaulted variable is only counted
+		// once even if it appears multiple times, since the second occurrence finds
+		// the value already set.
 		for _, variable := range fe.variables {
 			if _, exists := values[variable]; !exists && fe.canDefaultZero[variable] {
 				values[variable] = 0.0
@@ -588,12 +792,11 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			}
 		}
 
-		// Skip if we don't have all required variables
-		if validCount != len(fe.variables) {
+		// Skip if we don't have all required variables.
+		if validCount != nVars {
 			continue
 		}
 
-		// Evaluate expression
 		result, err := fe.expression.Evaluate(values)
 		if err != nil {
 			continue
@@ -604,17 +807,22 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			continue
 		}
 
-		resultValues = append(resultValues, &TimeSeriesValue{
+		backing = append(backing, TimeSeriesValue{
 			Timestamp: timestamp,
 			Value:     value,
 		})
 	}
 
-	if len(resultValues) == 0 {
+	if len(backing) == 0 {
 		return nil
 	}
 
-	// Preserve original label structure and metadata
+	resultValues := make([]*TimeSeriesValue, len(backing))
+	for i := range backing {
+		resultValues[i] = &backing[i]
+	}
+
+	// Preserve the original label structure for the result series.
 	resultLabels := make([]*Label, len(targetLabels))
 	copy(resultLabels, targetLabels)
 
