@@ -120,12 +120,8 @@ export function hostGetSelectedItemFilters(
 	};
 }
 
-export function hostInitialLogTracesFilter(
-	host: HostData,
-	dotMetricsEnabled: boolean,
-): TagFilterItem[] {
-	const hostKey = dotMetricsEnabled ? 'host.name' : 'host_name';
-	return [createFilterItem(hostKey, host.hostName || '')];
+export function hostInitialLogTracesFilter(host: HostData): TagFilterItem[] {
+	return [createFilterItem('hostname', host.hostName || '')];
 }
 
 export function hostInitialEventsFilter(_host: HostData): TagFilterItem[] {

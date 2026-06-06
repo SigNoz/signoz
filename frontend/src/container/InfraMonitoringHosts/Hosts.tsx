@@ -117,8 +117,8 @@ function Hosts(): JSX.Element {
 
 	const getInitialLogTracesFilters = useCallback(
 		(host: import('api/infraMonitoring/getHostLists').HostData) =>
-			hostInitialLogTracesFilter(host, dotMetricsEnabled),
-		[dotMetricsEnabled],
+			hostInitialLogTracesFilter(host),
+		[],
 	);
 
 	const controlListPrefix = !showFilters ? (
