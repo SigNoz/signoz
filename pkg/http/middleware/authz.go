@@ -285,6 +285,67 @@ func (middleware *AuthZ) CheckAll(next http.HandlerFunc, groups []AuthZCheckGrou
 	})
 }
 
+// CheckResources authorizes every resolved ResourceDef for the route (AND across
+// defs). It reads the list placed by the Resource middleware. Each def's Selector
+// is the sole source of its FGA selectors; roles are the role names allowed
+// (consumed by the OSS role-gate, while the resource selectors drive the EE
+// resource check).
+func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		resolved, ok := ResolvedFromContext(ctx)
+		if !ok {
+			render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "resource defs not resolved; CheckResources requires WithResourceDefs on the route"))
+			return
+		}
+
+		orgID := valuer.MustNewUUID(claims.OrgID)
+
+		roleSelectors := make([]coretypes.Selector, len(roles))
+		for idx, role := range roles {
+			roleSelectors[idx] = coretypes.TypeRole.MustSelector(role)
+		}
+
+		for _, def := range *resolved {
+			if def.Selector == nil {
+				render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "resource def used with CheckResources must declare a Selector"))
+				return
+			}
+
+			selectors, err := def.Selector(ctx, def.Resource, def.ID, claims)
+			if err != nil {
+				render.Error(rw, err)
+				return
+			}
+
+			err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, authtypes.Relation{Verb: def.Verb}, def.Resource, selectors, roleSelectors)
+			if err != nil {
+				if errors.Asc(err, authtypes.ErrCodeAuthZForbidden) {
+					middleware.logger.WarnContext(ctx, authzDeniedMessage, slog.Any("claims", claims))
+					if def.ID != "" {
+						render.Error(rw, errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "you don't have %s access to %s %s", def.Verb.StringValue(), def.Resource.Kind().String(), def.ID))
+						return
+					}
+
+					render.Error(rw, errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "you don't have %s access to %s", def.Verb.StringValue(), def.Resource.Kind().String()))
+					return
+				}
+
+				render.Error(rw, err)
+				return
+			}
+		}
+
+		next(rw, req)
+	})
+}
+
 func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb selectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()

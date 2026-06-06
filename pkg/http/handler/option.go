@@ -23,3 +23,12 @@ func WithAuditDef(def AuditDef) Option {
 		h.auditDef = &def
 	}
 }
+
+// WithResourceDefs attaches one or more resource specs (ResourceDef /
+// ResourcesDef) to the handler. The resource middleware resolves them and the
+// authz + audit middlewares read the result.
+func WithResourceDefs(defs ...ResourceSpec) Option {
+	return func(h *handler) {
+		h.resourceDefs = append(h.resourceDefs, defs...)
+	}
+}

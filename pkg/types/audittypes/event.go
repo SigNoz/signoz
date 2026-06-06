@@ -58,9 +58,27 @@ func NewAuditEventFromHTTPRequest(
 	errorType string,
 	errorCode string,
 ) AuditEvent {
+	return NewAuditEvent(req, route, statusCode, traceID, spanID, action, actionCategory, claims, NewResourceAttributes(resourceID, resourceKind), errorType, errorCode)
+}
+
+// NewAuditEvent builds an audit event from pre-built resource attributes (which
+// may carry related/attach context). NewAuditEventFromHTTPRequest is the simple
+// single-resource wrapper over this.
+func NewAuditEvent(
+	req *http.Request,
+	route string,
+	statusCode int,
+	traceID oteltrace.TraceID,
+	spanID oteltrace.SpanID,
+	action coretypes.Verb,
+	actionCategory ActionCategory,
+	claims authtypes.Claims,
+	resourceAttributes ResourceAttributes,
+	errorType string,
+	errorCode string,
+) AuditEvent {
 	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
 	principalAttributes := NewPrincipalAttributesFromClaims(claims)
-	resourceAttributes := NewResourceAttributes(resourceID, resourceKind)
 	errorAttributes := NewErrorAttributes(errorType, errorCode)
 	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 

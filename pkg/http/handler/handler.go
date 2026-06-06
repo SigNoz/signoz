@@ -16,12 +16,14 @@ type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
 	AuditDef() *AuditDef
+	ResourceDefs() []ResourceSpec
 }
 
 type handler struct {
-	handlerFunc http.HandlerFunc
-	openAPIDef  OpenAPIDef
-	auditDef    *AuditDef
+	handlerFunc  http.HandlerFunc
+	openAPIDef   OpenAPIDef
+	auditDef     *AuditDef
+	resourceDefs []ResourceSpec
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -45,6 +47,14 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 
 	for _, opt := range opts {
 		opt(handler)
+	}
+
+	// Resource defs are a developer-authored, registration-time declaration —
+	// fail fast and loud on misconfiguration, like coretypes' MustSelector.
+	for _, def := range handler.resourceDefs {
+		if err := def.validate(); err != nil {
+			panic(err)
+		}
 	}
 
 	return handler
@@ -132,4 +142,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (handler *handler) AuditDef() *AuditDef {
 	return handler.auditDef
+}
+
+func (handler *handler) ResourceDefs() []ResourceSpec {
+	return handler.resourceDefs
 }

@@ -73,6 +73,11 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 type ResourceAttributes struct {
 	ResourceID   string
 	ResourceKind coretypes.Kind // guaranteed to be present
+
+	// Related names a counterpart resource for attach/detach events (audit
+	// context only). Both empty when there is no relationship.
+	RelatedID   string
+	RelatedKind coretypes.Kind
 }
 
 func NewResourceAttributes(resourceID string, resourceKind coretypes.Kind) ResourceAttributes {
@@ -82,12 +87,36 @@ func NewResourceAttributes(resourceID string, resourceKind coretypes.Kind) Resou
 	}
 }
 
+// NewRelatedResourceAttributes builds resource attributes that additionally name
+// a related counterpart (used for attach/detach audit events).
+func NewRelatedResourceAttributes(resourceID string, resourceKind coretypes.Kind, relatedID string, relatedKind coretypes.Kind) ResourceAttributes {
+	return ResourceAttributes{
+		ResourceID:   resourceID,
+		ResourceKind: resourceKind,
+		RelatedID:    relatedID,
+		RelatedKind:  relatedKind,
+	}
+}
+
+// CategoryFor derives the audit ActionCategory from a resource's kind. Audit owns
+// this mapping so ResourceDef stays consumer-agnostic.
+func CategoryFor(resource coretypes.Resource) ActionCategory {
+	switch resource.Kind().String() {
+	case "role", "serviceaccount", "user", "auth-domain", "session", "factor-password", "factor-api-key":
+		return ActionCategoryAccessControl
+	default:
+		return ActionCategoryConfigurationChange
+	}
+}
+
 // PutResource writes the resource attributes to an OTel Resource's attribute map.
 // These are resource-level attributes (stored in the resource JSON column),
 // not event-level attributes (stored in attributes_string).
 func (attributes ResourceAttributes) PutResource(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.ResourceKind.String())
 	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
+	putStrIfNotEmpty(dest, "signoz.audit.resource.related.kind", attributes.RelatedKind.String())
+	putStrIfNotEmpty(dest, "signoz.audit.resource.related.id", attributes.RelatedID)
 }
 
 // Audit attributes — Error (When outcome is failure)
@@ -198,6 +227,17 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 		b.WriteString(" (")
 		b.WriteString(resourceAttributes.ResourceID)
 		b.WriteString(")")
+	}
+
+	// Related (attach/detach context): " · related kind (id)" or " · related kind".
+	if resourceAttributes.RelatedKind.String() != "" {
+		b.WriteString(" · related ")
+		b.WriteString(resourceAttributes.RelatedKind.String())
+		if resourceAttributes.RelatedID != "" {
+			b.WriteString(" (")
+			b.WriteString(resourceAttributes.RelatedID)
+			b.WriteString(")")
+		}
 	}
 
 	// Error suffix (failure only): ": type (code)" or ": type" or ": (code)" or omitted.

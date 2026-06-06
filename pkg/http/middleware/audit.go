@@ -61,6 +61,13 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
+
+		// If any resolved resource derives its id from the response, capture the
+		// success body (bounded) so the audit event can read it post-handler.
+		if resolved, ok := ResolvedFromContext(req.Context()); ok && handler.HasResponseIDs(*resolved) {
+			writer.EnableBodyCapture()
+		}
+
 		next.ServeHTTP(writer, req)
 
 		statusCode, writeErr := writer.StatusCode(), writer.WriteError()
@@ -80,7 +87,9 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			fields = append(fields, errors.Attr(writeErr))
 			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
 		} else {
-			if responseBuffer.Len() != 0 {
+			// Only log error bodies (status >= 400); a force-captured success
+			// body is for audit id extraction, not for logging.
+			if statusCode >= 400 && responseBuffer.Len() != 0 {
 				fields = append(fields, "response.body", responseBuffer.String())
 			}
 
@@ -94,25 +103,51 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	def := auditDefFromRequest(req)
-	if def == nil {
-		return
-	}
-
-	// extract claims
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
-
-	// extract status code
 	statusCode := writer.StatusCode()
-
-	// extract traces.
 	span := trace.SpanFromContext(req.Context())
 
-	// extract error details.
 	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
+	}
+
+	// Preferred path: resources resolved by the Resource middleware. Emit one
+	// event per resolved resource.
+	if resolved, ok := ResolvedFromContext(req.Context()); ok && len(*resolved) > 0 {
+		handler.FinalizeResponseIDs(*resolved, handler.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()})
+
+		for _, entry := range *resolved {
+			resourceAttributes := audittypes.NewResourceAttributes(entry.ID, entry.Resource.Kind())
+			if entry.Related != nil {
+				resourceAttributes = audittypes.NewRelatedResourceAttributes(entry.ID, entry.Resource.Kind(), entry.Related.ID, entry.Related.Resource.Kind())
+			}
+
+			event := audittypes.NewAuditEvent(
+				req,
+				routeTemplate,
+				statusCode,
+				span.SpanContext().TraceID(),
+				span.SpanContext().SpanID(),
+				entry.Verb,
+				audittypes.CategoryFor(entry.Resource),
+				claims,
+				resourceAttributes,
+				errorType,
+				errorCode,
+			)
+
+			middleware.auditor.Audit(req.Context(), event)
+		}
+
+		return
+	}
+
+	// Legacy fallback: AuditDef declared via WithAuditDef.
+	def := auditDefFromRequest(req)
+	if def == nil {
+		return
 	}
 
 	event := audittypes.NewAuditEventFromHTTPRequest(
