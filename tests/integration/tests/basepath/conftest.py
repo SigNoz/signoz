@@ -37,14 +37,14 @@ def signoz_base_path(  # pylint: disable=too-many-arguments,too-many-positional-
         clickhouse=clickhouse,
         request=request,
         pytestconfig=pytestconfig,
-        cache_key="signoz-base-path",
+        cache_key="signoz_base_path",
         env_overrides={"SIGNOZ_GLOBAL_EXTERNAL__URL": f"http://localhost:8080{BASE_PATH}"},
     )
 
 
 @pytest.fixture(name="create_user_admin", scope="package")
-def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
-    return register_admin(signoz, request, pytestconfig, BASE_PATH)
+def create_user_admin_base_path(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
+    return register_admin(signoz, request, pytestconfig, cache_key="create_user_admin_base_path", base_path=BASE_PATH)
 
 
 @pytest.fixture(name="get_token", scope="function")

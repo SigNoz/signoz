@@ -60,6 +60,7 @@ def register_admin(
     signoz: types.SigNoz,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    cache_key: str = "create_user_admin",
     base_path: str = "",
 ) -> types.Operation:
     """Register the first admin (creates the org), under base_path. Reuse-wrapped."""
@@ -89,7 +90,7 @@ def register_admin(
     return reuse.wrap(
         request,
         pytestconfig,
-        "create_user_admin",
+        cache_key,
         lambda: types.Operation(name=""),
         create,
         delete,
