@@ -17,24 +17,22 @@ class TestContainerUrlConfig:
     scheme: str
     address: str
     port: int
-    base_path: str = ""
 
     def base(self) -> str:
         return f"{self.scheme}://{self.address}:{self.port}"
 
     def get(self, path: str) -> str:
-        return urljoin(self.base(), f"{self.base_path}{path}")
+        return urljoin(self.base(), path)
 
     def __cache__(self) -> dict:
         return {
             "scheme": self.scheme,
             "address": self.address,
             "port": self.port,
-            "base_path": self.base_path,
         }
 
     def __log__(self) -> str:
-        return f"TestContainerUrlConfig(scheme={self.scheme}, address={self.address}, port={self.port}, base_path={self.base_path})"
+        return f"TestContainerUrlConfig(scheme={self.scheme}, address={self.address}, port={self.port})"
 
 
 @dataclass
