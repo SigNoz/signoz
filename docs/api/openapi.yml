@@ -870,14 +870,6 @@ components:
       - timestampMillis
       - data
       type: object
-    CloudintegrationtypesAssets:
-      properties:
-        dashboards:
-          items:
-            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
-          nullable: true
-          type: array
-      type: object
     CloudintegrationtypesAzureAccountConfig:
       properties:
         deploymentRegion:
@@ -1024,17 +1016,6 @@ components:
       - sigNozApiKey
       - ingestionUrl
       - ingestionKey
-      type: object
-    CloudintegrationtypesDashboard:
-      properties:
-        definition:
-          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
-        description:
-          type: string
-        id:
-          type: string
-        title:
-          type: string
       type: object
     CloudintegrationtypesDataCollected:
       properties:
@@ -1209,7 +1190,7 @@ components:
     CloudintegrationtypesService:
       properties:
         assets:
-          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+          $ref: '#/components/schemas/CloudintegrationtypesServiceAssets'
         cloudIntegrationService:
           $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
@@ -1222,8 +1203,6 @@ components:
           type: string
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
-        telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -1234,8 +1213,16 @@ components:
       - assets
       - supportedSignals
       - dataCollected
-      - telemetryCollectionStrategy
       - cloudIntegrationService
+      type: object
+    CloudintegrationtypesServiceAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceDashboard'
+          type: array
+      required:
+      - dashboards
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -1243,6 +1230,18 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
         azure:
           $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
+      type: object
+    CloudintegrationtypesServiceDashboard:
+      properties:
+        description:
+          type: string
+        integrationDashboard:
+          $ref: '#/components/schemas/CloudintegrationtypesStorableIntegrationDashboard'
+        title:
+          type: string
+      required:
+      - title
+      - description
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -1278,19 +1277,36 @@ components:
       - icon
       - enabled
       type: object
+    CloudintegrationtypesStorableIntegrationDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        dashboardId:
+          type: string
+        id:
+          type: string
+        provider:
+          type: string
+        slug:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - dashboardId
+      - provider
+      - slug
+      - createdAt
+      - updatedAt
+      type: object
     CloudintegrationtypesSupportedSignals:
       properties:
         logs:
           type: boolean
         metrics:
           type: boolean
-      type: object
-    CloudintegrationtypesTelemetryCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-        azure:
-          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -2380,6 +2396,26 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardLink:
+      properties:
+        name:
+          type: string
+        renderVariables:
+          type: boolean
+        targetBlank:
+          type: boolean
+        tooltip:
+          type: string
+        url:
+          type: string
+      type: object
+    DashboardPanelDisplay:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      type: object
     DashboardTextVariableSpec:
       properties:
         constant:
@@ -2510,7 +2546,7 @@ components:
           type: array
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         panels:
           additionalProperties:
@@ -2671,8 +2707,8 @@ components:
       type: object
     DashboardtypesLayout:
       oneOf:
-      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec'
-    DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpec:
+      - $ref: '#/components/schemas/DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec'
+    DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpec:
       properties:
         kind:
           enum:
@@ -2755,7 +2791,7 @@ components:
     DashboardtypesPanel:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/DashboardtypesPanelKind'
         spec:
           $ref: '#/components/schemas/DashboardtypesPanelSpec'
       type: object
@@ -2766,6 +2802,10 @@ components:
         unit:
           type: string
       type: object
+    DashboardtypesPanelKind:
+      enum:
+      - Panel
+      type: string
     DashboardtypesPanelPlugin:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -2872,10 +2912,10 @@ components:
     DashboardtypesPanelSpec:
       properties:
         display:
-          $ref: '#/components/schemas/V1PanelDisplay'
+          $ref: '#/components/schemas/DashboardPanelDisplay'
         links:
           items:
-            $ref: '#/components/schemas/V1Link'
+            $ref: '#/components/schemas/DashboardLink'
           type: array
         plugin:
           $ref: '#/components/schemas/DashboardtypesPanelPlugin'
@@ -2948,7 +2988,7 @@ components:
     DashboardtypesQuery:
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         spec:
           $ref: '#/components/schemas/DashboardtypesQuerySpec'
       type: object
@@ -3216,8 +3256,8 @@ components:
     DashboardtypesVariable:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpec'
-      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec'
-    DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpec:
+      - $ref: '#/components/schemas/DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec'
+    DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpec:
       properties:
         kind:
           enum:
@@ -7235,26 +7275,6 @@ components:
       required:
       - id
       type: object
-    V1Link:
-      properties:
-        name:
-          type: string
-        renderVariables:
-          type: boolean
-        targetBlank:
-          type: boolean
-        tooltip:
-          type: string
-        url:
-          type: string
-      type: object
-    V1PanelDisplay:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      type: object
     VariableDefaultValue:
       type: object
     VariableDisplay:
@@ -8087,7 +8107,139 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified account
+        and cloud provider
+      operationId: ListAccountServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List account services metadata
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service and its configuration for the specified
+        cloud integration account
+      operationId: GetAccountService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service for account
+      tags:
+      - cloudintegration
     put:
       deprecated: false
       description: This endpoint updates a service for the specified cloud provider

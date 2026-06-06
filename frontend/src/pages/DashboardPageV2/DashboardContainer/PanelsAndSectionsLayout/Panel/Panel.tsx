@@ -6,6 +6,10 @@ import { EllipsisVertical } from '@signozhq/icons';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 
+import type { DashboardSection } from '../../utils';
+import type { DeletePanelArgs } from './hooks/useDeletePanel';
+import type { MovePanelArgs } from './hooks/useMovePanelToSection';
+import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
 import styles from './Panel.module.scss';
 
 interface Props {
@@ -17,9 +21,22 @@ interface Props {
 	 * data. Currently unused on purpose.
 	 */
 	isVisible?: boolean;
+	/** Section actions — present only in editable sectioned mode. */
+	currentLayoutIndex?: number;
+	sections?: DashboardSection[];
+	onMovePanel?: (args: MovePanelArgs) => void;
+	onDeletePanel?: (args: DeletePanelArgs) => void;
 }
 
-function Panel({ panel, panelId, isVisible }: Props): JSX.Element {
+function Panel({
+	panel,
+	panelId,
+	isVisible,
+	currentLayoutIndex,
+	sections,
+	onMovePanel,
+	onDeletePanel,
+}: Props): JSX.Element {
 	const name = panel?.spec?.display?.name || `Panel ${panelId.slice(0, 6)}`;
 	const description = panel?.spec?.display?.description;
 	const kind = panel?.spec?.plugin?.kind?.replace(/^signoz\//, '') ?? 'unknown';
@@ -48,7 +65,17 @@ function Panel({ panel, panelId, isVisible }: Props): JSX.Element {
 					</Typography.Text>
 					<Badge className={styles.badge}>{kind}</Badge>
 				</div>
-				<EllipsisVertical size={14} />
+				{currentLayoutIndex !== undefined && (onMovePanel || onDeletePanel) ? (
+					<PanelActionsMenu
+						panelId={panelId}
+						currentLayoutIndex={currentLayoutIndex}
+						sections={sections ?? []}
+						onMovePanel={onMovePanel}
+						onDeletePanel={onDeletePanel}
+					/>
+				) : (
+					<EllipsisVertical size={14} />
+				)}
 			</div>
 
 			<div className={styles.body}>

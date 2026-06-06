@@ -2457,33 +2457,6 @@ export interface CloudintegrationtypesAccountDTO {
 	updatedAt?: string;
 }
 
-export interface DashboardtypesStorableDashboardDataDTO {
-	[key: string]: unknown;
-}
-
-export interface CloudintegrationtypesDashboardDTO {
-	definition?: DashboardtypesStorableDashboardDataDTO;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	title?: string;
-}
-
-export interface CloudintegrationtypesAssetsDTO {
-	/**
-	 * @type array,null
-	 */
-	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
-}
-
 export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	/**
 	 * @type string
@@ -2866,6 +2839,54 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	providerAccountId?: string;
 }
 
+export interface CloudintegrationtypesStorableIntegrationDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	dashboardId: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	slug: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface CloudintegrationtypesServiceDashboardDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	integrationDashboard?: CloudintegrationtypesStorableIntegrationDashboardDTO;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesServiceAssetsDTO {
+	/**
+	 * @type array
+	 */
+	dashboards: CloudintegrationtypesServiceDashboardDTO[];
+}
+
 export interface CloudintegrationtypesSupportedSignalsDTO {
 	/**
 	 * @type boolean
@@ -2877,13 +2898,8 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 	metrics?: boolean;
 }
 
-export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
-	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
-}
-
 export interface CloudintegrationtypesServiceDTO {
-	assets: CloudintegrationtypesAssetsDTO;
+	assets: CloudintegrationtypesServiceAssetsDTO;
 	cloudIntegrationService: CloudintegrationtypesCloudIntegrationServiceDTO | null;
 	dataCollected: CloudintegrationtypesDataCollectedDTO;
 	/**
@@ -2899,7 +2915,6 @@ export interface CloudintegrationtypesServiceDTO {
 	 */
 	overview: string;
 	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
-	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
 	/**
 	 * @type string
 	 */
@@ -3087,6 +3102,40 @@ export interface DashboardGridLayoutSpecDTO {
 	 * @type string
 	 */
 	repeatVariable?: string;
+}
+
+export interface DashboardLinkDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type boolean
+	 */
+	renderVariables?: boolean;
+	/**
+	 * @type boolean
+	 */
+	targetBlank?: boolean;
+	/**
+	 * @type string
+	 */
+	tooltip?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface DashboardPanelDisplayDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
 }
 
 export interface VariableDisplayDTO {
@@ -3705,6 +3754,10 @@ export interface DashboardtypesCustomVariableSpecDTO {
 	customValue: string;
 }
 
+export interface DashboardtypesStorableDashboardDataDTO {
+	[key: string]: unknown;
+}
+
 export enum DashboardtypesSourceDTO {
 	user = 'user',
 	system = 'system',
@@ -3786,40 +3839,9 @@ export type DashboardtypesDashboardSpecDTODatasources = {
 	[key: string]: DashboardtypesDatasourceSpecDTO;
 };
 
-export interface V1PanelDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
+export enum DashboardtypesPanelKindDTO {
+	Panel = 'Panel',
 }
-
-export interface V1LinkDTO {
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	renderVariables?: boolean;
-	/**
-	 * @type boolean
-	 */
-	targetBlank?: boolean;
-	/**
-	 * @type string
-	 */
-	tooltip?: string;
-	/**
-	 * @type string
-	 */
-	url?: string;
-}
-
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind {
 	'signoz/TimeSeriesPanel' = 'signoz/TimeSeriesPanel',
 }
@@ -4061,6 +4083,13 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
 
+export enum Querybuildertypesv5RequestTypeDTO {
+	scalar = 'scalar',
+	time_series = 'time_series',
+	raw = 'raw',
+	raw_stream = 'raw_stream',
+	trace = 'trace',
+}
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
 }
@@ -4365,19 +4394,16 @@ export interface DashboardtypesQuerySpecDTO {
 }
 
 export interface DashboardtypesQueryDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: Querybuildertypesv5RequestTypeDTO;
 	spec?: DashboardtypesQuerySpecDTO;
 }
 
 export interface DashboardtypesPanelSpecDTO {
-	display?: V1PanelDisplayDTO;
+	display?: DashboardPanelDisplayDTO;
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	plugin?: DashboardtypesPanelPluginDTO;
 	/**
 	 * @type array
@@ -4386,10 +4412,7 @@ export interface DashboardtypesPanelSpecDTO {
 }
 
 export interface DashboardtypesPanelDTO {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: DashboardtypesPanelKindDTO;
 	spec?: DashboardtypesPanelSpecDTO;
 }
 
@@ -4403,20 +4426,20 @@ export type DashboardtypesDashboardSpecDTOPanelsAnyOf = {
 export type DashboardtypesDashboardSpecDTOPanels =
 	DashboardtypesDashboardSpecDTOPanelsAnyOf | null;
 
-export enum DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind {
+export enum DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind {
 	Grid = 'Grid',
 }
-export interface DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO {
+export interface DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO {
 	/**
 	 * @enum Grid
 	 * @type string
 	 */
-	kind: DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTOKind;
+	kind: DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind;
 	spec: DashboardGridLayoutSpecDTO;
 }
 
 export type DashboardtypesLayoutDTO =
-	DashboardtypesLayoutEnvelopeGithubComPersesPersesPkgModelApiV1DashboardGridLayoutSpecDTO;
+	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTO;
 
 export enum DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind {
 	ListVariable = 'ListVariable',
@@ -4520,21 +4543,21 @@ export interface DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDash
 	spec: DashboardtypesListVariableSpecDTO;
 }
 
-export enum DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind {
+export enum DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind {
 	TextVariable = 'TextVariable',
 }
-export interface DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO {
+export interface DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO {
 	/**
 	 * @enum TextVariable
 	 * @type string
 	 */
-	kind: DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTOKind;
+	kind: DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind;
 	spec: DashboardTextVariableSpecDTO;
 }
 
 export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTO
-	| DashboardtypesVariableEnvelopeGithubComPersesPersesPkgModelApiV1DashboardTextVariableSpecDTO;
+	| DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
 	/**
@@ -4553,7 +4576,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	/**
 	 * @type array
 	 */
-	links?: V1LinkDTO[];
+	links?: DashboardLinkDTO[];
 	/**
 	 * @type object,null
 	 */
@@ -6935,13 +6958,6 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
 	[key: string]: Querybuildertypesv5VariableItemDTO;
 };
 
-export enum Querybuildertypesv5RequestTypeDTO {
-	scalar = 'scalar',
-	time_series = 'time_series',
-	raw = 'raw',
-	raw_stream = 'raw_stream',
-	trace = 'trace',
-}
 /**
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
@@ -8676,6 +8692,31 @@ export type UpdateAccountPathParameters = {
 	cloudProvider: string;
 	id: string;
 };
+export type ListAccountServicesMetadataPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type ListAccountServicesMetadata200 = {
+	data: CloudintegrationtypesGettableServicesMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetAccountServicePathParameters = {
+	cloudProvider: string;
+	id: string;
+	serviceId: string;
+};
+export type GetAccountService200 = {
+	data: CloudintegrationtypesServiceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateServicePathParameters = {
 	cloudProvider: string;
 	id: string;

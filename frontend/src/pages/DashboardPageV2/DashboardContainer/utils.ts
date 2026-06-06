@@ -72,7 +72,6 @@ export interface DashboardSection {
 	/** Position of this section's Grid in `spec.layouts`. All JSON-Patch ops target by this. */
 	layoutIndex: number;
 	title: string | undefined;
-	open: boolean;
 	items: GridItem[];
 	repeatVariable: string | undefined;
 }
@@ -127,15 +126,11 @@ export function layoutsToSections(
 				.filter((it): it is GridItem => it !== null);
 
 			const title = spec?.display?.title;
-			// `open` defaults to true when no collapse field is set (the section
-			// is expanded by default).
-			const open = spec?.display?.collapse?.open !== false;
 
 			return {
 				id: getSectionStableId(items, idx),
 				layoutIndex: idx,
 				title,
-				open,
 				items,
 				repeatVariable: spec?.repeatVariable,
 			};
