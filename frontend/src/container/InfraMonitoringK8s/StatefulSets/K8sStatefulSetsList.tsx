@@ -14,7 +14,6 @@ import {
 	k8sStatefulSetGetEntityName,
 	k8sStatefulSetGetSelectedItemFilters,
 	k8sStatefulSetInitialEventsFilter,
-	k8sStatefulSetInitialFilters,
 	k8sStatefulSetInitialLogTracesFilter,
 	statefulSetWidgetInfo,
 } from './constants';
@@ -106,7 +105,6 @@ function K8sStatefulSetsList({
 				getEntityName={k8sStatefulSetGetEntityName}
 				getInitialLogTracesFilters={k8sStatefulSetInitialLogTracesFilter}
 				getInitialEventsFilters={k8sStatefulSetInitialEventsFilter}
-				primaryFilterKeys={k8sStatefulSetInitialFilters}
 				metadataConfig={k8sStatefulSetDetailsMetadataConfig}
 				entityWidgetInfo={statefulSetWidgetInfo}
 				getEntityQueryPayload={getStatefulSetMetricsQueryPayload}
