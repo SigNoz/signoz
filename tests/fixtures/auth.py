@@ -270,6 +270,7 @@ def add_license(
     signoz: types.SigNoz,
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],  # pylint: disable=redefined-outer-name
+    base_path: str = "",
 ) -> None:
     make_http_mocks(
         signoz.zeus,
@@ -308,7 +309,7 @@ def add_license(
     access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v3/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,

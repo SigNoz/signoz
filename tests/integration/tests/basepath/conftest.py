@@ -4,13 +4,6 @@ from http import HTTPStatus
 import pytest
 import requests
 from testcontainers.core.container import Network
-from wiremock.resources.mappings import (
-    HttpMethods,
-    Mapping,
-    MappingRequest,
-    MappingResponse,
-    WireMockMatchers,
-)
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_NAME, USER_ADMIN_PASSWORD
@@ -109,68 +102,3 @@ def get_session_context(signoz: types.SigNoz) -> Callable[[str], dict]:
         return response.json()["data"]
 
     return _get_session_context
-
-
-@pytest.fixture(name="apply_license", scope="package")
-def apply_license(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
-    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
-) -> types.Operation:
-    """Stub the Zeus license lookup and apply an ENTERPRISE license under the base path."""
-    make_http_mocks(
-        signoz.zeus,
-        [
-            Mapping(
-                request=MappingRequest(
-                    method=HttpMethods.GET,
-                    url="/v2/licenses/me",
-                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
-                ),
-                response=MappingResponse(
-                    status=200,
-                    json_body={
-                        "status": "success",
-                        "data": {
-                            "id": "0196360e-90cd-7a74-8313-1aa815ce2a67",
-                            "key": "secret-key",
-                            "valid_from": 1732146923,
-                            "valid_until": -1,
-                            "status": "VALID",
-                            "state": "EVALUATING",
-                            "plan": {"name": "ENTERPRISE"},
-                            "platform": "CLOUD",
-                            "features": [],
-                            "event_queue": {},
-                        },
-                    },
-                ),
-                persistent=False,
-            )
-        ],
-    )
-
-    context = requests.get(
-        api(signoz, "/api/v2/sessions/context"),
-        params={"email": USER_ADMIN_EMAIL, "ref": signoz.self.host_configs["8080"].base()},
-        timeout=5,
-    )
-    assert context.status_code == HTTPStatus.OK
-    org_id = context.json()["data"]["orgs"][0]["id"]
-
-    login = requests.post(
-        api(signoz, "/api/v2/sessions/email_password"),
-        json={"email": USER_ADMIN_EMAIL, "password": USER_ADMIN_PASSWORD, "orgId": org_id},
-        timeout=5,
-    )
-    assert login.status_code == HTTPStatus.OK
-    access_token = login.json()["data"]["accessToken"]
-
-    response = requests.post(
-        api(signoz, "/api/v3/licenses"),
-        json={"key": "secret-key"},
-        headers={"Authorization": f"Bearer {access_token}"},
-        timeout=5,
-    )
-    assert response.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT)
-    return types.Operation(name="apply_license")
